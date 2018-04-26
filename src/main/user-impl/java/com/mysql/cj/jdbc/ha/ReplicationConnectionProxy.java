@@ -347,6 +347,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     /**
      * Pings both l/b connections. Switch to another connection in case of failure.
      */
+    @Override
     public void doPing() throws SQLException {
         boolean isMasterConn = isMasterConnection();
 

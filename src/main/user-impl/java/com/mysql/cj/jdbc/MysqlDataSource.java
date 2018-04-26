@@ -106,32 +106,12 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
     public MysqlDataSource() {
     }
 
-    /**
-     * Creates a new connection using the already configured username and
-     * password.
-     * 
-     * @return a connection to the database
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
+    @Override
     public java.sql.Connection getConnection() throws SQLException {
         return getConnection(this.user, this.password);
     }
 
-    /**
-     * Creates a new connection with the given username and password
-     * 
-     * @param userID
-     *            the user id to connect with
-     * @param password
-     *            the password to connect with
-     * 
-     * @return a connection to the database
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
+    @Override
     public java.sql.Connection getConnection(String userID, String pass) throws SQLException {
         Properties props = exposeAsProperties();
 
@@ -173,37 +153,21 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         return (this.databaseName != null) ? this.databaseName : "";
     }
 
-    /**
-     * Sets the log writer for this data source.
-     * 
-     * @see javax.sql.DataSource#setLogWriter(PrintWriter)
-     */
+    @Override
     public void setLogWriter(PrintWriter output) throws SQLException {
         this.logWriter = output;
     }
 
-    /**
-     * Returns the log writer for this data source
-     * 
-     * @return the log writer for this data source
-     */
+    @Override
     public java.io.PrintWriter getLogWriter() {
         return this.logWriter;
     }
 
-    /**
-     * @param seconds
-     * 
-     * @throws SQLException
-     */
+    @Override
     public void setLoginTimeout(int seconds) throws SQLException {
     }
 
-    /**
-     * Returns the login timeout
-     * 
-     * @return the login timeout
-     */
+    @Override
     public int getLoginTimeout() {
         return 0;
     }
@@ -242,8 +206,6 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * 
      * @param p
      *            the port
-     * 
-     * @see #setPort
      */
     public void setPortNumber(int p) {
         setPort(p);
@@ -286,6 +248,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @throws NamingException
      *             if a JNDI error occurs
      */
+    @Override
     public Reference getReference() throws NamingException {
         String factoryName = MysqlDataSourceFactory.class.getName();
         Reference ref = new Reference(getClass().getName(), factoryName, null);
@@ -447,14 +410,17 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
     //		throw SQLError.createSQLFeatureNotSupportedException();
     //	}
 
+    @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
         return null;
     }
 
+    @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         return null;
     }
 
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return false;
     }

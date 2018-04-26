@@ -88,13 +88,7 @@ public class MysqlPooledConnection implements PooledConnection {
         this.exceptionInterceptor = this.physicalConn.getExceptionInterceptor();
     }
 
-    /**
-     * Adds ConnectionEventListeners to a hash table to be used for notification
-     * of ConnectionEvents
-     * 
-     * @param connectioneventlistener
-     *            listener to be notified with ConnectionEvents
-     */
+    @Override
     public synchronized void addConnectionEventListener(ConnectionEventListener connectioneventlistener) {
 
         if (this.connectionEventListeners != null) {
@@ -102,13 +96,7 @@ public class MysqlPooledConnection implements PooledConnection {
         }
     }
 
-    /**
-     * Removes ConnectionEventListeners from hash table used for notification of
-     * ConnectionEvents
-     * 
-     * @param connectioneventlistener
-     *            listener to be removed
-     */
+    @Override
     public synchronized void removeConnectionEventListener(ConnectionEventListener connectioneventlistener) {
 
         if (this.connectionEventListeners != null) {
@@ -116,12 +104,7 @@ public class MysqlPooledConnection implements PooledConnection {
         }
     }
 
-    /**
-     * Invoked by the container. Return a logicalHandle object that wraps a
-     * physical connection.
-     * 
-     * @see javax.sql.DataSource#getConnection()
-     */
+    @Override
     public synchronized Connection getConnection() throws SQLException {
         return getConnection(true, false);
 
@@ -160,9 +143,8 @@ public class MysqlPooledConnection implements PooledConnection {
      * Invoked by the container (not the client), and should close the physical
      * connection. This will be called if the pool is destroyed or the
      * connectionEventListener receives a connectionErrorOccurred event.
-     * 
-     * @see javax.sql.PooledConnection#close()
      */
+    @Override
     public synchronized void close() throws SQLException {
         if (this.physicalConn != null) {
             this.physicalConn.close();
@@ -218,34 +200,14 @@ public class MysqlPooledConnection implements PooledConnection {
         return this.exceptionInterceptor;
     }
 
-    /**
-     * Registers a <code>StatementEventListener</code> with this <code>PooledConnection</code> object. Components that
-     * wish to be notified when <code>PreparedStatement</code>s created by the
-     * connection are closed or are detected to be invalid may use this method
-     * to register a <code>StatementEventListener</code> with this <code>PooledConnection</code> object.
-     * 
-     * @param listener
-     *            an component which implements the <code>StatementEventListener</code> interface that is to be registered with this
-     *            <code>PooledConnection</code> object
-     * 
-     * @since 1.6
-     */
+    @Override
     public void addStatementEventListener(StatementEventListener listener) {
         synchronized (this.statementEventListeners) {
             this.statementEventListeners.put(listener, listener);
         }
     }
 
-    /**
-     * Removes the specified <code>StatementEventListener</code> from the list of
-     * components that will be notified when the driver detects that a <code>PreparedStatement</code> has been closed or is invalid.
-     * 
-     * @param listener
-     *            the component which implements the <code>StatementEventListener</code> interface that was previously
-     *            registered with this <code>PooledConnection</code> object
-     * 
-     * @since 1.6
-     */
+    @Override
     public void removeStatementEventListener(StatementEventListener listener) {
         synchronized (this.statementEventListeners) {
             this.statementEventListeners.remove(listener);

@@ -43,13 +43,7 @@ public class MysqlConnectionPoolDataSource extends MysqlDataSource implements Co
 
     static final long serialVersionUID = -7767325445592304961L;
 
-    /**
-     * Returns a pooled connection.
-     * 
-     * @exception SQLException
-     *                if an error occurs
-     * @return a PooledConnection
-     */
+    @Override
     public synchronized PooledConnection getPooledConnection() throws SQLException {
         Connection connection = getConnection();
         MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((JdbcConnection) connection);
@@ -57,20 +51,9 @@ public class MysqlConnectionPoolDataSource extends MysqlDataSource implements Co
         return mysqlPooledConnection;
     }
 
-    /**
-     * This method is invoked by the container. Obtains physical connection
-     * using mySql.Driver class and returns a mysqlPooledConnection object.
-     * 
-     * @param s
-     *            user name
-     * @param s1
-     *            password
-     * @exception SQLException
-     *                if an error occurs
-     * @return a PooledConnection
-     */
-    public synchronized PooledConnection getPooledConnection(String s, String s1) throws SQLException {
-        Connection connection = getConnection(s, s1);
+    @Override
+    public synchronized PooledConnection getPooledConnection(String u, String p) throws SQLException {
+        Connection connection = getConnection(u, p);
         MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((JdbcConnection) connection);
 
         return mysqlPooledConnection;

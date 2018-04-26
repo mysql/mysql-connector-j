@@ -41,7 +41,6 @@ import java.sql.Date;
 import java.sql.JDBCType;
 import java.sql.NClob;
 import java.sql.ParameterMetaData;
-import java.sql.PreparedStatement;
 import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.RowId;
@@ -136,7 +135,6 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     /**
      * Creates a prepared statement instance
      */
-
     protected static ClientPreparedStatement getInstance(JdbcConnection conn, String sql, String catalog) throws SQLException {
         return new ClientPreparedStatement(conn, sql, catalog);
     }
@@ -221,6 +219,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     }
 
+    @Override
     public QueryBindings<?> getQueryBindings() {
         return ((PreparedQuery<?>) this.query).getQueryBindings();
     }
@@ -245,6 +244,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         return buf.toString();
     }
 
+    @Override
     public void addBatch() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             QueryBindings<?> queryBindings = ((PreparedQuery<?>) this.query).getQueryBindings();
@@ -281,16 +281,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
-    /**
-     * In general, parameter values remain in force for repeated used of a
-     * Statement. Setting a parameter value automatically clears its previous
-     * value. However, in some cases, it is useful to immediately release the
-     * resources used by the current parameter values; this can be done by
-     * calling clearParameters
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public void clearParameters() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             for (BindValue bv : ((PreparedQuery<?>) this.query).getQueryBindings().getBindValues()) {
@@ -315,17 +306,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
-    /**
-     * Some prepared statements return multiple results; the execute method
-     * handles these complex statements as well as the simpler form of
-     * statements handled by executeQuery and executeUpdate
-     * 
-     * @return true if the next result is a ResultSet; false if it is an update
-     *         count or there are no more results
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public boolean execute() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
@@ -960,15 +941,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
-    /**
-     * A Prepared SQL query is executed and its ResultSet is returned
-     * 
-     * @return a ResultSet that contains the data produced by the query - never
-     *         null
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public java.sql.ResultSet executeQuery() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
@@ -1036,17 +1009,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
-    /**
-     * Execute a SQL INSERT, UPDATE or DELETE statement. In addition, SQL
-     * statements that return nothing such as SQL DDL statements can be
-     * executed.
-     * 
-     * @return either the row count for INSERT, UPDATE or DELETE; or 0 for SQL
-     *         statements that return nothing.
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public int executeUpdate() throws SQLException {
         return Util.truncateAndConvertToInt(executeLargeUpdate());
     }
@@ -1163,11 +1126,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
-    /**
-     * @param parameterIndex
-     * 
-     * @throws SQLException
-     */
+    @Override
     public byte[] getBytesRepresentation(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return ((ClientPreparedQuery) this.query).getBytesRepresentation(parameterIndex);
@@ -1187,15 +1146,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
-    /**
-     * The number, types, and properties of a ResultSet's columns are provided by
-     * the getMetaData method.
-     * 
-     * @return the description of a ResultSet's columns
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
+    @Override
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
 
         synchronized (checkClosed().getConnectionMutex()) {
@@ -1278,9 +1229,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
-    /**
-     * @see PreparedStatement#getParameterMetaData()
-     */
+    @Override
     public ParameterMetaData getParameterMetaData() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.parameterMetaData == null) {
@@ -1296,6 +1245,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
+    @Override
     public ParseInfo getParseInfo() {
         return ((PreparedQuery<?>) this.query).getParseInfo();
     }
@@ -1313,21 +1263,13 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
+    @Override
     public boolean isNull(int paramIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return ((PreparedQuery<?>) this.query).getQueryBindings().getBindValues()[paramIndex].isNull();
         }
     }
 
-    /**
-     * Closes this statement, releasing all resources
-     * 
-     * @param calledExplicitly
-     *            was this called by close()?
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
     @Override
     public void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
         JdbcConnection locallyScopedConn = this.connection;
@@ -1361,6 +1303,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
+    @Override
     public String getPreparedSql() {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.rewrittenBatchSize == 0) {
@@ -1388,10 +1331,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         return count;
     }
 
-    /**
-     * JDBC 4.2
-     * Same as PreparedStatement.executeUpdate() but returns long instead of int.
-     */
+    @Override
     public long executeLargeUpdate() throws SQLException {
         return executeUpdateInternal(true, false);
     }
@@ -1433,214 +1373,237 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         return paramIndex - 1 + parameterIndexOffset;
     }
 
+    @Override
     public void setArray(int i, Array x) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
+    @Override
     public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setAsciiStream(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setAsciiStream(getCoreParameterIndex(parameterIndex), x, length);
         }
     }
 
+    @Override
     public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setAsciiStream(getCoreParameterIndex(parameterIndex), x, length);
         }
     }
 
+    @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setBigDecimal(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setBinaryStream(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setBinaryStream(getCoreParameterIndex(parameterIndex), x, length);
         }
     }
 
+    @Override
     public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setBinaryStream(getCoreParameterIndex(parameterIndex), x, length);
         }
     }
 
+    @Override
     public void setBlob(int i, java.sql.Blob x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setBlob(getCoreParameterIndex(i), x);
         }
     }
 
+    @Override
     public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setBlob(getCoreParameterIndex(parameterIndex), inputStream);
         }
     }
 
+    @Override
     public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setBlob(getCoreParameterIndex(parameterIndex), inputStream, length);
         }
     }
 
+    @Override
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setBoolean(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setByte(int parameterIndex, byte x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setByte(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setBytes(int parameterIndex, byte[] x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setBytes(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setBytes(int parameterIndex, byte[] x, boolean checkForIntroducer, boolean escapeForMBChars) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setBytes(getCoreParameterIndex(parameterIndex), x, checkForIntroducer, escapeForMBChars);
         }
     }
 
-    /**
-     * Used by updatable result sets for refreshRow() because the parameter has
-     * already been escaped for updater or inserter prepared statements.
-     * 
-     * @param parameterIndex
-     *            the parameter to set.
-     * @param parameterAsBytes
-     *            the parameter as a string.
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
+    @Override
     public void setBytesNoEscape(int parameterIndex, byte[] parameterAsBytes) throws SQLException {
         ((PreparedQuery<?>) this.query).getQueryBindings().setBytesNoEscape(getCoreParameterIndex(parameterIndex), parameterAsBytes);
     }
 
+    @Override
     public void setBytesNoEscapeNoQuotes(int parameterIndex, byte[] parameterAsBytes) throws SQLException {
         ((PreparedQuery<?>) this.query).getQueryBindings().setBytesNoEscapeNoQuotes(getCoreParameterIndex(parameterIndex), parameterAsBytes);
     }
 
+    @Override
     public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setCharacterStream(getCoreParameterIndex(parameterIndex), reader);
         }
     }
 
+    @Override
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setCharacterStream(getCoreParameterIndex(parameterIndex), reader, length);
         }
     }
 
+    @Override
     public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setCharacterStream(getCoreParameterIndex(parameterIndex), reader, length);
         }
     }
 
+    @Override
     public void setClob(int parameterIndex, Reader reader) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setCharacterStream(getCoreParameterIndex(parameterIndex), reader);
         }
     }
 
+    @Override
     public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setCharacterStream(getCoreParameterIndex(parameterIndex), reader, length);
         }
     }
 
+    @Override
     public void setClob(int i, Clob x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setClob(getCoreParameterIndex(i), x);
         }
     }
 
+    @Override
     public void setDate(int parameterIndex, Date x) throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setDate(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setDate(getCoreParameterIndex(parameterIndex), x, cal);
         }
     }
 
+    @Override
     public void setDouble(int parameterIndex, double x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setDouble(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setFloat(int parameterIndex, float x) throws SQLException {
         ((PreparedQuery<?>) this.query).getQueryBindings().setFloat(getCoreParameterIndex(parameterIndex), x);
     }
 
+    @Override
     public void setInt(int parameterIndex, int x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setInt(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setLong(int parameterIndex, long x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setLong(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setBigInteger(int parameterIndex, BigInteger x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setBigInteger(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setNCharacterStream(getCoreParameterIndex(parameterIndex), value);
         }
     }
 
+    @Override
     public void setNCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setNCharacterStream(getCoreParameterIndex(parameterIndex), reader, length);
         }
     }
 
+    @Override
     public void setNClob(int parameterIndex, Reader reader) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setNClob(getCoreParameterIndex(parameterIndex), reader);
         }
     }
 
+    @Override
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setNClob(getCoreParameterIndex(parameterIndex), reader, length);
         }
     }
 
+    @Override
     public void setNClob(int parameterIndex, NClob value) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setNClob(getCoreParameterIndex(parameterIndex), value);
@@ -1661,34 +1624,40 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      * @exception SQLException
      *                if a database access error occurs
      */
+    @Override
     public void setNString(int parameterIndex, String x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setNString(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setNull(getCoreParameterIndex(parameterIndex)); // MySQL ignores sqlType
         }
     }
 
+    @Override
     public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setNull(getCoreParameterIndex(parameterIndex));
         }
     }
 
+    @Override
     public void setNull(int parameterIndex, MysqlType mysqlType) throws SQLException {
         setNull(parameterIndex, mysqlType.getJdbcType());
     }
 
+    @Override
     public void setObject(int parameterIndex, Object parameterObj) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setObject(getCoreParameterIndex(parameterIndex), parameterObj);
         }
     }
 
+    @Override
     public void setObject(int parameterIndex, Object parameterObj, int targetSqlType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
@@ -1701,6 +1670,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
+    @Override
     public void setObject(int parameterIndex, Object parameterObj, SQLType targetSqlType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (targetSqlType instanceof MysqlType) {
@@ -1711,6 +1681,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
+    @Override
     public void setObject(int parameterIndex, Object parameterObj, int targetSqlType, int scale) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
@@ -1723,6 +1694,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
+    @Override
     public void setObject(int parameterIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (targetSqlType instanceof MysqlType) {
@@ -1734,20 +1706,24 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
+    @Override
     public void setRef(int i, Ref x) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
+    @Override
     public void setRowId(int parameterIndex, RowId x) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
+    @Override
     public void setShort(int parameterIndex, short x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setShort(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
         if (xmlObject == null) {
             setNull(parameterIndex, MysqlType.VARCHAR);
@@ -1757,30 +1733,35 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
+    @Override
     public void setString(int parameterIndex, String x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setString(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setTime(int parameterIndex, Time x) throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setTime(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setTime(int parameterIndex, java.sql.Time x, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setTime(getCoreParameterIndex(parameterIndex), x, cal);
         }
     }
 
+    @Override
     public void setTimestamp(int parameterIndex, Timestamp x) throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x);
         }
     }
 
+    @Override
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ((PreparedQuery<?>) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x, cal);
@@ -1788,11 +1769,13 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     }
 
     @Deprecated
+    @Override
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
         setBinaryStream(parameterIndex, x, length);
         ((PreparedQuery<?>) this.query).getQueryBindings().getBindValues()[getCoreParameterIndex(parameterIndex)].setMysqlType(MysqlType.TEXT); // TODO was Types.CLOB
     }
 
+    @Override
     public void setURL(int parameterIndex, URL arg) throws SQLException {
         if (arg == null) {
             setNull(parameterIndex, MysqlType.VARCHAR);
@@ -1861,78 +1844,97 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             this.bindingsAsRs.next();
         }
 
+        @Override
         public Array getArray(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getArray(parameterIndex);
         }
 
+        @Override
         public InputStream getAsciiStream(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getAsciiStream(parameterIndex);
         }
 
+        @Override
         public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getBigDecimal(parameterIndex);
         }
 
+        @Override
         public InputStream getBinaryStream(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getBinaryStream(parameterIndex);
         }
 
+        @Override
         public java.sql.Blob getBlob(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getBlob(parameterIndex);
         }
 
+        @Override
         public boolean getBoolean(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getBoolean(parameterIndex);
         }
 
+        @Override
         public byte getByte(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getByte(parameterIndex);
         }
 
+        @Override
         public byte[] getBytes(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getBytes(parameterIndex);
         }
 
+        @Override
         public Reader getCharacterStream(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getCharacterStream(parameterIndex);
         }
 
+        @Override
         public java.sql.Clob getClob(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getClob(parameterIndex);
         }
 
+        @Override
         public Date getDate(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getDate(parameterIndex);
         }
 
+        @Override
         public double getDouble(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getDouble(parameterIndex);
         }
 
+        @Override
         public float getFloat(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getFloat(parameterIndex);
         }
 
+        @Override
         public int getInt(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getInt(parameterIndex);
         }
 
+        @Override
         public BigInteger getBigInteger(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getBigInteger(parameterIndex);
         }
 
+        @Override
         public long getLong(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getLong(parameterIndex);
         }
 
+        @Override
         public Reader getNCharacterStream(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getCharacterStream(parameterIndex);
         }
 
+        @Override
         public Reader getNClob(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getCharacterStream(parameterIndex);
         }
 
+        @Override
         public Object getObject(int parameterIndex) throws SQLException {
             checkBounds(parameterIndex, 0);
 
@@ -1967,30 +1969,37 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             }
         }
 
+        @Override
         public Ref getRef(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getRef(parameterIndex);
         }
 
+        @Override
         public short getShort(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getShort(parameterIndex);
         }
 
+        @Override
         public String getString(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getString(parameterIndex);
         }
 
+        @Override
         public Time getTime(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getTime(parameterIndex);
         }
 
+        @Override
         public Timestamp getTimestamp(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getTimestamp(parameterIndex);
         }
 
+        @Override
         public URL getURL(int parameterIndex) throws SQLException {
             return this.bindingsAsRs.getURL(parameterIndex);
         }
 
+        @Override
         public boolean isNull(int parameterIndex) throws SQLException {
             checkBounds(parameterIndex, 0);
 

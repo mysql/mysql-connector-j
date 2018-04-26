@@ -46,9 +46,7 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
     public MysqlXADataSource() {
     }
 
-    /**
-     * @see javax.sql.XADataSource#getXAConnection()
-     */
+    @Override
     public XAConnection getXAConnection() throws SQLException {
 
         Connection conn = getConnection();
@@ -56,9 +54,7 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
         return wrapConnection(conn);
     }
 
-    /**
-     * @see javax.sql.XADataSource#getXAConnection(String, String)
-     */
+    @Override
     public XAConnection getXAConnection(String u, String p) throws SQLException {
 
         Connection conn = getConnection(u, p);
@@ -69,7 +65,6 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
     /**
      * Wraps a connection as a 'fake' XAConnection
      */
-
     private XAConnection wrapConnection(Connection conn) throws SQLException {
         if (getBooleanReadableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()
                 || ((JdbcConnection) conn).getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()) {

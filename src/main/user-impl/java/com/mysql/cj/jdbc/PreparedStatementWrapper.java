@@ -72,6 +72,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         super(c, conn, toWrap);
     }
 
+    @Override
     public void setArray(int parameterIndex, Array x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -85,6 +86,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -98,6 +100,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -111,6 +114,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -124,6 +128,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setBlob(int parameterIndex, Blob x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -137,6 +142,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -150,6 +156,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setByte(int parameterIndex, byte x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -163,6 +170,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setBytes(int parameterIndex, byte[] x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -176,6 +184,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -189,6 +198,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setClob(int parameterIndex, Clob x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -202,6 +212,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -215,6 +226,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -228,6 +240,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setDouble(int parameterIndex, double x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -241,6 +254,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setFloat(int parameterIndex, float x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -254,6 +268,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setInt(int parameterIndex, int x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -267,6 +282,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setLong(int parameterIndex, long x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -280,6 +296,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public ResultSetMetaData getMetaData() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -295,6 +312,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         return null;
     }
 
+    @Override
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -308,6 +326,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -321,6 +340,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setObject(int parameterIndex, Object x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -334,6 +354,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -347,6 +368,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scale) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -360,6 +382,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public ParameterMetaData getParameterMetaData() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -375,6 +398,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         return null;
     }
 
+    @Override
     public void setRef(int parameterIndex, Ref x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -388,6 +412,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setShort(int parameterIndex, short x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -401,6 +426,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setString(int parameterIndex, String x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -414,6 +440,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setTime(int parameterIndex, Time x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -427,6 +454,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -440,6 +468,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -453,6 +482,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -466,6 +496,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setURL(int parameterIndex, URL x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -479,16 +510,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
-    /**
-     * @param parameterIndex
-     * @param x
-     * @param length
-     * 
-     * @throws SQLException
-     * 
-     * @see java.sql.PreparedStatement#setUnicodeStream(int, java.io.InputStream, int)
-     * @deprecated
-     */
+    @Override
     @Deprecated
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
         try {
@@ -503,6 +525,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void addBatch() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -516,6 +539,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void clearParameters() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -529,6 +553,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public boolean execute() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -544,6 +569,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         return false; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public ResultSet executeQuery() throws SQLException {
         ResultSet rs = null;
         try {
@@ -562,6 +588,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         return rs;
     }
 
+    @Override
     public int executeUpdate() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -593,6 +620,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         return buf.toString();
     }
 
+    @Override
     public void setRowId(int parameterIndex, RowId x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -606,6 +634,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setNString(int parameterIndex, String value) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -619,6 +648,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -632,6 +662,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setNClob(int parameterIndex, NClob value) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -645,6 +676,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -658,6 +690,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -671,6 +704,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -684,6 +718,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -697,6 +732,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -710,6 +746,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -723,6 +760,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -736,6 +774,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -749,6 +788,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -762,6 +802,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -776,6 +817,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
 
     }
 
+    @Override
     public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -790,6 +832,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
 
     }
 
+    @Override
     public void setClob(int parameterIndex, Reader reader) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -804,6 +847,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
 
     }
 
+    @Override
     public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -817,6 +861,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
+    @Override
     public void setNClob(int parameterIndex, Reader reader) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -830,26 +875,6 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
-    /**
-     * Returns true if this either implements the interface argument or is
-     * directly or indirectly a wrapper for an object that does. Returns false
-     * otherwise. If this implements the interface then return true, else if
-     * this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped object. If this does not
-     * implement the interface and is not a wrapper, return false. This method
-     * should be implemented as a low-cost operation compared to <code>unwrap</code> so that callers can use this method to avoid
-     * expensive <code>unwrap</code> calls that may fail. If this method returns
-     * true then calling <code>unwrap</code> with the same argument should
-     * succeed.
-     * 
-     * @param interfaces
-     *            a Class defining an interface.
-     * @return true if this implements the interface or directly or indirectly
-     *         wraps an object that does.
-     * @throws java.sql.SQLException
-     *             if an error occurs while determining whether this is a
-     *             wrapper for an object with the given interface.
-     * @since 1.6
-     */
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
 
@@ -865,25 +890,6 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
                 || interfaceClassName.equals("java.sql.Wrapper") || interfaceClassName.equals("java.sql.PreparedStatement")); // TODO check other interfaces
     }
 
-    /**
-     * Returns an object that implements the given interface to allow access to
-     * non-standard methods, or standard methods not exposed by the proxy. The
-     * result may be either the object found to implement the interface or a
-     * proxy for that object. If the receiver implements the interface then that
-     * is the object. If the receiver is a wrapper and the wrapped object
-     * implements the interface then that is the object. Otherwise the object is
-     * the result of calling <code>unwrap</code> recursively on the wrapped
-     * object. If the receiver is not a wrapper and does not implement the
-     * interface, then an <code>SQLException</code> is thrown.
-     * 
-     * @param iface
-     *            A Class defining an interface that the result must implement.
-     * @return an object that implements the interface. May be a proxy for the
-     *         actual implementing object.
-     * @throws java.sql.SQLException
-     *             If no object found that implements the interface
-     * @since 1.6
-     */
     @Override
     public synchronized <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
         try {
@@ -932,10 +938,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
-    /**
-     * JDBC 4.2
-     * Same as PreparedStatement.executeUpdate() but returns long instead of int.
-     */
+    @Override
     public long executeLargeUpdate() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -951,14 +954,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         return -1; // we actually never get here, but the compiler can't figure that out
     }
 
-    /**
-     * Support for java.sql.JDBCType/java.sql.SQLType.
-     * 
-     * @param parameterIndex
-     * @param x
-     * @param targetSqlType
-     * @throws SQLException
-     */
+    @Override
     public void setObject(int parameterIndex, Object x, SQLType targetSqlType) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -972,15 +968,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         }
     }
 
-    /**
-     * Support for java.sql.JDBCType/java.sql.SQLType.
-     * 
-     * @param parameterIndex
-     * @param x
-     * @param targetSqlType
-     * @param scaleOrLength
-     * @throws SQLException
-     */
+    @Override
     public void setObject(int parameterIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
         try {
             if (this.wrappedStmt != null) {

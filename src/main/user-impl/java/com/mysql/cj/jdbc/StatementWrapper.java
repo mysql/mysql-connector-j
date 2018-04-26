@@ -60,6 +60,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         this.wrappedConn = c;
     }
 
+    @Override
     public Connection getConnection() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -75,6 +76,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public void setCursorName(String name) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -88,6 +90,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public void setEscapeProcessing(boolean enable) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -101,6 +104,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public void setFetchDirection(int direction) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -114,6 +118,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public int getFetchDirection() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -129,6 +134,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return ResultSet.FETCH_FORWARD; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public void setFetchSize(int rows) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -142,6 +148,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public int getFetchSize() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -157,6 +164,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return 0; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public ResultSet getGeneratedKeys() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -172,6 +180,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public void setMaxFieldSize(int max) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -185,6 +194,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public int getMaxFieldSize() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -200,6 +210,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return 0; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public void setMaxRows(int max) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -213,6 +224,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public int getMaxRows() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -228,6 +240,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return 0; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public boolean getMoreResults() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -243,6 +256,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false;
     }
 
+    @Override
     public boolean getMoreResults(int current) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -258,6 +272,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false;
     }
 
+    @Override
     public void setQueryTimeout(int seconds) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -271,6 +286,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public int getQueryTimeout() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -286,6 +302,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return 0;
     }
 
+    @Override
     public ResultSet getResultSet() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -306,6 +323,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null;
     }
 
+    @Override
     public int getResultSetConcurrency() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -321,6 +339,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return 0;
     }
 
+    @Override
     public int getResultSetHoldability() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -336,6 +355,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return Statement.CLOSE_CURRENT_RESULT;
     }
 
+    @Override
     public int getResultSetType() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -351,6 +371,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return ResultSet.TYPE_FORWARD_ONLY;
     }
 
+    @Override
     public int getUpdateCount() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -366,6 +387,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1;
     }
 
+    @Override
     public SQLWarning getWarnings() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -381,6 +403,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null;
     }
 
+    @Override
     public void addBatch(String sql) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -391,6 +414,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public void cancel() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -401,6 +425,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public void clearBatch() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -411,6 +436,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public void clearWarnings() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -421,6 +447,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public void close() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -435,6 +462,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -450,6 +478,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public boolean execute(String sql, int[] columnIndexes) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -465,6 +494,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public boolean execute(String sql, String[] columnNames) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -480,6 +510,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public boolean execute(String sql) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -495,6 +526,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public int[] executeBatch() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -510,6 +542,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public ResultSet executeQuery(String sql) throws SQLException {
         ResultSet rs = null;
         try {
@@ -528,6 +561,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return rs;
     }
 
+    @Override
     public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -543,6 +577,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -558,6 +593,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public int executeUpdate(String sql, String[] columnNames) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -573,6 +609,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1; // we actually never get here, but the compiler can't figure that out
     }
 
+    @Override
     public int executeUpdate(String sql) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -601,25 +638,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /**
-     * Returns an object that implements the given interface to allow access to
-     * non-standard methods, or standard methods not exposed by the proxy. The
-     * result may be either the object found to implement the interface or a
-     * proxy for that object. If the receiver implements the interface then that
-     * is the object. If the receiver is a wrapper and the wrapped object
-     * implements the interface then that is the object. Otherwise the object is
-     * the result of calling <code>unwrap</code> recursively on the wrapped
-     * object. If the receiver is not a wrapper and does not implement the
-     * interface, then an <code>SQLException</code> is thrown.
-     * 
-     * @param iface
-     *            A Class defining an interface that the result must implement.
-     * @return an object that implements the interface. May be a proxy for the
-     *         actual implementing object.
-     * @throws java.sql.SQLException
-     *             If no object found that implements the interface
-     * @since 1.6
-     */
+    @Override
     public synchronized <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
         try {
             if ("java.sql.Statement".equals(iface.getName()) || "java.sql.Wrapper.class".equals(iface.getName())) {
@@ -645,26 +664,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
-    /**
-     * Returns true if this either implements the interface argument or is
-     * directly or indirectly a wrapper for an object that does. Returns false
-     * otherwise. If this implements the interface then return true, else if
-     * this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped object. If this does not
-     * implement the interface and is not a wrapper, return false. This method
-     * should be implemented as a low-cost operation compared to <code>unwrap</code> so that callers can use this method to avoid
-     * expensive <code>unwrap</code> calls that may fail. If this method
-     * returns true then calling <code>unwrap</code> with the same argument
-     * should succeed.
-     * 
-     * @param interfaces
-     *            a Class defining an interface.
-     * @return true if this implements the interface or directly or indirectly
-     *         wraps an object that does.
-     * @throws java.sql.SQLException
-     *             if an error occurs while determining whether this is a
-     *             wrapper for an object with the given interface.
-     * @since 1.6
-     */
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
 
         boolean isInstance = iface.isInstance(this);
@@ -679,6 +679,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
                 || interfaceClassName.equals("java.sql.Wrapper")); // TODO check other interfaces
     }
 
+    @Override
     public boolean isClosed() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -693,6 +694,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false; // We never get here, compiler can't tell
     }
 
+    @Override
     public void setPoolable(boolean poolable) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -706,6 +708,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         }
     }
 
+    @Override
     public boolean isPoolable() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -720,17 +723,16 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return false; // We never get here, compiler can't tell
     }
 
+    @Override
     public void closeOnCompletion() throws SQLException {
     }
 
+    @Override
     public boolean isCloseOnCompletion() throws SQLException {
         return false;
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #executeBatch()} but returns long[] instead of int[].
-     */
+    @Override
     public long[] executeLargeBatch() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -745,10 +747,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return null; // we actually never get here, but the compiler can't figure that out
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #executeUpdate(String)} but returns long instead of int.
-     */
+    @Override
     public long executeLargeUpdate(String sql) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -763,10 +762,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1; // we actually never get here, but the compiler can't figure that out
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #executeUpdate(String, int)} but returns long instead of int.
-     */
+    @Override
     public long executeLargeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -781,10 +777,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1; // we actually never get here, but the compiler can't figure that out
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #executeUpdate(String, int[])} but returns long instead of int.
-     */
+    @Override
     public long executeLargeUpdate(String sql, int[] columnIndexes) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -799,10 +792,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1; // we actually never get here, but the compiler can't figure that out
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #executeUpdate(String, String[])} but returns long instead of int.
-     */
+    @Override
     public long executeLargeUpdate(String sql, String[] columnNames) throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -817,10 +807,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1; // we actually never get here, but the compiler can't figure that out
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #getMaxRows()} but returns long instead of int.
-     */
+    @Override
     public long getLargeMaxRows() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -835,10 +822,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return 0; // we actually never get here, but the compiler can't figure that out
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #getUpdateCount()} but returns long instead of int;
-     */
+    @Override
     public long getLargeUpdateCount() throws SQLException {
         try {
             if (this.wrappedStmt != null) {
@@ -853,10 +837,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
         return -1;
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #setMaxRows(int)} but accepts a long value instead of an int.
-     */
+    @Override
     public void setLargeMaxRows(long max) throws SQLException {
         try {
             if (this.wrappedStmt != null) {

@@ -46,6 +46,7 @@ public final class MysqlValidConnectionChecker implements ValidConnectionChecker
     public MysqlValidConnectionChecker() {
     }
 
+    @Override
     public SQLException isValidConnection(Connection conn) {
 
         // Use "/* ping */ SELECT 1" which will send pings across multi-connections too in case the connection was "wrapped" by Jboss in any way...

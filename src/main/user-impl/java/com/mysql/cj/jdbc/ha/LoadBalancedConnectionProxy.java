@@ -589,6 +589,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     /**
      * Pings live connections.
      */
+    @Override
     public synchronized void doPing() throws SQLException {
         SQLException se = null;
         boolean foundHost = false;
@@ -885,6 +886,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         public NullLoadBalancedConnectionProxy() {
         }
 
+        @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             SQLException exceptionToThrow = SQLError.createSQLException(Messages.getString("LoadBalancedConnectionProxy.unusableConnection"),
                     MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_STATE, MysqlErrorNumbers.ERROR_CODE_NULL_LOAD_BALANCED_CONNECTION, true, null);

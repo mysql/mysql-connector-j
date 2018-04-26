@@ -53,16 +53,19 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
 
     private boolean countStatements = false;
 
+    @Override
     public void destroy() {
         this.conn = null;
         this.proxy = null;
     }
 
+    @Override
     public boolean executeTopLevelOnly() {
         // always return false
         return false;
     }
 
+    @Override
     public QueryInterceptor init(MysqlConnection connection, Properties props, Log log) {
         this.conn = (JdbcConnection) connection;
 
@@ -80,6 +83,7 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
 
     }
 
+    @Override
     @SuppressWarnings("resource")
     public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
 
@@ -132,6 +136,7 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
         return originalResultSet;
     }
 
+    @Override
     public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
         // we do nothing before execution, it's unsafe to swap servers at this point.
         return null;

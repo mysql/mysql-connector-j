@@ -46,22 +46,27 @@ import java.util.Properties;
 public class CommentClientInfoProvider implements ClientInfoProvider {
     private Properties clientInfo;
 
+    @Override
     public synchronized void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException {
         this.clientInfo = new Properties();
     }
 
+    @Override
     public synchronized void destroy() throws SQLException {
         this.clientInfo = null;
     }
 
+    @Override
     public synchronized Properties getClientInfo(java.sql.Connection conn) throws SQLException {
         return this.clientInfo;
     }
 
+    @Override
     public synchronized String getClientInfo(java.sql.Connection conn, String name) throws SQLException {
         return this.clientInfo.getProperty(name);
     }
 
+    @Override
     public synchronized void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException {
         this.clientInfo = new Properties();
 
@@ -76,6 +81,7 @@ public class CommentClientInfoProvider implements ClientInfoProvider {
         setComment(conn);
     }
 
+    @Override
     public synchronized void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException {
         this.clientInfo.setProperty(name, value);
         setComment(conn);

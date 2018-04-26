@@ -149,9 +149,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * 
      * @exception SQLException
      *                if a database access error occurs or the url is null
-     * 
-     * @see java.sql.Driver#acceptsURL
      */
+    @Override
     public boolean acceptsURL(String url) throws SQLException {
         return (ConnectionUrl.acceptsUrl(url));
     }
@@ -192,9 +191,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * 
      * @exception SQLException
      *                if a database access error occurs or the url is {@code null}
-     * 
-     * @see java.sql.Driver#connect
      */
+    @Override
     public java.sql.Connection connect(String url, Properties info) throws SQLException {
 
         try {
@@ -239,49 +237,17 @@ public class NonRegisteringDriver implements java.sql.Driver {
         connectionPhantomRefs.put(phantomRef, phantomRef);
     }
 
-    /**
-     * Gets the drivers major version number
-     * 
-     * @return the drivers major version number
-     */
+    @Override
     public int getMajorVersion() {
         return getMajorVersionInternal();
     }
 
-    /**
-     * Get the drivers minor version number
-     * 
-     * @return the drivers minor version number
-     */
+    @Override
     public int getMinorVersion() {
         return getMinorVersionInternal();
     }
 
-    /**
-     * The getPropertyInfo method is intended to allow a generic GUI tool to
-     * discover what properties it should prompt a human for in order to get
-     * enough information to connect to a database.
-     * 
-     * <p>
-     * Note that depending on the values the human has supplied so far, additional values may become necessary, so it may be necessary to iterate through
-     * several calls to getPropertyInfo
-     * </p>
-     * 
-     * @param url
-     *            the Url of the database to connect to
-     * @param info
-     *            a proposed list of tag/value pairs that will be sent on
-     *            connect open.
-     * 
-     * @return An array of DriverPropertyInfo objects describing possible
-     *         properties. This array may be an empty array if no properties are
-     *         required
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     * 
-     * @see java.sql.Driver#getPropertyInfo
-     */
+    @Override
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
         String host = "";
         String port = "";
@@ -337,19 +303,10 @@ public class NonRegisteringDriver implements java.sql.Driver {
         return dpi;
     }
 
-    /**
-     * Report whether the driver is a genuine JDBC compliant driver. A driver
-     * may only report "true" here if it passes the JDBC compliance tests,
-     * otherwise it is required to return false. JDBC compliance requires full
-     * support for the JDBC API and full support for SQL 92 Entry Level.
-     * 
-     * <p>
-     * MySQL is not SQL92 compliant
-     * </p>
-     * 
-     * @return is this driver JDBC compliant?
-     */
+    @Override
     public boolean jdbcCompliant() {
+        // NOTE: MySQL is not SQL92 compliant
+        // TODO Is it true? DatabaseMetaData.supportsANSI92EntryLevelSQL() returns true...
         return false;
     }
 
@@ -373,6 +330,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
         }
     }
 
+    @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
         throw new SQLFeatureNotSupportedException();
     }

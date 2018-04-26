@@ -63,7 +63,8 @@ public enum MysqlType implements SQLType {
      * 
      * @see MysqlType#DECIMAL
      */
-    DECIMAL_UNSIGNED("DECIMAL UNSIGNED", Types.DECIMAL, BigDecimal.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 65L, "[(M[,D])] [UNSIGNED] [ZEROFILL]"),
+    DECIMAL_UNSIGNED("DECIMAL UNSIGNED", Types.DECIMAL, BigDecimal.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL,
+            65L, "[(M[,D])] [UNSIGNED] [ZEROFILL]"),
     /**
      * TINYINT[(M)] [UNSIGNED] [ZEROFILL]
      * A very small integer. The signed range is -128 to 127. The unsigned range is 0 to 255.
@@ -76,7 +77,8 @@ public enum MysqlType implements SQLType {
      * 
      * @see MysqlType#TINYINT
      */
-    TINYINT_UNSIGNED("TINYINT UNSIGNED", Types.TINYINT, Integer.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 3L, "[(M)] [UNSIGNED] [ZEROFILL]"),
+    TINYINT_UNSIGNED("TINYINT UNSIGNED", Types.TINYINT, Integer.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 3L,
+            "[(M)] [UNSIGNED] [ZEROFILL]"),
     /**
      * BOOL, BOOLEAN
      * These types are synonyms for TINYINT(1). A value of zero is considered false. Nonzero values are considered true
@@ -99,7 +101,8 @@ public enum MysqlType implements SQLType {
      * 
      * @see MysqlType#SMALLINT
      */
-    SMALLINT_UNSIGNED("SMALLINT UNSIGNED", Types.SMALLINT, Integer.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 5L, "[(M)] [UNSIGNED] [ZEROFILL]"),
+    SMALLINT_UNSIGNED("SMALLINT UNSIGNED", Types.SMALLINT, Integer.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL,
+            5L, "[(M)] [UNSIGNED] [ZEROFILL]"),
     /**
      * INT[(M)] [UNSIGNED] [ZEROFILL]
      * A normal-size integer. The signed range is -2147483648 to 2147483647. The unsigned range is 0 to 4294967295.
@@ -114,7 +117,8 @@ public enum MysqlType implements SQLType {
      * 
      * @see MysqlType#INT
      */
-    INT_UNSIGNED("INT UNSIGNED", Types.INTEGER, Long.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 10L, "[(M)] [UNSIGNED] [ZEROFILL]"),
+    INT_UNSIGNED("INT UNSIGNED", Types.INTEGER, Long.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 10L,
+            "[(M)] [UNSIGNED] [ZEROFILL]"),
     /**
      * FLOAT[(M,D)] [UNSIGNED] [ZEROFILL]
      * A small (single-precision) floating-point number. Permissible values are -3.402823466E+38 to -1.175494351E-38, 0,
@@ -140,7 +144,8 @@ public enum MysqlType implements SQLType {
      * 
      * @see MysqlType#FLOAT
      */
-    FLOAT_UNSIGNED("FLOAT UNSIGNED", Types.REAL, Float.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 12L, "[(M,D)] [UNSIGNED] [ZEROFILL]"),
+    FLOAT_UNSIGNED("FLOAT UNSIGNED", Types.REAL, Float.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 12L,
+            "[(M,D)] [UNSIGNED] [ZEROFILL]"),
     /**
      * DOUBLE[(M,D)] [UNSIGNED] [ZEROFILL]
      * A normal-size (double-precision) floating-point number. Permissible values are -1.7976931348623157E+308 to
@@ -163,7 +168,8 @@ public enum MysqlType implements SQLType {
      * 
      * @see MysqlType#DOUBLE
      */
-    DOUBLE_UNSIGNED("DOUBLE UNSIGNED", Types.DOUBLE, Double.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 22L, "[(M,D)] [UNSIGNED] [ZEROFILL]"),
+    DOUBLE_UNSIGNED("DOUBLE UNSIGNED", Types.DOUBLE, Double.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 22L,
+            "[(M,D)] [UNSIGNED] [ZEROFILL]"),
     /**
      * FIELD_TYPE_NULL = 6
      */
@@ -197,7 +203,8 @@ public enum MysqlType implements SQLType {
      * 
      * @see MysqlType#BIGINT
      */
-    BIGINT_UNSIGNED("BIGINT UNSIGNED", Types.BIGINT, BigInteger.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 20L, "[(M)] [UNSIGNED] [ZEROFILL]"),
+    BIGINT_UNSIGNED("BIGINT UNSIGNED", Types.BIGINT, BigInteger.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 20L,
+            "[(M)] [UNSIGNED] [ZEROFILL]"),
     /**
      * MEDIUMINT[(M)] [UNSIGNED] [ZEROFILL]
      * A medium-sized integer. The signed range is -8388608 to 8388607. The unsigned range is 0 to 16777215.
@@ -210,7 +217,8 @@ public enum MysqlType implements SQLType {
      * 
      * @see MysqlType#MEDIUMINT
      */
-    MEDIUMINT_UNSIGNED("MEDIUMINT UNSIGNED", Types.INTEGER, Integer.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 8L, "[(M)] [UNSIGNED] [ZEROFILL]"),
+    MEDIUMINT_UNSIGNED("MEDIUMINT UNSIGNED", Types.INTEGER, Integer.class, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL,
+            8L, "[(M)] [UNSIGNED] [ZEROFILL]"),
     /**
      * DATE
      * A date. The supported range is '1000-01-01' to '9999-12-31'. MySQL displays DATE values in 'YYYY-MM-DD' format,
@@ -300,7 +308,8 @@ public enum MysqlType implements SQLType {
      * 
      * Protocol: FIELD_TYPE_ENUM = 247
      */
-    ENUM("ENUM", Types.CHAR, String.class, 0, MysqlType.IS_NOT_DECIMAL, 65535L, "('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]"),
+    ENUM("ENUM", Types.CHAR, String.class, 0, MysqlType.IS_NOT_DECIMAL, 65535L,
+            "('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]"),
     /**
      * SET('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]
      * A set. A string object that can have zero or more values, each of which must be chosen from the list
@@ -653,9 +662,11 @@ public enum MysqlType implements SQLType {
                 return VARCHAR;
 
             case Types.REF_CURSOR:
+                throw new FeatureNotAvailableException("REF_CURSOR type is not supported");
             case Types.TIME_WITH_TIMEZONE:
+                throw new FeatureNotAvailableException("TIME_WITH_TIMEZONE type is not supported");
             case Types.TIMESTAMP_WITH_TIMEZONE:
-                throw new FeatureNotAvailableException("Document IDs are not assigned for SQL statements");
+                throw new FeatureNotAvailableException("TIMESTAMP_WITH_TIMEZONE type is not supported");
 
                 // TODO check next types
             case Types.ARRAY:

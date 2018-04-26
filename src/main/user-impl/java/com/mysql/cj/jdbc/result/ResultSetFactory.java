@@ -63,10 +63,12 @@ public class ResultSetFactory implements ProtocolEntityFactory<ResultSetImpl, Na
         }
     }
 
+    @Override
     public Resultset.Type getResultSetType() {
         return this.type;
     }
 
+    @Override
     public Resultset.Concurrency getResultSetConcurrency() {
         return this.concurrency;
     }

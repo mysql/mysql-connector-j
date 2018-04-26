@@ -45,6 +45,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
 
     PreparedStatement getClientInfoBulkSp;
 
+    @Override
     public synchronized void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException {
         String identifierQuote = ((com.mysql.cj.jdbc.JdbcConnection) conn).getSession().getIdentifierQuoteString();
         String setClientInfoSpName = configurationProps.getProperty(PropertyDefinitions.PNAME_clientInfoSetSPName, "setClientInfo");
@@ -64,6 +65,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
                 "CALL " + identifierQuote + catalog + identifierQuote + "." + identifierQuote + getClientInfoBulkSpName + identifierQuote + "()");
     }
 
+    @Override
     public synchronized void destroy() throws SQLException {
         if (this.setClientInfoSp != null) {
             this.setClientInfoSp.close();
@@ -81,6 +83,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
         }
     }
 
+    @Override
     public synchronized Properties getClientInfo(java.sql.Connection conn) throws SQLException {
         ResultSet rs = null;
 
@@ -103,6 +106,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
         return props;
     }
 
+    @Override
     public synchronized String getClientInfo(java.sql.Connection conn, String name) throws SQLException {
         ResultSet rs = null;
 
@@ -126,6 +130,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
         return clientInfo;
     }
 
+    @Override
     public synchronized void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException {
         try {
             Enumeration<?> propNames = properties.propertyNames();
@@ -144,6 +149,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
         }
     }
 
+    @Override
     public synchronized void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException {
         try {
             this.setClientInfoSp.setString(1, name);

@@ -115,6 +115,7 @@ public class MysqlSQLXML implements SQLXML {
         this.exceptionInterceptor = exceptionInterceptor;
     }
 
+    @Override
     public synchronized void free() throws SQLException {
         this.stringRep = null;
         this.asDOMResult = null;
@@ -127,6 +128,7 @@ public class MysqlSQLXML implements SQLXML {
 
     }
 
+    @Override
     public synchronized String getString() throws SQLException {
         checkClosed();
         checkWorkingWithResult();
@@ -150,6 +152,7 @@ public class MysqlSQLXML implements SQLXML {
         }
     }
 
+    @Override
     public synchronized void setString(String str) throws SQLException {
         checkClosed();
         checkWorkingWithResult();
@@ -169,6 +172,7 @@ public class MysqlSQLXML implements SQLXML {
         return false;
     }
 
+    @Override
     public synchronized InputStream getBinaryStream() throws SQLException {
         checkClosed();
         checkWorkingWithResult();
@@ -176,6 +180,7 @@ public class MysqlSQLXML implements SQLXML {
         return this.owningResultSet.getBinaryStream(this.columnIndexOfXml);
     }
 
+    @Override
     public synchronized Reader getCharacterStream() throws SQLException {
         checkClosed();
         checkWorkingWithResult();
@@ -184,6 +189,7 @@ public class MysqlSQLXML implements SQLXML {
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public <T extends Source> T getSource(Class<T> clazz) throws SQLException {
         checkClosed();
         checkWorkingWithResult();
@@ -253,6 +259,7 @@ public class MysqlSQLXML implements SQLXML {
         }
     }
 
+    @Override
     public synchronized OutputStream setBinaryStream() throws SQLException {
         checkClosed();
         checkWorkingWithResult();
@@ -268,6 +275,7 @@ public class MysqlSQLXML implements SQLXML {
         return this.asByteArrayOutputStream;
     }
 
+    @Override
     public synchronized Writer setCharacterStream() throws SQLException {
         checkClosed();
         checkWorkingWithResult();
@@ -284,6 +292,7 @@ public class MysqlSQLXML implements SQLXML {
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public synchronized <T extends Result> T setResult(Class<T> clazz) throws SQLException {
         checkClosed();
         checkWorkingWithResult();

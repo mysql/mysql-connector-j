@@ -61,6 +61,7 @@ public class SessionAssociationInterceptor implements QueryInterceptor {
         return sessionLocal.get();
     }
 
+    @Override
     public boolean executeTopLevelOnly() {
         return true;
     }
@@ -76,6 +77,7 @@ public class SessionAssociationInterceptor implements QueryInterceptor {
         return null;
     }
 
+    @Override
     public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
         String key = getSessionKey();
 
@@ -100,6 +102,7 @@ public class SessionAssociationInterceptor implements QueryInterceptor {
         return null;
     }
 
+    @Override
     public void destroy() {
         this.connection = null;
     }

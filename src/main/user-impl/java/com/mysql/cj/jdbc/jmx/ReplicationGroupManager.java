@@ -58,24 +58,29 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
 
     }
 
+    @Override
     public void addSlaveHost(String groupFilter, String host) throws SQLException {
         ReplicationConnectionGroupManager.addSlaveHost(groupFilter, host);
     }
 
+    @Override
     public void removeSlaveHost(String groupFilter, String host) throws SQLException {
         ReplicationConnectionGroupManager.removeSlaveHost(groupFilter, host);
     }
 
+    @Override
     public void promoteSlaveToMaster(String groupFilter, String host) throws SQLException {
         ReplicationConnectionGroupManager.promoteSlaveToMaster(groupFilter, host);
 
     }
 
+    @Override
     public void removeMasterHost(String groupFilter, String host) throws SQLException {
         ReplicationConnectionGroupManager.removeMasterHost(groupFilter, host);
 
     }
 
+    @Override
     public String getMasterHostsList(String group) {
         StringBuilder sb = new StringBuilder("");
         boolean found = false;
@@ -89,6 +94,7 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
         return sb.toString();
     }
 
+    @Override
     public String getSlaveHostsList(String group) {
         StringBuilder sb = new StringBuilder("");
         boolean found = false;
@@ -103,6 +109,7 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
 
     }
 
+    @Override
     public String getRegisteredConnectionGroups() {
         StringBuilder sb = new StringBuilder("");
         boolean found = false;
@@ -116,22 +123,27 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
         return sb.toString();
     }
 
+    @Override
     public int getActiveMasterHostCount(String group) {
         return ReplicationConnectionGroupManager.getMasterHosts(group).size();
     }
 
+    @Override
     public int getActiveSlaveHostCount(String group) {
         return ReplicationConnectionGroupManager.getSlaveHosts(group).size();
     }
 
+    @Override
     public int getSlavePromotionCount(String group) {
         return ReplicationConnectionGroupManager.getNumberOfMasterPromotion(group);
     }
 
+    @Override
     public long getTotalLogicalConnectionCount(String group) {
         return ReplicationConnectionGroupManager.getTotalConnectionCount(group);
     }
 
+    @Override
     public long getActiveLogicalConnectionCount(String group) {
         return ReplicationConnectionGroupManager.getActiveConnectionCount(group);
     }

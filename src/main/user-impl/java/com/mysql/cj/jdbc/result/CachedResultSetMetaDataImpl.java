@@ -36,10 +36,12 @@ public class CachedResultSetMetaDataImpl extends DefaultColumnDefinition impleme
     /** Cached ResultSetMetaData */
     java.sql.ResultSetMetaData metadata;
 
+    @Override
     public java.sql.ResultSetMetaData getMetadata() {
         return this.metadata;
     }
 
+    @Override
     public void setMetadata(java.sql.ResultSetMetaData metadata) {
         this.metadata = metadata;
     }

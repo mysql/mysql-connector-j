@@ -264,9 +264,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     void ping() throws SQLException;
 
     /**
-     * Resets the server-side state of this connection. Doesn't work for MySQL
-     * versions older than 4.0.6 or if isParanoid() is set (it will become a
-     * no-op in these cases). Usually only used from connection pooling code.
+     * Resets the server-side state of this connection. Doesn't work if isParanoid() is set
+     * (it will become a no-op in this case). Usually only used from connection pooling code.
      * 
      * @throws SQLException
      *             if the operation fails while resetting server state.
@@ -439,8 +438,21 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      */
     boolean isServerLocal() throws SQLException;
 
+    /**
+     * Returns the sql select limit max-rows for this session.
+     * 
+     * @return int max rows
+     */
     int getSessionMaxRows();
 
+    /**
+     * Sets the sql select limit max-rows for this session if different from current.
+     * 
+     * @param max
+     *            the new max-rows value to set.
+     * @throws SQLException
+     *             if a database error occurs issuing the statement that sets the limit.
+     */
     void setSessionMaxRows(int max) throws SQLException;
 
     // until we flip catalog/schema, this is a no-op
@@ -450,12 +462,32 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     // moved from MysqlJdbcConnection
     // **************************
 
+    /**
+     * Clobbers the physical network connection and marks this connection as closed.
+     * 
+     * @throws SQLException
+     *             if an error occurs
+     */
     void abortInternal() throws SQLException;
 
     boolean isProxySet();
 
+    /**
+     * Returns cached metadata (or null if not cached) for the given query, which must match _exactly_.
+     * 
+     * This method is synchronized by the caller on getMutex(), so if calling this method from internal code
+     * in the driver, make sure it's synchronized on the mutex that guards communication with the server.
+     * 
+     * @param sql
+     *            the query that is the key to the cache
+     * @return metadata cached for the given SQL, or none if it doesn't
+     *         exist.
+     */
     CachedResultSetMetaData getCachedMetaData(String sql);
 
+    /**
+     * @return Returns the characterSetMetadata.
+     */
     String getCharacterSetMetadata();
 
     java.sql.Statement getMetadataSafeStatement() throws SQLException;
@@ -464,20 +496,68 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     List<QueryInterceptor> getQueryInterceptorsInstances();
 
+    /**
+     * Caches CachedResultSetMetaData that has been placed in the cache using the given SQL as a key.
+     * 
+     * This method is synchronized by the caller on getMutex(), so if calling this method from internal code
+     * in the driver, make sure it's synchronized on the mutex that guards communication with the server.
+     * 
+     * @param sql
+     *            the query that the metadata pertains too.
+     * @param cachedMetaData
+     *            metadata (if it exists) to populate the cache.
+     * @param resultSet
+     *            the result set to retreive metadata from, or apply to.
+     * 
+     * @throws SQLException
+     *             if an error occurs
+     */
     void initializeResultsMetadataFromCache(String sql, CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet) throws SQLException;
 
     void initializeSafeQueryInterceptors() throws SQLException;
 
+    /**
+     * Tests to see if the connection is in Read Only Mode.
+     * 
+     * @param useSessionStatus
+     *            in some cases, for example when restoring connection with autoReconnect=true,
+     *            we can rely only on saved readOnly state, so use useSessionStatus=false in that case
+     * 
+     * @return true if the connection is read only
+     * @exception SQLException
+     *                if a database access error occurs
+     */
     boolean isReadOnly(boolean useSessionStatus) throws SQLException;
 
     void pingInternal(boolean checkForClosedConnection, int timeoutMillis) throws SQLException;
 
+    /**
+     * Closes connection and frees resources.
+     * 
+     * @param calledExplicitly
+     *            is this being called from close()
+     * @param issueRollback
+     *            should a rollback() be issued?
+     * @param skipLocalTeardown
+     *            if true, driver tries to close connection normally, performing rollbacks,
+     *            closing open statements etc; otherwise the force close is performed
+     * @param reason
+     *            the exception caused this method call
+     * @throws SQLException
+     *             if an error occurs
+     */
     void realClose(boolean calledExplicitly, boolean issueRollback, boolean skipLocalTeardown, Throwable reason) throws SQLException;
 
     void recachePreparedStatement(JdbcPreparedStatement pstmt) throws SQLException;
 
     void decachePreparedStatement(JdbcPreparedStatement pstmt) throws SQLException;
 
+    /**
+     * Register a Statement instance as open.
+     * 
+     * @param stmt
+     *            the Statement instance to remove
+     */
     void registerStatement(JdbcStatement stmt);
 
     void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException;
@@ -486,6 +566,12 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     void throwConnectionClosedException() throws SQLException;
 
+    /**
+     * Remove the given statement from the list of open statements
+     * 
+     * @param stmt
+     *            the Statement instance to remove
+     */
     void unregisterStatement(JdbcStatement stmt);
 
     void unSafeQueryInterceptors() throws SQLException;

@@ -56,6 +56,7 @@ public class ServerStatusDiffInterceptor implements QueryInterceptor {
 
     private Log log;
 
+    @Override
     public QueryInterceptor init(MysqlConnection conn, Properties props, Log l) {
         this.connection = (JdbcConnection) conn;
         this.log = l;
@@ -98,6 +99,7 @@ public class ServerStatusDiffInterceptor implements QueryInterceptor {
         }
     }
 
+    @Override
     public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
 
         populateMapWithSessionStatusValues(this.preExecuteValues);
@@ -105,10 +107,12 @@ public class ServerStatusDiffInterceptor implements QueryInterceptor {
         return null; // we don't actually modify a result set
     }
 
+    @Override
     public boolean executeTopLevelOnly() {
         return true;
     }
 
+    @Override
     public void destroy() {
         this.connection = null;
         this.log = null;

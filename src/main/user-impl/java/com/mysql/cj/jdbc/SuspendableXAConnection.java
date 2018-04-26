@@ -97,21 +97,25 @@ public class SuspendableXAConnection extends MysqlPooledConnection implements XA
         }
     }
 
+    @Override
     public XAResource getXAResource() throws SQLException {
         return this;
     }
 
+    @Override
     public void commit(Xid xid, boolean arg1) throws XAException {
         switchToXid(xid);
         this.currentXAResource.commit(xid, arg1);
         removeXAConnectionMapping(xid);
     }
 
+    @Override
     public void end(Xid xid, int arg1) throws XAException {
         switchToXid(xid);
         this.currentXAResource.end(xid, arg1);
     }
 
+    @Override
     public void forget(Xid xid) throws XAException {
         switchToXid(xid);
         this.currentXAResource.forget(xid);
@@ -119,33 +123,40 @@ public class SuspendableXAConnection extends MysqlPooledConnection implements XA
         removeXAConnectionMapping(xid);
     }
 
+    @Override
     public int getTransactionTimeout() throws XAException {
         return 0;
     }
 
+    @Override
     public boolean isSameRM(XAResource xaRes) throws XAException {
         return xaRes == this;
     }
 
+    @Override
     public int prepare(Xid xid) throws XAException {
         switchToXid(xid);
         return this.currentXAResource.prepare(xid);
     }
 
+    @Override
     public Xid[] recover(int flag) throws XAException {
         return MysqlXAConnection.recover(this.underlyingConnection, flag);
     }
 
+    @Override
     public void rollback(Xid xid) throws XAException {
         switchToXid(xid);
         this.currentXAResource.rollback(xid);
         removeXAConnectionMapping(xid);
     }
 
+    @Override
     public boolean setTransactionTimeout(int arg0) throws XAException {
         return false;
     }
 
+    @Override
     public void start(Xid xid, int arg1) throws XAException {
         switchToXid(xid);
 

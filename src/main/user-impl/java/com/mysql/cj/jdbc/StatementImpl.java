@@ -279,11 +279,7 @@ public class StatementImpl implements JdbcStatement {
         this.query = new SimpleQuery(this.session);
     }
 
-    /**
-     * @param sql
-     * 
-     * @throws SQLException
-     */
+    @Override
     public void addBatch(String sql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (sql != null) {
@@ -302,11 +298,7 @@ public class StatementImpl implements JdbcStatement {
         return this.query.getBatchedArgs();
     }
 
-    /**
-     * Cancels this Statement object if both the DBMS and driver support
-     * aborting an SQL statement. This method can be used by one thread to
-     * cancel a statement that is being executed by another thread.
-     */
+    @Override
     public void cancel() throws SQLException {
         if (!this.query.getStatementExecuting().get()) {
             return;
@@ -327,6 +319,7 @@ public class StatementImpl implements JdbcStatement {
                     public void transactionCompleted() {
                     }
 
+                    @Override
                     public void transactionBegun() {
                     }
                 });
@@ -411,31 +404,19 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * JDBC 2.0 Make the set of commands in the current batch empty. This method
-     * is optional.
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or the driver does not
-     *                support batch statements
-     */
+    @Override
     public void clearBatch() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             this.query.clearBatchedArgs();
         }
     }
 
+    @Override
     public void clearBatchedArgs() {
         this.query.clearBatchedArgs();
     }
 
-    /**
-     * After this call, getWarnings returns null until a new warning is reported
-     * for this Statement.
-     * 
-     * @exception SQLException
-     *                if a database access error occurs (why?)
-     */
+    @Override
     public void clearWarnings() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             setClearWarningsCalled(true);
@@ -458,6 +439,7 @@ public class StatementImpl implements JdbcStatement {
      * @exception SQLException
      *                if a database access error occurs
      */
+    @Override
     public void close() throws SQLException {
         realClose(true, true);
     }
@@ -507,6 +489,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
+    @Override
     public void removeOpenResultSet(ResultSetInternalMethods rs) {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
@@ -536,6 +519,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
+    @Override
     public int getOpenResultSetCount() {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
@@ -614,6 +598,7 @@ public class StatementImpl implements JdbcStatement {
     private Resultset.Type originalResultSetType = Type.FORWARD_ONLY;
     private int originalFetchSize = 0;
 
+    @Override
     public void enableStreamingResults() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             this.originalResultSetType = this.query.getResultType();
@@ -624,6 +609,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
+    @Override
     public void disableStreamingResults() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.query.getResultFetchSize() == Integer.MIN_VALUE && this.query.getResultType() == Type.FORWARD_ONLY) {
@@ -649,28 +635,17 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
+    @Override
     public CancelQueryTask startQueryTimer(Query stmtToCancel, int timeout) {
         return this.query.startQueryTimer(stmtToCancel, timeout);
     }
 
+    @Override
     public void stopQueryTimer(CancelQueryTask timeoutTask, boolean rethrowCancelReason, boolean checkCancelTimeout) {
         this.query.stopQueryTimer(timeoutTask, rethrowCancelReason, checkCancelTimeout);
     }
 
-    /**
-     * Execute a SQL statement that may return multiple results. We don't have
-     * to worry about this since we do not support multiple ResultSets. You can
-     * use getResultSet or getUpdateCount to retrieve the result.
-     * 
-     * @param sql
-     *            any SQL statement
-     * 
-     * @return true if the next result is a ResulSet, false if it is an update
-     *         count or there are no more results
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public boolean execute(String sql) throws SQLException {
         return executeInternal(sql, false);
     }
@@ -790,6 +765,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
+    @Override
     public void statementBegins() {
         this.query.statementBegins();
     }
@@ -801,40 +777,22 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * @see StatementImpl#execute(String, int)
-     */
+    @Override
     public boolean execute(String sql, int returnGeneratedKeys) throws SQLException {
         return executeInternal(sql, returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS);
     }
 
-    /**
-     * @see StatementImpl#execute(String, int[])
-     */
+    @Override
     public boolean execute(String sql, int[] generatedKeyIndices) throws SQLException {
         return executeInternal(sql, generatedKeyIndices != null && generatedKeyIndices.length > 0);
     }
 
-    /**
-     * @see StatementImpl#execute(String, String[])
-     */
+    @Override
     public boolean execute(String sql, String[] generatedKeyNames) throws SQLException {
         return executeInternal(sql, generatedKeyNames != null && generatedKeyNames.length > 0);
     }
 
-    /**
-     * JDBC 2.0 Submit a batch of commands to the database for execution. This
-     * method is optional.
-     * 
-     * @return an array of update counts containing one element for each command
-     *         in the batch. The array is ordered according to the order in
-     *         which commands were inserted into the batch
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or the driver does not
-     *                support batch statements
-     * @throws java.sql.BatchUpdateException
-     */
+    @Override
     public int[] executeBatch() throws SQLException {
         return Util.truncateAndConvertToInt(executeBatchInternal());
     }
@@ -1138,17 +1096,7 @@ public class StatementImpl implements JdbcStatement {
         throw SQLError.createBatchUpdateException(ex, newUpdateCounts, getExceptionInterceptor());
     }
 
-    /**
-     * Execute a SQL statement that returns a single ResultSet
-     * 
-     * @param sql
-     *            typically a static SQL SELECT statement
-     * 
-     * @return a ResulSet that contains the data produced by the query
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public java.sql.ResultSet executeQuery(String sql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             JdbcConnection locallyScopedConn = this.connection;
@@ -1288,17 +1236,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * Execute a SQL INSERT, UPDATE or DELETE statement. In addition SQL statements that return nothing such as SQL DDL statements can be executed.
-     * 
-     * @param sql
-     *            a SQL statement
-     * 
-     * @return either a row count, or 0 for SQL commands
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public int executeUpdate(String sql) throws SQLException {
         return Util.truncateAndConvertToInt(executeLargeUpdate(sql));
     }
@@ -1393,70 +1331,41 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * @see StatementImpl#executeUpdate(String, int)
-     */
+    @Override
     public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
         return Util.truncateAndConvertToInt(executeLargeUpdate(sql, autoGeneratedKeys));
     }
 
-    /**
-     * @see StatementImpl#executeUpdate(String, int[])
-     */
+    @Override
     public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
         return Util.truncateAndConvertToInt(executeLargeUpdate(sql, columnIndexes));
     }
 
-    /**
-     * @see StatementImpl#executeUpdate(String, String[])
-     */
+    @Override
     public int executeUpdate(String sql, String[] columnNames) throws SQLException {
         return Util.truncateAndConvertToInt(executeLargeUpdate(sql, columnNames));
     }
 
-    /**
-     * JDBC 2.0 Return the Connection that produced the Statement.
-     * 
-     * @return the Connection that produced the Statement
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
+    @Override
     public java.sql.Connection getConnection() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return this.connection;
         }
     }
 
-    /**
-     * JDBC 2.0 Determine the fetch direction.
-     * 
-     * @return the default fetch direction
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs
-     */
+    @Override
     public int getFetchDirection() throws SQLException {
         return java.sql.ResultSet.FETCH_FORWARD;
     }
 
-    /**
-     * JDBC 2.0 Determine the default fetch size.
-     * 
-     * @return the number of rows to fetch at a time
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
+    @Override
     public int getFetchSize() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return this.query.getResultFetchSize();
         }
     }
 
-    /**
-     * @throws SQLException
-     */
+    @Override
     public java.sql.ResultSet getGeneratedKeys() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (!this.retrieveGeneratedKeys) {
@@ -1589,33 +1498,14 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * The maxFieldSize limit (in bytes) is the maximum amount of data returned
-     * for any column value; it only applies to BINARY, VARBINARY,
-     * LONGVARBINARY, CHAR, VARCHAR and LONGVARCHAR columns. If the limit is
-     * exceeded, the excess data is silently discarded.
-     * 
-     * @return the current max column size limit; zero means unlimited
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public int getMaxFieldSize() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return this.maxFieldSize;
         }
     }
 
-    /**
-     * The maxRows limit is set to limit the number of rows that any ResultSet
-     * can contain. If the limit is exceeded, the excess rows are silently
-     * dropped.
-     * 
-     * @return the current maximum row limit; zero means unlimited
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public int getMaxRows() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.maxRows <= 0) {
@@ -1626,22 +1516,12 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * getMoreResults moves to a Statement's next result. If it returns true,
-     * this result is a ResulSet.
-     * 
-     * @return true if the next ResultSet is valid
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public boolean getMoreResults() throws SQLException {
         return getMoreResults(CLOSE_CURRENT_RESULT);
     }
 
-    /**
-     * @see StatementImpl#getMoreResults(int)
-     */
+    @Override
     public boolean getMoreResults(int current) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.results == null) {
@@ -1722,16 +1602,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * The queryTimeout limit is the number of seconds the driver will wait for
-     * a Statement to execute. If the limit is exceeded, a SQLException is
-     * thrown.
-     * 
-     * @return the current query timeout limit in seconds; 0 = unlimited
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public int getQueryTimeout() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return getTimeoutInMillis() / 1000;
@@ -1804,38 +1675,21 @@ public class StatementImpl implements JdbcStatement {
         return recordsCount - duplicatesCount;
     }
 
-    /**
-     * getResultSet returns the current result as a ResultSet. It should only be
-     * called once per result.
-     * 
-     * @return the current result set; null if there are no more
-     * 
-     * @exception SQLException
-     *                if a database access error occurs (why?)
-     */
+    @Override
     public java.sql.ResultSet getResultSet() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return ((this.results != null) && this.results.hasRows()) ? (java.sql.ResultSet) this.results : null;
         }
     }
 
-    /**
-     * JDBC 2.0 Determine the result set concurrency.
-     * 
-     * @return CONCUR_UPDATABLE or CONCUR_READONLY
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
+    @Override
     public int getResultSetConcurrency() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return this.resultSetConcurrency;
         }
     }
 
-    /**
-     * @see StatementImpl#getResultSetHoldability()
-     */
+    @Override
     public int getResultSetHoldability() throws SQLException {
         return java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
@@ -1850,53 +1704,19 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * JDBC 2.0 Determine the result set type.
-     * 
-     * @return the ResultSet type (TYPE_FORWARD_ONLY, SCROLL_SENSITIVE or SCROLL_INSENSITIVE)
-     * 
-     * @throws SQLException
-     *             if an error occurs.
-     */
+    @Override
     public int getResultSetType() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return this.query.getResultType().getIntValue();
         }
     }
 
-    /**
-     * getUpdateCount returns the current result as an update count, if the
-     * result is a ResultSet or there are no more results, -1 is returned. It
-     * should only be called once per result.
-     * 
-     * @return the current result as an update count.
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public int getUpdateCount() throws SQLException {
         return Util.truncateAndConvertToInt(getLargeUpdateCount());
     }
 
-    /**
-     * The first warning reported by calls on this Statement is returned. A
-     * Statement's execute methods clear its java.sql.SQLWarning chain.
-     * Subsequent Statement warnings will be chained to this
-     * java.sql.SQLWarning.
-     * 
-     * <p>
-     * The Warning chain is automatically cleared each time a statement is (re)executed.
-     * </p>
-     * 
-     * <p>
-     * <B>Note:</B> If you are processing a ResultSet then any warnings associated with ResultSet reads will be chained on the ResultSet object.
-     * </p>
-     * 
-     * @return the first java.sql.SQLWarning or null
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public java.sql.SQLWarning getWarnings() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
 
@@ -1921,6 +1741,8 @@ public class StatementImpl implements JdbcStatement {
      * 
      * @param calledExplicitly
      *            was this called from close()?
+     * @param closeOpenResults
+     *            should open result sets be closed?
      * 
      * @throws SQLException
      *             if an error occurs
@@ -1985,56 +1807,19 @@ public class StatementImpl implements JdbcStatement {
         this.resultSetFactory = null;
     }
 
-    /**
-     * setCursorName defines the SQL cursor name that will be used by subsequent
-     * execute methods. This name can then be used in SQL positioned
-     * update/delete statements to identify the current row in the ResultSet
-     * generated by this statement. If a database doesn't support positioned
-     * update/delete, this method is a no-op.
-     * 
-     * <p>
-     * <b>Note:</b> This MySQL driver does not support cursors.
-     * </p>
-     * 
-     * @param name
-     *            the new cursor name
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public void setCursorName(String name) throws SQLException {
         // No-op
     }
 
-    /**
-     * If escape scanning is on (the default), the driver will do escape
-     * substitution before sending the SQL to the database.
-     * 
-     * @param enable
-     *            true to enable; false to disable
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public void setEscapeProcessing(boolean enable) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             this.doEscapeProcessing = enable;
         }
     }
 
-    /**
-     * JDBC 2.0 Give a hint as to the direction in which the rows in a result
-     * set will be processed. The hint applies only to result sets created using
-     * this Statement object. The default value is ResultSet.FETCH_FORWARD.
-     * 
-     * @param direction
-     *            the initial direction for processing rows
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs or direction is not one
-     *                of ResultSet.FETCH_FORWARD, ResultSet.FETCH_REVERSE, or
-     *                ResultSet.FETCH_UNKNOWN
-     */
+    @Override
     public void setFetchDirection(int direction) throws SQLException {
         switch (direction) {
             case java.sql.ResultSet.FETCH_FORWARD:
@@ -2047,20 +1832,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * JDBC 2.0 Give the JDBC driver a hint as to the number of rows that should
-     * be fetched from the database when more rows are needed. The number of
-     * rows specified only affects result sets created using this statement. If
-     * the value specified is zero, then the hint is ignored. The default value
-     * is zero.
-     * 
-     * @param rows
-     *            the number of rows to fetch
-     * 
-     * @exception SQLException
-     *                if a database-access error occurs, or the condition 0
-     *                &lt;= rows &lt;= this.getMaxRows() is not satisfied.
-     */
+    @Override
     public void setFetchSize(int rows) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (((rows < 0) && (rows != Integer.MIN_VALUE)) || ((this.maxRows > 0) && (rows > this.getMaxRows()))) {
@@ -2071,6 +1843,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
+    @Override
     public void setHoldResultsOpenOverClose(boolean holdResultsOpenOverClose) {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
@@ -2081,15 +1854,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * Sets the maxFieldSize
-     * 
-     * @param max
-     *            the new max column size limit; zero means unlimited
-     * 
-     * @exception SQLException
-     *                if size exceeds buffer size
-     */
+    @Override
     public void setMaxFieldSize(int max) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (max < 0) {
@@ -2107,31 +1872,12 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * Set the maximum number of rows
-     * 
-     * @param max
-     *            the new max rows limit; zero means unlimited
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     * 
-     * @see getMaxRows
-     */
+    @Override
     public void setMaxRows(int max) throws SQLException {
         setLargeMaxRows(max);
     }
 
-    /**
-     * Sets the queryTimeout limit
-     * 
-     * @param seconds
-     *            -
-     *            the new query timeout limit in seconds
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public void setQueryTimeout(int seconds) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (seconds < 0) {
@@ -2233,6 +1979,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
+    @Override
     public boolean isClosed() throws SQLException {
         JdbcConnection locallyScopedConn = this.connection;
         if (locallyScopedConn == null) {
@@ -2245,17 +1992,17 @@ public class StatementImpl implements JdbcStatement {
 
     private boolean isPoolable = true;
 
+    @Override
     public boolean isPoolable() throws SQLException {
         return this.isPoolable;
     }
 
+    @Override
     public void setPoolable(boolean poolable) throws SQLException {
         this.isPoolable = poolable;
     }
 
-    /**
-     * @see java.sql.Wrapper#isWrapperFor(Class)
-     */
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         checkClosed();
 
@@ -2263,9 +2010,7 @@ public class StatementImpl implements JdbcStatement {
         return iface.isInstance(this);
     }
 
-    /**
-     * @see java.sql.Wrapper#unwrap(Class)
-     */
+    @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         try {
             // This works for classes that aren't actually wrapping anything
@@ -2302,18 +2047,22 @@ public class StatementImpl implements JdbcStatement {
         return statementStartPos;
     }
 
+    @Override
     public InputStream getLocalInfileInputStream() {
         return this.session.getLocalInfileInputStream();
     }
 
+    @Override
     public void setLocalInfileInputStream(InputStream stream) {
         this.session.setLocalInfileInputStream(stream);
     }
 
+    @Override
     public void setPingTarget(PingTarget pingTarget) {
         this.pingTarget = pingTarget;
     }
 
+    @Override
     public ExceptionInterceptor getExceptionInterceptor() {
         return this.exceptionInterceptor;
     }
@@ -2325,71 +2074,52 @@ public class StatementImpl implements JdbcStatement {
 
     private boolean closeOnCompletion = false;
 
+    @Override
     public void closeOnCompletion() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             this.closeOnCompletion = true;
         }
     }
 
+    @Override
     public boolean isCloseOnCompletion() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return this.closeOnCompletion;
         }
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #executeBatch()} but returns long[] instead of int[].
-     */
+    @Override
     public long[] executeLargeBatch() throws SQLException {
         return executeBatchInternal();
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #executeUpdate(String)} but returns long instead of int.
-     */
+    @Override
     public long executeLargeUpdate(String sql) throws SQLException {
         return executeUpdateInternal(sql, false, false);
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #executeUpdate(String, int)} but returns long instead of int.
-     */
+    @Override
     public long executeLargeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
         return executeUpdateInternal(sql, false, autoGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS);
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #executeUpdate(String, int[])} but returns long instead of int.
-     */
+    @Override
     public long executeLargeUpdate(String sql, int[] columnIndexes) throws SQLException {
         return executeUpdateInternal(sql, false, columnIndexes != null && columnIndexes.length > 0);
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #executeUpdate(String, String[])} but returns long instead of int.
-     */
+    @Override
     public long executeLargeUpdate(String sql, String[] columnNames) throws SQLException {
         return executeUpdateInternal(sql, false, columnNames != null && columnNames.length > 0);
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #getMaxRows()} but returns long instead of int.
-     */
+    @Override
     public long getLargeMaxRows() throws SQLException {
         // Max rows is limited by MySQLDefs.MAX_ROWS anyway...
         return getMaxRows();
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #getUpdateCount()} but returns long instead of int;
-     */
+    @Override
     public long getLargeUpdateCount() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.results == null) {
@@ -2404,10 +2134,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    /**
-     * JDBC 4.2
-     * Same as {@link #setMaxRows(int)} but accepts a long value instead of an int.
-     */
+    @Override
     public void setLargeMaxRows(long max) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if ((max > MAX_ROWS) || (max < 0)) {
@@ -2423,6 +2150,7 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
+    @Override
     public String getCurrentCatalog() {
         return this.query.getCurrentCatalog();
     }
@@ -2529,6 +2257,7 @@ public class StatementImpl implements JdbcStatement {
         this.query.setClearWarningsCalled(clearWarningsCalled);
     }
 
+    @Override
     public Query getQuery() {
         return this.query;
     }

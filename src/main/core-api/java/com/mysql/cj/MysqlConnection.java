@@ -38,6 +38,12 @@ public interface MysqlConnection {
 
     PropertySet getPropertySet();
 
+    /**
+     * Creates an IO channel to the server.
+     * 
+     * @param isForReconnect
+     *            is this request for a re-connect
+     */
     void createNewIO(boolean isForReconnect);
 
     long getId();
@@ -63,5 +69,11 @@ public interface MysqlConnection {
 
     void normalClose();
 
+    /**
+     * Destroys this connection and any underlying resources.
+     * 
+     * @param whyCleanedUp
+     *            exception caused the connection clean up
+     */
     void cleanup(Throwable whyCleanedUp);
 }

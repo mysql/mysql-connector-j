@@ -45,6 +45,7 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
     private List<String> sqlStateList;
     private List<Class<?>> sqlExClassList;
 
+    @Override
     public boolean shouldExceptionTriggerFailover(Throwable ex) {
         String sqlState = ex instanceof SQLException ? ((SQLException) ex).getSQLState() : null;
 
@@ -80,9 +81,11 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
         return false;
     }
 
+    @Override
     public void destroy() {
     }
 
+    @Override
     public void init(Properties props) {
         configureSQLStateList(props.getProperty(PropertyDefinitions.PNAME_loadBalanceSQLStateFailover, null));
         configureSQLExceptionSubclassList(props.getProperty(PropertyDefinitions.PNAME_loadBalanceSQLExceptionSubclassFailover, null));

@@ -973,16 +973,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         return super.previous();
     }
 
-    /**
-     * Closes this ResultSet and releases resources.
-     * 
-     * @param calledExplicitly
-     *            was realClose called by the standard ResultSet.close() method, or was it closed internally by the
-     *            driver?
-     * 
-     * @throws SQLException
-     *             if an error occurs.
-     */
     @Override
     public void realClose(boolean calledExplicitly) throws SQLException {
         if (this.isClosed) {

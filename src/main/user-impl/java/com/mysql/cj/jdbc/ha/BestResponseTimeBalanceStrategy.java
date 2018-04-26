@@ -42,6 +42,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
     public BestResponseTimeBalanceStrategy() {
     }
 
+    @Override
     public ConnectionImpl pickConnection(InvocationHandler proxy, List<String> configuredHosts, Map<String, JdbcConnection> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException {
 

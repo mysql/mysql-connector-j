@@ -91,14 +91,17 @@ public class MysqlXid implements Xid {
         return false;
     }
 
+    @Override
     public byte[] getBranchQualifier() {
         return this.myBqual;
     }
 
+    @Override
     public int getFormatId() {
         return this.myFormatId;
     };
 
+    @Override
     public byte[] getGlobalTransactionId() {
         return this.myGtrid;
     }

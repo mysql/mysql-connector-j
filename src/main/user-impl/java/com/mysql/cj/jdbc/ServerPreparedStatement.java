@@ -83,7 +83,6 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
     /**
      * Creates a prepared statement instance
      */
-
     protected static ServerPreparedStatement getInstance(JdbcConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency)
             throws SQLException {
         return new ServerPreparedStatement(conn, sql, catalog, resultSetType, resultSetConcurrency);
@@ -481,17 +480,6 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
         throw new IllegalArgumentException(Messages.getString("ServerPreparedStatement.7"));
     }
 
-    /**
-     * Closes this connection and frees all resources.
-     * 
-     * @param calledExplicitly
-     *            was this called from close()?
-     * @param closeOpenResults
-     *            should open result sets be closed?
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
     @Override
     public void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
         JdbcConnection locallyScopedConn = this.connection;

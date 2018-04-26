@@ -382,6 +382,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * Subclasses have to override this to complete the method invocation process, deal with exceptions and decide when to switch connection.
      * To avoid unnecessary additional exception handling overriders should consult #canDealWith(Method) before chaining here.
      */
+    @Override
     public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         String methodName = method.getName();
 

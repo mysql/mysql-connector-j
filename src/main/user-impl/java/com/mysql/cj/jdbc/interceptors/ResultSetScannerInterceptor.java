@@ -54,6 +54,7 @@ public class ResultSetScannerInterceptor implements QueryInterceptor {
 
     protected Pattern regexP;
 
+    @Override
     public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
         String regexFromUser = props.getProperty(PropertyDefinitions.PNAME_resultSetScannerRegex);
 
@@ -106,6 +107,7 @@ public class ResultSetScannerInterceptor implements QueryInterceptor {
 
     }
 
+    @Override
     public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
         // we don't care about this event
 
@@ -113,10 +115,12 @@ public class ResultSetScannerInterceptor implements QueryInterceptor {
     }
 
     // we don't issue queries, so it should be safe to intercept at any point
+    @Override
     public boolean executeTopLevelOnly() {
         return false;
     }
 
+    @Override
     public void destroy() {
 
     }

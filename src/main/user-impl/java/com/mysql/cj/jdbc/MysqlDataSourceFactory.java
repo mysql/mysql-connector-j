@@ -60,13 +60,7 @@ public class MysqlDataSourceFactory implements ObjectFactory {
 
     protected final static String XA_DATA_SOURCE_CLASS_NAME = MysqlXADataSource.class.getName();
 
-    /**
-     * @param refObj
-     * @param nm
-     * @param ctx
-     * @param env
-     * @throws Exception
-     */
+    @Override
     public Object getObjectInstance(Object refObj, Name nm, Context ctx, Hashtable<?, ?> env) throws Exception {
         Reference ref = (Reference) refObj;
         String className = ref.getClassName();

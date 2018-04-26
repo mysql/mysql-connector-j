@@ -175,7 +175,8 @@ public class ReplicationConnectionGroup {
     /**
      * Removes a host from the masters hosts list.
      * 
-     * @see #removeMasterHost(String, boolean)
+     * @param hostPortPair
+     *            host:port
      */
     public void removeMasterHost(String hostPortPair) throws SQLException {
         this.removeMasterHost(hostPortPair, true);
@@ -192,6 +193,7 @@ public class ReplicationConnectionGroup {
      * This is a no-op if the group doesn't have this host in a master role.
      * 
      * @param hostPortPair
+     *            host:port
      * @param closeGently
      * @throws SQLException
      */

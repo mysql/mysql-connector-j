@@ -384,6 +384,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             this.columnOrdinalPosition = columnOrdinalPosition;
         }
 
+        @Override
         public int compareTo(IndexMetaDataKey indexInfoKey) {
             int compareResult;
 
@@ -438,6 +439,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             this.tableName = tableName == null ? "" : tableName;
         }
 
+        @Override
         public int compareTo(TableMetaDataKey tablesKey) {
             int compareResult;
 
@@ -744,23 +746,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         this.quotedId = this.session.getIdentifierQuoteString();
     }
 
-    /**
-     * Can all the procedures returned by getProcedures be called by the current
-     * user?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean allProceduresAreCallable() throws SQLException {
         return false;
     }
 
-    /**
-     * Can all the tables returned by getTable be SELECTed by the current user?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean allTablesAreSelectable() throws SQLException {
         return false;
     }
@@ -983,50 +974,22 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return this.exceptionInterceptor;
     }
 
-    /**
-     * Does a data definition statement within a transaction force the
-     * transaction to commit?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean dataDefinitionCausesTransactionCommit() throws SQLException {
         return true;
     }
 
-    /**
-     * Is a data definition statement within a transaction ignored?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean dataDefinitionIgnoredInTransactions() throws SQLException {
         return false;
     }
 
-    /**
-     * JDBC 2.0 Determine whether or not a visible row delete can be detected by
-     * calling ResultSet.rowDeleted(). If deletesAreDetected() returns false,
-     * then deleted rows are removed from the result set.
-     * 
-     * @param type
-     *            set type, i.e. ResultSet.TYPE_XXX
-     * @return true if changes are detected by the resultset type
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
+    @Override
     public boolean deletesAreDetected(int type) throws SQLException {
         return false;
     }
 
-    // ----------------------------------------------------------------------
-
-    /**
-     * Did getMaxRowSize() include LONGVARCHAR and LONGVARBINARY blobs?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean doesMaxRowSizeIncludeBlobs() throws SQLException {
         return true;
     }
@@ -1266,6 +1229,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(rows, new DefaultColumnDefinition(fields)));
     }
 
+    @Override
     public java.sql.ResultSet getAttributes(String arg0, String arg1, String arg2, String arg3) throws SQLException {
         Field[] fields = new Field[21];
         fields[0] = new Field("", "TYPE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
@@ -1294,6 +1258,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(new ArrayList<ResultsetRow>(), new DefaultColumnDefinition(fields)));
     }
 
+    @Override
     public java.sql.ResultSet getBestRowIdentifier(String catalog, String schema, final String table, int scope, boolean nullable) throws SQLException {
         if (table == null) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
@@ -1875,6 +1840,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return allCatalogsIter;
     }
 
+    @Override
     public java.sql.ResultSet getCatalogs() throws SQLException {
         java.sql.ResultSet results = null;
         java.sql.Statement stmt = null;
@@ -1931,29 +1897,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
     }
 
-    /**
-     * What's the separator between catalog and table name?
-     * 
-     * @return the separator string
-     * @throws SQLException
-     */
+    @Override
     public String getCatalogSeparator() throws SQLException {
         return ".";
     }
 
-    // The following group of methods exposes various limitations based on the target database with the current driver. Unless otherwise specified, a result of
-    // zero means there is no limit, or the limit is not known.
-
-    /**
-     * What's the database vendor's preferred term for "catalog"?
-     * 
-     * @return the vendor term
-     * @throws SQLException
-     */
+    @Override
     public String getCatalogTerm() throws SQLException {
         return "database";
     }
 
+    @Override
     public java.sql.ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException {
         Field[] fields = new Field[8];
         fields[0] = new Field("", "TABLE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 64);
@@ -2057,6 +2011,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(grantRows, new DefaultColumnDefinition(fields)));
     }
 
+    @Override
     public java.sql.ResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern, String columnNamePattern)
             throws SQLException {
 
@@ -2289,17 +2244,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return fields;
     }
 
-    /**
-     * JDBC 2.0 Return the connection that produced this metadata object.
-     * 
-     * @return the connection that produced this metadata object.
-     * @throws SQLException
-     *             if a database error occurs
-     */
+    @Override
     public java.sql.Connection getConnection() throws SQLException {
         return this.conn;
     }
 
+    @Override
     public java.sql.ResultSet getCrossReference(final String primaryCatalog, final String primarySchema, final String primaryTable, final String foreignCatalog,
             final String foreignSchema, final String foreignTable) throws SQLException {
         if (primaryTable == null) {
@@ -2448,85 +2398,52 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return fields;
     }
 
+    @Override
     public int getDatabaseMajorVersion() throws SQLException {
         return this.conn.getServerVersion().getMajor();
     }
 
+    @Override
     public int getDatabaseMinorVersion() throws SQLException {
         return this.conn.getServerVersion().getMinor();
     }
 
-    /**
-     * What's the name of this database product?
-     * 
-     * @return database product name
-     * @throws SQLException
-     */
+    @Override
     public String getDatabaseProductName() throws SQLException {
         return "MySQL";
     }
 
-    /**
-     * What's the version of this database product?
-     * 
-     * @return database version
-     * @throws SQLException
-     */
+    @Override
     public String getDatabaseProductVersion() throws SQLException {
         return this.conn.getServerVersion().toString();
     }
 
-    /**
-     * What's the database's default transaction isolation level? The values are
-     * defined in java.sql.Connection.
-     * 
-     * @return the default isolation level
-     * @throws SQLException
-     *             if a database access error occurs
-     * @see JdbcConnection
-     */
+    @Override
     public int getDefaultTransactionIsolation() throws SQLException {
         return java.sql.Connection.TRANSACTION_READ_COMMITTED;
     }
 
-    /**
-     * What's this JDBC driver's major version number?
-     * 
-     * @return JDBC driver major version
-     */
+    @Override
     public int getDriverMajorVersion() {
         return NonRegisteringDriver.getMajorVersionInternal();
     }
 
-    /**
-     * What's this JDBC driver's minor version number?
-     * 
-     * @return JDBC driver minor version number
-     */
+    @Override
     public int getDriverMinorVersion() {
         return NonRegisteringDriver.getMinorVersionInternal();
     }
 
-    /**
-     * What's the name of this JDBC driver?
-     * 
-     * @return JDBC driver name
-     * @throws SQLException
-     */
+    @Override
     public String getDriverName() throws SQLException {
         return Constants.CJ_NAME;
     }
 
-    /**
-     * What's the version of this JDBC driver?
-     * 
-     * @return JDBC driver version
-     * @throws java.sql.SQLException
-     */
+    @Override
     public String getDriverVersion() throws java.sql.SQLException {
         return Constants.CJ_FULL_NAME + " (Revision: " + Constants.CJ_REVISION + ")";
     }
 
+    @Override
     public java.sql.ResultSet getExportedKeys(String catalog, String schema, final String table) throws SQLException {
         if (table == null) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
@@ -2631,13 +2548,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         getResultsImpl(catalog, exportingTable, keysComment, tuples, fkTableName, true);
     }
 
-    /**
-     * Get all the "extra" characters that can be used in unquoted identifier
-     * names (those beyond a-z, 0-9 and _).
-     * 
-     * @return the string containing the extra characters
-     * @throws SQLException
-     */
+    @Override
     public String getExtraNameCharacters() throws SQLException {
         return "#@";
     }
@@ -2666,18 +2577,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return actions;
     }
 
-    /**
-     * What's the string used to quote SQL identifiers? This returns a space " "
-     * if identifier quoting isn't supported. A JDBC compliant driver always
-     * uses a double quote character.
-     * 
-     * @return the quoting string
-     * @throws SQLException
-     */
+    @Override
     public String getIdentifierQuoteString() throws SQLException {
+        // NOTE: A JDBC compliant driver always uses a double quote character.
         return this.session.getIdentifierQuoteString();
     }
 
+    @Override
     public java.sql.ResultSet getImportedKeys(String catalog, String schema, final String table) throws SQLException {
         if (table == null) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
@@ -2775,6 +2681,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         getResultsImpl(catalog, importingTable, keysComment, tuples, null, false);
     }
 
+    @Override
     public java.sql.ResultSet getIndexInfo(String catalog, String schema, final String table, final boolean unique, boolean approximate) throws SQLException {
         /*
          * MySQL stores index information in the following fields: Table Non_unique Key_name Seq_in_index Column_name Collation Cardinality Sub_part
@@ -2896,225 +2803,123 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return fields;
     }
 
+    @Override
     public int getJDBCMajorVersion() throws SQLException {
         return 4;
     }
 
+    @Override
     public int getJDBCMinorVersion() throws SQLException {
         return 2;
     }
 
-    /**
-     * How many hex characters can you have in an inline binary literal?
-     * 
-     * @return max literal length
-     * @throws SQLException
-     */
+    @Override
     public int getMaxBinaryLiteralLength() throws SQLException {
         return 16777208;
     }
 
-    /**
-     * What's the maximum length of a catalog name?
-     * 
-     * @return max name length in bytes
-     * @throws SQLException
-     */
+    @Override
     public int getMaxCatalogNameLength() throws SQLException {
         return 32;
     }
 
-    /**
-     * What's the max length for a character literal?
-     * 
-     * @return max literal length
-     * @throws SQLException
-     */
+    @Override
     public int getMaxCharLiteralLength() throws SQLException {
         return 16777208;
     }
 
-    /**
-     * What's the limit on column name length?
-     * 
-     * @return max literal length
-     * @throws SQLException
-     */
+    @Override
     public int getMaxColumnNameLength() throws SQLException {
         return 64;
     }
 
-    /**
-     * What's the maximum number of columns in a "GROUP BY" clause?
-     * 
-     * @return max number of columns
-     * @throws SQLException
-     */
+    @Override
     public int getMaxColumnsInGroupBy() throws SQLException {
         return 64;
     }
 
-    /**
-     * What's the maximum number of columns allowed in an index?
-     * 
-     * @return max columns
-     * @throws SQLException
-     */
+    @Override
     public int getMaxColumnsInIndex() throws SQLException {
         return 16;
     }
 
-    /**
-     * What's the maximum number of columns in an "ORDER BY" clause?
-     * 
-     * @return max columns
-     * @throws SQLException
-     */
+    @Override
     public int getMaxColumnsInOrderBy() throws SQLException {
         return 64;
     }
 
-    /**
-     * What's the maximum number of columns in a "SELECT" list?
-     * 
-     * @return max columns
-     * @throws SQLException
-     */
+    @Override
     public int getMaxColumnsInSelect() throws SQLException {
         return 256;
     }
 
-    /**
-     * What's maximum number of columns in a table?
-     * 
-     * @return max columns
-     * @throws SQLException
-     */
+    @Override
     public int getMaxColumnsInTable() throws SQLException {
         return 512;
     }
 
-    /**
-     * How many active connections can we have at a time to this database?
-     * 
-     * @return max connections
-     * @throws SQLException
-     */
+    @Override
     public int getMaxConnections() throws SQLException {
         return 0;
     }
 
-    /**
-     * What's the maximum cursor name length?
-     * 
-     * @return max cursor name length in bytes
-     * @throws SQLException
-     */
+    @Override
     public int getMaxCursorNameLength() throws SQLException {
         return 64;
     }
 
-    /**
-     * What's the maximum length of an index (in bytes)?
-     * 
-     * @return max index length in bytes
-     * @throws SQLException
-     */
+    @Override
     public int getMaxIndexLength() throws SQLException {
         return 256;
     }
 
-    /**
-     * What's the maximum length of a procedure name?
-     * 
-     * @return max name length in bytes
-     * @throws SQLException
-     */
+    @Override
     public int getMaxProcedureNameLength() throws SQLException {
         return 0;
     }
 
-    /**
-     * What's the maximum length of a single row?
-     * 
-     * @return max row size in bytes
-     * @throws SQLException
-     */
+    @Override
     public int getMaxRowSize() throws SQLException {
         return Integer.MAX_VALUE - 8; // Max buffer size - HEADER
     }
 
-    /**
-     * What's the maximum length allowed for a schema name?
-     * 
-     * @return max name length in bytes
-     * @throws SQLException
-     */
+    @Override
     public int getMaxSchemaNameLength() throws SQLException {
         return 0;
     }
 
-    /**
-     * What's the maximum length of a SQL statement?
-     * 
-     * @return max length in bytes
-     * @throws SQLException
-     */
+    @Override
     public int getMaxStatementLength() throws SQLException {
         return maxBufferSize - 4; // Max buffer - header
     }
 
-    /**
-     * How many active statements can we have open at one time to this database?
-     * 
-     * @return the maximum
-     * @throws SQLException
-     */
+    @Override
     public int getMaxStatements() throws SQLException {
         return 0;
     }
 
-    /**
-     * What's the maximum length of a table name?
-     * 
-     * @return max name length in bytes
-     * @throws SQLException
-     */
+    @Override
     public int getMaxTableNameLength() throws SQLException {
         return 64;
     }
 
-    /**
-     * What's the maximum number of tables in a SELECT?
-     * 
-     * @return the maximum
-     * @throws SQLException
-     */
+    @Override
     public int getMaxTablesInSelect() throws SQLException {
         return 256;
     }
 
-    /**
-     * What's the maximum length of a user name?
-     * 
-     * @return max name length in bytes
-     * @throws SQLException
-     */
+    @Override
     public int getMaxUserNameLength() throws SQLException {
         return 16;
     }
 
-    /**
-     * Get a comma separated list of math functions.
-     * 
-     * @return the list
-     * @throws SQLException
-     */
+    @Override
     public String getNumericFunctions() throws SQLException {
         return "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,"
                 + "POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE";
     }
 
+    @Override
     public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, final String table) throws SQLException {
         Field[] fields = new Field[6];
         fields[0] = new Field("", "TABLE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 255);
@@ -3200,6 +3005,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return results;
     }
 
+    @Override
     public java.sql.ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern)
             throws SQLException {
         Field[] fields = createProcedureColumnsFields();
@@ -3337,6 +3143,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(resultRows, new DefaultColumnDefinition(fields)));
     }
 
+    @Override
     public java.sql.ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
         Field[] fields = createFieldMetadataForGetProcedures();
 
@@ -3502,17 +3309,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(procedureRows, new DefaultColumnDefinition(fields)));
     }
 
-    /**
-     * What's the database vendor's preferred term for "procedure"?
-     * 
-     * @return the vendor term
-     * @throws SQLException
-     *             if an error occurs (don't know why it would in this case...)
-     */
+    @Override
     public String getProcedureTerm() throws SQLException {
         return "PROCEDURE";
     }
 
+    @Override
     public int getResultSetHoldability() throws SQLException {
         return ResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
@@ -3559,6 +3361,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
     }
 
+    @Override
     public java.sql.ResultSet getSchemas() throws SQLException {
         Field[] fields = new Field[2];
         fields[0] = new Field("", "TABLE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 0);
@@ -3571,29 +3374,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return results;
     }
 
-    /**
-     * What's the database vendor's preferred term for "schema"?
-     * 
-     * @return the vendor term
-     * @throws SQLException
-     */
+    @Override
     public String getSchemaTerm() throws SQLException {
         return "";
     }
 
-    /**
-     * This is the string that can be used to escape '_' or '%' in the string
-     * pattern style catalog search parameters.
-     * <P>
-     * The '_' character represents any single character.
-     * </p>
-     * <P>
-     * The '%' character represents any sequence of zero or more characters.
-     * </p>
-     * 
-     * @return the string used to escape wildcard characters
-     * @throws SQLException
-     */
+    @Override
     public String getSearchStringEscape() throws SQLException {
         return "\\";
     }
@@ -3604,6 +3390,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return the list
      * @throws SQLException
      */
+    @Override
     public String getSQLKeywords() throws SQLException {
         if (mysqlKeywords != null) {
             return mysqlKeywords;
@@ -3630,16 +3417,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
     }
 
+    @Override
     public int getSQLStateType() throws SQLException {
         return java.sql.DatabaseMetaData.sqlStateSQL99;
     }
 
-    /**
-     * Get a comma separated list of string functions.
-     * 
-     * @return the list
-     * @throws SQLException
-     */
+    @Override
     public String getStringFunctions() throws SQLException {
         return "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
                 + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
@@ -3647,6 +3430,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 + "SUBSTRING_INDEX,TRIM,UCASE,UPPER";
     }
 
+    @Override
     public java.sql.ResultSet getSuperTables(String arg0, String arg1, String arg2) throws SQLException {
         Field[] fields = new Field[4];
         fields[0] = new Field("", "TABLE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
@@ -3658,6 +3442,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(new ArrayList<Row>(), new DefaultColumnDefinition(fields)));
     }
 
+    @Override
     public java.sql.ResultSet getSuperTypes(String arg0, String arg1, String arg2) throws SQLException {
         Field[] fields = new Field[6];
         fields[0] = new Field("", "TYPE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
@@ -3671,12 +3456,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(new ArrayList<Row>(), new DefaultColumnDefinition(fields)));
     }
 
-    /**
-     * Get a comma separated list of system functions.
-     * 
-     * @return the list
-     * @throws SQLException
-     */
+    @Override
     public String getSystemFunctions() throws SQLException {
         return "DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION";
     }
@@ -3687,6 +3467,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return tableNameWithCase;
     }
 
+    @Override
     public java.sql.ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
 
         Field[] fields = new Field[7];
@@ -3811,6 +3592,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(grantRows, new DefaultColumnDefinition(fields)));
     }
 
+    @Override
     public java.sql.ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, final String[] types) throws SQLException {
 
         final SortedMap<TableMetaDataKey, Row> sortedRows = new TreeMap<>();
@@ -4038,6 +3820,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return new DefaultColumnDefinition(fields);
     }
 
+    @Override
     public java.sql.ResultSet getTableTypes() throws SQLException {
         ArrayList<Row> tuples = new ArrayList<>();
         Field[] fields = new Field[] { new Field("", "TABLE_TYPE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 256) };
@@ -4052,12 +3835,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(tuples, new DefaultColumnDefinition(fields)));
     }
 
-    /**
-     * Get a comma separated list of time and date functions.
-     * 
-     * @return the list
-     * @throws SQLException
-     */
+    @Override
     public String getTimeDateFunctions() throws SQLException {
         return "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
                 + "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
@@ -4142,6 +3920,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return rowVal;
     }
 
+    @Override
     public java.sql.ResultSet getTypeInfo() throws SQLException {
         Field[] fields = new Field[18];
         fields[0] = new Field("", "TYPE_NAME", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
@@ -4216,6 +3995,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(tuples, new DefaultColumnDefinition(fields)));
     }
 
+    @Override
     public java.sql.ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types) throws SQLException {
         Field[] fields = new Field[7];
         fields[0] = new Field("", "TYPE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 32);
@@ -4232,22 +4012,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(tuples, new DefaultColumnDefinition(fields)));
     }
 
-    /**
-     * What's the url for this database?
-     * 
-     * @return the url or null if it can't be generated
-     * @throws SQLException
-     */
+    @Override
     public String getURL() throws SQLException {
         return this.conn.getURL();
     }
 
-    /**
-     * What's our user name as known to the database?
-     * 
-     * @return our database user name
-     * @throws SQLException
-     */
+    @Override
     public String getUserName() throws SQLException {
         if (this.useHostsInPrivileges) {
             Statement stmt = null;
@@ -4286,6 +4056,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return this.conn.getUser();
     }
 
+    @Override
     public java.sql.ResultSet getVersionColumns(String catalog, String schema, final String table) throws SQLException {
 
         if (table == null) {
@@ -4370,150 +4141,78 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(rows, new DefaultColumnDefinition(fields)));
     }
 
-    /**
-     * JDBC 2.0 Determine whether or not a visible row insert can be detected by
-     * calling ResultSet.rowInserted().
-     * 
-     * @param type
-     *            set type, i.e. ResultSet.TYPE_XXX
-     * @return true if changes are detected by the resultset type
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
+    @Override
     public boolean insertsAreDetected(int type) throws SQLException {
         return false;
     }
 
-    /**
-     * Does a catalog appear at the start of a qualified table name? (Otherwise
-     * it appears at the end)
-     * 
-     * @return true if it appears at the start
-     * @throws SQLException
-     */
+    @Override
     public boolean isCatalogAtStart() throws SQLException {
         return true;
     }
 
-    /**
-     * Is the database in read-only mode?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean isReadOnly() throws SQLException {
         return false;
     }
 
+    @Override
     public boolean locatorsUpdateCopy() throws SQLException {
         return !this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_emulateLocators).getValue();
     }
 
-    /**
-     * Are concatenations between NULL and non-NULL values NULL? A JDBC
-     * compliant driver always returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean nullPlusNonNullIsNull() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Are NULL values sorted at the end regardless of sort order?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean nullsAreSortedAtEnd() throws SQLException {
         return false;
     }
 
-    /**
-     * Are NULL values sorted at the start regardless of sort order?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean nullsAreSortedAtStart() throws SQLException {
         return false;
     }
 
-    /**
-     * Are NULL values sorted high?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean nullsAreSortedHigh() throws SQLException {
         return false;
     }
 
-    /**
-     * Are NULL values sorted low?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean nullsAreSortedLow() throws SQLException {
         return !nullsAreSortedHigh();
     }
 
-    /**
-     * @param type
-     * @throws SQLException
-     */
+    @Override
     public boolean othersDeletesAreVisible(int type) throws SQLException {
         return false;
     }
 
-    /**
-     * @param type
-     * @throws SQLException
-     */
+    @Override
     public boolean othersInsertsAreVisible(int type) throws SQLException {
         return false;
     }
 
-    /**
-     * JDBC 2.0 Determine whether changes made by others are visible.
-     * 
-     * @param type
-     *            set type, i.e. ResultSet.TYPE_XXX
-     * @return true if changes are visible for the result set type
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
+    @Override
     public boolean othersUpdatesAreVisible(int type) throws SQLException {
         return false;
     }
 
-    /**
-     * @param type
-     * @throws SQLException
-     */
+    @Override
     public boolean ownDeletesAreVisible(int type) throws SQLException {
         return false;
     }
 
-    /**
-     * @param type
-     * @throws SQLException
-     */
+    @Override
     public boolean ownInsertsAreVisible(int type) throws SQLException {
         return false;
     }
 
-    /**
-     * JDBC 2.0 Determine whether a result set's own changes visible.
-     * 
-     * @param type
-     *            set type, i.e. ResultSet.TYPE_XXX
-     * @return true if changes are visible for the result set type
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
+    @Override
     public boolean ownUpdatesAreVisible(int type) throws SQLException {
         return false;
     }
@@ -4609,336 +4308,175 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
     }
 
-    /**
-     * Does the database store mixed case unquoted SQL identifiers in lower
-     * case?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean storesLowerCaseIdentifiers() throws SQLException {
         return this.conn.storesLowerCaseTableName();
     }
 
-    /**
-     * Does the database store mixed case quoted SQL identifiers in lower case?
-     * A JDBC compliant driver will always return false.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean storesLowerCaseQuotedIdentifiers() throws SQLException {
+        // NOTE: A JDBC compliant driver will always return false.
         return this.conn.storesLowerCaseTableName();
     }
 
-    /**
-     * Does the database store mixed case unquoted SQL identifiers in mixed
-     * case?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean storesMixedCaseIdentifiers() throws SQLException {
         return !this.conn.storesLowerCaseTableName();
     }
 
-    /**
-     * Does the database store mixed case quoted SQL identifiers in mixed case?
-     * A JDBC compliant driver will always return false.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean storesMixedCaseQuotedIdentifiers() throws SQLException {
+        // NOTE: A JDBC compliant driver will always return false.
         return !this.conn.storesLowerCaseTableName();
     }
 
-    /**
-     * Does the database store mixed case unquoted SQL identifiers in upper
-     * case?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean storesUpperCaseIdentifiers() throws SQLException {
         return false;
     }
 
-    /**
-     * Does the database store mixed case quoted SQL identifiers in upper case?
-     * A JDBC compliant driver will always return true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean storesUpperCaseQuotedIdentifiers() throws SQLException {
+        // NOTE: A JDBC compliant driver will always return true.
         return true; // not actually true, but required by JDBC spec!?
     }
 
-    /**
-     * Is "ALTER TABLE" with add column supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsAlterTableWithAddColumn() throws SQLException {
         return true;
     }
 
-    /**
-     * Is "ALTER TABLE" with drop column supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsAlterTableWithDropColumn() throws SQLException {
         return true;
     }
 
-    /**
-     * Is the ANSI92 entry level SQL grammar supported? All JDBC compliant
-     * drivers must return true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsANSI92EntryLevelSQL() throws SQLException {
+        // NOTE: All JDBC compliant drivers must return true.
         return true;
     }
 
-    /**
-     * Is the ANSI92 full SQL grammar supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsANSI92FullSQL() throws SQLException {
         return false;
     }
 
-    /**
-     * Is the ANSI92 intermediate SQL grammar supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsANSI92IntermediateSQL() throws SQLException {
         return false;
     }
 
-    /**
-     * JDBC 2.0 Return true if the driver supports batch updates, else return
-     * false.
-     * 
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsBatchUpdates() throws SQLException {
         return true;
     }
 
-    /**
-     * Can a catalog name be used in a data manipulation statement?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsCatalogsInDataManipulation() throws SQLException {
         return true;
     }
 
-    /**
-     * Can a catalog name be used in a index definition statement?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
         return true;
     }
 
-    /**
-     * Can a catalog name be used in a privilege definition statement?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
         return true;
     }
 
-    /**
-     * Can a catalog name be used in a procedure call statement?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsCatalogsInProcedureCalls() throws SQLException {
         return true;
     }
 
-    /**
-     * Can a catalog name be used in a table definition statement?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsCatalogsInTableDefinitions() throws SQLException {
         return true;
     }
 
-    /**
-     * Is column aliasing supported?
-     * <P>
-     * If so, the SQL AS clause can be used to provide names for computed columns or to provide alias names for columns as required. A JDBC compliant driver
-     * always returns true.
-     * </p>
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsColumnAliasing() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Is the CONVERT function between SQL types supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsConvert() throws SQLException {
+        // TODO MySQL has a CONVERT() function, is it irrelevant here?
         return false;
     }
 
+    @Override
     public boolean supportsConvert(int fromType, int toType) throws SQLException {
         return MysqlType.supportsConvert(fromType, toType);
     }
 
-    /**
-     * Is the ODBC Core SQL grammar supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsCoreSQLGrammar() throws SQLException {
         return true;
     }
 
-    /**
-     * Are correlated subqueries supported? A JDBC compliant driver always
-     * returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsCorrelatedSubqueries() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Are both data definition and data manipulation statements within a
-     * transaction supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsDataDefinitionAndDataManipulationTransactions() throws SQLException {
         return false;
     }
 
-    /**
-     * Are only data manipulation statements within a transaction supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsDataManipulationTransactionsOnly() throws SQLException {
         return false;
     }
 
-    /**
-     * If table correlation names are supported, are they restricted to be
-     * different from the names of the tables? A JDBC compliant driver always
-     * returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsDifferentTableCorrelationNames() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Are expressions in "ORDER BY" lists supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsExpressionsInOrderBy() throws SQLException {
         return true;
     }
 
-    /**
-     * Is the ODBC Extended SQL grammar supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsExtendedSQLGrammar() throws SQLException {
         return false;
     }
 
-    /**
-     * Are full nested outer joins supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsFullOuterJoins() throws SQLException {
         return false;
     }
 
+    @Override
     public boolean supportsGetGeneratedKeys() {
         return true;
     }
 
-    /**
-     * Is some form of "GROUP BY" clause supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsGroupBy() throws SQLException {
         return true;
     }
 
-    /**
-     * Can a "GROUP BY" clause add columns not in the SELECT provided it
-     * specifies all the columns in the SELECT?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsGroupByBeyondSelect() throws SQLException {
         return true;
     }
 
-    /**
-     * Can a "GROUP BY" clause use columns not in the SELECT?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsGroupByUnrelated() throws SQLException {
         return true;
     }
 
-    /**
-     * Is the SQL Integrity Enhancement Facility supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsIntegrityEnhancementFacility() throws SQLException {
         if (!this.conn.getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility).getValue()) {
             return false;
@@ -4947,197 +4485,101 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return true;
     }
 
-    /**
-     * Is the escape character in "LIKE" clauses supported? A JDBC compliant
-     * driver always returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsLikeEscapeClause() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Is there limited support for outer joins? (This will be true if
-     * supportFullOuterJoins is true.)
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsLimitedOuterJoins() throws SQLException {
         return true;
     }
 
-    /**
-     * Is the ODBC Minimum SQL grammar supported? All JDBC compliant drivers
-     * must return true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsMinimumSQLGrammar() throws SQLException {
+        // NOTE: All JDBC compliant drivers must return true.
         return true;
     }
 
-    /**
-     * Does the database support mixed case unquoted SQL identifiers?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsMixedCaseIdentifiers() throws SQLException {
         return !this.conn.lowerCaseTableNames();
     }
 
-    /**
-     * Does the database support mixed case quoted SQL identifiers? A JDBC
-     * compliant driver will always return true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return !this.conn.lowerCaseTableNames();
     }
 
+    @Override
     public boolean supportsMultipleOpenResults() throws SQLException {
         return true;
     }
 
-    /**
-     * Are multiple ResultSets from a single execute supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsMultipleResultSets() throws SQLException {
         return true;
     }
 
-    /**
-     * Can we have multiple transactions open at once (on different
-     * connections)?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsMultipleTransactions() throws SQLException {
         return true;
     }
 
+    @Override
     public boolean supportsNamedParameters() throws SQLException {
         return false;
     }
 
-    /**
-     * Can columns be defined as non-nullable? A JDBC compliant driver always
-     * returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsNonNullableColumns() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Can cursors remain open across commits?
-     * 
-     * @return true if so
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public boolean supportsOpenCursorsAcrossCommit() throws SQLException {
         return false;
     }
 
-    /**
-     * Can cursors remain open across rollbacks?
-     * 
-     * @return true if so
-     * @throws SQLException
-     *             if an error occurs
-     */
+    @Override
     public boolean supportsOpenCursorsAcrossRollback() throws SQLException {
         return false;
     }
 
-    /**
-     * Can statements remain open across commits?
-     * 
-     * @return true if so
-     * @throws SQLException
-     *             if an error occurs
-     */
+    @Override
     public boolean supportsOpenStatementsAcrossCommit() throws SQLException {
         return false;
     }
 
-    /**
-     * Can statements remain open across rollbacks?
-     * 
-     * @return true if so
-     * @throws SQLException
-     *             if an error occurs
-     */
+    @Override
     public boolean supportsOpenStatementsAcrossRollback() throws SQLException {
         return false;
     }
 
-    /**
-     * Can an "ORDER BY" clause use columns not in the SELECT?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsOrderByUnrelated() throws SQLException {
         return false;
     }
 
-    /**
-     * Is some form of outer join supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsOuterJoins() throws SQLException {
         return true;
     }
 
-    /**
-     * Is positioned DELETE supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsPositionedDelete() throws SQLException {
         return false;
     }
 
-    /**
-     * Is positioned UPDATE supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsPositionedUpdate() throws SQLException {
         return false;
     }
 
-    /**
-     * JDBC 2.0 Does the database support the concurrency type in combination
-     * with the given result set type?
-     * 
-     * @param type
-     *            defined in java.sql.ResultSet
-     * @param concurrency
-     *            type defined in java.sql.ResultSet
-     * @return true if so
-     * @exception SQLException
-     *                if a database-access error occurs.
-     * @see JdbcConnection
-     */
+    @Override
     public boolean supportsResultSetConcurrency(int type, int concurrency) throws SQLException {
         switch (type) {
             case ResultSet.TYPE_SCROLL_INSENSITIVE:
@@ -5163,168 +4605,92 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     }
 
+    @Override
     public boolean supportsResultSetHoldability(int holdability) throws SQLException {
         return (holdability == ResultSet.HOLD_CURSORS_OVER_COMMIT);
     }
 
-    /**
-     * JDBC 2.0 Does the database support the given result set type?
-     * 
-     * @param type
-     *            defined in java.sql.ResultSet
-     * @return true if so
-     * @exception SQLException
-     *                if a database-access error occurs.
-     * @see JdbcConnection
-     */
+    @Override
     public boolean supportsResultSetType(int type) throws SQLException {
         return (type == ResultSet.TYPE_SCROLL_INSENSITIVE);
     }
 
+    @Override
     public boolean supportsSavepoints() throws SQLException {
         return true;
     }
 
-    /**
-     * Can a schema name be used in a data manipulation statement?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsSchemasInDataManipulation() throws SQLException {
         return false;
     }
 
-    /**
-     * Can a schema name be used in an index definition statement?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsSchemasInIndexDefinitions() throws SQLException {
         return false;
     }
 
-    /**
-     * Can a schema name be used in a privilege definition statement?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
         return false;
     }
 
-    /**
-     * Can a schema name be used in a procedure call statement?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsSchemasInProcedureCalls() throws SQLException {
         return false;
     }
 
-    /**
-     * Can a schema name be used in a table definition statement?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsSchemasInTableDefinitions() throws SQLException {
         return false;
     }
 
-    /**
-     * Is SELECT for UPDATE supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsSelectForUpdate() throws SQLException {
         return true;
     }
 
+    @Override
     public boolean supportsStatementPooling() throws SQLException {
         return false;
     }
 
-    /**
-     * Are stored procedure calls using the stored procedure escape syntax
-     * supported?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsStoredProcedures() throws SQLException {
         return true;
     }
 
-    /**
-     * Are subqueries in comparison expressions supported? A JDBC compliant
-     * driver always returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsSubqueriesInComparisons() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Are subqueries in exists expressions supported? A JDBC compliant driver
-     * always returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsSubqueriesInExists() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Are subqueries in "in" statements supported? A JDBC compliant driver
-     * always returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsSubqueriesInIns() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Are subqueries in quantified expressions supported? A JDBC compliant
-     * driver always returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsSubqueriesInQuantifieds() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Are table correlation names supported? A JDBC compliant driver always
-     * returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsTableCorrelationNames() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Does the database support the given transaction isolation level?
-     * 
-     * @param level
-     *            the values are defined in java.sql.Connection
-     * @return true if so
-     * @throws SQLException
-     *             if a database access error occurs
-     * @see JdbcConnection
-     */
+    @Override
     public boolean supportsTransactionIsolationLevel(int level) throws SQLException {
         switch (level) {
             case java.sql.Connection.TRANSACTION_READ_COMMITTED:
@@ -5338,71 +4704,39 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
     }
 
-    /**
-     * Are transactions supported? If not, commit is a noop and the isolation
-     * level is TRANSACTION_NONE.
-     * 
-     * @return true if transactions are supported
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsTransactions() throws SQLException {
         return true;
     }
 
-    /**
-     * Is SQL UNION supported? A JDBC compliant driver always returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsUnion() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * Is SQL UNION ALL supported? A JDBC compliant driver always returns true.
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean supportsUnionAll() throws SQLException {
+        // NOTE: A JDBC compliant driver always returns true.
         return true;
     }
 
-    /**
-     * JDBC 2.0 Determine whether or not a visible row update can be detected by
-     * calling ResultSet.rowUpdated().
-     * 
-     * @param type
-     *            set type, i.e. ResultSet.TYPE_XXX
-     * @return true if changes are detected by the resultset type
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
+    @Override
     public boolean updatesAreDetected(int type) throws SQLException {
         return false;
     }
 
-    /**
-     * Does the database use a file for each table?
-     * 
-     * @return true if the database uses a local file for each table
-     * @throws SQLException
-     */
+    @Override
     public boolean usesLocalFilePerTable() throws SQLException {
         return false;
     }
 
-    /**
-     * Does the database store tables in a local file?
-     * 
-     * @return true if so
-     * @throws SQLException
-     */
+    @Override
     public boolean usesLocalFiles() throws SQLException {
         return false;
     }
 
+    @Override
     public ResultSet getClientInfoProperties() throws SQLException {
         // We don't have any built-ins, we actually support whatever the client wants to provide, however we don't have a way to express this with the interface
         // given
@@ -5416,6 +4750,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(new ArrayList<Row>(), new DefaultColumnDefinition(fields)));
     }
 
+    @Override
     public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
         Field[] fields = createFunctionColumnsFields();
 
@@ -5443,6 +4778,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return fields;
     }
 
+    @Override
     public java.sql.ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
         Field[] fields = new Field[6];
         fields[0] = new Field("", "FUNCTION_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 255);
@@ -5459,11 +4795,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return false;
     }
 
-    /**
-     * @param catalog
-     * @param schemaPattern
-     * @throws SQLException
-     */
+    @Override
     public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
         Field[] fields = { new Field("", "TABLE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 255),
                 new Field("", "TABLE_CATALOG", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 255) };
@@ -5472,6 +4804,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(new ArrayList<Row>(), new DefaultColumnDefinition(fields)));
     }
 
+    @Override
     public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
         return true;
     }
@@ -5495,6 +4828,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return pStmt;
     }
 
+    @Override
     public java.sql.ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
         Field[] fields = { new Field("", "TABLE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 512),
                 new Field("", "TABLE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 512),
@@ -5513,26 +4847,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 new ResultsetRowsStatic(new ArrayList<Row>(), new DefaultColumnDefinition(fields)));
     }
 
+    @Override
     public boolean generatedKeyAlwaysReturned() throws SQLException {
         return true;
     }
 
-    /**
-     * Returns an object that implements the given interface to allow access to non-standard methods,
-     * or standard methods not exposed by the proxy.
-     * The result may be either the object found to implement the interface or a proxy for that object.
-     * If the receiver implements the interface then that is the object. If the receiver is a wrapper
-     * and the wrapped object implements the interface then that is the object. Otherwise the object is
-     * the result of calling <code>unwrap</code> recursively on the wrapped object. If the receiver is not a
-     * wrapper and does not implement the interface, then an <code>SQLException</code> is thrown.
-     * 
-     * @param iface
-     *            A Class defining an interface that the result must implement.
-     * @return an object that implements the interface. May be a proxy for the actual implementing object.
-     * @throws java.sql.SQLException
-     *             If no object found that implements the interface
-     * @since 1.6
-     */
+    @Override
     public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
         try {
             // This works for classes that aren't actually wrapping
@@ -5544,32 +4864,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
     }
 
-    /**
-     * Returns true if this either implements the interface argument or is directly or indirectly a wrapper
-     * for an object that does. Returns false otherwise. If this implements the interface then return true,
-     * else if this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped
-     * object. If this does not implement the interface and is not a wrapper, return false.
-     * This method should be implemented as a low-cost operation compared to <code>unwrap</code> so that
-     * callers can use this method to avoid expensive <code>unwrap</code> calls that may fail. If this method
-     * returns true then calling <code>unwrap</code> with the same argument should succeed.
-     * 
-     * @param interfaces
-     *            a Class defining an interface.
-     * @return true if this implements the interface or directly or indirectly wraps an object that does.
-     * @throws java.sql.SQLException
-     *             if an error occurs while determining whether this is a wrapper
-     *             for an object with the given interface.
-     * @since 1.6
-     */
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         // This works for classes that aren't actually wrapping anything
         return iface.isInstance(this);
     }
 
+    @Override
     public RowIdLifetime getRowIdLifetime() throws SQLException {
         return RowIdLifetime.ROWID_UNSUPPORTED;
     }
 
+    @Override
     public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
         return false;
     }

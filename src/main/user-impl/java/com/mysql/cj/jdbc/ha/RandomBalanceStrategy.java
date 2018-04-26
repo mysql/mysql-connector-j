@@ -46,6 +46,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
     public RandomBalanceStrategy() {
     }
 
+    @Override
     public ConnectionImpl pickConnection(InvocationHandler proxy, List<String> configuredHosts, Map<String, JdbcConnection> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException {
         int numHosts = configuredHosts.size();

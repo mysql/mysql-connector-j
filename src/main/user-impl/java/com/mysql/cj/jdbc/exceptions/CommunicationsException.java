@@ -62,22 +62,17 @@ public class CommunicationsException extends SQLRecoverableException implements 
         }
     }
 
-    /*
-     * @see java.lang.Throwable#getMessage()
-     */
     @Override
     public String getMessage() {
         return this.exceptionMessage;
     }
 
-    /*
-     * @see java.sql.SQLException#getSQLState()
-     */
     @Override
     public String getSQLState() {
         return MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE;
     }
 
+    @Override
     public void setWasStreamingResults() {
         // replace exception message
         this.exceptionMessage = Messages.getString("CommunicationsException.ClientWasStreaming");

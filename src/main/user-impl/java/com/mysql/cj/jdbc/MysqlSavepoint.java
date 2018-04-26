@@ -78,16 +78,12 @@ public class MysqlSavepoint implements Savepoint {
         this.exceptionInterceptor = exceptionInterceptor;
     }
 
-    /**
-     * @see java.sql.Savepoint#getSavepointId()
-     */
+    @Override
     public int getSavepointId() throws SQLException {
         throw SQLError.createSQLException(Messages.getString("MysqlSavepoint.1"), MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
     }
 
-    /**
-     * @see java.sql.Savepoint#getSavepointName()
-     */
+    @Override
     public String getSavepointName() throws SQLException {
         return this.savepointName;
     }

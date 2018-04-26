@@ -79,7 +79,6 @@ import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.PasswordExpiredException;
 import com.mysql.cj.exceptions.UnableToConnectException;
 import com.mysql.cj.interceptors.QueryInterceptor;
-import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;
@@ -115,6 +114,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     private static final SQLPermission ABORT_PERM = new SQLPermission("abort");
 
+    @Override
     public String getHost() {
         return this.session.getHostInfo().getHost();
     }
@@ -122,10 +122,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     private JdbcConnection proxy = null;
     private InvocationHandler realProxy = null;
 
+    @Override
     public boolean isProxySet() {
         return this.proxy != null;
     }
 
+    @Override
     public void setProxy(JdbcConnection proxy) {
         this.proxy = proxy;
         this.realProxy = this.proxy instanceof MultiHostMySQLConnection ? ((MultiHostMySQLConnection) proxy).getThisAsProxy() : null;
@@ -137,14 +139,17 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return (this.proxy != null) ? this.proxy : (JdbcConnection) this;
     }
 
+    @Override
     public JdbcConnection getMultiHostSafeProxy() {
         return this.getProxy();
     }
 
+    @Override
     public JdbcConnection getActiveMySQLConnection() {
         return this;
     }
 
+    @Override
     public Object getConnectionMutex() {
         return (this.realProxy != null) ? this.realProxy : getProxy();
     }
@@ -469,6 +474,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return this.propertySet;
     }
 
+    @Override
     public void unSafeQueryInterceptors() throws SQLException {
         this.queryInterceptors = this.queryInterceptors.stream().map(u -> ((NoSubInterceptorWrapper) u).getUnderlyingInterceptor())
                 .collect(Collectors.toList());
@@ -478,6 +484,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public void initializeSafeQueryInterceptors() throws SQLException {
         this.queryInterceptors = Util
                 .<QueryInterceptor> loadClasses(this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_queryInterceptors).getStringValue(),
@@ -485,6 +492,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 .stream().map(o -> new NoSubInterceptorWrapper(o.init(this, this.props, this.session.getLog()))).collect(Collectors.toList());
     }
 
+    @Override
     public List<QueryInterceptor> getQueryInterceptorsInstances() {
         return this.queryInterceptors;
     }
@@ -519,6 +527,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return StringUtils.canHandleAsServerPreparedStatementNoCache(sql, getServerVersion());
     }
 
+    @Override
     public void changeUser(String userName, String newPassword) throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
@@ -551,10 +560,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public void checkClosed() {
         this.session.checkClosed();
     }
 
+    @Override
     public void throwConnectionClosedException() throws SQLException {
         SQLException ex = SQLError.createSQLException(Messages.getString("Connection.2"), MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN,
                 getExceptionInterceptor());
@@ -585,22 +596,11 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * Clobbers the physical network connection and marks
-     * this connection as closed.
-     * 
-     * @throws SQLException
-     */
+    @Override
     public void abortInternal() throws SQLException {
         this.session.forceClose();
     }
 
-    /**
-     * Destroys this connection and any underlying resources
-     * 
-     * @param fromWhere
-     * @param whyCleanedUp
-     */
     @Override
     public void cleanup(Throwable whyCleanedUp) {
         try {
@@ -617,29 +617,22 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     @Deprecated
+    @Override
     public void clearHasTriedMaster() {
         this.hasTriedMasterFlag = false;
     }
 
-    /**
-     * After this call, getWarnings returns null until a new warning is reported
-     * for this connection.
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public void clearWarnings() throws SQLException {
         // firstWarning = null;
     }
 
-    /**
-     * @param sql
-     * @throws SQLException
-     */
+    @Override
     public java.sql.PreparedStatement clientPrepareStatement(String sql) throws SQLException {
         return clientPrepareStatement(sql, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
+    @Override
     public java.sql.PreparedStatement clientPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException {
         java.sql.PreparedStatement pStmt = clientPrepareStatement(sql);
 
@@ -648,12 +641,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return pStmt;
     }
 
-    /**
-     * @param sql
-     * @param resultSetType
-     * @param resultSetConcurrency
-     * @throws SQLException
-     */
+    @Override
     public java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         return clientPrepareStatement(sql, resultSetType, resultSetConcurrency, true);
     }
@@ -685,6 +673,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return pStmt;
     }
 
+    @Override
     public java.sql.PreparedStatement clientPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException {
 
         ClientPreparedStatement pStmt = (ClientPreparedStatement) clientPrepareStatement(sql);
@@ -694,6 +683,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return pStmt;
     }
 
+    @Override
     public java.sql.PreparedStatement clientPrepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException {
         ClientPreparedStatement pStmt = (ClientPreparedStatement) clientPrepareStatement(sql);
 
@@ -702,23 +692,13 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return pStmt;
     }
 
+    @Override
     public java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
             throws SQLException {
         return clientPrepareStatement(sql, resultSetType, resultSetConcurrency, true);
     }
 
-    // --------------------------JDBC 2.0-----------------------------
-
-    /**
-     * In some cases, it is desirable to immediately release a Connection's
-     * database and JDBC resources instead of waiting for them to be
-     * automatically released (cant think why off the top of my head) <B>Note:</B>
-     * A Connection is automatically closed when it is garbage collected.
-     * Certain fatal errors also result in a closed connection.
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public void close() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.connectionLifecycleInterceptors != null) {
@@ -773,19 +753,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * The method commit() makes all changes made since the previous
-     * commit/rollback permanent and releases any database locks currently held
-     * by the Connection. This method should only be used when auto-commit has
-     * been disabled.
-     * <p>
-     * <b>Note:</b> MySQL does not support transactions, so this method is a no-op.
-     * </p>
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     * @see setAutoCommit
-     */
+    @Override
     public void commit() throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
@@ -834,13 +802,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return;
     }
 
-    /**
-     * Creates an IO channel to the server
-     * 
-     * @param isForReconnect
-     *            is this request for a re-connect
-     * @throws CommunicationsException
-     */
+    @Override
     public void createNewIO(boolean isForReconnect) {
         synchronized (getConnectionMutex()) {
             // Synchronization Not needed for *new* connections, but defintely for connections going through fail-over, since we might get the new connection up
@@ -1104,31 +1066,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * SQL statements without parameters are normally executed using Statement
-     * objects. If the same SQL statement is executed many times, it is more
-     * efficient to use a PreparedStatement
-     * 
-     * @return a new Statement object
-     * @throws SQLException
-     *             passed through from the constructor
-     */
+    @Override
     public java.sql.Statement createStatement() throws SQLException {
         return createStatement(DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
-    /**
-     * JDBC 2.0 Same as createStatement() above, but allows the default result
-     * set type and result set concurrency type to be overridden.
-     * 
-     * @param resultSetType
-     *            a result set type, see ResultSet.TYPE_XXX
-     * @param resultSetConcurrency
-     *            a concurrency type, see ResultSet.CONCUR_XXX
-     * @return a new Statement object
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
+    @Override
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
 
         StatementImpl stmt = new StatementImpl(getMultiHostSafeProxy(), this.database);
@@ -1138,6 +1081,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return stmt;
     }
 
+    @Override
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
@@ -1149,18 +1093,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return createStatement(resultSetType, resultSetConcurrency);
     }
 
+    @Override
     public int getActiveStatementCount() {
         return this.openStatements.size();
     }
 
-    /**
-     * Gets the current auto-commit state
-     * 
-     * @return Current state of auto-commit
-     * @exception SQLException
-     *                if an error occurs
-     * @see setAutoCommit
-     */
+    @Override
     public boolean getAutoCommit() throws SQLException {
         synchronized (getConnectionMutex()) {
             return this.session.getServerSession().isAutoCommit();
@@ -1168,8 +1106,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     /**
-     * Return the connections current catalog name, or null if no catalog name
-     * is set, or we dont support catalogs.
+     * Return the connections current catalog name, or null if no catalog name is set.
      * <p>
      * <b>Note:</b> MySQL's notion of catalogs are individual databases.
      * </p>
@@ -1178,25 +1115,26 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      * @exception SQLException
      *                if a database access error occurs
      */
+    @Override
     public String getCatalog() throws SQLException {
         synchronized (getConnectionMutex()) {
             return this.database;
         }
     }
 
-    /**
-     * @return Returns the characterSetMetadata.
-     */
+    @Override
     public String getCharacterSetMetadata() {
         synchronized (getConnectionMutex()) {
             return this.session.getServerSession().getCharacterSetMetadata();
         }
     }
 
+    @Override
     public int getHoldability() throws SQLException {
         return java.sql.ResultSet.CLOSE_CURSORS_AT_COMMIT;
     }
 
+    @Override
     public long getId() {
         return this.session.getThreadId();
     }
@@ -1209,22 +1147,14 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      * @return number of ms that this connection has been idle, 0 if the driver
      *         is busy retrieving results.
      */
+    @Override
     public long getIdleFor() {
         synchronized (getConnectionMutex()) {
             return this.session.getIdleFor();
         }
     }
 
-    /**
-     * A connection's database is able to provide information describing its
-     * tables, its supported SQL grammar, its stored procedures, the
-     * capabilities of this connection, etc. This information is made available
-     * through a DatabaseMetaData object.
-     * 
-     * @return a DatabaseMetaData object for this connection
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public java.sql.DatabaseMetaData getMetaData() throws SQLException {
         return getMetaData(true, true);
     }
@@ -1245,6 +1175,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return dbmeta;
     }
 
+    @Override
     public java.sql.Statement getMetadataSafeStatement() throws SQLException {
         return getMetadataSafeStatement(0);
     }
@@ -1263,17 +1194,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return stmt;
     }
 
+    @Override
     public ServerVersion getServerVersion() {
         return this.session.getServerSession().getServerVersion();
     }
 
-    /**
-     * Get this Connection's current transaction isolation mode.
-     * 
-     * @return the current TRANSACTION_ mode value
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public int getTransactionIsolation() throws SQLException {
 
         synchronized (getConnectionMutex()) {
@@ -1297,14 +1223,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * JDBC 2.0 Get the type-map object associated with this connection. By
-     * default, the map returned is empty.
-     * 
-     * @return the type map
-     * @throws SQLException
-     *             if a database error occurs
-     */
+    @Override
     public java.util.Map<String, Class<?>> getTypeMap() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.typeMap == null) {
@@ -1315,36 +1234,33 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public String getURL() {
         return this.origHostInfo.getDatabaseUrl();
     }
 
+    @Override
     public String getUser() {
         return this.user;
     }
 
-    /**
-     * The first warning reported by calls on this Connection is returned.
-     * <B>Note:</B> Subsequent warnings will be changed to this
-     * java.sql.SQLWarning
-     * 
-     * @return the first java.sql.SQLWarning or null
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public SQLWarning getWarnings() throws SQLException {
         return null;
     }
 
+    @Override
     public boolean hasSameProperties(JdbcConnection c) {
         return this.props.equals(c.getProperties());
     }
 
+    @Override
     public Properties getProperties() {
         return this.props;
     }
 
     @Deprecated
+    @Override
     public boolean hasTriedMaster() {
         return this.hasTriedMasterFlag;
     }
@@ -1457,47 +1373,27 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public boolean isClosed() {
         return this.session.isClosed();
     }
 
+    @Override
     public boolean isInGlobalTx() {
         return this.isInGlobalTx;
     }
 
-    /**
-     * Is this connection connected to the first host in the list if
-     * there is a list of servers in the URL?
-     * 
-     * @return true if this connection is connected to the first in
-     *         the list.
-     */
+    @Override
     public boolean isMasterConnection() {
         return false; // handled higher up
     }
 
-    /**
-     * Tests to see if the connection is in Read Only Mode.
-     * 
-     * @return true if the connection is read only
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public boolean isReadOnly() throws SQLException {
         return isReadOnly(true);
     }
 
-    /**
-     * Tests to see if the connection is in Read Only Mode.
-     * 
-     * @param useSessionStatus
-     *            in some cases, for example when restoring connection with autoReconnect=true,
-     *            we can rely only on saved readOnly state, so use useSessionStatus=false in that case
-     * 
-     * @return true if the connection is read only
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
         if (useSessionStatus && !this.session.isClosed() && versionMeetsMinimum(5, 6, 5) && !this.useLocalSessionState.getValue()
                 && this.readOnlyPropagatesToServer.getValue()) {
@@ -1518,6 +1414,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return this.readOnly;
     }
 
+    @Override
     public boolean isSameResource(JdbcConnection otherConnection) {
         synchronized (getConnectionMutex()) {
             if (otherConnection == null) {
@@ -1566,31 +1463,17 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     private int autoIncrementIncrement = 0;
 
+    @Override
     public int getAutoIncrementIncrement() {
         return this.autoIncrementIncrement;
     }
 
-    /**
-     * Is the server configured to use lower-case table names only?
-     * 
-     * @return true if lower_case_table_names is 'on'
-     */
+    @Override
     public boolean lowerCaseTableNames() {
         return this.session.getServerSession().isLowerCaseTableNames();
     }
 
-    /**
-     * A driver may convert the JDBC sql grammar into its system's native SQL
-     * grammar prior to sending it; nativeSQL returns the native form of the
-     * statement that the driver would have sent.
-     * 
-     * @param sql
-     *            a SQL statement that may contain one or more '?' parameter
-     *            placeholders
-     * @return the native form of this statement
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public String nativeSQL(String sql) throws SQLException {
         if (sql == null) {
             return null;
@@ -1624,12 +1507,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return CallableStatement.getInstance(getMultiHostSafeProxy(), parsedSql, this.database, isFunctionCall);
     }
 
-    /**
-     * Detect if the connection is still good
-     * 
-     * @throws SQLException
-     *             if the ping fails
-     */
+    @Override
     public void ping() throws SQLException {
         pingInternal(true, 0);
     }
@@ -1639,30 +1517,13 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         this.session.ping(checkForClosedConnection, timeoutMillis);
     }
 
-    /**
-     * @param sql
-     * @throws SQLException
-     */
+    @Override
     public java.sql.CallableStatement prepareCall(String sql) throws SQLException {
 
         return prepareCall(sql, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
-    /**
-     * JDBC 2.0 Same as prepareCall() above, but allows the default result set
-     * type and result set concurrency type to be overridden.
-     * 
-     * @param sql
-     *            the SQL representing the callable statement
-     * @param resultSetType
-     *            a result set type, see ResultSet.TYPE_XXX
-     * @param resultSetConcurrency
-     *            a concurrency type, see ResultSet.CONCUR_XXX
-     * @return a new CallableStatement object containing the pre-compiled SQL
-     *         statement
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
+    @Override
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         CallableStatement cStmt = null;
 
@@ -1695,6 +1556,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return cStmt;
     }
 
+    @Override
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
@@ -1707,31 +1569,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return cStmt;
     }
 
-    /**
-     * A SQL statement with or without IN parameters can be pre-compiled and
-     * stored in a PreparedStatement object. This object can then be used to
-     * efficiently execute this statement multiple times.
-     * <p>
-     * <B>Note:</B> This method is optimized for handling parametric SQL statements that benefit from precompilation if the driver supports precompilation. In
-     * this case, the statement is not sent to the database until the PreparedStatement is executed. This has no direct effect on users; however it does affect
-     * which method throws certain java.sql.SQLExceptions
-     * </p>
-     * <p>
-     * MySQL does not support precompilation of statements, so they are handled by the driver.
-     * </p>
-     * 
-     * @param sql
-     *            a SQL statement that may contain one or more '?' IN parameter
-     *            placeholders
-     * @return a new PreparedStatement object containing the pre-compiled
-     *         statement.
-     * @exception SQLException
-     *                if a database access error occurs.
-     */
+    @Override
     public java.sql.PreparedStatement prepareStatement(String sql) throws SQLException {
         return prepareStatement(sql, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
+    @Override
     public java.sql.PreparedStatement prepareStatement(String sql, int autoGenKeyIndex) throws SQLException {
         java.sql.PreparedStatement pStmt = prepareStatement(sql);
 
@@ -1740,21 +1583,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return pStmt;
     }
 
-    /**
-     * JDBC 2.0 Same as prepareStatement() above, but allows the default result
-     * set type and result set concurrency type to be overridden.
-     * 
-     * @param sql
-     *            the SQL query containing place holders
-     * @param resultSetType
-     *            a result set type, see ResultSet.TYPE_XXX
-     * @param resultSetConcurrency
-     *            a concurrency type, see ResultSet.CONCUR_XXX
-     * @return a new PreparedStatement object containing the pre-compiled SQL
-     *         statement
-     * @exception SQLException
-     *                if a database-access error occurs.
-     */
+    @Override
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
@@ -1829,6 +1658,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
@@ -1839,6 +1669,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return prepareStatement(sql, resultSetType, resultSetConcurrency);
     }
 
+    @Override
     public java.sql.PreparedStatement prepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException {
         java.sql.PreparedStatement pStmt = prepareStatement(sql);
 
@@ -1847,6 +1678,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return pStmt;
     }
 
+    @Override
     public java.sql.PreparedStatement prepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException {
         java.sql.PreparedStatement pStmt = prepareStatement(sql);
 
@@ -1855,16 +1687,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return pStmt;
     }
 
-    /**
-     * Closes connection and frees resources.
-     * 
-     * @param calledExplicitly
-     *            is this being called from close()
-     * @param issueRollback
-     *            should a rollback() be issued?
-     * @throws SQLException
-     *             if an error occurs
-     */
+    @Override
     public void realClose(boolean calledExplicitly, boolean issueRollback, boolean skipLocalTeardown, Throwable reason) throws SQLException {
         SQLException sqlEx = null;
 
@@ -1937,6 +1760,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     }
 
+    @Override
     public void recachePreparedStatement(JdbcPreparedStatement pstmt) throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
@@ -1954,6 +1778,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public void decachePreparedStatement(JdbcPreparedStatement pstmt) throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
@@ -1965,42 +1790,24 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * Register a Statement instance as open.
-     * 
-     * @param stmt
-     *            the Statement instance to remove
-     */
+    @Override
     public void registerStatement(JdbcStatement stmt) {
         this.openStatements.addIfAbsent(stmt);
     }
 
+    @Override
     public void releaseSavepoint(Savepoint arg0) throws SQLException {
         // this is a no-op
     }
 
-    /**
-     * Resets the server-side state of this connection. Doesn't work if isParanoid() is set (it will become a
-     * no-op in this case). Usually only used from connection pooling code.
-     * 
-     * @throws SQLException
-     *             if the operation fails while resetting server state.
-     */
+    @Override
     public void resetServerState() throws SQLException {
         if (!this.propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_paranoid).getValue() && (this.session != null)) {
             changeUser(this.user, this.password);
         }
     }
 
-    /**
-     * The method rollback() drops all changes made since the previous
-     * commit/rollback and releases any database locks currently held by the
-     * Connection.
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
-     * @see commit
-     */
+    @Override
     public void rollback() throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
@@ -2051,6 +1858,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public void rollback(final Savepoint savepoint) throws SQLException {
 
         synchronized (getConnectionMutex()) {
@@ -2136,6 +1944,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
         String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
@@ -2143,6 +1952,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
+    @Override
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException {
         String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
@@ -2154,12 +1964,14 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return pStmt;
     }
 
+    @Override
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
         return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), resultSetType, resultSetConcurrency);
     }
 
+    @Override
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
             throws SQLException {
         if (this.pedantic.getValue()) {
@@ -2171,6 +1983,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return serverPrepareStatement(sql, resultSetType, resultSetConcurrency);
     }
 
+    @Override
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException {
 
         ClientPreparedStatement pStmt = (ClientPreparedStatement) serverPrepareStatement(sql);
@@ -2180,6 +1993,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return pStmt;
     }
 
+    @Override
     public java.sql.PreparedStatement serverPrepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException {
         ClientPreparedStatement pStmt = (ClientPreparedStatement) serverPrepareStatement(sql);
 
@@ -2188,24 +2002,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return pStmt;
     }
 
-    /**
-     * If a connection is in auto-commit mode, than all its SQL statements will
-     * be executed and committed as individual transactions. Otherwise, its SQL
-     * statements are grouped into transactions that are terminated by either
-     * commit() or rollback(). By default, new connections are in auto-commit
-     * mode. The commit occurs when the statement completes or the next execute
-     * occurs, whichever comes first. In the case of statements returning a
-     * ResultSet, the statement completes when the last row of the ResultSet has
-     * been retrieved or the ResultSet has been closed. In advanced cases, a
-     * single statement may return multiple results as well as output parameter
-     * values. Here the commit occurs when all results and output param values
-     * have been retrieved.
-     * 
-     * @param autoCommitFlag
-     *            true enables auto-commit; false disables it
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public void setAutoCommit(final boolean autoCommitFlag) throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
@@ -2274,6 +2071,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      * @throws SQLException
      *             if a database access error occurs
      */
+    @Override
     public void setCatalog(final String catalog) throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
@@ -2328,38 +2126,28 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * @param failedOver
-     *            The failedOver to set.
-     */
+    @Override
     public void setFailedOver(boolean flag) {
         // handled higher up
     }
 
+    @Override
     public void setHoldability(int arg0) throws SQLException {
         // do nothing
     }
 
+    @Override
     public void setInGlobalTx(boolean flag) {
         this.isInGlobalTx = flag;
     }
 
-    /**
-     * You can put a connection in read-only mode as a hint to enable database
-     * optimizations <B>Note:</B> setReadOnly cannot be called while in the
-     * middle of a transaction
-     * 
-     * @param readOnlyFlag
-     *            -
-     *            true enables read-only mode; false disables it
-     * @exception SQLException
-     *                if a database access error occurs
-     */
+    @Override
     public void setReadOnly(boolean readOnlyFlag) throws SQLException {
 
         setReadOnlyInternal(readOnlyFlag);
     }
 
+    @Override
     public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
         synchronized (getConnectionMutex()) {
             // note this this is safe even inside a transaction
@@ -2374,6 +2162,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public java.sql.Savepoint setSavepoint() throws SQLException {
         MysqlSavepoint savepoint = new MysqlSavepoint(getExceptionInterceptor());
 
@@ -2404,6 +2193,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public java.sql.Savepoint setSavepoint(String name) throws SQLException {
         synchronized (getConnectionMutex()) {
             MysqlSavepoint savepoint = new MysqlSavepoint(name, getExceptionInterceptor());
@@ -2414,10 +2204,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * @param level
-     * @throws SQLException
-     */
+    @Override
     public void setTransactionIsolation(int level) throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
@@ -2475,15 +2262,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * JDBC 2.0 Install a type-map object as the default type-map for this
-     * connection
-     * 
-     * @param map
-     *            the type mapping
-     * @throws SQLException
-     *             if a database error occurs.
-     */
+    @Override
     public void setTypeMap(java.util.Map<String, Class<?>> map) throws SQLException {
         synchronized (getConnectionMutex()) {
             this.typeMap = map;
@@ -2520,12 +2299,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * Used by MiniAdmin to shutdown a MySQL server
-     * 
-     * @throws SQLException
-     *             if the command can not be issued.
-     */
+    @Override
     public void shutdownServer() throws SQLException {
         try {
             this.session.shutdownServer();
@@ -2539,12 +2313,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * Remove the given statement from the list of open statements
-     * 
-     * @param stmt
-     *            the Statement instance to remove
-     */
+    @Override
     public void unregisterStatement(JdbcStatement stmt) {
         this.openStatements.remove(stmt);
     }
@@ -2553,20 +2322,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return this.session.versionMeetsMinimum(major, minor, subminor);
     }
 
-    /**
-     * Returns cached metadata (or null if not cached) for the given query,
-     * which must match _exactly_.
-     * 
-     * This method is synchronized by the caller on getMutex(), so if
-     * calling this method from internal code in the driver, make sure it's
-     * synchronized on the mutex that guards communication with the server.
-     * 
-     * @param sql
-     *            the query that is the key to the cache
-     * 
-     * @return metadata cached for the given SQL, or none if it doesn't
-     *         exist.
-     */
+    @Override
     public CachedResultSetMetaData getCachedMetaData(String sql) {
         if (this.resultSetMetadataCache != null) {
             synchronized (this.resultSetMetadataCache) {
@@ -2577,23 +2333,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return null; // no cache exists
     }
 
-    /**
-     * Caches CachedResultSetMetaData that has been placed in the cache using
-     * the given SQL as a key.
-     * 
-     * This method is synchronized by the caller on getMutex(), so if
-     * calling this method from internal code in the driver, make sure it's
-     * synchronized on the mutex that guards communication with the server.
-     * 
-     * @param sql
-     *            the query that the metadata pertains too.
-     * @param cachedMetaData
-     *            metadata (if it exists) to populate the cache.
-     * @param resultSet
-     *            the result set to retreive metadata from, or apply to.
-     * 
-     * @throws SQLException
-     */
+    @Override
     public void initializeResultsMetadataFromCache(String sql, CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet) throws SQLException {
 
         if (cachedMetaData == null) {
@@ -2622,30 +2362,17 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * Returns the comment that will be prepended to all statements
-     * sent to the server.
-     * 
-     * @return the comment that will be prepended to all statements
-     *         sent to the server.
-     */
+    @Override
     public String getStatementComment() {
         return this.session.getProtocol().getQueryComment();
     }
 
-    /**
-     * Sets the comment that will be prepended to all statements
-     * sent to the server. Do not use slash-star or star-slash tokens
-     * in the comment as these will be added by the driver itself.
-     * 
-     * @param comment
-     *            the comment that will be prepended to all statements
-     *            sent to the server.
-     */
+    @Override
     public void setStatementComment(String comment) {
         this.session.getProtocol().setQueryComment(comment);
     }
 
+    @Override
     public void transactionBegun() {
         synchronized (getConnectionMutex()) {
             if (this.connectionLifecycleInterceptors != null) {
@@ -2654,6 +2381,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public void transactionCompleted() {
         synchronized (getConnectionMutex()) {
             if (this.connectionLifecycleInterceptors != null) {
@@ -2662,6 +2390,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public boolean storesLowerCaseTableName() {
         return this.session.getServerSession().storesLowerCaseTableNames();
     }
@@ -2673,6 +2402,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return this.exceptionInterceptor;
     }
 
+    @Override
     public boolean isServerLocal() throws SQLException {
         synchronized (getConnectionMutex()) {
             try {
@@ -2684,23 +2414,14 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * Returns the sql select limit max-rows for this session.
-     */
+    @Override
     public int getSessionMaxRows() {
         synchronized (getConnectionMutex()) {
             return this.session.getSessionMaxRows();
         }
     }
 
-    /**
-     * Sets the sql select limit max-rows for this session if different from current.
-     * 
-     * @param max
-     *            the new max-rows value to set.
-     * @throws SQLException
-     *             if a database error occurs issuing the statement that sets the limit.
-     */
+    @Override
     public void setSessionMaxRows(int max) throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.session.getSessionMaxRows() != max) {
@@ -2711,13 +2432,14 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    // until we flip catalog/schema, this is a no-op
+    @Override
     public void setSchema(String schema) throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
         }
     }
 
+    @Override
     public String getSchema() throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
@@ -2726,36 +2448,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * Terminates an open connection. Calling <code>abort</code> results in:
-     * <ul>
-     * <li>The connection marked as closed
-     * <li>Closes any physical connection to the database
-     * <li>Releases resources used by the connection
-     * <li>Insures that any thread that is currently accessing the connection will either progress to completion or throw an <code>SQLException</code>.
-     * </ul>
-     * <p>
-     * Calling <code>abort</code> marks the connection closed and releases any resources. Calling <code>abort</code> on a closed connection is a no-op.
-     * <p>
-     * It is possible that the aborting and releasing of the resources that are held by the connection can take an extended period of time. When the
-     * <code>abort</code> method returns, the connection will have been marked as closed and the <code>Executor</code> that was passed as a parameter to abort
-     * may still be executing tasks to release resources.
-     * <p>
-     * This method checks to see that there is an <code>SQLPermission</code> object before allowing the method to proceed. If a <code>SecurityManager</code>
-     * exists and its <code>checkPermission</code> method denies calling <code>abort</code>, this method throws a <code>java.lang.SecurityException</code>.
-     * 
-     * @param executor
-     *            The <code>Executor</code> implementation which will
-     *            be used by <code>abort</code>.
-     * @throws java.sql.SQLException
-     *             if a database access error occurs or
-     *             the {@code executor} is {@code null},
-     * @throws java.lang.SecurityException
-     *             if a security manager exists and its <code>checkPermission</code> method denies calling <code>abort</code>
-     * @see SecurityManager#checkPermission
-     * @see Executor
-     * @since 1.7
-     */
+    @Override
     public void abort(Executor executor) throws SQLException {
         SecurityManager sec = System.getSecurityManager();
 
@@ -2769,6 +2462,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
         executor.execute(new Runnable() {
 
+            @Override
             public void run() {
                 try {
                     abortInternal();
@@ -2779,6 +2473,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         });
     }
 
+    @Override
     public void setNetworkTimeout(Executor executor, final int milliseconds) throws SQLException {
         synchronized (getConnectionMutex()) {
             SecurityManager sec = System.getSecurityManager();
@@ -2806,6 +2501,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             this.milliseconds = milliseconds;
         }
 
+        @Override
         public void run() {
             JdbcConnection conn = this.connRef.get();
             if (conn != null) {
@@ -2816,6 +2512,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public int getNetworkTimeout() throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
@@ -2823,43 +2520,27 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public Clob createClob() {
         return new com.mysql.cj.jdbc.Clob(getExceptionInterceptor());
     }
 
+    @Override
     public Blob createBlob() {
         return new com.mysql.cj.jdbc.Blob(getExceptionInterceptor());
     }
 
+    @Override
     public NClob createNClob() {
         return new com.mysql.cj.jdbc.NClob(getExceptionInterceptor());
     }
 
+    @Override
     public SQLXML createSQLXML() throws SQLException {
         return new MysqlSQLXML(getExceptionInterceptor());
     }
 
-    /**
-     * Returns true if the connection has not been closed and is still valid.
-     * The driver shall submit a query on the connection or use some other
-     * mechanism that positively verifies the connection is still valid when
-     * this method is called.
-     * <p>
-     * The query submitted by the driver to validate the connection shall be executed in the context of the current transaction.
-     * 
-     * @param timeout
-     *            - The time in seconds to wait for the database operation
-     *            used to validate the connection to complete. If
-     *            the timeout period expires before the operation
-     *            completes, this method returns false. A value of
-     *            0 indicates a timeout is not applied to the
-     *            database operation.
-     *            <p>
-     * @return true if the connection is valid, false otherwise
-     * @exception SQLException
-     *                if the value supplied for <code>timeout</code> is less then 0
-     * @since 1.6
-     */
+    @Override
     public boolean isValid(int timeout) throws SQLException {
         synchronized (getConnectionMutex()) {
             if (isClosed()) {
@@ -2889,6 +2570,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     private ClientInfoProvider infoProvider;
 
+    @Override
     public ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.infoProvider == null) {
@@ -2920,6 +2602,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public void setClientInfo(String name, String value) throws SQLClientInfoException {
         try {
             getClientInfoProviderImpl().setClientInfo(this, name, value);
@@ -2933,6 +2616,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public void setClientInfo(Properties properties) throws SQLClientInfoException {
         try {
             getClientInfoProviderImpl().setClientInfo(this, properties);
@@ -2946,38 +2630,27 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
+    @Override
     public String getClientInfo(String name) throws SQLException {
         return getClientInfoProviderImpl().getClientInfo(this, name);
     }
 
+    @Override
     public Properties getClientInfo() throws SQLException {
         return getClientInfoProviderImpl().getClientInfo(this);
     }
 
+    @Override
     public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
+    @Override
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
-    /**
-     * Returns an object that implements the given interface to allow access to non-standard methods,
-     * or standard methods not exposed by the proxy.
-     * The result may be either the object found to implement the interface or a proxy for that object.
-     * If the receiver implements the interface then that is the object. If the receiver is a wrapper
-     * and the wrapped object implements the interface then that is the object. Otherwise the object is
-     * the result of calling <code>unwrap</code> recursively on the wrapped object. If the receiver is not a
-     * wrapper and does not implement the interface, then an <code>SQLException</code> is thrown.
-     * 
-     * @param iface
-     *            A Class defining an interface that the result must implement.
-     * @return an object that implements the interface. May be a proxy for the actual implementing object.
-     * @throws java.sql.SQLException
-     *             If no object found that implements the interface
-     * @since 1.6
-     */
+    @Override
     public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
         try {
             // This works for classes that aren't actually wrapping
@@ -2989,23 +2662,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * Returns true if this either implements the interface argument or is directly or indirectly a wrapper
-     * for an object that does. Returns false otherwise. If this implements the interface then return true,
-     * else if this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped
-     * object. If this does not implement the interface and is not a wrapper, return false.
-     * This method should be implemented as a low-cost operation compared to <code>unwrap</code> so that
-     * callers can use this method to avoid expensive <code>unwrap</code> calls that may fail. If this method
-     * returns true then calling <code>unwrap</code> with the same argument should succeed.
-     * 
-     * @param interfaces
-     *            a Class defining an interface.
-     * @return true if this implements the interface or directly or indirectly wraps an object that does.
-     * @throws java.sql.SQLException
-     *             if an error occurs while determining whether this is a wrapper
-     *             for an object with the given interface.
-     * @since 1.6
-     */
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
 
         // This works for classes that aren't actually wrapping

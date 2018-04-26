@@ -286,6 +286,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             return this.parameterMap.get(name);
         }
 
+        @Override
         public String getParameterClassName(int arg0) throws SQLException {
             String mysqlTypeName = getParameterTypeName(arg0);
 
@@ -311,6 +312,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
         }
 
+        @Override
         public int getParameterCount() throws SQLException {
             if (this.parameterList == null) {
                 return 0;
@@ -319,42 +321,49 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             return this.parameterList.size();
         }
 
+        @Override
         public int getParameterMode(int arg0) throws SQLException {
             checkBounds(arg0);
 
             return getParameter(arg0 - 1).inOutModifier;
         }
 
+        @Override
         public int getParameterType(int arg0) throws SQLException {
             checkBounds(arg0);
 
             return getParameter(arg0 - 1).jdbcType;
         }
 
+        @Override
         public String getParameterTypeName(int arg0) throws SQLException {
             checkBounds(arg0);
 
             return getParameter(arg0 - 1).typeName;
         }
 
+        @Override
         public int getPrecision(int arg0) throws SQLException {
             checkBounds(arg0);
 
             return getParameter(arg0 - 1).precision;
         }
 
+        @Override
         public int getScale(int arg0) throws SQLException {
             checkBounds(arg0);
 
             return getParameter(arg0 - 1).scale;
         }
 
+        @Override
         public int isNullable(int arg0) throws SQLException {
             checkBounds(arg0);
 
             return getParameter(arg0 - 1).nullability;
         }
 
+        @Override
         public boolean isSigned(int arg0) throws SQLException {
             checkBounds(arg0);
 
@@ -369,9 +378,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             return this.numParameters;
         }
 
-        /**
-         * @see java.sql.Wrapper#isWrapperFor(Class)
-         */
+        @Override
         public boolean isWrapperFor(Class<?> iface) throws SQLException {
             checkClosed();
 
@@ -379,9 +386,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             return iface.isInstance(this);
         }
 
-        /**
-         * @see java.sql.Wrapper#unwrap(Class)
-         */
+        @Override
         public <T> T unwrap(Class<T> iface) throws java.sql.SQLException {
             try {
                 // This works for classes that aren't actually wrapping anything
@@ -924,9 +929,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getArray(int)
-     */
+    @Override
     public Array getArray(int i) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(i);
@@ -939,9 +942,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getArray(java.lang.String)
-     */
+    @Override
     public Array getArray(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -954,9 +955,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getBigDecimal(int)
-     */
+    @Override
     public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -969,15 +968,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @param parameterIndex
-     * @param scale
-     * 
-     * @throws SQLException
-     * 
-     * @see java.sql.CallableStatement#getBigDecimal(int, int)
-     * @deprecated
-     */
+    @Override
     @Deprecated
     public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -991,9 +982,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getBigDecimal(java.lang.String)
-     */
+    @Override
     public BigDecimal getBigDecimal(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1006,9 +995,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getBlob(int)
-     */
+    @Override
     public Blob getBlob(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1021,9 +1008,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getBlob(java.lang.String)
-     */
+    @Override
     public Blob getBlob(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1036,9 +1021,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getBoolean(int)
-     */
+    @Override
     public boolean getBoolean(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1051,9 +1034,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getBoolean(java.lang.String)
-     */
+    @Override
     public boolean getBoolean(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1066,9 +1047,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getByte(int)
-     */
+    @Override
     public byte getByte(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1081,9 +1060,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getByte(java.lang.String)
-     */
+    @Override
     public byte getByte(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1096,9 +1073,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getBytes(int)
-     */
+    @Override
     public byte[] getBytes(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1111,9 +1086,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getBytes(java.lang.String)
-     */
+    @Override
     public byte[] getBytes(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1126,9 +1099,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getClob(int)
-     */
+    @Override
     public Clob getClob(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1141,9 +1112,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getClob(java.lang.String)
-     */
+    @Override
     public Clob getClob(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1156,9 +1125,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getDate(int)
-     */
+    @Override
     public Date getDate(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1171,9 +1138,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getDate(int, java.util.Calendar)
-     */
+    @Override
     public Date getDate(int parameterIndex, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1186,9 +1151,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getDate(java.lang.String)
-     */
+    @Override
     public Date getDate(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1201,9 +1164,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getDate(java.lang.String, java.util.Calendar)
-     */
+    @Override
     public Date getDate(String parameterName, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1216,9 +1177,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getDouble(int)
-     */
+    @Override
     public double getDouble(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1231,9 +1190,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getDouble(java.lang.String)
-     */
+    @Override
     public double getDouble(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1246,9 +1203,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getFloat(int)
-     */
+    @Override
     public float getFloat(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1261,9 +1216,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getFloat(java.lang.String)
-     */
+    @Override
     public float getFloat(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1276,9 +1229,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getInt(int)
-     */
+    @Override
     public int getInt(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1291,9 +1242,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getInt(java.lang.String)
-     */
+    @Override
     public int getInt(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1306,9 +1255,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getLong(int)
-     */
+    @Override
     public long getLong(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1321,9 +1268,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getLong(java.lang.String)
-     */
+    @Override
     public long getLong(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1374,9 +1319,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getObject(int)
-     */
+    @Override
     public Object getObject(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
@@ -1391,9 +1334,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getObject(int, java.util.Map)
-     */
+    @Override
     public Object getObject(int parameterIndex, Map<String, Class<?>> map) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1406,9 +1347,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getObject(java.lang.String)
-     */
+    @Override
     public Object getObject(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1421,9 +1360,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getObject(java.lang.String, java.util.Map)
-     */
+    @Override
     public Object getObject(String parameterName, Map<String, Class<?>> map) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1436,6 +1373,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
+    @Override
     public <T> T getObject(int parameterIndex, Class<T> type) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1449,6 +1387,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
+    @Override
     public <T> T getObject(String parameterName, Class<T> type) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1503,9 +1442,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getRef(int)
-     */
+    @Override
     public Ref getRef(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1518,9 +1455,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getRef(java.lang.String)
-     */
+    @Override
     public Ref getRef(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1533,9 +1468,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getShort(int)
-     */
+    @Override
     public short getShort(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1548,9 +1481,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getShort(java.lang.String)
-     */
+    @Override
     public short getShort(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1563,9 +1494,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getString(int)
-     */
+    @Override
     public String getString(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1578,9 +1507,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getString(java.lang.String)
-     */
+    @Override
     public String getString(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1593,9 +1520,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getTime(int)
-     */
+    @Override
     public Time getTime(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1608,9 +1533,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getTime(int, java.util.Calendar)
-     */
+    @Override
     public Time getTime(int parameterIndex, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1623,9 +1546,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getTime(java.lang.String)
-     */
+    @Override
     public Time getTime(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1638,9 +1559,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getTime(java.lang.String, java.util.Calendar)
-     */
+    @Override
     public Time getTime(String parameterName, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1653,9 +1572,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getTimestamp(int)
-     */
+    @Override
     public Timestamp getTimestamp(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1668,9 +1585,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getTimestamp(int, java.util.Calendar)
-     */
+    @Override
     public Timestamp getTimestamp(int parameterIndex, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1683,9 +1598,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getTimestamp(java.lang.String)
-     */
+    @Override
     public Timestamp getTimestamp(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1698,9 +1611,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getTimestamp(java.lang.String, java.util.Calendar)
-     */
+    @Override
     public Timestamp getTimestamp(String parameterName, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1713,9 +1624,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getURL(int)
-     */
+    @Override
     public URL getURL(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1728,9 +1637,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#getURL(java.lang.String)
-     */
+    @Override
     public URL getURL(String parameterName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
@@ -1774,6 +1681,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         paramDescriptor.desiredMysqlType = mysqlType;
     }
 
+    @Override
     public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
         try {
             MysqlType mt = MysqlType.getByJdbcType(sqlType);
@@ -1784,6 +1692,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
+    @Override
     public void registerOutParameter(int parameterIndex, SQLType sqlType) throws SQLException {
         if (sqlType instanceof MysqlType) {
             registerOutParameter(parameterIndex, (MysqlType) sqlType);
@@ -1796,10 +1705,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         registerOutParameter(parameterIndex, mysqlType); // TODO is that correct that we ignore scale?
     }
 
+    @Override
     public void registerOutParameter(int parameterIndex, int sqlType, int scale) throws SQLException {
         registerOutParameter(parameterIndex, sqlType); // TODO is that correct that we ignore scale?
     }
 
+    @Override
     public void registerOutParameter(int parameterIndex, SQLType sqlType, int scale) throws SQLException {
         if (sqlType instanceof MysqlType) {
             registerOutParameter(parameterIndex, (MysqlType) sqlType, scale);
@@ -1812,6 +1723,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         registerOutParameter(parameterIndex, mysqlType); // TODO is that correct that we ignore typeName?
     }
 
+    @Override
     public void registerOutParameter(int parameterIndex, int sqlType, String typeName) throws SQLException {
         try {
             MysqlType mt = MysqlType.getByJdbcType(sqlType);
@@ -1822,6 +1734,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
+    @Override
     public void registerOutParameter(int parameterIndex, SQLType sqlType, String typeName) throws SQLException {
         if (sqlType instanceof MysqlType) {
             registerOutParameter(parameterIndex, (MysqlType) sqlType, typeName);
@@ -1830,15 +1743,14 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#registerOutParameter(java.lang.String, int)
-     */
+    @Override
     public void registerOutParameter(String parameterName, int sqlType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             registerOutParameter(getNamedParamIndex(parameterName, true), sqlType);
         }
     }
 
+    @Override
     public void registerOutParameter(String parameterName, SQLType sqlType) throws SQLException {
         if (sqlType instanceof MysqlType) {
             registerOutParameter(getNamedParamIndex(parameterName, true), (MysqlType) sqlType);
@@ -1847,13 +1759,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#registerOutParameter(java.lang.String, int, int)
-     */
+    @Override
     public void registerOutParameter(String parameterName, int sqlType, int scale) throws SQLException {
         registerOutParameter(getNamedParamIndex(parameterName, true), sqlType, scale);
     }
 
+    @Override
     public void registerOutParameter(String parameterName, SQLType sqlType, int scale) throws SQLException {
         if (sqlType instanceof MysqlType) {
             registerOutParameter(getNamedParamIndex(parameterName, true), (MysqlType) sqlType, scale);
@@ -1862,13 +1773,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#registerOutParameter(java.lang.String, int, java.lang.String)
-     */
+    @Override
     public void registerOutParameter(String parameterName, int sqlType, String typeName) throws SQLException {
         registerOutParameter(getNamedParamIndex(parameterName, true), sqlType, typeName);
     }
 
+    @Override
     public void registerOutParameter(String parameterName, SQLType sqlType, String typeName) throws SQLException {
         if (sqlType instanceof MysqlType) {
             registerOutParameter(getNamedParamIndex(parameterName, true), (MysqlType) sqlType, typeName);
@@ -1958,79 +1868,57 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#setAsciiStream(java.lang.String, java.io.InputStream, int)
-     */
+    @Override
     public void setAsciiStream(String parameterName, InputStream x, int length) throws SQLException {
         setAsciiStream(getNamedParamIndex(parameterName, false), x, length);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setBigDecimal(java.lang.String, java.math.BigDecimal)
-     */
+    @Override
     public void setBigDecimal(String parameterName, BigDecimal x) throws SQLException {
         setBigDecimal(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setBinaryStream(java.lang.String, java.io.InputStream, int)
-     */
+    @Override
     public void setBinaryStream(String parameterName, InputStream x, int length) throws SQLException {
         setBinaryStream(getNamedParamIndex(parameterName, false), x, length);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setBoolean(java.lang.String, boolean)
-     */
+    @Override
     public void setBoolean(String parameterName, boolean x) throws SQLException {
         setBoolean(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setByte(java.lang.String, byte)
-     */
+    @Override
     public void setByte(String parameterName, byte x) throws SQLException {
         setByte(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setBytes(java.lang.String, byte[])
-     */
+    @Override
     public void setBytes(String parameterName, byte[] x) throws SQLException {
         setBytes(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setCharacterStream(java.lang.String, java.io.Reader, int)
-     */
+    @Override
     public void setCharacterStream(String parameterName, Reader reader, int length) throws SQLException {
         setCharacterStream(getNamedParamIndex(parameterName, false), reader, length);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setDate(java.lang.String, java.sql.Date)
-     */
+    @Override
     public void setDate(String parameterName, Date x) throws SQLException {
         setDate(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setDate(java.lang.String, java.sql.Date, java.util.Calendar)
-     */
+    @Override
     public void setDate(String parameterName, Date x, Calendar cal) throws SQLException {
         setDate(getNamedParamIndex(parameterName, false), x, cal);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setDouble(java.lang.String, double)
-     */
+    @Override
     public void setDouble(String parameterName, double x) throws SQLException {
         setDouble(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setFloat(java.lang.String, float)
-     */
+    @Override
     public void setFloat(String parameterName, float x) throws SQLException {
         setFloat(getNamedParamIndex(parameterName, false), x);
     }
@@ -2103,61 +1991,49 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#setInt(java.lang.String, int)
-     */
+    @Override
     public void setInt(String parameterName, int x) throws SQLException {
         setInt(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setLong(java.lang.String, long)
-     */
+    @Override
     public void setLong(String parameterName, long x) throws SQLException {
         setLong(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setNull(java.lang.String, int)
-     */
+    @Override
     public void setNull(String parameterName, int sqlType) throws SQLException {
         setNull(getNamedParamIndex(parameterName, false), sqlType);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setNull(java.lang.String, int, java.lang.String)
-     */
+    @Override
     public void setNull(String parameterName, int sqlType, String typeName) throws SQLException {
         setNull(getNamedParamIndex(parameterName, false), sqlType, typeName);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setObject(java.lang.String, java.lang.Object)
-     */
+    @Override
     public void setObject(String parameterName, Object x) throws SQLException {
         setObject(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setObject(java.lang.String, java.lang.Object, int)
-     */
+    @Override
     public void setObject(String parameterName, Object x, int targetSqlType) throws SQLException {
         setObject(getNamedParamIndex(parameterName, false), x, targetSqlType);
     }
 
+    @Override
     public void setObject(String parameterName, Object x, SQLType targetSqlType) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             setObject(getNamedParamIndex(parameterName, false), x, targetSqlType);
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#setObject(java.lang.String, java.lang.Object, int, int)
-     */
+    @Override
     public void setObject(String parameterName, Object x, int targetSqlType, int scale) throws SQLException {
         setObject(getNamedParamIndex(parameterName, false), x, targetSqlType, scale);
     }
 
+    @Override
     public void setObject(String parameterName, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             setObject(getNamedParamIndex(parameterName, false), x, targetSqlType, scaleOrLength);
@@ -2207,58 +2083,42 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
     }
 
-    /**
-     * @see java.sql.CallableStatement#setShort(java.lang.String, short)
-     */
+    @Override
     public void setShort(String parameterName, short x) throws SQLException {
         setShort(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setString(java.lang.String, java.lang.String)
-     */
+    @Override
     public void setString(String parameterName, String x) throws SQLException {
         setString(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setTime(java.lang.String, java.sql.Time)
-     */
+    @Override
     public void setTime(String parameterName, Time x) throws SQLException {
         setTime(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setTime(java.lang.String, java.sql.Time, java.util.Calendar)
-     */
+    @Override
     public void setTime(String parameterName, Time x, Calendar cal) throws SQLException {
         setTime(getNamedParamIndex(parameterName, false), x, cal);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setTimestamp(java.lang.String, java.sql.Timestamp)
-     */
+    @Override
     public void setTimestamp(String parameterName, Timestamp x) throws SQLException {
         setTimestamp(getNamedParamIndex(parameterName, false), x);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setTimestamp(java.lang.String, java.sql.Timestamp, java.util.Calendar)
-     */
+    @Override
     public void setTimestamp(String parameterName, Timestamp x, Calendar cal) throws SQLException {
         setTimestamp(getNamedParamIndex(parameterName, false), x, cal);
     }
 
-    /**
-     * @see java.sql.CallableStatement#setURL(java.lang.String, java.net.URL)
-     */
+    @Override
     public void setURL(String parameterName, URL val) throws SQLException {
         setURL(getNamedParamIndex(parameterName, false), val);
     }
 
-    /**
-     * @see java.sql.CallableStatement#wasNull()
-     */
+    @Override
     public boolean wasNull() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             return this.outputParamWasNull;
@@ -2280,71 +2140,85 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return super.getParameterIndexOffset();
     }
 
+    @Override
     public void setAsciiStream(String parameterName, InputStream x) throws SQLException {
         setAsciiStream(getNamedParamIndex(parameterName, false), x);
 
     }
 
+    @Override
     public void setAsciiStream(String parameterName, InputStream x, long length) throws SQLException {
         setAsciiStream(getNamedParamIndex(parameterName, false), x, length);
 
     }
 
+    @Override
     public void setBinaryStream(String parameterName, InputStream x) throws SQLException {
         setBinaryStream(getNamedParamIndex(parameterName, false), x);
 
     }
 
+    @Override
     public void setBinaryStream(String parameterName, InputStream x, long length) throws SQLException {
         setBinaryStream(getNamedParamIndex(parameterName, false), x, length);
 
     }
 
+    @Override
     public void setBlob(String parameterName, Blob x) throws SQLException {
         setBlob(getNamedParamIndex(parameterName, false), x);
 
     }
 
+    @Override
     public void setBlob(String parameterName, InputStream inputStream) throws SQLException {
         setBlob(getNamedParamIndex(parameterName, false), inputStream);
 
     }
 
+    @Override
     public void setBlob(String parameterName, InputStream inputStream, long length) throws SQLException {
         setBlob(getNamedParamIndex(parameterName, false), inputStream, length);
 
     }
 
+    @Override
     public void setCharacterStream(String parameterName, Reader reader) throws SQLException {
         setCharacterStream(getNamedParamIndex(parameterName, false), reader);
 
     }
 
+    @Override
     public void setCharacterStream(String parameterName, Reader reader, long length) throws SQLException {
         setCharacterStream(getNamedParamIndex(parameterName, false), reader, length);
 
     }
 
+    @Override
     public void setClob(String parameterName, Clob x) throws SQLException {
         setClob(getNamedParamIndex(parameterName, false), x);
 
     }
 
+    @Override
     public void setClob(String parameterName, Reader reader) throws SQLException {
         setClob(getNamedParamIndex(parameterName, false), reader);
 
     }
 
+    @Override
     public void setClob(String parameterName, Reader reader, long length) throws SQLException {
         setClob(getNamedParamIndex(parameterName, false), reader, length);
 
     }
 
+    @Override
     public void setNCharacterStream(String parameterName, Reader value) throws SQLException {
         setNCharacterStream(getNamedParamIndex(parameterName, false), value);
 
     }
 
+    @Override
     public void setNCharacterStream(String parameterName, Reader value, long length) throws SQLException {
         setNCharacterStream(getNamedParamIndex(parameterName, false), value, length);
 
@@ -2424,6 +2298,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return (super.checkReadOnlySafeStatement() || this.checkReadOnlyProcedure());
     }
 
+    @Override
     public RowId getRowId(int parameterIndex) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
@@ -2434,6 +2309,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return retValue;
     }
 
+    @Override
     public RowId getRowId(String parameterName) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
@@ -2444,34 +2320,41 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return retValue;
     }
 
+    @Override
     public void setRowId(String parameterName, RowId x) throws SQLException {
         setRowId(getNamedParamIndex(parameterName, false), x);
     }
 
+    @Override
     public void setNString(String parameterName, String value) throws SQLException {
         setNString(getNamedParamIndex(parameterName, false), value);
     }
 
+    @Override
     public void setNClob(String parameterName, NClob value) throws SQLException {
         setNClob(getNamedParamIndex(parameterName, false), value);
 
     }
 
+    @Override
     public void setNClob(String parameterName, Reader reader) throws SQLException {
         setNClob(getNamedParamIndex(parameterName, false), reader);
 
     }
 
+    @Override
     public void setNClob(String parameterName, Reader reader, long length) throws SQLException {
         setNClob(getNamedParamIndex(parameterName, false), reader, length);
 
     }
 
+    @Override
     public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
         setSQLXML(getNamedParamIndex(parameterName, false), xmlObject);
 
     }
 
+    @Override
     public SQLXML getSQLXML(int parameterIndex) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
@@ -2483,6 +2366,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     }
 
+    @Override
     public SQLXML getSQLXML(String parameterName) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
@@ -2493,6 +2377,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return retValue;
     }
 
+    @Override
     public String getNString(int parameterIndex) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
@@ -2503,6 +2388,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return retValue;
     }
 
+    @Override
     public String getNString(String parameterName) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
         String retValue = rs.getNString(fixParameterName(parameterName));
@@ -2512,6 +2398,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return retValue;
     }
 
+    @Override
     public Reader getNCharacterStream(int parameterIndex) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
@@ -2522,6 +2409,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return retValue;
     }
 
+    @Override
     public Reader getNCharacterStream(String parameterName) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
         Reader retValue = rs.getNCharacterStream(fixParameterName(parameterName));
@@ -2531,9 +2419,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return retValue;
     }
 
-    /**
-     * @see java.sql.CallableStatement#getCharacterStream(int)
-     */
+    @Override
     public Reader getCharacterStream(int parameterIndex) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
@@ -2544,9 +2430,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return retValue;
     }
 
-    /**
-     * @see java.sql.CallableStatement#getCharacterStream(java.lang.String)
-     */
+    @Override
     public Reader getCharacterStream(String parameterName) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
@@ -2557,6 +2441,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return retValue;
     }
 
+    @Override
     public NClob getNClob(int parameterIndex) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
@@ -2567,6 +2452,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return retValue;
     }
 
+    @Override
     public NClob getNClob(String parameterName) throws SQLException {
         ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 

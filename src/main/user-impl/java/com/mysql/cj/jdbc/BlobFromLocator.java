@@ -151,30 +151,19 @@ public class BlobFromLocator implements java.sql.Blob {
         throw SQLError.createSQLException(Messages.getString("Blob.8"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
     }
 
-    /**
-     * @see Blob#setBinaryStream(long)
-     */
+    @Override
     public OutputStream setBinaryStream(long indexToWriteAt) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
-    /**
-     * Retrieves the BLOB designated by this Blob instance as a stream.
-     * 
-     * @return this BLOB represented as a binary stream of bytes.
-     * 
-     * @throws SQLException
-     *             if a database error occurs
-     */
+    @Override
     public java.io.InputStream getBinaryStream() throws SQLException {
         // TODO: Make fetch size configurable
         return new BufferedInputStream(new LocatorInputStream(),
                 this.creatorResultSet.getSession().getPropertySet().getMemorySizeReadableProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue());
     }
 
-    /**
-     * @see Blob#setBytes(long, byte[], int, int)
-     */
+    @Override
     public int setBytes(long writeAt, byte[] bytes, int offset, int length) throws SQLException {
         java.sql.PreparedStatement pStmt = null;
 
@@ -237,27 +226,12 @@ public class BlobFromLocator implements java.sql.Blob {
         return (int) length();
     }
 
-    /**
-     * @see Blob#setBytes(long, byte[])
-     */
+    @Override
     public int setBytes(long writeAt, byte[] bytes) throws SQLException {
         return setBytes(writeAt, bytes, 0, bytes.length);
     }
 
-    /**
-     * Returns as an array of bytes, part or all of the BLOB value that this
-     * Blob object designates.
-     * 
-     * @param pos
-     *            where to start the part of the BLOB
-     * @param length
-     *            the length of the part of the BLOB you want returned.
-     * 
-     * @return the bytes stored in the blob starting at position <code>pos</code> and having a length of <code>length</code>.
-     * 
-     * @throws SQLException
-     *             if a database error occurs
-     */
+    @Override
     public byte[] getBytes(long pos, int length) throws SQLException {
         java.sql.PreparedStatement pStmt = null;
 
@@ -279,15 +253,7 @@ public class BlobFromLocator implements java.sql.Blob {
         }
     }
 
-    /**
-     * Returns the number of bytes in the BLOB value designated by this Blob
-     * object.
-     * 
-     * @return the length of this blob
-     * 
-     * @throws SQLException
-     *             if a database error occurs
-     */
+    @Override
     public long length() throws SQLException {
         java.sql.ResultSet blobRs = null;
         java.sql.PreparedStatement pStmt = null;
@@ -346,27 +312,12 @@ public class BlobFromLocator implements java.sql.Blob {
         }
     }
 
-    /**
-     * Finds the position of the given pattern in this BLOB.
-     * 
-     * @param pattern
-     *            the pattern to find
-     * @param start
-     *            where to start finding the pattern
-     * 
-     * @return the position where the pattern is found in the BLOB, -1 if not
-     *         found
-     * 
-     * @throws SQLException
-     *             if a database error occurs
-     */
+    @Override
     public long position(java.sql.Blob pattern, long start) throws SQLException {
         return position(pattern.getBytes(0, (int) pattern.length()), start);
     }
 
-    /**
-     * @see java.sql.Blob#position(byte[], long)
-     */
+    @Override
     public long position(byte[] pattern, long start) throws SQLException {
         java.sql.ResultSet blobRs = null;
         java.sql.PreparedStatement pStmt = null;
@@ -429,9 +380,7 @@ public class BlobFromLocator implements java.sql.Blob {
         }
     }
 
-    /**
-     * @see Blob#truncate(long)
-     */
+    @Override
     public void truncate(long length) throws SQLException {
         java.sql.PreparedStatement pStmt = null;
 
@@ -652,12 +601,14 @@ public class BlobFromLocator implements java.sql.Blob {
         }
     }
 
+    @Override
     public void free() throws SQLException {
         this.creatorResultSet = null;
         this.primaryKeyColumns = null;
         this.primaryKeyValues = null;
     }
 
+    @Override
     public InputStream getBinaryStream(long pos, long length) throws SQLException {
         return new LocatorInputStream(pos, length);
     }

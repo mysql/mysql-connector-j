@@ -55,6 +55,7 @@ public class LoadBalancedMySQLConnection extends MultiHostMySQLConnection implem
         ping(true);
     }
 
+    @Override
     public void ping(boolean allConnections) throws SQLException {
         if (allConnections) {
             getThisAsProxy().doPing();
@@ -63,14 +64,17 @@ public class LoadBalancedMySQLConnection extends MultiHostMySQLConnection implem
         }
     }
 
+    @Override
     public boolean addHost(String host) throws SQLException {
         return getThisAsProxy().addHost(host);
     }
 
+    @Override
     public void removeHost(String host) throws SQLException {
         getThisAsProxy().removeHost(host);
     }
 
+    @Override
     public void removeHostWhenNotInUse(String host) throws SQLException {
         getThisAsProxy().removeHostWhenNotInUse(host);
     }

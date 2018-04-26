@@ -87,18 +87,22 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
         this.logXaCommands = logXaCommands;
     }
 
+    @Override
     public XAResource getXAResource() throws SQLException {
         return this;
     }
 
+    @Override
     public int getTransactionTimeout() throws XAException {
         return 0;
     }
 
+    @Override
     public boolean setTransactionTimeout(int arg0) throws XAException {
         return false;
     }
 
+    @Override
     public boolean isSameRM(XAResource xares) throws XAException {
 
         if (xares instanceof MysqlXAConnection) {
@@ -108,6 +112,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
         return false;
     }
 
+    @Override
     public Xid[] recover(int flag) throws XAException {
         return recover(this.underlyingConnection, flag);
     }
@@ -212,6 +217,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
         return asXids;
     }
 
+    @Override
     public int prepare(Xid xid) throws XAException {
         StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
         commandBuf.append("XA PREPARE ");
@@ -222,10 +228,12 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
         return XA_OK; // TODO: Check for read-only
     }
 
+    @Override
     public void forget(Xid xid) throws XAException {
         // mysql doesn't support this
     }
 
+    @Override
     public void rollback(Xid xid) throws XAException {
         StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
         commandBuf.append("XA ROLLBACK ");
@@ -238,6 +246,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
         }
     }
 
+    @Override
     public void end(Xid xid, int flags) throws XAException {
         StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
         commandBuf.append("XA END ");
@@ -258,6 +267,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
         dispatchCommand(commandBuf.toString());
     }
 
+    @Override
     public void start(Xid xid, int flags) throws XAException {
         StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
         commandBuf.append("XA START ");
@@ -282,6 +292,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
         this.underlyingConnection.setInGlobalTx(true);
     }
 
+    @Override
     public void commit(Xid xid, boolean onePhase) throws XAException {
         StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
         commandBuf.append("XA COMMIT ");

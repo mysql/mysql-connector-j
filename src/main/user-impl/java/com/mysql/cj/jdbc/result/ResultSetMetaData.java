@@ -77,17 +77,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         this.exceptionInterceptor = exceptionInterceptor;
     }
 
-    /**
-     * What's a column's table's catalog name?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2...
-     * 
-     * @return catalog name, or "" if not applicable
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public String getCatalogName(int column) throws SQLException {
         Field f = getField(column);
 
@@ -142,26 +132,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return getField(column).getEncoding();
     }
 
-    // --------------------------JDBC 2.0-----------------------------------
-
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Return the fully qualified name of the Java class whose instances are manufactured if ResultSet.getObject() is called to retrieve a value from the
-     * column. ResultSet.getObject() may return a subClass of the class returned by this method.
-     * </p>
-     * 
-     * @param column
-     *            the column number to retrieve information for
-     * 
-     * @return the fully qualified name of the Java class whose instances are
-     *         manufactured if ResultSet.getObject() is called to retrieve a
-     *         value from the column.
-     * 
-     * @throws SQLException
-     *             if an error occurs
-     */
+    @Override
     public String getColumnClassName(int column) throws SQLException {
         Field f = getField(column);
 
@@ -178,29 +149,12 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     }
 
-    /**
-     * Whats the number of columns in the ResultSet?
-     * 
-     * @return the number
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public int getColumnCount() throws SQLException {
         return this.fields.length;
     }
 
-    /**
-     * What is the column's normal maximum width in characters?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2, etc.
-     * 
-     * @return the maximum width
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public int getColumnDisplaySize(int column) throws SQLException {
         Field f = getField(column);
 
@@ -209,17 +163,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return lengthInBytes / this.session.getServerSession().getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
     }
 
-    /**
-     * What is the suggested column title for use in printouts and displays?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2, etc.
-     * 
-     * @return the column label
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public String getColumnLabel(int column) throws SQLException {
         if (this.useOldAliasBehavior) {
             return getColumnName(column);
@@ -228,17 +172,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return getField(column).getColumnLabel();
     }
 
-    /**
-     * What's a column's name?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2, etc.
-     * 
-     * @return the column name
-     * 
-     * @throws SQLException
-     *             if a databvase access error occurs
-     */
+    @Override
     public String getColumnName(int column) throws SQLException {
         if (this.useOldAliasBehavior) {
             return getField(column).getName();
@@ -253,32 +187,12 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return name;
     }
 
-    /**
-     * What is a column's SQL Type? (java.sql.Type int)
-     * 
-     * @param column
-     *            the first column is 1, the second is 2, etc.
-     * 
-     * @return the java.sql.Type value
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public int getColumnType(int column) throws SQLException {
         return getField(column).getJavaType();
     }
 
-    /**
-     * Whats is the column's data source specific type name?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2, etc.
-     * 
-     * @return the type name
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public String getColumnTypeName(int column) throws java.sql.SQLException {
         Field field = getField(column);
         return field.getMysqlType().getName();
@@ -304,17 +218,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return this.fields[columnIndex - 1];
     }
 
-    /**
-     * What is a column's number of decimal digits.
-     * 
-     * @param column
-     *            the first column is 1, the second is 2...
-     * 
-     * @return the precision
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public int getPrecision(int column) throws SQLException {
         Field f = getField(column);
 
@@ -374,17 +278,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return 0;
     }
 
-    /**
-     * What is a column's number of digits to the right of the decimal point?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2...
-     * 
-     * @return the scale
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public int getScale(int column) throws SQLException {
         Field f = getField(column);
 
@@ -395,34 +289,12 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return 0;
     }
 
-    /**
-     * What is a column's table's schema? This relies on us knowing the table
-     * name. The JDBC specification allows us to return "" if this is not
-     * applicable.
-     * 
-     * @param column
-     *            the first column is 1, the second is 2...
-     * 
-     * @return the Schema
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public String getSchemaName(int column) throws SQLException {
         return "";
     }
 
-    /**
-     * Whats a column's table's name?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2...
-     * 
-     * @return column name, or "" if not applicable
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public String getTableName(int column) throws SQLException {
         if (this.useOldAliasBehavior) {
             return getField(column).getTableName();
@@ -431,34 +303,14 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return getField(column).getOriginalTableName();
     }
 
-    /**
-     * Is the column automatically numbered (and thus read-only)
-     * 
-     * @param column
-     *            the first column is 1, the second is 2...
-     * 
-     * @return true if so
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public boolean isAutoIncrement(int column) throws SQLException {
         Field f = getField(column);
 
         return f.isAutoIncrement();
     }
 
-    /**
-     * Does a column's case matter?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2...
-     * 
-     * @return true if so
-     * 
-     * @throws java.sql.SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public boolean isCaseSensitive(int column) throws java.sql.SQLException {
         Field field = getField(column);
 
@@ -502,47 +354,17 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         }
     }
 
-    /**
-     * Is the column a cash value?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2...
-     * 
-     * @return true if its a cash column
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public boolean isCurrency(int column) throws SQLException {
         return false;
     }
 
-    /**
-     * Will a write on this column definately succeed?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2, etc..
-     * 
-     * @return true if so
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public boolean isDefinitelyWritable(int column) throws SQLException {
         return isWritable(column);
     }
 
-    /**
-     * Can you put a NULL in this column?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2...
-     * 
-     * @return one of the columnNullable values
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public int isNullable(int column) throws SQLException {
         if (!getField(column).isNotNull()) {
             return java.sql.ResultSetMetaData.columnNullable;
@@ -551,75 +373,26 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return java.sql.ResultSetMetaData.columnNoNulls;
     }
 
-    /**
-     * Is the column definitely not writable?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2, etc.
-     * 
-     * @return true if so
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public boolean isReadOnly(int column) throws SQLException {
         return getField(column).isReadOnly();
     }
 
-    /**
-     * Can the column be used in a WHERE clause? Basically for this, I split the
-     * functions into two types: recognised types (which are always useable),
-     * and OTHER types (which may or may not be useable). The OTHER types, for
-     * now, I will assume they are useable. We should really query the catalog
-     * to see if they are useable.
-     * 
-     * @param column
-     *            the first column is 1, the second is 2...
-     * 
-     * @return true if they can be used in a WHERE clause
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public boolean isSearchable(int column) throws SQLException {
         return true;
     }
 
-    /**
-     * Is the column a signed number?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2...
-     * 
-     * @return true if so
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public boolean isSigned(int column) throws SQLException {
         return MysqlType.isSigned(getField(column).getMysqlType());
     }
 
-    /**
-     * Is it possible for a write on the column to succeed?
-     * 
-     * @param column
-     *            the first column is 1, the second is 2, etc.
-     * 
-     * @return true if so
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
-     */
+    @Override
     public boolean isWritable(int column) throws SQLException {
         return !isReadOnly(column);
     }
 
-    /**
-     * Returns a string representation of this object
-     * 
-     * @return ...
-     */
     @Override
     public String toString() {
         StringBuilder toStringBuf = new StringBuilder();
@@ -634,17 +407,13 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         return toStringBuf.toString();
     }
 
-    /**
-     * @see java.sql.Wrapper#isWrapperFor(Class)
-     */
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         // This works for classes that aren't actually wrapping anything
         return iface.isInstance(this);
     }
 
-    /**
-     * @see java.sql.Wrapper#unwrap(Class)
-     */
+    @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         try {
             // This works for classes that aren't actually wrapping anything

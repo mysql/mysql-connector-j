@@ -81,6 +81,7 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
         }
     }
 
+    @Override
     public DriverPropertyInfo[] exposeAsDriverPropertyInfo(Properties info, int slotsToReserve) throws SQLException {
         initializeProperties(info);
 

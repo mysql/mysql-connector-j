@@ -53,14 +53,17 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
         return getCurrentConnection();
     }
 
+    @Override
     public synchronized JdbcConnection getCurrentConnection() {
         return getThisAsProxy().getCurrentConnection();
     }
 
+    @Override
     public long getConnectionGroupId() {
         return getThisAsProxy().getConnectionGroupId();
     }
 
+    @Override
     public synchronized JdbcConnection getMasterConnection() {
         return getThisAsProxy().getMasterConnection();
     }
@@ -74,22 +77,27 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
         }
     }
 
+    @Override
     public void promoteSlaveToMaster(String host) throws SQLException {
         getThisAsProxy().promoteSlaveToMaster(host);
     }
 
+    @Override
     public void removeMasterHost(String host) throws SQLException {
         getThisAsProxy().removeMasterHost(host);
     }
 
+    @Override
     public void removeMasterHost(String host, boolean waitUntilNotInUse) throws SQLException {
         getThisAsProxy().removeMasterHost(host, waitUntilNotInUse);
     }
 
+    @Override
     public boolean isHostMaster(String host) {
         return getThisAsProxy().isHostMaster(host);
     }
 
+    @Override
     public synchronized JdbcConnection getSlavesConnection() {
         return getThisAsProxy().getSlavesConnection();
     }
@@ -103,18 +111,22 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
         }
     }
 
+    @Override
     public void addSlaveHost(String host) throws SQLException {
         getThisAsProxy().addSlaveHost(host);
     }
 
+    @Override
     public void removeSlave(String host) throws SQLException {
         getThisAsProxy().removeSlave(host);
     }
 
+    @Override
     public void removeSlave(String host, boolean closeGently) throws SQLException {
         getThisAsProxy().removeSlave(host, closeGently);
     }
 
+    @Override
     public boolean isHostSlave(String host) {
         return getThisAsProxy().isHostSlave(host);
     }

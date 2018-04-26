@@ -48,6 +48,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
     public SequentialBalanceStrategy() {
     }
 
+    @Override
     public ConnectionImpl pickConnection(InvocationHandler proxy, List<String> configuredHosts, Map<String, JdbcConnection> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException {
         int numHosts = configuredHosts.size();

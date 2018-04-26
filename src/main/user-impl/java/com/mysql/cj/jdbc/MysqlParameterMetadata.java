@@ -68,10 +68,12 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         this.returnSimpleMetadata = true;
     }
 
+    @Override
     public int getParameterCount() throws SQLException {
         return this.parameterCount;
     }
 
+    @Override
     public int isNullable(int arg0) throws SQLException {
         checkAvailable();
 
@@ -85,6 +87,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         }
     }
 
+    @Override
     public boolean isSigned(int arg0) throws SQLException {
         if (this.returnSimpleMetadata) {
             checkBounds(arg0);
@@ -97,6 +100,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         return (this.metadata.isSigned(arg0));
     }
 
+    @Override
     public int getPrecision(int arg0) throws SQLException {
         if (this.returnSimpleMetadata) {
             checkBounds(arg0);
@@ -109,6 +113,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         return (this.metadata.getPrecision(arg0));
     }
 
+    @Override
     public int getScale(int arg0) throws SQLException {
         if (this.returnSimpleMetadata) {
             checkBounds(arg0);
@@ -121,6 +126,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         return (this.metadata.getScale(arg0));
     }
 
+    @Override
     public int getParameterType(int arg0) throws SQLException {
         if (this.returnSimpleMetadata) {
             checkBounds(arg0);
@@ -133,6 +139,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         return (this.metadata.getColumnType(arg0));
     }
 
+    @Override
     public String getParameterTypeName(int arg0) throws SQLException {
         if (this.returnSimpleMetadata) {
             checkBounds(arg0);
@@ -145,6 +152,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         return (this.metadata.getColumnTypeName(arg0));
     }
 
+    @Override
     public String getParameterClassName(int arg0) throws SQLException {
         if (this.returnSimpleMetadata) {
             checkBounds(arg0);
@@ -157,6 +165,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         return (this.metadata.getColumnClassName(arg0));
     }
 
+    @Override
     public int getParameterMode(int arg0) throws SQLException {
         return parameterModeIn;
     }
@@ -174,17 +183,13 @@ public class MysqlParameterMetadata implements ParameterMetaData {
         }
     }
 
-    /**
-     * @see java.sql.Wrapper#isWrapperFor(Class)
-     */
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         // This works for classes that aren't actually wrapping anything
         return iface.isInstance(this);
     }
 
-    /**
-     * @see java.sql.Wrapper#unwrap(Class)
-     */
+    @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         try {
             // This works for classes that aren't actually wrapping anything

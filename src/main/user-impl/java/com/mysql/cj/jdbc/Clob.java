@@ -65,9 +65,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         this.exceptionInterceptor = exceptionInterceptor;
     }
 
-    /**
-     * @see java.sql.Clob#getAsciiStream()
-     */
+    @Override
     public InputStream getAsciiStream() throws SQLException {
         if (this.charData != null) {
             return new ByteArrayInputStream(StringUtils.getBytes(this.charData));
@@ -76,9 +74,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         return null;
     }
 
-    /**
-     * @see java.sql.Clob#getCharacterStream()
-     */
+    @Override
     public Reader getCharacterStream() throws SQLException {
         if (this.charData != null) {
             return new StringReader(this.charData);
@@ -87,9 +83,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         return null;
     }
 
-    /**
-     * @see java.sql.Clob#getSubString(long, int)
-     */
+    @Override
     public String getSubString(long startPos, int length) throws SQLException {
         if (startPos < 1) {
             throw SQLError.createSQLException(Messages.getString("Clob.6"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
@@ -109,9 +103,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         return null;
     }
 
-    /**
-     * @see java.sql.Clob#length()
-     */
+    @Override
     public long length() throws SQLException {
         if (this.charData != null) {
             return this.charData.length();
@@ -120,16 +112,12 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         return 0;
     }
 
-    /**
-     * @see java.sql.Clob#position(Clob, long)
-     */
+    @Override
     public long position(java.sql.Clob arg0, long arg1) throws SQLException {
         return position(arg0.getSubString(1L, (int) arg0.length()), arg1);
     }
 
-    /**
-     * @see java.sql.Clob#position(String, long)
-     */
+    @Override
     public long position(String stringToFind, long startPos) throws SQLException {
         if (startPos < 1) {
             throw SQLError.createSQLException(Messages.getString("Clob.8", new Object[] { startPos }), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
@@ -149,9 +137,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         return -1;
     }
 
-    /**
-     * @see java.sql.Clob#setAsciiStream(long)
-     */
+    @Override
     public OutputStream setAsciiStream(long indexToWriteAt) throws SQLException {
         if (indexToWriteAt < 1) {
             throw SQLError.createSQLException(Messages.getString("Clob.0"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
@@ -167,9 +153,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         return bytesOut;
     }
 
-    /**
-     * @see java.sql.Clob#setCharacterStream(long)
-     */
+    @Override
     public Writer setCharacterStream(long indexToWriteAt) throws SQLException {
         if (indexToWriteAt < 1) {
             throw SQLError.createSQLException(Messages.getString("Clob.1"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
@@ -188,9 +172,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         return writer;
     }
 
-    /**
-     * @see java.sql.Clob#setString(long, String)
-     */
+    @Override
     public int setString(long pos, String str) throws SQLException {
         if (pos < 1) {
             throw SQLError.createSQLException(Messages.getString("Clob.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
@@ -213,9 +195,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         return strLength;
     }
 
-    /**
-     * @see java.sql.Clob#setString(long, String, int, int)
-     */
+    @Override
     public int setString(long pos, String str, int offset, int len) throws SQLException {
         if (pos < 1) {
             throw SQLError.createSQLException(Messages.getString("Clob.4"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
@@ -242,6 +222,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         return len;
     }
 
+    @Override
     public void streamClosed(WatchableStream out) {
         int streamSize = out.size();
 
@@ -252,9 +233,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         this.charData = StringUtils.toAsciiString(out.toByteArray());
     }
 
-    /**
-     * @see java.sql.Clob#truncate(long)
-     */
+    @Override
     public void truncate(long length) throws SQLException {
         if (length > this.charData.length()) {
             throw SQLError.createSQLException(
@@ -269,6 +248,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         this.charData = new String(charDataBeingWritten);
     }
 
+    @Override
     public void writerClosed(WatchableWriter out) {
         int dataLength = out.size();
 
@@ -279,10 +259,12 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         this.charData = out.toString();
     }
 
+    @Override
     public void free() throws SQLException {
         this.charData = null;
     }
 
+    @Override
     public Reader getCharacterStream(long pos, long length) throws SQLException {
         return new StringReader(getSubString(pos, (int) length));
     }
