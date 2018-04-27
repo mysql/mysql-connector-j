@@ -94,6 +94,11 @@ public class NamedPipeSocketFactory implements SocketFactory {
         public boolean isClosed() {
             return this.isClosed;
         }
+
+        @Override
+        public void shutdownInput() throws IOException {
+            // no-op
+        }
     }
 
     /**
