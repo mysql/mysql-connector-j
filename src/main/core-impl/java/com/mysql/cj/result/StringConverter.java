@@ -42,6 +42,9 @@ import com.mysql.cj.util.StringUtils;
 /**
  * A string converter facilitates "indirect" conversions of values from strings to other non-string types. A byte array is interpreted as a string in the given
  * character set and then inspected to guess that the actual type may be. After this, it is decoded as that type and sent to the value factory.
+ * 
+ * @param <T>
+ *            value type
  */
 public class StringConverter<T> extends BaseDecoratingValueFactory<T> {
     private String encoding;
@@ -55,6 +58,9 @@ public class StringConverter<T> extends BaseDecoratingValueFactory<T> {
 
     /**
      * Should empty strings be treated as "0"?
+     * 
+     * @param val
+     *            value
      */
     public void setEmptyStringsConvertToZero(boolean val) {
         this.emptyStringsConvertToZero = val;
@@ -64,11 +70,9 @@ public class StringConverter<T> extends BaseDecoratingValueFactory<T> {
         this.eventSink = eventSink;
     }
 
-    /**
-     * @todo context information for the profiler event is unavailable here. Context information should be provided at higher levels. this includes catalog,
-     *       query, rs metadata, etc
-     */
     private void issueConversionViaParsingWarning() {
+        // TODO context information for the profiler event is unavailable here.
+        // Context information should be provided at higher levels. this includes catalog, query, rs metadata, etc
         if (this.eventSink == null) {
             return;
         }

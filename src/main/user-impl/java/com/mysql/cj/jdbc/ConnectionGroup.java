@@ -150,6 +150,7 @@ public class ConnectionGroup {
      * @param hostPortPair
      *            The host:port pair to remove.
      * @throws SQLException
+     *             if a database access error occurs
      */
     public void removeHost(String hostPortPair) throws SQLException {
         removeHost(hostPortPair, false);
@@ -163,6 +164,7 @@ public class ConnectionGroup {
      * @param removeExisting
      *            Whether affects existing load-balanced connections or only new ones.
      * @throws SQLException
+     *             if a database access error occurs
      */
     public void removeHost(String hostPortPair, boolean removeExisting) throws SQLException {
         this.removeHost(hostPortPair, removeExisting, true);
@@ -179,6 +181,7 @@ public class ConnectionGroup {
      *            If true instructs the load-balanced connections to fail-over the underlying active connection before removing this host, otherwise remove
      *            immediately.
      * @throws SQLException
+     *             if a database access error occurs
      */
     public synchronized void removeHost(String hostPortPair, boolean removeExisting, boolean waitForGracefulFailover) throws SQLException {
         if (this.activeHosts == 1) {
@@ -214,7 +217,6 @@ public class ConnectionGroup {
      * 
      * @param hostPortPair
      *            The host:port pair to add.
-     * @throws SQLException
      */
     public void addHost(String hostPortPair) {
         addHost(hostPortPair, false);

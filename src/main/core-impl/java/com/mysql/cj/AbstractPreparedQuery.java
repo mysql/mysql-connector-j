@@ -129,6 +129,8 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
      * without overflowing max_allowed_packet.
      * 
      * @param numBatchedArgs
+     *            original batch size
+     * @return computed batch size
      */
     public int computeBatchSize(int numBatchedArgs) {
         long[] combinedValues = computeMaxParameterSetSizeAndBatchSize(numBatchedArgs);
@@ -222,7 +224,7 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
     /**
      * Creates the packet that contains the query to be sent to the server.
      * 
-     * @param bindValues
+     * @param bindings
      *            values
      * 
      * @return a Buffer filled with the query that represents this statement

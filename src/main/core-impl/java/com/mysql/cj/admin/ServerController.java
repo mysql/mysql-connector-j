@@ -313,6 +313,9 @@ public class ServerController {
     /**
      * Returns true if the property does not belong as a command-line argument
      * 
+     * @param propName
+     *            property name
+     * 
      * @return boolean if the property should not be a command-line argument.
      */
     private boolean isNonCommandLineArgument(String propName) {

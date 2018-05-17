@@ -227,6 +227,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * 
      * @param ref
      *            The JNDI Reference that holds RefAddrs for all properties
+     * @throws SQLException
+     *             if error occurs
      */
     public void setPropertiesViaRef(Reference ref) throws SQLException {
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
@@ -430,8 +432,9 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * 
      * @param name
      *            property name property name
-     * @return
+     * @return property value
      * @throws SQLException
+     *             if error occurs
      */
     protected String getStringProperty(String name) throws SQLException {
         return getStringReadableProperty(name).getValue();
@@ -445,6 +448,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @param value
      *            value
      * @throws SQLException
+     *             if error occurs
      */
     @SuppressWarnings("unchecked")
     protected void setStringProperty(String name, String value) throws SQLException {
@@ -461,8 +465,9 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * 
      * @param name
      *            property name
-     * @return
+     * @return property value
      * @throws SQLException
+     *             if error occurs
      */
     protected boolean getBooleanProperty(String name) throws SQLException {
         return getBooleanReadableProperty(name).getValue();
@@ -476,6 +481,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @param value
      *            value
      * @throws SQLException
+     *             if error occurs
      */
     @SuppressWarnings("unchecked")
     protected void setBooleanProperty(String name, boolean value) throws SQLException {
@@ -492,8 +498,9 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * 
      * @param name
      *            property name
-     * @return
+     * @return property value
      * @throws SQLException
+     *             if error occurs
      */
     protected int getIntegerProperty(String name) throws SQLException {
         return getIntegerReadableProperty(name).getValue();
@@ -507,6 +514,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @param value
      *            value
      * @throws SQLException
+     *             if error occurs
      */
     @SuppressWarnings("unchecked")
     protected void setIntegerProperty(String name, int value) throws SQLException {
@@ -523,8 +531,9 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * 
      * @param name
      *            property name
-     * @return
+     * @return property value
      * @throws SQLException
+     *             if error occurs
      */
     protected long getLongProperty(String name) throws SQLException {
         return getLongReadableProperty(name).getValue();
@@ -538,6 +547,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @param value
      *            value
      * @throws SQLException
+     *             if error occurs
      */
     @SuppressWarnings("unchecked")
     protected void setLongProperty(String name, long value) throws SQLException {
@@ -554,8 +564,9 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * 
      * @param name
      *            property name
-     * @return
+     * @return property value
      * @throws SQLException
+     *             if error occurs
      */
     protected int getMemorySizeProperty(String name) throws SQLException {
         return getMemorySizeReadableProperty(name).getValue();
@@ -569,6 +580,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @param value
      *            value
      * @throws SQLException
+     *             if error occurs
      */
     @SuppressWarnings("unchecked")
     protected void setMemorySizeProperty(String name, int value) throws SQLException {
@@ -585,8 +597,9 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * 
      * @param name
      *            property name
-     * @return
+     * @return property value
      * @throws SQLException
+     *             if error occurs
      */
     protected String getEnumProperty(String name) throws SQLException {
         return getEnumReadableProperty(name).getStringValue();
@@ -600,6 +613,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      * @param value
      *            value
      * @throws SQLException
+     *             if error occurs
      */
     protected void setEnumProperty(String name, String value) throws SQLException {
         ReadableProperty<?> prop = getEnumReadableProperty(name);

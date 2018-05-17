@@ -59,6 +59,20 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
 
     /**
      * Decode the wire-level result bytes and call the value factory.
+     * 
+     * @param columnIndex
+     *            column index
+     * @param bytes
+     *            bytes array with result data
+     * @param offset
+     *            offset in array
+     * @param length
+     *            data length
+     * @param vf
+     *            {@link ValueFactory}
+     * @param <T>
+     *            value type
+     * @return value
      */
     private <T> T decodeAndCreateReturnValue(int columnIndex, byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         Field f = this.metadata.getFields()[columnIndex];
@@ -212,7 +226,7 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
     /**
      * Get a value from a byte array. The byte array is interpreted by the {@link com.mysql.cj.protocol.ValueDecoder} which uses the value factory create the
      * return value.
-     *
+     * 
      * @param columnIndex
      *            The (internal) index of the column
      * @param bytes
@@ -223,6 +237,9 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
      *            length of value in byte array
      * @param vf
      *            value factory
+     * @param <T>
+     *            value type
+     * @return value
      */
     protected <T> T getValueFromBytes(int columnIndex, byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (getNull(columnIndex)) {

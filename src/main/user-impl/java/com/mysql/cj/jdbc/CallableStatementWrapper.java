@@ -66,8 +66,11 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
 
     /**
      * @param c
+     *            ConnectionWrapper
      * @param conn
+     *            MysqlPooledConnection
      * @param toWrap
+     *            CallableStatement
      */
     public CallableStatementWrapper(ConnectionWrapper c, MysqlPooledConnection conn, CallableStatement toWrap) {
         super(c, conn, toWrap);

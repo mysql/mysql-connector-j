@@ -61,6 +61,9 @@ public class NotUpdatable extends SQLException {
     /**
      * Append the given reason to the not updatable message if the reason is not
      * null.
+     * 
+     * @param reason
+     *            message for this exception
      */
     public NotUpdatable(String reason) {
         super(reason + Messages.getString("NotUpdatable.1") + Messages.getString("NotUpdatable.2") + Messages.getString("NotUpdatable.3")

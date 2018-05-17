@@ -115,6 +115,13 @@ public abstract class CoreSession implements Session {
 
     /**
      * Change user as given by parameters. This implementation only supports calling this during the initial handshake.
+     * 
+     * @param user
+     *            user name
+     * @param password
+     *            password
+     * @param database
+     *            database name
      */
     public void changeUser(String user, String password, String database) {
         // reset maxRows to default value

@@ -90,6 +90,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
      *            reference to object that instantiated this object
      * @param mysqlConnection
      *            physical connection to db
+     * @param forXa
+     *            is it for XA connection?
      * 
      * @throws SQLException
      *             if an error occurs.

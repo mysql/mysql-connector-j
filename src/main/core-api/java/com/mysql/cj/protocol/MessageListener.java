@@ -33,6 +33,9 @@ package com.mysql.cj.protocol;
  * Sink for messages that are read asynchonously from the socket.
  *
  * Return whether the listener is done receiving messages.
+ * 
+ * @param <M>
+ *            Message type
  */
 public interface MessageListener<M extends Message> extends ProtocolEntityFactory<Boolean, M> {
 

@@ -426,6 +426,8 @@ public class NativeSession extends CoreSession implements Serializable {
     /**
      * Sets up client character set. This must be done before any further communication with the server!
      * 
+     * @param dontCheckServerMatch
+     *            if true then send the SET NAMES query even if server charset already matches the new value
      * @return true if this routine actually configured the client character
      *         set, or false if the driver needs to use 'older' methods to
      *         detect the character set, as it is connected to a MySQL server
@@ -782,6 +784,11 @@ public class NativeSession extends CoreSession implements Serializable {
     /**
      * Loads the result of 'SHOW VARIABLES' into the serverVariables field so
      * that the driver can configure itself.
+     * 
+     * @param syncMutex
+     *            synchronization mutex
+     * @param version
+     *            driver version string
      */
     public void loadServerVariables(Object syncMutex, String version) {
 
@@ -1091,7 +1098,8 @@ public class NativeSession extends CoreSession implements Serializable {
      * Get the variable value from server.
      * 
      * @param varName
-     * @return
+     *            server variable name
+     * @return server variable value
      */
     public String queryServerVariable(String varName) {
         try {
@@ -1120,15 +1128,27 @@ public class NativeSession extends CoreSession implements Serializable {
      * To ensure that Statement's queries are serialized, calls to this method
      * should be enclosed in a connection mutex synchronized block.
      * 
+     * @param <T>
+     *            extends {@link Resultset}
      * @param callingQuery
+     *            {@link Query} object
      * @param query
      *            the SQL statement to be executed
      * @param maxRows
+     *            rows limit
      * @param packet
+     *            {@link NativePacketPayload}
      * @param streamResults
+     *            whether a stream result should be created
+     * @param resultSetFactory
+     *            {@link ProtocolEntityFactory}
      * @param catalog
+     *            database name
      * @param cachedMetadata
+     *            use this metadata instead of the one provided on wire
      * @param isBatch
+     *            is it a batch query
+     * 
      * @return a ResultSet holding the results
      */
     public <T extends Resultset> T execSQL(Query callingQuery, String query, int maxRows, NativePacketPayload packet, boolean streamResults,

@@ -35,6 +35,9 @@ import java.math.BigInteger;
 /**
  * A base class for value factory decorators. The default behavior of all methods is to delegate to the underlying value factory. Subclasses are expected to
  * override one or more creation functions to override or augment the behavior of the underlying value factory.
+ * 
+ * @param <T>
+ *            value type
  */
 public abstract class BaseDecoratingValueFactory<T> implements ValueFactory<T> {
     /**

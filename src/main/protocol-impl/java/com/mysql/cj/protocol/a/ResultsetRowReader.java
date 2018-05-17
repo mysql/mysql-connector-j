@@ -60,8 +60,9 @@ public class ResultsetRowReader implements ProtocolEntityReader<ResultsetRow, Na
      * synchronizing on this object.
      * 
      * @param sf
+     *            ProtocolEntityFactory
      * @throws IOException
-     * 
+     *             if an error occurs
      */
     @Override
     public ResultsetRow read(ProtocolEntityFactory<ResultsetRow, NativePacketPayload> sf) throws IOException {

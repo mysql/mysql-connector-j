@@ -229,6 +229,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
      *            schema name
      * @param pattern
      *            object name pattern
+     * @return XMessage
      */
     public XMessage buildListObjects(String schemaName, String pattern) {
         if (schemaName == null) {
@@ -278,6 +279,8 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
      * |---------------------+---------------|
      * | warnings            | 1             |
      * </pre>
+     * 
+     * @return XMessage
      */
     public XMessage buildListNotices() {
         return new XMessage(buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_LIST_NOTICES));
@@ -353,7 +356,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
      * 
      * @param statement
      *            SQL statement string
-     * @return @{@link XMessage} wrapping {@link StmtExecute}
+     * @return {@link XMessage} wrapping {@link StmtExecute}
      */
     public XMessage buildSqlStatement(String statement) {
         return buildSqlStatement(statement, null);
@@ -366,7 +369,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
      *            SQL statement string
      * @param args
      *            list of {@link Object} arguments
-     * @return @{@link XMessage} wrapping {@link StmtExecute}
+     * @return {@link XMessage} wrapping {@link StmtExecute}
      */
     public XMessage buildSqlStatement(String statement, List<Object> args) {
         StmtExecute.Builder builder = StmtExecute.newBuilder();

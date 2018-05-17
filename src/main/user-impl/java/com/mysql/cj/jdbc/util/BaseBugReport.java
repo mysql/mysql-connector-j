@@ -39,11 +39,7 @@ import com.mysql.cj.jdbc.Driver;
  * Base class to help file bug reports for Connector/J.
  * 
  * <p>
- * MySQL AB, 2008 Sun Microsystems, 2009 Oracle Corporation
- * 
- * <ul>
- * really
- * </ul>
+ * MySQL AB, 2008 Sun Microsystems, 2009 Oracle Corporation <b>really</b>
  * appreciates repeatable testcases when reporting bugs, so we're giving you this class to make that job a bit easier (and standarized).
  * 
  * <p>
@@ -72,8 +68,6 @@ import com.mysql.cj.jdbc.Driver;
  * 
  * <p>
  * Finally, create a 'main' method that creates a new instance of your testcase, and calls the 'run' method:
- * 
- * <p>
  * 
  * <pre>
  * public static void main(String[] args) throws Exception {
@@ -183,6 +177,8 @@ public abstract class BaseBugReport {
      * by the getConnection() method using this URL.
      * 
      * The default value is 'jdbc:mysql:///test'
+     * 
+     * @return URL
      */
     public String getUrl() {
         return "jdbc:mysql:///test";

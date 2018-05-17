@@ -72,6 +72,7 @@ public class NativeResultset implements Resultset {
      * Create a result set for an executeUpdate statement.
      * 
      * @param ok
+     *            {@link OkPacket}
      */
     public NativeResultset(OkPacket ok) {
         this.updateCount = ok.getUpdateCount();

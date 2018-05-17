@@ -96,6 +96,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
      *            0-based
      * @param forLongData
      *            is this for a stream?
+     * @return ServerPreparedQueryBindValue
      */
     public ServerPreparedQueryBindValue getBinding(int parameterIndex, boolean forLongData) {
 

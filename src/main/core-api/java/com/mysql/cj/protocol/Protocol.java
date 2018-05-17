@@ -45,6 +45,9 @@ import com.mysql.cj.result.RowList;
 
 /**
  * A protocol provides the facilities to communicate with a MySQL server.
+ * 
+ * @param <M>
+ *            Message type
  */
 public interface Protocol<M extends Message> {
 

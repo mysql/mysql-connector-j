@@ -222,8 +222,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
      * Create a result set for an executeUpdate statement.
      * 
      * @param ok
+     *            {@link OkPacket}
      * @param conn
+     *            the Connection that created us.
      * @param creatorStmt
+     *            the Statement that created us.
      */
     public ResultSetImpl(OkPacket ok, JdbcConnection conn, StatementImpl creatorStmt) {
         super(ok);
@@ -247,6 +250,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
      * @param conn
      *            the Connection that created us.
      * @param creatorStmt
+     *            the Statement that created us.
      * 
      * @throws SQLException
      *             if an error occurs
@@ -453,6 +457,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     /**
      * Ensures that the result set is not closed
      * 
+     * @return connection
+     * 
      * @throws SQLException
      *             if the result set is closed
      */
@@ -601,6 +607,14 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     /**
      * Decorate a date/time value factory to implement zeroDateTimeBehavior.
+     * 
+     * @param vf
+     *            value factory
+     * @param zeroDateTimeBehavior
+     *            CONVERT_TO_NULL, EXCEPTION or ROUND
+     * @param <T>
+     *            value type
+     * @return value
      */
     private static <T> ValueFactory<T> decorateDateTimeValueFactory(ValueFactory<T> vf, PropertyDefinitions.ZeroDatetimeBehavior zeroDateTimeBehavior) {
         // enforce zero date/time behavior
@@ -619,6 +633,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
      * Get a non-string value from a row. All requests to obtain non-string values should use this method. This method implements the "indirect" conversion of
      * values that are returned as strings from the server. This is an expensive conversion which first requires interpreting the value as a string in it's
      * given character set and converting it to an ASCII string which can then be parsed as a numeric/date value.
+     * 
+     * @param columnIndex
+     *            column index
+     * @param vf
+     *            value factory
+     * @param <T>
+     *            value type
+     * @return value
+     * @throws SQLException
+     *             if an error occurs
      */
     private <T> T getNonStringValueFromRow(int columnIndex, ValueFactory<T> vf) throws SQLException {
         Field f = this.columnDefinition.getFields()[columnIndex - 1];
@@ -633,6 +657,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     /**
      * Get a Date of Timestamp value from a row. This implements the "yearIsDateType=true" behavior.
+     * 
+     * @param columnIndex
+     *            column index
+     * @param vf
+     *            value factory
+     * @param <T>
+     *            value type
+     * @return value
+     * @throws SQLException
+     *             if an error occurs
      */
     private <T> T getDateOrTimestampValueFromRow(int columnIndex, ValueFactory<T> vf) throws SQLException {
         Field f = this.columnDefinition.getFields()[columnIndex - 1];
@@ -2394,9 +2428,13 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     /**
      * 
      * @param columnIndex
+     *            column index
      * @param x
+     *            reader
      * @param length
+     *            length
      * @throws SQLException
+     *             if an error occurs
      */
     public void updateNCharacterStream(int columnIndex, Reader x, int length) throws SQLException {
         throw SQLError.notUpdatable();

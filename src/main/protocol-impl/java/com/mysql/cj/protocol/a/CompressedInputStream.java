@@ -70,8 +70,12 @@ public class CompressedInputStream extends InputStream {
      * Creates a new CompressedInputStream that reads the given stream from the
      * server.
      * 
-     * @param conn
      * @param streamFromServer
+     *            original server InputStream
+     * @param traceProtocol
+     *            "traceProtocol" property
+     * @param log
+     *            logger
      */
     public CompressedInputStream(InputStream streamFromServer, ReadableProperty<Boolean> traceProtocol, Log log) {
         this.traceProtocol = traceProtocol;
@@ -80,9 +84,6 @@ public class CompressedInputStream extends InputStream {
         this.inflater = new Inflater();
     }
 
-    /**
-     * @see java.io.InputStream#available()
-     */
     @Override
     public int available() throws IOException {
         if (this.buffer == null) {
@@ -92,9 +93,6 @@ public class CompressedInputStream extends InputStream {
         return this.buffer.length - this.pos + this.in.available();
     }
 
-    /**
-     * @see java.io.InputStream#close()
-     */
     @Override
     public void close() throws IOException {
         this.in.close();
@@ -211,9 +209,6 @@ public class CompressedInputStream extends InputStream {
         }
     }
 
-    /**
-     * @see java.io.InputStream#read()
-     */
     @Override
     public int read() throws IOException {
         try {
@@ -225,17 +220,11 @@ public class CompressedInputStream extends InputStream {
         return this.buffer[this.pos++] & 0xff;
     }
 
-    /**
-     * @see java.io.InputStream#read(byte)
-     */
     @Override
     public int read(byte[] b) throws IOException {
         return read(b, 0, b.length);
     }
 
-    /**
-     * @see java.io.InputStream#read(byte, int, int)
-     */
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         if (b == null) {
@@ -283,9 +272,6 @@ public class CompressedInputStream extends InputStream {
         return n;
     }
 
-    /**
-     * @see java.io.InputStream#skip(long)
-     */
     @Override
     public long skip(long n) throws IOException {
         long count = 0;

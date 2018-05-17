@@ -84,11 +84,17 @@ class EscapeProcessor {
      * 
      * @param sql
      *            the SQL to escape process.
+     * @param defaultTimeZone
+     *            time zone
+     * @param serverSupportsFractionalSecond
+     *            flag indicating if server supports fractional seconds
+     * @param exceptionInterceptor
+     *            exception interceptor
      * 
      * @return the SQL after it has been escape processed.
      * 
-     * @throws java.sql.SQLException
      * @throws SQLException
+     *             if error occurs
      */
     public static final Object escapeSQL(String sql, TimeZone defaultTimeZone, boolean serverSupportsFractionalSecond,
             ExceptionInterceptor exceptionInterceptor) throws java.sql.SQLException {
@@ -371,7 +377,12 @@ class EscapeProcessor {
      * Re-writes {fn convert (expr, type)} as cast(expr AS type)
      * 
      * @param functionToken
+     *            token
+     * @param exceptionInterceptor
+     *            exception interceptor
+     * @return result of rewriting
      * @throws SQLException
+     *             if error occurs
      */
     private static String processConvertToken(String functionToken, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         // The JDBC spec requires these types:

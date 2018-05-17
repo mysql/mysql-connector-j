@@ -627,8 +627,10 @@ public class TranslateExceptions {
      *            Class from JDBC specification where methods descriptors to be get.
      * @param declaredMethodsOnly
      *            true - instrument methods declared in this class, false - also instrument inherited methods
-     * @return Array of CtMethods to be instrumented
+     * @param exceptionInterceptorStr
+     *            exception interceptor reference as a string
      * @throws Exception
+     *             if an error occurs
      */
     private static void instrumentJdbcMethods(CtClass cjClazz, Class<?> jdbcClass, boolean declaredMethodsOnly, String exceptionInterceptorStr)
             throws Exception {

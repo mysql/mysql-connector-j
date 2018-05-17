@@ -213,6 +213,8 @@ public class DefaultColumnDefinition implements ColumnDefinition {
      * exist in this ColumnDefinition.
      * This check is used for making a decision about whether we want to force a
      * buffer row (better for rows with large fields).
+     * 
+     * @return true if this ColumnDefinition has large fields
      */
     public boolean hasLargeFields() {
         if (this.fields != null) {

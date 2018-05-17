@@ -50,6 +50,10 @@ public class BigDecimalValueFactory extends DefaultValueFactory<BigDecimal> {
 
     /**
      * Adjust the result value by apply the scale, if appropriate.
+     * 
+     * @param d
+     *            value
+     * @return result
      */
     private BigDecimal adjustResult(BigDecimal d) {
         if (this.hasScale) {

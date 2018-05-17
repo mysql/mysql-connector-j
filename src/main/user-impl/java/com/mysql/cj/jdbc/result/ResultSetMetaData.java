@@ -66,8 +66,17 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     /**
      * Initialize for a result with a tuple set and a field descriptor set
      * 
+     * @param session
+     *            this {@link Session}
+     * 
      * @param fields
      *            the array of field descriptors
+     * @param useOldAliasBehavior
+     *            'useOldAliasMetadataBehavior' property value
+     * @param treatYearAsDate
+     *            'yearIsDateType' property value
+     * @param exceptionInterceptor
+     *            exception interceptor
      */
     public ResultSetMetaData(Session session, Field[] fields, boolean useOldAliasBehavior, boolean treatYearAsDate, ExceptionInterceptor exceptionInterceptor) {
         this.session = session;
@@ -249,6 +258,9 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      * value.
      *
      * Different versions of MySQL report different precision values.
+     * 
+     * @param f
+     *            field
      *
      * @return the amount to adjust precision value by.
      */

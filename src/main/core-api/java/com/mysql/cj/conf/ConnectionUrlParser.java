@@ -638,6 +638,11 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * This class is a simple container for two elements.
+     * 
+     * @param <T>
+     *            left part type
+     * @param <U>
+     *            right part type
      */
     public static class Pair<T, U> {
         public final T left;

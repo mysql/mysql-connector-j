@@ -100,6 +100,8 @@ public class ClientPreparedQuery extends AbstractPreparedQuery<ClientPreparedQue
 
     /**
      * @param parameterIndex
+     *            parameter index
+     * @return bytes
      */
     public byte[] getBytesRepresentation(int parameterIndex) {
         BindValue bv = this.queryBindings.getBindValues()[parameterIndex];
@@ -128,7 +130,10 @@ public class ClientPreparedQuery extends AbstractPreparedQuery<ClientPreparedQue
      * Get bytes representation for a parameter in a statement batch.
      * 
      * @param parameterIndex
+     *            parameter index
      * @param commandIndex
+     *            command index
+     * @return bytes
      */
     public byte[] getBytesRepresentationForBatch(int parameterIndex, int commandIndex) {
         Object batchedArg = this.batchedArgs.get(commandIndex);

@@ -77,6 +77,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @param connectionUrl
      *            The connection URL containing the hosts in a replication setup.
      * @return A {@link ReplicationConnection} proxy.
+     * @throws SQLException
+     *             if an error occurs
      */
     public static ReplicationConnection createProxyInstance(ReplicationConnectionUrl connectionUrl) throws SQLException {
         ReplicationConnectionProxy connProxy = new ReplicationConnectionProxy(connectionUrl);
@@ -90,6 +92,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * 
      * @param connectionUrl
      *            The connection URL containing the hosts in a replication setup.
+     * @throws SQLException
+     *             if an error occurs
      */
     private ReplicationConnectionProxy(ReplicationConnectionUrl connectionUrl) throws SQLException {
         super();
@@ -221,7 +225,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     /**
      * Has no use in replication connections. Always return <code>false</code>.
      * 
-     * @param ex
+     * @param t
      *            The Exception instance to check.
      */
     @Override
@@ -239,6 +243,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
 
     /**
      * Checks if current connection is the slaves l/b connection.
+     * 
+     * @return true if current connection is the slaves l/b connection
      */
     public boolean isSlavesConnection() {
         return this.currentConnection != null && this.currentConnection == this.slavesConnection;
@@ -336,6 +342,11 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * Checks if this connection is in a state capable to invoke the provided method. If the connection is in an inconsistent state, i.e. it has no hosts for
      * both sub-connections, then throw an invalid transaction state exception. Nevertheless, the methods defined in the ReplicationConnection interface will be
      * allowed as they are the only way to leave from an empty hosts lists situation.
+     * 
+     * @param method
+     *            method
+     * @throws Throwable
+     *             if an error occurs
      */
     private void checkConnectionCapabilityForMethod(Method method) throws Throwable {
         if (this.masterHosts.isEmpty() && this.slaveHosts.isEmpty() && !ReplicationConnection.class.isAssignableFrom(method.getDeclaringClass())) {

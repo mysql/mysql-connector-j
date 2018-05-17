@@ -166,8 +166,11 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
      * Used to escape binary data with hex for mb charsets
      * 
      * @param buf
+     *            source bytes
      * @param packet
+     *            write to this packet
      * @param size
+     *            number of bytes to read
      */
     public final void hexEscapeBlock(byte[] buf, NativePacketPayload packet, int size) {
         for (int i = 0; i < size; i++) {
@@ -565,7 +568,9 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
      * Sets the value for the placeholder as a serialized Java object (used by various forms of setObject()
      * 
      * @param parameterIndex
+     *            parameter index
      * @param parameterObj
+     *            value
      */
     protected final void setSerializableObject(int parameterIndex, Object parameterObj) {
         try {

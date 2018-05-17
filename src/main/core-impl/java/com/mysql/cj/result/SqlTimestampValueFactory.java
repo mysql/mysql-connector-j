@@ -64,7 +64,6 @@ public class SqlTimestampValueFactory extends DefaultValueFactory<Timestamp> {
      * Create a Timestamp from a DATE value.
      *
      * @return a timestamp at midnight on the day given by the DATE value
-     * @see java.sql.ResultSet.getTimestamp(int)
      */
     @Override
     public Timestamp createFromDate(int year, int month, int day) {

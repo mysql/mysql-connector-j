@@ -86,6 +86,12 @@ public class Security {
      * reply=xor(hash_stage1, sha1(public_seed,hash_stage2))
      * send(reply)
      * </pre>
+     * 
+     * @param password
+     *            password
+     * @param seed
+     *            seed
+     * @return bytes
      */
     public static byte[] scramble411(byte[] password, byte[] seed) {
         MessageDigest md;
@@ -122,7 +128,14 @@ public class Security {
      * Scramble = XOR(SHA2(password), SHA2(SHA2(SHA2(password)), Nonce))
      * </pre>
      * 
+     * @param password
+     *            password
+     * @param seed
+     *            seed
+     * @return bytes
+     * 
      * @throws DigestException
+     *             if an error occurs
      */
     public static byte[] scrambleCachingSha2(byte[] password, byte[] seed) throws DigestException {
         /*

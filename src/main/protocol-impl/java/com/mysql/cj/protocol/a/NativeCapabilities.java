@@ -157,6 +157,7 @@ public class NativeCapabilities implements ServerCapabilities {
      * Stores collation index which server provided in handshake greeting packet.
      * 
      * @param serverDefaultCollationIndex
+     *            server default collation index
      */
     public void setServerDefaultCollationIndex(int serverDefaultCollationIndex) {
         this.serverDefaultCollationIndex = serverDefaultCollationIndex;

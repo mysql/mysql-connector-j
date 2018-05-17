@@ -480,6 +480,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     /**
      * Helper/wrapper class to provide means of sorting objects by using a sorting key.
+     * 
+     * @param <K>
+     *            key type
+     * @param <V>
+     *            value type
      */
     protected class ComparableWrapper<K extends Object & Comparable<? super K>, V> implements Comparable<ComparableWrapper<K, V>> {
         K key;
@@ -730,7 +735,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * Creates a new DatabaseMetaData object.
      * 
      * @param connToSet
+     *            Connection object
      * @param databaseToSet
+     *            database name
+     * @param resultSetFactory
+     *            {@link ResultSetFactory}
      */
     protected DatabaseMetaData(JdbcConnection connToSet, String databaseToSet, ResultSetFactory resultSetFactory) {
         this.conn = connToSet;
@@ -810,6 +819,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     /**
      * Builds and returns a fully qualified name, quoted if necessary, for the given catalog and database entity.
+     * 
+     * @param catalog
+     *            database name
+     * @param entity
+     *            identifier
+     * @return fully qualified name
      */
     protected String getFullyQualifiedName(String catalog, String entity) {
         StringBuilder fullyQualifiedName = new StringBuilder(StringUtils.quoteIdentifier(catalog == null ? "" : catalog, this.quotedId, this.pedantic));
@@ -1144,10 +1159,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * Creates a result set similar enough to 'SHOW TABLE STATUS' to allow the
      * same code to work on extracting the foreign key data
      * 
-     * @param connToUse
-     *            the database connection to use
-     * @param metadata
-     *            the DatabaseMetaData instance calling this method
      * @param catalog
      *            the database name to extract foreign key info for
      * @param tableName
@@ -1715,8 +1726,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @param procedureDefn
      *            the function body containing the definition of the function
-     * @param quoteChar
-     *            the identifier quote string in use
      * @param positionOfReturnKeyword
      *            the position of "RETURNS" in the definition
      * @return the end of the returns clause
@@ -3168,12 +3177,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     /**
      * @param fields
+     *            fields
      * @param catalog
+     *            catalog
      * @param schemaPattern
+     *            schema pattern
      * @param procedureNamePattern
+     *            procedure name pattern
      * @param returnProcedures
+     *            true if procedures should be included into result
      * @param returnFunctions
+     *            true if functions should be included into result
+     * @return result set
      * @throws SQLException
+     *             if a database access error occurs
      */
     protected java.sql.ResultSet getProceduresAndOrFunctions(final Field[] fields, String catalog, String schemaPattern, String procedureNamePattern,
             final boolean returnProcedures, final boolean returnFunctions) throws SQLException {
@@ -3389,6 +3406,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @return the list
      * @throws SQLException
+     *             if a database access error occurs
      */
     @Override
     public String getSQLKeywords() throws SQLException {
@@ -3846,8 +3864,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * @param mysqlTypeName
      *            we use a string name here to allow aliases for the same MysqlType to be listed too
-     * @return
+     * @return bytes
      * @throws SQLException
+     *             if a conversion error occurs
      */
     private byte[][] getTypeInfo(String mysqlTypeName) throws SQLException {
 
@@ -4295,6 +4314,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * encoding, or if not available, the JVM default encoding.
      * 
      * @param s
+     *            string
+     * @return bytes
+     * @throws SQLException
+     *             if a conversion error occurs
      */
     protected byte[] s2b(String s) throws SQLException {
         if (s == null) {
@@ -4812,8 +4835,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      * Get a prepared statement to query information_schema tables.
      * 
+     * @param sql
+     *            query
      * @return PreparedStatement
      * @throws SQLException
+     *             if a database access error occurs
      */
     protected java.sql.PreparedStatement prepareMetaDataSafeStatement(String sql) throws SQLException {
         // Can't use server-side here as we coerce a lot of types to match the spec.

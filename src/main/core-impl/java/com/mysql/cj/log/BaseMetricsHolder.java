@@ -140,6 +140,7 @@ public class BaseMetricsHolder {
 
     /**
      * @param queryTimeMs
+     *            query execution time in milliseconds
      */
     public void registerQueryExecutionTime(long queryTimeMs) {
         if (queryTimeMs > this.longestQueryTimeMs) {

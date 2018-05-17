@@ -346,9 +346,6 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
 
     /**
      * Dispatch a message to a listener or "peek-er" once it has been read and parsed.
-     * 
-     * @param message
-     *            {@link GeneratedMessage}
      */
     void dispatchMessage() {
 
@@ -489,6 +486,9 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
 
     /**
      * Synchronously read a single message and propagate any errors to the current thread.
+     * 
+     * @param <T>
+     *            GeneratedMessage type
      */
     private static final class SyncXMessageListener<T extends GeneratedMessage> implements MessageListener<XMessage> {
         private CompletableFuture<XMessage> future;

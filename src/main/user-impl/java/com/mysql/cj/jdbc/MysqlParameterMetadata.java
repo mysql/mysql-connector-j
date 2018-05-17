@@ -61,7 +61,8 @@ public class MysqlParameterMetadata implements ParameterMetaData {
      * Used for "fake" basic metadata for client-side prepared statements when
      * we don't know the parameter types.
      * 
-     * @param parameterCount
+     * @param count
+     *            parameters number
      */
     MysqlParameterMetadata(int count) {
         this.parameterCount = count;

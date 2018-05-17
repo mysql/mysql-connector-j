@@ -79,7 +79,7 @@ public class BooleanPropertyDefinition extends AbstractPropertyDefinition<Boolea
     /**
      * Creates instance of ReadableBooleanProperty or ModifiableBooleanProperty depending on isRuntimeModifiable() result.
      * 
-     * @return
+     * @return RuntimeProperty
      */
     @Override
     public RuntimeProperty<Boolean> createRuntimeProperty() {

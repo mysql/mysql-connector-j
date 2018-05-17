@@ -36,6 +36,9 @@ package com.mysql.cj.protocol;
 public interface WriterWatcher {
     /**
      * Called when the Writer being watched has .close() called
+     * 
+     * @param out
+     *            WatchableWriter instance
      */
     void writerClosed(WatchableWriter out);
 }

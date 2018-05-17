@@ -59,6 +59,7 @@ public class Jdk14Logger implements Log {
      * Creates a new Jdk14Logger object.
      * 
      * @param name
+     *            logger name as per {@link Logger#getLogger(String)}
      */
     public Jdk14Logger(String name) {
         this.jdkLogger = Logger.getLogger(name);

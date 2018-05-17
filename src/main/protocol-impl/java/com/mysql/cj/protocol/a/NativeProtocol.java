@@ -44,7 +44,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
 import java.sql.DataTruncation;
-import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -325,6 +324,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      * to a MySQL server that understands SSL.
      * 
      * @param packLength
+     *            packet length
      */
     @Override
     public void negotiateSSLConnection(int packLength) {
@@ -457,6 +457,11 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Apply optional decorators to configured PacketSender and PacketReader.
+     * 
+     * @param sender
+     *            {@link MessageSender}
+     * @param messageReader
+     *            {@link MessageReader}
      */
     public void applyPacketDecorators(MessageSender<NativePacketPayload> sender, MessageReader<NativePacketHeader, NativePacketPayload> messageReader) {
         TimeTrackingPacketSender ttSender = null;
@@ -570,6 +575,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * @param packet
+     *            {@link Message}
      * @param packetLen
      *            length of header + payload
      */
@@ -719,10 +725,11 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      * 
      * @param command
      *            the command being issued (if used)
-     * 
+     * @return NativePacketPayload
      * @throws CJException
      *             if an error packet was received
      * @throws CJCommunicationsException
+     *             if a database error occurs
      */
     private NativePacketPayload checkErrorMessage(int command) {
 
@@ -854,17 +861,29 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     /**
      * Build a query packet from the given string and send it to the server.
      * 
+     * @param <T>
+     *            extends {@link Resultset}
      * @param callingQuery
+     *            {@link Query}
      * @param query
+     *            query string
      * @param characterEncoding
+     *            Java encoding name
      * @param maxRows
+     *            rows limit
      * @param streamResults
+     *            whether a stream result should be created
      * @param catalog
+     *            database name
      * @param cachedMetadata
+     *            use this metadata instead of the one provided on wire
      * @param getProfilerEventHandlerInstanceFunction
+     *            {@link com.mysql.cj.protocol.Protocol.GetProfilerEventHandlerInstanceFunction}
      * @param resultSetFactory
-     * @return
+     *            {@link ProtocolEntityFactory}
+     * @return T instance
      * @throws IOException
+     *             if an i/o error occurs
      */
     public final <T extends Resultset> T sendQueryString(Query callingQuery, String query, String characterEncoding, int maxRows, boolean streamResults,
             String catalog, ColumnDefinition cachedMetadata, GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction,
@@ -916,16 +935,27 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     /**
      * Send a query stored in a packet to the server.
      * 
+     * @param <T>
+     *            extends {@link Resultset}
      * @param callingQuery
+     *            {@link Query}
      * @param queryPacket
+     *            {@link NativePacketPayload} containing query
      * @param maxRows
+     *            rows limit
      * @param streamResults
+     *            whether a stream result should be created
      * @param catalog
+     *            database name
      * @param cachedMetadata
+     *            use this metadata instead of the one provided on wire
      * @param getProfilerEventHandlerInstanceFunction
+     *            {@link com.mysql.cj.protocol.Protocol.GetProfilerEventHandlerInstanceFunction}
      * @param resultSetFactory
-     * @return
+     *            {@link ProtocolEntityFactory}
+     * @return T instance
      * @throws IOException
+     *             if an i/o error occurs
      */
     public final <T extends Resultset> T sendQueryPacket(Query callingQuery, NativePacketPayload queryPacket, int maxRows, boolean streamResults,
             String catalog, ColumnDefinition cachedMetadata, GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction,
@@ -1134,9 +1164,13 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * 
+     * @param <M>
+     *            extends {@link Message}
      * @param queryPacket
+     *            {@link NativePacketPayload} containing query
      * @param forceExecute
-     * @return
+     *            currently ignored
+     * @return M instance
      */
     public <M extends Message> M invokeQueryInterceptorsPre(M queryPacket, boolean forceExecute) {
         M previousPacketPayload = null;
@@ -1180,7 +1214,16 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     /**
+     * 
+     * @param <M>
+     *            extends {@link Message}
+     * @param queryPacket
+     *            {@link NativePacketPayload} containing query
+     * @param originalResponsePacket
+     *            {@link NativePacketPayload} containing response
      * @param forceExecute
+     *            currently ignored
+     * @return T instance
      */
     public <M extends Message> M invokeQueryInterceptorsPost(M queryPacket, M originalResponsePacket, boolean forceExecute) {
 
@@ -1221,8 +1264,10 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     /**
      * Runs an 'EXPLAIN' on the given query and dumps the results to the log
      * 
-     * @param querySQL
+     * @param query
+     *            full query string
      * @param truncatedQuery
+     *            query string truncated for profiling
      * 
      */
     public void explainSlowQuery(String query, String truncatedQuery) {
@@ -1332,8 +1377,11 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      * Re-authenticates as the given user and password
      * 
      * @param user
+     *            user name
      * @param password
+     *            password
      * @param database
+     *            database name
      * 
      */
     public void changeUser(String user, String password, String database) {
@@ -1664,13 +1712,21 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     /**
      * Read next result set from multi-result chain.
      * 
+     * @param <T>
+     *            extends {@link ProtocolEntity}
      * @param currentProtocolEntity
+     *            T instance
      * @param maxRows
+     *            rows limit
      * @param streamResults
+     *            whether a stream result should be created
      * @param isBinaryEncoded
+     *            true for binary protocol
      * @param resultSetFactory
-     * @return
+     *            {@link ProtocolEntityFactory}
+     * @return T instance
      * @throws IOException
+     *             if an i/o error occurs
      */
     public <T extends ProtocolEntity> T readNextResultset(T currentProtocolEntity, int maxRows, boolean streamResults, boolean isBinaryEncoded,
             ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
@@ -1773,7 +1829,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      * 
      * @param fileName
      *            the file name to send.
-     * 
+     * @return NativePacketPayload
      */
     public final NativePacketPayload sendFileToServer(String fileName) {
 
@@ -2086,10 +2142,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      *            if this method should only scan for data truncation warnings
      * 
      * @return the SQLWarning chain (or null if no warnings)
-     * 
-     * @throws SQLException
-     *             if the warnings could not be retrieved, or if data truncation
-     *             is being scanned for and truncations were found.
      */
     public SQLWarning convertShowWarningsToSQLWarnings(int warningCountIfKnown, boolean forTruncationOnly) {
         SQLWarning currentWarning = null;

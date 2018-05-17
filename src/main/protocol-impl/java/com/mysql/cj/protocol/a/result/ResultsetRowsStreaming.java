@@ -59,6 +59,9 @@ import com.mysql.cj.util.Util;
  * input stream only on {@link #next()} call. Consumed rows are not cached thus
  * we only stream result sets when they are forward-only, read-only, and the
  * fetch size has been set to Integer.MIN_VALUE (rows are read one by one).
+ * 
+ * @param <T>
+ *            ProtocolEntity type
  */
 public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractResultsetRows implements ResultsetRows {
 
@@ -90,6 +93,7 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
      * @param isBinaryEncoded
      *            is this data in native format?
      * @param resultSetFactory
+     *            {@link ProtocolEntityFactory}
      */
     public ResultsetRowsStreaming(NativeProtocol io, ColumnDefinition columnDefinition, boolean isBinaryEncoded,
             ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) {

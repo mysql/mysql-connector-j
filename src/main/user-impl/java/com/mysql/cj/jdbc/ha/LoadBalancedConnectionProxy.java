@@ -110,6 +110,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * @param connectionUrl
      *            The connection URL containing the hosts in a load-balance setup.
      * @return A {@link LoadBalancedConnection} proxy.
+     * @throws SQLException
+     *             if an error occurs
      */
     public static LoadBalancedConnection createProxyInstance(LoadbalanceConnectionUrl connectionUrl) throws SQLException {
         LoadBalancedConnectionProxy connProxy = new LoadBalancedConnectionProxy(connectionUrl);
@@ -122,6 +124,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * @param connectionUrl
      *            The connection URL containing the hosts to load balance.
      * @throws SQLException
+     *             if an error occurs
      */
     public LoadBalancedConnectionProxy(LoadbalanceConnectionUrl connectionUrl) throws SQLException {
         super();
@@ -245,6 +248,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * 
      * @return
      *         The connection object instance that wraps 'this'.
+     * @throws SQLException
+     *             if an error occurs
      */
     @Override
     JdbcConnection getNewWrapperForThisAsConnection() throws SQLException {
@@ -272,9 +277,9 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     /**
      * Consults the registered LoadBalanceExceptionChecker if the given exception should trigger a connection fail-over.
      * 
-     * @param ex
+     * @param t
      *            The Exception instance to check.
-     * @return
+     * @return true if the given exception should trigger a connection fail-over
      */
     @Override
     boolean shouldExceptionTriggerConnectionSwitch(Throwable t) {
@@ -293,7 +298,9 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * Closes specified connection and removes it from required mappings.
      * 
      * @param conn
+     *            connection
      * @throws SQLException
+     *             if an error occurs
      */
     @Override
     synchronized void invalidateConnection(JdbcConnection conn) throws SQLException {
@@ -320,6 +327,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * Picks the "best" connection to use for the next transaction based on the BalanceStrategy in use.
      * 
      * @throws SQLException
+     *             if an error occurs
      */
     @Override
     public synchronized void pickNewConnection() throws SQLException {
@@ -380,6 +388,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      *            The host info instance.
      * @return
      *         The new Connection instance.
+     * @throws SQLException
+     *             if an error occurs
      */
     @Override
     public synchronized ConnectionImpl createConnectionForHost(HostInfo hostInfo) throws SQLException {
@@ -424,6 +434,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      *            The host:port pair identifying the host to connect to.
      * @return
      *         The new Connection instance.
+     * @throws SQLException
+     *             if an error occurs
      */
     public synchronized ConnectionImpl createConnectionForHost(String hostPortPair) throws SQLException {
         for (HostInfo hi : this.hostsList) {
@@ -588,6 +600,9 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
 
     /**
      * Pings live connections.
+     * 
+     * @throws SQLException
+     *             if an error occurs
      */
     @Override
     public synchronized void doPing() throws SQLException {
@@ -680,7 +695,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     /**
      * Checks if host blacklist management was enabled.
      * 
-     * @return
+     * @return true if host blacklist management was enabled
      */
     public boolean isGlobalBlacklistEnabled() {
         return (this.globalBlacklistTimeout > 0);
@@ -744,6 +759,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * @param hostPortPair
      *            The host to be removed.
      * @throws SQLException
+     *             if an error occurs
      */
     public void removeHostWhenNotInUse(String hostPortPair) throws SQLException {
         if (this.hostRemovalGracePeriod <= 0) {
@@ -783,6 +799,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * @param hostPortPair
      *            The host to be removed.
      * @throws SQLException
+     *             if an error occurs
      */
     public synchronized void removeHost(String hostPortPair) throws SQLException {
         if (this.connectionGroup != null) {
@@ -821,6 +838,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * 
      * @param hostPortPair
      *            The host to be added.
+     * @return true if host was added and false if the host list already contains it
      */
     public synchronized boolean addHost(String hostPortPair) {
         if (this.hostsToListIndexMap.containsKey(hostPortPair)) {
@@ -879,8 +897,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     }
 
     /**
-     * A LoadBalancedConnection proxy that provides null-functionality. It can be used as a replacement of the <code>null</null> keyword in the places where a
-     * LoadBalancedConnection object cannot be effectively <code>null</code> because that would be a potential source of NPEs.
+     * A LoadBalancedConnection proxy that provides null-functionality. It can be used as a replacement of the <b>null</b> keyword in the places where a
+     * LoadBalancedConnection object cannot be effectively <b>null</b> because that would be a potential source of NPEs.
      */
     private static class NullLoadBalancedConnectionProxy implements InvocationHandler {
         public NullLoadBalancedConnectionProxy() {

@@ -31,6 +31,9 @@ package com.mysql.cj.result;
 
 /**
  * A value factory which converts MySQL YEAR values to Dates.
+ * 
+ * @param <T>
+ *            value type
  */
 public class YearToDateValueFactory<T> extends BaseDecoratingValueFactory<T> {
     public YearToDateValueFactory(ValueFactory<T> targetVf) {

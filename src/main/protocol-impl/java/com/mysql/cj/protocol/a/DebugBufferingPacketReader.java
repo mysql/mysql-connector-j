@@ -39,7 +39,7 @@ import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.util.StringUtils;
 
 /**
- * A decorating {@link PacketReader} which put debugging info to a ring-buffer.
+ * A decorating {@link MessageReader} which put debugging info to a ring-buffer.
  */
 public class DebugBufferingPacketReader implements MessageReader<NativePacketHeader, NativePacketPayload> {
 

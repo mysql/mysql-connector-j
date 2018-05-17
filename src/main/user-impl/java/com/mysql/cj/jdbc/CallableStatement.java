@@ -466,6 +466,18 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Creates a callable statement instance
+     * 
+     * @param conn
+     *            the connection creating this statement
+     * @param sql
+     *            the SQL to prepare
+     * @param catalog
+     *            the current catalog
+     * @param isFunctionCall
+     *            is it a function call or a procedure call?
+     * @return CallableStatement
+     * @throws SQLException
+     *             if an error occurs
      */
 
     protected static CallableStatement getInstance(JdbcConnection conn, String sql, String catalog, boolean isFunctionCall) throws SQLException {
@@ -474,6 +486,14 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Creates a callable statement instance
+     * 
+     * @param conn
+     *            the connection creating this statement
+     * @param paramInfo
+     *            the SQL to prepare
+     * @return CallableStatement
+     * @throws SQLException
+     *             if an error occurs
      */
 
     protected static CallableStatement getInstance(JdbcConnection conn, CallableStatementParamInfo paramInfo) throws SQLException {
@@ -546,6 +566,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      *            the SQL to prepare
      * @param catalog
      *            the current catalog
+     * @param isFunctionCall
+     *            is it a function call or a procedure call?
      * 
      * @throws SQLException
      *             if an error occurs
@@ -629,8 +651,10 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * @param paramIndex
+     *            parameter index
      * 
      * @throws SQLException
+     *             if a database access error occurs or this method is called on a closed PreparedStatement
      */
     private void checkParameterIndexBounds(int paramIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -644,6 +668,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      * can not stream the results.
      * 
      * @throws SQLException
+     *             if a database access error occurs
      */
     private void checkStreamability() throws SQLException {
         if (this.hasOutputParams && createStreamingResultSet()) {
@@ -670,6 +695,9 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     /**
      * Used to fake up some metadata when we don't have access to
      * SHOW CREATE PROCEDURE or mysql.proc.
+     * 
+     * @param isReallyProcedure
+     *            is it a procedure or function
      * 
      * @throws SQLException
      *             if we can't build the metadata.
@@ -1403,6 +1431,9 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     /**
      * Returns the ResultSet that holds the output parameters, or throws an
      * appropriate exception if none exist, or they weren't returned.
+     * 
+     * @param paramIndex
+     *            parameter index
      * 
      * @return the ResultSet that holds the output parameters
      * 
@@ -2229,6 +2260,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      * 
      * @return true if procedure does not alter data
      * @throws SQLException
+     *             if a database access error occurs or this method is called on a closed PreparedStatement
      */
     private boolean checkReadOnlyProcedure() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -2468,6 +2500,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      * encoding.
      *
      * @param s
+     *            string
+     * @return bytes
      */
     protected byte[] s2b(String s) {
         return s == null ? null : StringUtils.getBytes(s, this.charEncoding);

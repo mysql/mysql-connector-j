@@ -125,6 +125,11 @@ public class SerializingBufferWriter implements CompletionHandler<Long, Void> {
 
     /**
      * Completion handler for channel writes.
+     * 
+     * @param bytesWritten
+     *            number of processed bytes
+     * @param v
+     *            Void
      */
     public void completed(Long bytesWritten, Void v) {
         // collect completed writes to notify after initiating the next write

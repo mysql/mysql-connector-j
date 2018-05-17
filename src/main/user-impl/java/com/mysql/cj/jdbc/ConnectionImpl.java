@@ -229,7 +229,13 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     /**
-     * Creates a connection instance
+     * Creates a connection instance.
+     * 
+     * @param hostInfo
+     *            {@link HostInfo} instance
+     * @return new {@link ConnectionImpl} instance
+     * @throws SQLException
+     *             if a database access error occurs
      */
     public static JdbcConnection getInstance(HostInfo hostInfo) throws SQLException {
         return new ConnectionImpl(hostInfo);
@@ -239,7 +245,10 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     /**
      * @param url
+     *            connection URL
      * @param hostList
+     *            hosts list
+     * @return index in a host list
      */
     protected static synchronized int getNextRoundRobinHostIndex(String url, List<?> hostList) {
         // we really do "random" here, because you don't get even distribution when this is coupled with connection pools
@@ -724,6 +733,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      * Closes all currently open statements.
      * 
      * @throws SQLException
+     *             if a database access error occurs
      */
     private void closeAllOpenStatements() throws SQLException {
         SQLException postponedException = null;
@@ -1269,8 +1279,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      * Sets varying properties that depend on server information. Called once we
      * have connected to the server.
      * 
-     * @param info
      * @throws SQLException
+     *             if a database access error occurs
      */
     private void initializePropsFromServer() throws SQLException {
         String connectionInterceptorClasses = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors)
@@ -1333,6 +1343,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     /**
      * Resets a default auto-commit value of 0 to 1, as required by JDBC specification.
      * Takes into account that the default auto-commit value of 0 may have been changed on the server via init_connect.
+     * 
+     * @throws SQLException
+     *             if a database access error occurs
      */
     private void handleAutoCommitDefaults() throws SQLException {
         boolean resetAutoCommitDefault = false;

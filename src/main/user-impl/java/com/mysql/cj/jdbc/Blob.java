@@ -67,6 +67,9 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
 
     /**
      * Creates a Blob without data
+     * 
+     * @param exceptionInterceptor
+     *            exception interceptor
      */
     Blob(ExceptionInterceptor exceptionInterceptor) {
         setBinaryData(Constants.EMPTY_BYTE_ARRAY);
@@ -77,6 +80,9 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
      * Creates a BLOB encapsulating the given binary data
      * 
      * @param data
+     *            data to fill the Blob
+     * @param exceptionInterceptor
+     *            exception interceptor
      */
     public Blob(byte[] data, ExceptionInterceptor exceptionInterceptor) {
         setBinaryData(data);
@@ -87,8 +93,11 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
      * Creates an updatable BLOB that can update in-place (not implemented yet).
      * 
      * @param data
+     *            data to fill the Blob
      * @param creatorResultSetToSet
+     *            result set
      * @param columnIndexToSet
+     *            column index
      */
     Blob(byte[] data, ResultSetInternalMethods creatorResultSetToSet, int columnIndexToSet) {
         setBinaryData(data);

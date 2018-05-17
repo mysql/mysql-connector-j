@@ -57,6 +57,11 @@ public class DebugBufferingPacketSender implements MessageSender<NativePacketPay
 
     /**
      * Add a packet to the debug buffer.
+     * 
+     * @param packet
+     *            packet as bytes
+     * @param packetLen
+     *            packet length
      */
     private void pushPacketToDebugBuffer(byte[] packet, int packetLen) {
         int bytesToDump = Math.min(this.maxPacketDumpLength, packetLen);

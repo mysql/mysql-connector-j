@@ -71,7 +71,7 @@ public class EnumPropertyDefinition<T extends Enum<T>> extends AbstractPropertyD
     /**
      * Creates an instance of ReadableEnumProperty or ModifiableEnumProperty depending on isRuntimeModifiable() result.
      * 
-     * @return
+     * @return RuntimeProperty
      */
     @Override
     public RuntimeProperty<T> createRuntimeProperty() {

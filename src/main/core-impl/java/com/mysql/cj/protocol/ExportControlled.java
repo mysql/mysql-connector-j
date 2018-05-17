@@ -274,10 +274,14 @@ public class ExportControlled {
      * @param serverVersion
      *            ServerVersion object
      * @return SSL socket
+     * @throws IOException
+     *             if i/o exception occurs
      * @throws SSLParamsException
      *             if the handshake fails, or if this distribution of
      *             Connector/J doesn't contain the SSL crypto hooks needed to
      *             perform the handshake.
+     * @throws FeatureNotAvailableException
+     *             if TLS is not supported
      */
     public static Socket performTlsHandshake(Socket rawSocket, SocketConnection socketConnection, ServerVersion serverVersion)
             throws IOException, SSLParamsException, FeatureNotAvailableException {
@@ -414,6 +418,30 @@ public class ExportControlled {
 
     /**
      * Configure the {@link SSLContext} based on the supplier property set.
+     * 
+     * @param clientCertificateKeyStoreUrl
+     *            clientCertificateKeyStoreUrl
+     * @param clientCertificateKeyStoreType
+     *            clientCertificateKeyStoreType
+     * @param clientCertificateKeyStorePassword
+     *            clientCertificateKeyStorePassword
+     * @param trustCertificateKeyStoreUrl
+     *            trustCertificateKeyStoreUrl
+     * @param trustCertificateKeyStoreType
+     *            trustCertificateKeyStoreType
+     * @param trustCertificateKeyStorePassword
+     *            trustCertificateKeyStorePassword
+     * @param fallbackToDefaultTrustStore
+     *            fallbackToDefaultTrustStore
+     * @param verifyServerCert
+     *            verifyServerCert
+     * @param hostName
+     *            host name
+     * @param exceptionInterceptor
+     *            exception interceptor
+     * @return SSLContext
+     * @throws SSLParamsException
+     *             if an error occurs
      */
     public static SSLContext getSSLContext(String clientCertificateKeyStoreUrl, String clientCertificateKeyStoreType, String clientCertificateKeyStorePassword,
             String trustCertificateKeyStoreUrl, String trustCertificateKeyStoreType, String trustCertificateKeyStorePassword,

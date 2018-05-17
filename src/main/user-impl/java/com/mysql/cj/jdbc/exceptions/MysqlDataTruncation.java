@@ -57,6 +57,8 @@ public class MysqlDataTruncation extends DataTruncation {
      *            size requested
      * @param transferSize
      *            size actually used
+     * @param vendorErrorCode
+     *            MySQL error code
      */
     public MysqlDataTruncation(String message, int index, boolean parameter, boolean read, int dataSize, int transferSize, int vendorErrorCode) {
         super(index, parameter, read, dataSize, transferSize);

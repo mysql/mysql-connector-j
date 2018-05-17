@@ -95,8 +95,11 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      * @param sessState
      *            The session state object. It's intended to be updated from the handshake
      * @param user
+     *            user name
      * @param password
+     *            password
      * @param database
+     *            database name
      */
     @Override
     public void connect(ServerSession sessState, String user, String password, String database) {
@@ -397,6 +400,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      * Check if given plugin requires confidentiality, but connection is without SSL
      * 
      * @param plugin
+     *            {@link AuthenticationPlugin}
      */
     private void checkConfidentiality(AuthenticationPlugin<?> plugin) {
         if (plugin.requiresConfidentiality() && !this.protocol.getSocketConnection().isSSLEstablished()) {
@@ -766,6 +770,8 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     /**
      * Get the Java encoding to be used for the handshake
      * response. Defaults to UTF-8.
+     * 
+     * @return encoding name
      */
     public String getEncodingForHandshake() {
         String enc = this.propertySet.getStringReadableProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
@@ -784,6 +790,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      * to a MySQL server that understands SSL.
      * 
      * @param packLength
+     *            packet length
      */
     private void negotiateSSLConnection(int packLength) {
         this.protocol.negotiateSSLConnection(packLength);
@@ -793,9 +800,13 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      * Re-authenticates as the given user and password
      * 
      * @param serverSession
+     *            current {@link ServerSession}
      * @param userName
+     *            user name
      * @param password
+     *            password
      * @param database
+     *            database name
      */
     @Override
     public void changeUser(ServerSession serverSession, String userName, String password, String database) {

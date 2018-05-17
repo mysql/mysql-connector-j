@@ -109,6 +109,7 @@ public class NativePacketPayload implements Message {
      * If buffer size is smaller than required then it is re-allocated with bigger size.
      * 
      * @param additionalData
+     *            additional data size in bytes
      */
     public final void ensureCapacity(int additionalData) {
         if ((this.position + additionalData) > this.byteBuffer.length) {
@@ -140,7 +141,7 @@ public class NativePacketPayload implements Message {
     /**
      * Sets the array of bytes to use as a buffer to read from.
      * 
-     * @param byteBuffer
+     * @param byteBufferToSet
      *            the array of bytes to use as a buffer
      */
     public void setByteBuffer(byte[] byteBufferToSet) {
@@ -151,7 +152,7 @@ public class NativePacketPayload implements Message {
      * Get the actual length of payload the buffer contains.
      * It can be smaller than underlying buffer size because it can be reused after a big packet.
      * 
-     * @return
+     * @return payload length
      */
     public int getPayloadLength() {
         return this.payloadLength;
@@ -162,6 +163,7 @@ public class NativePacketPayload implements Message {
      * It can be smaller or equal to underlying buffer size.
      * 
      * @param bufLengthToSet
+     *            length
      */
     public void setPayloadLength(int bufLengthToSet) {
         if (bufLengthToSet > this.byteBuffer.length) {
@@ -188,7 +190,7 @@ public class NativePacketPayload implements Message {
     /**
      * Set the current position to write to/ read from
      * 
-     * @param position
+     * @param positionToSet
      *            the position (0-based index)
      */
     public void setPosition(int positionToSet) {
@@ -198,7 +200,7 @@ public class NativePacketPayload implements Message {
     /**
      * Is it a ERROR packet.
      * 
-     * @return
+     * @return true if it is a ERROR packet
      */
     public boolean isErrorPacket() {
         return (this.byteBuffer[0] & 0xff) == TYPE_ID_ERROR;
@@ -208,7 +210,7 @@ public class NativePacketPayload implements Message {
      * Is it a EOF packet.
      * See http://dev.mysql.com/doc/internals/en/packet-EOF_Packet.html
      * 
-     * @return
+     * @return true if it is a EOF packet
      */
     public final boolean isEOFPacket() {
         return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (getPayloadLength() <= 5);
@@ -218,7 +220,7 @@ public class NativePacketPayload implements Message {
      * Is it a Protocol::AuthSwitchRequest packet.
      * See http://dev.mysql.com/doc/internals/en/connection-phase-packets.html
      * 
-     * @return
+     * @return true if it is a Protocol::AuthSwitchRequest packet
      */
     public final boolean isAuthMethodSwitchRequestPacket() {
         return (this.byteBuffer[0] & 0xff) == TYPE_ID_AUTH_SWITCH;
@@ -228,7 +230,7 @@ public class NativePacketPayload implements Message {
      * Is it an OK packet.
      * See http://dev.mysql.com/doc/internals/en/packet-OK_Packet.html
      * 
-     * @return
+     * @return true if it is an OK packet
      */
     public final boolean isOKPacket() {
         return (this.byteBuffer[0] & 0xff) == TYPE_ID_OK;
@@ -238,7 +240,7 @@ public class NativePacketPayload implements Message {
      * Is it an OK packet for ResultSet. Unlike usual 0x00 signature it has 0xfe signature.
      * See http://dev.mysql.com/doc/internals/en/packet-OK_Packet.html
      * 
-     * @return
+     * @return true if it is an OK packet for ResultSet
      */
     public final boolean isResultSetOKPacket() {
         return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (getPayloadLength() < 16777215);
@@ -248,7 +250,7 @@ public class NativePacketPayload implements Message {
      * Is it a Protocol::AuthMoreData packet.
      * See http://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::AuthMoreData
      * 
-     * @return
+     * @return true if it is a Protocol::AuthMoreData packet
      */
     public final boolean isAuthMoreData() {
         return ((this.byteBuffer[0] & 0xff) == 1);
@@ -258,7 +260,9 @@ public class NativePacketPayload implements Message {
      * Write data according to provided Integer type.
      * 
      * @param type
+     *            {@link IntegerDataType}
      * @param l
+     *            value
      */
     public void writeInteger(IntegerDataType type, long l) {
         byte[] b;
@@ -346,7 +350,8 @@ public class NativePacketPayload implements Message {
      * Read data according to provided Integer type.
      * 
      * @param type
-     * @return
+     *            {@link IntegerDataType}
+     * @return long
      */
     public final long readInteger(IntegerDataType type) {
         byte[] b = this.byteBuffer;
@@ -483,7 +488,8 @@ public class NativePacketPayload implements Message {
      * The length of data to read depends on {@link StringSelfDataType}.
      * 
      * @param type
-     * @return
+     *            {@link StringSelfDataType}
+     * @return bytes
      */
     public byte[] readBytes(StringSelfDataType type) {
         byte[] b;
@@ -511,7 +517,7 @@ public class NativePacketPayload implements Message {
      * Set position to next value in internal buffer skipping the current value according to {@link StringSelfDataType}.
      * 
      * @param type
-     * @return
+     *            {@link StringSelfDataType}
      */
     public void skipBytes(StringSelfDataType type) {
         switch (type) {
@@ -539,8 +545,10 @@ public class NativePacketPayload implements Message {
      * Read len bytes from internal buffer starting from current position into the new byte array.
      * 
      * @param type
+     *            {@link StringLengthDataType}
      * @param len
-     * @return
+     *            length
+     * @return bytes
      */
     public byte[] readBytes(StringLengthDataType type, int len) {
         byte[] b;
@@ -560,9 +568,10 @@ public class NativePacketPayload implements Message {
      * The length of data to read depends on {@link StringSelfDataType}.
      * 
      * @param type
+     *            {@link StringSelfDataType}
      * @param encoding
      *            if null then platform default encoding is used
-     * @return
+     * @return string
      */
     public String readString(StringSelfDataType type, String encoding) {
         String res = null;
@@ -591,10 +600,12 @@ public class NativePacketPayload implements Message {
      * Read len bytes from internal buffer starting from current position decoding them into String using the specified character encoding.
      * 
      * @param type
+     *            {@link StringLengthDataType}
      * @param encoding
      *            if null then platform default encoding is used
      * @param len
-     * @return
+     *            length
+     * @return string
      */
     public String readString(StringLengthDataType type, String encoding, int len) {
         String res = null;

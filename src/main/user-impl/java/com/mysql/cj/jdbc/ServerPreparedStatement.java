@@ -82,6 +82,20 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     /**
      * Creates a prepared statement instance
+     * 
+     * @param conn
+     *            the connection creating us.
+     * @param sql
+     *            the SQL containing the statement to prepare.
+     * @param catalog
+     *            the catalog in use when we were created.
+     * @param resultSetType
+     *            ResultSet type
+     * @param resultSetConcurrency
+     *            ResultSet concurrency
+     * @return new ServerPreparedStatement
+     * @throws SQLException
+     *             If an error occurs
      */
     protected static ServerPreparedStatement getInstance(JdbcConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency)
             throws SQLException {
@@ -97,6 +111,10 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
      *            the SQL containing the statement to prepare.
      * @param catalog
      *            the catalog in use when we were created.
+     * @param resultSetType
+     *            ResultSet type
+     * @param resultSetConcurrency
+     *            ResultSet concurrency
      * 
      * @throws SQLException
      *             If an error occurs
@@ -441,7 +459,9 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
      *            1-based
      * @param forLongData
      *            is this for a stream?
+     * @return {@link ServerPreparedQueryBindValue}
      * @throws SQLException
+     *             if a database access error occurs or this method is called on a closed PreparedStatement
      */
     protected ServerPreparedQueryBindValue getBinding(int parameterIndex, boolean forLongData) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -597,11 +617,14 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
      * </pre>
      * 
      * @param maxRowsToRetrieve
+     *            rows limit
      * @param createStreamingResultSet
+     *            should c/J create a streaming result?
      * @param metadata
      *            use this metadata instead of the one provided on wire
-     * 
+     * @return result set
      * @throws SQLException
+     *             if a database access error occurs or this method is called on a closed PreparedStatement
      */
     protected ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, ColumnDefinition metadata) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {

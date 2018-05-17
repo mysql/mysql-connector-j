@@ -104,7 +104,9 @@ public class ReplicationConnectionGroup {
      * This is a no-op if the group already has this host in a slave role.
      * 
      * @param hostPortPair
+     *            "host:port"
      * @throws SQLException
+     *             if an error occurs
      */
     public void addSlaveHost(String hostPortPair) throws SQLException {
         // only add if it's not already a slave host
@@ -134,8 +136,11 @@ public class ReplicationConnectionGroup {
      * This is a no-op if the group doesn't have this host in a slave role.
      * 
      * @param hostPortPair
+     *            "host:port"
      * @param closeGently
+     *            remove host when it's not in use
      * @throws SQLException
+     *             if an error occurs
      */
     public void removeSlaveHost(String hostPortPair, boolean closeGently) throws SQLException {
         if (this.slaveHostList.remove(hostPortPair)) {
@@ -159,7 +164,9 @@ public class ReplicationConnectionGroup {
      * This is a no-op if the group already has this host in a master role and not in slave role.
      * 
      * @param hostPortPair
+     *            "host:port"
      * @throws SQLException
+     *             if an error occurs
      */
     public void promoteSlaveToMaster(String hostPortPair) throws SQLException {
         // remove host from slaves AND add host to masters, note that both operands need to be evaluated.
@@ -177,6 +184,8 @@ public class ReplicationConnectionGroup {
      * 
      * @param hostPortPair
      *            host:port
+     * @throws SQLException
+     *             if an error occurs
      */
     public void removeMasterHost(String hostPortPair) throws SQLException {
         this.removeMasterHost(hostPortPair, true);
@@ -193,9 +202,11 @@ public class ReplicationConnectionGroup {
      * This is a no-op if the group doesn't have this host in a master role.
      * 
      * @param hostPortPair
-     *            host:port
+     *            "host:port"
      * @param closeGently
+     *            remove host when it's not in use
      * @throws SQLException
+     *             if an error occurs
      */
     public void removeMasterHost(String hostPortPair, boolean closeGently) throws SQLException {
         if (this.masterHostList.remove(hostPortPair)) {

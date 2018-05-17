@@ -36,7 +36,7 @@ import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.protocol.PacketReceivedTimeHolder;
 
 /**
- * A {@link PacketReader} which tracks the last time a packet was received.
+ * A {@link MessageReader} which tracks the last time a packet was received.
  */
 public class TimeTrackingPacketReader implements MessageReader<NativePacketHeader, NativePacketPayload>, PacketReceivedTimeHolder {
 

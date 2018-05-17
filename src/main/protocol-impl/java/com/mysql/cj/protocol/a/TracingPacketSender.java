@@ -57,6 +57,13 @@ public class TracingPacketSender implements MessageSender<NativePacketPayload> {
 
     /**
      * Log the packet details to the provided logger.
+     * 
+     * @param packet
+     *            packet as bytes
+     * @param packetLen
+     *            packet length
+     * @param packetSequence
+     *            sequence index
      */
     private void logPacket(byte[] packet, int packetLen, byte packetSequence) {
         StringBuilder traceMessageBuf = new StringBuilder();

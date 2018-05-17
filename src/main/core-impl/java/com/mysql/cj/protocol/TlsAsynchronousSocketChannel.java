@@ -101,6 +101,11 @@ public class TlsAsynchronousSocketChannel extends AsynchronousSocketChannel impl
 
     /**
      * Completion handler for a read. Prepare the buffer for decryption and continue with {@link #decryptAndDispatch()}.
+     * 
+     * @param result
+     *            number of processed bytes
+     * @param attachment
+     *            Void
      */
     public void completed(Integer result, Void attachment) {
         if (result < 0) {
@@ -260,6 +265,9 @@ public class TlsAsynchronousSocketChannel extends AsynchronousSocketChannel impl
 
     /**
      * Internal class used for easy propagation of error to the {@link CompletionHandler}.
+     * 
+     * @param <V>
+     *            result type
      */
     private static class ErrorPropagatingCompletionHandler<V> implements CompletionHandler<V, Void> {
         private CompletionHandler<Long, ?> target;

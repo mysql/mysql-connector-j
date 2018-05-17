@@ -67,8 +67,11 @@ public class Notice implements Warning {
      * Constructor for XProtocolNoticeFrameType_WARNING
      * 
      * @param level
+     *            level
      * @param code
+     *            code
      * @param message
+     *            message
      */
     public Notice(int level, long code, String message) {
         this.noticeType = XProtocolNoticeFrameType_WARNING;
@@ -81,7 +84,9 @@ public class Notice implements Warning {
      * Constructor for XProtocolNoticeFrameType_SESS_STATE_CHANGED
      * 
      * @param paramType
+     *            parameter type
      * @param valueList
+     *            values
      */
     public Notice(int paramType, List<Scalar> valueList) {
         this.noticeType = XProtocolNoticeFrameType_SESS_STATE_CHANGED;
@@ -93,7 +98,9 @@ public class Notice implements Warning {
      * Constructor for XProtocolNoticeFrameType_SESS_VAR_CHANGED
      * 
      * @param paramName
+     *            parameter name
      * @param value
+     *            value
      */
     public Notice(String paramName, Scalar value) {
         this.noticeType = XProtocolNoticeFrameType_SESS_VAR_CHANGED;

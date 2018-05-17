@@ -42,14 +42,8 @@ public class CJException extends RuntimeException {
      */
     protected String exceptionMessage;
 
-    /**
-     * @serial
-     */
     private String SQLState = "S1000"; // GENERAL_ERROR by default
 
-    /**
-     * @serial
-     */
     private int vendorCode = 0;
 
     private boolean isTransient = false;

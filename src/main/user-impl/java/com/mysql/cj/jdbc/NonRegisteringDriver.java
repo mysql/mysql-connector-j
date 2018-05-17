@@ -174,12 +174,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * </p>
      * 
      * <p>
-     * MySQL protocol takes the form:
-     * 
-     * <PRE>
-     * jdbc:mysql://host:port/database
-     * </PRE>
-     * 
+     * MySQL protocol takes the form: jdbc:mysql://host:port/database
      * </p>
      * 
      * @param url

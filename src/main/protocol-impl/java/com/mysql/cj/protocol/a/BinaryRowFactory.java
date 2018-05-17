@@ -87,7 +87,9 @@ public class BinaryRowFactory extends AbstractRowFactory implements ProtocolEnti
      * Un-packs binary-encoded result set data for one row
      * 
      * @param fields
+     *            {@link Field}s array
      * @param binaryData
+     *            data
      * 
      * @return byte[][]
      */
@@ -128,6 +130,10 @@ public class BinaryRowFactory extends AbstractRowFactory implements ProtocolEnti
      * 
      * @param binaryData
      *            packet to the
+     * @param fields
+     *            {@link Field}s array
+     * @param columnIndex
+     *            column index
      * @param unpackedRowData
      *            byte array.
      */

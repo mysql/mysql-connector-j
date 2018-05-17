@@ -64,6 +64,12 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
 
     /**
      * Wraps a connection as a 'fake' XAConnection
+     * 
+     * @param conn
+     *            connection to wrap
+     * @return {@link XAConnection}
+     * @throws SQLException
+     *             if an error occurs
      */
     private XAConnection wrapConnection(Connection conn) throws SQLException {
         if (getBooleanReadableProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()

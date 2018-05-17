@@ -116,10 +116,10 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     /**
      * Instantiates a new FailoverConnectionProxy for the given list of hosts and connection properties.
      * 
-     * @param hosts
-     *            The lists of hosts available to switch on.
-     * @param props
-     *            The properties to be used in new internal connections.
+     * @param connectionUrl
+     *            {@link ConnectionUrl} instance containing the lists of hosts available to switch on.
+     * @throws SQLException
+     *             if an error occurs
      */
     private FailoverConnectionProxy(ConnectionUrl connectionUrl) throws SQLException {
         super(connectionUrl);
@@ -209,6 +209,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *            The host index in the global hosts list.
      * @return
      *         The new connection instance.
+     * @throws SQLException
+     *             if an error occurs
      */
     synchronized ConnectionImpl createConnectionForHostIndex(int hostIndex) throws SQLException {
         return createConnectionForHost(this.hostsList.get(hostIndex));
@@ -219,6 +221,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * 
      * @param hostIndex
      *            The host index in the global hosts list.
+     * @throws SQLException
+     *             if an error occurs
      */
     private synchronized void connectTo(int hostIndex) throws SQLException {
         try {
@@ -244,6 +248,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *            The host index in the global hosts list that matches the given connection.
      * @param connection
      *            The connection instance to switch to.
+     * @throws SQLException
+     *             if an error occurs
      */
     private synchronized void switchCurrentConnectionTo(int hostIndex, JdbcConnection connection) throws SQLException {
         invalidateCurrentConnection();
@@ -267,6 +273,9 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Initiates a default failover procedure starting at the current connection host index.
+     * 
+     * @throws SQLException
+     *             if an error occurs
      */
     private synchronized void failOver() throws SQLException {
         failOver(this.currentHostIndex);
@@ -278,6 +287,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * 
      * @param failedHostIdx
      *            The host index where to start from. First connection attempt will be the next one.
+     * @throws SQLException
+     *             if an error occurs
      */
     private synchronized void failOver(int failedHostIdx) throws SQLException {
         int prevHostIndex = this.currentHostIndex;
@@ -358,6 +369,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *            Current host index.
      * @param vouchForPrimaryHost
      *            Allows to return the primary host index even if the usual required conditions aren't met.
+     * @return next host index
      */
     private int nextHost(int currHostIdx, boolean vouchForPrimaryHost) {
         int nextHostIdx = (currHostIdx + 1) % this.hostsList.size();
@@ -378,6 +390,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     /**
      * Checks if at least one of the required conditions to fall back to primary host is met, which is determined by the properties 'queriesBeforeRetryMaster'
      * and 'secondsBeforeRetryMaster'.
+     * 
+     * @return true if ready
      */
     synchronized boolean readyToFallBackToPrimaryHost() {
         return this.enableFallBackToPrimaryHost && connectedToSecondaryHost() && (secondsBeforeRetryPrimaryHostIsMet() || queriesBeforeRetryPrimaryHostIsMet());
@@ -385,6 +399,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Checks if there is a underlying connection for this proxy.
+     * 
+     * @return true if there is a connection
      */
     synchronized boolean isConnected() {
         return this.currentHostIndex != NO_CONNECTION_INDEX;
@@ -395,6 +411,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * 
      * @param hostIndex
      *            The host index in the global hosts list.
+     * @return true if so
      */
     synchronized boolean isPrimaryHostIndex(int hostIndex) {
         return hostIndex == this.primaryHostIndex;
@@ -402,6 +419,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Checks if this proxy is using the primary host in the underlying connection.
+     * 
+     * @return true if so
      */
     synchronized boolean connectedToPrimaryHost() {
         return isPrimaryHostIndex(this.currentHostIndex);
@@ -409,6 +428,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Checks if this proxy is using a secondary host in the underlying connection.
+     * 
+     * @return true if so
      */
     synchronized boolean connectedToSecondaryHost() {
         return this.currentHostIndex >= 0 && !isPrimaryHostIndex(this.currentHostIndex);
@@ -416,6 +437,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Checks the condition set by the property 'secondsBeforeRetryMaster'.
+     * 
+     * @return value
      */
     private synchronized boolean secondsBeforeRetryPrimaryHostIsMet() {
         return this.secondsBeforeRetryPrimaryHost > 0 && Util.secondsSinceMillis(this.primaryHostFailTimeMillis) >= this.secondsBeforeRetryPrimaryHost;
@@ -423,6 +446,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Checks the condition set by the property 'queriesBeforeRetryMaster'.
+     * 
+     * @return value
      */
     private synchronized boolean queriesBeforeRetryPrimaryHostIsMet() {
         return this.queriesBeforeRetryPrimaryHost > 0 && this.queriesIssuedSinceFailover >= this.queriesBeforeRetryPrimaryHost;
@@ -438,6 +463,9 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Closes current connection.
+     * 
+     * @throws SQLException
+     *             if an error occurs
      */
     @Override
     synchronized void doClose() throws SQLException {
@@ -446,6 +474,9 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Aborts current connection.
+     * 
+     * @throws SQLException
+     *             if an error occurs
      */
     @Override
     synchronized void doAbortInternal() throws SQLException {
@@ -454,6 +485,9 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Aborts current connection using the given executor.
+     * 
+     * @throws SQLException
+     *             if an error occurs
      */
     @Override
     synchronized void doAbort(Executor executor) throws SQLException {

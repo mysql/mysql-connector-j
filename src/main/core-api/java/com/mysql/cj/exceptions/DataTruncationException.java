@@ -33,29 +33,10 @@ public class DataTruncationException extends CJException {
 
     private static final long serialVersionUID = -5209088385943506720L;
 
-    /**
-     * @serial
-     */
     private int index;
-
-    /**
-     * @serial
-     */
     private boolean parameter;
-
-    /**
-     * @serial
-     */
     private boolean read;
-
-    /**
-     * @serial
-     */
     private int dataSize;
-
-    /**
-     * @serial
-     */
     private int transferSize;
 
     public DataTruncationException() {

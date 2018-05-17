@@ -31,6 +31,9 @@ package com.mysql.cj.result;
 
 /**
  * A decorating value factory which translates zero date/time values into NULL.
+ * 
+ * @param <T>
+ *            value type
  */
 public class ZeroDateTimeToNullValueFactory<T> extends BaseDecoratingValueFactory<T> {
     public ZeroDateTimeToNullValueFactory(ValueFactory<T> targetVf) {

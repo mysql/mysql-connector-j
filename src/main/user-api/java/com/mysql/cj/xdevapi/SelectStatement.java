@@ -98,7 +98,7 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
      * Locks matching rows against updates using the provided lock contention option.
      * 
      * @param lockContention
-     *            The {@link LockContention} value to set.
+     *            The {@link com.mysql.cj.xdevapi.Statement.LockContention} value to set.
      * @return {@link SelectStatement}
      */
     SelectStatement lockShared(LockContention lockContention);
@@ -114,7 +114,7 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
      * Locks matching rows exclusively so no other transactions can read or write to them, using the provided lock contention option.
      * 
      * @param lockContention
-     *            The {@link LockContention} value to set.
+     *            The {@link com.mysql.cj.xdevapi.Statement.LockContention} value to set.
      * @return {@link SelectStatement}
      */
     SelectStatement lockExclusive(LockContention lockContention);

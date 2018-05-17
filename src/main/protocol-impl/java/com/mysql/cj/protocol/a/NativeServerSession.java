@@ -304,6 +304,7 @@ public class NativeServerSession implements ServerSession {
      * @param autoCommitFlag
      *            autocommit status we are going to set in driver
      * @param elideSetAutoCommitsFlag
+     *            'elideSetAutoCommits' property value
      * @return true if SET AUTOCOMMIT to be sent
      */
     public boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag, boolean elideSetAutoCommitsFlag) {
@@ -535,7 +536,7 @@ public class NativeServerSession implements ServerSession {
     }
 
     public TimeZone getServerTimeZone() {
-        return serverTimeZone;
+        return this.serverTimeZone;
     }
 
     public void setServerTimeZone(TimeZone serverTimeZone) {
@@ -543,7 +544,7 @@ public class NativeServerSession implements ServerSession {
     }
 
     public TimeZone getDefaultTimeZone() {
-        return defaultTimeZone;
+        return this.defaultTimeZone;
     }
 
     public void setDefaultTimeZone(TimeZone defaultTimeZone) {

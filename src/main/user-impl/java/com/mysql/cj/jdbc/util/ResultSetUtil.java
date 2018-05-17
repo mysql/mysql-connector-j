@@ -64,10 +64,11 @@ public class ResultSetUtil {
      * @param index
      *            an index into the ResultSet.
      * @return the object if it can be de-serialized
-     * @throws SQLException
      * @throws IOException
+     *             if an error occurs
+     * @throws SQLException
+     *             if an error occurs
      * @throws ClassNotFoundException
-     * @throws Exception
      *             if an error occurs
      */
     // TODO not used ?

@@ -136,8 +136,10 @@ public class UpdatableResultSet extends ResultSetImpl {
      * @param conn
      *            the Connection that created us.
      * @param creatorStmt
+     *            statement owning this result set
      * 
      * @throws SQLException
+     *             if an error occurs
      */
     public UpdatableResultSet(ResultsetRows tuples, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
         super(tuples, conn, creatorStmt);
@@ -205,6 +207,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      * Is this ResultSet updatable?
      * 
      * @throws SQLException
+     *             if an error occurs
      */
     public void checkUpdatability() throws SQLException {
         try {
@@ -560,7 +563,9 @@ public class UpdatableResultSet extends ResultSetImpl {
      * generate the PreparedStatements to support updates.
      * 
      * @throws SQLException
+     *             if an error occurs
      * @throws NotUpdatable
+     *             if result set was marked as not updatable
      */
     protected void generateStatements() throws SQLException {
         if (!this.isUpdatable) {
@@ -1200,6 +1205,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      * point to current, valid row.
      * 
      * @throws SQLException
+     *             if an error occurs
      */
     protected void syncUpdate() throws SQLException {
         if (this.updater == null) {
@@ -1598,10 +1604,15 @@ public class UpdatableResultSet extends ResultSetImpl {
      * JDBC42UpdatableResultSet new JDBC 4.2 updateObject() methods.
      * 
      * @param columnIndex
+     *            column index
      * @param x
+     *            value
      * @param targetType
+     *            target type
      * @param scaleOrLength
+     *            scale or length, depending on target type
      * @throws SQLException
+     *             if an error occurs
      */
     protected void updateObjectInternal(int columnIndex, Object x, Integer targetType, int scaleOrLength) throws SQLException {
         try {
@@ -1618,10 +1629,15 @@ public class UpdatableResultSet extends ResultSetImpl {
      * Internal setObject implementation.
      * 
      * @param columnIndex
+     *            column index
      * @param x
+     *            value
      * @param targetType
+     *            target type
      * @param scaleOrLength
+     *            scale or length, depending on target type
      * @throws SQLException
+     *             if an error occurs
      */
     protected void updateObjectInternal(int columnIndex, Object x, SQLType targetType, int scaleOrLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {

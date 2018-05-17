@@ -109,7 +109,9 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
      * Reset a bind value to be used for a new value of the given type.
      * 
      * @param bufType
+     *            MysqlType.FIELD_TYPE_*
      * @param numberOfExecutions
+     *            current number of PreparedQuery executions
      * @return true if we need to send/resend types to the server
      */
     public boolean resetToType(int bufType, long numberOfExecutions) {
@@ -299,8 +301,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
 
     /**
      * @param intoPacket
-     * @param dt
-     * @param mysql
+     *            packet to write into
      */
     private void storeDateTime(NativePacketPayload intoPacket) {
         synchronized (this) {

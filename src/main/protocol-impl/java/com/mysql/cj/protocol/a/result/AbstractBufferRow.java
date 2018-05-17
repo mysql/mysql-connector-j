@@ -49,7 +49,7 @@ public abstract class AbstractBufferRow extends AbstractResultsetRow {
     protected int homePosition = 0;
 
     /**
-     * The last-requested index, used as an optimization, if you ask for the same index, we won't seek to find it. If you ask for an index that is >
+     * The last-requested index, used as an optimization, if you ask for the same index, we won't seek to find it. If you ask for an index that is greater
      * than the last one requested, we start seeking from the last requested index.
      */
     protected int lastRequestedIndex = -1;

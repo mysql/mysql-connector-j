@@ -48,11 +48,11 @@ import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.protocol.Resultset.Type;
 import com.mysql.cj.protocol.a.ColumnDefinitionFactory;
-import com.mysql.cj.protocol.a.NativeMessageBuilder;
 import com.mysql.cj.protocol.a.NativeConstants;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
+import com.mysql.cj.protocol.a.NativeMessageBuilder;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.util.LogUtils;
@@ -108,7 +108,9 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     /**
      * 
      * @param sql
+     *            query string
      * @throws IOException
+     *             if an i/o error occurs
      */
     public void serverPrepare(String sql) throws IOException {
         this.session.checkClosed();
@@ -175,11 +177,17 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     }
 
     /**
-     * 
+     * @param <T>
+     *            extends {@link Resultset}
      * @param maxRowsToRetrieve
+     *            rows limit
      * @param createStreamingResultSet
+     *            should c/J create a streaming result?
      * @param metadata
-     * @return
+     *            use this metadata instead of the one provided on wire
+     * @param resultSetFactory
+     *            {@link ProtocolEntityFactory}
+     * @return T instance
      */
     public <T extends Resultset> T serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, ColumnDefinition metadata,
             ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) {
@@ -483,7 +491,9 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
      * </pre>
      * 
      * @param parameterIndex
+     *            parameter index
      * @param longData
+     *            {@link ServerPreparedQueryBindValue containing long data}
      * 
      */
     private void serverLongData(int parameterIndex, ServerPreparedQueryBindValue longData) {
@@ -696,10 +706,8 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     }
 
     /**
-     * 
      * @param clearServerParameters
-     * @return Whether or not the long parameters have been 'switched' back to normal parameters.
-     *         We cannot execute() if clearParameters() has not been called in this case.
+     *            flag indicating whether we need an additional clean up
      */
     public void clearParameters(boolean clearServerParameters) {
         boolean hadLongData = false;

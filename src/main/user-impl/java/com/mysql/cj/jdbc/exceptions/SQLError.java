@@ -190,9 +190,10 @@ public class SQLError {
      * Run exception through an ExceptionInterceptor chain.
      * 
      * @param exInterceptor
+     *            exception interceptor
      * @param sqlEx
-     * @param conn
-     * @return
+     *            cause
+     * @return SQLException
      */
     private static SQLException runThroughExceptionInterceptor(ExceptionInterceptor exInterceptor, SQLException sqlEx) {
         if (exInterceptor != null) {
@@ -210,11 +211,18 @@ public class SQLError {
      * while JDBC 4.2 and beyond uses long values.
      * 
      * @param underlyingEx
+     *            underlying exception
      * @param updateCounts
+     *            update counts of completed queries in this batch
      * @param interceptor
+     *            exception interceptor
+     * @return SQLException
+     * @throws SQLException
+     *             if an error occurs
      */
     public static SQLException createBatchUpdateException(SQLException underlyingEx, long[] updateCounts, ExceptionInterceptor interceptor)
             throws SQLException {
+        // TODO should not throw SQLException
         SQLException newEx = (SQLException) Util.getInstance("java.sql.BatchUpdateException",
                 new Class<?>[] { String.class, String.class, int.class, long[].class, Throwable.class },
                 new Object[] { underlyingEx.getMessage(), underlyingEx.getSQLState(), underlyingEx.getErrorCode(), updateCounts, underlyingEx }, interceptor);
@@ -223,6 +231,8 @@ public class SQLError {
 
     /**
      * Create a SQLFeatureNotSupportedException or a NotImplemented exception according to the JDBC version in use.
+     * 
+     * @return SQLException
      */
     public static SQLException createSQLFeatureNotSupportedException() {
         return new SQLFeatureNotSupportedException();
@@ -232,8 +242,14 @@ public class SQLError {
      * Create a SQLFeatureNotSupportedException or a NotImplemented exception according to the JDBC version in use.
      * 
      * @param message
+     *            error message
      * @param sqlState
+     *            sqlState
      * @param interceptor
+     *            exception interceptor
+     * @return SQLException
+     * @throws SQLException
+     *             if an error occurs
      */
     public static SQLException createSQLFeatureNotSupportedException(String message, String sqlState, ExceptionInterceptor interceptor) throws SQLException {
         SQLException newEx = new SQLFeatureNotSupportedException(message, sqlState);

@@ -36,6 +36,9 @@ import java.util.List;
  * 
  * The driver will create one instance of a given plugin per MysqlIO instance if it's reusable (see {@link #isReusable()}) or a new instance
  * in each MysqlIO#proceedHandshakeWithPluggableAuthentication(String, String, String, Buffer) call.
+ * 
+ * @param <M>
+ *            Message type
  */
 public interface AuthenticationPlugin<M extends Message> {
 

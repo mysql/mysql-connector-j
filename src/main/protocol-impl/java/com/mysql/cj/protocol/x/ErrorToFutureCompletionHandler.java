@@ -34,6 +34,9 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Base class that propagates any error to the given future allowing only implementation of the success callback.
+ * 
+ * @param <T>
+ *            result type
  */
 public class ErrorToFutureCompletionHandler<T> implements CompletionHandler<T, Void> {
     private CompletableFuture<?> future;

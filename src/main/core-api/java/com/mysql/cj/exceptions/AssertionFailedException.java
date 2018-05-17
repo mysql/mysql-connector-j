@@ -66,6 +66,8 @@ public class AssertionFailedException extends CJException {
      * @param assertion
      *            message
      * @return the exception. exception should be thrown by the caller to satisfy compiler checks for data-flow, etc
+     * @throws AssertionFailedException
+     *             if exception occurs
      */
     public static AssertionFailedException shouldNotHappen(String assertion) throws AssertionFailedException {
         return new AssertionFailedException(assertion);

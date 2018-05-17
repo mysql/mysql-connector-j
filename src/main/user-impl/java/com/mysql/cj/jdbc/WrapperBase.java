@@ -110,7 +110,10 @@ abstract class WrapperBase {
          * instance so that we can catch and fire SQL errors.
          * 
          * @param toProxy
+         *            object to be proxied
          * @param clazz
+         *            desired class
+         * @return proxy object
          */
         private Object proxyIfInterfaceIsJdbc(Object toProxy, Class<?> clazz) {
             Class<?>[] interfaces = clazz.getInterfaces();

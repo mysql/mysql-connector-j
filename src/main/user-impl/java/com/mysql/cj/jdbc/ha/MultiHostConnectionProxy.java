@@ -115,6 +115,9 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
 
     /**
      * Initializes a connection wrapper for this MultiHostConnectionProxy instance.
+     * 
+     * @throws SQLException
+     *             if an error occurs
      */
     MultiHostConnectionProxy() throws SQLException {
         this.thisAsConnection = getNewWrapperForThisAsConnection();
@@ -125,6 +128,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * 
      * @param connectionUrl
      *            The connection URL.
+     * @throws SQLException
+     *             if an error occurs
      */
     MultiHostConnectionProxy(ConnectionUrl connectionUrl) throws SQLException {
         this();
@@ -195,6 +200,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * 
      * @return
      *         The connection object instance that wraps 'this'.
+     * @throws SQLException
+     *             if an error occurs
      */
     JdbcConnection getNewWrapperForThisAsConnection() throws SQLException {
         return new MultiHostMySQLConnection(this);
@@ -237,6 +244,12 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * 
      * @param e
      *            The Exception instance to check.
+     * @throws SQLException
+     *             if an error occurs
+     * @throws Throwable
+     *             if an error occurs
+     * @throws InvocationTargetException
+     *             if an error occurs
      */
     void dealWithInvocationException(InvocationTargetException e) throws SQLException, Throwable, InvocationTargetException {
         Throwable t = e.getTargetException();
@@ -255,6 +268,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     /**
      * Checks if the given throwable should trigger a connection switch.
      * 
+     * @return true if the given throwable should trigger a connection switch
      * @param t
      *            The Throwable instance to analyze.
      */
@@ -262,11 +276,16 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
 
     /**
      * Checks if current connection is to a master host.
+     * 
+     * @return true if current connection is to a master host
      */
     abstract boolean isMasterConnection();
 
     /**
      * Invalidates the current connection.
+     * 
+     * @throws SQLException
+     *             if an error occurs
      */
     synchronized void invalidateCurrentConnection() throws SQLException {
         invalidateConnection(this.currentConnection);
@@ -277,6 +296,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * 
      * @param conn
      *            The connection instance to invalidate.
+     * @throws SQLException
+     *             if an error occurs
      */
     synchronized void invalidateConnection(JdbcConnection conn) throws SQLException {
         try {
@@ -290,6 +311,9 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
 
     /**
      * Picks the "best" connection to use from now on. Each subclass needs to implement its connection switch strategy on it.
+     * 
+     * @throws SQLException
+     *             if an error occurs
      */
     abstract void pickNewConnection() throws SQLException;
 
@@ -300,6 +324,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      *            The host info instance.
      * @return
      *         The new Connection instance.
+     * @throws SQLException
+     *             if an error occurs
      */
     synchronized ConnectionImpl createConnectionForHost(HostInfo hostInfo) throws SQLException {
         ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(hostInfo);
@@ -314,6 +340,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      *            The connection where to get state from.
      * @param target
      *            The connection where to set state.
+     * @throws SQLException
+     *             if an error occurs
      */
     void syncSessionState(JdbcConnection source, JdbcConnection target) throws SQLException {
         if (source == null || target == null) {
@@ -339,6 +367,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      *            The connection where to set state.
      * @param readOnly
      *            The new read-only status.
+     * @throws SQLException
+     *             if an error occurs
      */
     void syncSessionState(JdbcConnection source, JdbcConnection target, boolean readOnly) throws SQLException {
         if (target != null) {
@@ -364,16 +394,27 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
 
     /**
      * Executes a close() invocation;
+     * 
+     * @throws SQLException
+     *             if an error occurs
      */
     abstract void doClose() throws SQLException;
 
     /**
      * Executes a abortInternal() invocation;
+     * 
+     * @throws SQLException
+     *             if an error occurs
      */
     abstract void doAbortInternal() throws SQLException;
 
     /**
      * Executes a abort() invocation;
+     * 
+     * @param executor
+     *            executor
+     * @throws SQLException
+     *             if an error occurs
      */
     abstract void doAbort(Executor executor) throws SQLException;
 
@@ -381,6 +422,16 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * Proxies method invocation on the java.sql.Connection interface, trapping multi-host specific methods and generic methods.
      * Subclasses have to override this to complete the method invocation process, deal with exceptions and decide when to switch connection.
      * To avoid unnecessary additional exception handling overriders should consult #canDealWith(Method) before chaining here.
+     * 
+     * @param proxy
+     *            proxy object
+     * @param method
+     *            method to invoke
+     * @param args
+     *            method parameters
+     * @return method result
+     * @throws Throwable
+     *             if an error occurs
      */
     @Override
     public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -444,11 +495,25 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
 
     /**
      * Continuation of the method invocation process, to be implemented within each subclass.
+     * 
+     * @param proxy
+     *            proxy object
+     * @param method
+     *            method to invoke
+     * @param args
+     *            method parameters
+     * @return method result
+     * @throws Throwable
+     *             if an error occurs
      */
     abstract Object invokeMore(Object proxy, Method method, Object[] args) throws Throwable;
 
     /**
      * Checks if the given method is allowed on closed connections.
+     * 
+     * @param method
+     *            method
+     * @return true if the given method is allowed on closed connections
      */
     protected boolean allowedOnClosedConnection(Method method) {
         String methodName = method.getName();

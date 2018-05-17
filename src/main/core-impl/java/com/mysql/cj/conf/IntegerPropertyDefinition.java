@@ -72,7 +72,7 @@ public class IntegerPropertyDefinition extends AbstractPropertyDefinition<Intege
     /**
      * Creates instance of ReadableIntegerProperty or ModifiableIntegerProperty depending on isRuntimeModifiable() result.
      * 
-     * @return
+     * @return RuntimeProperty
      */
     @Override
     public RuntimeProperty<Integer> createRuntimeProperty() {
