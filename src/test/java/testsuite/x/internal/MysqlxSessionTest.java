@@ -55,9 +55,9 @@ import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.ValueFactory;
 import com.mysql.cj.xdevapi.DatabaseObject;
 import com.mysql.cj.xdevapi.DatabaseObject.DbObjectType;
-import com.mysql.cj.xdevapi.DocFindParams;
+import com.mysql.cj.xdevapi.DocFilterParams;
 import com.mysql.cj.xdevapi.DocResultImpl;
-import com.mysql.cj.xdevapi.FindParams;
+import com.mysql.cj.xdevapi.FilterParams;
 
 /**
  * Tests for (internal) session-level APIs against X Plugin via X Protocol.
@@ -165,14 +165,14 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
         stringDocs = stringDocs.stream().map(s -> s.replaceAll("'", "\"")).collect(Collectors.toList());
         this.session.sendMessage(builder.buildDocInsert(getTestDatabase(), collName, stringDocs, false));
 
-        FindParams findParams = new DocFindParams(getTestDatabase(), collName);
-        findParams.setOrder("$._id");
+        FilterParams filterParams = new DocFilterParams(getTestDatabase(), collName);
+        filterParams.setOrder("$._id");
 
-        DocResultImpl docs1 = this.session.find(findParams, (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs2 = this.session.find(findParams, (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs3 = this.session.find(findParams, (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs4 = this.session.find(findParams, (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs5 = this.session.find(findParams, (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs1 = this.session.find(filterParams, (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs2 = this.session.find(filterParams, (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs3 = this.session.find(filterParams, (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs4 = this.session.find(filterParams, (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs5 = this.session.find(filterParams, (rows, task) -> new DocResultImpl(rows, task));
         assertTrue(docs5.hasNext());
         assertTrue(docs4.hasNext());
         assertTrue(docs3.hasNext());

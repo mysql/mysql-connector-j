@@ -37,12 +37,15 @@ import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 
+/**
+ * {@link UpdateStatement} implementation.
+ */
 public class UpdateStatementImpl extends FilterableStatement<UpdateStatement, Result> implements UpdateStatement {
     private MysqlxSession mysqlxSession;
     private UpdateParams updateParams = new UpdateParams();
 
     /* package private */ UpdateStatementImpl(MysqlxSession mysqlxSession, String schema, String table) {
-        super(schema, table, true);
+        super(new TableFilterParams(schema, table));
         this.mysqlxSession = mysqlxSession;
     }
 

@@ -42,17 +42,20 @@ import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 
+/**
+ * {@link ModifyStatement} implementation.
+ */
 public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Result> implements ModifyStatement {
     private MysqlxSession mysqlxSession;
     private List<UpdateSpec> updates = new ArrayList<>();
 
     /* package private */ ModifyStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
-        super(schema, collection, false);
+        super(new DocFilterParams(schema, collection));
         if (criteria == null || criteria.trim().length() == 0) {
             throw new XDevAPIError(Messages.getString("ModifyStatement.0", new String[] { "criteria" }));
         }
-        this.mysqlxSession = mysqlxSession;
         this.filterParams.setCriteria(criteria);
+        this.mysqlxSession = mysqlxSession;
     }
 
     @Override

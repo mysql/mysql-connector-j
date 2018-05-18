@@ -58,11 +58,10 @@ import com.mysql.cj.protocol.x.XServerCapabilities;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.Row;
 import com.mysql.cj.result.StringValueFactory;
-import com.mysql.cj.xdevapi.DocFindParams;
+import com.mysql.cj.xdevapi.DocFilterParams;
 import com.mysql.cj.xdevapi.FilterParams;
-import com.mysql.cj.xdevapi.FindParams;
 import com.mysql.cj.xdevapi.InsertParams;
-import com.mysql.cj.xdevapi.TableFindParams;
+import com.mysql.cj.xdevapi.TableFilterParams;
 import com.mysql.cj.xdevapi.UpdateSpec;
 import com.mysql.cj.xdevapi.UpdateType;
 import com.mysql.cj.xdevapi.Warning;
@@ -337,8 +336,9 @@ public class XProtocolTest extends InternalXBaseTestCase {
         this.protocol.send(this.messageBuilder.buildDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }), false), 0);
         this.protocol.readQueryResult();
 
-        FindParams findParams = new DocFindParams(getTestDatabase(), collName, "$.testVal = 2-1");
-        this.protocol.send(this.messageBuilder.buildFind(findParams), 0);
+        FilterParams filterParams = new DocFilterParams(getTestDatabase(), collName);
+        filterParams.setCriteria("$.testVal = 2-1");
+        this.protocol.send(this.messageBuilder.buildFind(filterParams), 0);
 
         ColumnDefinition metadata = this.protocol.readMetadata();
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
@@ -362,9 +362,9 @@ public class XProtocolTest extends InternalXBaseTestCase {
         this.protocol.send(this.messageBuilder.buildDocInsert(getTestDatabase(), collName, stringDocs, false), 0);
         this.protocol.readQueryResult();
 
-        FindParams findParams = new DocFindParams(getTestDatabase(), collName);
-        findParams.setOrder("_id");
-        this.protocol.send(this.messageBuilder.buildFind(findParams), 0);
+        FilterParams filterParams = new DocFilterParams(getTestDatabase(), collName);
+        filterParams.setOrder("_id");
+        this.protocol.send(this.messageBuilder.buildFind(filterParams), 0);
 
         ColumnDefinition metadata = this.protocol.readMetadata();
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
@@ -391,11 +391,11 @@ public class XProtocolTest extends InternalXBaseTestCase {
         List<UpdateSpec> updates = new ArrayList<>();
         updates.add(new UpdateSpec(UpdateType.ITEM_SET, "$.a").setValue("lemon"));
         updates.add(new UpdateSpec(UpdateType.ITEM_REMOVE, "$.insertedBy"));
-        this.protocol.send(this.messageBuilder.buildDocUpdate(new FilterParams(getTestDatabase(), collName, false), updates), 0);
+        this.protocol.send(this.messageBuilder.buildDocUpdate(new DocFilterParams(getTestDatabase(), collName), updates), 0);
         this.protocol.readQueryResult();
 
         // verify
-        this.protocol.send(this.messageBuilder.buildFind(new DocFindParams(getTestDatabase(), collName)), 0);
+        this.protocol.send(this.messageBuilder.buildFind(new DocFilterParams(getTestDatabase(), collName)), 0);
         ColumnDefinition metadata = this.protocol.readMetadata();
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         Row r = ris.next();
@@ -420,10 +420,10 @@ public class XProtocolTest extends InternalXBaseTestCase {
         StatementExecuteOk ok = this.protocol.readQueryResult();
         assertEquals(2, ok.getRowsAffected());
 
-        FindParams findParams = new TableFindParams(getTestDatabase(), "tableInsert");
-        findParams.setOrder("x DESC");
-        findParams.setFields("z, y, x");
-        this.protocol.send(this.messageBuilder.buildFind(findParams), 0);
+        FilterParams filterParams = new TableFilterParams(getTestDatabase(), "tableInsert");
+        filterParams.setOrder("x DESC");
+        filterParams.setFields("z, y, x");
+        this.protocol.send(this.messageBuilder.buildFind(filterParams), 0);
 
         ColumnDefinition metadata = this.protocol.readMetadata();
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);

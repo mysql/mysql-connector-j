@@ -32,55 +32,55 @@ package com.mysql.cj.xdevapi;
 import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.MysqlxSession;
-import com.mysql.cj.xdevapi.FindParams.RowLock;
-import com.mysql.cj.xdevapi.FindParams.RowLockOptions;
+import com.mysql.cj.xdevapi.FilterParams.RowLock;
+import com.mysql.cj.xdevapi.FilterParams.RowLockOptions;
 
+/**
+ * {@link SelectStatement} implementation.
+ */
 public class SelectStatementImpl extends FilterableStatement<SelectStatement, RowResult> implements SelectStatement {
     private MysqlxSession mysqlxSession;
-    private FindParams findParams;
 
     /* package private */ SelectStatementImpl(MysqlxSession mysqlxSession, String schema, String table, String projection) {
-        super(new TableFindParams(schema, table));
-        this.findParams = (TableFindParams) this.filterParams;
+        super(new TableFilterParams(schema, table));
         this.mysqlxSession = mysqlxSession;
         if (projection != null && projection.length() > 0) {
-            this.findParams.setFields(projection);
+            this.filterParams.setFields(projection);
         }
     }
 
     /* package private */ SelectStatementImpl(MysqlxSession mysqlxSession, String schema, String table, String... projection) {
-        super(new TableFindParams(schema, table));
-        this.findParams = (TableFindParams) this.filterParams;
+        super(new TableFilterParams(schema, table));
         this.mysqlxSession = mysqlxSession;
         if (projection != null && projection.length > 0) {
-            this.findParams.setFields(projection);
+            this.filterParams.setFields(projection);
         }
     }
 
     public RowResultImpl execute() {
-        return this.mysqlxSession.find(this.findParams,
+        return this.mysqlxSession.find(this.filterParams,
                 metadata -> (rows, task) -> new RowResultImpl(metadata, this.mysqlxSession.getServerSession().getDefaultTimeZone(), rows, task));
     }
 
     public CompletableFuture<RowResult> executeAsync() {
-        return this.mysqlxSession.asyncFind(this.findParams,
+        return this.mysqlxSession.asyncFind(this.filterParams,
                 metadata -> (rows, task) -> new RowResultImpl(metadata, this.mysqlxSession.getServerSession().getDefaultTimeZone(), rows, task));
     }
 
     @Override
     public SelectStatement groupBy(String... groupBy) {
-        this.findParams.setGrouping(groupBy);
+        this.filterParams.setGrouping(groupBy);
         return this;
     }
 
     public SelectStatement having(String having) {
-        this.findParams.setGroupingCriteria(having);
+        this.filterParams.setGroupingCriteria(having);
         return this;
     }
 
     @Override
-    public FindParams getFindParams() {
-        return this.findParams;
+    public FilterParams getFilterParams() {
+        return this.filterParams;
     }
 
     @Override
@@ -90,13 +90,13 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
 
     @Override
     public SelectStatement lockShared(LockContention lockContention) {
-        this.findParams.setLock(RowLock.SHARED_LOCK);
+        this.filterParams.setLock(RowLock.SHARED_LOCK);
         switch (lockContention) {
             case NOWAIT:
-                this.findParams.setLockOption(RowLockOptions.NOWAIT);
+                this.filterParams.setLockOption(RowLockOptions.NOWAIT);
                 break;
             case SKIP_LOCKED:
-                this.findParams.setLockOption(RowLockOptions.SKIP_LOCKED);
+                this.filterParams.setLockOption(RowLockOptions.SKIP_LOCKED);
                 break;
             case DEFAULT:
         }
@@ -110,13 +110,13 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
 
     @Override
     public SelectStatement lockExclusive(LockContention lockContention) {
-        this.findParams.setLock(RowLock.EXCLUSIVE_LOCK);
+        this.filterParams.setLock(RowLock.EXCLUSIVE_LOCK);
         switch (lockContention) {
             case NOWAIT:
-                this.findParams.setLockOption(RowLockOptions.NOWAIT);
+                this.filterParams.setLockOption(RowLockOptions.NOWAIT);
                 break;
             case SKIP_LOCKED:
-                this.findParams.setLockOption(RowLockOptions.SKIP_LOCKED);
+                this.filterParams.setLockOption(RowLockOptions.SKIP_LOCKED);
                 break;
             case DEFAULT:
         }

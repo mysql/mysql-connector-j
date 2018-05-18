@@ -30,63 +30,68 @@
 package com.mysql.cj.xdevapi;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.x.protobuf.MysqlxCrud.Collection;
-import com.mysql.cj.x.protobuf.MysqlxCrud.Projection;
 
-public class DocFindParams extends AbstractFindParams {
-    public DocFindParams(String schemaName, String collectionName) {
-        super(schemaName, collectionName, false);
+/**
+ * {@link FilterParams} implementation for {@link Table} syntax.
+ */
+public class TableFilterParams extends AbstractFilterParams {
+    /**
+     * Constructor.
+     * 
+     * @param schemaName
+     *            Schema name
+     * @param collectionName
+     *            Collection name
+     */
+    public TableFilterParams(String schemaName, String collectionName) {
+        super(schemaName, collectionName, true);
     }
 
-    public DocFindParams(String schemaName, String collectionName, String criteriaString) {
-        super(schemaName, collectionName, criteriaString, false);
-    }
-
-    private DocFindParams(Collection coll, boolean isRelational) {
-        super(coll, isRelational);
-    }
-
-    public void setFields(Expression docProjection) {
-        this.fields = Collections.singletonList(Projection.newBuilder().setSource(new ExprParser(docProjection.getExpressionString(), false).parse()).build());
+    private TableFilterParams(Collection coll) {
+        super(coll, true);
     }
 
     @Override
     public void setFields(String... projection) {
-        this.fields = new ExprParser(Arrays.stream(projection).collect(Collectors.joining(", ")), false).parseDocumentProjection();
+        this.projection = projection;
+        this.fields = new ExprParser(Arrays.stream(projection).collect(Collectors.joining(", ")), true).parseTableSelectProjection();
     }
 
     @Override
-    public FindParams clone() {
-        FindParams newFindParams = new DocFindParams(this.collection, this.isRelational);
-        newFindParams.setLimit(this.limit);
-        newFindParams.setOffset(this.offset);
+    public FilterParams clone() {
+        FilterParams newFilterParams = new TableFilterParams(this.collection);
+        newFilterParams.setLimit(this.limit);
+        newFilterParams.setOffset(this.offset);
         if (this.orderExpr != null) {
-            newFindParams.setOrder(this.orderExpr);
+            newFilterParams.setOrder(this.orderExpr);
         }
         if (this.criteriaStr != null) {
-            newFindParams.setCriteria(this.criteriaStr);
+            newFilterParams.setCriteria(this.criteriaStr);
             if (this.args != null) {
-                // newFindParams.args should already exist after setCriteria() call
+                // newFilterParams.args should already exist after setCriteria() call
                 for (int i = 0; i < this.args.length; i++) {
-                    ((FilterParams) newFindParams).args[i] = this.args[i];
+                    ((AbstractFilterParams) newFilterParams).args[i] = this.args[i];
                 }
             }
         }
         if (this.groupBy != null) {
-            newFindParams.setGrouping(this.groupBy);
+            newFilterParams.setGrouping(this.groupBy);
         }
         if (this.having != null) {
-            newFindParams.setGroupingCriteria(this.having);
+            newFilterParams.setGroupingCriteria(this.having);
+        }
+        if (this.projection != null) {
+            newFilterParams.setFields(this.projection);
         }
         if (this.lock != null) {
-            newFindParams.setLock(this.lock);
+            newFilterParams.setLock(this.lock);
         }
         if (this.lockOption != null) {
-            newFindParams.setLockOption(this.lockOption);
+            newFilterParams.setLockOption(this.lockOption);
         }
-        return newFindParams;
+        return newFilterParams;
     }
 }

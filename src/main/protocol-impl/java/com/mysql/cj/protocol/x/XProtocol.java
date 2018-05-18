@@ -86,7 +86,7 @@ import com.mysql.cj.x.protobuf.MysqlxConnection.Capability;
 import com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData;
 import com.mysql.cj.x.protobuf.MysqlxResultset.Row;
 import com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateContinue;
-import com.mysql.cj.xdevapi.FindParams;
+import com.mysql.cj.xdevapi.FilterParams;
 import com.mysql.cj.xdevapi.SqlResult;
 
 /**
@@ -447,18 +447,18 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     /**
      *
-     * @param findParams
-     *            {@link FindParams}
+     * @param filterParams
+     *            {@link FilterParams}
      * @param callbacks
      *            {@link ResultListener}
      * @param errorFuture
      *            the {@link CompletableFuture} to complete exceptionally if the request fails
      */
-    public void asyncFind(FindParams findParams, ResultListener<StatementExecuteOk> callbacks, CompletableFuture<?> errorFuture) {
+    public void asyncFind(FilterParams filterParams, ResultListener<StatementExecuteOk> callbacks, CompletableFuture<?> errorFuture) {
         newCommand();
         MessageListener<XMessage> l = new ResultMessageListener(this.fieldFactory, this.noticeFactory, callbacks);
         CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(errorFuture, () -> this.reader.pushMessageListener(l));
-        this.sender.send(((XMessageBuilder) this.messageBuilder).buildFind(findParams), resultHandler);
+        this.sender.send(((XMessageBuilder) this.messageBuilder).buildFind(filterParams), resultHandler);
     }
 
     public boolean isOpen() {

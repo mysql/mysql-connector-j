@@ -30,61 +30,77 @@
 package com.mysql.cj.xdevapi;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.x.protobuf.MysqlxCrud.Collection;
+import com.mysql.cj.x.protobuf.MysqlxCrud.Projection;
 
-public class TableFindParams extends AbstractFindParams {
-    public TableFindParams(String schemaName, String collectionName) {
-        super(schemaName, collectionName, true);
+/**
+ * {@link FilterParams} implementation for {@link com.mysql.cj.xdevapi.Collection} syntax.
+ */
+public class DocFilterParams extends AbstractFilterParams {
+
+    /**
+     * Constructor.
+     * 
+     * @param schemaName
+     *            Schema name
+     * @param collectionName
+     *            Collection name
+     */
+    public DocFilterParams(String schemaName, String collectionName) {
+        super(schemaName, collectionName, false);
     }
 
-    public TableFindParams(String schemaName, String collectionName, String criteriaString) {
-        super(schemaName, collectionName, criteriaString, true);
+    private DocFilterParams(Collection coll) {
+        super(coll, false);
     }
 
-    private TableFindParams(Collection coll, boolean isRelational) {
-        super(coll, isRelational);
+    /**
+     * Parse projection expressions into X Protocol Projection objects.
+     * 
+     * @param docProjection
+     *            projection expression
+     */
+    public void setFields(Expression docProjection) {
+        this.fields = Collections.singletonList(Projection.newBuilder().setSource(new ExprParser(docProjection.getExpressionString(), false).parse()).build());
     }
 
     @Override
     public void setFields(String... projection) {
-        this.projection = projection;
-        this.fields = new ExprParser(Arrays.stream(projection).collect(Collectors.joining(", ")), true).parseTableSelectProjection();
+        this.fields = new ExprParser(Arrays.stream(projection).collect(Collectors.joining(", ")), false).parseDocumentProjection();
     }
 
     @Override
-    public FindParams clone() {
-        FindParams newFindParams = new TableFindParams(this.collection, this.isRelational);
-        newFindParams.setLimit(this.limit);
-        newFindParams.setOffset(this.offset);
+    public FilterParams clone() {
+        FilterParams newFilterParams = new DocFilterParams(this.collection);
+        newFilterParams.setLimit(this.limit);
+        newFilterParams.setOffset(this.offset);
         if (this.orderExpr != null) {
-            newFindParams.setOrder(this.orderExpr);
+            newFilterParams.setOrder(this.orderExpr);
         }
         if (this.criteriaStr != null) {
-            newFindParams.setCriteria(this.criteriaStr);
+            newFilterParams.setCriteria(this.criteriaStr);
             if (this.args != null) {
-                // newFindParams.args should already exist after setCriteria() call
+                // newFilterParams.args should already exist after setCriteria() call
                 for (int i = 0; i < this.args.length; i++) {
-                    ((FilterParams) newFindParams).args[i] = this.args[i];
+                    ((AbstractFilterParams) newFilterParams).args[i] = this.args[i];
                 }
             }
         }
         if (this.groupBy != null) {
-            newFindParams.setGrouping(this.groupBy);
+            newFilterParams.setGrouping(this.groupBy);
         }
         if (this.having != null) {
-            newFindParams.setGroupingCriteria(this.having);
-        }
-        if (this.projection != null) {
-            newFindParams.setFields(this.projection);
+            newFilterParams.setGroupingCriteria(this.having);
         }
         if (this.lock != null) {
-            newFindParams.setLock(this.lock);
+            newFilterParams.setLock(this.lock);
         }
         if (this.lockOption != null) {
-            newFindParams.setLockOption(this.lockOption);
+            newFilterParams.setLockOption(this.lockOption);
         }
-        return newFindParams;
+        return newFilterParams;
     }
 }

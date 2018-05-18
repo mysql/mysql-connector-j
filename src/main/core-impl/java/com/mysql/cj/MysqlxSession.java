@@ -49,7 +49,7 @@ import com.mysql.cj.protocol.x.XMessageBuilder;
 import com.mysql.cj.protocol.x.XProtocol;
 import com.mysql.cj.result.RowList;
 import com.mysql.cj.util.StringUtils;
-import com.mysql.cj.xdevapi.FindParams;
+import com.mysql.cj.xdevapi.FilterParams;
 import com.mysql.cj.xdevapi.SqlDataResult;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.SqlResultImpl;
@@ -102,28 +102,28 @@ public class MysqlxSession extends CoreSession {
         }
     }
 
-    public <T extends ResultStreamer> T find(FindParams findParams,
+    public <T extends ResultStreamer> T find(FilterParams filterParams,
             Function<ColumnDefinition, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> resultCtor) {
-        this.protocol.send(((XMessageBuilder) this.messageBuilder).buildFind(findParams), 0);
+        this.protocol.send(((XMessageBuilder) this.messageBuilder).buildFind(filterParams), 0);
         ColumnDefinition metadata = this.protocol.readMetadata();
         T res = resultCtor.apply(metadata).apply(((XProtocol) this.protocol).getRowInputStream(metadata), this.protocol::readQueryResult);
         this.protocol.setCurrentResultStreamer(res);
         return res;
     }
 
-    public <T extends ResultStreamer> T find(FindParams findParams, BiFunction<RowList, Supplier<StatementExecuteOk>, T> resultCtor) {
-        this.protocol.send(((XMessageBuilder) this.messageBuilder).buildFind(findParams), 0);
+    public <T extends ResultStreamer> T find(FilterParams filterParams, BiFunction<RowList, Supplier<StatementExecuteOk>, T> resultCtor) {
+        this.protocol.send(((XMessageBuilder) this.messageBuilder).buildFind(filterParams), 0);
         ColumnDefinition metadata = this.protocol.readMetadata();
         T res = resultCtor.apply(((XProtocol) this.protocol).getRowInputStream(metadata), this.protocol::readQueryResult);
         this.protocol.setCurrentResultStreamer(res);
         return res;
     }
 
-    public <RES_T> CompletableFuture<RES_T> asyncFind(FindParams findParams,
+    public <RES_T> CompletableFuture<RES_T> asyncFind(FilterParams filterParams,
             Function<ColumnDefinition, BiFunction<RowList, Supplier<StatementExecuteOk>, RES_T>> resultCtor) {
         CompletableFuture<RES_T> f = new CompletableFuture<>();
         ResultListener<StatementExecuteOk> l = new ResultCreatingResultListener<>(resultCtor, f);
-        ((XProtocol) this.protocol).asyncFind(findParams, l, f);
+        ((XProtocol) this.protocol).asyncFind(filterParams, l, f);
         return f;
     }
 

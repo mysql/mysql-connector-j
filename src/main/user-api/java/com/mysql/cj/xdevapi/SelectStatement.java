@@ -120,9 +120,9 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
     SelectStatement lockExclusive(LockContention lockContention);
 
     /**
-     * Return FindParams defined for this statement.
+     * Return {@link FilterParams} defined for this statement.
      * 
-     * @return {@link FindParams}
+     * @return {@link FilterParams}
      */
-    FindParams getFindParams();
+    FilterParams getFilterParams();
 }

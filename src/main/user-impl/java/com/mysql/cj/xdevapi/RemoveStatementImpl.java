@@ -37,16 +37,19 @@ import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 
+/**
+ * {@link RemoveStatement} implementation.
+ */
 public class RemoveStatementImpl extends FilterableStatement<RemoveStatement, Result> implements RemoveStatement {
     private MysqlxSession mysqlxSession;
 
-    public RemoveStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
-        super(schema, collection, false);
+    /* package private */ RemoveStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
+        super(new DocFilterParams(schema, collection));
         if (criteria == null || criteria.trim().length() == 0) {
             throw new XDevAPIError(Messages.getString("RemoveStatement.0", new String[] { "criteria" }));
         }
-        this.mysqlxSession = mysqlxSession;
         this.filterParams.setCriteria(criteria);
+        this.mysqlxSession = mysqlxSession;
     }
 
     public Result execute() {

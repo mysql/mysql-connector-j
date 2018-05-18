@@ -36,11 +36,14 @@ import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 
+/**
+ * {@link DeleteStatement} implementation.
+ */
 public class DeleteStatementImpl extends FilterableStatement<DeleteStatement, Result> implements DeleteStatement {
     private MysqlxSession mysqlxSession;
 
     /* package private */ DeleteStatementImpl(MysqlxSession mysqlxSession, String schema, String table) {
-        super(schema, table, true);
+        super(new TableFilterParams(schema, table));
         this.mysqlxSession = mysqlxSession;
     }
 

@@ -38,13 +38,14 @@ import java.util.stream.IntStream;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Order;
+import com.mysql.cj.x.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
 
 /**
- * Filter parameters.
+ * Abstract implementation of {@link FilterParams}.
  */
-public class FilterParams {
+public abstract class AbstractFilterParams implements FilterParams {
     protected Collection collection;
     protected Long limit;
     protected Long offset;
@@ -56,18 +57,31 @@ public class FilterParams {
     private Map<String, Integer> placeholderNameToPosition;
     protected boolean isRelational;
 
-    public FilterParams(String schemaName, String collectionName, boolean isRelational) {
+    protected String[] groupBy;
+    private List<Expr> grouping;
+    String having;
+    private Expr groupingCriteria;
+    protected String[] projection;
+    protected List<Projection> fields;
+    protected RowLock lock;
+    protected RowLockOptions lockOption;
+
+    /**
+     * Constructor.
+     * 
+     * @param schemaName
+     *            Schema name
+     * @param collectionName
+     *            Collection name
+     * @param isRelational
+     *            Are relational columns identifiers allowed?
+     */
+    public AbstractFilterParams(String schemaName, String collectionName, boolean isRelational) {
         this.collection = ExprUtil.buildCollection(schemaName, collectionName);
         this.isRelational = isRelational;
     }
 
-    public FilterParams(String schemaName, String collectionName, String criteriaString, boolean isRelational) {
-        this.collection = ExprUtil.buildCollection(schemaName, collectionName);
-        this.isRelational = isRelational;
-        setCriteria(criteriaString);
-    }
-
-    protected FilterParams(Collection coll, boolean isRelational) {
+    protected AbstractFilterParams(Collection coll, boolean isRelational) {
         this.collection = coll;
         this.isRelational = isRelational;
     }
@@ -134,12 +148,6 @@ public class FilterParams {
         this.args[this.placeholderNameToPosition.get(name)] = ExprUtil.argObjectToScalar(value);
     }
 
-    /**
-     * Verify that all arguments are bound.
-     *
-     * @throws WrongArgumentException
-     *             if any placeholder argument is not bound
-     */
     public void verifyAllArgsBound() {
         if (this.args != null) {
             IntStream.range(0, this.args.length)
@@ -162,4 +170,47 @@ public class FilterParams {
     public boolean isRelational() {
         return this.isRelational;
     }
+
+    public abstract void setFields(String... projection);
+
+    public Object getFields() {
+        return this.fields;
+    }
+
+    public void setGrouping(String... groupBy) {
+        this.groupBy = groupBy;
+        this.grouping = new ExprParser(Arrays.stream(groupBy).collect(Collectors.joining(", ")), isRelational()).parseExprList();
+    }
+
+    public Object getGrouping() {
+        return this.grouping;
+    }
+
+    public void setGroupingCriteria(String having) {
+        this.having = having;
+        this.groupingCriteria = new ExprParser(having, isRelational()).parse();
+    }
+
+    public Object getGroupingCriteria() {
+        return this.groupingCriteria;
+    }
+
+    public RowLock getLock() {
+        return this.lock;
+    }
+
+    public void setLock(RowLock rowLock) {
+        this.lock = rowLock;
+    }
+
+    public RowLockOptions getLockOption() {
+        return this.lockOption;
+    }
+
+    public void setLockOption(RowLockOptions lockOption) {
+        this.lockOption = lockOption;
+    }
+
+    @Override
+    protected abstract FilterParams clone();
 }

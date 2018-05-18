@@ -83,7 +83,6 @@ import com.mysql.cj.xdevapi.CreateIndexParams;
 import com.mysql.cj.xdevapi.CreateIndexParams.IndexField;
 import com.mysql.cj.xdevapi.ExprUtil;
 import com.mysql.cj.xdevapi.FilterParams;
-import com.mysql.cj.xdevapi.FindParams;
 import com.mysql.cj.xdevapi.InsertParams;
 import com.mysql.cj.xdevapi.UpdateParams;
 import com.mysql.cj.xdevapi.UpdateSpec;
@@ -149,25 +148,25 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     }
 
     @SuppressWarnings("unchecked")
-    public XMessage buildFind(FindParams findParams) {
-        Find.Builder builder = Find.newBuilder().setCollection((Collection) findParams.getCollection());
-        builder.setDataModel(findParams.isRelational() ? DataModel.TABLE : DataModel.DOCUMENT);
-        if (findParams.getFields() != null) {
-            builder.addAllProjection((List<Projection>) findParams.getFields());
+    public XMessage buildFind(FilterParams filterParams) {
+        Find.Builder builder = Find.newBuilder().setCollection((Collection) filterParams.getCollection());
+        builder.setDataModel(filterParams.isRelational() ? DataModel.TABLE : DataModel.DOCUMENT);
+        if (filterParams.getFields() != null) {
+            builder.addAllProjection((List<Projection>) filterParams.getFields());
         }
-        if (findParams.getGrouping() != null) {
-            builder.addAllGrouping((List<Expr>) findParams.getGrouping());
+        if (filterParams.getGrouping() != null) {
+            builder.addAllGrouping((List<Expr>) filterParams.getGrouping());
         }
-        if (findParams.getGroupingCriteria() != null) {
-            builder.setGroupingCriteria((Expr) findParams.getGroupingCriteria());
+        if (filterParams.getGroupingCriteria() != null) {
+            builder.setGroupingCriteria((Expr) filterParams.getGroupingCriteria());
         }
-        if (findParams.getLock() != null) {
-            builder.setLocking(RowLock.valueOf(findParams.getLock().asNumber()));
+        if (filterParams.getLock() != null) {
+            builder.setLocking(RowLock.valueOf(filterParams.getLock().asNumber()));
         }
-        if (findParams.getLockOption() != null) {
-            builder.setLockingOptions(RowLockOptions.valueOf(findParams.getLockOption().asNumber()));
+        if (filterParams.getLockOption() != null) {
+            builder.setLockingOptions(RowLockOptions.valueOf(filterParams.getLockOption().asNumber()));
         }
-        applyFilterParams(((FilterParams) findParams), builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
+        applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         return new XMessage(builder.build());
     }
 

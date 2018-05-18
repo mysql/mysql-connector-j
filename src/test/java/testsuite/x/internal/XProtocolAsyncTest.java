@@ -51,7 +51,7 @@ import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 import com.mysql.cj.protocol.x.XProtocol;
 import com.mysql.cj.result.Row;
-import com.mysql.cj.xdevapi.DocFindParams;
+import com.mysql.cj.xdevapi.DocFilterParams;
 
 /**
  * Tests for protocol-level <b>async</b> APIs against X Plugin via X Protocol.
@@ -110,7 +110,7 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
         final ValueHolder<StatementExecuteOk> okHolder = new ValueHolder<>();
         final ValueHolder<Throwable> excHolder = new ValueHolder<>();
 
-        this.protocol.asyncFind(new DocFindParams(getTestDatabase(), collName), new ResultListener<StatementExecuteOk>() {
+        this.protocol.asyncFind(new DocFilterParams(getTestDatabase(), collName), new ResultListener<StatementExecuteOk>() {
             public void onMetadata(ColumnDefinition metadata) {
                 metadataHolder.accept(metadata);
             }

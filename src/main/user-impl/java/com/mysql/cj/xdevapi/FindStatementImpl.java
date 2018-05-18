@@ -32,49 +32,50 @@ package com.mysql.cj.xdevapi;
 import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.MysqlxSession;
-import com.mysql.cj.xdevapi.FindParams.RowLock;
-import com.mysql.cj.xdevapi.FindParams.RowLockOptions;
+import com.mysql.cj.xdevapi.FilterParams.RowLock;
+import com.mysql.cj.xdevapi.FilterParams.RowLockOptions;
 
+/**
+ * {@link FindStatement} implementation.
+ */
 public class FindStatementImpl extends FilterableStatement<FindStatement, DocResult> implements FindStatement {
     private MysqlxSession mysqlxSession;
-    private DocFindParams findParams;
 
     /* package private */ FindStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
-        super(new DocFindParams(schema, collection));
-        this.findParams = (DocFindParams) this.filterParams;
+        super(new DocFilterParams(schema, collection));
         this.mysqlxSession = mysqlxSession;
         if (criteria != null && criteria.length() > 0) {
-            this.findParams.setCriteria(criteria);
+            this.filterParams.setCriteria(criteria);
         }
     }
 
     public DocResultImpl execute() {
-        return this.mysqlxSession.find(this.findParams, (rows, task) -> new DocResultImpl(rows, task));
+        return this.mysqlxSession.find(this.filterParams, (rows, task) -> new DocResultImpl(rows, task));
     }
 
     public CompletableFuture<DocResult> executeAsync() {
-        return this.mysqlxSession.asyncFind(this.findParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
+        return this.mysqlxSession.asyncFind(this.filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
     }
 
     @Override
     public FindStatement fields(String... projection) {
-        this.findParams.setFields(projection);
+        this.filterParams.setFields(projection);
         return this;
     }
 
     public FindStatement fields(Expression docProjection) {
-        this.findParams.setFields(docProjection);
+        ((DocFilterParams) this.filterParams).setFields(docProjection);
         return this;
     }
 
     @Override
     public FindStatement groupBy(String... groupBy) {
-        this.findParams.setGrouping(groupBy);
+        this.filterParams.setGrouping(groupBy);
         return this;
     }
 
     public FindStatement having(String having) {
-        this.findParams.setGroupingCriteria(having);
+        this.filterParams.setGroupingCriteria(having);
         return this;
     }
 
@@ -85,13 +86,13 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
 
     @Override
     public FindStatement lockShared(LockContention lockContention) {
-        this.findParams.setLock(RowLock.SHARED_LOCK);
+        this.filterParams.setLock(RowLock.SHARED_LOCK);
         switch (lockContention) {
             case NOWAIT:
-                this.findParams.setLockOption(RowLockOptions.NOWAIT);
+                this.filterParams.setLockOption(RowLockOptions.NOWAIT);
                 break;
             case SKIP_LOCKED:
-                this.findParams.setLockOption(RowLockOptions.SKIP_LOCKED);
+                this.filterParams.setLockOption(RowLockOptions.SKIP_LOCKED);
                 break;
             case DEFAULT:
         }
@@ -105,13 +106,13 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
 
     @Override
     public FindStatement lockExclusive(LockContention lockContention) {
-        this.findParams.setLock(RowLock.EXCLUSIVE_LOCK);
+        this.filterParams.setLock(RowLock.EXCLUSIVE_LOCK);
         switch (lockContention) {
             case NOWAIT:
-                this.findParams.setLockOption(RowLockOptions.NOWAIT);
+                this.filterParams.setLockOption(RowLockOptions.NOWAIT);
                 break;
             case SKIP_LOCKED:
-                this.findParams.setLockOption(RowLockOptions.SKIP_LOCKED);
+                this.filterParams.setLockOption(RowLockOptions.SKIP_LOCKED);
                 break;
             case DEFAULT:
         }

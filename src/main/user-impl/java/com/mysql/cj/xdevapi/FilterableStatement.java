@@ -29,43 +29,125 @@
 
 package com.mysql.cj.xdevapi;
 
+/**
+ * Abstract class, common to several X DevAPI statement classes.
+ *
+ * @param <STMT_T>
+ *            statement interface
+ * @param <RES_T>
+ *            result interface
+ */
 public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<STMT_T, RES_T> {
     protected FilterParams filterParams;
 
+    /**
+     * Constructor.
+     * 
+     * @param filterParams
+     *            {@link FilterParams} object.
+     */
     public FilterableStatement(FilterParams filterParams) {
         this.filterParams = filterParams;
     }
 
-    public FilterableStatement(String schemaName, String collectionName, boolean isRelational) {
-        this.filterParams = new FilterParams(schemaName, collectionName, isRelational);
-    }
-
+    /**
+     * Add search condition to this statement.
+     * 
+     * <pre>
+     * table.delete().where("age == 13").execute();
+     * </pre>
+     * 
+     * @param searchCondition
+     *            expression
+     * @return this statement
+     */
     @SuppressWarnings("unchecked")
     public STMT_T where(String searchCondition) {
         this.filterParams.setCriteria(searchCondition);
         return (STMT_T) this;
     }
 
+    /**
+     * Add sort expressions to this statement. Synonym to {@link #orderBy(String...)}.
+     * 
+     * <pre>
+     * DocResult docs = this.collection.find().orderBy("$._id").execute();
+     * docs = this.collection.find().sort("$.x", "$.y").execute();
+     * </pre>
+     * 
+     * @param sortFields
+     *            sort expressions
+     * @return this statement
+     */
     public STMT_T sort(String... sortFields) {
         return orderBy(sortFields);
     }
 
+    /**
+     * Add sort expressions to this statement.
+     * 
+     * <pre>
+     * DocResult docs = this.collection.find().orderBy("$._id").execute();
+     * docs = this.collection.find().sort("$.x", "$.y").execute();
+     * </pre>
+     * 
+     * @param sortFields
+     *            sort expressions
+     * @return this statement
+     */
     @SuppressWarnings("unchecked")
     public STMT_T orderBy(String... sortFields) {
         this.filterParams.setOrder(sortFields);
         return (STMT_T) this;
     }
 
+    /**
+     * Add row limit to this statement.
+     * 
+     * <p>
+     * For example, to find only 3 rows:
+     * </p>
+     * 
+     * <pre>
+     * docs = this.collection.find().orderBy("$._id").limit(3).execute();
+     * </pre>
+     * 
+     * @param numberOfRows
+     *            maximum rows to process
+     * @return this statement
+     */
     @SuppressWarnings("unchecked")
     public STMT_T limit(long numberOfRows) {
         this.filterParams.setLimit(numberOfRows);
         return (STMT_T) this;
     }
 
+    /**
+     * Synonym to {@link #offset(long)}.
+     * 
+     * @param limitOffset
+     *            number of rows to skip
+     * @return this statement
+     */
     public STMT_T skip(long limitOffset) {
         return offset(limitOffset);
     }
 
+    /**
+     * Add maximum number of rows to skip before find others.
+     * 
+     * <p>
+     * For example, to skip 2 rows:
+     * </p>
+     * 
+     * <pre>
+     * docs = this.collection.find().orderBy("$._id").offset(2).execute();
+     * </pre>
+     * 
+     * @param limitOffset
+     *            number of rows to skip
+     * @return this statement
+     */
     @SuppressWarnings("unchecked")
     public STMT_T offset(long limitOffset) {
         this.filterParams.setOffset(limitOffset);
@@ -73,9 +155,9 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
     }
 
     /**
-     * Is this a relational statement?
+     * Are relational columns identifiers allowed in this statement?
      * 
-     * @return true if relational
+     * @return true if allowed
      */
     public boolean isRelational() {
         return this.filterParams.isRelational();

@@ -29,7 +29,7 @@
 
 package com.mysql.cj.xdevapi;
 
-public interface FindParams {
+public interface FilterParams {
     public enum RowLock {
         /**
          * Lock matching rows against updates.
