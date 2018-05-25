@@ -101,6 +101,10 @@ public class TextBufferRow extends AbstractBufferRow {
 
     @Override
     public byte[] getBytes(int index) {
+        if (getNull(index)) {
+            return null;
+        }
+
         findAndSeekToOffset(index);
         return this.rowFromServer.readBytes(StringSelfDataType.STRING_LENENC);
     }

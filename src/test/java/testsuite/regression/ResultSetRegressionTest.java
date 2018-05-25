@@ -6143,4 +6143,24 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(2, getRowCount("testBug26266731"));
     }
 
+    /**
+     * Tests for fix to BUG#85941 (25924324), WASNULL NOT SET AFTER GETBYTES IS CALLED
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug85941() throws Exception {
+        createTable("testBug85941", "(strField VARCHAR(1), bitField TEXT)");
+        this.stmt.executeUpdate("insert into testBug85941 values(NULL, 1)");
+
+        this.rs = this.stmt.executeQuery("SELECT strField, bitField FROM testBug85941");
+        this.rs.next();
+
+        assertNull(this.rs.getString(1));
+        assertTrue(this.rs.wasNull());
+
+        assertEquals("1".getBytes()[0], this.rs.getBytes(2)[0]);
+        assertFalse(this.rs.wasNull());
+    }
+
 }
