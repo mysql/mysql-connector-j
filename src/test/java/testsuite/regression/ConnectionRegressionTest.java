@@ -135,6 +135,7 @@ import com.mysql.cj.jdbc.MysqlXADataSource;
 import com.mysql.cj.jdbc.MysqlXid;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.SuspendableXAConnection;
+import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.ha.LoadBalanceExceptionChecker;
@@ -151,6 +152,8 @@ import com.mysql.cj.log.Log;
 import com.mysql.cj.log.StandardLogger;
 import com.mysql.cj.protocol.AuthenticationPlugin;
 import com.mysql.cj.protocol.Message;
+import com.mysql.cj.protocol.PacketReceivedTimeHolder;
+import com.mysql.cj.protocol.PacketSentTimeHolder;
 import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.StandardSocketFactory;
@@ -2469,7 +2472,22 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug44587() throws Exception {
         Exception e = null;
         String msg = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(((MysqlConnection) this.conn).getPropertySet(),
-                ((MysqlConnection) this.conn).getSession().getServerSession(), System.currentTimeMillis() - 1000, System.currentTimeMillis() - 2000, e);
+                ((MysqlConnection) this.conn).getSession().getServerSession(), new PacketSentTimeHolder() {
+                    @Override
+                    public long getPreviousPacketSentTime() {
+                        return System.currentTimeMillis() - 1000;
+                    }
+
+                    @Override
+                    public long getLastPacketSentTime() {
+                        return System.currentTimeMillis() - 1000;
+                    }
+                }, new PacketReceivedTimeHolder() {
+                    @Override
+                    public long getLastPacketReceivedTime() {
+                        return System.currentTimeMillis() - 2000;
+                    }
+                }, e);
         assertTrue(containsMessage(msg, "CommunicationsException.ServerPacketTimingInfo"));
     }
 
@@ -2480,7 +2498,22 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug45419() throws Exception {
         Exception e = null;
         String msg = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(((MysqlConnection) this.conn).getPropertySet(),
-                ((MysqlConnection) this.conn).getSession().getServerSession(), System.currentTimeMillis() - 1000, System.currentTimeMillis() - 2000, e);
+                ((MysqlConnection) this.conn).getSession().getServerSession(), new PacketSentTimeHolder() {
+                    @Override
+                    public long getPreviousPacketSentTime() {
+                        return System.currentTimeMillis() - 1000;
+                    }
+
+                    @Override
+                    public long getLastPacketSentTime() {
+                        return System.currentTimeMillis() - 1000;
+                    }
+                }, new PacketReceivedTimeHolder() {
+                    @Override
+                    public long getLastPacketReceivedTime() {
+                        return System.currentTimeMillis() - 2000;
+                    }
+                }, e);
         Matcher m = Pattern.compile("([\\d\\,\\.]+)", Pattern.MULTILINE).matcher(msg);
         assertTrue(m.find());
         assertTrue(Long.parseLong(m.group(0).replaceAll("[,.]", "")) >= 2000);
@@ -10587,5 +10620,44 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } finally {
             this.stmt.execute("SET GLOBAL autocommit=" + prevAutocommit);
         }
+    }
+
+    /**
+     * Tests fix for Bug#90753 (27977617), WAIT_TIMEOUT EXCEEDED MESSAGE NOT TRIGGERED.
+     */
+    public void testBug90753() throws Exception {
+        String initialWaitTimeout = getMysqlVariable("wait_timeout");
+        String initialInteractiveTimeout = getMysqlVariable("interactive_timeout");
+        int seconds = 2;
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+
+        try {
+            getConnectionWithProps(props).createStatement().executeUpdate("SET @@global.wait_timeout=" + seconds + ", @@global.interactive_timeout=" + seconds);
+
+            Connection testConn = getConnectionWithProps(props);
+            ResultSet rslt = testConn.createStatement().executeQuery("SELECT @@wait_timeout, @@interactive_timeout");
+            rslt.next();
+            System.out.println("wait_timeout: " + rslt.getString(1));
+            System.out.println("interactive_timeout: " + rslt.getString(1));
+            Thread.sleep(1500 * seconds);
+
+            assertThrows(CommunicationsException.class,
+                    "The last packet successfully received from the server was .+ milliseconds ago.+"
+                            + "The last packet sent successfully to the server was .+ milliseconds ago.+"
+                            + "is longer than the server configured value of 'wait_timeout'.+",
+                    new Callable<Void>() {
+                        public Void call() throws Exception {
+                            testConn.createStatement().executeQuery("SELECT 1");
+                            return null;
+                        }
+                    });
+
+        } finally {
+            getConnectionWithProps(props).createStatement()
+                    .executeUpdate("SET @@global.wait_timeout=" + initialWaitTimeout + ", @@global.interactive_timeout=" + initialInteractiveTimeout);
+        }
+
     }
 }

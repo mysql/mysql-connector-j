@@ -36,6 +36,8 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.StreamingNotifiable;
 import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.protocol.PacketReceivedTimeHolder;
+import com.mysql.cj.protocol.PacketSentTimeHolder;
 
 /**
  * An exception to represent communications errors with the database.
@@ -49,9 +51,10 @@ public class CommunicationsException extends SQLRecoverableException implements 
 
     private String exceptionMessage;
 
-    public CommunicationsException(JdbcConnection conn, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs, Exception underlyingException) {
-        this(ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(conn.getPropertySet(), conn.getSession().getServerSession(), lastPacketSentTimeMs,
-                lastPacketReceivedTimeMs, underlyingException), underlyingException);
+    public CommunicationsException(JdbcConnection conn, PacketSentTimeHolder packetSentTimeHolder, PacketReceivedTimeHolder packetReceivedTimeHolder,
+            Exception underlyingException) {
+        this(ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(conn.getPropertySet(), conn.getSession().getServerSession(), packetSentTimeHolder,
+                packetReceivedTimeHolder, underlyingException), underlyingException);
     }
 
     public CommunicationsException(String message, Throwable underlyingException) {

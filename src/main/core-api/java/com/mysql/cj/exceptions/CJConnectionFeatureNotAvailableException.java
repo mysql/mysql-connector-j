@@ -31,6 +31,7 @@ package com.mysql.cj.exceptions;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.protocol.PacketSentTimeHolder;
 import com.mysql.cj.protocol.ServerSession;
 
 public class CJConnectionFeatureNotAvailableException extends CJCommunicationsException {
@@ -41,10 +42,10 @@ public class CJConnectionFeatureNotAvailableException extends CJCommunicationsEx
         super();
     }
 
-    public CJConnectionFeatureNotAvailableException(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs,
+    public CJConnectionFeatureNotAvailableException(PropertySet propertySet, ServerSession serverSession, PacketSentTimeHolder packetSentTimeHolder,
             Exception underlyingException) {
         super(underlyingException);
-        init(propertySet, serverSession, lastPacketSentTimeMs, 0L);
+        init(propertySet, serverSession, packetSentTimeHolder, null);
     }
 
     @Override

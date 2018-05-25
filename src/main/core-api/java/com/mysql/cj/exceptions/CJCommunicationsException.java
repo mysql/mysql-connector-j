@@ -30,6 +30,8 @@
 package com.mysql.cj.exceptions;
 
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.protocol.PacketReceivedTimeHolder;
+import com.mysql.cj.protocol.PacketSentTimeHolder;
 import com.mysql.cj.protocol.ServerSession;
 
 public class CJCommunicationsException extends CJException {
@@ -56,9 +58,10 @@ public class CJCommunicationsException extends CJException {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public void init(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs, long lastPacketReceivedTimeMs) {
-        this.exceptionMessage = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(propertySet, serverSession, lastPacketSentTimeMs,
-                lastPacketReceivedTimeMs, getCause());
+    public void init(PropertySet propertySet, ServerSession serverSession, PacketSentTimeHolder packetSentTimeHolder,
+            PacketReceivedTimeHolder packetReceivedTimeHolder) {
+        this.exceptionMessage = ExceptionFactory.createLinkFailureMessageBasedOnHeuristics(propertySet, serverSession, packetSentTimeHolder,
+                packetReceivedTimeHolder, getCause());
     }
 
 }

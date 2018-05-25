@@ -33,5 +33,7 @@ package com.mysql.cj.protocol;
  * Holds the time the last packet was received.
  */
 public interface PacketReceivedTimeHolder {
-    long getLastPacketReceivedTime();
+    default long getLastPacketReceivedTime() {
+        return 0;
+    }
 }

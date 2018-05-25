@@ -45,6 +45,7 @@ import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.protocol.AbstractSocketConnection;
 import com.mysql.cj.protocol.FullReadInputStream;
+import com.mysql.cj.protocol.PacketSentTimeHolder;
 import com.mysql.cj.protocol.ReadAheadInputStream;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.SocketConnection;
@@ -87,7 +88,8 @@ public class NativeSocketConnection extends AbstractSocketConnection implements 
             this.mysqlInput = new FullReadInputStream(rawInputStream);
             this.mysqlOutput = new BufferedOutputStream(this.mysqlSocket.getOutputStream(), 16384);
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(propSet, null, 0, 0, ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(propSet, null, new PacketSentTimeHolder() {
+            }, null, ioEx, getExceptionInterceptor());
         }
     }
 

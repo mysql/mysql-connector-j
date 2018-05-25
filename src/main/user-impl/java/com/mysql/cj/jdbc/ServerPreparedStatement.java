@@ -640,8 +640,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                 ServerPreparedQuery q = (ServerPreparedQuery) this.query;
                 q.serverPrepare(sql);
             } catch (IOException ioEx) {
-                throw SQLError.createCommunicationsException(this.connection, this.session.getProtocol().getPacketSentTimeHolder().getLastPacketSentTime(),
-                        this.session.getProtocol().getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, this.exceptionInterceptor);
+                throw SQLError.createCommunicationsException(this.connection, this.session.getProtocol().getPacketSentTimeHolder(),
+                        this.session.getProtocol().getPacketReceivedTimeHolder(), ioEx, this.exceptionInterceptor);
             } catch (CJException sqlEx) {
                 SQLException ex = SQLExceptionsMapping.translateException(sqlEx);
 

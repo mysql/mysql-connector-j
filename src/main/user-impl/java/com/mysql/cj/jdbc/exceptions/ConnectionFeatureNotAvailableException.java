@@ -32,6 +32,7 @@ package com.mysql.cj.jdbc.exceptions;
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.protocol.PacketSentTimeHolder;
 
 /**
  * Thrown when a client requests a connection-level feature that isn't available for this particular distribution of Connector/J (currently only used by code
@@ -41,8 +42,8 @@ public class ConnectionFeatureNotAvailableException extends CommunicationsExcept
 
     private static final long serialVersionUID = 8315412078945570018L;
 
-    public ConnectionFeatureNotAvailableException(JdbcConnection conn, long lastPacketSentTimeMs, Exception underlyingException) {
-        super(conn, lastPacketSentTimeMs, 0, underlyingException);
+    public ConnectionFeatureNotAvailableException(JdbcConnection conn, PacketSentTimeHolder packetSentTimeHolder, Exception underlyingException) {
+        super(conn, packetSentTimeHolder, null, underlyingException);
     }
 
     public ConnectionFeatureNotAvailableException(String message, Throwable underlyingException) {

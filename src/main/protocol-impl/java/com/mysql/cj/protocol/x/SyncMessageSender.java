@@ -53,6 +53,7 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
 
     private BufferedOutputStream outputStream;
     private long lastPacketSentTime = 0;
+    private long previousPacketSentTime = 0;
     private int maxAllowedPacket = -1;
 
     public SyncMessageSender(BufferedOutputStream os) {
@@ -74,6 +75,7 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
             this.outputStream.write(type);
             msg.writeTo(this.outputStream);
             this.outputStream.flush();
+            this.previousPacketSentTime = this.lastPacketSentTime;
             this.lastPacketSentTime = System.currentTimeMillis();
         } catch (IOException ex) {
             throw new CJCommunicationsException("Unable to write message", ex);
@@ -93,6 +95,11 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
 
     public long getLastPacketSentTime() {
         return this.lastPacketSentTime;
+    }
+
+    @Override
+    public long getPreviousPacketSentTime() {
+        return this.previousPacketSentTime;
     }
 
     public void setMaxAllowedPacket(int maxAllowedPacket) {

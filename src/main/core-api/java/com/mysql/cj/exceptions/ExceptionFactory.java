@@ -34,6 +34,8 @@ import java.net.BindException;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.protocol.PacketReceivedTimeHolder;
+import com.mysql.cj.protocol.PacketSentTimeHolder;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.util.Util;
 
@@ -160,10 +162,10 @@ public class ExceptionFactory {
         return sqlEx;
     }
 
-    public static CJCommunicationsException createCommunicationsException(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs,
-            long lastPacketReceivedTimeMs, Throwable cause, ExceptionInterceptor interceptor) {
+    public static CJCommunicationsException createCommunicationsException(PropertySet propertySet, ServerSession serverSession,
+            PacketSentTimeHolder packetSentTimeHolder, PacketReceivedTimeHolder packetReceivedTimeHolder, Throwable cause, ExceptionInterceptor interceptor) {
         CJCommunicationsException sqlEx = createException(CJCommunicationsException.class, null, cause, interceptor);
-        sqlEx.init(propertySet, serverSession, lastPacketSentTimeMs, lastPacketReceivedTimeMs);
+        sqlEx.init(propertySet, serverSession, packetSentTimeHolder, packetReceivedTimeHolder);
 
         // TODO: Decide whether we need to intercept exceptions at this level
         //if (interceptor != null) {
@@ -185,18 +187,24 @@ public class ExceptionFactory {
      *            property set
      * @param serverSession
      *            server session
-     * @param lastPacketSentTimeMs
-     *            lastPacketSentTimeMs
-     * @param lastPacketReceivedTimeMs
-     *            lastPacketReceivedTimeMs
+     * @param packetSentTimeHolder
+     *            packetSentTimeHolder
+     * @param packetReceivedTimeHolder
+     *            packetReceivedTimeHolder
      * @param underlyingException
      *            underlyingException
      * @return message
      */
-    public static String createLinkFailureMessageBasedOnHeuristics(PropertySet propertySet, ServerSession serverSession, long lastPacketSentTimeMs,
-            long lastPacketReceivedTimeMs, Throwable underlyingException) {
+    public static String createLinkFailureMessageBasedOnHeuristics(PropertySet propertySet, ServerSession serverSession,
+            PacketSentTimeHolder packetSentTimeHolder, PacketReceivedTimeHolder packetReceivedTimeHolder, Throwable underlyingException) {
         long serverTimeoutSeconds = 0;
         boolean isInteractiveClient = false;
+
+        long lastPacketReceivedTimeMs = packetReceivedTimeHolder == null ? 0L : packetReceivedTimeHolder.getLastPacketReceivedTime();
+        long lastPacketSentTimeMs = packetSentTimeHolder.getLastPacketSentTime();
+        if (lastPacketSentTimeMs > lastPacketReceivedTimeMs) {
+            lastPacketSentTimeMs = packetSentTimeHolder.getPreviousPacketSentTime();
+        }
 
         if (propertySet != null) {
             isInteractiveClient = propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_interactiveClient).getValue();
@@ -204,11 +212,8 @@ public class ExceptionFactory {
             String serverTimeoutSecondsStr = null;
 
             if (serverSession != null) {
-                if (isInteractiveClient) {
-                    serverTimeoutSecondsStr = serverSession.getServerVariable("interactive_timeout");
-                } else {
-                    serverTimeoutSecondsStr = serverSession.getServerVariable("wait_timeout");
-                }
+                serverTimeoutSecondsStr = isInteractiveClient ? serverSession.getServerVariable("interactive_timeout")
+                        : serverSession.getServerVariable("wait_timeout");
             }
 
             if (serverTimeoutSecondsStr != null) {
@@ -242,21 +247,14 @@ public class ExceptionFactory {
                 dueToTimeout = DUE_TO_TIMEOUT_TRUE;
 
                 timeoutMessageBuf = new StringBuilder();
-
                 timeoutMessageBuf.append(Messages.getString("CommunicationsException.2"));
-
-                if (!isInteractiveClient) {
-                    timeoutMessageBuf.append(Messages.getString("CommunicationsException.3"));
-                } else {
-                    timeoutMessageBuf.append(Messages.getString("CommunicationsException.4"));
-                }
-
+                timeoutMessageBuf.append(Messages.getString(isInteractiveClient ? "CommunicationsException.4" : "CommunicationsException.3"));
             }
+
         } else if (timeSinceLastPacketSeconds > DEFAULT_WAIT_TIMEOUT_SECONDS) {
             dueToTimeout = DUE_TO_TIMEOUT_MAYBE;
 
             timeoutMessageBuf = new StringBuilder();
-
             timeoutMessageBuf.append(Messages.getString("CommunicationsException.5"));
             timeoutMessageBuf.append(Messages.getString("CommunicationsException.6"));
             timeoutMessageBuf.append(Messages.getString("CommunicationsException.7"));

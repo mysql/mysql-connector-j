@@ -40,6 +40,7 @@ import com.mysql.cj.protocol.PacketSentTimeHolder;
 public class TimeTrackingPacketSender implements MessageSender<NativePacketPayload>, PacketSentTimeHolder {
     private MessageSender<NativePacketPayload> packetSender;
     private long lastPacketSentTime = 0;
+    private long previousPacketSentTime = 0;
 
     public TimeTrackingPacketSender(MessageSender<NativePacketPayload> packetSender) {
         this.packetSender = packetSender;
@@ -48,11 +49,17 @@ public class TimeTrackingPacketSender implements MessageSender<NativePacketPaylo
     public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         this.packetSender.send(packet, packetLen, packetSequence);
 
+        this.previousPacketSentTime = this.lastPacketSentTime;
         this.lastPacketSentTime = System.currentTimeMillis();
     }
 
     public long getLastPacketSentTime() {
         return this.lastPacketSentTime;
+    }
+
+    @Override
+    public long getPreviousPacketSentTime() {
+        return this.previousPacketSentTime;
     }
 
     @Override

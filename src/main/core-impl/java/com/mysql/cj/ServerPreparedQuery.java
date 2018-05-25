@@ -459,8 +459,8 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
             return rs;
         } catch (IOException ioEx) {
             throw ExceptionFactory.createCommunicationsException(this.session.getPropertySet(), this.session.getServerSession(),
-                    this.session.getProtocol().getPacketSentTimeHolder().getLastPacketSentTime(),
-                    this.session.getProtocol().getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, this.session.getExceptionInterceptor());
+                    this.session.getProtocol().getPacketSentTimeHolder(), this.session.getProtocol().getPacketReceivedTimeHolder(), ioEx,
+                    this.session.getExceptionInterceptor());
         } catch (CJException sqlEx) {
             if (this.session.shouldIntercept()) {
                 this.session.invokeQueryInterceptorsPost(() -> {

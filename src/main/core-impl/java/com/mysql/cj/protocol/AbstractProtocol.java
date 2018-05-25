@@ -55,14 +55,8 @@ public abstract class AbstractProtocol<M extends Message> implements Protocol<M>
 
     // Default until packet sender created
     private PacketSentTimeHolder packetSentTimeHolder = new PacketSentTimeHolder() {
-        public long getLastPacketSentTime() {
-            return 0;
-        }
     };
     private PacketReceivedTimeHolder packetReceivedTimeHolder = new PacketReceivedTimeHolder() {
-        public long getLastPacketReceivedTime() {
-            return 0;
-        }
     };
 
     protected LinkedList<StringBuilder> packetDebugRingBuffer = null;
