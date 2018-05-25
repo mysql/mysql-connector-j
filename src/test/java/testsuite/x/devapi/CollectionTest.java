@@ -347,16 +347,24 @@ public class CollectionTest extends BaseCollectionTestCase {
                     }
                 });
 
-        // ET_3 Create an index specifying INDEX as the index type for a spatial data type
-        assertThrows(XProtocolError.class, "ERROR 1170 \\(42000\\) BLOB/TEXT column .+_gj_r_.+ used in key specification without a key length",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        CollectionTest.this.collection.createIndex("myIndex",
-                                "{\"fields\": [{\"field\": \"$.myGeoJsonField\", \"type\": \"GEOJSON\", \"required\": true, \"options\": 2, \"srid\": 4326}],"
-                                        + " \"type\":\"INDEX\"}");
-                        return null;
-                    }
-                });
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.12"))) {
+            this.collection.createIndex("myIndex",
+                    "{\"fields\": [{\"field\": \"$.myGeoJsonField\", \"type\": \"GEOJSON\", \"required\": true, \"options\": 2, \"srid\": 4326}],"
+                            + " \"type\":\"INDEX\"}");
+            validateIndex("myIndex", this.collectionName, "gj", false, true, false, 1, 32);
+            this.collection.dropIndex("myIndex");
+        } else {
+            // ET_3 Create an index specifying INDEX as the index type for a spatial data type
+            assertThrows(XProtocolError.class, "ERROR 1170 \\(42000\\) BLOB/TEXT column .+_gj_r_.+ used in key specification without a key length",
+                    new Callable<Void>() {
+                        public Void call() throws Exception {
+                            CollectionTest.this.collection.createIndex("myIndex",
+                                    "{\"fields\": [{\"field\": \"$.myGeoJsonField\", \"type\": \"GEOJSON\", \"required\": true, \"options\": 2, \"srid\": 4326}],"
+                                            + " \"type\":\"INDEX\"}");
+                            return null;
+                        }
+                    });
+        }
 
         // NPE checks
         assertThrows(XDevAPIError.class, "Parameter 'indexName' must not be null or empty.", new Callable<Void>() {

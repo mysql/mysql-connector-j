@@ -44,7 +44,7 @@ import com.mysql.cj.xdevapi.XDevAPIError;
 /**
  * @todo
  */
-public class CollectionRemoveTest extends CollectionTest {
+public class CollectionRemoveTest extends BaseCollectionTestCase {
 
     @Test
     public void deleteAll() {
