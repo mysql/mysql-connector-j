@@ -48,7 +48,6 @@ import com.mysql.cj.ServerVersion;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.AddResult;
 import com.mysql.cj.xdevapi.DbDoc;
-import com.mysql.cj.xdevapi.DbDocImpl;
 import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
@@ -113,7 +112,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        DbDoc doc = new DbDocImpl().add("firstName", new JsonString().setValue("Georgia"));
+        DbDoc doc = this.collection.newDoc().add("firstName", new JsonString().setValue("Georgia"));
         doc.add("middleName", new JsonString().setValue("Totto"));
         doc.add("lastName", new JsonString().setValue("O'Keeffe"));
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
@@ -139,12 +138,14 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         }
 
         if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion(("8.0.5")))) {
-            AddResult res1 = this.collection
-                    .add(new DbDocImpl().add("f1", new JsonString().setValue("doc1")), new DbDocImpl().add("f1", new JsonString().setValue("doc2"))).execute();
+            AddResult res1 = this.collection.add(this.collection.newDoc().add("f1", new JsonString().setValue("doc1")),
+                    this.collection.newDoc().add("f1", new JsonString().setValue("doc2"))).execute();
             assertTrue(res1.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
         } else {
-            AddResult res1 = this.collection.add(new DbDocImpl().add("_id", new JsonString().setValue("1")).add("f1", new JsonString().setValue("doc1")),
-                    new DbDocImpl().add("_id", new JsonString().setValue("2")).add("f1", new JsonString().setValue("doc2"))).execute(); // Inject _ids.
+            AddResult res1 = this.collection
+                    .add(this.collection.newDoc().add("_id", new JsonString().setValue("1")).add("f1", new JsonString().setValue("doc1")),
+                            this.collection.newDoc().add("_id", new JsonString().setValue("2")).add("f1", new JsonString().setValue("doc2")))
+                    .execute(); // Inject _ids.
             assertEquals(0, res1.getGeneratedIds().size());
         }
 
@@ -152,14 +153,13 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         assertEquals(2, docs.count());
 
         if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion(("8.0.5")))) {
-            AddResult res2 = this.collection.add(
-                    new DbDoc[] { new DbDocImpl().add("f1", new JsonString().setValue("doc3")), new DbDocImpl().add("f1", new JsonString().setValue("doc4")) })
-                    .execute();
+            AddResult res2 = this.collection.add(new DbDoc[] { this.collection.newDoc().add("f1", new JsonString().setValue("doc3")),
+                    this.collection.newDoc().add("f1", new JsonString().setValue("doc4")) }).execute();
             assertTrue(res2.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
         } else {
             AddResult res2 = this.collection
-                    .add(new DbDoc[] { new DbDocImpl().add("_id", new JsonString().setValue("3")).add("f1", new JsonString().setValue("doc3")),
-                            new DbDocImpl().add("_id", new JsonString().setValue("4")).add("f1", new JsonString().setValue("doc4")) })
+                    .add(new DbDoc[] { this.collection.newDoc().add("_id", new JsonString().setValue("3")).add("f1", new JsonString().setValue("doc3")),
+                            this.collection.newDoc().add("_id", new JsonString().setValue("4")).add("f1", new JsonString().setValue("doc4")) })
                     .execute();
             assertEquals(0, res2.getGeneratedIds().size());
         }
@@ -269,14 +269,14 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         this.collection.add("{\"_id\": \"id1\", \"a\": 1}").execute();
 
         // new _id
-        Result res = this.collection.addOrReplaceOne("id2", new DbDocImpl().add("a", new JsonNumber().setValue("2")));
+        Result res = this.collection.addOrReplaceOne("id2", this.collection.newDoc().add("a", new JsonNumber().setValue("2")));
         assertEquals(1, res.getAffectedItemsCount());
         assertEquals(2, this.collection.count());
         assertTrue(this.collection.find("a = 1").execute().hasNext());
         assertTrue(this.collection.find("a = 2").execute().hasNext());
 
         // existing _id
-        res = this.collection.addOrReplaceOne("id1", new DbDocImpl().add("a", new JsonNumber().setValue("3")));
+        res = this.collection.addOrReplaceOne("id1", this.collection.newDoc().add("a", new JsonNumber().setValue("3")));
         assertEquals(2, res.getAffectedItemsCount());
         assertEquals(2, this.collection.count());
         assertFalse(this.collection.find("a = 1").execute().hasNext());
@@ -294,7 +294,8 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         // a new document with _id field that doesn't match id parameter
         assertThrows(XDevAPIError.class, "Document already has an _id that doesn't match to id parameter", new Callable<Void>() {
             public Void call() throws Exception {
-                CollectionAddTest.this.collection.addOrReplaceOne("id2", new DbDocImpl().add("_id", new JsonString().setValue("id111")));
+                CollectionAddTest.this.collection.addOrReplaceOne("id2",
+                        CollectionAddTest.this.collection.newDoc().add("_id", new JsonString().setValue("id111")));
                 return null;
             }
         });
@@ -316,7 +317,8 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         // null id parameter
         assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", new Callable<Void>() {
             public Void call() throws Exception {
-                CollectionAddTest.this.collection.addOrReplaceOne(null, new DbDocImpl().add("_id", new JsonString().setValue("id111")));
+                CollectionAddTest.this.collection.addOrReplaceOne(null,
+                        CollectionAddTest.this.collection.newDoc().add("_id", new JsonString().setValue("id111")));
                 return null;
             }
         });

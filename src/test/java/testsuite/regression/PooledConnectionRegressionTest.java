@@ -29,21 +29,45 @@
 
 package testsuite.regression;
 
+import static org.junit.Assert.assertNotEquals;
+
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLNonTransientConnectionException;
+import java.sql.Statement;
+import java.util.Properties;
+import java.util.concurrent.Callable;
 
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
 import javax.sql.ConnectionPoolDataSource;
 import javax.sql.PooledConnection;
 
+import com.mysql.cj.NativeSession;
+import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.jdbc.Blob;
+import com.mysql.cj.jdbc.CallableStatementWrapper;
+import com.mysql.cj.jdbc.Clob;
+import com.mysql.cj.jdbc.CommentClientInfoProvider;
+import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.ConnectionWrapper;
+import com.mysql.cj.jdbc.DatabaseMetaData;
+import com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema;
+import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcPropertySetImpl;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.cj.jdbc.MysqlSQLXML;
 import com.mysql.cj.jdbc.MysqlXADataSource;
+import com.mysql.cj.jdbc.NClob;
+import com.mysql.cj.jdbc.PreparedStatementWrapper;
+import com.mysql.cj.jdbc.StatementWrapper;
+import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.PacketTooBigException;
 
 import testsuite.BaseTestCase;
@@ -400,5 +424,1111 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         this.pstmt = xads.getXAConnection().getConnection().prepareStatement("SELECT 1");
         this.pstmt.execute();
         this.pstmt.close();
+    }
+
+    @SuppressWarnings("deprecation")
+    public void testConnectionWrapperMethods() throws Exception {
+        PooledConnection pc = null;
+        pc = this.cpds.getPooledConnection();
+        ConnectionWrapper cw = (ConnectionWrapper) pc.getConnection();
+
+        assertEquals(PreparedStatementWrapper.class, cw.clientPrepare("SELECT 1").getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.clientPrepare("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.clientPrepareStatement("SELECT 1").getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.clientPrepareStatement("SELECT 1", new int[] { 1 }).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.clientPrepareStatement("SELECT 1", new String[] { "1" }).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.clientPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY).getClass());
+        assertEquals(PreparedStatementWrapper.class,
+                cw.clientPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.serverPrepareStatement("SELECT 1").getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.serverPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.serverPrepareStatement("SELECT 1", new int[] { 1 }).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.serverPrepareStatement("SELECT 1", new String[] { "1" }).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.serverPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY).getClass());
+        assertEquals(PreparedStatementWrapper.class,
+                cw.serverPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.prepareStatement("SELECT 1").getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.prepareStatement("SELECT 1", new int[] { 1 }).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.prepareStatement("SELECT 1", new String[] { "1" }).getClass());
+        assertEquals(PreparedStatementWrapper.class, cw.prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY).getClass());
+        assertEquals(PreparedStatementWrapper.class,
+                cw.prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT).getClass());
+
+        assertEquals(CallableStatementWrapper.class, cw.prepareCall("SELECT 1").getClass());
+        assertEquals(CallableStatementWrapper.class, cw.prepareCall("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY).getClass());
+        assertEquals(CallableStatementWrapper.class,
+                cw.prepareCall("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT).getClass());
+
+        assertEquals(StatementWrapper.class, cw.createStatement().getClass());
+        assertEquals(StatementWrapper.class, cw.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY).getClass());
+        assertEquals(StatementWrapper.class,
+                cw.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT).getClass());
+
+        assertEquals(26, cw.getActiveStatementCount());
+
+        assertThrows(SQLFeatureNotSupportedException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createArrayOf(String.class.getName(), new Object[] {}).getClass();
+                return null;
+            }
+        });
+        assertThrows(SQLFeatureNotSupportedException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createStruct(String.class.getName(), new Object[] {}).getClass();
+                return null;
+            }
+        });
+
+        assertEquals(Blob.class, cw.createBlob().getClass());
+        assertEquals(Clob.class, cw.createClob().getClass());
+        assertEquals(NClob.class, cw.createNClob().getClass());
+        assertEquals(MysqlSQLXML.class, cw.createSQLXML().getClass());
+        assertEquals(ConnectionImpl.class, cw.getActiveMySQLConnection().getClass());
+
+        assertEquals(this.conn.getAutoCommit(), cw.getAutoCommit());
+        assertEquals(((JdbcConnection) this.conn).getAutoIncrementIncrement(), cw.getAutoIncrementIncrement());
+        assertEquals(((JdbcConnection) this.conn).getCatalog(), cw.getCatalog());
+        assertEquals(((JdbcConnection) this.conn).getCharacterSetMetadata(), cw.getCharacterSetMetadata());
+        assertEquals(((JdbcConnection) this.conn).getHoldability(), cw.getHoldability());
+        assertEquals(((JdbcConnection) this.conn).getHost(), cw.getHost());
+        assertEquals(((JdbcConnection) this.conn).getHostPortPair(), cw.getHostPortPair());
+        assertEquals(Properties.class, cw.getProperties().getClass());
+        assertEquals(JdbcPropertySetImpl.class, cw.getPropertySet().getClass());
+        assertEquals(((JdbcConnection) this.conn).getSchema(), cw.getSchema());
+        assertEquals(((JdbcConnection) this.conn).getServerVersion().toString(), cw.getServerVersion().toString());
+        assertEquals(NativeSession.class, cw.getSession().getClass());
+        assertEquals(((JdbcConnection) this.conn).getSessionMaxRows(), cw.getSessionMaxRows());
+        assertEquals(((JdbcConnection) this.conn).getURL(), cw.getURL());
+        assertEquals(((JdbcConnection) this.conn).getUser(), cw.getUser());
+        assertFalse(cw.hasTriedMaster());
+        assertFalse(cw.isClosed());
+        assertFalse(cw.isInGlobalTx());
+        assertFalse(cw.isMasterConnection());
+        assertFalse(cw.isProxySet());
+        assertFalse(cw.isReadOnly());
+        assertFalse(cw.isReadOnly(false));
+        assertFalse(cw.isReadOnly(true));
+        assertTrue(cw.isServerLocal());
+        assertTrue(cw.isValid(10));
+        assertTrue(cw.isWrapperFor(Connection.class));
+        assertEquals(((JdbcConnection) this.conn).lowerCaseTableNames(), cw.lowerCaseTableNames());
+
+        assertEquals(CommentClientInfoProvider.class, cw.getClientInfoProviderImpl().getClass());
+        Properties ci1 = new Properties();
+        ci1.setProperty("k1", "v1");
+        ci1.setProperty("k2", "v2");
+        cw.setClientInfo(ci1);
+        cw.setClientInfo("k3", "v3");
+        Properties ci2 = cw.getClientInfo();
+        assertFalse(ci1.equals(ci2));
+        assertEquals("v1", cw.getClientInfo("k1"));
+        assertEquals("v2", cw.getClientInfo("k2"));
+        assertEquals("v3", cw.getClientInfo("k3"));
+
+        String comment = cw.getStatementComment();
+        assertEquals("k3=v3, k2=v2, k1=v1", comment);
+        cw.setStatementComment("Test comment");
+        assertNotEquals(((JdbcConnection) this.conn).getStatementComment(), cw.getStatementComment());
+
+        assertEquals(ConnectionImpl.class, cw.getConnectionMutex().getClass());
+        assertNull(cw.getExceptionInterceptor());
+        assertEquals(((JdbcConnection) this.conn).getNetworkTimeout(), cw.getNetworkTimeout());
+        assertEquals(((JdbcConnection) this.conn).getTypeMap(), cw.getTypeMap());
+        assertNull(cw.getWarnings());
+
+        // testsuite is built upon non-SSL default connection with additional useSSL=false&allowPublicKeyRetrieval=true properties
+        assertFalse(cw.hasSameProperties((JdbcConnection) this.conn));
+
+        assertTrue(cw.isSameResource((JdbcConnection) this.conn));
+        assertEquals(((JdbcConnection) this.conn).nativeSQL("SELECT 1"), cw.nativeSQL("SELECT 1"));
+
+        assertEquals(cw.getServerVersion().meetsMinimum(new ServerVersion(8, 0, 3)) ? DatabaseMetaDataUsingInfoSchema.class : DatabaseMetaData.class,
+                cw.getMetaData().getClass());
+
+        // TODO find a way to test following methods
+        //        cw.getId();
+        //        cw.getIdleFor();
+        //        cw.getMetadataSafeStatement();
+        //        cw.getMultiHostSafeProxy();
+        //        cw.resetServerState();
+
+        cw.setCatalog(this.dbName);
+        cw.setFailedOver(false);
+        cw.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT);
+        cw.setInGlobalTx(false);
+        // TODO find a way to test following methods
+        //        cw.setNetworkTimeout(executor, milliseconds);
+        //        cw.setProxy(this.conn);
+        //        cw.setReadOnly(readOnly);
+        //        cw.setReadOnlyInternal(readOnlyFlag);
+        //        cw.setSchema(schema);
+        //        cw.setSessionMaxRows(max);
+        //        cw.setTypeMap(map);
+        assertEquals(((JdbcConnection) this.conn).storesLowerCaseTableName(), cw.storesLowerCaseTableName());
+
+        // TODO find a way to test following methods
+        //        cw.getQueryInterceptorsInstances();
+        //        cw.initializeSafeQueryInterceptors();
+        //        cw.unSafeQueryInterceptors();
+        //        cw.unwrap(iface);
+        //        cw.initializeResultsMetadataFromCache(sql, cachedMetaData, resultSet);
+        //        cw.getCachedMetaData(sql);
+
+        cw.setAutoCommit(false);
+        cw.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+        assertEquals(Connection.TRANSACTION_READ_UNCOMMITTED, cw.getTransactionIsolation());
+        cw.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+        assertEquals(Connection.TRANSACTION_READ_COMMITTED, cw.getTransactionIsolation());
+        // TODO find a way to test following methods
+        //cw.transactionBegun();
+        //cw.transactionCompleted();
+        //        cw.commit();
+        //        cw.rollback();
+        //        cw.rollback(arg0);
+        //        cw.setSavepoint();
+        //        cw.setSavepoint(arg0);
+        //        cw.releaseSavepoint(arg0);
+        cw.setAutoCommit(true);
+
+        // TODO find a way to test following methods
+        //        cw.registerStatement(this.stmt);
+        //        cw.unregisterStatement(this.stmt);
+        //        cw.decachePreparedStatement(this.pstmt);
+        //        cw.recachePreparedStatement(this.pstmt);
+
+        // TODO find a way to test following methods
+        //        cw.clearHasTriedMaster();
+        //        cw.clearWarnings();
+        //        cw.ping();
+        //        cw.pingInternal(checkForClosedConnection, timeoutMillis);
+        //        cw.createNewIO(isForReconnect);
+        //        cw.changeUser(userName, newPassword);
+        //        cw.checkClosed();
+
+        cw.close();
+        assertEquals(26, cw.getActiveStatementCount()); // TODO why are they still active? Active statements should be cleaned when connection is returned to pool.
+        checkConnectionReturnedToPool(cw);
+
+        cw.normalClose();
+        assertEquals(0, cw.getActiveStatementCount());
+        checkReallyClosedConnection(cw);
+
+        // TODO find a way to test following methods
+        //        cw.realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason);
+        //        cw.cleanup(whyCleanedUp);
+        //        cw.abort(executor);
+        //        cw.abortInternal();
+
+    }
+
+    @SuppressWarnings("deprecation")
+    private void checkConnectionReturnedToPool(ConnectionWrapper cw) throws Exception {
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepare("SELECT 1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepare("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1", new int[] { 1 });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1", new String[] { "1" });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1", new int[] { 1 });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1", new String[] { "1" });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1", new int[] { 1 });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1", new String[] { "1" });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareCall("SELECT 1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareCall("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareCall("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createStatement();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createArrayOf(String.class.getName(), new Object[] {}).getClass();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createStruct(String.class.getName(), new Object[] {}).getClass();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createBlob();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createClob();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createNClob();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createSQLXML();
+                return null;
+            }
+        });
+
+        assertEquals(ConnectionImpl.class, cw.getActiveMySQLConnection().getClass());
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getAutoCommit();
+                return null;
+            }
+        });
+
+        assertEquals(((JdbcConnection) this.conn).getAutoIncrementIncrement(), cw.getAutoIncrementIncrement());
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getCatalog();
+                return null;
+            }
+        });
+
+        assertEquals(((JdbcConnection) this.conn).getCharacterSetMetadata(), cw.getCharacterSetMetadata());
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getHoldability();
+                return null;
+            }
+        });
+        assertEquals(((JdbcConnection) this.conn).getHost(), cw.getHost());
+        assertEquals(((JdbcConnection) this.conn).getHostPortPair(), cw.getHostPortPair());
+        assertEquals(Properties.class, cw.getProperties().getClass());
+        assertEquals(JdbcPropertySetImpl.class, cw.getPropertySet().getClass());
+        assertEquals(((JdbcConnection) this.conn).getSchema(), cw.getSchema());
+        assertEquals(((JdbcConnection) this.conn).getServerVersion().toString(), cw.getServerVersion().toString());
+        assertEquals(NativeSession.class, cw.getSession().getClass());
+        assertEquals(((JdbcConnection) this.conn).getSessionMaxRows(), cw.getSessionMaxRows());
+        assertEquals(((JdbcConnection) this.conn).getURL(), cw.getURL());
+        assertEquals(((JdbcConnection) this.conn).getUser(), cw.getUser());
+        assertFalse(cw.hasTriedMaster());
+        assertTrue(cw.isClosed());
+        assertFalse(cw.isInGlobalTx());
+        assertFalse(cw.isMasterConnection());
+        assertFalse(cw.isProxySet());
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.isReadOnly();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.isReadOnly(false);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.isReadOnly(true);
+                return null;
+            }
+        });
+        assertTrue(cw.isServerLocal());
+        assertTrue(cw.isValid(10));
+        assertTrue(cw.isWrapperFor(Connection.class));
+        assertEquals(((JdbcConnection) this.conn).lowerCaseTableNames(), cw.lowerCaseTableNames());
+
+        assertEquals(CommentClientInfoProvider.class, cw.getClientInfoProviderImpl().getClass());
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                Properties ci1 = new Properties();
+                ci1.setProperty("k1", "v1");
+                cw.setClientInfo(ci1);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setClientInfo("k4", "v4");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getClientInfo();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getClientInfo("k1");
+                return null;
+            }
+        });
+
+        assertEquals(ConnectionImpl.class, cw.getConnectionMutex().getClass());
+        assertNull(cw.getExceptionInterceptor());
+        assertEquals(((JdbcConnection) this.conn).getNetworkTimeout(), cw.getNetworkTimeout());
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getTypeMap();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getWarnings();
+                return null;
+            }
+        });
+
+        // testsuite is built upon non-SSL default connection with additional useSSL=false&allowPublicKeyRetrieval=true properties
+        assertFalse(cw.hasSameProperties((JdbcConnection) this.conn));
+
+        assertTrue(cw.isSameResource((JdbcConnection) this.conn));
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.nativeSQL("SELECT 1");
+                return null;
+            }
+        });
+
+        String comment = cw.getStatementComment();
+        assertEquals("Test comment", comment);
+        cw.setStatementComment("Test comment 2");
+        assertNotEquals(((JdbcConnection) this.conn).getStatementComment(), cw.getStatementComment());
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getMetaData();
+                return null;
+            }
+        });
+
+        // TODO find a way to test following methods
+        //        cw.getId();
+        //        cw.getIdleFor();
+        //        cw.getMetadataSafeStatement();
+        //        cw.getMultiHostSafeProxy();
+        //        cw.resetServerState();
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            @SuppressWarnings("synthetic-access")
+            public Void call() throws Exception {
+                cw.setCatalog(PooledConnectionRegressionTest.this.dbName);
+                return null;
+            }
+        });
+
+        cw.setFailedOver(false);
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+
+        cw.setInGlobalTx(false);
+        // TODO find a way to test following methods
+        //        cw.setNetworkTimeout(executor, milliseconds);
+        //        cw.setProxy(this.conn);
+        //        cw.setReadOnly(readOnly);
+        //        cw.setReadOnlyInternal(readOnlyFlag);
+        //        cw.setSchema(schema);
+        //        cw.setSessionMaxRows(max);
+        //        cw.setTypeMap(map);
+        assertEquals(((JdbcConnection) this.conn).storesLowerCaseTableName(), cw.storesLowerCaseTableName());
+
+        // TODO find a way to test following methods
+        //        cw.getQueryInterceptorsInstances();
+        //        cw.initializeSafeQueryInterceptors();
+        //        cw.unSafeQueryInterceptors();
+        //        cw.unwrap(iface);
+        //        cw.initializeResultsMetadataFromCache(sql, cachedMetaData, resultSet);
+        //        cw.getCachedMetaData(sql);
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setAutoCommit(false);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getTransactionIsolation();
+                return null;
+            }
+        });
+        cw.transactionBegun();
+        cw.transactionCompleted();
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.commit();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.rollback();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.rollback(null);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setSavepoint();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setSavepoint("SP1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.releaseSavepoint(null);
+                return null;
+            }
+        });
+
+        // TODO find a way to test following methods
+        //        cw.registerStatement(this.stmt);
+        //        cw.unregisterStatement(this.stmt);
+        //        cw.decachePreparedStatement(this.pstmt);
+        //        cw.recachePreparedStatement(this.pstmt);
+        //        cw.clearHasTriedMaster();
+        //        cw.clearWarnings();
+        //        cw.ping();
+        //        cw.pingInternal(checkForClosedConnection, timeoutMillis);
+        //        cw.createNewIO(isForReconnect);
+        //        cw.changeUser(userName, newPassword);
+        //        cw.checkClosed();
+        //        cw.realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason);
+        //        cw.cleanup(whyCleanedUp);
+        //        cw.abort(executor);
+        //        cw.abortInternal();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void checkReallyClosedConnection(ConnectionWrapper cw) throws Exception {
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepare("SELECT 1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepare("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1", new int[] { 1 });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1", new String[] { "1" });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.clientPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1", new int[] { 1 });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1", new String[] { "1" });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.serverPrepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1", new int[] { 1 });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1", new String[] { "1" });
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareCall("SELECT 1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareCall("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.prepareCall("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createStatement();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createArrayOf(String.class.getName(), new Object[] {}).getClass();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createStruct(String.class.getName(), new Object[] {}).getClass();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createBlob();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createClob();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createNClob();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.createSQLXML();
+                return null;
+            }
+        });
+
+        assertEquals(ConnectionImpl.class, cw.getActiveMySQLConnection().getClass());
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getAutoCommit();
+                return null;
+            }
+        });
+
+        assertEquals(((JdbcConnection) this.conn).getAutoIncrementIncrement(), cw.getAutoIncrementIncrement());
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getCatalog();
+                return null;
+            }
+        });
+
+        assertEquals(((JdbcConnection) this.conn).getCharacterSetMetadata(), cw.getCharacterSetMetadata());
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getHoldability();
+                return null;
+            }
+        });
+        assertEquals(((JdbcConnection) this.conn).getHost(), cw.getHost());
+        assertEquals(((JdbcConnection) this.conn).getHostPortPair(), cw.getHostPortPair());
+        assertEquals(Properties.class, cw.getProperties().getClass());
+        assertEquals(JdbcPropertySetImpl.class, cw.getPropertySet().getClass());
+        assertThrows(SQLNonTransientConnectionException.class, "No operations allowed after connection closed.", new Callable<Void>() { // TODO why message is different?
+            public Void call() throws Exception {
+                cw.getSchema();
+                return null;
+            }
+        });
+        assertEquals(((JdbcConnection) this.conn).getServerVersion().toString(), cw.getServerVersion().toString());
+        assertEquals(NativeSession.class, cw.getSession().getClass());
+        assertEquals(((JdbcConnection) this.conn).getSessionMaxRows(), cw.getSessionMaxRows());
+        assertEquals(((JdbcConnection) this.conn).getURL(), cw.getURL());
+        assertEquals(((JdbcConnection) this.conn).getUser(), cw.getUser());
+        assertFalse(cw.hasTriedMaster());
+        assertTrue(cw.isClosed());
+        assertFalse(cw.isInGlobalTx());
+        assertFalse(cw.isMasterConnection());
+        assertFalse(cw.isProxySet());
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.isReadOnly();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.isReadOnly(false);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.isReadOnly(true);
+                return null;
+            }
+        });
+        assertThrows(CommunicationsException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.isServerLocal();
+                return null;
+            }
+        });
+        assertFalse(cw.isValid(10));
+        assertTrue(cw.isWrapperFor(Connection.class));
+        assertEquals(((JdbcConnection) this.conn).lowerCaseTableNames(), cw.lowerCaseTableNames());
+
+        assertEquals(CommentClientInfoProvider.class, cw.getClientInfoProviderImpl().getClass());
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                Properties ci1 = new Properties();
+                ci1.setProperty("k1", "v1");
+                cw.setClientInfo(ci1);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setClientInfo("k4", "v4");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getClientInfo();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getClientInfo("k1");
+                return null;
+            }
+        });
+        assertEquals(ConnectionImpl.class, cw.getConnectionMutex().getClass());
+        assertNull(cw.getExceptionInterceptor());
+
+        String comment = cw.getStatementComment();
+        assertEquals("Test comment 2", comment);
+        cw.setStatementComment("Test comment 3");
+        assertNotEquals(((JdbcConnection) this.conn).getStatementComment(), cw.getStatementComment());
+
+        assertThrows(SQLNonTransientConnectionException.class, "No operations allowed after connection closed.", new Callable<Void>() { // TODO why message is different?
+            public Void call() throws Exception {
+                cw.getNetworkTimeout();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getTypeMap();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getWarnings();
+                return null;
+            }
+        });
+
+        // testsuite is built upon non-SSL default connection with additional useSSL=false&allowPublicKeyRetrieval=true properties
+        assertFalse(cw.hasSameProperties((JdbcConnection) this.conn));
+
+        assertTrue(cw.isSameResource((JdbcConnection) this.conn));
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.nativeSQL("SELECT 1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getMetaData();
+                return null;
+            }
+        });
+
+        // TODO find a way to test following methods
+        //        cw.getId();
+        //        cw.getIdleFor();
+        //        cw.getMetadataSafeStatement();
+        //        cw.getMultiHostSafeProxy();
+        //        cw.resetServerState();
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            @SuppressWarnings("synthetic-access")
+            public Void call() throws Exception {
+                cw.setCatalog(PooledConnectionRegressionTest.this.dbName);
+                return null;
+            }
+        });
+
+        cw.setFailedOver(false);
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT);
+                return null;
+            }
+        });
+
+        cw.setInGlobalTx(false);
+        // TODO find a way to test following methods
+        //        cw.setNetworkTimeout(executor, milliseconds);
+        //        cw.setProxy(this.conn);
+        //        cw.setReadOnly(readOnly);
+        //        cw.setReadOnlyInternal(readOnlyFlag);
+        //        cw.setSchema(schema);
+        //        cw.setSessionMaxRows(max);
+        //        cw.setTypeMap(map);
+        assertEquals(((JdbcConnection) this.conn).storesLowerCaseTableName(), cw.storesLowerCaseTableName());
+
+        // TODO find a way to test following methods
+        //        cw.getQueryInterceptorsInstances();
+        //        cw.initializeSafeQueryInterceptors();
+        //        cw.unSafeQueryInterceptors();
+        //        cw.unwrap(iface);
+        //        cw.initializeResultsMetadataFromCache(sql, cachedMetaData, resultSet);
+        //        cw.getCachedMetaData(sql);
+
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setAutoCommit(false);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.getTransactionIsolation();
+                return null;
+            }
+        });
+        cw.transactionBegun();
+        cw.transactionCompleted();
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.commit();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.rollback();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.rollback(null);
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setSavepoint();
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.setSavepoint("SP1");
+                return null;
+            }
+        });
+        assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
+            public Void call() throws Exception {
+                cw.releaseSavepoint(null);
+                return null;
+            }
+        });
+
+        // TODO find a way to test following methods
+        //        cw.registerStatement(this.stmt);
+        //        cw.unregisterStatement(this.stmt);
+        //        cw.decachePreparedStatement(this.pstmt);
+        //        cw.recachePreparedStatement(this.pstmt);
+        //        cw.clearHasTriedMaster();
+        //        cw.clearWarnings();
+        //        cw.ping();
+        //        cw.pingInternal(checkForClosedConnection, timeoutMillis);
+        //        cw.createNewIO(isForReconnect);
+        //        cw.changeUser(userName, newPassword);
+        //        cw.checkClosed();
+        //        cw.realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason);
+        //        cw.cleanup(whyCleanedUp);
+        //        cw.abort(executor);
+        //        cw.abortInternal();
     }
 }

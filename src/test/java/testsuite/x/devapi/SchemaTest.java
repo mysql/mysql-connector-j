@@ -138,6 +138,13 @@ public class SchemaTest extends DevApiBaseTestCase {
             // expected
             assertEquals(MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR, ex.getErrorCode());
         }
+        try {
+            this.schema.createCollection(collName, false);
+            fail("Exception should be thrown trying to create a collection that already exists");
+        } catch (XProtocolError ex) {
+            // expected
+            assertEquals(MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR, ex.getErrorCode());
+        }
         Collection coll2 = this.schema.createCollection(collName, true);
         assertEquals(coll, coll2);
     }

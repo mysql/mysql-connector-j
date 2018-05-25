@@ -1726,12 +1726,18 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
 
     @Override
     public <T> T getObject(int parameterIndex, Class<T> type) throws SQLException {
-        return null;
+        if (this.wrappedStmt != null) {
+            return null; // TODO
+        }
+        throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
     }
 
     @Override
     public <T> T getObject(String parameterName, Class<T> type) throws SQLException {
-        return null;
+        if (this.wrappedStmt != null) {
+            return null; // TODO
+        }
+        throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
     }
 
     @Override
@@ -1792,7 +1798,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             if (this.wrappedStmt != null) {
                 ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterIndex, sqlType);
             } else {
-                throw SQLError.createSQLException("No operations allowed after statement closed", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         this.exceptionInterceptor);
             }
         } catch (SQLException sqlEx) {
@@ -1806,7 +1812,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             if (this.wrappedStmt != null) {
                 ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterIndex, sqlType, scale);
             } else {
-                throw SQLError.createSQLException("No operations allowed after statement closed", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         this.exceptionInterceptor);
             }
         } catch (SQLException sqlEx) {
@@ -1820,7 +1826,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             if (this.wrappedStmt != null) {
                 ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterIndex, sqlType, typeName);
             } else {
-                throw SQLError.createSQLException("No operations allowed after statement closed", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         this.exceptionInterceptor);
             }
         } catch (SQLException sqlEx) {
@@ -1834,7 +1840,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             if (this.wrappedStmt != null) {
                 ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterName, sqlType);
             } else {
-                throw SQLError.createSQLException("No operations allowed after statement closed", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         this.exceptionInterceptor);
             }
         } catch (SQLException sqlEx) {
@@ -1848,7 +1854,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             if (this.wrappedStmt != null) {
                 ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterName, sqlType, scale);
             } else {
-                throw SQLError.createSQLException("No operations allowed after statement closed", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         this.exceptionInterceptor);
             }
         } catch (SQLException sqlEx) {
@@ -1862,7 +1868,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             if (this.wrappedStmt != null) {
                 ((CallableStatement) this.wrappedStmt).registerOutParameter(parameterName, sqlType, typeName);
             } else {
-                throw SQLError.createSQLException("No operations allowed after statement closed", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         this.exceptionInterceptor);
             }
         } catch (SQLException sqlEx) {
@@ -1876,7 +1882,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             if (this.wrappedStmt != null) {
                 ((CallableStatement) this.wrappedStmt).setObject(parameterIndex, x, targetSqlType);
             } else {
-                throw SQLError.createSQLException("No operations allowed after statement closed", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         this.exceptionInterceptor);
             }
         } catch (SQLException sqlEx) {
@@ -1890,7 +1896,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             if (this.wrappedStmt != null) {
                 ((CallableStatement) this.wrappedStmt).setObject(parameterIndex, x, targetSqlType, scaleOrLength);
             } else {
-                throw SQLError.createSQLException("No operations allowed after statement closed", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         this.exceptionInterceptor);
             }
         } catch (SQLException sqlEx) {
@@ -1904,7 +1910,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             if (this.wrappedStmt != null) {
                 ((CallableStatement) this.wrappedStmt).setObject(parameterName, x, targetSqlType);
             } else {
-                throw SQLError.createSQLException("No operations allowed after statement closed", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         this.exceptionInterceptor);
             }
         } catch (SQLException sqlEx) {
@@ -1918,7 +1924,7 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
             if (this.wrappedStmt != null) {
                 ((CallableStatement) this.wrappedStmt).setObject(parameterName, x, targetSqlType, scaleOrLength);
             } else {
-                throw SQLError.createSQLException("No operations allowed after statement closed", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         this.exceptionInterceptor);
             }
         } catch (SQLException sqlEx) {

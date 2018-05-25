@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,11 +32,27 @@ package testsuite.simple;
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
 
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.exceptions.CommunicationsException;
+import com.mysql.cj.jdbc.exceptions.ConnectionFeatureNotAvailableException;
+import com.mysql.cj.jdbc.exceptions.MySQLQueryInterruptedException;
+import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
+import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException;
+import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
+import com.mysql.cj.jdbc.exceptions.NotUpdatable;
+import com.mysql.cj.jdbc.exceptions.OperationNotSupportedException;
+import com.mysql.cj.jdbc.exceptions.PacketTooBigException;
+import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.protocol.PacketReceivedTimeHolder;
+import com.mysql.cj.protocol.PacketSentTimeHolder;
 
 import testsuite.BaseTestCase;
 
 public class ExceptionsTest extends BaseTestCase {
+    static String TEST_MESSAGE = "Test message";
+    static String TEST_SQL_STATE = "Test SQLState";
 
     public ExceptionsTest(String name) {
         super(name);
@@ -68,6 +84,49 @@ public class ExceptionsTest extends BaseTestCase {
                     }
                 });
 
+    }
+
+    public void testConstructors() {
+        new CommunicationsException(TEST_MESSAGE, new Throwable());
+        new CommunicationsException((JdbcConnection) this.conn, new PacketSentTimeHolder() {
+        }, new PacketReceivedTimeHolder() {
+        }, new Exception());
+
+        new ConnectionFeatureNotAvailableException(TEST_MESSAGE, new Throwable());
+        new ConnectionFeatureNotAvailableException((JdbcConnection) this.conn, new PacketSentTimeHolder() {
+        }, new Exception());
+
+        new MysqlDataTruncation(TEST_MESSAGE, 0, false, false, 0, 0, 0);
+
+        new MySQLQueryInterruptedException();
+        new MySQLQueryInterruptedException(TEST_MESSAGE);
+        new MySQLQueryInterruptedException(TEST_MESSAGE, TEST_SQL_STATE);
+        new MySQLQueryInterruptedException(TEST_MESSAGE, TEST_SQL_STATE, 0);
+
+        new MySQLStatementCancelledException();
+        new MySQLStatementCancelledException(TEST_MESSAGE);
+        new MySQLStatementCancelledException(TEST_MESSAGE, TEST_SQL_STATE);
+        new MySQLStatementCancelledException(TEST_MESSAGE, TEST_SQL_STATE, 0);
+
+        new MySQLTimeoutException();
+        new MySQLTimeoutException(TEST_MESSAGE);
+        new MySQLTimeoutException(TEST_MESSAGE, TEST_SQL_STATE);
+        new MySQLTimeoutException(TEST_MESSAGE, TEST_SQL_STATE, 0);
+
+        new MySQLTransactionRollbackException();
+        new MySQLTransactionRollbackException(TEST_MESSAGE);
+        new MySQLTransactionRollbackException(TEST_MESSAGE, TEST_SQL_STATE);
+        new MySQLTransactionRollbackException(TEST_MESSAGE, TEST_SQL_STATE, 0);
+
+        new NotUpdatable(TEST_MESSAGE);
+
+        new OperationNotSupportedException();
+        new OperationNotSupportedException(TEST_MESSAGE);
+
+        new PacketTooBigException(TEST_MESSAGE);
+        new PacketTooBigException(0, 100);
+
+        new SQLError();
     }
 
 }

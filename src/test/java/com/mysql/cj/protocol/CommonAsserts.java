@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -27,13 +27,31 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package com.mysql.cj.jdbc;
+package com.mysql.cj.protocol;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import static org.junit.Assert.fail;
 
-public class DocsConnectionPropsHelper {
+import java.util.concurrent.Callable;
 
-    public static void main(String[] args) throws Exception {
-        System.out.println(PropertyDefinitions.exposeAsXml());
+public class CommonAsserts {
+
+    protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, String msgMatchesRegex, Callable<?> testRoutine) {
+        try {
+            testRoutine.call();
+        } catch (Throwable t) {
+            if (!throwable.isAssignableFrom(t.getClass())) {
+                fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
+            }
+
+            if (!t.getMessage().matches(msgMatchesRegex)) {
+                fail("The error message [" + t.getMessage() + "] was expected to match [" + msgMatchesRegex + "].");
+            }
+
+            return throwable.cast(t);
+        }
+        fail("Expected exception of type '" + throwable.getName() + "'.");
+
+        // never reaches here
+        return null;
     }
 }

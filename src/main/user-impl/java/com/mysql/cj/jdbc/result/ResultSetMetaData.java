@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
+import com.mysql.cj.NativeSession;
 import com.mysql.cj.Session;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -109,21 +110,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      *             if an invalid column index is given.
      */
     public String getColumnCharacterEncoding(int column) throws SQLException {
-        String mysqlName = getColumnCharacterSet(column);
-
-        String javaName = null;
-
-        if (mysqlName != null) {
-            try {
-                javaName = CharsetMapping.getJavaEncodingForMysqlCharset(mysqlName);
-            } catch (RuntimeException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
-                sqlEx.initCause(ex);
-                throw sqlEx;
-            }
-        }
-
-        return javaName;
+        return getField(column).getEncoding();
     }
 
     /**
@@ -138,7 +125,18 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      *             if an invalid column index is given.
      */
     public String getColumnCharacterSet(int column) throws SQLException {
-        return getField(column).getEncoding();
+        int index = getField(column).getCollationIndex();
+
+        String charsetName = null;
+
+        if (((NativeSession) this.session).getProtocol().getServerSession().indexToCustomMysqlCharset != null) {
+            charsetName = ((NativeSession) this.session).getProtocol().getServerSession().indexToCustomMysqlCharset.get(index);
+        }
+        if (charsetName == null) {
+            charsetName = CharsetMapping.getMysqlCharsetNameForCollationIndex(index);
+        }
+
+        return charsetName;
     }
 
     @Override

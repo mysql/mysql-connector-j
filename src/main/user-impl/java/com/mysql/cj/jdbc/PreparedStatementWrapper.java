@@ -945,7 +945,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
                 return ((ClientPreparedStatement) this.wrappedStmt).executeLargeUpdate();
             }
 
-            throw SQLError.createSQLException("No operations allowed after statement closed", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+            throw SQLError.createSQLException(Messages.getString("Statement.AlreadyClosed"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                     this.exceptionInterceptor);
         } catch (SQLException sqlEx) {
             checkAndFireConnectionError(sqlEx);

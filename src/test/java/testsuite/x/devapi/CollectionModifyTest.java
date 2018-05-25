@@ -559,6 +559,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         assertEquals(new DbDocImpl(), doc.get("nullfield"));
     }
 
+    @Test
     public void testReplaceOne() {
         if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
             return;

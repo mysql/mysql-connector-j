@@ -81,11 +81,6 @@ public abstract class AbstractFilterParams implements FilterParams {
         this.isRelational = isRelational;
     }
 
-    protected AbstractFilterParams(Collection coll, boolean isRelational) {
-        this.collection = coll;
-        this.isRelational = isRelational;
-    }
-
     public Object getCollection() {
         return this.collection;
     }
@@ -210,7 +205,4 @@ public abstract class AbstractFilterParams implements FilterParams {
     public void setLockOption(RowLockOptions lockOption) {
         this.lockOption = lockOption;
     }
-
-    @Override
-    protected abstract FilterParams clone();
 }

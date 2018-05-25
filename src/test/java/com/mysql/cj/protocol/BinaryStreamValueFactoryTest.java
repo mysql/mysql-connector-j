@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -27,24 +27,19 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package com.mysql.cj.jdbc.exceptions;
+package com.mysql.cj.protocol;
 
-import java.sql.SQLException;
+import static org.junit.Assert.assertEquals;
 
-import com.mysql.cj.Messages;
-import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import org.junit.Test;
 
-/**
- * Thrown when a result sate is not updatable
- */
-public class NotUpdatable extends SQLException {
+import com.mysql.cj.result.BinaryStreamValueFactory;
 
-    private static final long serialVersionUID = 6004153665887216929L;
+public class BinaryStreamValueFactoryTest extends CommonAsserts {
 
-    /**
-     * Create a new NotUpdatable exception. Append the given reason to the not updatable message if the reason is not null.
-     */
-    public NotUpdatable(String reason) {
-        super(reason + Messages.getString("NotUpdatable.1"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR);
+    @Test
+    public void testBasics() {
+        BinaryStreamValueFactory vf = new BinaryStreamValueFactory();
+        assertEquals("java.io.InputStream", vf.getTargetTypeName());
     }
 }

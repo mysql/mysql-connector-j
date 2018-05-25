@@ -42,6 +42,9 @@ import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.DbDocImpl;
+import com.mysql.cj.xdevapi.JsonArray;
+import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.XDevAPIError;
@@ -64,6 +67,30 @@ public class CollectionTest extends BaseCollectionTestCase {
             this.collection.add("{'c':'c'}".replaceAll("'", "\"")).execute();
         }
         assertEquals(3, this.collection.count());
+    }
+
+    @Test
+    public void testGetSchema() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        String collName = "testExists";
+        dropCollection(collName);
+        Collection coll = this.schema.getCollection(collName);
+        assertEquals(this.schema, coll.getSchema());
+        this.schema.dropCollection(collName);
+    }
+
+    @Test
+    public void testGetSession() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        String collName = "testExists";
+        dropCollection(collName);
+        Collection coll = this.schema.getCollection(collName);
+        assertEquals(this.session, coll.getSession());
+        this.schema.dropCollection(collName);
     }
 
     @Test
@@ -118,7 +145,8 @@ public class CollectionTest extends BaseCollectionTestCase {
         }
 
         // FR1_1 Create an index on a single field.
-        this.collection.createIndex("myIndex", "{\"fields\": [{\"field\": \"$.myField\", \"type\": \"TEXT(200)\"}]}");
+        this.collection.createIndex("myIndex", new DbDocImpl().add("fields", new JsonArray()
+                .addValue(new DbDocImpl().add("field", new JsonString().setValue("$.myField")).add("type", new JsonString().setValue("TEXT(200)")))));
         validateIndex("myIndex", this.collectionName, "t200", false, false, false, 1, 200);
         this.collection.dropIndex("myIndex");
 

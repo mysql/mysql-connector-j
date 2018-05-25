@@ -29,7 +29,6 @@
 
 package com.mysql.cj.result;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import com.mysql.cj.Messages;
@@ -75,6 +74,6 @@ public class LocalDateTimeValueFactory extends DefaultValueFactory<LocalDateTime
     }
 
     public String getTargetTypeName() {
-        return Timestamp.class.getName();
+        return LocalDateTime.class.getName();
     }
 }

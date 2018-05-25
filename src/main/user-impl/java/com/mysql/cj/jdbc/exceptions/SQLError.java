@@ -184,10 +184,6 @@ public class SQLError {
         return runThroughExceptionInterceptor(interceptor, exToReturn);
     }
 
-    public static NotUpdatable notUpdatable() {
-        return new NotUpdatable();
-    }
-
     /**
      * Run exception through an ExceptionInterceptor chain.
      * 

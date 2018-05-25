@@ -66,23 +66,6 @@ public class TableImpl implements Table {
         this.name = name;
     }
 
-    /* package private */ TableImpl(MysqlxSession mysqlxSession, SchemaImpl schema, DatabaseObjectDescription descr) {
-        if (mysqlxSession == null) {
-            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "mysqlxSession" }));
-        }
-        if (schema == null) {
-            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "schema" }));
-        }
-        if (descr == null) {
-            throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "descr" }));
-        }
-        this.mysqlxSession = mysqlxSession;
-        this.xbuilder = (XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder();
-        this.schema = schema;
-        this.name = descr.getObjectName();
-        this.isView = descr.getObjectType() == DbObjectType.VIEW || descr.getObjectType() == DbObjectType.COLLECTION_VIEW;
-    }
-
     public Session getSession() {
         return this.schema.getSession();
     }

@@ -30,6 +30,8 @@
 package testsuite.simple;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.util.Hashtable;
 
@@ -42,7 +44,14 @@ import javax.naming.spi.ObjectFactory;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 
+import com.mysql.cj.conf.BooleanPropertyDefinition;
+import com.mysql.cj.conf.EnumPropertyDefinition;
+import com.mysql.cj.conf.IntegerPropertyDefinition;
+import com.mysql.cj.conf.LongPropertyDefinition;
+import com.mysql.cj.conf.MemorySizePropertyDefinition;
+import com.mysql.cj.conf.PropertyDefinition;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.StringPropertyDefinition;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlXADataSource;
 
@@ -215,5 +224,109 @@ public class DataSourceTest extends BaseTestCase {
         ds = new com.mysql.cj.jdbc.MysqlDataSource();
         ds.setUrl(dbUrl); // from BaseTestCase
         this.ctx.bind("_test", ds);
+    }
+
+    public void testPropertyGettersSetters() throws Exception {
+        com.mysql.cj.jdbc.MysqlDataSource ds = new com.mysql.cj.jdbc.MysqlDataSource();
+
+        String testStr = "Test value";
+        int testInt = 42;
+        long testLong = 42L;
+
+        // standard properties
+        assertEquals("MySQL Connector/J Data Source", ds.getDescription());
+        ds.setDescription(testStr);
+        assertEquals(testStr, ds.getDescription());
+
+        assertEquals(0, ds.getLoginTimeout());
+        ds.setLoginTimeout(testInt);
+        // TODO assertEquals(testInt, ds.getLoginTimeout());
+
+        assertNull(ds.getLogWriter());
+        PrintWriter pw = new PrintWriter(File.createTempFile("testPropertyGettersSettersLog", "tmp"));
+        ds.setLogWriter(pw);
+        assertEquals(pw, ds.getLogWriter());
+
+        assertEquals(3306, ds.getPort());
+        ds.setPort(3307);
+        assertEquals(3307, ds.getPort());
+
+        assertEquals(3307, ds.getPortNumber());
+        ds.setPortNumber(3308);
+        assertEquals(3308, ds.getPortNumber());
+
+        // TODO ds.getReference();
+        // TODO ds.setPropertiesViaRef(ref);
+
+        assertEquals("", ds.getServerName());
+        ds.setServerName("test.server.name");
+        assertEquals("test.server.name", ds.getServerName());
+
+        assertEquals("jdbc:mysql://test.server.name:3308/", ds.getUrl());
+        ds.setUrl("http://192.168.1.1/");
+        assertEquals("http://192.168.1.1/", ds.getUrl());
+
+        assertEquals("http://192.168.1.1/", ds.getURL());
+        ds.setURL("http://10.0.0.1");
+        assertEquals("http://10.0.0.1", ds.getURL());
+
+        assertNull(ds.getUser());
+        ds.setUser("testUser");
+        assertEquals("testUser", ds.getUser());
+
+        // instrumented properties
+        for (PropertyDefinition<?> def : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.values()) {
+            String pname = def.hasCcAlias() ? def.getCcAlias() : def.getName();
+            String gname = "get" + pname.substring(0, 1).toUpperCase() + pname.substring(1);
+            String sname = "set" + pname.substring(0, 1).toUpperCase() + pname.substring(1);
+
+            Method getter = ds.getClass().getMethod(gname, new Class<?>[] {});
+            Object res1 = getter.invoke(ds, new Object[] {});
+            assertEquals(gname + ": ", def.getDefaultValue() + "", res1 + "");
+
+            Method setter = null;
+
+            if (def instanceof StringPropertyDefinition) {
+                setter = ds.getClass().getMethod(sname, new Class<?>[] { String.class });
+                setter.invoke(ds, new Object[] { testStr });
+                assertEquals(sname + ": ", testStr, (String) getter.invoke(ds, new Object[] {}));
+
+            } else if (def instanceof BooleanPropertyDefinition) {
+                Boolean testBool = !((Boolean) def.getDefaultValue());
+                setter = ds.getClass().getMethod(sname, new Class<?>[] { Boolean.TYPE });
+                setter.invoke(ds, new Object[] { testBool });
+                assertEquals(sname + ": ", testBool, getter.invoke(ds, new Object[] {}));
+
+            } else if (def instanceof IntegerPropertyDefinition) {
+                setter = ds.getClass().getMethod(sname, new Class<?>[] { Integer.TYPE });
+                setter.invoke(ds, new Object[] { testInt });
+                assertEquals(sname + ": ", testInt, getter.invoke(ds, new Object[] {}));
+
+            } else if (def instanceof LongPropertyDefinition) {
+                setter = ds.getClass().getMethod(sname, new Class<?>[] { Long.TYPE });
+                setter.invoke(ds, new Object[] { testLong });
+                assertEquals(sname + ": ", testLong, getter.invoke(ds, new Object[] {}));
+
+            } else if (def instanceof MemorySizePropertyDefinition) {
+                setter = ds.getClass().getMethod(sname, new Class<?>[] { Integer.TYPE });
+                setter.invoke(ds, new Object[] { testInt });
+                assertEquals(sname + ": ", testInt, getter.invoke(ds, new Object[] {}));
+
+            } else if (def instanceof EnumPropertyDefinition<?>) {
+                String testEnum = null;
+                for (String val : def.getAllowableValues()) {
+                    if (!val.equals(def.getDefaultValue())) {
+                        testEnum = val;
+                        break;
+                    }
+                }
+                setter = ds.getClass().getMethod(sname, new Class<?>[] { String.class });
+                setter.invoke(ds, new Object[] { testEnum });
+                assertEquals(sname + ": ", testEnum, (String) getter.invoke(ds, new Object[] {}));
+
+            } else {
+                fail("Unknown " + def.getName() + " property type.");
+            }
+        }
     }
 }

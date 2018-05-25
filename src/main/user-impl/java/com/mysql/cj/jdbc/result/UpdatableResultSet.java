@@ -1044,7 +1044,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     public void refreshRow() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (!this.isUpdatable) {
-                throw SQLError.notUpdatable();
+                throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
             }
 
             if (this.onInsertRow) {
@@ -1996,31 +1996,6 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException(Messages.getString("ResultSet.16"));
-        }
-
-        if (!this.onInsertRow) {
-            if (!this.doingUpdates) {
-                this.doingUpdates = true;
-                syncUpdate();
-            }
-
-            this.updater.setNCharacterStream(columnIndex, x, length);
-        } else {
-            this.inserter.setNCharacterStream(columnIndex, x, length);
-
-            if (x == null) {
-                this.thisRow.setBytes(columnIndex - 1, null);
-            } else {
-                this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
-            }
-        }
-    }
-
-    @Override
     public void updateNClob(int columnIndex, Reader reader) throws SQLException {
         String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
@@ -2100,11 +2075,6 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
-        updateNCharacterStream(findColumn(columnLabel), reader, length);
-    }
-
-    @Override
     public void updateNClob(String columnLabel, Reader reader) throws SQLException {
         updateNClob(findColumn(columnLabel), reader);
 
@@ -2122,7 +2092,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateNCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
+    public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
             if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
@@ -2149,8 +2119,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateNCharacterStream(String columnName, java.io.Reader reader, int length) throws SQLException {
-        updateNCharacterStream(findColumn(columnName), reader, length);
+    public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
+        updateNCharacterStream(findColumn(columnLabel), reader, length);
     }
 
     @Override

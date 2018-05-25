@@ -41,14 +41,6 @@ import com.mysql.cj.xdevapi.FilterParams.RowLockOptions;
 public class SelectStatementImpl extends FilterableStatement<SelectStatement, RowResult> implements SelectStatement {
     private MysqlxSession mysqlxSession;
 
-    /* package private */ SelectStatementImpl(MysqlxSession mysqlxSession, String schema, String table, String projection) {
-        super(new TableFilterParams(schema, table));
-        this.mysqlxSession = mysqlxSession;
-        if (projection != null && projection.length() > 0) {
-            this.filterParams.setFields(projection);
-        }
-    }
-
     /* package private */ SelectStatementImpl(MysqlxSession mysqlxSession, String schema, String table, String... projection) {
         super(new TableFilterParams(schema, table));
         this.mysqlxSession = mysqlxSession;

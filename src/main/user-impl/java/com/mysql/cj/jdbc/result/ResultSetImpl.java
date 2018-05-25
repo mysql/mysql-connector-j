@@ -84,6 +84,7 @@ import com.mysql.cj.jdbc.JdbcPreparedStatement;
 import com.mysql.cj.jdbc.JdbcStatement;
 import com.mysql.cj.jdbc.MysqlSQLXML;
 import com.mysql.cj.jdbc.StatementImpl;
+import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.log.ProfilerEvent;
@@ -451,7 +452,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public void cancelRowUpdates() throws SQLException {
-        throw SQLError.notUpdatable();
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     /**
@@ -556,7 +557,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public void deleteRow() throws SQLException {
-        throw SQLError.notUpdatable();
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     /*
@@ -799,7 +800,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     }
 
     @Override
-    public java.io.Reader getCharacterStream(int columnIndex) throws SQLException {
+    public Reader getCharacterStream(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
         InputStream stream = getBinaryStream(columnIndex);
@@ -819,7 +820,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     }
 
     @Override
-    public java.io.Reader getCharacterStream(String columnName) throws SQLException {
+    public Reader getCharacterStream(String columnName) throws SQLException {
         return getCharacterStream(findColumn(columnName));
     }
 
@@ -1740,7 +1741,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public void insertRow() throws SQLException {
-        throw SQLError.notUpdatable();
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
@@ -1794,12 +1795,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public void moveToCurrentRow() throws SQLException {
-        throw SQLError.notUpdatable();
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
     public void moveToInsertRow() throws SQLException {
-        throw SQLError.notUpdatable();
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
@@ -2022,7 +2023,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public void refreshRow() throws SQLException {
-        throw SQLError.notUpdatable();
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
@@ -2182,271 +2183,379 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     }
 
     @Override
-    public void updateArray(int arg0, Array arg1) throws SQLException {
+    public void updateArray(int columnIndex, Array arg1) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
-    public void updateArray(String arg0, Array arg1) throws SQLException {
+    public void updateArray(String columnLabel, Array arg1) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
-    public void updateAsciiStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
-        throw SQLError.notUpdatable();
+    public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
-    public void updateAsciiStream(String columnName, java.io.InputStream x, int length) throws SQLException {
-        updateAsciiStream(findColumn(columnName), x, length);
+    public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateAsciiStream(int columnIndex, InputStream x, int length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateAsciiStream(String columnName, InputStream x, int length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
     public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {
-        throw SQLError.notUpdatable();
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
     public void updateBigDecimal(String columnName, BigDecimal x) throws SQLException {
-        updateBigDecimal(findColumn(columnName), x);
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
-    public void updateBinaryStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
-        throw SQLError.notUpdatable();
+    public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
-    public void updateBinaryStream(String columnName, java.io.InputStream x, int length) throws SQLException {
-        updateBinaryStream(findColumn(columnName), x, length);
+    public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
-    public void updateBlob(int arg0, java.sql.Blob arg1) throws SQLException {
-        throw SQLError.notUpdatable();
+    public void updateBinaryStream(int columnIndex, InputStream x, int length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
-    public void updateBlob(String arg0, java.sql.Blob arg1) throws SQLException {
-        throw SQLError.notUpdatable();
+    public void updateBinaryStream(String columnName, InputStream x, int length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateBlob(int columnIndex, java.sql.Blob arg1) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateBlob(String columnLabel, java.sql.Blob arg1) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+
+    }
+
+    @Override
+    public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
     public void updateBoolean(int columnIndex, boolean x) throws SQLException {
-        throw SQLError.notUpdatable();
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
     public void updateBoolean(String columnName, boolean x) throws SQLException {
-        updateBoolean(findColumn(columnName), x);
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
     public void updateByte(int columnIndex, byte x) throws SQLException {
-        throw SQLError.notUpdatable();
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
     public void updateByte(String columnName, byte x) throws SQLException {
-        updateByte(findColumn(columnName), x);
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
     public void updateBytes(int columnIndex, byte[] x) throws SQLException {
-        throw SQLError.notUpdatable();
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
     public void updateBytes(String columnName, byte[] x) throws SQLException {
-        updateBytes(findColumn(columnName), x);
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
-    public void updateCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
-        throw SQLError.notUpdatable();
+    public void updateCharacterStream(int columnIndex, Reader x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
-    public void updateCharacterStream(String columnName, java.io.Reader reader, int length) throws SQLException {
-        updateCharacterStream(findColumn(columnName), reader, length);
+    public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
-    public void updateClob(int arg0, java.sql.Clob arg1) throws SQLException {
+    public void updateCharacterStream(int columnIndex, Reader x, int length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateCharacterStream(String columnName, Reader reader, int length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateClob(int columnIndex, java.sql.Clob arg1) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
     public void updateClob(String columnName, java.sql.Clob clob) throws SQLException {
-        updateClob(findColumn(columnName), clob);
-    }
-
-    @Override
-    public void updateDate(int columnIndex, java.sql.Date x) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateDate(String columnName, java.sql.Date x) throws SQLException {
-        updateDate(findColumn(columnName), x);
-    }
-
-    @Override
-    public void updateDouble(int columnIndex, double x) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateDouble(String columnName, double x) throws SQLException {
-        updateDouble(findColumn(columnName), x);
-    }
-
-    @Override
-    public void updateFloat(int columnIndex, float x) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateFloat(String columnName, float x) throws SQLException {
-        updateFloat(findColumn(columnName), x);
-    }
-
-    @Override
-    public void updateInt(int columnIndex, int x) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateInt(String columnName, int x) throws SQLException {
-        updateInt(findColumn(columnName), x);
-    }
-
-    @Override
-    public void updateLong(int columnIndex, long x) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateLong(String columnName, long x) throws SQLException {
-        updateLong(findColumn(columnName), x);
-    }
-
-    @Override
-    public void updateNull(int columnIndex) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateNull(String columnName) throws SQLException {
-        updateNull(findColumn(columnName));
-    }
-
-    @Override
-    public void updateObject(int columnIndex, Object x) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateObject(String columnName, Object x) throws SQLException {
-        updateObject(findColumn(columnName), x);
-    }
-
-    @Override
-    public void updateObject(String columnName, Object x, int scale) throws SQLException {
-        updateObject(findColumn(columnName), x);
-    }
-
-    @Override
-    public void updateRef(int arg0, Ref arg1) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
-    public void updateRef(String arg0, Ref arg1) throws SQLException {
+    public void updateClob(int columnIndex, Reader reader) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateClob(String columnLabel, Reader reader) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateDate(int columnIndex, java.sql.Date x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateDate(String columnName, java.sql.Date x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateDouble(int columnIndex, double x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateDouble(String columnName, double x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateFloat(int columnIndex, float x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateFloat(String columnName, float x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateInt(int columnIndex, int x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateInt(String columnName, int x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateLong(int columnIndex, long x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateLong(String columnName, long x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNClob(int columnIndex, NClob nClob) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNClob(String columnName, NClob nClob) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNClob(int columnIndex, Reader reader) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNClob(String columnLabel, Reader reader) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNull(int columnIndex) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNull(String columnName) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNString(int columnIndex, String nString) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateNString(String columnLabel, String nString) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateObject(int columnIndex, Object x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateObject(String columnName, Object x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateObject(String columnName, Object x, int scale) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateObject(int columnIndex, Object x, SQLType targetSqlType) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateObject(String columnLabel, Object x, SQLType targetSqlType) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateRef(int columnIndex, Ref arg1) throws SQLException {
+        throw SQLError.createSQLFeatureNotSupportedException();
+    }
+
+    @Override
+    public void updateRef(String columnLabel, Ref arg1) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
     }
 
     @Override
     public void updateRow() throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateShort(int columnIndex, short x) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateShort(String columnName, short x) throws SQLException {
-        updateShort(findColumn(columnName), x);
-    }
-
-    @Override
-    public void updateString(int columnIndex, String x) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateString(String columnName, String x) throws SQLException {
-        updateString(findColumn(columnName), x);
-    }
-
-    @Override
-    public void updateTime(int columnIndex, java.sql.Time x) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateTime(String columnName, java.sql.Time x) throws SQLException {
-        updateTime(findColumn(columnName), x);
-    }
-
-    @Override
-    public void updateTimestamp(int columnIndex, java.sql.Timestamp x) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateTimestamp(String columnName, java.sql.Timestamp x) throws SQLException {
-        updateTimestamp(findColumn(columnName), x);
-    }
-
-    @Override
-    public boolean wasNull() throws SQLException {
-        return this.thisRow.wasNull();
-    }
-
-    protected ExceptionInterceptor getExceptionInterceptor() {
-        return this.exceptionInterceptor;
-    }
-
-    /**
-     * 
-     * @param columnIndex
-     *            column index
-     * @param x
-     *            reader
-     * @param length
-     *            length
-     * @throws SQLException
-     *             if an error occurs
-     */
-    public void updateNCharacterStream(int columnIndex, Reader x, int length) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    public void updateNCharacterStream(String columnName, Reader reader, int length) throws SQLException {
-        updateNCharacterStream(findColumn(columnName), reader, length);
-    }
-
-    @Override
-    public void updateNClob(String columnName, NClob nClob) throws SQLException {
-        updateNClob(findColumn(columnName), nClob);
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
     @Override
@@ -2457,6 +2566,65 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public void updateRowId(String columnName, RowId x) throws SQLException {
         throw SQLError.createSQLFeatureNotSupportedException();
+    }
+
+    @Override
+    public void updateShort(int columnIndex, short x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateShort(String columnName, short x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateString(int columnIndex, String x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateString(String columnName, String x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateTime(int columnIndex, java.sql.Time x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateTime(String columnName, java.sql.Time x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateTimestamp(int columnIndex, java.sql.Timestamp x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public void updateTimestamp(String columnName, java.sql.Timestamp x) throws SQLException {
+        throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
+    }
+
+    @Override
+    public boolean wasNull() throws SQLException {
+        return this.thisRow.wasNull();
+    }
+
+    protected ExceptionInterceptor getExceptionInterceptor() {
+        return this.exceptionInterceptor;
     }
 
     @Override
@@ -2484,190 +2652,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public SQLXML getSQLXML(String columnLabel) throws SQLException {
         return getSQLXML(findColumn(columnLabel));
-    }
-
-    @Override
-    public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {
-        updateAsciiStream(findColumn(columnLabel), x);
-
-    }
-
-    @Override
-    public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException {
-        updateAsciiStream(findColumn(columnLabel), x, length);
-    }
-
-    @Override
-    public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {
-        updateBinaryStream(findColumn(columnLabel), x);
-    }
-
-    @Override
-    public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException {
-        updateBinaryStream(findColumn(columnLabel), x, length);
-    }
-
-    @Override
-    public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {
-        updateBlob(findColumn(columnLabel), inputStream);
-    }
-
-    @Override
-    public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException {
-        updateBlob(findColumn(columnLabel), inputStream, length);
-    }
-
-    @Override
-    public void updateCharacterStream(int columnIndex, Reader x) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {
-        updateCharacterStream(findColumn(columnLabel), reader);
-    }
-
-    @Override
-    public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
-        updateCharacterStream(findColumn(columnLabel), reader, length);
-    }
-
-    @Override
-    public void updateClob(int columnIndex, Reader reader) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateClob(String columnLabel, Reader reader) throws SQLException {
-        updateClob(findColumn(columnLabel), reader);
-    }
-
-    @Override
-    public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {
-        updateClob(findColumn(columnLabel), reader, length);
-    }
-
-    @Override
-    public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {
-        updateNCharacterStream(findColumn(columnLabel), reader);
-
-    }
-
-    @Override
-    public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
-        updateNCharacterStream(findColumn(columnLabel), reader, length);
-    }
-
-    @Override
-    public void updateNClob(int columnIndex, NClob nClob) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateNClob(int columnIndex, Reader reader) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateNClob(String columnLabel, Reader reader) throws SQLException {
-        updateNClob(findColumn(columnLabel), reader);
-
-    }
-
-    @Override
-    public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {
-        updateNClob(findColumn(columnLabel), reader, length);
-    }
-
-    @Override
-    public void updateNString(int columnIndex, String nString) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateNString(String columnLabel, String nString) throws SQLException {
-        updateNString(findColumn(columnLabel), nString);
-    }
-
-    @Override
-    public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
-        throw SQLError.notUpdatable();
-
-    }
-
-    @Override
-    public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {
-        updateSQLXML(findColumn(columnLabel), xmlObject);
-
     }
 
     @Override
@@ -2700,26 +2684,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         } else {
             this.warningChain.setNextWarning(w);
         }
-    }
-
-    @Override
-    public void updateObject(int columnIndex, Object x, SQLType targetSqlType) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateObject(String columnLabel, Object x, SQLType targetSqlType) throws SQLException {
-        throw SQLError.notUpdatable();
-    }
-
-    @Override
-    public void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
-        throw SQLError.notUpdatable();
     }
 
     public ColumnDefinition getMetadata() {

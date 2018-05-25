@@ -129,7 +129,7 @@ public class XAuthenticationProvider implements AuthenticationProvider<XMessage>
             // More than one authentication mechanism was tried.
             String errMsg = "Authentication failed using " + StringUtils.joinWithSerialComma(tryAuthMech)
                     + ", check username and password or try a secure connection";
-            XDevAPIError ex = new XDevAPIError(errMsg);
+            XDevAPIError ex = new XDevAPIError(errMsg, capturedAuthErr);
             ex.setVendorCode(capturedAuthErr.getErrorCode());
             ex.setSQLState(capturedAuthErr.getSQLState());
             ex.initCause(capturedAuthErr);

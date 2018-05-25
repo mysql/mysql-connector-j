@@ -32,8 +32,6 @@ package com.mysql.cj.xdevapi;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import com.mysql.cj.x.protobuf.MysqlxCrud.Collection;
-
 /**
  * {@link FilterParams} implementation for {@link Table} syntax.
  */
@@ -50,48 +48,9 @@ public class TableFilterParams extends AbstractFilterParams {
         super(schemaName, collectionName, true);
     }
 
-    private TableFilterParams(Collection coll) {
-        super(coll, true);
-    }
-
     @Override
     public void setFields(String... projection) {
         this.projection = projection;
         this.fields = new ExprParser(Arrays.stream(projection).collect(Collectors.joining(", ")), true).parseTableSelectProjection();
-    }
-
-    @Override
-    public FilterParams clone() {
-        FilterParams newFilterParams = new TableFilterParams(this.collection);
-        newFilterParams.setLimit(this.limit);
-        newFilterParams.setOffset(this.offset);
-        if (this.orderExpr != null) {
-            newFilterParams.setOrder(this.orderExpr);
-        }
-        if (this.criteriaStr != null) {
-            newFilterParams.setCriteria(this.criteriaStr);
-            if (this.args != null) {
-                // newFilterParams.args should already exist after setCriteria() call
-                for (int i = 0; i < this.args.length; i++) {
-                    ((AbstractFilterParams) newFilterParams).args[i] = this.args[i];
-                }
-            }
-        }
-        if (this.groupBy != null) {
-            newFilterParams.setGrouping(this.groupBy);
-        }
-        if (this.having != null) {
-            newFilterParams.setGroupingCriteria(this.having);
-        }
-        if (this.projection != null) {
-            newFilterParams.setFields(this.projection);
-        }
-        if (this.lock != null) {
-            newFilterParams.setLock(this.lock);
-        }
-        if (this.lockOption != null) {
-            newFilterParams.setLockOption(this.lockOption);
-        }
-        return newFilterParams;
     }
 }

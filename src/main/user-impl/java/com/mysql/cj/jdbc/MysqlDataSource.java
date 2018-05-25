@@ -165,6 +165,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
 
     @Override
     public void setLoginTimeout(int seconds) throws SQLException {
+        // TODO
     }
 
     @Override

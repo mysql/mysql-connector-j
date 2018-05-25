@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,7 +34,6 @@ import java.util.Map;
 
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.ConnectionWrapper;
-import com.mysql.cj.jdbc.ha.MultiHostMySQLConnection;
 
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -98,6 +97,11 @@ public class CommonChecks {
         addClosedCheck(clazz.getDeclaredMethod("clientPrepare", new CtClass[] { ctString }));
         addClosedCheck(clazz.getDeclaredMethod("clientPrepare", new CtClass[] { ctString, ctInt, ctInt }));
         addClosedCheck(clazz.getDeclaredMethod("clientPrepareStatement", new CtClass[] { ctString }));
+        addClosedCheck(clazz.getDeclaredMethod("clientPrepareStatement", new CtClass[] { ctString, ctInt }));
+        addClosedCheck(clazz.getDeclaredMethod("clientPrepareStatement", new CtClass[] { ctString, ctIntArray }));
+        addClosedCheck(clazz.getDeclaredMethod("clientPrepareStatement", new CtClass[] { ctString, ctStringArray }));
+        addClosedCheck(clazz.getDeclaredMethod("clientPrepareStatement", new CtClass[] { ctString, ctInt, ctInt }));
+        addClosedCheck(clazz.getDeclaredMethod("clientPrepareStatement", new CtClass[] { ctString, ctInt, ctInt, ctInt }));
         addClosedCheck(clazz.getDeclaredMethod("commit", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("clearWarnings", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("createArrayOf", new CtClass[] { ctString, ctObjectArray }));
@@ -122,7 +126,8 @@ public class CommonChecks {
         addClosedCheck(clazz.getDeclaredMethod("getTypeMap", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("getWarnings", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("isReadOnly", new CtClass[] {}));
-        addClosedCheck(clazz.getDeclaredMethod("isWrapperFor", new CtClass[] { ctClazz }));
+        addClosedCheck(clazz.getDeclaredMethod("isReadOnly", new CtClass[] { ctBool }));
+        //addClosedCheck(clazz.getDeclaredMethod("isWrapperFor", new CtClass[] { ctClazz }));
         addClosedCheck(clazz.getDeclaredMethod("nativeSQL", new CtClass[] { ctString }));
         addClosedCheck(clazz.getDeclaredMethod("prepareCall", new CtClass[] { ctString }));
         addClosedCheck(clazz.getDeclaredMethod("prepareCall", new CtClass[] { ctString, ctInt, ctInt }));
@@ -139,6 +144,11 @@ public class CommonChecks {
         addClosedCheck(clazz.getDeclaredMethod("rollback", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("rollback", new CtClass[] { ctSavepoint }));
         addClosedCheck(clazz.getDeclaredMethod("serverPrepareStatement", new CtClass[] { ctString }));
+        addClosedCheck(clazz.getDeclaredMethod("serverPrepareStatement", new CtClass[] { ctString, ctInt }));
+        addClosedCheck(clazz.getDeclaredMethod("serverPrepareStatement", new CtClass[] { ctString, ctIntArray }));
+        addClosedCheck(clazz.getDeclaredMethod("serverPrepareStatement", new CtClass[] { ctString, ctStringArray }));
+        addClosedCheck(clazz.getDeclaredMethod("serverPrepareStatement", new CtClass[] { ctString, ctInt, ctInt }));
+        addClosedCheck(clazz.getDeclaredMethod("serverPrepareStatement", new CtClass[] { ctString, ctInt, ctInt, ctInt }));
         addClosedCheck(clazz.getDeclaredMethod("setAutoCommit", new CtClass[] { ctBool }));
         addClosedCheck(clazz.getDeclaredMethod("setCatalog", new CtClass[] { ctString }));
         // addClosedCheck(clazz.getDeclaredMethod("setClientInfo", new CtClass[] { ctString, ctString }));
@@ -155,9 +165,9 @@ public class CommonChecks {
         //addClosedCheck(clazz.getDeclaredMethod("versionMeetsMinimum", new CtClass[] { ctInt, ctInt, ctInt }));
         clazz.writeFile(args[0]);
 
-        clazz = pool.get(MultiHostMySQLConnection.class.getName());
-        addClosedCheck(clazz.getDeclaredMethod("isWrapperFor", new CtClass[] { ctClazz }));
-        clazz.writeFile(args[0]);
+        //clazz = pool.get(MultiHostMySQLConnection.class.getName());
+        //addClosedCheck(clazz.getDeclaredMethod("isWrapperFor", new CtClass[] { ctClazz }));
+        //clazz.writeFile(args[0]);
 
     }
 

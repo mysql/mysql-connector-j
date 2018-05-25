@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
-import com.mysql.cj.x.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Projection;
 
 /**
@@ -53,10 +52,6 @@ public class DocFilterParams extends AbstractFilterParams {
         super(schemaName, collectionName, false);
     }
 
-    private DocFilterParams(Collection coll) {
-        super(coll, false);
-    }
-
     /**
      * Parse projection expressions into X Protocol Projection objects.
      * 
@@ -70,37 +65,5 @@ public class DocFilterParams extends AbstractFilterParams {
     @Override
     public void setFields(String... projection) {
         this.fields = new ExprParser(Arrays.stream(projection).collect(Collectors.joining(", ")), false).parseDocumentProjection();
-    }
-
-    @Override
-    public FilterParams clone() {
-        FilterParams newFilterParams = new DocFilterParams(this.collection);
-        newFilterParams.setLimit(this.limit);
-        newFilterParams.setOffset(this.offset);
-        if (this.orderExpr != null) {
-            newFilterParams.setOrder(this.orderExpr);
-        }
-        if (this.criteriaStr != null) {
-            newFilterParams.setCriteria(this.criteriaStr);
-            if (this.args != null) {
-                // newFilterParams.args should already exist after setCriteria() call
-                for (int i = 0; i < this.args.length; i++) {
-                    ((AbstractFilterParams) newFilterParams).args[i] = this.args[i];
-                }
-            }
-        }
-        if (this.groupBy != null) {
-            newFilterParams.setGrouping(this.groupBy);
-        }
-        if (this.having != null) {
-            newFilterParams.setGroupingCriteria(this.having);
-        }
-        if (this.lock != null) {
-            newFilterParams.setLock(this.lock);
-        }
-        if (this.lockOption != null) {
-            newFilterParams.setLockOption(this.lockOption);
-        }
-        return newFilterParams;
     }
 }

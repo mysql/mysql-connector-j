@@ -45,6 +45,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.exceptions.CJPacketTooBigException;
+import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.Row;
@@ -230,6 +231,53 @@ public class SessionTest extends DevApiBaseTestCase {
         assertEquals(null, res.getAutoIncrementValue());
         assertEquals(0, res.getWarningsCount());
         assertFalse(res.getWarnings().hasNext());
+
+        // TODO SqlUpdateResult throws FeatureNotAvailableException("Not a multi-result");
+        //res.nextResult();
+
+        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
+            public Void call() throws Exception {
+                res.fetchAll();
+                return null;
+            }
+        });
+        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
+            public Void call() throws Exception {
+                res.next();
+                return null;
+            }
+        });
+        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
+            public Void call() throws Exception {
+                res.hasNext();
+                return null;
+            }
+        });
+        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
+            public Void call() throws Exception {
+                res.getColumnCount();
+                return null;
+            }
+        });
+        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
+            public Void call() throws Exception {
+                res.getColumns();
+                return null;
+            }
+        });
+        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
+            public Void call() throws Exception {
+                res.getColumnNames();
+                return null;
+            }
+        });
+        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
+            public Void call() throws Exception {
+                res.count();
+                return null;
+            }
+        });
+
     }
 
     @Test

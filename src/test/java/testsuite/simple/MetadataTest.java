@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema;
@@ -436,6 +437,52 @@ public class MetadataTest extends BaseTestCase {
         assertEquals("java.lang.Boolean", this.rs.getMetaData().getColumnClassName(1));
     }
 
+    public void testResultSetMetaDataMethods() throws Exception {
+        createTable("t1",
+                "(c1 char(1) CHARACTER SET latin7 COLLATE latin7_general_cs, c2 char(10) CHARACTER SET latin7 COLLATE latin7_general_ci, g1 GEOMETRY)");
+
+        this.rs = this.stmt.executeQuery("SELECT c1 as QQQ, c2, g1 FROM t1");
+
+        assertThrows(SQLException.class, "Column index out of range.", new Callable<Void>() {
+            @SuppressWarnings("synthetic-access")
+            @Override
+            public Void call() throws Exception {
+                MetadataTest.this.rs.getMetaData().getColumnType(0);
+                return null;
+            }
+        });
+        assertThrows(SQLException.class, "Column index out of range.", new Callable<Void>() {
+            @SuppressWarnings("synthetic-access")
+            @Override
+            public Void call() throws Exception {
+                MetadataTest.this.rs.getMetaData().getColumnType(100);
+                return null;
+            }
+        });
+
+        assertEquals(Types.CHAR, this.rs.getMetaData().getColumnType(1));
+        assertEquals("ISO-8859-13", ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(1));
+        assertEquals("latin7", ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterSet(1));
+        assertEquals("QQQ", this.rs.getMetaData().getColumnLabel(1));
+        assertEquals("c1", this.rs.getMetaData().getColumnName(1));
+        assertTrue(this.rs.getMetaData().isCaseSensitive(1));
+        assertFalse(this.rs.getMetaData().isCaseSensitive(2));
+        assertTrue(this.rs.getMetaData().isCaseSensitive(3));
+        assertFalse(this.rs.getMetaData().isCurrency(3));
+        assertTrue(this.rs.getMetaData().isDefinitelyWritable(3));
+
+        assertEquals(0, this.rs.getMetaData().getScale(1));
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior, "true");
+        Connection con = getConnectionWithProps(props);
+
+        this.rs = con.createStatement().executeQuery("SELECT c1 as QQQ, g1 FROM t1");
+        assertEquals("QQQ", this.rs.getMetaData().getColumnLabel(1));
+        assertEquals("QQQ", this.rs.getMetaData().getColumnName(1));
+
+    }
+
     /**
      * Tests the implementation of Information Schema for primary keys.
      */
@@ -731,11 +778,10 @@ public class MetadataTest extends BaseTestCase {
         }
 
         // Test GENERATED columns syntax.
-        createTable("pythagorean_triple",
-                "(side_a DOUBLE NULL, side_b DOUBLE NULL, "
-                        + "side_c_vir DOUBLE AS (SQRT(side_a * side_a + side_b * side_b)) VIRTUAL UNIQUE KEY COMMENT 'hypotenuse - virtual', "
-                        + "side_c_sto DOUBLE GENERATED ALWAYS AS (SQRT(POW(side_a, 2) + POW(side_b, 2))) STORED UNIQUE KEY COMMENT 'hypotenuse - stored' NOT NULL "
-                        + "PRIMARY KEY)");
+        createTable("pythagorean_triple", "(side_a DOUBLE NULL, side_b DOUBLE NULL, "
+                + "side_c_vir DOUBLE AS (SQRT(side_a * side_a + side_b * side_b)) VIRTUAL UNIQUE KEY COMMENT 'hypotenuse - virtual', "
+                + "side_c_sto DOUBLE GENERATED ALWAYS AS (SQRT(POW(side_a, 2) + POW(side_b, 2))) STORED UNIQUE KEY COMMENT 'hypotenuse - stored' NOT NULL "
+                + "PRIMARY KEY)");
 
         // Test data for generated columns.
         assertEquals(1, this.stmt.executeUpdate("INSERT INTO pythagorean_triple (side_a, side_b) VALUES (3, 4)"));

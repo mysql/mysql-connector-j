@@ -62,7 +62,7 @@ public class TableDeleteTest extends BaseTableTestCase {
 
             Table view = this.schema.getTable("testDeleteView");
             assertEquals(2, view.count());
-            view.delete().where("age == 12").execute();
+            view.delete().where("age == 12").executeAsync();
             assertEquals(1, view.count());
 
             table.delete().where("age = :age").bind("age", 14).execute();

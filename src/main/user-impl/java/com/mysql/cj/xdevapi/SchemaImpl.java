@@ -126,10 +126,6 @@ public class SchemaImpl implements Schema {
         return new TableImpl(this.mysqlxSession, this, tableName);
     }
 
-    /* package private */ Table getTable(DatabaseObjectDescription descr) {
-        return new TableImpl(this.mysqlxSession, this, descr);
-    }
-
     public Table getTable(String tableName, boolean requireExists) {
         TableImpl table = new TableImpl(this.mysqlxSession, this, tableName);
         if (requireExists && table.existsInDatabase() != DbObjectStatus.EXISTS) {
@@ -147,7 +143,7 @@ public class SchemaImpl implements Schema {
         try {
             return createCollection(collectionName);
         } catch (XProtocolError ex) {
-            if (ex.getErrorCode() == MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR) {
+            if (reuseExistingObject && ex.getErrorCode() == MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR) {
                 return getCollection(collectionName);
             }
             throw ex;
