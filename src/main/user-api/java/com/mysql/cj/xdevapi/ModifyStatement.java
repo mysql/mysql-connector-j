@@ -83,16 +83,6 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
     ModifyStatement unset(String... fields);
 
     /**
-     * Unsupported.
-     * 
-     * @param document
-     *            document
-     * @return {@link ModifyStatement}
-     */
-    // TODO determine status of this feature
-    ModifyStatement merge(String document);
-
-    /**
      * Takes in a patch object and applies it on all documents matching the modify() filter, using the JSON_MERGE_PATCH() function.
      * Please note that {@link DbDoc} does not support expressions as a field values, please use {@link #patch(String)} method if you need
      * such functionality.
@@ -139,16 +129,4 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
      * @return {@link ModifyStatement}
      */
     ModifyStatement arrayAppend(String field, Object value);
-
-    /**
-     * Unsupported.
-     * 
-     * @param field
-     *            document path to the array field
-     * @param position
-     *            array index
-     * @return {@link ModifyStatement}
-     */
-    // TODO determine status of this feature
-    ModifyStatement arrayDelete(String field, int position);
 }

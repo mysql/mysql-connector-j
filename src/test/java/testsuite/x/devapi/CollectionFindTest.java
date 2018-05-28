@@ -183,6 +183,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         assertEquals(new Integer(1), ((JsonNumber) doc.get("xyz")).getInteger());
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testLimitOffset() {
         if (!this.isSetForXTests) {
@@ -210,11 +211,18 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         assertFalse(docs.hasNext());
 
         // limit 3, offset 1, order by ID, make sure we don't see the first ID
-        docs = this.collection.find().orderBy("$._id").limit(3).skip(1).execute();
+        docs = this.collection.find().orderBy("$._id").limit(3).offset(1).execute();
         assertTrue(docs.hasNext());
         assertNotEquals(firstId, ((JsonString) docs.next().get("_id")).getString());
         assertTrue(docs.hasNext());
         assertNotEquals(firstId, ((JsonString) docs.next().get("_id")).getString());
+        assertTrue(docs.hasNext());
+        assertNotEquals(firstId, ((JsonString) docs.next().get("_id")).getString());
+        assertFalse(docs.hasNext());
+
+        // Test deprecated skip(n) alias for offset
+        // limit 1, offset 1, order by ID, make sure we don't see the first ID
+        docs = this.collection.find().orderBy("$._id").limit(1).skip(1).execute();
         assertTrue(docs.hasNext());
         assertNotEquals(firstId, ((JsonString) docs.next().get("_id")).getString());
         assertFalse(docs.hasNext());
@@ -884,5 +892,55 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
         doc = this.collection.getOne(null);
         assertNull(doc);
+    }
+
+    @Test
+    public void testGroupingQuery() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        this.collection.add("{\"_id\": \"01\", \"name\":\"Mamie\", \"age\":11, \"something\":0}").execute();
+        this.collection.add("{\"_id\": \"02\", \"name\":\"Eulalia\", \"age\":11, \"something\":0}").execute();
+        this.collection.add("{\"_id\": \"03\", \"name\":\"Polly\", \"age\":12, \"something\":0}").execute();
+        this.collection.add("{\"_id\": \"04\", \"name\":\"Rufus\", \"age\":12, \"something\":0}").execute();
+        this.collection.add("{\"_id\": \"05\", \"name\":\"Cassidy\", \"age\":13, \"something\":0}").execute();
+        this.collection.add("{\"_id\": \"06\", \"name\":\"Olympia\", \"age\":14, \"something\":0}").execute();
+        this.collection.add("{\"_id\": \"07\", \"name\":\"Lev\", \"age\":14, \"something\":0}").execute();
+        this.collection.add("{\"_id\": \"08\", \"name\":\"Tierney\", \"age\":15, \"something\":0}").execute();
+        this.collection.add("{\"_id\": \"09\", \"name\":\"Octavia\", \"age\":15, \"something\":0}").execute();
+        this.collection.add("{\"_id\": \"10\", \"name\":\"Vesper\", \"age\":16, \"something\":0}").execute();
+        this.collection.add("{\"_id\": \"11\", \"name\":\"Caspian\", \"age\":17, \"something\":0}").execute();
+        this.collection.add("{\"_id\": \"12\", \"name\":\"Romy\", \"age\":17, \"something\":0}").execute();
+
+        // Result:
+        // age_group | cnt
+        // 11        | 2   <-- filtered out by where
+        // 12        | 2   <-- filtered out by limit
+        // 13        | 1   <-- filtered out by having
+        // 14        | 2   * second row in result
+        // 15        | 2   * first row in result
+        // 16        | 1   <-- filtered out by having
+        // 17        | 2   <-- filtered out by offset
+        DocResult res = this.collection.find("age > 11 and 1 < 2 and 40 between 30 and 900") //
+                .fields("age as age_group, count(name) as cnt, something as something") //
+                .groupBy("something, age") //
+                .having("count(name) > 1") //
+                .orderBy("age desc") //
+                .limit(2).offset(1) //
+                .execute();
+
+        assertEquals(2, res.count());
+
+        DbDoc doc = res.fetchOne();
+        assertEquals(15, ((JsonNumber) doc.get("age_group")).getInteger().intValue());
+        assertEquals(2, ((JsonNumber) doc.get("cnt")).getInteger().intValue());
+        assertEquals(0, ((JsonNumber) doc.get("something")).getInteger().intValue());
+
+        doc = res.fetchOne();
+        assertEquals(14, ((JsonNumber) doc.get("age_group")).getInteger().intValue());
+        assertEquals(2, ((JsonNumber) doc.get("cnt")).getInteger().intValue());
+        assertEquals(0, ((JsonNumber) doc.get("something")).getInteger().intValue());
+
     }
 }

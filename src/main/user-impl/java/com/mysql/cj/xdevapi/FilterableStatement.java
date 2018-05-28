@@ -123,17 +123,6 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
     }
 
     /**
-     * Synonym to {@link #offset(long)}.
-     * 
-     * @param limitOffset
-     *            number of rows to skip
-     * @return this statement
-     */
-    public STMT_T skip(long limitOffset) {
-        return offset(limitOffset);
-    }
-
-    /**
      * Add maximum number of rows to skip before find others.
      * 
      * <p>

@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlxSession;
-import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
@@ -91,11 +90,6 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
     }
 
     @Override
-    public ModifyStatement merge(String document) {
-        throw new FeatureNotAvailableException("TODO: not supported in xplugin");
-    }
-
-    @Override
     public ModifyStatement patch(DbDoc document) {
         return patch(document.toString());
     }
@@ -116,10 +110,5 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
     public ModifyStatement arrayAppend(String docPath, Object value) {
         this.updates.add(new UpdateSpec(UpdateType.ARRAY_APPEND, docPath).setValue(value));
         return this;
-    }
-
-    @Override
-    public ModifyStatement arrayDelete(String field, int position) {
-        throw new FeatureNotAvailableException("TODO: not supported in xplugin");
     }
 }

@@ -137,7 +137,7 @@ public class HostInfo implements DatabaseUrlContainer {
     /**
      * Constructs a {@link HostInfo} instance initialized with the provided properties.
      * 
-     * @param properties
+     * @param props
      *            a connection arguments map.
      */
     public HostInfo(Properties props) {

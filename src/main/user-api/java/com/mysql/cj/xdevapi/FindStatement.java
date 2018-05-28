@@ -95,8 +95,21 @@ public interface FindStatement extends Statement<FindStatement, DocResult> {
      * @param limitOffset
      *            number of documents to skip
      * @return {@link FindStatement}
+     * @deprecated Deprecated in c/J 8.0.12, please use {@link #offset(long)} instead.
      */
-    FindStatement skip(long limitOffset);
+    @Deprecated
+    default FindStatement skip(long limitOffset) {
+        return offset(limitOffset);
+    }
+
+    /**
+     * Add/replace the document offset for this query.
+     * 
+     * @param limitOffset
+     *            number of documents to skip
+     * @return {@link FindStatement}
+     */
+    FindStatement offset(long limitOffset);
 
     /**
      * Add/replace the document limit for this query.

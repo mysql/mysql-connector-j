@@ -475,12 +475,10 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
     }
 
     /**
-     * Subclasses should override this to perform any required preprocessing on the host information properties.
+     * Subclasses should override this to perform any required pre-processing on the host information properties.
      * 
      * @param hostProps
      *            the host properties map to process
-     * @return
-     *         the processed host properties map
      */
     protected void preprocessPerTypeHostProperties(Map<String, String> hostProps) {
         // To be overridden in subclasses if needed.
