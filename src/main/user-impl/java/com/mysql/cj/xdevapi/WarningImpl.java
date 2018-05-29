@@ -31,9 +31,18 @@ package com.mysql.cj.xdevapi;
 
 import com.mysql.cj.protocol.Warning;
 
+/**
+ * {@link com.mysql.cj.xdevapi.Warning} implementation
+ */
 public class WarningImpl implements com.mysql.cj.xdevapi.Warning {
     private Warning message;
 
+    /**
+     * Constructor.
+     * 
+     * @param message
+     *            {@link Warning} object provided by c/J core.
+     */
     public WarningImpl(Warning message) {
         this.message = message;
     }

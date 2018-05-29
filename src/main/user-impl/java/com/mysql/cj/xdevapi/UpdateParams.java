@@ -36,19 +36,38 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
 
 /**
- * Update parameters for a relational update command.
+ * Class collecting parameters for {@link Table#update()}.
  */
 public class UpdateParams {
     private Map<ColumnIdentifier, Expr> updateOps = new HashMap<>();
 
+    /**
+     * Fill update parameters from field -&gt; value_expression map.
+     * 
+     * @param updates
+     *            field -&gt; value_expression map
+     */
     public void setUpdates(Map<String, Object> updates) {
         updates.entrySet().forEach(e -> addUpdate(e.getKey(), e.getValue()));
     }
 
+    /**
+     * Add update parameter.
+     * 
+     * @param path
+     *            field name
+     * @param value
+     *            value expression
+     */
     public void addUpdate(String path, Object value) {
         this.updateOps.put(new ExprParser(path, true).parseTableUpdateField(), ExprUtil.argObjectToExpr(value, true));
     }
 
+    /**
+     * Get update parameters map.
+     * 
+     * @return X Protocol ColumnIdentifier-&gt;Expr map.
+     */
     public Object getUpdates() {
         return this.updateOps;
     }

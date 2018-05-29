@@ -37,11 +37,22 @@ import java.util.concurrent.CompletableFuture;
 import com.mysql.cj.MysqlxSession;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 
+/**
+ * {@link SqlStatement} implementation.
+ */
 public class SqlStatementImpl implements SqlStatement {
     private MysqlxSession mysqlxSession;
     private String sql;
     private List<Object> args = new ArrayList<>();
 
+    /**
+     * Constructor.
+     * 
+     * @param mysqlxSession
+     *            {@link com.mysql.cj.Session} instance.
+     * @param sql
+     *            SQL statement string.
+     */
     public SqlStatementImpl(MysqlxSession mysqlxSession, String sql) {
         this.mysqlxSession = mysqlxSession;
         this.sql = sql;

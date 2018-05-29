@@ -33,34 +33,68 @@ import com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation;
 import com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
 
+/**
+ * Representation of a single update operation in a list of operations to be performed by {@link ModifyStatement}.
+ * Used internally for transformation of X DevAPI parameters into X Protocol ones.
+ */
 public class UpdateSpec {
 
     private UpdateOperation.UpdateType updateType;
     private ColumnIdentifier source;
     private Expr value;
 
+    /**
+     * Constructor.
+     * 
+     * @param updateType
+     *            update operation type
+     * @param source
+     *            document path expression
+     */
     public UpdateSpec(UpdateType updateType, String source) {
         this.updateType = UpdateOperation.UpdateType.valueOf(updateType.name());
-        // accomodate parser's documentField() handling by removing "$"
+        // accommodate parser's documentField() handling by removing "$"
         if (source.length() > 0 && source.charAt(0) == '$') {
             source = source.substring(1);
         }
         this.source = new ExprParser(source, false).documentField().getIdentifier();
     }
 
+    /**
+     * Get X Protocol update type.
+     * 
+     * @return X Protocol UpdateOperation.UpdateType
+     */
     public Object getUpdateType() {
         return this.updateType;
     }
 
+    /**
+     * Get X Protocol ColumnIdentifier.
+     * 
+     * @return X Protocol MysqlxExpr.ColumnIdentifier
+     */
     public Object getSource() {
         return this.source;
     }
 
+    /**
+     * Set value to be set by this update operation.
+     * 
+     * @param value
+     *            value expression
+     * @return this UpdateSpec
+     */
     public UpdateSpec setValue(Object value) {
         this.value = ExprUtil.argObjectToExpr(value, false);
         return this;
     }
 
+    /**
+     * Get X Protocol value expression.
+     * 
+     * @return X Protocol MysqlxExpr.Expr
+     */
     public Object getValue() {
         return this.value;
     }

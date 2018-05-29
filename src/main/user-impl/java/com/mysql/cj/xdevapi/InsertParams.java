@@ -40,28 +40,56 @@ import com.mysql.cj.x.protobuf.MysqlxCrud.Column;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Insert.TypedRow;
 
 /**
- * Parameters for relational insert command.
+ * Helper class for collecting parameters for relational insert command.
  */
 public class InsertParams {
     private List<Column> projection;
     private List<TypedRow> rows = new LinkedList<>();
 
+    /**
+     * Set X Protocol Column objects list for projection.
+     * 
+     * @param projection
+     *            projection expressions
+     */
     public void setProjection(String[] projection) {
         this.projection = Arrays.stream(projection).map(p -> new ExprParser(p, true).parseTableInsertField()).collect(Collectors.toList());
     }
 
+    /**
+     * Get X Protocol Column objects list for projection.
+     * 
+     * @return X Protocol Column objects list
+     */
     public Object getProjection() {
         return this.projection;
     }
 
+    /**
+     * Add new X Protocol row.
+     * 
+     * @param row
+     *            field value expressions for this row
+     */
     public void addRow(List<Object> row) {
         this.rows.add(TypedRow.newBuilder().addAllField(row.stream().map(f -> ExprUtil.argObjectToExpr(f, true)).collect(Collectors.toList())).build());
     }
 
+    /**
+     * Get X Protocol rows list.
+     * 
+     * @return X Protocol rows list
+     */
     public Object getRows() {
         return this.rows;
     }
 
+    /**
+     * Fill insert parameters from projection_expression -&gt; value_expression map.
+     * 
+     * @param fieldsAndValues
+     *            projection_expression -&gt; value_expression map
+     */
     public void setFieldsAndValues(Map<String, Object> fieldsAndValues) {
         this.projection = new ArrayList<>();
         TypedRow.Builder rowBuilder = TypedRow.newBuilder();

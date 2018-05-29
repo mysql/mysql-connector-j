@@ -64,6 +64,13 @@ public class JsonArray extends ArrayList<JsonValue> implements JsonValue {
         return sb.toString();
     }
 
+    /**
+     * Add value to this array.
+     * 
+     * @param val
+     *            value
+     * @return this JsonArray
+     */
     public JsonArray addValue(JsonValue val) {
         add(val);
         return this;

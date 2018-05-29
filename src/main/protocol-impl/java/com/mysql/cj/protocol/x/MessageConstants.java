@@ -157,7 +157,7 @@ public class MessageConstants {
     }
 
     /**
-     * Lookup the "ClientMessages" type tag for a protobuf message class.
+     * Lookup the "ClientMessages" type tag for a Protocol buffers message class.
      * 
      * @param msgClass
      *            message class extending {@link MessageLite}

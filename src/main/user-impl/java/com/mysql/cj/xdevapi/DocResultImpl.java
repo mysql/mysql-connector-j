@@ -34,7 +34,19 @@ import java.util.function.Supplier;
 import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.result.RowList;
 
+/**
+ * A sequence of documents retrieved from a find query.
+ */
 public class DocResultImpl extends AbstractDataResult<DbDoc> implements DocResult {
+
+    /**
+     * Constructor.
+     * 
+     * @param rows
+     *            {@link RowList} object
+     * @param completer
+     *            Supplier of X Protocol StatementExecuteOk object.
+     */
     public DocResultImpl(RowList rows, Supplier<StatementExecuteOk> completer) {
         super(rows, completer, new DbDocFactory());
         this.rows = rows;

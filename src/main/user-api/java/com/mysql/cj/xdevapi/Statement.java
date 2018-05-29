@@ -77,7 +77,7 @@ public interface Statement<STMT_T, RES_T> {
     CompletableFuture<RES_T> executeAsync();
 
     /**
-     * Clear the bindings for this statement.
+     * Clear all bindings for this statement.
      * 
      * @return this statement
      */

@@ -43,15 +43,24 @@ import com.mysql.cj.util.StringUtils;
 public class DbDocValueFactory extends DefaultValueFactory<DbDoc> {
     private String encoding;
 
+    /**
+     * Constructor.
+     */
     public DbDocValueFactory() {
     }
 
+    /**
+     * Constructor.
+     * 
+     * @param encoding
+     *            Java encoding name
+     */
     public DbDocValueFactory(String encoding) {
         this.encoding = encoding;
     }
 
     /**
-     * Interpret the given byte array as a string. This value factory needs to know the encoding to interpret the string. The default (null) will interpet the
+     * Interpret the given byte array as a string. This value factory needs to know the encoding to interpret the string. The default (null) will interpret the
      * byte array using the platform encoding.
      */
     @Override

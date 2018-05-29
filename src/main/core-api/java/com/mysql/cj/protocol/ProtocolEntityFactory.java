@@ -57,6 +57,7 @@ public interface ProtocolEntityFactory<T, M extends Message> {
     }
 
     /**
+     * Create object from protocol entity.
      * 
      * @param protocolEntity
      *            the {@link ProtocolEntity} to create from

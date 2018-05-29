@@ -62,7 +62,17 @@ public interface ValueFactory<T> {
 
     T createFromBit(byte[] bytes, int offset, int length);
 
+    /**
+     * Create result value from intermediate null value.
+     * 
+     * @return {@link T} object
+     */
     T createFromNull();
 
+    /**
+     * Get the actual class name of {@link T} parameter.
+     * 
+     * @return class name
+     */
     String getTargetTypeName();
 }

@@ -96,10 +96,24 @@ public class ExprParser {
     /** Are relational columns identifiers allowed? */
     private boolean allowRelationalColumns;
 
+    /**
+     * Constructor.
+     * 
+     * @param s
+     *            expression string to parse
+     */
     public ExprParser(String s) {
         this(s, true);
     }
 
+    /**
+     * Constructor.
+     * 
+     * @param s
+     *            expression string to parse
+     * @param allowRelationalColumns
+     *            are relational columns identifiers allowed?
+     */
     public ExprParser(String s, boolean allowRelationalColumns) {
         this.string = s;
         lex();
@@ -1184,6 +1198,8 @@ public class ExprParser {
     }
 
     /**
+     * Get a mapping of parameter names to positions.
+     * 
      * @return a mapping of parameter names to positions.
      */
     public Map<String, Integer> getPlaceholderNameToPositionMap() {

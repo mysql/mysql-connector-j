@@ -42,6 +42,9 @@ import com.mysql.cj.result.Row;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.ValueFactory;
 
+/**
+ * {@link Table} implementation
+ */
 public class TableImpl implements Table {
 
     private MysqlxSession mysqlxSession;
@@ -155,6 +158,12 @@ public class TableImpl implements Table {
         return this.isView;
     }
 
+    /**
+     * Set flag indicating if the underlying object is a view.
+     * 
+     * @param isView
+     *            true if it is a View
+     */
     public void setView(boolean isView) {
         this.isView = isView;
     }

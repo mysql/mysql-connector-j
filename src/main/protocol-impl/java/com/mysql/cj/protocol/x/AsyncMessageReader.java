@@ -59,7 +59,7 @@ import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
 
 /**
- * Asynchronous low-level message reader for X Protocol protobuf-encoded messages.
+ * Asynchronous low-level message reader for Protocol buffers encoded messages delivered by X Protocol.
  * The <i>MessageReader</i> will generally be used in one of two ways (See note regarding exceptions for Error messages):
  * <ul>
  * <li>The next message type is known and it's an error to read any other type of message. The caller will generally call the reader like so:

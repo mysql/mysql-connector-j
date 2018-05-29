@@ -32,8 +32,8 @@ package com.mysql.cj.xdevapi;
 import java.util.Map;
 
 /**
- * A client-side representation of a collection of documents. This interface allows access/manipulation to the collection through add/find/modify/remove
- * statements.
+ * Representation of a document collection. This interface allows access to and manipulation of the collection
+ * through add/find/modify/remove statements.
  */
 public interface Collection extends DatabaseObject {
     /**

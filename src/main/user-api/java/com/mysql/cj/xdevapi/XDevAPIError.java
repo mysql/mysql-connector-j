@@ -37,10 +37,24 @@ import com.mysql.cj.exceptions.CJException;
 public class XDevAPIError extends CJException {
     private static final long serialVersionUID = 9102723045325569686L;
 
+    /**
+     * Create new {@link XDevAPIError} instance.
+     * 
+     * @param message
+     *            error message
+     */
     public XDevAPIError(String message) {
         super(message);
     }
 
+    /**
+     * Create new {@link XDevAPIError} instance.
+     * 
+     * @param message
+     *            error message
+     * @param t
+     *            cause of this XDevAPIError
+     */
     public XDevAPIError(String message, Throwable t) {
         super(message, t);
     }

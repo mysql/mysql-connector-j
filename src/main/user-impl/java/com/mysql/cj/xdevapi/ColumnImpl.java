@@ -36,6 +36,12 @@ import com.mysql.cj.result.Field;
 public class ColumnImpl implements Column {
     private Field field;
 
+    /**
+     * Constructor.
+     * 
+     * @param f
+     *            {@link Field} object
+     */
     public ColumnImpl(Field f) {
         this.field = f;
     }

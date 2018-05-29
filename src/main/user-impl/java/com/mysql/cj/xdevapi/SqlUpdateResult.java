@@ -38,6 +38,13 @@ import com.mysql.cj.protocol.x.StatementExecuteOk;
  * SQL result for DML statements.
  */
 public class SqlUpdateResult extends UpdateResult implements SqlResult {
+
+    /**
+     * Constructor.
+     * 
+     * @param ok
+     *            {@link StatementExecuteOk} instance.
+     */
     public SqlUpdateResult(StatementExecuteOk ok) {
         super(ok);
     }

@@ -43,6 +43,14 @@ public class RowFactory implements ProtocolEntityFactory<Row, XMessage> {
     private ColumnDefinition metadata;
     private TimeZone defaultTimeZone;
 
+    /**
+     * Constructor.
+     * 
+     * @param metadata
+     *            {@link ColumnDefinition} object to use for new rows.
+     * @param defaultTimeZone
+     *            {@link TimeZone} object representing the default time zone
+     */
     public RowFactory(ColumnDefinition metadata, TimeZone defaultTimeZone) {
         this.metadata = metadata;
         this.defaultTimeZone = defaultTimeZone;

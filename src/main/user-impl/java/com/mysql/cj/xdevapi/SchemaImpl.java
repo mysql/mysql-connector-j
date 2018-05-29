@@ -45,6 +45,9 @@ import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.ValueFactory;
 
+/**
+ * {@link Schema} implementation.
+ */
 public class SchemaImpl implements Schema {
     private MysqlxSession mysqlxSession;
     private XMessageBuilder xbuilder;

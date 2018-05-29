@@ -55,7 +55,7 @@ public class ExprUtil {
     private static SimpleDateFormat javaUtilDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
 
     /**
-     * Proto-buf helper to build a LITERAL Expr with a Scalar NULL type.
+     * Protocol buffers helper to build a LITERAL Expr with a Scalar NULL type.
      * 
      * @return {@link Expr}
      */
@@ -64,7 +64,7 @@ public class ExprUtil {
     }
 
     /**
-     * Proto-buf helper to build a LITERAL Expr with a Scalar DOUBLE type.
+     * Protocol buffers helper to build a LITERAL Expr with a Scalar DOUBLE type.
      * 
      * @param d
      *            value
@@ -75,7 +75,7 @@ public class ExprUtil {
     }
 
     /**
-     * Proto-buf helper to build a LITERAL Expr with a Scalar SINT (signed int) type.
+     * Protocol buffers helper to build a LITERAL Expr with a Scalar SINT (signed int) type.
      * 
      * @param l
      *            value
@@ -86,7 +86,7 @@ public class ExprUtil {
     }
 
     /**
-     * Proto-buf helper to build a LITERAL Expr with a Scalar STRING type.
+     * Protocol buffers helper to build a LITERAL Expr with a Scalar STRING type.
      * 
      * @param str
      *            value
@@ -97,7 +97,7 @@ public class ExprUtil {
     }
 
     /**
-     * Proto-buf helper to build a LITERAL Expr with a Scalar OCTETS type.
+     * Protocol buffers helper to build a LITERAL Expr with a Scalar OCTETS type.
      * 
      * @param bytes
      *            value
@@ -108,7 +108,7 @@ public class ExprUtil {
     }
 
     /**
-     * Proto-buf helper to build a LITERAL Expr with a Scalar BOOL type.
+     * Protocol buffers helper to build a LITERAL Expr with a Scalar BOOL type.
      * 
      * @param b
      *            value
@@ -129,34 +129,74 @@ public class ExprUtil {
         return Expr.newBuilder().setType(Expr.Type.LITERAL).setLiteral(scalar).build();
     }
 
+    /**
+     * Protocol buffers helper to build a Scalar NULL type.
+     * 
+     * @return {@link Scalar}
+     */
     public static Scalar nullScalar() {
         return Scalar.newBuilder().setType(Scalar.Type.V_NULL).build();
     }
 
+    /**
+     * Protocol buffers helper to build a Scalar DOUBLE type.
+     * 
+     * @param d
+     *            value
+     * @return {@link Scalar}
+     */
     public static Scalar scalarOf(double d) {
         return Scalar.newBuilder().setType(Scalar.Type.V_DOUBLE).setVDouble(d).build();
     }
 
+    /**
+     * Protocol buffers helper to build a Scalar SINT (signed int) type.
+     * 
+     * @param l
+     *            value
+     * @return {@link Scalar}
+     */
     public static Scalar scalarOf(long l) {
         return Scalar.newBuilder().setType(Scalar.Type.V_SINT).setVSignedInt(l).build();
     }
 
+    /**
+     * Protocol buffers helper to build a Scalar STRING type.
+     * 
+     * @param str
+     *            value
+     * @return {@link Scalar}
+     */
     public static Scalar scalarOf(String str) {
         Scalar.String sstr = Scalar.String.newBuilder().setValue(ByteString.copyFromUtf8(str)).build();
         return Scalar.newBuilder().setType(Scalar.Type.V_STRING).setVString(sstr).build();
     }
 
+    /**
+     * Protocol buffers helper to build a Scalar OCTETS type.
+     * 
+     * @param bytes
+     *            value
+     * @return {@link Scalar}
+     */
     public static Scalar scalarOf(byte[] bytes) {
         Octets.Builder o = Octets.newBuilder().setValue(ByteString.copyFrom(bytes));
         return Scalar.newBuilder().setType(Scalar.Type.V_OCTETS).setVOctets(o).build();
     }
 
+    /**
+     * Protocol buffers helper to build a Scalar BOOL type.
+     * 
+     * @param b
+     *            value
+     * @return {@link Scalar}
+     */
     public static Scalar scalarOf(boolean b) {
         return Scalar.newBuilder().setType(Scalar.Type.V_BOOL).setVBool(b).build();
     }
 
     /**
-     * Build an Any with a string value.
+     * Build a Protocol buffers Any with a string value.
      * 
      * @param str
      *            value
@@ -170,14 +210,37 @@ public class ExprUtil {
         return a;
     }
 
+    /**
+     * Build a Protocol buffers Any with a boolean value.
+     * 
+     * @param b
+     *            value
+     * @return {@link Any}
+     */
     public static Any buildAny(boolean b) {
         return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(scalarOf(b)).build();
     }
 
+    /**
+     * Build a Protocol buffers Collection.
+     * 
+     * @param schemaName
+     *            schema name
+     * @param collectionName
+     *            collection name
+     * @return {@link Collection}
+     */
     public static Collection buildCollection(String schemaName, String collectionName) {
         return Collection.newBuilder().setSchema(schemaName).setName(collectionName).build();
     }
 
+    /**
+     * Protocol buffers helper to build a Scalar type with any object.
+     * 
+     * @param value
+     *            value
+     * @return {@link Scalar}
+     */
     public static Scalar argObjectToScalar(Object value) {
         Expr e = argObjectToExpr(value, false);
         if (!e.hasLiteral()) {
@@ -186,11 +249,27 @@ public class ExprUtil {
         return e.getLiteral();
     }
 
+    /**
+     * Protocol buffers helper to build an Any type with any object.
+     * 
+     * @param value
+     *            value
+     * @return {@link Any}
+     */
     public static Any argObjectToScalarAny(Object value) {
         Scalar s = argObjectToScalar(value);
         return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
     }
 
+    /**
+     * Protocol buffers helper to build Expr with any object.
+     * 
+     * @param value
+     *            value
+     * @param allowRelationalColumns
+     *            Are relational columns identifiers allowed?
+     * @return {@link Expr}
+     */
     public static Expr argObjectToExpr(Object value, boolean allowRelationalColumns) {
         if (value == null) {
             return buildLiteralNullScalar();

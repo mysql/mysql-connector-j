@@ -41,6 +41,18 @@ import com.mysql.cj.result.RowList;
  * SQL result with data. Implemented as a thin layer over {@link RowResultImpl}.
  */
 public class SqlDataResult extends RowResultImpl implements SqlResult {
+    /**
+     * Constructor.
+     * 
+     * @param metadata
+     *            {@link ColumnDefinition} object to use for new rows.
+     * @param defaultTimeZone
+     *            {@link TimeZone} object representing the default time zone
+     * @param rows
+     *            {@link RowList} provided by c/J core
+     * @param completer
+     *            supplier for completion task
+     */
     public SqlDataResult(ColumnDefinition metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer) {
         super(metadata, defaultTimeZone, rows, completer);
     }

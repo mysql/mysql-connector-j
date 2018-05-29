@@ -37,12 +37,18 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.ResultStreamer;
 
 /**
- * SQL result.
+ * Result of {@link SqlStatement#execute()}.
  */
 public class SqlResultImpl implements SqlResult, ResultStreamer {
     private Supplier<SqlResult> resultStream;
     private SqlResult currentResult;
 
+    /**
+     * Constructor.
+     * 
+     * @param resultStream
+     *            Supplies the result stream depending on query type. Could be {@link SqlDataResult}, {@link SqlUpdateResult} etc.
+     */
     public SqlResultImpl(Supplier<SqlResult> resultStream) {
         this.resultStream = resultStream;
         this.currentResult = resultStream.get();

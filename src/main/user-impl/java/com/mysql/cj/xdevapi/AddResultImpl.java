@@ -38,7 +38,7 @@ import com.mysql.cj.protocol.x.StatementExecuteOk;
  */
 public class AddResultImpl extends UpdateResult implements AddResult {
     /**
-     * Create a new result.
+     * Constructor.
      *
      * @param ok
      *            the response from the server

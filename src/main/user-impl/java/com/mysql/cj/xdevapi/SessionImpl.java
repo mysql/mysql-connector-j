@@ -50,12 +50,21 @@ import com.mysql.cj.result.Row;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.util.StringUtils;
 
+/**
+ * {@link Session} implementation.
+ */
 public class SessionImpl implements Session {
 
     protected MysqlxSession session;
     protected String defaultSchemaName;
     private XMessageBuilder xbuilder;
 
+    /**
+     * Constructor.
+     * 
+     * @param hostInfo
+     *            {@link HostInfo} instance
+     */
     public SessionImpl(HostInfo hostInfo) {
         PropertySet pset = new DefaultPropertySet();
         pset.initializeProperties(hostInfo.exposeAsProperties());

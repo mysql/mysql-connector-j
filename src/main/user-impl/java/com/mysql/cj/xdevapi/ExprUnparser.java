@@ -268,10 +268,24 @@ public class ExprUnparser {
         return ident;
     }
 
+    /**
+     * Quote a JSON document field key.
+     * 
+     * @param key
+     *            key
+     * @return quoted key
+     */
     public static String quoteJsonKey(String key) {
         return key.replaceAll("'", "\\\\'");
     }
 
+    /**
+     * Quote a JSON document path member.
+     * 
+     * @param member
+     *            path member
+     * @return quoted path member
+     */
     public static String quoteDocumentPathMember(String member) {
         if (!member.matches("[a-zA-Z0-9_]*")) {
             return "\"" + member.replaceAll("\"", "\\\\\"") + "\"";

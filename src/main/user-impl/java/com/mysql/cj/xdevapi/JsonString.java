@@ -49,18 +49,31 @@ public class JsonString implements JsonValue {
     private String val = "";
 
     /**
+     * Get internal unescaped JsonString value.
      * 
-     * @return internal (unescaped) representation of JSON value
+     * @return internal string value
      */
     public String getString() {
         return this.val;
     }
 
+    /**
+     * Set JsonString value.
+     * 
+     * @param value
+     *            string value
+     * @return this JsonString
+     */
     public JsonString setValue(String value) {
         this.val = value;
         return this;
     }
 
+    /**
+     * Get escaped JsonString value.
+     * 
+     * @return string value
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("\"");

@@ -145,6 +145,13 @@ public class JsonParser {
         return StructuralToken.COMMA.CHAR == ch || StructuralToken.RCRBRACKET.CHAR == ch || StructuralToken.RSQBRACKET.CHAR == ch;
     }
 
+    /**
+     * Create {@link DbDoc} object from JSON string.
+     * 
+     * @param jsonString
+     *            JSON string representing a document
+     * @return New {@link DbDoc} object initialized by parsed JSON string.
+     */
     public static DbDoc parseDoc(String jsonString) {
         try {
             return JsonParser.parseDoc(new StringReader(jsonString));
@@ -154,6 +161,7 @@ public class JsonParser {
     }
 
     /**
+     * Create {@link DbDoc} object from JSON string provided by reader.
      * 
      * @param reader
      *            JSON string reader.
@@ -207,6 +215,7 @@ public class JsonParser {
     }
 
     /**
+     * Create {@link JsonArray} object from JSON string provided by reader.
      * 
      * @param reader
      *            JSON string reader.
@@ -346,6 +355,7 @@ public class JsonParser {
     }
 
     /**
+     * Create {@link JsonString} object from JSON string provided by reader.
      * 
      * @param reader
      *            JSON string reader.
@@ -402,6 +412,7 @@ public class JsonParser {
     }
 
     /**
+     * Create {@link JsonNumber} object from JSON string provided by reader.
      * 
      * @param reader
      *            JSON string reader.
@@ -515,6 +526,7 @@ public class JsonParser {
     }
 
     /**
+     * Create {@link JsonLiteral} object from JSON string provided by reader.
      * 
      * @param reader
      *            JSON string reader.

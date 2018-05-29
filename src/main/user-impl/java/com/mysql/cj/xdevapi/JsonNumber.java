@@ -39,21 +39,30 @@ public class JsonNumber implements JsonValue {
     private String val = "null";
 
     /**
+     * Get number as Integer.
      * 
-     * @return value as Integer
+     * @return Integer value
      */
     public Integer getInteger() {
         return new BigDecimal(this.val).intValue();
     }
 
     /**
+     * Get number as BigDecimal.
      * 
-     * @return value as BigDecimal
+     * @return BigDecimal value
      */
     public BigDecimal getBigDecimal() {
         return new BigDecimal(this.val);
     }
 
+    /**
+     * Set number value.
+     * 
+     * @param value
+     *            string number representation
+     * @return this JsonNumber
+     */
     public JsonNumber setValue(String value) {
         // validate with BigDecimal
         this.val = new BigDecimal(value).toString();

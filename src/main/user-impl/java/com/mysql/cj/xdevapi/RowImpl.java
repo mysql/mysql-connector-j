@@ -49,6 +49,9 @@ import com.mysql.cj.result.SqlTimeValueFactory;
 import com.mysql.cj.result.SqlTimestampValueFactory;
 import com.mysql.cj.result.StringValueFactory;
 
+/**
+ * {@link com.mysql.cj.xdevapi.Row} implementation.
+ */
 public class RowImpl implements com.mysql.cj.xdevapi.Row {
     private Row row;
     private ColumnDefinition metadata;
@@ -57,6 +60,16 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
      */
     private TimeZone defaultTimeZone;
 
+    /**
+     * Constructor.
+     * 
+     * @param row
+     *            {@link Row} instance provided by c/J core.
+     * @param metadata
+     *            {@link ColumnDefinition} object to use for new rows.
+     * @param defaultTimeZone
+     *            {@link TimeZone} object representing the default time zone
+     */
     public RowImpl(Row row, ColumnDefinition metadata, TimeZone defaultTimeZone) {
         this.row = row;
         this.metadata = metadata;

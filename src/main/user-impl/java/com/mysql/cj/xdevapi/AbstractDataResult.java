@@ -63,6 +63,16 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
     /** List of all elements. <code>null</code> until requested via {@link #fetchAll()}. */
     protected List<T> all;
 
+    /**
+     * Constructor.
+     * 
+     * @param rows
+     *            {@link RowList} object
+     * @param completer
+     *            Supplier for StatementExecuteOk object
+     * @param rowToData
+     *            {@link ProtocolEntityFactory}
+     */
     public AbstractDataResult(RowList rows, Supplier<StatementExecuteOk> completer, ProtocolEntityFactory<T, XMessage> rowToData) {
         this.rows = rows;
         this.completer = completer;
@@ -82,6 +92,11 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
         return this.rowToData.createFromProtocolEntity(r);
     }
 
+    /**
+     * Create a list of all elements in the result forcing internal buffering.
+     * 
+     * @return list of result elements
+     */
     public List<T> fetchAll() {
         if (this.position > -1) {
             throw new WrongArgumentException("Cannot fetchAll() after starting iteration");
@@ -95,6 +110,11 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
         return this.all;
     }
 
+    /**
+     * Return the number of items in this result. Forces internal buffering of the entire result.
+     * 
+     * @return number of elements in result
+     */
     public long count() {
         finishStreaming();
         return this.count;
@@ -104,6 +124,11 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
         return this.rows.hasNext();
     }
 
+    /**
+     * Get StatementExecuteOk object finalizing the result transfer. Forces internal buffering of the entire result.
+     * 
+     * @return StatementExecuteOk object
+     */
     public StatementExecuteOk getStatementExecuteOk() {
         finishStreaming();
         return this.ok;
@@ -122,10 +147,20 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
         }
     }
 
+    /**
+     * Number of warnings generated during statement execution. This method forces internal buffering of the result.
+     * 
+     * @return number of warnings
+     */
     public int getWarningsCount() {
         return getStatementExecuteOk().getWarnings().size();
     }
 
+    /**
+     * Warnings generated during statement execution. This method forces internal buffering of the result.
+     * 
+     * @return iterator over warnings
+     */
     public Iterator<Warning> getWarnings() {
         return getStatementExecuteOk().getWarnings().stream().map(w -> (Warning) new WarningImpl(w)).collect(Collectors.toList()).iterator();
     }

@@ -51,7 +51,19 @@ public interface AddStatement extends Statement<AddStatement, AddResult> {
      */
     AddStatement add(DbDoc... documents);
 
+    /**
+     * Check the upsert flag.
+     * 
+     * @return true if this is an upsert statement.
+     */
     boolean isUpsert();
 
+    /**
+     * Set upsert flag on this statement. Used internally by the {@link Collection#addOrReplaceOne(String, DbDoc)} method.
+     * 
+     * @param upsert
+     *            if true then this statement will be executed as an upsert statement
+     * @return {@link AddStatement}
+     */
     AddStatement setUpsert(boolean upsert);
 }
