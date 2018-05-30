@@ -3,6 +3,8 @@
 
 Version 8.0.12
 
+  - WL#10544, Update MySQL 8.0 keywords list.
+
   - WL#11858, DevAPI: Core API v1 alignment.
 
   - Fix for Bug#27652379, NPE FROM GETSESSION(PROPERTIES) WHEN HOST PARAMETER IS GIVEN IN SMALL LETTER.

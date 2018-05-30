@@ -29,6 +29,7 @@
 
 package testsuite.simple;
 
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -36,16 +37,25 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
+import com.mysql.cj.Query;
+import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema;
+import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.util.StringUtils;
 
+import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
 
 /**
@@ -854,6 +864,122 @@ public class MetadataTest extends BaseTestCase {
             assertFalse(test, this.rs.next());
 
             testConn.close();
+        }
+    }
+
+    /**
+     * Tests DatabaseMetaData.getSQLKeywords().
+     * (Related to BUG#70701 - DatabaseMetaData.getSQLKeywords() doesn't match MySQL 5.6 reserved words)
+     * 
+     * This test checks the statically maintained keywords list.
+     */
+    public void testGetSqlKeywordsStatic() throws Exception {
+        final String mysqlKeywords = "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,"
+                + "DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,"
+                + "GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,"
+                + "IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,"
+                + "LOW_PRIORITY,MASTER_BIND,MASTER_SSL_VERIFY_SERVER_CERT,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,"
+                + "NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PERSIST,PERSIST_ONLY,PURGE,READ,READ_WRITE,REGEXP,"
+                + "RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,"
+                + "SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,"
+                + "UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL";
+
+        if (!versionMeetsMinimum(8, 0, 11)) {
+            Connection testConn = getConnectionWithProps("useInformationSchema=true");
+            assertEquals("MySQL keywords don't match expected.", mysqlKeywords, testConn.getMetaData().getSQLKeywords());
+            testConn.close();
+        }
+
+        Connection testConn = getConnectionWithProps("useInformationSchema=false"); // Required for MySQL 8.0.11 and above, otherwise returns dynamic keywords.
+        assertEquals("MySQL keywords don't match expected.", mysqlKeywords, testConn.getMetaData().getSQLKeywords());
+        testConn.close();
+    }
+
+    /**
+     * Tests DatabaseMetaData.getSQLKeywords().
+     * WL#10544, Update MySQL 8.0 keywords list.
+     * 
+     * This test checks the dynamically maintained keywords lists.
+     */
+    public void testGetSqlKeywordsDynamic() throws Exception {
+        if (!versionMeetsMinimum(8, 0, 11)) {
+            // Tested in testGetSqlKeywordsStatic();
+            return;
+        }
+
+        /*
+         * Setup test case.
+         */
+        // 1. Get list of SQL:2003 to exclude.
+        Field dbmdSql2003Keywords = com.mysql.cj.jdbc.DatabaseMetaData.class.getDeclaredField("SQL2003_KEYWORDS");
+        dbmdSql2003Keywords.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        List<String> sql2003ReservedWords = Collections.unmodifiableList((List<String>) dbmdSql2003Keywords.get(null));
+        assertTrue("Failed to get field SQL2003_KEYWORDS from com.mysql.cj.jdbc.DatabaseMetaData",
+                sql2003ReservedWords != null && !sql2003ReservedWords.isEmpty());
+
+        // 2. Retrieve list of reserved words from server.
+        final String keywordsQuery = "SELECT WORD FROM INFORMATION_SCHEMA.KEYWORDS WHERE RESERVED=1 ORDER BY WORD";
+        List<String> mysqlReservedWords = new ArrayList<>();
+        this.rs = this.stmt.executeQuery(keywordsQuery);
+        while (this.rs.next()) {
+            mysqlReservedWords.add(this.rs.getString(1));
+        }
+        assertTrue("Failed to retrieve reserved words from server.", !mysqlReservedWords.isEmpty());
+
+        // 3. Find the difference mysqlReservedWords - sql2003ReservedWords and prepare the expected result.
+        mysqlReservedWords.removeAll(sql2003ReservedWords);
+        String expectedSqlKeywords = String.join(",", mysqlReservedWords);
+
+        // Make sure the keywords cache is empty in DatabaseMetaDataUsingInfoSchema.
+        Field dbmduisKeywordsCacheField = DatabaseMetaDataUsingInfoSchema.class.getDeclaredField("keywordsCache");
+        dbmduisKeywordsCacheField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<ServerVersion, String> dbmduisKeywordsCache = (Map<ServerVersion, String>) dbmduisKeywordsCacheField.get(null);
+        assertNotNull("Failed to retrieve the field keywordsCache from com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema.", dbmduisKeywordsCache);
+        dbmduisKeywordsCache.clear();
+        assertTrue("Failed to clear the DatabaseMetaDataUsingInfoSchema keywords cache.", dbmduisKeywordsCache.isEmpty());
+
+        /*
+         * Check that keywords are retrieved from database and cached.
+         */
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
+        props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, TestGetSqlKeywordsDynamicQueryInterceptor.class.getName());
+
+        // First call to DatabaseMetaData.getSQLKeywords() -> keywords are retrieved from database.
+        Connection testConn = getConnectionWithProps(props);
+        assertEquals("MySQL keywords don't match expected.", expectedSqlKeywords, testConn.getMetaData().getSQLKeywords());
+        assertTrue("MySQL keywords weren't obtained from database.", TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.contains(keywordsQuery));
+        assertTrue("Keywords for current server weren't properly cached.", dbmduisKeywordsCache.containsKey(((JdbcConnection) testConn).getServerVersion()));
+
+        TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.clear();
+
+        // Second call to DatabaseMetaData.getSQLKeywords(), using same connection -> keywords are retrieved from internal cache.
+        assertEquals("MySQL keywords don't match expected.", expectedSqlKeywords, testConn.getMetaData().getSQLKeywords());
+        assertFalse("MySQL keywords weren't obtained from cache.", TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.contains(keywordsQuery));
+        assertTrue("Keywords for current server weren't properly cached.", dbmduisKeywordsCache.containsKey(((JdbcConnection) testConn).getServerVersion()));
+        testConn.close();
+
+        TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.clear();
+
+        // Third call to DatabaseMetaData.getSQLKeywords(), using different connection -> keywords are retrieved from internal cache.
+        testConn = getConnectionWithProps(props);
+        assertEquals("MySQL keywords don't match expected.", expectedSqlKeywords, testConn.getMetaData().getSQLKeywords());
+        assertFalse("MySQL keywords weren't obtained from cache.", TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.contains(keywordsQuery));
+        assertTrue("Keywords for current server weren't properly cached.", dbmduisKeywordsCache.containsKey(((JdbcConnection) testConn).getServerVersion()));
+        testConn.close();
+
+        TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.clear();
+    }
+
+    public static class TestGetSqlKeywordsDynamicQueryInterceptor extends BaseQueryInterceptor {
+        public static List<String> interceptedQueries = new ArrayList<>();
+
+        @Override
+        public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
+            interceptedQueries.add(sql.get());
+            return super.preProcess(sql, interceptedQuery);
         }
     }
 }

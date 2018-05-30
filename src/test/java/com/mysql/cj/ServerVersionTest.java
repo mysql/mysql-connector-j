@@ -31,6 +31,9 @@ package com.mysql.cj;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -98,5 +101,45 @@ public class ServerVersionTest {
         assertTrue(v200.compareTo(v101) > 0);
         assertTrue(v202.compareTo(v101) > 0);
         assertTrue(v202.compareTo(v200) > 0);
+    }
+
+    @Test
+    public void testEqualsAndHash() {
+        ServerVersion v123a = new ServerVersion(1, 2, 3);
+        ServerVersion v123b = new ServerVersion(1, 2, 3);
+        ServerVersion v123c = new ServerVersion("1.2.3", 1, 2, 3);
+        ServerVersion v123d = new ServerVersion("1.2.3-something", 1, 2, 3);
+        ServerVersion v123e = ServerVersion.parseVersion("1.2.3");
+        ServerVersion v123f = ServerVersion.parseVersion("1.2.3-something");
+        ServerVersion[] versions = new ServerVersion[] { v123a, v123b, v123c, v123d, v123e, v123f };
+        ServerVersion v321a = new ServerVersion(3, 2, 1);
+        ServerVersion v321b = ServerVersion.parseVersion("3.2.1");
+
+        for (int i = 0; i < versions.length; i++) {
+            ServerVersion v1 = versions[i];
+            for (int j = 0; j < versions.length; j++) {
+                ServerVersion v2 = versions[j];
+                if (i == j) {
+                    assertSame(v1, v2);
+                } else {
+                    assertNotSame(v1, v2);
+                }
+                assertEquals(v1, v2);
+                assertTrue(v1.equals(v2));
+                assertEquals(v1.hashCode(), v2.hashCode());
+
+                assertNotSame(v1, v321a);
+                assertNotEquals(v1, v321a);
+                assertFalse(v1.equals(v321a));
+                assertFalse(v321a.equals(v1));
+                assertNotEquals(v1.hashCode(), v321a.hashCode());
+
+                assertNotSame(v1, v321b);
+                assertNotEquals(v1, v321b);
+                assertFalse(v1.equals(v321b));
+                assertFalse(v321b.equals(v1));
+                assertNotEquals(v1.hashCode(), v321b.hashCode());
+            }
+        }
     }
 }

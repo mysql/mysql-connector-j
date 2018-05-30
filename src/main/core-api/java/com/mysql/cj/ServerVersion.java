@@ -75,6 +75,30 @@ public class ServerVersion implements Comparable<ServerVersion> {
         return String.format("%d.%d.%d", this.major, this.minor, this.subminor);
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || !ServerVersion.class.isAssignableFrom(obj.getClass())) {
+            return false;
+        }
+        ServerVersion another = (ServerVersion) obj;
+        if (this.getMajor() != another.getMajor() || this.getMinor() != another.getMinor() || this.getSubminor() != another.getSubminor()) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 23;
+        hash += 19 * hash + this.major;
+        hash += 19 * hash + this.minor;
+        hash += 19 * hash + this.subminor;
+        return hash;
+    }
+
     public int compareTo(ServerVersion other) {
         int c;
         if ((c = this.major.compareTo(other.getMajor())) != 0) {

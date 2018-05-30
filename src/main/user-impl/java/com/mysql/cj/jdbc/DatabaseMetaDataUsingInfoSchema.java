@@ -31,21 +31,29 @@ package com.mysql.cj.jdbc;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
+import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.ResultSetFactory;
 import com.mysql.cj.result.Field;
+import com.mysql.cj.util.LRUCache;
 import com.mysql.cj.util.StringUtils;
 
 /**
  * DatabaseMetaData implementation that uses INFORMATION_SCHEMA
  */
 public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
+
+    private static Map<ServerVersion, String> keywordsCache = Collections.synchronizedMap(new LRUCache<>(10));
 
     protected enum FunctionConstant {
         // COLUMN_TYPE values
@@ -1100,6 +1108,40 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             if (pStmt != null) {
                 pStmt.close();
             }
+        }
+    }
+
+    @Override
+    public String getSQLKeywords() throws SQLException {
+        if (!this.conn.getServerVersion().meetsMinimum(ServerVersion.parseVersion("8.0.11"))) {
+            return super.getSQLKeywords();
+        }
+
+        String keywords = keywordsCache.get(this.conn.getServerVersion());
+        if (keywords != null) {
+            return keywords;
+        }
+
+        synchronized (keywordsCache) {
+            // Double check, maybe another thread already added it.
+            keywords = keywordsCache.get(this.conn.getServerVersion());
+            if (keywords != null) {
+                return keywords;
+            }
+
+            List<String> keywordsFromServer = new ArrayList<>();
+            Statement stmt = this.conn.getMetadataSafeStatement();
+            ResultSet rs = stmt.executeQuery("SELECT WORD FROM INFORMATION_SCHEMA.KEYWORDS WHERE RESERVED=1 ORDER BY WORD");
+            while (rs.next()) {
+                keywordsFromServer.add(rs.getString(1));
+            }
+            stmt.close();
+
+            keywordsFromServer.removeAll(SQL2003_KEYWORDS);
+            keywords = String.join(",", keywordsFromServer);
+
+            keywordsCache.put(this.conn.getServerVersion(), keywords);
+            return keywords;
         }
     }
 
