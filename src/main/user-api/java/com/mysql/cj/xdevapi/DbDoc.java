@@ -76,7 +76,7 @@ import java.util.Map;
  * }
  * </pre>
  * 
- * To create {@link DbDoc} from existing string representation you could use the {@link JsonParser#parseDoc(java.io.StringReader)} method:
+ * To create {@link DbDoc} from existing string representation you could use the JsonParser.parseDoc(java.io.StringReader) method:
  * 
  * <pre>
  * DbDoc doc = JsonParser.parseDoc(new StringReader(&quot;{\&quot;key1\&quot; : \&quot;value1\&quot;}&quot;));
