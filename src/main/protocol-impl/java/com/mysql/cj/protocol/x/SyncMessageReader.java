@@ -160,8 +160,26 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
 
         synchronized (this.dispatchingThreadMonitor) {
             if (this.dispatchingThread == null) {
-                this.dispatchingThread = new Thread(new ListenersDispatcher(), "Message listeners dispatching thread");
+                ListenersDispatcher ld = new ListenersDispatcher();
+                this.dispatchingThread = new Thread(ld, "Message listeners dispatching thread");
                 this.dispatchingThread.start();
+
+                // We must ensure that ListenersDispatcher is really started before leaving
+                // the synchronized block. Otherwise the race condition is possible: if next
+                // operation is executed synchronously it could consume results of the previous
+                // asynchronous operation.
+                int millis = 5000; // TODO expose via properties ?
+                while (!ld.started) {
+                    try {
+                        Thread.sleep(10);
+                        millis = millis - 10;
+                    } catch (InterruptedException e) {
+                        throw new XProtocolError(e.getMessage(), e);
+                    }
+                    if (millis <= 0) {
+                        throw new XProtocolError("Timeout for starting ListenersDispatcher exceeded.");
+                    }
+                }
             }
         }
     }
@@ -172,7 +190,8 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
          * On the other hand, the bigger timeout value allows to keep dispatcher thread running while multiple concurrent asynchronous
          * read operations are pending, thus avoiding the delays for new dispatching threads creation.
          */
-        private static final long POLL_TIMEOUT = 200; // TODO expose via connection property
+        private static final long POLL_TIMEOUT = 100; // TODO expose via connection property
+        boolean started = false;
 
         public ListenersDispatcher() {
         }
@@ -180,6 +199,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
         @Override
         public void run() {
             synchronized (SyncMessageReader.this.waitingSyncOperationMonitor) {
+                this.started = true;
                 try {
                     while (true) {
                         MessageListener<XMessage> l;

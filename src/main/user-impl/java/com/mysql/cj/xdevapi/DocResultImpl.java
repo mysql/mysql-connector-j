@@ -49,7 +49,5 @@ public class DocResultImpl extends AbstractDataResult<DbDoc> implements DocResul
      */
     public DocResultImpl(RowList rows, Supplier<StatementExecuteOk> completer) {
         super(rows, completer, new DbDocFactory());
-        this.rows = rows;
-        this.completer = completer;
     }
 }

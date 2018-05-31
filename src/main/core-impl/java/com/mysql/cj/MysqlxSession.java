@@ -111,14 +111,6 @@ public class MysqlxSession extends CoreSession {
         return res;
     }
 
-    public <T extends ResultStreamer> T find(FilterParams filterParams, BiFunction<RowList, Supplier<StatementExecuteOk>, T> resultCtor) {
-        this.protocol.send(((XMessageBuilder) this.messageBuilder).buildFind(filterParams), 0);
-        ColumnDefinition metadata = this.protocol.readMetadata();
-        T res = resultCtor.apply(((XProtocol) this.protocol).getRowInputStream(metadata), this.protocol::readQueryResult);
-        this.protocol.setCurrentResultStreamer(res);
-        return res;
-    }
-
     public <RES_T> CompletableFuture<RES_T> asyncFind(FilterParams filterParams,
             Function<ColumnDefinition, BiFunction<RowList, Supplier<StatementExecuteOk>, RES_T>> resultCtor) {
         CompletableFuture<RES_T> f = new CompletableFuture<>();

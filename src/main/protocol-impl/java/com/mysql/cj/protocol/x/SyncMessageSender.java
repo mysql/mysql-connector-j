@@ -56,40 +56,47 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
     private long previousPacketSentTime = 0;
     private int maxAllowedPacket = -1;
 
+    /** Lock to protect async writes from sync ones. */
+    Object waitingAsyncOperationMonitor = new Object();
+
     public SyncMessageSender(BufferedOutputStream os) {
         this.outputStream = os;
     }
 
     public void send(XMessage message) {
-        MessageLite msg = message.getMessage();
-        try {
-            int type = MessageConstants.getTypeForMessageClass(msg.getClass());
-            int size = 1 + msg.getSerializedSize();
-            if (this.maxAllowedPacket > 0 && size > this.maxAllowedPacket) {
-                throw new CJPacketTooBigException(Messages.getString("PacketTooBigException.1", new Object[] { size, this.maxAllowedPacket }));
+        synchronized (this.waitingAsyncOperationMonitor) {
+            MessageLite msg = message.getMessage();
+            try {
+                int type = MessageConstants.getTypeForMessageClass(msg.getClass());
+                int size = 1 + msg.getSerializedSize();
+                if (this.maxAllowedPacket > 0 && size > this.maxAllowedPacket) {
+                    throw new CJPacketTooBigException(Messages.getString("PacketTooBigException.1", new Object[] { size, this.maxAllowedPacket }));
+                }
+                // for debugging
+                // System.err.println("Initiating write of message (size=" + size + ", tag=" + ClientMessages.Type.valueOf(type) + ")");
+                byte[] sizeHeader = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(size).array();
+                this.outputStream.write(sizeHeader);
+                this.outputStream.write(type);
+                msg.writeTo(this.outputStream);
+                this.outputStream.flush();
+                this.previousPacketSentTime = this.lastPacketSentTime;
+                this.lastPacketSentTime = System.currentTimeMillis();
+            } catch (IOException ex) {
+                throw new CJCommunicationsException("Unable to write message", ex);
             }
-            // for debugging
-            // System.err.println("Initiating write of message (size=" + size + ", tag=" + ClientMessages.Type.valueOf(type) + ")");
-            byte[] sizeHeader = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(size).array();
-            this.outputStream.write(sizeHeader);
-            this.outputStream.write(type);
-            msg.writeTo(this.outputStream);
-            this.outputStream.flush();
-            this.previousPacketSentTime = this.lastPacketSentTime;
-            this.lastPacketSentTime = System.currentTimeMillis();
-        } catch (IOException ex) {
-            throw new CJCommunicationsException("Unable to write message", ex);
         }
     }
 
     public void send(XMessage message, CompletionHandler<Long, Void> callback) {
-        MessageLite msg = message.getMessage();
-        try {
-            send(message);
-            long result = 4 + 1 + msg.getSerializedSize();
-            callback.completed(result, null);
-        } catch (Throwable t) {
-            callback.failed(t, null);
+        synchronized (this.waitingAsyncOperationMonitor) {
+            MessageLite msg = message.getMessage();
+            try {
+                send(message);
+                long result = 4 + 1 + msg.getSerializedSize();
+                callback.completed(result, null);
+            } catch (Throwable t) {
+                callback.failed(t, null);
+            }
         }
     }
 

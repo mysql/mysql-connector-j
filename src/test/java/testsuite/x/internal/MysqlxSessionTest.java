@@ -168,11 +168,11 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
         FilterParams filterParams = new DocFilterParams(getTestDatabase(), collName);
         filterParams.setOrder("$._id");
 
-        DocResultImpl docs1 = this.session.find(filterParams, (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs2 = this.session.find(filterParams, (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs3 = this.session.find(filterParams, (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs4 = this.session.find(filterParams, (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs5 = this.session.find(filterParams, (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs1 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs2 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs3 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs4 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs5 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
         assertTrue(docs5.hasNext());
         assertTrue(docs4.hasNext());
         assertTrue(docs3.hasNext());

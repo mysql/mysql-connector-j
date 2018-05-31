@@ -53,6 +53,8 @@ import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.Session;
+import com.mysql.cj.xdevapi.SessionFactory;
 import com.mysql.cj.xdevapi.SqlResult;
 
 @Category(testsuite.x.AsyncTests.class)
@@ -86,15 +88,21 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        final int NUMBER_OF_QUERIES = 50;
+        final int NUMBER_OF_QUERIES = 1000;
+        Session sess = new SessionFactory().getSession(this.baseUrl);
+        Collection coll = sess.getSchema(this.schema.getName()).getCollection(this.collection.getName());
 
-        String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
+        String json1 = "{'mode': 'sync'}".replaceAll("'", "\"");
+        String json2 = "{'mode': 'async'}".replaceAll("'", "\"");
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
-            json = json.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
+            // Inject an _id.
+            json1 = json1.replace("{", "{\"_id\": \"1\", ");
+            json2 = json2.replace("{", "{\"_id\": \"2\", ");
         }
-        AddResult res = this.collection.add(json).execute();
+        AddResult res = coll.add(json1).add(json2).execute();
         if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             assertTrue(res.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
+            assertTrue(res.getGeneratedIds().get(1).matches("[a-f0-9]{28}"));
         } else {
             assertEquals(0, res.getGeneratedIds().size());
         }
@@ -102,17 +110,27 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
         List<CompletableFuture<DocResult>> futures = new ArrayList<>();
         for (int i = 0; i < NUMBER_OF_QUERIES; ++i) {
             if (i % 5 == 0) {
-                futures.add(CompletableFuture.completedFuture(this.collection.find("firstName like '%Fra%'").execute()));
+                //System.out.println("\nfutures.add(CompletableFuture.completedFuture(coll.find(\"mode = 'sync'\").execute()));");
+                futures.add(CompletableFuture.completedFuture(coll.find("mode = 'sync'").execute()));
             } else {
-                futures.add(this.collection.find("firstName like '%Fra%'").executeAsync());
+                //System.out.println("\nfutures.add(coll.find(\"mode = 'async'\").executeAsync());");
+                futures.add(coll.find("mode = 'async'").executeAsync());
             }
         }
 
         for (int i = 0; i < NUMBER_OF_QUERIES; ++i) {
-            DocResult docs = futures.get(i).get();
-            DbDoc d = docs.next();
-            JsonString val = (JsonString) d.get("lastName");
-            assertEquals("Wright", val.getString());
+            try {
+                DocResult docs = futures.get(i).get();
+                DbDoc d = docs.next();
+                JsonString mode = (JsonString) d.get("mode");
+                if (i % 5 == 0) {
+                    assertEquals("i = " + i, "sync", mode.getString());
+                } else {
+                    assertEquals("i = " + i, "async", mode.getString());
+                }
+            } catch (Throwable t) {
+                throw new Exception("Error on i = " + i, t);
+            }
         }
     }
 
@@ -238,7 +256,7 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
         if (!this.isSetForXTests) {
             return;
         }
-        int MANY = 100000;
+        int MANY = 10;//100000;
         Collection coll = this.collection;
         List<CompletableFuture<DocResult>> futures = new ArrayList<>();
         for (int i = 0; i < MANY; ++i) {
@@ -256,8 +274,10 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
             //System.out.println("++++ Read " + i + " set " + i % 3 + " +++++");
             if (i % 3 == 0) {
                 //Expect Success and check F1  is like  %Field%-5
+                System.out.println("\nExpect Success and check F1  is like  %Field%-5");
                 docs = futures.get(i).get();
                 assertFalse(docs.hasNext());
+                System.out.println(docs.fetchOne());
             } else if (i % 3 == 1) {
                 try {
                     //Expecting Error FUNCTION test.NON_EXISTING_FUNCTION does not exist
@@ -269,8 +289,10 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
                 }
             } else {
                 //Expect Success and check F3 is 106
+                System.out.println("\nExpect Success and check F3 is 106");
                 docs = futures.get(i).get();
                 assertFalse(docs.hasNext());
+                System.out.println(docs.fetchOne());
             }
         }
         System.out.println("Done.");

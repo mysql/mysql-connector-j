@@ -50,7 +50,7 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
     }
 
     public DocResultImpl execute() {
-        return this.mysqlxSession.find(this.filterParams, (rows, task) -> new DocResultImpl(rows, task));
+        return this.mysqlxSession.find(this.filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
     }
 
     public CompletableFuture<DocResult> executeAsync() {
