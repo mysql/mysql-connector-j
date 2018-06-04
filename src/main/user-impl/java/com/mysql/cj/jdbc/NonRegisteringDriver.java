@@ -202,6 +202,9 @@ public class NonRegisteringDriver implements java.sql.Driver {
             }
 
             switch (conStr.getType()) {
+                case SINGLE_CONNECTION:
+                    return com.mysql.cj.jdbc.ConnectionImpl.getInstance(conStr.getMainHost());
+
                 case LOADBALANCE_CONNECTION:
                     return LoadBalancedConnectionProxy.createProxyInstance((LoadbalanceConnectionUrl) conStr);
 
@@ -211,13 +214,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
                 case REPLICATION_CONNECTION:
                     return ReplicationConnectionProxy.createProxyInstance((ReplicationConnectionUrl) conStr);
 
-                case XDEVAPI_SESSION:
-                    // TODO test it
-                    //return new XJdbcConnection(conStr.getProperties());
-
                 default:
-                    return com.mysql.cj.jdbc.ConnectionImpl.getInstance(conStr.getMainHost());
-
+                    return null;
             }
 
         } catch (CJException ex) {

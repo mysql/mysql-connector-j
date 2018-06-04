@@ -215,7 +215,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * MalformedURL exception.
      * 
      * @throws Exception
-     *             if an error ocurrs.
+     *             if an error occurs.
      */
     public void testBug3554() throws Exception {
         try {
@@ -10655,5 +10655,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     .executeUpdate("SET @@global.wait_timeout=" + initialWaitTimeout + ", @@global.interactive_timeout=" + initialInteractiveTimeout);
         }
 
+    }
+
+    /**
+     * Tests fix for BUG#26089880, GETCONNECTION("MYSQLX://..") RETURNS NON-X PROTOCOL CONNECTION.
+     * 
+     * @throws Exception
+     *             if an error occurs.
+     */
+    public void testBug26089880() throws Exception {
+        assertThrows(SQLException.class, "No suitable driver found for mysqlx://localhost:33060/test\\?user=usr&password=pwd", new Callable<Void>() {
+            public Void call() throws Exception {
+                DriverManager.getConnection("mysqlx://localhost:33060/test?user=usr&password=pwd", null);
+                return null;
+            }
+        });
     }
 }

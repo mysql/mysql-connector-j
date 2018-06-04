@@ -3,6 +3,8 @@
 
 Version 8.0.12
 
+  - Fix for BUG#26089880, GETCONNECTION("MYSQLX://..") RETURNS NON-X PROTOCOL CONNECTION.
+
   - WL#11876, Improve connection properties design.
 
   - WL#11933, Connector/J 8.0 X DevAPI reference documentation update.
