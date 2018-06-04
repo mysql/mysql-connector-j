@@ -178,7 +178,7 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
     }
 
     /**
-     * Internal method for setting property value ignoring the RUNTIME_NOT_MODIFIABLE flag.
+     * Internal method for setting property value; ignoring the RUNTIME_NOT_MODIFIABLE flag.
      * 
      * @param value
      *            value
@@ -196,7 +196,7 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
     }
 
     /**
-     * For range-based property checks that value fit into range given by PropertyDefinition.
+     * For range-based property, checks that value fit into range given by PropertyDefinition.
      * 
      * @param val
      *            value
