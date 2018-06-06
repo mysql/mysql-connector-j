@@ -66,6 +66,7 @@ import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.ParameterBindings;
@@ -1153,14 +1154,13 @@ public class StatementsTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_noDatetimeStringSync, "true"); // value=true for #5
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
-        createTable("t1",
-                " (c1 DECIMAL," // instance of String
-                        + "c2 VARCHAR(255)," // instance of String
-                        + "c3 BLOB," // instance of byte[]
-                        + "c4 DATE," // instance of java.util.Date
-                        + "c5 TIMESTAMP," // instance of String
-                        + "c6 TIME," // instance of String
-                        + "c7 TIME)"); // instance of java.sql.Timestamp
+        createTable("t1", " (c1 DECIMAL," // instance of String
+                + "c2 VARCHAR(255)," // instance of String
+                + "c3 BLOB," // instance of byte[]
+                + "c4 DATE," // instance of java.util.Date
+                + "c5 TIMESTAMP," // instance of String
+                + "c6 TIME," // instance of String
+                + "c7 TIME)"); // instance of java.sql.Timestamp
 
         this.pstmt = conn1.prepareStatement("INSERT INTO t1 VALUES (?, ?, ?, ?, ?, ?, ?)");
 
@@ -1200,14 +1200,13 @@ public class StatementsTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_noDatetimeStringSync, "true"); // value=true for #5
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
-        createTable("t1",
-                " (c1 DECIMAL," // instance of String
-                        + "c2 VARCHAR(255)," // instance of String
-                        + "c3 BLOB," // instance of byte[]
-                        + "c4 DATE," // instance of java.util.Date
-                        + "c5 TIMESTAMP NULL," // instance of String
-                        + "c6 TIME," // instance of String
-                        + "c7 TIME)"); // instance of java.sql.Timestamp
+        createTable("t1", " (c1 DECIMAL," // instance of String
+                + "c2 VARCHAR(255)," // instance of String
+                + "c3 BLOB," // instance of byte[]
+                + "c4 DATE," // instance of java.util.Date
+                + "c5 TIMESTAMP NULL," // instance of String
+                + "c6 TIME," // instance of String
+                + "c7 TIME)"); // instance of java.sql.Timestamp
 
         this.pstmt = conn1.prepareStatement("INSERT INTO t1 VALUES (?, ?, ?, ?, ?, ?, ?)");
 
@@ -2393,7 +2392,7 @@ public class StatementsTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, CountingReBalanceStrategy.class.getName());
         props.setProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "3");
 
-        String portNumber = getPropertiesFromTestsuiteUrl().getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String portNumber = getPropertiesFromTestsuiteUrl().getProperty(PropertyKey.PORT.getKeyName());
 
         if (portNumber == null) {
             portNumber = "3306";

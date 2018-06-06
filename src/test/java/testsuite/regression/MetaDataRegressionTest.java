@@ -56,6 +56,7 @@ import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.Driver;
@@ -2601,7 +2602,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         Statement savedSt = this.stmt;
 
         Properties props = getHostFreePropertiesFromTestsuiteUrl();
-        props.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        props.remove(PropertyKey.DBNAME.getKeyName());
         Connection conn1 = DriverManager.getConnection(newUrlToTestNoDB.toString(), props);
 
         this.stmt = conn1.createStatement();
@@ -2712,7 +2713,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         try {
             Properties props = getPropertiesFromTestsuiteUrl();
-            String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+            String dbname = props.getProperty(PropertyKey.DBNAME.getKeyName());
             if (dbname == null) {
                 assertTrue("No database selected", false);
             }
@@ -2842,7 +2843,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
     public void testBug63800() throws Exception {
         try {
             Properties props = getPropertiesFromTestsuiteUrl();
-            String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+            String dbname = props.getProperty(PropertyKey.DBNAME.getKeyName());
             assertFalse("No database selected", StringUtils.isNullOrEmpty(dbname));
 
             for (String prop : new String[] { "dummyProp", PropertyDefinitions.PNAME_useInformationSchema }) {
@@ -3670,10 +3671,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
     private void checkMetaDataInfoForBug17248345(Connection testConn) throws Exception {
         DatabaseMetaData testDbMetaData = testConn.getMetaData();
         ResultSet rsMD;
-        boolean useInfoSchema = ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useInformationSchema)
+        boolean useInfoSchema = ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue();
+        boolean getProcRetFunc = ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions)
                 .getValue();
-        boolean getProcRetFunc = ((JdbcConnection) testConn).getPropertySet()
-                .getBooleanProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue();
         String stepDescription = "Prop. useInfoSchema(" + (useInfoSchema ? 1 : 0) + ") + getProcRetFunc(" + (getProcRetFunc ? 1 : 0) + "):";
         String sd;
 

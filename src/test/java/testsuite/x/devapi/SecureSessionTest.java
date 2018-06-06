@@ -44,6 +44,7 @@ import com.mysql.cj.CoreSession;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.AuthMech;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.protocol.x.XAuthenticationProvider;
 import com.mysql.cj.protocol.x.XProtocol;
@@ -122,24 +123,24 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             String userAndSslFreeBaseUrl = this.sslFreeBaseUrl;
             userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(getTestUser() + ":" + getTestPassword() + "@", "");
-            userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_user + "=", PropertyDefinitions.PNAME_user + "VOID=");
-            userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_password + "=", PropertyDefinitions.PNAME_password + "VOID=");
+            userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyKey.USER.getKeyName() + "=", PropertyKey.USER.getKeyName() + "VOID=");
+            userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyKey.PASSWORD.getKeyName() + "=", PropertyKey.PASSWORD.getKeyName() + "VOID=");
 
             testSession = this.fact.getSession(userAndSslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED)
-                    + makeParam(PropertyDefinitions.PNAME_user, "testPlainAuth") + makeParam(PropertyDefinitions.PNAME_password, "pwd"));
+                    + makeParam(PropertyKey.USER.getKeyName(), "testPlainAuth") + makeParam(PropertyKey.PASSWORD.getKeyName(), "pwd"));
             assertNonSecureSession(testSession);
             testSession.close();
 
             testSession = this.fact.getSession(userAndSslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED)
-                    + makeParam(PropertyDefinitions.PNAME_user, "testPlainAuth") + makeParam(PropertyDefinitions.PNAME_password, "pwd")
+                    + makeParam(PropertyKey.USER.getKeyName(), "testPlainAuth") + makeParam(PropertyKey.PASSWORD.getKeyName(), "pwd")
                     + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
             assertNonSecureSession(testSession);
             testSession.close();
 
             Properties props = new Properties(this.sslFreeTestProperties);
             props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
-            props.setProperty(PropertyDefinitions.PNAME_user, "testPlainAuth");
-            props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+            props.setProperty(PropertyKey.USER.getKeyName(), "testPlainAuth");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
             testSession.close();
@@ -547,8 +548,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             Properties props = new Properties(this.sslFreeTestProperties);
 
             // With default auth mechanism for secure connections (PLAIN).
-            props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechNative");
-            props.setProperty(PropertyDefinitions.PNAME_password, "mysqlnative");
+            props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
@@ -564,8 +565,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechSha256");
-                props.setProperty(PropertyDefinitions.PNAME_password, "sha256");
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
@@ -582,8 +583,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechCachingSha2");
-                props.setProperty(PropertyDefinitions.PNAME_password, "cachingsha2");
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
@@ -600,8 +601,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             // Forcing an auth mechanism.
             props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-            props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechNative");
-            props.setProperty(PropertyDefinitions.PNAME_password, "mysqlnative");
+            props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
             props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
@@ -650,8 +651,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechSha256");
-                props.setProperty(PropertyDefinitions.PNAME_password, "sha256");
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
                 props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
@@ -693,8 +694,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechCachingSha2");
-                props.setProperty(PropertyDefinitions.PNAME_password, "cachingsha2");
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
                 props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
@@ -735,8 +736,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             }
 
             props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-            props.setProperty(PropertyDefinitions.PNAME_user, "external");
-            props.setProperty(PropertyDefinitions.PNAME_password, "external");
+            props.setProperty(PropertyKey.USER.getKeyName(), "external");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "external");
             props.setProperty(PropertyDefinitions.PNAME_auth, "EXTERNAL");
             assertThrows(XProtocolError.class, "ERROR 1251 \\(HY000\\) Invalid authentication method EXTERNAL", () -> this.fact.getSession(props));
 
@@ -752,8 +753,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             // With default auth mechanism for non-secure connections (MYSQL41|SHA2_MEMORY).
             props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-            props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechNative");
-            props.setProperty(PropertyDefinitions.PNAME_password, "mysqlnative");
+            props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
             assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
@@ -769,8 +770,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_PASSWORD requires secure connections in MySQL 8.0.3 and below.
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechSha256");
-                props.setProperty(PropertyDefinitions.PNAME_password, "sha256");
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -787,8 +788,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // CACHING_SHA2_PASSWORD requires secure connections in MySQL 8.0.3 and below.
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechCachingSha2");
-                props.setProperty(PropertyDefinitions.PNAME_password, "cachingsha2");
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -805,8 +806,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             // Forcing an auth mechanism.
             props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-            props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechNative");
-            props.setProperty(PropertyDefinitions.PNAME_password, "mysqlnative");
+            props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
             props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
             assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
@@ -847,8 +848,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechSha256");
-                props.setProperty(PropertyDefinitions.PNAME_password, "sha256");
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
                 props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
                 assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
@@ -882,8 +883,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_user, "testAuthMechCachingSha2");
-                props.setProperty(PropertyDefinitions.PNAME_password, "cachingsha2");
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
                 props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
                 assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
@@ -916,8 +917,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             }
 
             props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-            props.setProperty(PropertyDefinitions.PNAME_user, "external");
-            props.setProperty(PropertyDefinitions.PNAME_password, "external");
+            props.setProperty(PropertyKey.USER.getKeyName(), "external");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "external");
             props.setProperty(PropertyDefinitions.PNAME_auth, "EXTERNAL");
             assertThrows(XProtocolError.class, "ERROR 1251 \\(HY000\\) Invalid authentication method EXTERNAL", () -> this.fact.getSession(props));
 
@@ -1167,8 +1168,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             sess.close();
 
             // 3. Check connection with required client certificate 
-            props.setProperty(PropertyDefinitions.PNAME_user, "bug25494338user");
-            props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+            props.setProperty(PropertyKey.USER.getKeyName(), "bug25494338user");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
 
             props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
             sess = this.fact.getSession(props);

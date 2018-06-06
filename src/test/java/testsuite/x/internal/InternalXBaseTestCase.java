@@ -43,6 +43,7 @@ import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.AuthMech;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XMessageBuilder;
@@ -92,23 +93,23 @@ public class InternalXBaseTestCase {
     }
 
     public String getTestHost() {
-        return this.testProperties.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+        return this.testProperties.getProperty(PropertyKey.HOST.getKeyName());
     }
 
     public int getTestPort() {
-        return Integer.valueOf(this.testProperties.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
+        return Integer.valueOf(this.testProperties.getProperty(PropertyKey.PORT.getKeyName()));
     }
 
     public String getTestUser() {
-        return this.testProperties.getProperty(PropertyDefinitions.PNAME_user);
+        return this.testProperties.getProperty(PropertyKey.USER.getKeyName());
     }
 
     public String getTestPassword() {
-        return this.testProperties.getProperty(PropertyDefinitions.PNAME_password);
+        return this.testProperties.getProperty(PropertyKey.PASSWORD.getKeyName());
     }
 
     public String getTestDatabase() {
-        return this.testProperties.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        return this.testProperties.getProperty(PropertyKey.DBNAME.getKeyName());
     }
 
     public String getEncodedTestHost() {

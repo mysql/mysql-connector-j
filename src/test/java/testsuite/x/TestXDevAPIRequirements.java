@@ -40,7 +40,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.conf.ConnectionUrl;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.Schema;
 import com.mysql.cj.xdevapi.Session;
@@ -80,10 +80,10 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
         sess.close();
 
         // test connection without port specification
-        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
+        props.remove(PropertyKey.PORT.getKeyName());
         sess = getSession(props);
         ConnectionUrl conUrl1 = ConnectionUrl.getConnectionUrlInstance(sess.getUri(), null);
-        assertEquals("33060", conUrl1.getMainHost().exposeAsProperties().getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
+        assertEquals("33060", conUrl1.getMainHost().exposeAsProperties().getProperty(PropertyKey.PORT.getKeyName()));
         sess.close();
 
         // TODO test different properties

@@ -29,6 +29,7 @@
 
 package com.mysql.cj.conf;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -97,23 +98,90 @@ public class PropertyDefinitions {
     public static final String SYSP_testsuite_runLongTests /*                 */ = "com.mysql.cj.testsuite.runLongTests";
     public static final String SYSP_testsuite_serverController_basedir /*     */ = "com.mysql.cj.testsuite.serverController.basedir";
 
-    /*
-     * Properties added internally after parsing connection string
+    /**
+     * Properties individually managed after parsing connection string. These property keys are case insensitive.
      */
-    public static final String PROTOCOL_PROPERTY_KEY = "PROTOCOL";
-    public static final String PATH_PROPERTY_KEY = "PATH";
-    public final static String TYPE_PROPERTY_KEY = "TYPE";
-    /** Key used to retrieve the hostname value from the properties instance passed to the driver. */
-    public static final String HOST_PROPERTY_KEY = "HOST";
-    /** Key used to retrieve the port number value from the properties instance passed to the driver. */
-    public static final String PORT_PROPERTY_KEY = "PORT";
-    /** Key used to retrieve the database value from the properties instance passed to the driver. */
-    public static final String DBNAME_PROPERTY_KEY = "DBNAME";
-    /** Key used to retrieve the address value ("host:port") from the properties instance passed to the driver. */
-    public static final String ADDRESS_PROPERTY_KEY = "ADDRESS";
-    /** Key used to retried the host priority in a list of hosts. */
-    public static final String PRIORITY_PROPERTY_KEY = "PRIORITY";
+    public enum PropertyKey {
+        /** The database user name. */
+        USER("user"),
+        /** The database user password. */
+        PASSWORD("password"),
+        /** The hostname value from the properties instance passed to the driver. */
+        HOST("host"),
+        /** The port number value from the properties instance passed to the driver. */
+        PORT("port"),
+        /** The communications protocol. Possible values: "tcp" and "pipe". */
+        PROTOCOL("protocol"),
+        /** The name pipes path to use when "protocol=pipe'. */
+        PATH("path"),
+        /** The server type in a replication setup. Possible values: "master" and "slave". */
+        TYPE("type"),
+        /** The address value ("host:port") from the properties instance passed to the driver. */
+        ADDRESS("address"),
+        /** The host priority in a list of hosts. */
+        PRIORITY("priority"),
+        /** The database value from the properties instance passed to the driver. */
+        DBNAME("dbname");
 
+        private String keyName;
+
+        private static Map<String, PropertyKey> ciValues = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        static {
+            Arrays.stream(values()).forEach(pk -> ciValues.put(pk.getKeyName(), pk));
+        }
+
+        /**
+         * Initializes each enum element with the proper key name to be used in the connection string or properties maps.
+         * 
+         * @param keyName
+         *            the key name for the enum element.
+         */
+        PropertyKey(String keyName) {
+            this.keyName = keyName;
+        }
+
+        /**
+         * Gets the key name of this enum element.
+         * 
+         * @return
+         *         the key name associated with the enum element.
+         */
+        public String getKeyName() {
+            return this.keyName;
+        }
+
+        /**
+         * Looks for a {@link PropertyKey} that matches the given value as key name.
+         * 
+         * @param value
+         *            the key name to look for.
+         * @return
+         *         the {@link PropertyKey} element that matches the given key name value or <code>null</code> if none is found.
+         */
+        public static PropertyKey fromValue(String value) {
+            for (PropertyKey k : values()) {
+                if (k.getKeyName().equalsIgnoreCase(value)) {
+                    return k;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Helper method that normalizes the case of the given key, if it is one of {@link PropertyKey} elements.
+         * 
+         * @param keyName
+         *            the key name to normalize.
+         * @return
+         *         the normalized key name if it belongs to this enum, otherwise returns the input unchanged.
+         */
+        public static String normalizeCase(String keyName) {
+            PropertyKey pk = ciValues.get(keyName);
+            return pk == null ? keyName : pk.getKeyName();
+        }
+    }
+
+    /** The named pipe path used inside of NamedPipeSocketFactory */
     public static final String NAMED_PIPE_PROP_NAME = "namedPipePath";
 
     /*
@@ -368,8 +436,6 @@ public class PropertyDefinitions {
     public static final String PNAME_serverAffinityOrder = "serverAffinityOrder";
 
     // TODO following names are used in code but have no definitions
-    public static final String PNAME_user = "user";
-    public static final String PNAME_password = "password";
     public static final String PNAME_resultSetScannerRegex = "resultSetScannerRegex";
     public static final String PNAME_clientInfoSetSPName = "clientInfoSetSPName";
     public static final String PNAME_clientInfoGetSPName = "clientInfoGetSPName";
@@ -1002,11 +1068,11 @@ public class PropertyDefinitions {
         // The following properties are not exposed as 'normal' properties, but they are settable nonetheless, so we need to have them documented, make sure
         // that they sort 'first' as #1 and #2 in the category
         //
-        StringPropertyDefinition userDef = new StringPropertyDefinition(PropertyDefinitions.PNAME_user, NO_ALIAS, DEFAULT_VALUE_NULL_STRING,
+        StringPropertyDefinition userDef = new StringPropertyDefinition(PropertyKey.USER.getKeyName(), NO_ALIAS, DEFAULT_VALUE_NULL_STRING,
                 RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.Username"), Messages.getString("ConnectionProperties.allVersions"),
                 CATEGORY_AUTH, Integer.MIN_VALUE + 1);
 
-        StringPropertyDefinition passwordDef = new StringPropertyDefinition(PropertyDefinitions.PNAME_password, NO_ALIAS, DEFAULT_VALUE_NULL_STRING,
+        StringPropertyDefinition passwordDef = new StringPropertyDefinition(PropertyKey.PASSWORD.getKeyName(), NO_ALIAS, DEFAULT_VALUE_NULL_STRING,
                 RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.Password"), Messages.getString("ConnectionProperties.allVersions"),
                 CATEGORY_AUTH, Integer.MIN_VALUE + 2);
 

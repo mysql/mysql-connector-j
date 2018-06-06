@@ -32,7 +32,7 @@ package testsuite.simple;
 import java.util.Properties;
 
 import com.mysql.cj.conf.ConnectionPropertiesTransform;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 
 /**
  * Used for testing the ConnectionPropertiesTransform functionality.
@@ -40,7 +40,7 @@ import com.mysql.cj.conf.PropertyDefinitions;
 public class SimpleTransformer implements ConnectionPropertiesTransform {
 
     public Properties transformProperties(Properties props) {
-        props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "albequerque");
+        props.setProperty(PropertyKey.HOST.getKeyName(), "albequerque");
 
         return props;
     }

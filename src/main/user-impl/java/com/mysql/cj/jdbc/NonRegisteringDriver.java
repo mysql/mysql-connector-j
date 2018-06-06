@@ -45,7 +45,7 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrl.Type;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.conf.url.LoadbalanceConnectionUrl;
 import com.mysql.cj.conf.url.ReplicationConnectionUrl;
 import com.mysql.cj.exceptions.CJException;
@@ -262,30 +262,30 @@ public class NonRegisteringDriver implements java.sql.Driver {
         }
 
         if (info != null) {
-            host = info.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-            port = info.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-            database = info.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-            user = info.getProperty(PropertyDefinitions.PNAME_user);
-            password = info.getProperty(PropertyDefinitions.PNAME_password);
+            host = info.getProperty(PropertyKey.HOST.getKeyName());
+            port = info.getProperty(PropertyKey.PORT.getKeyName());
+            database = info.getProperty(PropertyKey.DBNAME.getKeyName());
+            user = info.getProperty(PropertyKey.USER.getKeyName());
+            password = info.getProperty(PropertyKey.PASSWORD.getKeyName());
         }
 
-        DriverPropertyInfo hostProp = new DriverPropertyInfo(PropertyDefinitions.HOST_PROPERTY_KEY, host);
+        DriverPropertyInfo hostProp = new DriverPropertyInfo(PropertyKey.HOST.getKeyName(), host);
         hostProp.required = true;
         hostProp.description = Messages.getString("NonRegisteringDriver.3");
 
-        DriverPropertyInfo portProp = new DriverPropertyInfo(PropertyDefinitions.PORT_PROPERTY_KEY, port);
+        DriverPropertyInfo portProp = new DriverPropertyInfo(PropertyKey.PORT.getKeyName(), port);
         portProp.required = false;
         portProp.description = Messages.getString("NonRegisteringDriver.7");
 
-        DriverPropertyInfo dbProp = new DriverPropertyInfo(PropertyDefinitions.DBNAME_PROPERTY_KEY, database);
+        DriverPropertyInfo dbProp = new DriverPropertyInfo(PropertyKey.DBNAME.getKeyName(), database);
         dbProp.required = false;
         dbProp.description = Messages.getString("NonRegisteringDriver.10");
 
-        DriverPropertyInfo userProp = new DriverPropertyInfo(PropertyDefinitions.PNAME_user, user);
+        DriverPropertyInfo userProp = new DriverPropertyInfo(PropertyKey.USER.getKeyName(), user);
         userProp.required = true;
         userProp.description = Messages.getString("NonRegisteringDriver.13");
 
-        DriverPropertyInfo passwordProp = new DriverPropertyInfo(PropertyDefinitions.PNAME_password, password);
+        DriverPropertyInfo passwordProp = new DriverPropertyInfo(PropertyKey.PASSWORD.getKeyName(), password);
         passwordProp.required = true;
         passwordProp.description = Messages.getString("NonRegisteringDriver.16");
 

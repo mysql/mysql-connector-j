@@ -50,6 +50,7 @@ import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.Schema;
+import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.SqlStatement;
@@ -344,5 +345,65 @@ public class SessionTest extends DevApiBaseTestCase {
         assertEquals(0, res.getWarningsCount());
         assertFalse(res.getWarnings().hasNext());
         assertEquals(new Long(1), res.getAutoIncrementValue());
+    }
+
+    /**
+     * Tests fix for Bug #27652379, NPE FROM GETSESSION(PROPERTIES) WHEN HOST PARAMETER IS GIVEN IN SMALL LETTER.
+     */
+    @Test
+    public void testBug27652379() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        Properties props = new Properties();
+
+        // Upper case keys.
+        props.clear();
+        props.setProperty("HOST", getTestHost());
+        props.setProperty("PORT", String.valueOf(getTestPort()));
+        props.setProperty("USER", getTestUser());
+        props.setProperty("PASSWORD", getTestPassword());
+        props.setProperty("DBNAME", getTestDatabase());
+
+        Session testSession = this.fact.getSession(props);
+        assertEquals(getTestDatabase(), testSession.getDefaultSchemaName());
+        testSession.close();
+
+        testSession = this.fact.getSession(new Properties(props));
+        assertEquals(getTestDatabase(), testSession.getDefaultSchemaName());
+        testSession.close();
+
+        // Lower case keys.
+        props.clear();
+        props.setProperty("host", getTestHost());
+        props.setProperty("port", String.valueOf(getTestPort()));
+        props.setProperty("user", getTestUser());
+        props.setProperty("password", getTestPassword());
+        props.setProperty("dbname", getTestDatabase());
+
+        testSession = this.fact.getSession(props);
+        assertEquals(getTestDatabase(), testSession.getDefaultSchemaName());
+        testSession.close();
+
+        testSession = this.fact.getSession(new Properties(props));
+        assertEquals(getTestDatabase(), testSession.getDefaultSchemaName());
+        testSession.close();
+
+        // Random case keys.
+        props.clear();
+        props.setProperty("HOst", getTestHost());
+        props.setProperty("poRT", String.valueOf(getTestPort()));
+        props.setProperty("uSEr", getTestUser());
+        props.setProperty("PassworD", getTestPassword());
+        props.setProperty("DbNaMe", getTestDatabase());
+
+        testSession = this.fact.getSession(props);
+        assertEquals(getTestDatabase(), testSession.getDefaultSchemaName());
+        testSession.close();
+
+        testSession = this.fact.getSession(new Properties(props));
+        assertEquals(getTestDatabase(), testSession.getDefaultSchemaName());
+        testSession.close();
     }
 }

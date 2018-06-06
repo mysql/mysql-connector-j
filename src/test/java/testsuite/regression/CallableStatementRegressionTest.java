@@ -47,6 +47,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 
 import testsuite.BaseTestCase;
@@ -447,7 +448,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             createProcedure("p_testBug15121", "()\nBEGIN\nSELECT * from idonotexist;\nEND");
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, "");
+            props.setProperty(PropertyKey.DBNAME.getKeyName(), "");
 
             Connection noDbConn = null;
 

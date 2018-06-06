@@ -29,8 +29,6 @@
 
 package com.mysql.cj.conf.url;
 
-import static com.mysql.cj.conf.PropertyDefinitions.TYPE_PROPERTY_KEY;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +41,7 @@ import java.util.stream.Collectors;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.HostInfo;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 
 public class ReplicationConnectionUrl extends ConnectionUrl {
     private static final String TYPE_MASTER = "MASTER";
@@ -67,10 +66,10 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
         LinkedList<HostInfo> undefinedHosts = new LinkedList<>();
         for (HostInfo hi : this.hosts) {
             Map<String, String> hostProperties = hi.getHostProperties();
-            if (hostProperties.containsKey(TYPE_PROPERTY_KEY)) {
-                if (TYPE_MASTER.equalsIgnoreCase(hostProperties.get(TYPE_PROPERTY_KEY))) {
+            if (hostProperties.containsKey(PropertyKey.TYPE.getKeyName())) {
+                if (TYPE_MASTER.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))) {
                     this.masterHosts.add(hi);
-                } else if (TYPE_SLAVE.equalsIgnoreCase(hostProperties.get(TYPE_PROPERTY_KEY))) {
+                } else if (TYPE_SLAVE.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))) {
                     this.slaveHosts.add(hi);
                 } else {
                     undefinedHosts.add(hi);

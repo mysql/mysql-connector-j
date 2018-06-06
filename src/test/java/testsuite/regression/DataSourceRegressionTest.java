@@ -61,6 +61,7 @@ import javax.transaction.xa.Xid;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.conf.AbstractRuntimeProperty;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
@@ -451,8 +452,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
         System.out.println(asRef);
 
         removeFromRef(asRef, "port");
-        removeFromRef(asRef, PropertyDefinitions.PNAME_user);
-        removeFromRef(asRef, PropertyDefinitions.PNAME_password);
+        removeFromRef(asRef, PropertyKey.USER.getKeyName());
+        removeFromRef(asRef, PropertyKey.PASSWORD.getKeyName());
         removeFromRef(asRef, "serverName");
         removeFromRef(asRef, "databaseName");
 

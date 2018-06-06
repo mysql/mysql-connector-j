@@ -46,6 +46,7 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.conf.AbstractRuntimeProperty;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 
 /**
@@ -114,11 +115,11 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         Properties props = exposeAsProperties();
 
         if (userID != null) {
-            props.setProperty(PropertyDefinitions.PNAME_user, userID);
+            props.setProperty(PropertyKey.USER.getKeyName(), userID);
         }
 
         if (pass != null) {
-            props.setProperty(PropertyDefinitions.PNAME_password, pass);
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), pass);
         }
 
         return getConnection(props);
@@ -253,8 +254,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
     public Reference getReference() throws NamingException {
         String factoryName = MysqlDataSourceFactory.class.getName();
         Reference ref = new Reference(getClass().getName(), factoryName, null);
-        ref.add(new StringRefAddr(PropertyDefinitions.PNAME_user, getUser()));
-        ref.add(new StringRefAddr(PropertyDefinitions.PNAME_password, this.password));
+        ref.add(new StringRefAddr(PropertyKey.USER.getKeyName(), getUser()));
+        ref.add(new StringRefAddr(PropertyKey.PASSWORD.getKeyName(), this.password));
         ref.add(new StringRefAddr("serverName", getServerName()));
         ref.add(new StringRefAddr("port", "" + getPort()));
         ref.add(new StringRefAddr("databaseName", getDatabaseName()));
@@ -384,9 +385,9 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         //
         ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(jdbcUrlToUse, null);
         Properties urlProps = connUrl.getConnectionArgumentsAsProperties();
-        urlProps.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-        urlProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
-        urlProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
+        urlProps.remove(PropertyKey.HOST.getKeyName());
+        urlProps.remove(PropertyKey.PORT.getKeyName());
+        urlProps.remove(PropertyKey.DBNAME.getKeyName());
         urlProps.stringPropertyNames().stream().forEach(k -> props.setProperty(k, urlProps.getProperty(k)));
 
         return mysqlDriver.connect(jdbcUrlToUse, props);

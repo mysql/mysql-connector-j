@@ -50,6 +50,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
@@ -252,7 +253,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         }
 
         Properties props = getPropertiesFromTestsuiteUrl();
-        String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        String dbname = props.getProperty(PropertyKey.DBNAME.getKeyName());
         if (dbname == null) {
             assertTrue("No database selected", false);
         }
@@ -452,7 +453,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         }
 
         Properties props = getPropertiesFromTestsuiteUrl();
-        String dbname = props.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        String dbname = props.getProperty(PropertyKey.DBNAME.getKeyName());
 
         props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
@@ -1508,11 +1509,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
         args.put("mpl", geoMultiPolygon);
         args.put("gc", geoGeometryCollection);
         args.put("gh", "'s14f5h28wc04jsq093jd'");
-        args.put("js",
-                "'{\"type\": \"GeometryCollection\", \"geometries\": [" + //
-                        "{\"type\": \"Point\", \"coordinates\": [8, 0]}, " + //
-                        "{\"type\": \"LineString\", \"coordinates\": [[0, 0], [8, 0], [4, 6], [0, 0]]}, " + //
-                        "{\"type\": \"Polygon\", \"coordinates\": [[[0, 3], [8, 3], [4, 9], [0, 3]]]}]}'");
+        args.put("js", "'{\"type\": \"GeometryCollection\", \"geometries\": [" + //
+                "{\"type\": \"Point\", \"coordinates\": [8, 0]}, " + //
+                "{\"type\": \"LineString\", \"coordinates\": [[0, 0], [8, 0], [4, 6], [0, 0]]}, " + //
+                "{\"type\": \"Polygon\", \"coordinates\": [[[0, 3], [8, 3], [4, 9], [0, 3]]]}]}'");
 
         final class GisFunction {
             String function;
@@ -1856,8 +1856,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
         final String user = "testAccLck";
         final String pwd = "testAccLck";
         final Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_user, user);
-        props.setProperty(PropertyDefinitions.PNAME_password, pwd);
+        props.setProperty(PropertyKey.USER.getKeyName(), user);
+        props.setProperty(PropertyKey.PASSWORD.getKeyName(), pwd);
 
         for (String accLock : new String[] { "/* default */", "ACCOUNT UNLOCK", "ACCOUNT LOCK" }) {
             createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + pwd + "' " + accLock);
@@ -1921,8 +1921,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
         final String user = "testAccPwdExp";
         final String pwd = "testAccPwdExp";
         final Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_user, user);
-        props.setProperty(PropertyDefinitions.PNAME_password, pwd);
+        props.setProperty(PropertyKey.USER.getKeyName(), user);
+        props.setProperty(PropertyKey.PASSWORD.getKeyName(), pwd);
 
         // CREATE USER syntax.
         for (String accPwdExp : new String[] { "/* default */", "PASSWORD EXPIRE", "PASSWORD EXPIRE DEFAULT", "PASSWORD EXPIRE NEVER",

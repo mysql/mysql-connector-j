@@ -95,6 +95,8 @@ public class SessionFactory {
      * @return a {@link Session} instance.
      */
     public Session getSession(Properties properties) {
-        return new SessionImpl(new HostInfo(properties));
+        ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(ConnectionUrl.Type.XDEVAPI_SESSION.getScheme(), properties);
+
+        return new SessionImpl(connUrl.getMainHost());
     }
 }

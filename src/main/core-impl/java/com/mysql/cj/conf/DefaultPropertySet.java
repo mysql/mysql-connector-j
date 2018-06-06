@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -125,11 +126,11 @@ public class DefaultPropertySet implements PropertySet, Serializable {
             Properties infoCopy = (Properties) props.clone();
 
             // TODO do we need to remove next properties (as it was before)?
-            infoCopy.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
-            infoCopy.remove(PropertyDefinitions.PNAME_user);
-            infoCopy.remove(PropertyDefinitions.PNAME_password);
-            infoCopy.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-            infoCopy.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
+            infoCopy.remove(PropertyKey.HOST.getKeyName());
+            infoCopy.remove(PropertyKey.PORT.getKeyName());
+            infoCopy.remove(PropertyKey.USER.getKeyName());
+            infoCopy.remove(PropertyKey.PASSWORD.getKeyName());
+            infoCopy.remove(PropertyKey.DBNAME.getKeyName());
 
             for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
                 try {

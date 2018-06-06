@@ -73,6 +73,7 @@ import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.Query;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -736,7 +737,7 @@ public class ConnectionTest extends BaseTestCase {
 
         Properties transformedProps = ConnectionUrl.getConnectionUrlInstance(BaseTestCase.dbUrl, props).getConnectionArgumentsAsProperties();
 
-        assertTrue("albequerque".equals(transformedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY)));
+        assertTrue("albequerque".equals(transformedProps.getProperty(PropertyKey.HOST.getKeyName())));
     }
 
     /**
@@ -1098,7 +1099,7 @@ public class ConnectionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.setProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist, "true");
-        props.setProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY, databaseName);
+        props.setProperty(PropertyKey.DBNAME.getKeyName(), databaseName);
 
         Connection con = getConnectionWithProps(props);
 
@@ -1660,19 +1661,19 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testNewHostParsing() throws Exception {
         Properties parsedProps = getPropertiesFromTestsuiteUrl();
-        String host = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-        String port = parsedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
-        String user = parsedProps.getProperty(PropertyDefinitions.PNAME_user);
-        String password = parsedProps.getProperty(PropertyDefinitions.PNAME_password);
-        String database = parsedProps.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        String host = parsedProps.getProperty(PropertyKey.HOST.getKeyName());
+        String port = parsedProps.getProperty(PropertyKey.PORT.getKeyName());
+        String user = parsedProps.getProperty(PropertyKey.USER.getKeyName());
+        String password = parsedProps.getProperty(PropertyKey.PASSWORD.getKeyName());
+        String database = parsedProps.getProperty(PropertyKey.DBNAME.getKeyName());
 
         String newUrl = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s", TestUtils.encodePercent(host), port,
                 user != null ? user : "", password != null ? password : "", database);
 
         Properties props = getHostFreePropertiesFromTestsuiteUrl();
-        props.remove(PropertyDefinitions.PNAME_user);
-        props.remove(PropertyDefinitions.PNAME_password);
-        props.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        props.remove(PropertyKey.USER.getKeyName());
+        props.remove(PropertyKey.PASSWORD.getKeyName());
+        props.remove(PropertyKey.DBNAME.getKeyName());
 
         try {
             getConnectionWithProps(newUrl, props);
@@ -1700,7 +1701,7 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testIsLocal() throws Exception {
         Properties parsedProps = getPropertiesFromTestsuiteUrl();
-        String host = parsedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
+        String host = parsedProps.getProperty(PropertyKey.HOST.getKeyName(), "localhost");
 
         if (host.equals("localhost") || host.equals("127.0.0.1")) {
             // we can actually test this
@@ -1780,8 +1781,8 @@ public class ConnectionTest extends BaseTestCase {
         this.stmt.execute("GRANT ALL ON *.* TO '" + testUser + "'@'%'");
 
         Properties connProps = getHostFreePropertiesFromTestsuiteUrl();
-        connProps.setProperty(PropertyDefinitions.PNAME_user, testUser);
-        connProps.setProperty(PropertyDefinitions.PNAME_password, testUser);
+        connProps.setProperty(PropertyKey.USER.getKeyName(), testUser);
+        connProps.setProperty(PropertyKey.PASSWORD.getKeyName(), testUser);
 
         List<Inet6Address> ipv6List = TestUtils.getIpv6List();
         List<String> ipv6Addrs = ipv6List.stream().map((e) -> e.getHostAddress()).collect(Collectors.toList());
@@ -2148,8 +2149,8 @@ public class ConnectionTest extends BaseTestCase {
         final String password = "testUserReqSSL";
 
         final Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_user, user);
-        props.setProperty(PropertyDefinitions.PNAME_password, password);
+        props.setProperty(PropertyKey.USER.getKeyName(), user);
+        props.setProperty(PropertyKey.PASSWORD.getKeyName(), password);
 
         createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + password + "' REQUIRE SSL");
         this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
@@ -2238,8 +2239,8 @@ public class ConnectionTest extends BaseTestCase {
         final String password = "testUserReqX509";
 
         final Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_user, user);
-        props.setProperty(PropertyDefinitions.PNAME_password, password);
+        props.setProperty(PropertyKey.USER.getKeyName(), user);
+        props.setProperty(PropertyKey.PASSWORD.getKeyName(), password);
 
         createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + password + "' REQUIRE X509");
         this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");

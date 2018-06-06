@@ -95,6 +95,7 @@ import com.mysql.cj.Query;
 import com.mysql.cj.ServerPreparedQuery;
 import com.mysql.cj.Session;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -5710,8 +5711,8 @@ public class StatementRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
 
         Properties parsed = getPropertiesFromTestsuiteUrl();
-        String db = parsed.getProperty(PropertyDefinitions.DBNAME_PROPERTY_KEY);
-        String port = parsed.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String db = parsed.getProperty(PropertyKey.DBNAME.getKeyName());
+        String port = parsed.getProperty(PropertyKey.PORT.getKeyName());
         String host = getPortFreeHostname(props);
 
         UnreliableSocketFactory.flushAllStaticData();

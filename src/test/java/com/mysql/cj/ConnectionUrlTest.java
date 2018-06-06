@@ -29,7 +29,6 @@
 
 package com.mysql.cj;
 
-import static com.mysql.cj.conf.PropertyDefinitions.PRIORITY_PROPERTY_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -59,6 +58,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.WrongArgumentException;
 
 public class ConnectionUrlTest {
@@ -948,8 +948,8 @@ public class ConnectionUrlTest {
             assertEquals(testCase, "host" + hostIdx, hi.getHost());
             assertEquals(testCase, 1111 * hostIdx, hi.getPort());
             assertEquals(testCase, "db", hi.getDatabase());
-            assertTrue(testCase, hi.getHostProperties().containsKey(PRIORITY_PROPERTY_KEY));
-            assertEquals(testCase, Integer.toString(101 - hostIdx), hi.getHostProperties().get(PRIORITY_PROPERTY_KEY));
+            assertTrue(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
+            assertEquals(testCase, Integer.toString(101 - hostIdx), hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()));
             hostIdx++;
         }
 
@@ -964,7 +964,7 @@ public class ConnectionUrlTest {
             assertEquals(testCase, "host" + hostIdx, hi.getHost());
             assertEquals(testCase, 1111 * hostIdx, hi.getPort());
             assertEquals(testCase, "db", hi.getDatabase());
-            assertFalse(testCase, hi.getHostProperties().containsKey(PRIORITY_PROPERTY_KEY));
+            assertFalse(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
             hostIdx++;
         }
 
@@ -979,8 +979,8 @@ public class ConnectionUrlTest {
             assertEquals(testCase, "host" + hostIdx, hi.getHost());
             assertEquals(testCase, 1111 * hostIdx, hi.getPort());
             assertEquals(testCase, "db", hi.getDatabase());
-            assertTrue(testCase, hi.getHostProperties().containsKey(PRIORITY_PROPERTY_KEY));
-            assertEquals(testCase, Integer.toString(101 - hostIdx), hi.getHostProperties().get(PRIORITY_PROPERTY_KEY));
+            assertTrue(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
+            assertEquals(testCase, Integer.toString(101 - hostIdx), hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()));
             hostIdx++;
         }
 
@@ -995,7 +995,7 @@ public class ConnectionUrlTest {
             assertEquals(testCase, "host" + hostIdx, hi.getHost());
             assertEquals(testCase, 1111 * hostIdx, hi.getPort());
             assertEquals(testCase, "db", hi.getDatabase());
-            assertFalse(testCase, hi.getHostProperties().containsKey(PRIORITY_PROPERTY_KEY));
+            assertFalse(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
             hostIdx++;
         }
 

@@ -38,7 +38,7 @@ import javax.naming.Reference;
 import javax.naming.spi.ObjectFactory;
 
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 
 /**
  * Factory class for MysqlDataSource objects
@@ -85,13 +85,13 @@ public class MysqlDataSourceFactory implements ObjectFactory {
 
             dataSource.setPort(portNumber);
 
-            String user = nullSafeRefAddrStringGet(PropertyDefinitions.PNAME_user, ref);
+            String user = nullSafeRefAddrStringGet(PropertyKey.USER.getKeyName(), ref);
 
             if (user != null) {
                 dataSource.setUser(user);
             }
 
-            String password = nullSafeRefAddrStringGet(PropertyDefinitions.PNAME_password, ref);
+            String password = nullSafeRefAddrStringGet(PropertyKey.PASSWORD.getKeyName(), ref);
 
             if (password != null) {
                 dataSource.setPassword(password);

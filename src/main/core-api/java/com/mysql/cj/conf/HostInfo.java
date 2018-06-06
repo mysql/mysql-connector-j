@@ -29,7 +29,6 @@
 
 package com.mysql.cj.conf;
 
-import static com.mysql.cj.conf.PropertyDefinitions.DBNAME_PROPERTY_KEY;
 import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
 
 import java.util.Collections;
@@ -37,6 +36,8 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 
 /**
  * This class holds the following MySQL host information:
@@ -133,12 +134,19 @@ public class HostInfo implements DatabaseUrlContainer {
         }
     }
 
+    /**
+     * Constructs a {@link HostInfo} instance initialized with the provided properties.
+     * 
+     * @param properties
+     *            a connection arguments map.
+     */
     public HostInfo(Properties props) {
         this.originalUrl = null;
-        this.host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
-        this.port = Integer.parseInt(props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
-        this.user = props.getProperty(PropertyDefinitions.PNAME_user);
-        this.password = props.getProperty(PropertyDefinitions.PNAME_password);
+
+        this.host = props.getProperty(PropertyKey.HOST.getKeyName());
+        this.port = Integer.parseInt(props.getProperty(PropertyKey.PORT.getKeyName()));
+        this.user = props.getProperty(PropertyKey.USER.getKeyName());
+        this.password = props.getProperty(PropertyKey.PASSWORD.getKeyName());
         this.isPasswordless = this.password == null;
         Enumeration<Object> keyEnum = props.keys();
         while (keyEnum.hasMoreElements()) {
@@ -229,7 +237,7 @@ public class HostInfo implements DatabaseUrlContainer {
      * @return the database name
      */
     public String getDatabase() {
-        String database = this.hostProperties.get(DBNAME_PROPERTY_KEY);
+        String database = this.hostProperties.get(PropertyKey.DBNAME.getKeyName());
         return isNullOrEmpty(database) ? "" : database;
     }
 
@@ -242,10 +250,10 @@ public class HostInfo implements DatabaseUrlContainer {
     public Properties exposeAsProperties() {
         Properties props = new Properties();
         this.hostProperties.entrySet().stream().forEach(e -> props.setProperty(e.getKey(), e.getValue() == null ? "" : e.getValue()));
-        props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY, getHost());
-        props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, String.valueOf(getPort()));
-        props.setProperty(PropertyDefinitions.PNAME_user, getUser());
-        props.setProperty(PropertyDefinitions.PNAME_password, getPassword());
+        props.setProperty(PropertyKey.HOST.getKeyName(), getHost());
+        props.setProperty(PropertyKey.PORT.getKeyName(), String.valueOf(getPort()));
+        props.setProperty(PropertyKey.USER.getKeyName(), getUser());
+        props.setProperty(PropertyKey.PASSWORD.getKeyName(), getPassword());
         return props;
     }
 

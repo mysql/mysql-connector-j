@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.DriverManager;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +46,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
@@ -301,11 +301,11 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      */
     protected void collectProperties(ConnectionUrlParser connStrParser, Properties info) {
         // Fill in the properties from the connection string.
-        this.properties.putAll(connStrParser.getProperties());
+        connStrParser.getProperties().entrySet().stream().forEach(e -> this.properties.put(PropertyKey.normalizeCase(e.getKey()), e.getValue()));
 
         // Properties passed in override the ones from the connection string.
         if (info != null) {
-            info.stringPropertyNames().stream().forEach(k -> this.properties.put(k, info.getProperty(k)));
+            info.stringPropertyNames().stream().forEach(k -> this.properties.put(PropertyKey.normalizeCase(k), info.getProperty(k)));
         }
 
         // Collect properties from additional sources. 
@@ -360,7 +360,8 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         String configFiles = props.get(PropertyDefinitions.PNAME_useConfigs);
         if (!isNullOrEmpty(configFiles)) {
             Properties configProps = getPropertiesFromConfigFiles(configFiles);
-            configProps.stringPropertyNames().stream().filter(k -> !props.containsKey(k)).forEach(k -> props.put(k, configProps.getProperty(k)));
+            configProps.stringPropertyNames().stream().map(PropertyKey::normalizeCase).filter(k -> !props.containsKey(k))
+                    .forEach(k -> props.put(k, configProps.getProperty(k)));
         }
     }
 
@@ -417,36 +418,39 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      * @return a new {@link HostInfo} with all required data
      */
     protected HostInfo fixHostInfo(HostInfo hi) {
-        Map<String, String> hostProps = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        Map<String, String> hostProps = new HashMap<>();
 
-        hostProps.putAll(this.properties); // Add global connection arguments.
-        hostProps.putAll(hi.getHostProperties()); // Add/override host specific connection arguments.
-        hostProps.put(PropertyDefinitions.DBNAME_PROPERTY_KEY, getDatabase()); // Add the database name
+        // Add global connection arguments.
+        hostProps.putAll(this.properties);
+        // Add/override host specific connection arguments.
+        hi.getHostProperties().entrySet().stream().forEach(e -> hostProps.put(PropertyKey.normalizeCase(e.getKey()), e.getValue()));
+        // Add the database name
+        hostProps.put(PropertyKey.DBNAME.getKeyName(), getDatabase());
 
-        hostProps = preprocessPerTypeHostProperties(hostProps);
+        preprocessPerTypeHostProperties(hostProps);
 
-        String host = hostProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
+        String host = hostProps.remove(PropertyKey.HOST.getKeyName());
         if (!isNullOrEmpty(hi.getHost())) {
             host = hi.getHost();
         } else if (isNullOrEmpty(host)) {
             host = getDefaultHost();
         }
 
-        String portAsString = hostProps.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
+        String portAsString = hostProps.remove(PropertyKey.PORT.getKeyName());
         int port = hi.getPort();
         if (port == -1 && !isNullOrEmpty(portAsString)) {
             try {
                 port = Integer.valueOf(portAsString);
             } catch (NumberFormatException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
-                        Messages.getString("ConnectionString.7", new Object[] { hostProps.get(PropertyDefinitions.PORT_PROPERTY_KEY) }), e);
+                        Messages.getString("ConnectionString.7", new Object[] { hostProps.get(PropertyKey.PORT.getKeyName()) }), e);
             }
         }
         if (port == -1) {
             port = getDefaultPort();
         }
 
-        String user = hostProps.remove(PropertyDefinitions.PNAME_user);
+        String user = hostProps.remove(PropertyKey.USER.getKeyName());
         if (!isNullOrEmpty(hi.getUser())) {
             user = hi.getUser();
         } else if (isNullOrEmpty(user)) {
@@ -454,7 +458,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         }
 
         boolean isPasswordless = hi.isPasswordless();
-        String password = hostProps.remove(PropertyDefinitions.PNAME_password);
+        String password = hostProps.remove(PropertyKey.PASSWORD.getKeyName());
         if (!isPasswordless) {
             password = hi.getPassword();
         } else if (password == null) {
@@ -465,7 +469,6 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         }
 
         expandPropertiesFromConfigFiles(hostProps);
-        fixKeysCase(hostProps);
         fixProtocolDependencies(hostProps);
 
         return buildHostInfo(host, port, user, password, isPasswordless, hostProps);
@@ -479,8 +482,8 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      * @return
      *         the processed host properties map
      */
-    protected Map<String, String> preprocessPerTypeHostProperties(Map<String, String> hostProps) {
-        return hostProps;
+    protected void preprocessPerTypeHostProperties(Map<String, String> hostProps) {
+        // To be overridden in subclasses if needed.
     }
 
     /**
@@ -507,7 +510,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      * @return the default user
      */
     public String getDefaultUser() {
-        String user = this.properties.get(PropertyDefinitions.PNAME_user);
+        String user = this.properties.get(PropertyKey.USER.getKeyName());
         return isNullOrEmpty(user) ? "" : user;
     }
 
@@ -518,23 +521,8 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      * @return the default password
      */
     public String getDefaultPassword() {
-        String password = this.properties.get(PropertyDefinitions.PNAME_password);
+        String password = this.properties.get(PropertyKey.PASSWORD.getKeyName());
         return isNullOrEmpty(password) ? "" : password;
-    }
-
-    /**
-     * Fixes the case for alternate host syntax main properties.
-     * 
-     * @param hostProps
-     *            the host properties map to fix
-     */
-    protected void fixKeysCase(Map<String, String> hostProps) {
-        for (String key : Arrays.asList(PropertyDefinitions.PROTOCOL_PROPERTY_KEY, PropertyDefinitions.PATH_PROPERTY_KEY, PropertyDefinitions.TYPE_PROPERTY_KEY,
-                PropertyDefinitions.ADDRESS_PROPERTY_KEY, PropertyDefinitions.PRIORITY_PROPERTY_KEY)) {
-            if (hostProps.containsKey(key)) {
-                hostProps.put(key, hostProps.remove(key));
-            }
-        }
     }
 
     /**
@@ -544,13 +532,13 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      *            the host properties map to fix
      */
     protected void fixProtocolDependencies(Map<String, String> hostProps) {
-        String protocol = hostProps.get(PropertyDefinitions.PROTOCOL_PROPERTY_KEY);
+        String protocol = hostProps.get(PropertyKey.PROTOCOL.getKeyName());
         if (!isNullOrEmpty(protocol) && protocol.equalsIgnoreCase("PIPE")) {
             if (!hostProps.containsKey(PropertyDefinitions.PNAME_socketFactory)) {
                 hostProps.put(PropertyDefinitions.PNAME_socketFactory, "com.mysql.cj.protocol.NamedPipeSocketFactory");
             }
-            if (hostProps.containsKey(PropertyDefinitions.PATH_PROPERTY_KEY) && !hostProps.containsKey(PropertyDefinitions.NAMED_PIPE_PROP_NAME)) {
-                hostProps.put(PropertyDefinitions.NAMED_PIPE_PROP_NAME, hostProps.get(PropertyDefinitions.PATH_PROPERTY_KEY));
+            if (hostProps.containsKey(PropertyKey.PATH.getKeyName()) && !hostProps.containsKey(PropertyDefinitions.NAMED_PIPE_PROP_NAME)) {
+                hostProps.put(PropertyDefinitions.NAMED_PIPE_PROP_NAME, hostProps.get(PropertyKey.PATH.getKeyName()));
             }
         }
     }
@@ -580,8 +568,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      * @return the database name
      */
     public String getDatabase() {
-        return this.properties.containsKey(PropertyDefinitions.DBNAME_PROPERTY_KEY) ? this.properties.get(PropertyDefinitions.DBNAME_PROPERTY_KEY)
-                : this.originalDatabase;
+        return this.properties.containsKey(PropertyKey.DBNAME.getKeyName()) ? this.properties.get(PropertyKey.DBNAME.getKeyName()) : this.originalDatabase;
     }
 
     /**
@@ -671,30 +658,31 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
             Properties props = new Properties();
             props.putAll(hostProps);
 
-            props.setProperty(PropertyDefinitions.HOST_PROPERTY_KEY, host);
-            props.setProperty(PropertyDefinitions.PORT_PROPERTY_KEY, String.valueOf(port));
-            props.setProperty(PropertyDefinitions.PNAME_user, user);
-            props.setProperty(PropertyDefinitions.PNAME_password, password);
+            props.setProperty(PropertyKey.HOST.getKeyName(), host);
+            props.setProperty(PropertyKey.PORT.getKeyName(), String.valueOf(port));
+            props.setProperty(PropertyKey.USER.getKeyName(), user);
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), password);
 
             Properties transformedProps = this.propertiesTransformer.transformProperties(props);
 
-            host = transformedProps.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY);
+            host = transformedProps.getProperty(PropertyKey.PORT.getKeyName());
             try {
-                port = Integer.parseInt(transformedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY));
+                port = Integer.parseInt(transformedProps.getProperty(PropertyKey.PORT.getKeyName()));
             } catch (NumberFormatException e) {
-                throw ExceptionFactory.createException(WrongArgumentException.class,
-                        Messages.getString("ConnectionString.8",
-                                new Object[] { PropertyDefinitions.PORT_PROPERTY_KEY, transformedProps.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY) }),
-                        e);
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionString.8",
+                        new Object[] { PropertyKey.PORT.getKeyName(), transformedProps.getProperty(PropertyKey.PORT.getKeyName()) }), e);
             }
-            user = transformedProps.getProperty(PropertyDefinitions.PNAME_user);
-            password = transformedProps.getProperty(PropertyDefinitions.PNAME_password);
+            user = transformedProps.getProperty(PropertyKey.USER.getKeyName());
+            password = transformedProps.getProperty(PropertyKey.PASSWORD.getKeyName());
 
-            List<String> surplusKeys = Arrays.asList(PropertyDefinitions.HOST_PROPERTY_KEY, PropertyDefinitions.PORT_PROPERTY_KEY,
-                    PropertyDefinitions.PNAME_user, PropertyDefinitions.PNAME_password);
             Map<String, String> transformedHostProps = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-            transformedProps.stringPropertyNames().stream().filter(k -> !surplusKeys.contains(k))
-                    .forEach(k -> transformedHostProps.put(k, transformedProps.getProperty(k)));
+            transformedProps.stringPropertyNames().stream().forEach(k -> transformedHostProps.put(k, transformedProps.getProperty(k)));
+            // Remove surplus keys.
+            transformedHostProps.remove(PropertyKey.HOST.getKeyName());
+            transformedHostProps.remove(PropertyKey.PORT.getKeyName());
+            transformedHostProps.remove(PropertyKey.USER.getKeyName());
+            transformedHostProps.remove(PropertyKey.PASSWORD.getKeyName());
+
             hostProps = transformedHostProps;
         }
 

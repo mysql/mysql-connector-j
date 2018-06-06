@@ -38,6 +38,7 @@ import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.protocol.Resultset;
 
@@ -107,8 +108,8 @@ public class CharsetRegressionTest extends BaseTestCase {
                         ? "ALTER USER 'Bug72630User'@'%' IDENTIFIED BY 'pwd'" : "set password for 'Bug72630User'@'%' = PASSWORD('pwd')");
 
                 final Properties props = new Properties();
-                props.setProperty(PropertyDefinitions.PNAME_user, "Bug72630User");
-                props.setProperty(PropertyDefinitions.PNAME_password, "pwd");
+                props.setProperty(PropertyKey.USER.getKeyName(), "Bug72630User");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
                 props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "NonexistentEncoding");
 
                 assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'", new Callable<Void>() {

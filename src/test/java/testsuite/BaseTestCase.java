@@ -58,6 +58,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.ha.ReplicationConnection;
@@ -465,8 +466,8 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected void removeHostRelatedProps(Properties props) {
-        props.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
-        props.remove(PropertyDefinitions.PORT_PROPERTY_KEY);
+        props.remove(PropertyKey.HOST.getKeyName());
+        props.remove(PropertyKey.PORT.getKeyName());
     }
 
     protected String getHostFromTestsuiteUrl() throws SQLException {
@@ -491,9 +492,9 @@ public abstract class BaseTestCase extends TestCase {
 
     protected String getNoDbUrl(String url) throws SQLException {
         Properties props = getPropertiesFromUrl(ConnectionUrl.getConnectionUrlInstance(url, null));
-        final String host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY, "localhost");
-        final String port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY, "3306");
-        props.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
+        final String host = props.getProperty(PropertyKey.HOST.getKeyName(), "localhost");
+        final String port = props.getProperty(PropertyKey.PORT.getKeyName(), "3306");
+        props.remove(PropertyKey.DBNAME.getKeyName());
         removeHostRelatedProps(props);
 
         final StringBuilder urlBuilder = new StringBuilder("jdbc:mysql://").append(host).append(":").append(port).append("/?");
@@ -1107,7 +1108,7 @@ public abstract class BaseTestCase extends TestCase {
 
     protected String getPort(Properties props) throws SQLException {
         String port;
-        if (props == null || (port = props.getProperty(PropertyDefinitions.PORT_PROPERTY_KEY)) == null) {
+        if (props == null || (port = props.getProperty(PropertyKey.PORT.getKeyName())) == null) {
             return String.valueOf(mainConnectionUrl.getMainHost().getPort());
         }
         return port;
@@ -1115,7 +1116,7 @@ public abstract class BaseTestCase extends TestCase {
 
     protected String getPortFreeHostname(Properties props) throws SQLException {
         String host;
-        if (props == null || (host = props.getProperty(PropertyDefinitions.HOST_PROPERTY_KEY)) == null) {
+        if (props == null || (host = props.getProperty(PropertyKey.HOST.getKeyName())) == null) {
             return mainConnectionUrl.getMainHost().getHost();
         }
         return ConnectionUrlParser.parseHostPortPair(host).left;

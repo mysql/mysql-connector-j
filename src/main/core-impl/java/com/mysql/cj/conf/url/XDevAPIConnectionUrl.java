@@ -29,10 +29,6 @@
 
 package com.mysql.cj.conf.url;
 
-import static com.mysql.cj.conf.PropertyDefinitions.ADDRESS_PROPERTY_KEY;
-import static com.mysql.cj.conf.PropertyDefinitions.HOST_PROPERTY_KEY;
-import static com.mysql.cj.conf.PropertyDefinitions.PORT_PROPERTY_KEY;
-import static com.mysql.cj.conf.PropertyDefinitions.PRIORITY_PROPERTY_KEY;
 import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
 import static com.mysql.cj.util.StringUtils.safeTrim;
 
@@ -45,6 +41,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.ConnectionUrlParser.Pair;
 import com.mysql.cj.conf.HostInfo;
+import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 
@@ -78,20 +75,20 @@ public class XDevAPIConnectionUrl extends ConnectionUrl {
                 first = false;
                 user = hi.getUser();
                 password = hi.getPassword();
-                hasPriority = hi.getHostProperties().containsKey(PRIORITY_PROPERTY_KEY);
+                hasPriority = hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName());
             } else {
                 if (!user.equals(hi.getUser()) || !password.equals(hi.getPassword())) {
                     throw ExceptionFactory.createException(WrongArgumentException.class,
                             Messages.getString("ConnectionString.14", new Object[] { Type.XDEVAPI_SESSION.getScheme() }));
                 }
-                if (hasPriority ^ hi.getHostProperties().containsKey(PRIORITY_PROPERTY_KEY)) {
+                if (hasPriority ^ hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName())) {
                     throw ExceptionFactory.createException(WrongArgumentException.class,
                             Messages.getString("ConnectionString.15", new Object[] { Type.XDEVAPI_SESSION.getScheme() }));
                 }
             }
             if (hasPriority) {
                 try {
-                    int priority = Integer.parseInt(hi.getProperty(PRIORITY_PROPERTY_KEY));
+                    int priority = Integer.parseInt(hi.getProperty(PropertyKey.PRIORITY.getKeyName()));
                     if (priority < 0 || priority > 100) {
                         throw ExceptionFactory.createException(WrongArgumentException.class,
                                 Messages.getString("ConnectionString.16", new Object[] { Type.XDEVAPI_SESSION.getScheme() }));
@@ -105,7 +102,8 @@ public class XDevAPIConnectionUrl extends ConnectionUrl {
 
         // Sort the hosts list according to their priority settings.
         if (hasPriority) {
-            this.hosts.sort(Comparator.<HostInfo, Integer> comparing(hi -> Integer.parseInt(hi.getHostProperties().get(PRIORITY_PROPERTY_KEY))).reversed());
+            this.hosts.sort(
+                    Comparator.<HostInfo, Integer> comparing(hi -> Integer.parseInt(hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()))).reversed());
         }
     }
 
@@ -115,20 +113,19 @@ public class XDevAPIConnectionUrl extends ConnectionUrl {
     }
 
     @Override
-    protected Map<String, String> preprocessPerTypeHostProperties(Map<String, String> hostProps) {
-        if (hostProps.containsKey(ADDRESS_PROPERTY_KEY)) {
-            String address = hostProps.get(ADDRESS_PROPERTY_KEY);
+    protected void preprocessPerTypeHostProperties(Map<String, String> hostProps) {
+        if (hostProps.containsKey(PropertyKey.ADDRESS.getKeyName())) {
+            String address = hostProps.get(PropertyKey.ADDRESS.getKeyName());
             Pair<String, Integer> hostPortPair = ConnectionUrlParser.parseHostPortPair(address);
             String host = safeTrim(hostPortPair.left);
             Integer port = hostPortPair.right;
-            if (!isNullOrEmpty(host) && !hostProps.containsKey(HOST_PROPERTY_KEY)) {
-                hostProps.put(HOST_PROPERTY_KEY, host);
+            if (!isNullOrEmpty(host) && !hostProps.containsKey(PropertyKey.HOST.getKeyName())) {
+                hostProps.put(PropertyKey.HOST.getKeyName(), host);
             }
-            if (port != -1 && !hostProps.containsKey(PORT_PROPERTY_KEY)) {
-                hostProps.put(PORT_PROPERTY_KEY, port.toString());
+            if (port != -1 && !hostProps.containsKey(PropertyKey.PORT.getKeyName())) {
+                hostProps.put(PropertyKey.PORT.getKeyName(), port.toString());
             }
         }
-        return hostProps;
     }
 
     @Override
