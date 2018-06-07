@@ -542,14 +542,25 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             };
 
             /*
+             * Access denied (ER_ACCESS_DENIED_ERROR) error message from servers up to version 8.0.11.
+             * In MySQL 8.0.12 this message changed due to fix for Bug#27675699 - FAILED AUTHENTICATION AT X PLUGIN ALWAYS RETURNS ER_ACCESS_DENIED_ERROR.
+             * This variable may be redefined as needed along the test.
+             */
+            String accessDeniedErrMsg = "ERROR 1045 \\(HY000\\) Invalid user or password";
+
+            /*
              * Authenticate using (default) TLS first. As per MySQL 8.0.4 X Plugin this is required so that SHA2[56] logins get cached in SHA2_MEMORY.
              */
             Session testSession = null;
             Properties props = new Properties(this.sslFreeTestProperties);
 
             // With default auth mechanism for secure connections (PLAIN).
+
+            // *** User: mysqlnative; Auth: default.
             props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
+
+            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
@@ -564,9 +575,11 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.close();
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                // *** User: testAuthMechSha256; Auth: default.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
@@ -582,9 +595,11 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             }
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                // *** User: testAuthMechCachingSha2; Auth: default.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
@@ -600,10 +615,13 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             }
 
             // Forcing an auth mechanism.
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+
+            // *** User: testAuthMechNative; Auth: PLAIN.
             props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
             props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+
+            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
@@ -617,8 +635,10 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             assertUser("testAuthMechNative", testSession);
             testSession.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            // *** User: testAuthMechNative; Auth: MYSQL41.
             props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+
+            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
@@ -633,8 +653,10 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.close();
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                // *** User: testAuthMechNative; Auth: SHA256_MEMORY.
                 props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -650,33 +672,42 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             }
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                // *** User: testAuthMechSha256; Auth: PLAIN.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
                 props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
-                testSession = this.fact.getSession(props);
-                assertSecureSession(testSession);
-                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
-                assertUser("testAuthMechSha256", testSession);
-                testSession.close();
-
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
-                testSession = this.fact.getSession(props);
-                assertSecureSession(testSession);
-                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
-                assertUser("testAuthMechSha256", testSession);
-                testSession.close();
 
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
-                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                testSession = this.fact.getSession(props);
+                assertSecureSession(testSession);
+                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
+                assertUser("testAuthMechSha256", testSession);
+                testSession.close();
 
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
-                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                testSession = this.fact.getSession(props);
+                assertSecureSession(testSession);
+                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
+                assertUser("testAuthMechSha256", testSession);
+                testSession.close();
+
+                // *** User: testAuthMechSha256; Auth: MYSQL41.
+                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.12"))) {
+                    accessDeniedErrMsg = "ERROR 1045 \\(HY000\\) Access denied for user 'testAuthMechSha256'@.*";
+                }
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                    // *** User: testAuthMechSha256; Auth: SHA256_MEMORY.
                     props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+
+                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
                     testSession = this.fact.getSession(props);
                     assertSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -693,33 +724,42 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             }
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                // *** User: testAuthMechCachingSha2; Auth: PLAIN.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
                 props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
-                testSession = this.fact.getSession(props);
-                assertSecureSession(testSession);
-                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
-                assertUser("testAuthMechCachingSha2", testSession);
-                testSession.close();
-
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
-                testSession = this.fact.getSession(props);
-                assertSecureSession(testSession);
-                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
-                assertUser("testAuthMechCachingSha2", testSession);
-                testSession.close();
 
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
-                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                testSession = this.fact.getSession(props);
+                assertSecureSession(testSession);
+                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
+                assertUser("testAuthMechCachingSha2", testSession);
+                testSession.close();
 
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
-                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                testSession = this.fact.getSession(props);
+                assertSecureSession(testSession);
+                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
+                assertUser("testAuthMechCachingSha2", testSession);
+                testSession.close();
+
+                // *** User: testAuthMechCachingSha2; Auth: MYSQL41.
+                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.12"))) {
+                    accessDeniedErrMsg = "ERROR 1045 \\(HY000\\) Access denied for user 'testAuthMechCachingSha2'@.*";
+                }
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                    // User: testAuthMechCachingSha2; Auth: SHA256_MEMORY.
                     props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+
+                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
                     testSession = this.fact.getSession(props);
                     assertSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -735,10 +775,12 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 }
             }
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            // *** User: external; Auth: EXTERNAL.
             props.setProperty(PropertyKey.USER.getKeyName(), "external");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "external");
             props.setProperty(PropertyDefinitions.PNAME_auth, "EXTERNAL");
+
+            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
             assertThrows(XProtocolError.class, "ERROR 1251 \\(HY000\\) Invalid authentication method EXTERNAL", () -> this.fact.getSession(props));
 
             props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
@@ -752,9 +794,12 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
 
             // With default auth mechanism for non-secure connections (MYSQL41|SHA2_MEMORY).
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+
+            // *** User: testAuthMechNative; Auth: default.
             props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
+
+            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
             assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
@@ -769,9 +814,11 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.close();
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_PASSWORD requires secure connections in MySQL 8.0.3 and below.
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                // *** User: testAuthMechSha256; Auth: default.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -787,9 +834,11 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             }
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // CACHING_SHA2_PASSWORD requires secure connections in MySQL 8.0.3 and below.
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                // *** User: testAuthMechCachingSha2; Auth: default.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -805,17 +854,22 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             }
 
             // Forcing an auth mechanism.
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+
+            // *** User: testAuthMechNative; Auth: PLAIN.
             props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
             props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+
+            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
             assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
             props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
             assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            // *** User: testAuthMechNative; Auth: MYSQL41.
             props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+
+            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
             assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
@@ -830,8 +884,10 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.close();
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                // *** User: testAuthMechNative; Auth: SHA256_MEMORY.
                 props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -847,25 +903,34 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             }
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                // *** User: testAuthMechSha256; Auth: PLAIN.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
                 props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
-                assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
-
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
-                assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
-                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
-                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
+
+                // *** User: testAuthMechSha256; Auth: MYSQL41.
+                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.12"))) {
+                    accessDeniedErrMsg = "ERROR 1045 \\(HY000\\) Access denied for user 'testAuthMechSha256'@.*";
+                }
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                    // *** User: testAuthMechSha256; Auth: SHA256_MEMORY.
                     props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+
+                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
                     testSession = this.fact.getSession(props);
                     assertNonSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -882,25 +947,34 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             }
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                // *** User: testAuthMechCachingSha2; Auth: PLAIN.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
                 props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
-                assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
-
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
-                assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
-                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
                 props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
-                assertThrows(XProtocolError.class, "ERROR 1045 \\(HY000\\) Invalid user or password", () -> this.fact.getSession(props)); // Auth mech mismatch.
+                assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
+
+                // *** User: testAuthMechCachingSha2; Auth: MYSQL41.
+                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.12"))) {
+                    accessDeniedErrMsg = "ERROR 1045 \\(HY000\\) Access denied for user 'testAuthMechCachingSha2'@.*";
+                }
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
+
+                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                    // *** User: testAuthMechCachingSha2; Auth: SHA256_MEMORY.
                     props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+
+                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
                     testSession = this.fact.getSession(props);
                     assertNonSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -916,10 +990,12 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 }
             }
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            // *** User: external; Auth: EXTERNAL.
             props.setProperty(PropertyKey.USER.getKeyName(), "external");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "external");
             props.setProperty(PropertyDefinitions.PNAME_auth, "EXTERNAL");
+
+            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
             assertThrows(XProtocolError.class, "ERROR 1251 \\(HY000\\) Invalid authentication method EXTERNAL", () -> this.fact.getSession(props));
 
             props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
