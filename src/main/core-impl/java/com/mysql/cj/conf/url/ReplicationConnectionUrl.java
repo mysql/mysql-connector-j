@@ -114,7 +114,7 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
      *            the properties common to all hosts
      */
     public ReplicationConnectionUrl(List<HostInfo> masters, List<HostInfo> slaves, Map<String, String> properties) {
-        this.originalConnStr = ConnectionUrl.Type.REPLICATION_CONNECTION.getProtocol() + "//**internally_generated**" + System.currentTimeMillis() + "**";
+        this.originalConnStr = ConnectionUrl.Type.REPLICATION_CONNECTION.getScheme() + "//**internally_generated**" + System.currentTimeMillis() + "**";
         this.type = ConnectionUrl.Type.REPLICATION_CONNECTION;
         this.hosts.addAll(masters);
         this.hosts.addAll(slaves);

@@ -58,7 +58,7 @@ public class SessionFactory {
      */
     private ConnectionUrl parseUrl(String url) {
         ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(url, null);
-        if (connUrl.getType() != ConnectionUrl.Type.XDEVAPI_SESSION) {
+        if (connUrl == null || connUrl.getType() != ConnectionUrl.Type.XDEVAPI_SESSION) {
             throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "Initialization via URL failed for \"" + url + "\"");
         }
         return connUrl;

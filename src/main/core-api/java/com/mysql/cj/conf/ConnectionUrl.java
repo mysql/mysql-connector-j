@@ -50,6 +50,7 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
+import com.mysql.cj.exceptions.UnsupportedConnectionStringException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.util.LRUCache;
 import com.mysql.cj.util.Util;
@@ -94,7 +95,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
     }
 
     /**
-     * The database URL type which is determined by the protocol section of the connection string.
+     * The database URL type which is determined by the scheme section of the connection string.
      */
     public enum Type {
         SINGLE_CONNECTION("jdbc:mysql:", HostsCardinality.SINGLE), //
@@ -103,16 +104,16 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         REPLICATION_CONNECTION("jdbc:mysql:replication:", HostsCardinality.ONE_OR_MORE), //
         XDEVAPI_SESSION("mysqlx:", HostsCardinality.ONE_OR_MORE);
 
-        private String protocol;
+        private String scheme;
         private HostsCardinality cardinality;
 
-        private Type(String protocol, HostsCardinality cardinality) {
-            this.protocol = protocol;
+        private Type(String scheme, HostsCardinality cardinality) {
+            this.scheme = scheme;
             this.cardinality = cardinality;
         }
 
-        public String getProtocol() {
-            return this.protocol;
+        public String getScheme() {
+            return this.scheme;
         }
 
         public HostsCardinality getCardinality() {
@@ -120,26 +121,44 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         }
 
         /**
-         * Returns the {@link Type} corresponding to the given protocol and number of hosts, if any. Otherwise throws an {@link IllegalArgumentException}.
-         * Calling this method with the argument n lower than 0 skips the hosts cardinality validation. This should be used for URL protocol validation only as
-         * the returned {@link Type} won't won't reliable represent the database URL type.
+         * Returns the {@link Type} corresponding to the given scheme and number of hosts, if any.
+         * Otherwise throws an {@link UnsupportedConnectionStringException}.
+         * Calling this method with the argument n lower than 0 skips the hosts cardinality validation.
          * 
-         * @param protocol
-         *            the protocol
+         * @param scheme
+         *            one of supported schemes
          * @param n
          *            the number of hosts in the database URL
          * @return the {@link Type} corresponding to the given protocol and number of hosts
          */
-        public static Type fromValue(String protocol, int n) {
+        public static Type fromValue(String scheme, int n) {
             for (Type t : values()) {
-                if (t.getProtocol().equalsIgnoreCase(protocol) && (n < 0 || t.getCardinality().assertSize(n))) {
+                if (t.getScheme().equalsIgnoreCase(scheme) && (n < 0 || t.getCardinality().assertSize(n))) {
                     return t;
                 }
             }
             if (n < 0) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionString.5", new Object[] { protocol }));
+                throw ExceptionFactory.createException(UnsupportedConnectionStringException.class,
+                        Messages.getString("ConnectionString.5", new Object[] { scheme }));
             }
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionString.6", new Object[] { protocol, n }));
+            throw ExceptionFactory.createException(UnsupportedConnectionStringException.class,
+                    Messages.getString("ConnectionString.6", new Object[] { scheme, n }));
+        }
+
+        /**
+         * Checks if the given scheme corresponds to one of the connection types the driver supports.
+         * 
+         * @param scheme
+         *            scheme part from connection string, like "jdbc:mysql:"
+         * @return true if the given scheme is supported by driver
+         */
+        public static boolean isSupported(String scheme) {
+            for (Type t : values()) {
+                if (t.getScheme().equalsIgnoreCase(scheme)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -177,13 +196,6 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
                 connectionString = connectionUrlCache.get(connStringCacheKey);
                 if (connectionString == null) {
                     ConnectionUrlParser connStrParser = ConnectionUrlParser.parseConnectionString(connString);
-                    try {
-                        Type.fromValue(connStrParser.getScheme(), -1);
-                    } catch (WrongArgumentException e) {
-                        return new ConnectionUrl(connString) {
-                        };
-                    }
-
                     switch (Type.fromValue(connStrParser.getScheme(), connStrParser.getHosts().size())) {
                         case SINGLE_CONNECTION:
                             connectionString = (ConnectionUrl) Util.getInstance("com.mysql.cj.conf.url.SingleConnectionUrl",
@@ -206,8 +218,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
                                     new Class<?>[] { ConnectionUrlParser.class, Properties.class }, new Object[] { connStrParser, info }, null);
                             break;
                         default:
-                            return new ConnectionUrl(connString) {
-                            };
+                            return null; // should not happen
                     }
                     connectionUrlCache.put(connStringCacheKey, connectionString);
                 }
@@ -245,16 +256,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      * @return true if this class is able to process the given URL, false otherwise
      */
     public static boolean acceptsUrl(String connString) {
-        if (connString == null) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionString.0"));
-        }
-        try {
-            ConnectionUrlParser connStringParser = ConnectionUrlParser.parseConnectionString(connString);
-            Type.fromValue(connStringParser.getScheme(), -1);
-        } catch (Throwable t) {
-            return false;
-        }
-        return true;
+        return ConnectionUrlParser.isConnectionStringSupported(connString);
     }
 
     /**

@@ -51,6 +51,7 @@ import com.mysql.cj.conf.url.ReplicationConnectionUrl;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.UnableToConnectException;
+import com.mysql.cj.exceptions.UnsupportedConnectionStringException;
 import com.mysql.cj.jdbc.ha.FailoverConnectionProxy;
 import com.mysql.cj.jdbc.ha.LoadBalancedConnectionProxy;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
@@ -191,8 +192,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
     public java.sql.Connection connect(String url, Properties info) throws SQLException {
 
         try {
-            ConnectionUrl conStr = ConnectionUrl.getConnectionUrlInstance(url, info);
-            if (conStr.getType() == null) {
+            if (!ConnectionUrl.acceptsUrl(url)) {
                 /*
                  * According to JDBC spec:
                  * The driver should return "null" if it realizes it is the wrong kind of driver to connect to the given URL. This will be common, as when the
@@ -201,6 +201,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
                 return null;
             }
 
+            ConnectionUrl conStr = ConnectionUrl.getConnectionUrlInstance(url, info);
             switch (conStr.getType()) {
                 case SINGLE_CONNECTION:
                     return com.mysql.cj.jdbc.ConnectionImpl.getInstance(conStr.getMainHost());
@@ -217,6 +218,10 @@ public class NonRegisteringDriver implements java.sql.Driver {
                 default:
                     return null;
             }
+
+        } catch (UnsupportedConnectionStringException e) {
+            // when Connector/J can't handle this connection string the Driver must return null
+            return null;
 
         } catch (CJException ex) {
             throw ExceptionFactory.createException(UnableToConnectException.class,

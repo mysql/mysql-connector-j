@@ -980,8 +980,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             HostInfo hostInfo = mainConnectionUrl.getMainHost();
             String replUrl = String.format("%1$s//address=(host=%2$s)(port=%3$d),address=(host=%2$s)(port=%3$d)(isSlave=true)/%4$s",
-                    ConnectionUrl.Type.REPLICATION_CONNECTION.getProtocol(), getEncodedHostFromTestsuiteUrl(), getPortFromTestsuiteUrl(),
-                    hostInfo.getDatabase());
+                    ConnectionUrl.Type.REPLICATION_CONNECTION.getScheme(), getEncodedHostFromTestsuiteUrl(), getPortFromTestsuiteUrl(), hostInfo.getDatabase());
 
             try {
                 replConn = DriverManager.getConnection(replUrl, hostInfo.getUser(), hostInfo.getPassword());
@@ -10667,6 +10666,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertThrows(SQLException.class, "No suitable driver found for mysqlx://localhost:33060/test\\?user=usr&password=pwd", new Callable<Void>() {
             public Void call() throws Exception {
                 DriverManager.getConnection("mysqlx://localhost:33060/test?user=usr&password=pwd", null);
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Tests fix for BUG#87600 (26724154), CONNECTOR THROWS 'MALFORMED DATABASE URL' ON NON MYSQL CONNECTION-URLS.
+     * 
+     * @throws Exception
+     *             if an error ocurrs.
+     */
+    public void testBug87600() throws Exception {
+        assertThrows(SQLException.class, "No suitable driver found for jdbc:oracle:thin:@127.0.0.1:1521:xe", new Callable<Void>() {
+            public Void call() throws Exception {
+                DriverManager.getConnection("jdbc:oracle:thin:@127.0.0.1:1521:xe", null);
                 return null;
             }
         });

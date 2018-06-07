@@ -82,11 +82,11 @@ public class XDevAPIConnectionUrl extends ConnectionUrl {
             } else {
                 if (!user.equals(hi.getUser()) || !password.equals(hi.getPassword())) {
                     throw ExceptionFactory.createException(WrongArgumentException.class,
-                            Messages.getString("ConnectionString.14", new Object[] { Type.XDEVAPI_SESSION.getProtocol() }));
+                            Messages.getString("ConnectionString.14", new Object[] { Type.XDEVAPI_SESSION.getScheme() }));
                 }
                 if (hasPriority ^ hi.getHostProperties().containsKey(PRIORITY_PROPERTY_KEY)) {
                     throw ExceptionFactory.createException(WrongArgumentException.class,
-                            Messages.getString("ConnectionString.15", new Object[] { Type.XDEVAPI_SESSION.getProtocol() }));
+                            Messages.getString("ConnectionString.15", new Object[] { Type.XDEVAPI_SESSION.getScheme() }));
                 }
             }
             if (hasPriority) {
@@ -94,11 +94,11 @@ public class XDevAPIConnectionUrl extends ConnectionUrl {
                     int priority = Integer.parseInt(hi.getProperty(PRIORITY_PROPERTY_KEY));
                     if (priority < 0 || priority > 100) {
                         throw ExceptionFactory.createException(WrongArgumentException.class,
-                                Messages.getString("ConnectionString.16", new Object[] { Type.XDEVAPI_SESSION.getProtocol() }));
+                                Messages.getString("ConnectionString.16", new Object[] { Type.XDEVAPI_SESSION.getScheme() }));
                     }
                 } catch (NumberFormatException e) {
                     throw ExceptionFactory.createException(WrongArgumentException.class,
-                            Messages.getString("ConnectionString.16", new Object[] { Type.XDEVAPI_SESSION.getProtocol() }));
+                            Messages.getString("ConnectionString.16", new Object[] { Type.XDEVAPI_SESSION.getScheme() }));
                 }
             }
         }

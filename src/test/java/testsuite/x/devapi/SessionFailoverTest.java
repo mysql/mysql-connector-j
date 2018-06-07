@@ -62,7 +62,7 @@ public class SessionFailoverTest extends InternalXBaseTestCase {
      * @return a single host or a multi-host connection string
      */
     private String buildConnectionString(String... hosts) {
-        StringBuilder url = new StringBuilder(ConnectionUrl.Type.XDEVAPI_SESSION.getProtocol()).append("//");
+        StringBuilder url = new StringBuilder(ConnectionUrl.Type.XDEVAPI_SESSION.getScheme()).append("//");
         url.append(getTestUser()).append(":").append(getTestPassword()).append("@").append("[");
         String separator = "";
         int priority = 100;

@@ -567,7 +567,7 @@ public class ConnectionUrlTest {
                     ConnectionUrl.getConnectionUrlInstance(cs, props);
                 } catch (WrongArgumentException e) {
                     // X plugin connections ("mysqlx:") don't allow different credentials in different hosts and the generator doesn't account for that.
-                    assertEquals(cs, ConnectionUrl.Type.XDEVAPI_SESSION.getProtocol(), csg.getProtocol());
+                    assertEquals(cs, ConnectionUrl.Type.XDEVAPI_SESSION.getScheme(), csg.getProtocol());
                     boolean first = true;
                     boolean ok = false;
                     String lastUi = "";
@@ -1016,7 +1016,7 @@ public class ConnectionUrlTest {
                 fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
             } catch (Exception e) {
                 assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(), WrongArgumentException.class.isAssignableFrom(e.getClass()));
-                assertEquals(cs, Messages.getString("ConnectionString.14", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getProtocol() }), e.getMessage());
+                assertEquals(cs, Messages.getString("ConnectionString.14", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }), e.getMessage());
             }
         }
 
@@ -1035,7 +1035,7 @@ public class ConnectionUrlTest {
                 fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
             } catch (Exception e) {
                 assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(), WrongArgumentException.class.isAssignableFrom(e.getClass()));
-                assertEquals(cs, Messages.getString("ConnectionString.15", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getProtocol() }), e.getMessage());
+                assertEquals(cs, Messages.getString("ConnectionString.15", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }), e.getMessage());
             }
         }
 
@@ -1050,7 +1050,7 @@ public class ConnectionUrlTest {
                 fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
             } catch (Exception e) {
                 assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(), WrongArgumentException.class.isAssignableFrom(e.getClass()));
-                assertEquals(cs, Messages.getString("ConnectionString.16", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getProtocol() }), e.getMessage());
+                assertEquals(cs, Messages.getString("ConnectionString.16", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }), e.getMessage());
             }
         }
 

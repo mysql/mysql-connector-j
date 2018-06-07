@@ -82,17 +82,11 @@ public class InternalXBaseTestCase {
     public InternalXBaseTestCase() {
         if (this.isSetForXTests) {
             ConnectionUrl conUrl = ConnectionUrl.getConnectionUrlInstance(this.baseUrl, null);
-            if (conUrl.getType() == null) {
-                throw new RuntimeException("Initialization via URL failed for \"" + this.baseUrl + "\"");
-            }
             this.testHostInfo = conUrl.getMainHost();
             this.testProperties = conUrl.getMainHost().exposeAsProperties();
         }
         if (this.isSetForOpensslXTests) {
             ConnectionUrl conUrl = ConnectionUrl.getConnectionUrlInstance(this.baseOpensslUrl, null);
-            if (conUrl.getType() == null) {
-                throw new RuntimeException("Initialization via URL failed for \"" + this.baseOpensslUrl + "\"");
-            }
             this.testPropertiesOpenSSL = conUrl.getMainHost().exposeAsProperties();
         }
     }

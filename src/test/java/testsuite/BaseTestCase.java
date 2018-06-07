@@ -1053,13 +1053,13 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected Connection getMasterSlaveReplicationConnection(Properties props) throws SQLException {
-        String replicationUrl = getMasterSlaveUrl(ConnectionUrl.Type.REPLICATION_CONNECTION.getProtocol());
+        String replicationUrl = getMasterSlaveUrl(ConnectionUrl.Type.REPLICATION_CONNECTION.getScheme());
         Connection replConn = new NonRegisteringDriver().connect(replicationUrl, getHostFreePropertiesFromTestsuiteUrl(props));
         return replConn;
     }
 
     protected String getMasterSlaveUrl() throws SQLException {
-        return getMasterSlaveUrl(ConnectionUrl.Type.FAILOVER_CONNECTION.getProtocol());
+        return getMasterSlaveUrl(ConnectionUrl.Type.FAILOVER_CONNECTION.getScheme());
     }
 
     protected String getMasterSlaveUrl(String protocol) throws SQLException {
@@ -1093,7 +1093,7 @@ public abstract class BaseTestCase extends TestCase {
             hostsString.add(getEncodedHostPortPairFromTestsuiteUrl());
         }
 
-        Connection lbConn = DriverManager.getConnection(ConnectionUrl.Type.LOADBALANCE_CONNECTION.getProtocol() + "//" + hostsString, urlProps);
+        Connection lbConn = DriverManager.getConnection(ConnectionUrl.Type.LOADBALANCE_CONNECTION.getScheme() + "//" + hostsString, urlProps);
         return lbConn;
     }
 
@@ -1155,7 +1155,7 @@ public abstract class BaseTestCase extends TestCase {
             haMode += ":";
         }
 
-        return getConnectionWithProps(ConnectionUrl.Type.FAILOVER_CONNECTION.getProtocol() + haMode + "//" + hostString.toString() + "/" + db, props);
+        return getConnectionWithProps(ConnectionUrl.Type.FAILOVER_CONNECTION.getScheme() + haMode + "//" + hostString.toString() + "/" + db, props);
     }
 
     protected Connection getUnreliableFailoverConnection(String[] hostNames, Properties props) throws Exception {
@@ -1235,7 +1235,7 @@ public abstract class BaseTestCase extends TestCase {
             }
         }
 
-        return (ReplicationConnection) getConnectionWithProps(ConnectionUrl.Type.REPLICATION_CONNECTION.getProtocol() + "//" + hostString.toString() + "/" + db,
+        return (ReplicationConnection) getConnectionWithProps(ConnectionUrl.Type.REPLICATION_CONNECTION.getScheme() + "//" + hostString.toString() + "/" + db,
                 props);
     }
 

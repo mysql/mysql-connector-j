@@ -45,7 +45,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.mysql.cj.Messages;
+import com.mysql.cj.conf.ConnectionUrl.Type;
 import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.exceptions.UnsupportedConnectionStringException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.util.StringUtils;
 
@@ -89,6 +91,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
             + "(?:/(?!\\s*/)(?<path>[^?#]*))?" // path: optional; starts with "/" but not followed by "/", and then followed by by any char except "?" and "#"
             + "(?:\\?(?!\\s*\\?)(?<query>[^#]*))?" // query: optional; starts with "?" but not followed by "?", and then followed by by any char except "#"
             + "(?:\\s*#(?<fragment>.*))?"); // fragment: optional; starts with "#", and then followed by anything
+    private static final Pattern SCHEME_PTRN = Pattern.compile("(?<scheme>[\\w:%]+).*");
     private static final Pattern HOST_LIST_PTRN = Pattern.compile("^\\[(?<hosts>.*)\\]$");
     private static final Pattern GENERIC_HOST_PTRN = Pattern.compile("^(?<host>.*?)(?::(?<port>[^:]*))?$");
     private static final Pattern KEY_VALUE_HOST_PTRN = Pattern.compile("[,\\s]*(?<key>[\\w\\.\\-\\s%]*)(?:=(?<value>[^,=]*))?");
@@ -112,9 +115,6 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
      * @return an instance of {@link ConnectionUrlParser}
      */
     public static ConnectionUrlParser parseConnectionString(String connString) {
-        if (connString == null) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionString.0"));
-        }
         return new ConnectionUrlParser(connString);
     }
 
@@ -125,8 +125,31 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
      *            the connection string to parse
      */
     private ConnectionUrlParser(String connString) {
+        if (connString == null) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionString.0"));
+        }
+        if (!isConnectionStringSupported(connString)) {
+            throw ExceptionFactory.createException(UnsupportedConnectionStringException.class,
+                    Messages.getString("ConnectionString.17", new String[] { connString }));
+        }
         this.baseConnectionString = connString;
         parseConnectionString();
+    }
+
+    /**
+     * Checks if the scheme part of given connection string matches one of the {@link Type}s supported by Connector/J.
+     * Throws {@link WrongArgumentException} if connString is null.
+     * 
+     * @param connString
+     *            connection string
+     * @return true if supported
+     */
+    public static boolean isConnectionStringSupported(String connString) {
+        if (connString == null) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionString.0"));
+        }
+        Matcher matcher = SCHEME_PTRN.matcher(connString);
+        return matcher.matches() && Type.isSupported(decode(matcher.group("scheme")));
     }
 
     /**

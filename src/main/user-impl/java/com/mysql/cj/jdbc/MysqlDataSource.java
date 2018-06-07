@@ -47,8 +47,6 @@ import com.mysql.cj.conf.AbstractRuntimeProperty;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.RuntimeProperty;
-import com.mysql.cj.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.jdbc.exceptions.SQLError;
 
 /**
  * A JNDI DataSource for a Mysql JDBC connection
@@ -341,7 +339,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      */
     public String getUrl() {
         if (!this.explicitUrl) {
-            StringBuilder sbUrl = new StringBuilder(ConnectionUrl.Type.SINGLE_CONNECTION.getProtocol());
+            StringBuilder sbUrl = new StringBuilder(ConnectionUrl.Type.SINGLE_CONNECTION.getScheme());
             sbUrl.append("//").append(getServerName()).append(":").append(getPort()).append("/").append(getDatabaseName());
             return sbUrl.toString();
         }
@@ -379,22 +377,12 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      *             if an error occurs
      */
     protected java.sql.Connection getConnection(Properties props) throws SQLException {
-        String jdbcUrlToUse = null;
-
-        if (!this.explicitUrl) {
-            jdbcUrlToUse = getUrl();
-        } else {
-            jdbcUrlToUse = this.url;
-        }
+        String jdbcUrlToUse = this.explicitUrl ? this.url : getUrl();
 
         //
         // URL should take precedence over properties
         //
         ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(jdbcUrlToUse, null);
-        if (connUrl.getType() == null) {
-            throw SQLError.createSQLException(Messages.getString("MysqlDataSource.BadUrl", new Object[] { jdbcUrlToUse }),
-                    MysqlErrorNumbers.SQL_STATE_CONNECTION_FAILURE, null);
-        }
         Properties urlProps = connUrl.getConnectionArgumentsAsProperties();
         urlProps.remove(PropertyDefinitions.DBNAME_PROPERTY_KEY);
         urlProps.remove(PropertyDefinitions.HOST_PROPERTY_KEY);
@@ -403,15 +391,6 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
 
         return mysqlDriver.connect(jdbcUrlToUse, props);
     }
-
-    //
-    //	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-    //		throw SQLError.createSQLFeatureNotSupportedException();
-    //	}
-    //
-    //	public <T> T unwrap(Class<T> iface) throws SQLException {
-    //		throw SQLError.createSQLFeatureNotSupportedException();
-    //	}
 
     @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {

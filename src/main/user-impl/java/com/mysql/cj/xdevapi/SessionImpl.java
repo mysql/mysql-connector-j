@@ -170,7 +170,7 @@ public class SessionImpl implements Session {
     public String getUri() {
         PropertySet pset = this.session.getPropertySet();
 
-        StringBuilder sb = new StringBuilder(ConnectionUrl.Type.XDEVAPI_SESSION.getProtocol());
+        StringBuilder sb = new StringBuilder(ConnectionUrl.Type.XDEVAPI_SESSION.getScheme());
         sb.append("//").append(this.session.getProcessHost()).append(":").append(this.session.getPort()).append("/").append(this.defaultSchemaName).append("?");
 
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {

@@ -81,7 +81,7 @@ public class LoadbalanceConnectionUrl extends ConnectionUrl {
      *            the properties common to all hosts
      */
     public LoadbalanceConnectionUrl(List<HostInfo> hosts, Map<String, String> properties) {
-        this.originalConnStr = ConnectionUrl.Type.LOADBALANCE_CONNECTION.getProtocol() + "//**internally_generated**" + System.currentTimeMillis() + "**";
+        this.originalConnStr = ConnectionUrl.Type.LOADBALANCE_CONNECTION.getScheme() + "//**internally_generated**" + System.currentTimeMillis() + "**";
         this.type = ConnectionUrl.Type.LOADBALANCE_CONNECTION;
         this.hosts.addAll(hosts);
         this.properties.putAll(properties);
