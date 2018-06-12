@@ -59,7 +59,7 @@ public class XServerCapabilities implements ServerCapabilities {
     }
 
     public boolean getTls() {
-        return this.capabilities.get("tls").getScalar().getVBool();
+        return hasCapability("tls") ? this.capabilities.get("tls").getScalar().getVBool() : false;
     }
 
     public boolean getClientPwdExpireOk() {
