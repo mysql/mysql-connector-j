@@ -3,6 +3,8 @@
 
 Version 8.0.12
 
+  - Fix for Bug#28208000, MASTER : HANG IN ASYNCHRONOUS SELECT TEST.
+
   - WL#10544, Update MySQL 8.0 keywords list.
 
   - WL#11858, DevAPI: Core API v1 alignment.

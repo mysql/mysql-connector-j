@@ -210,15 +210,16 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
                                     break;
                                 }
                             }
-                        }
-                        try {
-                            XMessage msg = null;
-                            do {
-                                XMessageHeader hdr = readHeader();
-                                msg = readMessage(null, hdr);
-                            } while (!l.createFromMessage(msg));
-                        } catch (Throwable t) {
-                            l.error(t);
+                        } else {
+                            try {
+                                XMessage msg = null;
+                                do {
+                                    XMessageHeader hdr = readHeader();
+                                    msg = readMessage(null, hdr);
+                                } while (!l.createFromMessage(msg));
+                            } catch (Throwable t) {
+                                l.error(t);
+                            }
                         }
                     }
                 } catch (InterruptedException e) {
