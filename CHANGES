@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/5.1/en/
 
+Version 5.1.47
+
 Version 5.1.46
 
   - WL#11629, Change caching_sha2_password padding.
