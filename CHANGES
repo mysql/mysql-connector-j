@@ -3,6 +3,8 @@
 
 Version 5.1.47
 
+  - Fix for BUG#90024 (27677574), SOME TESTS FAILED AGAINST MYSQL 8.0.5 BECAUSE OF DEPRECATED FEATURES REMOVAL.
+
 Version 5.1.46
 
   - WL#11629, Change caching_sha2_password padding.
