@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.13
+
 Version 8.0.12
 
   - Fix for Bug#28208000, MASTER : HANG IN ASYNCHRONOUS SELECT TEST.
