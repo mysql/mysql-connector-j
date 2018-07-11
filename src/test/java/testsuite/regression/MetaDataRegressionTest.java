@@ -4630,4 +4630,36 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
     }
+
+    /**
+     * Tests fix for BUG#90887 (28034570), DATABASEMETADATAUSINGINFOSCHEMA#GETTABLES FAILS IF METHOD ARGUMENTS ARE NULL.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug90887() throws Exception {
+        List<String> resNames = new ArrayList<>();
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "false");
+        Connection con = getConnectionWithProps(props);
+        DatabaseMetaData metaData = con.getMetaData();
+        ResultSet res = metaData.getTables(null, null, null, null);
+        while (res.next()) {
+            resNames.add(res.getString("TABLE_NAME"));
+        }
+
+        assertTrue(resNames.size() > 0);
+
+        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
+        con = getConnectionWithProps(props);
+        metaData = con.getMetaData();
+        res = metaData.getTables(null, null, null, null);
+        while (res.next()) {
+            resNames.remove(res.getString("TABLE_NAME"));
+        }
+
+        assertTrue(resNames.size() == 0);
+
+    }
 }
