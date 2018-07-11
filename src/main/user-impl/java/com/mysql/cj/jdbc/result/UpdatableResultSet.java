@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.sql.Clob;
 import java.sql.JDBCType;
 import java.sql.NClob;
 import java.sql.SQLException;
@@ -1242,6 +1243,36 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
+    public void updateRow() throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            if (!this.isUpdatable) {
+                throw new NotUpdatable(this.notUpdatableReason);
+            }
+
+            if (this.doingUpdates) {
+                this.updater.executeUpdate();
+                refreshRow();
+                this.doingUpdates = false;
+            } else if (this.onInsertRow) {
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.44"), getExceptionInterceptor());
+            }
+
+            // fixes calling updateRow() and then doing more updates on same row...
+            syncUpdate();
+        }
+    }
+
+    @Override
+    public int getHoldability() throws SQLException {
+        throw SQLError.createSQLFeatureNotSupportedException();
+    }
+
+    @Override
+    public void updateAsciiStream(String columnLabel, java.io.InputStream x, int length) throws SQLException {
+        updateAsciiStream(findColumn(columnLabel), x, length);
+    }
+
+    @Override
     public void updateAsciiStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (!this.onInsertRow) {
@@ -1259,8 +1290,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateAsciiStream(String columnName, java.io.InputStream x, int length) throws SQLException {
-        updateAsciiStream(findColumn(columnName), x, length);
+    public void updateBigDecimal(String columnLabel, BigDecimal x) throws SQLException {
+        updateBigDecimal(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1286,8 +1317,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateBigDecimal(String columnName, BigDecimal x) throws SQLException {
-        updateBigDecimal(findColumn(columnName), x);
+    public void updateBinaryStream(String columnLabel, java.io.InputStream x, int length) throws SQLException {
+        updateBinaryStream(findColumn(columnLabel), x, length);
     }
 
     @Override
@@ -1313,8 +1344,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateBinaryStream(String columnName, java.io.InputStream x, int length) throws SQLException {
-        updateBinaryStream(findColumn(columnName), x, length);
+    public void updateBlob(String columnLabel, java.sql.Blob blob) throws SQLException {
+        updateBlob(findColumn(columnLabel), blob);
     }
 
     @Override
@@ -1340,8 +1371,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateBlob(String columnName, java.sql.Blob blob) throws SQLException {
-        updateBlob(findColumn(columnName), blob);
+    public void updateBoolean(String columnLabel, boolean x) throws SQLException {
+        updateBoolean(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1363,8 +1394,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateBoolean(String columnName, boolean x) throws SQLException {
-        updateBoolean(findColumn(columnName), x);
+    public void updateByte(String columnLabel, byte x) throws SQLException {
+        updateByte(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1386,8 +1417,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateByte(String columnName, byte x) throws SQLException {
-        updateByte(findColumn(columnName), x);
+    public void updateBytes(String columnLabel, byte[] x) throws SQLException {
+        updateBytes(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1409,8 +1440,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateBytes(String columnName, byte[] x) throws SQLException {
-        updateBytes(findColumn(columnName), x);
+    public void updateCharacterStream(String columnLabel, java.io.Reader reader, int length) throws SQLException {
+        updateCharacterStream(findColumn(columnLabel), reader, length);
     }
 
     @Override
@@ -1436,8 +1467,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateCharacterStream(String columnName, java.io.Reader reader, int length) throws SQLException {
-        updateCharacterStream(findColumn(columnName), reader, length);
+    public void updateClob(String columnLabel, Clob clob) throws SQLException {
+        updateClob(findColumn(columnLabel), clob);
     }
 
     @Override
@@ -1449,6 +1480,11 @@ public class UpdatableResultSet extends ResultSetImpl {
                 updateCharacterStream(columnIndex, clob.getCharacterStream(), (int) clob.length());
             }
         }
+    }
+
+    @Override
+    public void updateDate(String columnLabel, java.sql.Date x) throws SQLException {
+        updateDate(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1470,8 +1506,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateDate(String columnName, java.sql.Date x) throws SQLException {
-        updateDate(findColumn(columnName), x);
+    public void updateDouble(String columnLabel, double x) throws SQLException {
+        updateDouble(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1493,8 +1529,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateDouble(String columnName, double x) throws SQLException {
-        updateDouble(findColumn(columnName), x);
+    public void updateFloat(String columnLabel, float x) throws SQLException {
+        updateFloat(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1516,8 +1552,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateFloat(String columnName, float x) throws SQLException {
-        updateFloat(findColumn(columnName), x);
+    public void updateInt(String columnLabel, int x) throws SQLException {
+        updateInt(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1539,8 +1575,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateInt(String columnName, int x) throws SQLException {
-        updateInt(findColumn(columnName), x);
+    public void updateLong(String columnLabel, long x) throws SQLException {
+        updateLong(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1562,8 +1598,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateLong(String columnName, long x) throws SQLException {
-        updateLong(findColumn(columnName), x);
+    public void updateNull(String columnLabel) throws SQLException {
+        updateNull(findColumn(columnLabel));
     }
 
     @Override
@@ -1585,13 +1621,18 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateNull(String columnName) throws SQLException {
-        updateNull(findColumn(columnName));
+    public void updateObject(String columnLabel, Object x) throws SQLException {
+        updateObject(findColumn(columnLabel), x);
     }
 
     @Override
     public void updateObject(int columnIndex, Object x) throws SQLException {
         updateObjectInternal(columnIndex, x, (Integer) null, 0);
+    }
+
+    @Override
+    public void updateObject(String columnLabel, Object x, int scale) throws SQLException {
+        updateObject(findColumn(columnLabel), x, scale);
     }
 
     @Override
@@ -1665,13 +1706,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateObject(String columnName, Object x) throws SQLException {
-        updateObject(findColumn(columnName), x);
-    }
-
-    @Override
-    public void updateObject(String columnName, Object x, int scale) throws SQLException {
-        updateObject(findColumn(columnName), x);
+    public void updateObject(String columnLabel, Object x, SQLType targetSqlType) throws SQLException {
+        updateObject(findColumn(columnLabel), x, targetSqlType);
     }
 
     @Override
@@ -1680,38 +1716,18 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
+    public void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+        updateObject(findColumn(columnLabel), x, targetSqlType, scaleOrLength);
+    }
+
+    @Override
     public void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
         updateObjectInternal(columnIndex, x, targetSqlType, scaleOrLength);
     }
 
     @Override
-    public void updateObject(String columnLabel, Object x, SQLType targetSqlType) throws SQLException {
-        updateObjectInternal(findColumn(columnLabel), x, targetSqlType, 0);
-    }
-
-    @Override
-    public void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
-        updateObjectInternal(findColumn(columnLabel), x, targetSqlType, scaleOrLength);
-    }
-
-    @Override
-    public void updateRow() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            if (!this.isUpdatable) {
-                throw new NotUpdatable(this.notUpdatableReason);
-            }
-
-            if (this.doingUpdates) {
-                this.updater.executeUpdate();
-                refreshRow();
-                this.doingUpdates = false;
-            } else if (this.onInsertRow) {
-                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.44"), getExceptionInterceptor());
-            }
-
-            // fixes calling updateRow() and then doing more updates on same row...
-            syncUpdate();
-        }
+    public void updateShort(String columnLabel, short x) throws SQLException {
+        updateShort(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1733,8 +1749,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateShort(String columnName, short x) throws SQLException {
-        updateShort(findColumn(columnName), x);
+    public void updateString(String columnLabel, String x) throws SQLException {
+        updateString(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1760,8 +1776,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateString(String columnName, String x) throws SQLException {
-        updateString(findColumn(columnName), x);
+    public void updateTime(String columnLabel, java.sql.Time x) throws SQLException {
+        updateTime(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1783,8 +1799,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateTime(String columnName, java.sql.Time x) throws SQLException {
-        updateTime(findColumn(columnName), x);
+    public void updateTimestamp(String columnLabel, java.sql.Timestamp x) throws SQLException {
+        updateTimestamp(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1806,8 +1822,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateTimestamp(String columnName, java.sql.Timestamp x) throws SQLException {
-        updateTimestamp(findColumn(columnName), x);
+    public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {
+        updateAsciiStream(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1826,6 +1842,11 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
+    public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException {
+        updateAsciiStream(findColumn(columnLabel), x, length);
+    }
+
+    @Override
     public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {
         if (!this.onInsertRow) {
             if (!this.doingUpdates) {
@@ -1838,6 +1859,11 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.inserter.setAsciiStream(columnIndex, x, length);
             this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
         }
+    }
+
+    @Override
+    public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {
+        updateBinaryStream(findColumn(columnLabel), x);
     }
 
     @Override
@@ -1861,6 +1887,11 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
+    public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException {
+        updateBinaryStream(findColumn(columnLabel), x, length);
+    }
+
+    @Override
     public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {
         if (!this.onInsertRow) {
             if (!this.doingUpdates) {
@@ -1878,6 +1909,11 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
             }
         }
+    }
+
+    @Override
+    public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {
+        updateBlob(findColumn(columnLabel), inputStream);
     }
 
     @Override
@@ -1901,6 +1937,11 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
+    public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException {
+        updateBlob(findColumn(columnLabel), inputStream, length);
+    }
+
+    @Override
     public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException {
         if (!this.onInsertRow) {
             if (!this.doingUpdates) {
@@ -1918,6 +1959,11 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
             }
         }
+    }
+
+    @Override
+    public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {
+        updateCharacterStream(findColumn(columnLabel), reader);
     }
 
     @Override
@@ -1941,6 +1987,11 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
+    public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
+        updateCharacterStream(findColumn(columnLabel), reader, length);
+    }
+
+    @Override
     public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
         if (!this.onInsertRow) {
             if (!this.doingUpdates) {
@@ -1961,13 +2012,28 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
+    public void updateClob(String columnLabel, Reader reader) throws SQLException {
+        updateClob(findColumn(columnLabel), reader);
+    }
+
+    @Override
     public void updateClob(int columnIndex, Reader reader) throws SQLException {
         updateCharacterStream(columnIndex, reader);
     }
 
     @Override
+    public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {
+        updateClob(findColumn(columnLabel), reader, length);
+    }
+
+    @Override
     public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {
         updateCharacterStream(columnIndex, reader, length);
+    }
+
+    @Override
+    public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {
+        updateNCharacterStream(findColumn(columnLabel), reader);
     }
 
     @Override
@@ -1996,99 +2062,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateNClob(int columnIndex, Reader reader) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException(Messages.getString("ResultSet.17"));
-        }
-        updateCharacterStream(columnIndex, reader);
-    }
-
-    @Override
-    public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-            throw new SQLException(Messages.getString("ResultSet.17"));
-        }
-        updateCharacterStream(columnIndex, reader, length);
-    }
-
-    @Override
-    public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
-        updateString(columnIndex, ((MysqlSQLXML) xmlObject).getString());
-    }
-
-    @Override
-    public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {
-        updateAsciiStream(findColumn(columnLabel), x);
-    }
-
-    @Override
-    public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException {
-        updateAsciiStream(findColumn(columnLabel), x, length);
-    }
-
-    @Override
-    public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {
-        updateBinaryStream(findColumn(columnLabel), x);
-    }
-
-    @Override
-    public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException {
-        updateBinaryStream(findColumn(columnLabel), x, length);
-    }
-
-    @Override
-    public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {
-        updateBlob(findColumn(columnLabel), inputStream);
-    }
-
-    @Override
-    public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException {
-        updateBlob(findColumn(columnLabel), inputStream, length);
-    }
-
-    @Override
-    public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {
-        updateCharacterStream(findColumn(columnLabel), reader);
-    }
-
-    @Override
-    public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
-        updateCharacterStream(findColumn(columnLabel), reader, length);
-    }
-
-    @Override
-    public void updateClob(String columnLabel, Reader reader) throws SQLException {
-        updateClob(findColumn(columnLabel), reader);
-    }
-
-    @Override
-    public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {
-        updateClob(findColumn(columnLabel), reader, length);
-    }
-
-    @Override
-    public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {
-        updateNCharacterStream(findColumn(columnLabel), reader);
-
-    }
-
-    @Override
-    public void updateNClob(String columnLabel, Reader reader) throws SQLException {
-        updateNClob(findColumn(columnLabel), reader);
-
-    }
-
-    @Override
-    public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {
-        updateNClob(findColumn(columnLabel), reader, length);
-    }
-
-    @Override
-    public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {
-        updateSQLXML(findColumn(columnLabel), xmlObject);
-
+    public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
+        updateNCharacterStream(findColumn(columnLabel), reader, length);
     }
 
     @Override
@@ -2119,8 +2094,36 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
-        updateNCharacterStream(findColumn(columnLabel), reader, length);
+    public void updateNClob(String columnLabel, Reader reader) throws SQLException {
+        updateNClob(findColumn(columnLabel), reader);
+    }
+
+    @Override
+    public void updateNClob(int columnIndex, Reader reader) throws SQLException {
+        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+            throw new SQLException(Messages.getString("ResultSet.17"));
+        }
+        updateCharacterStream(columnIndex, reader);
+    }
+
+    @Override
+    public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {
+        updateNClob(findColumn(columnLabel), reader, length);
+    }
+
+    @Override
+    public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
+        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+            throw new SQLException(Messages.getString("ResultSet.17"));
+        }
+        updateCharacterStream(columnIndex, reader, length);
+    }
+
+    @Override
+    public void updateNClob(String columnLabel, java.sql.NClob nClob) throws SQLException {
+        updateNClob(findColumn(columnLabel), nClob);
     }
 
     @Override
@@ -2140,8 +2143,18 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateNClob(String columnName, java.sql.NClob nClob) throws SQLException {
-        updateNClob(findColumn(columnName), nClob);
+    public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {
+        updateSQLXML(findColumn(columnLabel), xmlObject);
+    }
+
+    @Override
+    public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
+        updateString(columnIndex, ((MysqlSQLXML) xmlObject).getString());
+    }
+
+    @Override
+    public void updateNString(String columnLabel, String x) throws SQLException {
+        updateNString(findColumn(columnLabel), x);
     }
 
     @Override
@@ -2172,13 +2185,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public void updateNString(String columnName, String x) throws SQLException {
-        updateNString(findColumn(columnName), x);
-    }
-
-    @Override
-    public int getHoldability() throws SQLException {
-        throw SQLError.createSQLFeatureNotSupportedException();
+    public Reader getNCharacterStream(String columnLabel) throws SQLException {
+        return getNCharacterStream(findColumn(columnLabel));
     }
 
     @Override
@@ -2192,8 +2200,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public Reader getNCharacterStream(String columnName) throws SQLException {
-        return getNCharacterStream(findColumn(columnName));
+    public NClob getNClob(String columnLabel) throws SQLException {
+        return getNClob(findColumn(columnLabel));
     }
 
     @Override
@@ -2214,8 +2222,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     @Override
-    public NClob getNClob(String columnName) throws SQLException {
-        return getNClob(findColumn(columnName));
+    public String getNString(String columnLabel) throws SQLException {
+        return getNString(findColumn(columnLabel));
     }
 
     @Override
@@ -2229,20 +2237,14 @@ public class UpdatableResultSet extends ResultSetImpl {
         return getString(columnIndex);
     }
 
-    // The following routines simply convert the columnName into a columnIndex and then call the appropriate routine above.
     @Override
-    public String getNString(String columnName) throws SQLException {
-        return getNString(findColumn(columnName));
+    public SQLXML getSQLXML(String columnLabel) throws SQLException {
+        return getSQLXML(findColumn(columnLabel));
     }
 
     @Override
     public SQLXML getSQLXML(int columnIndex) throws SQLException {
         return new MysqlSQLXML(this, columnIndex, getExceptionInterceptor());
-    }
-
-    @Override
-    public SQLXML getSQLXML(String columnLabel) throws SQLException {
-        return getSQLXML(findColumn(columnLabel));
     }
 
     private String getStringForNClob(int columnIndex) throws SQLException {

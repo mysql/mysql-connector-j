@@ -697,7 +697,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         clob.setString(1, "bar");
 
-        this.rs.updateClob(2, clob);
+        this.rs.updateClob("clobField", clob);
         this.rs.updateRow();
 
         this.rs.moveToInsertRow();
