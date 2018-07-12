@@ -1349,4 +1349,30 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertSecureSession(testSession);
         testSession.close();
     }
+
+    /**
+     * Tests fix for Bug#27629553, NPE FROM GETSESSION() FOR SSL CONNECTION WHEN NO PASSWORD PASSED.
+     */
+    @Test
+    public void testBug27629553() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        Session testSession = this.fact.getSession(this.baseUrl);
+        testSession.sql("CREATE USER IF NOT EXISTS 'testBug27629553'@'%' IDENTIFIED WITH mysql_native_password").execute();
+        testSession.sql("GRANT SELECT ON *.* TO 'testBug27629553'@'%'").execute();
+        testSession.close();
+
+        Properties props = (Properties) this.sslFreeTestProperties.clone();
+        props.setProperty("user", "testBug27629553");
+        props.remove("password");
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, this.clientKeyStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, this.clientKeyStorePassword);
+
+        this.fact.getSession(props);
+    }
 }
