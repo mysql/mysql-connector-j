@@ -637,6 +637,13 @@ public class JsonDocTest {
             }
         });
 
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character ']'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                JsonParser.parseDoc("{\"_id\":\"1004\",\"F1\": ] }");
+                return null;
+            }
+        });
+
         StringBuilder sb = new StringBuilder();
         sb.append("{");
         sb.append("\"\" : \"val0\", ");

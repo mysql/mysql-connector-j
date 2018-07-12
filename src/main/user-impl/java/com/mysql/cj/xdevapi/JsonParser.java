@@ -173,6 +173,7 @@ public class JsonParser {
     public static DbDoc parseDoc(StringReader reader) throws IOException {
 
         DbDoc doc = new DbDocImpl();
+        JsonValue val;
 
         int leftBrackets = 0;
         int rightBrackets = 0;
@@ -187,7 +188,11 @@ public class JsonParser {
                 }
                 if ((key = nextKey(reader)) != null) {
                     try {
-                        doc.put(key, nextValue(reader));
+                        if ((val = nextValue(reader)) != null) {
+                            doc.put(key, val);
+                        } else {
+                            reader.reset();
+                        }
                     } catch (WrongArgumentException ex) {
                         throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.0", new String[] { key }), ex);
                     }

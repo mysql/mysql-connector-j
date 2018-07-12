@@ -45,6 +45,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.AddResult;
 import com.mysql.cj.xdevapi.DbDoc;
@@ -325,6 +326,24 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", new Callable<Void>() {
             public Void call() throws Exception {
                 CollectionAddTest.this.collection.addOrReplaceOne(null, "{\"_id\": \"id100\", \"a\": 100}");
+                return null;
+            }
+        });
+
+    }
+
+    /**
+     * Tests fix for Bug#21914769, NPE WHEN TRY TO EXECUTE INVALID JSON STRING.
+     */
+    @Test
+    public void testBug21914769() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character ']'.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionAddTest.this.collection.add("{\"_id\":\"1004\",\"F1\": ] }").execute();
                 return null;
             }
         });
