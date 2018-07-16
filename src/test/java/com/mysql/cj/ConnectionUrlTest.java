@@ -59,6 +59,7 @@ import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyDefinitions.ZeroDatetimeBehavior;
 import com.mysql.cj.exceptions.WrongArgumentException;
 
 public class ConnectionUrlTest {
@@ -1073,5 +1074,25 @@ public class ConnectionUrlTest {
         assertEquals("host1", connUrl.getHostsList().get(2).getHost());
         assertEquals("host5", connUrl.getHostsList().get(3).getHost());
         assertEquals("host4", connUrl.getHostsList().get(4).getHost());
+    }
+
+    @Test
+    public void testReplaceLegacyPropertyValues() throws Exception {
+        /* Test zeroDateTimeBehavior convertToNull-> CONVERT_TO_NULL replacement (BUG#91421) */
+        List<String> connStr = new ArrayList<>();
+        connStr.add("jdbc:mysql://somehost:1234/db");
+        connStr.add("jdbc:mysql://somehost:1234/db?key=value&zeroDateTimeBehavior=convertToNull");
+        connStr.add("jdbc:mysql://127.0.0.1:1234/db");
+        connStr.add("jdbc:mysql://127.0.0.1:1234/db?key=value&zeroDateTimeBehavior=convertToNull");
+        connStr.add("jdbc:mysql://(port=3306,user=root,password=pwd,zeroDateTimeBehavior=convertToNull)/test");
+        connStr.add("jdbc:mysql://address=(port=3306)(user=root)(password=pwd)(zeroDateTimeBehavior=convertToNull)/test");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull");
+
+        for (String cs : connStr) {
+            ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(cs, props);
+            assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL.name(), connUrl.getMainHost().getProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior));
+        }
     }
 }

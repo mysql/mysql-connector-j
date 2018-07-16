@@ -117,6 +117,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyDefinitions.ZeroDatetimeBehavior;
 import com.mysql.cj.conf.url.ReplicationConnectionUrl;
 import com.mysql.cj.exceptions.ClosedOnExpiredPasswordException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -10680,5 +10681,35 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 return null;
             }
         });
+    }
+
+    /**
+     * Tests fix for BUG#91421 (28246270), ALLOWED VALUES FOR ZERODATETIMEBEHAVIOR ARE INCOMPATIBLE WITH NETBEANS.
+     * 
+     * @throws Exception
+     *             if an error occurs.
+     */
+    public void testBug91421() throws Exception {
+        Properties props = new Properties();
+
+        props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "exception"); // legacy EXCEPTION alias
+        JdbcConnection con = (JdbcConnection) getConnectionWithProps(props);
+        assertEquals(ZeroDatetimeBehavior.EXCEPTION,
+                con.getPropertySet().<ZeroDatetimeBehavior> getEnumProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue());
+
+        props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "round"); // legacy ROUND alias
+        con = (JdbcConnection) getConnectionWithProps(props);
+        assertEquals(ZeroDatetimeBehavior.ROUND,
+                con.getPropertySet().<ZeroDatetimeBehavior> getEnumProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue());
+
+        props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull"); // legacy CONVERT_TO_NULL alias
+        con = (JdbcConnection) getConnectionWithProps(props);
+        assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL,
+                con.getPropertySet().<ZeroDatetimeBehavior> getEnumProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue());
+
+        con = (JdbcConnection) getConnectionWithProps("jdbc:mysql://(port=" + getPortFromTestsuiteUrl() + ",user=" + mainConnectionUrl.getDefaultUser()
+                + ",password=" + mainConnectionUrl.getDefaultPassword() + ",zeroDateTimeBehavior=convertToNull)/" + this.dbName, new Properties());
+        assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL,
+                con.getPropertySet().<ZeroDatetimeBehavior> getEnumProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue());
     }
 }

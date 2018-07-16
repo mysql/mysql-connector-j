@@ -400,6 +400,21 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
     }
 
     /**
+     * Some acceptable property values have changed in c/J 8.0 but old values remain hardcoded in a widely used software.
+     * So we need to accept old values and translate them to new ones.
+     * 
+     * @param props
+     *            the host properties map to fix
+     */
+    protected void replaceLegacyPropertyValues(Map<String, String> props) {
+        // Workaround for zeroDateTimeBehavior=convertToNull hardcoded in NetBeans
+        String zeroDateTimeBehavior = props.get(PropertyDefinitions.PNAME_zeroDateTimeBehavior);
+        if (zeroDateTimeBehavior != null && zeroDateTimeBehavior.equalsIgnoreCase("convertToNull")) {
+            props.put(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "CONVERT_TO_NULL");
+        }
+    }
+
+    /**
      * Collects the hosts information from the {@link ConnectionUrlParser}.
      * 
      * @param connStrParser
@@ -470,6 +485,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
 
         expandPropertiesFromConfigFiles(hostProps);
         fixProtocolDependencies(hostProps);
+        replaceLegacyPropertyValues(hostProps);
 
         return buildHostInfo(host, port, user, password, isPasswordless, hostProps);
     }
