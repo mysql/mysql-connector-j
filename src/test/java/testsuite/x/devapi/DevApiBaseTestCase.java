@@ -101,4 +101,12 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
             }
         }
     }
+
+    protected String makeParam(String key, Enum<?> value) {
+        return makeParam(key, value.toString());
+    }
+
+    protected String makeParam(String key, String value) {
+        return "&" + key + "=" + value;
+    }
 }

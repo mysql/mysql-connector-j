@@ -1186,14 +1186,6 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertSessionStatusNotEquals(sess, "mysqlx_ssl_cipher", "");
     }
 
-    private String makeParam(String key, Enum<?> value) {
-        return makeParam(key, value.toString());
-    }
-
-    private String makeParam(String key, String value) {
-        return "&" + key + "=" + value;
-    }
-
     /**
      * Tests fix for Bug#25494338, ENABLEDSSLCIPHERSUITES PARAMETER NOT WORKING AS EXPECTED WITH X-PLUGIN.
      */

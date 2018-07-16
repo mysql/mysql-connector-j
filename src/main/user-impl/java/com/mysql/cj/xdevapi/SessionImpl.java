@@ -173,16 +173,24 @@ public class SessionImpl implements Session {
         StringBuilder sb = new StringBuilder(ConnectionUrl.Type.XDEVAPI_SESSION.getScheme());
         sb.append("//").append(this.session.getProcessHost()).append(":").append(this.session.getPort()).append("/").append(this.defaultSchemaName).append("?");
 
+        boolean isFirstParam = true;
+
         for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
             RuntimeProperty<?> propToGet = pset.getProperty(propName);
-
-            String propValue = propToGet.getStringValue();
-
-            if (propValue != null && !propValue.equals(propToGet.getPropertyDefinition().getDefaultValue().toString())) {
-                sb.append(",");
-                sb.append(propName);
-                sb.append("=");
-                sb.append(propValue);
+            if (propToGet.isExplicitlySet()) {
+                String propValue = propToGet.getStringValue();
+                Object defaultValue = propToGet.getPropertyDefinition().getDefaultValue();
+                if (defaultValue == null && !StringUtils.isNullOrEmpty(propValue) || defaultValue != null && propValue == null
+                        || defaultValue != null && propValue != null && !propValue.equals(defaultValue.toString())) {
+                    if (isFirstParam) {
+                        isFirstParam = false;
+                    } else {
+                        sb.append("&");
+                    }
+                    sb.append(propName);
+                    sb.append("=");
+                    sb.append(propValue);
+                }
             }
         }
 
