@@ -776,8 +776,6 @@ public class ConnectionUrlTest {
         connStr.add("jdbc:mysql://johndoe:secret@myhost:abcd/db?key=value");
         connStr.add("jdbc:mysql://johndoe:secret@myhost:1234//db?key=value");
         connStr.add("jdbc:mysql://johndoe:secret@myhost:1234/db??key=value");
-        connStr.add("jdbc:mysql://johndoe:secret@myhost:1234/db?key==value");
-        connStr.add("jdbc:mysql://johndoe:secret@myhost:1234/db?key=value1=value2");
         connStr.add("jdbc:mysql://johndoe:secret@myhost:1234/db?=value");
 
         for (String cs : connStr) {
@@ -1093,6 +1091,30 @@ public class ConnectionUrlTest {
         for (String cs : connStr) {
             ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(cs, props);
             assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL.name(), connUrl.getMainHost().getProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior));
+        }
+    }
+
+    /**
+     * Tests fix for BUG#28150662, CONNECTOR/J 8 MALFORMED DATABASE URL EXCEPTION WHIT CORRECT URL STRING.
+     */
+    @Test
+    public void testBug28150662() {
+        List<String> connStr = new ArrayList<>();
+        connStr.add(
+                "jdbc:mysql://localhost:3306/db1?connectionCollation=utf8mb4_unicode_ci&user=user1&sessionVariables=sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0");
+        connStr.add(
+                "jdbc:mysql://localhost:3306/db1?connectionCollation=utf8mb4_unicode_ci&sessionVariables=sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0&user=user1");
+        connStr.add(
+                "jdbc:mysql://address=(host=localhost)(port=3306)(connectionCollation=utf8mb4_unicode_ci)(sessionVariables=sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0)(user=user1)/db1");
+        connStr.add(
+                "jdbc:mysql://(host=localhost,port=3306,connectionCollation=utf8mb4_unicode_ci,sessionVariables=sql_mode='IGNORE_SPACE%2CANSI'%2CFOREIGN_KEY_CHECKS=0,user=user1)/db1");
+
+        for (String cs : connStr) {
+            ConnectionUrl url = ConnectionUrl.getConnectionUrlInstance(cs, null);
+            HostInfo hi = url.getMainHost();
+            assertEquals("utf8mb4_unicode_ci", hi.getHostProperties().get("connectionCollation"));
+            assertEquals("user1", hi.getUser());
+            assertEquals("sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0", hi.getHostProperties().get("sessionVariables"));
         }
     }
 }

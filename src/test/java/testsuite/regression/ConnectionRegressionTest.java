@@ -10712,4 +10712,38 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL,
                 con.getPropertySet().<ZeroDatetimeBehavior> getEnumProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue());
     }
+
+    /**
+     * Tests fix for BUG#28150662, CONNECTOR/J 8 MALFORMED DATABASE URL EXCEPTION WHIT CORRECT URL STRING.
+     * 
+     * @throws Exception
+     *             if an error occurs.
+     */
+    public void testBug28150662() throws Exception {
+        HostInfo hostInfo = mainConnectionUrl.getMainHost();
+        List<String> connStr = new ArrayList<>();
+        connStr.add(dbUrl + "&sessionVariables=sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0&connectionCollation=utf8mb4_unicode_ci");
+        connStr.add(dbUrl + "&connectionCollation=utf8mb4_unicode_ci&sessionVariables=sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0");
+        connStr.add(String.format(
+                "jdbc:mysql://address=(host=%1$s)(port=%2$d)(connectionCollation=utf8mb4_unicode_ci)(sessionVariables=sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0)(user=%3$s)(password=%4$s)/%5$s",
+                getEncodedHostFromTestsuiteUrl(), getPortFromTestsuiteUrl(), hostInfo.getUser(), hostInfo.getPassword(), hostInfo.getDatabase()));
+        connStr.add(String.format(
+                "jdbc:mysql://(host=%1$s,port=%2$d,connectionCollation=utf8mb4_unicode_ci,sessionVariables=sql_mode='IGNORE_SPACE%3$sANSI'%3$sFOREIGN_KEY_CHECKS=0,user=%4$s,password=%5$s)/%6$s",
+                getEncodedHostFromTestsuiteUrl(), getPortFromTestsuiteUrl(), "%2C", hostInfo.getUser(), hostInfo.getPassword(), hostInfo.getDatabase()));
+
+        for (String cs : connStr) {
+            JdbcConnection c1 = (JdbcConnection) getConnectionWithProps(cs, new Properties());
+
+            assertEquals("utf8mb4_unicode_ci", c1.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_connectionCollation).getValue());
+            String foreignKeyChecks = getMysqlVariable(c1, "FOREIGN_KEY_CHECKS");
+            assertTrue("OFF".equalsIgnoreCase(foreignKeyChecks) || "0".equals(foreignKeyChecks));
+
+            assertEquals("sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0",
+                    c1.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_sessionVariables).getValue());
+            String sqlMode = getMysqlVariable(c1, "sql_mode");
+            assertTrue(sqlMode.indexOf("ANSI") != -1);
+            assertTrue(sqlMode.indexOf("IGNORE_SPACE") != -1);
+        }
+    }
+
 }
