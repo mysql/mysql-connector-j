@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -980,8 +980,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         }
     }
 
-    protected Timestamp fastTimestampCreate(Calendar cal, int year, int month, int day, int hour, int minute, int seconds, int secondsPart)
-            throws SQLException {
+    protected Timestamp fastTimestampCreate(Calendar cal, int year, int month, int day, int hour, int minute, int seconds, int secondsPart,
+            boolean useGmtMillis) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (!this.useLegacyDatetimeCode) {
                 return TimeUtil.fastTimestampCreate(cal.getTimeZone(), year, month, day, hour, minute, seconds, secondsPart);
@@ -990,8 +990,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             if (cal == null) {
                 cal = getFastDefaultCalendar();
             }
-
-            boolean useGmtMillis = this.connection.getUseGmtMillisForDatetimes();
 
             return TimeUtil.fastTimestampCreate(useGmtMillis, useGmtMillis ? getGmtCalendar() : null, cal, year, month, day, hour, minute, seconds,
                     secondsPart);
@@ -5665,6 +5663,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
                     : getCalendarInstanceForSessionOrNew();
 
+            boolean useGmtMillis = this.connection.getUseGmtMillisForDatetimes();
+
             if ((length > 0) && (timestampValue.charAt(0) == '0') && (timestampValue.equals("0000-00-00") || timestampValue.equals("0000-00-00 00:00:00")
                     || timestampValue.equals("00000000000000") || timestampValue.equals("0"))) {
 
@@ -5678,7 +5678,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 }
 
                 // We're left with the case of 'round' to a date Java _can_ represent, which is '0001-01-01'.
-                return fastTimestampCreate(null, 1, 1, 1, 0, 0, 0, 0);
+                return fastTimestampCreate(null, 1, 1, 1, 0, 0, 0, 0, useGmtMillis);
 
             } else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 
@@ -5687,7 +5687,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 }
 
                 return TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar,
-                        fastTimestampCreate(sessionCalendar, Integer.parseInt(timestampValue.substring(0, 4)), 1, 1, 0, 0, 0, 0),
+                        fastTimestampCreate(sessionCalendar, Integer.parseInt(timestampValue.substring(0, 4)), 1, 1, 0, 0, 0, 0, useGmtMillis),
                         this.connection.getServerTimezoneTZ(), tz, rollForward);
 
             } else {
@@ -5875,8 +5875,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 }
 
                 return TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar,
-                        fastTimestampCreate(sessionCalendar, year, month, day, hour, minutes, seconds, nanos), this.connection.getServerTimezoneTZ(), tz,
-                        rollForward);
+                        fastTimestampCreate(sessionCalendar, year, month, day, hour, minutes, seconds, nanos, useGmtMillis),
+                        this.connection.getServerTimezoneTZ(), tz, rollForward);
             }
         } catch (RuntimeException e) {
             SQLException sqlEx = SQLError.createSQLException("Cannot convert value '" + timestampValue + "' from column " + columnIndex + " to TIMESTAMP.",
@@ -5918,7 +5918,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
             checkRowPos();
             checkColumnBounds(columnIndex);
 
-            tsVal = this.thisRow.getTimestampFast(columnIndex - 1, targetCalendar, tz, rollForward, this.connection, this);
+            tsVal = this.thisRow.getTimestampFast(columnIndex - 1, targetCalendar, tz, rollForward, this.connection, this,
+                    this.connection.getUseGmtMillisForDatetimes(), this.connection.getUseJDBCCompliantTimezoneShift());
         }
 
         if (tsVal == null) {

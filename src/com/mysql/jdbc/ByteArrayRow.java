@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -119,15 +119,16 @@ public class ByteArrayRow extends ResultSetRow {
     }
 
     @Override
-    public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
-            throws SQLException {
+    public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn, ResultSetImpl rs,
+            boolean useGmtMillis, boolean useJDBCCompliantTimezoneShift) throws SQLException {
         byte[] columnValue = this.internalRowData[columnIndex];
 
         if (columnValue == null) {
             return null;
         }
 
-        return getTimestampFast(columnIndex, this.internalRowData[columnIndex], 0, columnValue.length, targetCalendar, tz, rollForward, conn, rs);
+        return getTimestampFast(columnIndex, this.internalRowData[columnIndex], 0, columnValue.length, targetCalendar, tz, rollForward, conn, rs, useGmtMillis,
+                useJDBCCompliantTimezoneShift);
     }
 
     @Override

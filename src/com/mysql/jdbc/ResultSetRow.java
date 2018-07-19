@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -477,7 +477,10 @@ public abstract class ResultSetRow {
                         return TimeUtil.fastTimestampCreate(tz, year, month, day, hour, minute, seconds, nanos);
                     }
 
-                    Timestamp ts = rs.fastTimestampCreate(rs.getCalendarInstanceForSessionOrNew(), year, month, day, hour, minute, seconds, nanos);
+                    boolean useGmtMillis = conn.getUseGmtMillisForDatetimes();
+
+                    Timestamp ts = rs.fastTimestampCreate(rs.getCalendarInstanceForSessionOrNew(), year, month, day, hour, minute, seconds, nanos,
+                            useGmtMillis);
 
                     Timestamp adjustedTs = TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar, ts, conn.getServerTimezoneTZ(), tz, rollForward);
 
@@ -630,9 +633,11 @@ public abstract class ResultSetRow {
             return TimeUtil.fastTimestampCreate(tz, year, month, day, hour, minute, seconds, nanos);
         }
 
+        boolean useGmtMillis = conn.getUseGmtMillisForDatetimes();
+
         Calendar sessionCalendar = conn.getUseJDBCCompliantTimezoneShift() ? conn.getUtcCalendar() : rs.getCalendarInstanceForSessionOrNew();
 
-        Timestamp ts = rs.fastTimestampCreate(sessionCalendar, year, month, day, hour, minute, seconds, nanos);
+        Timestamp ts = rs.fastTimestampCreate(sessionCalendar, year, month, day, hour, minute, seconds, nanos, useGmtMillis);
 
         Timestamp adjustedTs = TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar, ts, conn.getServerTimezoneTZ(), tz, rollForward);
 
@@ -898,10 +903,10 @@ public abstract class ResultSetRow {
             throws SQLException;
 
     protected Timestamp getTimestampFast(int columnIndex, byte[] timestampAsBytes, int offset, int length, Calendar targetCalendar, TimeZone tz,
-            boolean rollForward, MySQLConnection conn, ResultSetImpl rs) throws SQLException {
+            boolean rollForward, MySQLConnection conn, ResultSetImpl rs, boolean useGmtMillis, boolean useJDBCCompliantTimezoneShift) throws SQLException {
 
         try {
-            Calendar sessionCalendar = conn.getUseJDBCCompliantTimezoneShift() ? conn.getUtcCalendar() : rs.getCalendarInstanceForSessionOrNew();
+            Calendar sessionCalendar = useJDBCCompliantTimezoneShift ? conn.getUtcCalendar() : rs.getCalendarInstanceForSessionOrNew();
 
             boolean allZeroTimestamp = true;
 
@@ -942,7 +947,7 @@ public abstract class ResultSetRow {
                     return TimeUtil.fastTimestampCreate(tz, 1, 1, 1, 0, 0, 0, 0);
                 }
                 // We're left with the case of 'round' to a date Java _can_ represent, which is '0001-01-01'.
-                return rs.fastTimestampCreate(null, 1, 1, 1, 0, 0, 0, 0);
+                return rs.fastTimestampCreate(null, 1, 1, 1, 0, 0, 0, 0, useGmtMillis);
 
             } else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 
@@ -951,8 +956,8 @@ public abstract class ResultSetRow {
                 }
 
                 return TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar,
-                        rs.fastTimestampCreate(sessionCalendar, StringUtils.getInt(timestampAsBytes, offset, 4), 1, 1, 0, 0, 0, 0), conn.getServerTimezoneTZ(),
-                        tz, rollForward);
+                        rs.fastTimestampCreate(sessionCalendar, StringUtils.getInt(timestampAsBytes, offset, 4), 1, 1, 0, 0, 0, 0, useGmtMillis),
+                        conn.getServerTimezoneTZ(), tz, rollForward);
             } else {
                 // Convert from TIMESTAMP, TIME or DATE
 
@@ -1164,7 +1169,8 @@ public abstract class ResultSetRow {
                 }
 
                 return TimeUtil.changeTimezone(conn, sessionCalendar, targetCalendar,
-                        rs.fastTimestampCreate(sessionCalendar, year, month, day, hour, minutes, seconds, nanos), conn.getServerTimezoneTZ(), tz, rollForward);
+                        rs.fastTimestampCreate(sessionCalendar, year, month, day, hour, minutes, seconds, nanos, useGmtMillis), conn.getServerTimezoneTZ(), tz,
+                        rollForward);
             }
         } catch (RuntimeException e) {
             SQLException sqlEx = SQLError.createSQLException(
@@ -1177,7 +1183,7 @@ public abstract class ResultSetRow {
     }
 
     public abstract Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar, TimeZone tz, boolean rollForward, MySQLConnection conn,
-            ResultSetImpl rs) throws SQLException;
+            ResultSetImpl rs, boolean useGmtMillis, boolean useJDBCCompliantTimezoneShift) throws SQLException;
 
     /**
      * Could the column value at the given index (which starts at 0) be

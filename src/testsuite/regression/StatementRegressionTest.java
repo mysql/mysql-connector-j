@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -3242,6 +3242,7 @@ public class StatementRegressionTest extends BaseTestCase {
             conn2 = super.getConnectionWithProps(props);
             this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
             Calendar c = Calendar.getInstance();
+            c.set(Calendar.MILLISECOND, 789);
             this.pstmt.setTimestamp(1, new Timestamp(c.getTime().getTime()));
             this.pstmt.execute();
             this.pstmt.close();
@@ -6619,23 +6620,43 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug18091639() throws SQLException {
-        String str = TimeUtil.formatNanos(1, true, false);
-        assertEquals("000000001", str);
+        String str = TimeUtil.formatNanos(900000000, true, 1);
+        assertEquals("9", str);
 
-        str = TimeUtil.formatNanos(1, true, true);
+        str = TimeUtil.formatNanos(90000000, true, 1);
         assertEquals("0", str);
 
-        str = TimeUtil.formatNanos(1999, true, false);
-        assertEquals("000001999", str);
+        str = TimeUtil.formatNanos(900000000, true, 0);
+        assertEquals("0", str);
 
-        str = TimeUtil.formatNanos(1999, true, true);
+        assertThrows(SQLException.class, "fsp value must be in 0 to 6 range but was 9", new Callable<Void>() {
+            public Void call() throws Exception {
+                TimeUtil.formatNanos(1, true, 9);
+                return null;
+            }
+        });
+
+        str = TimeUtil.formatNanos(1, true, 6);
+        assertEquals("0", str);
+
+        str = TimeUtil.formatNanos(1999, true, 6);
         assertEquals("000001", str);
 
-        str = TimeUtil.formatNanos(1000000010, true, false);
-        assertEquals("00000001", str);
-
-        str = TimeUtil.formatNanos(1000000010, true, true);
+        str = TimeUtil.formatNanos(123999, true, 3);
         assertEquals("0", str);
+
+        str = TimeUtil.formatNanos(123999, true, 4);
+        assertEquals("0001", str);
+
+        assertThrows(SQLException.class, "nanos value must be in 0 to 999999999 range but was 1000000010", new Callable<Void>() {
+            public Void call() throws Exception {
+                TimeUtil.formatNanos(1000000010, true, 6);
+                return null;
+            }
+        });
+
+        str = TimeUtil.formatNanos(100000000, true, 6);
+        assertEquals("1", str);
     }
 
     /**

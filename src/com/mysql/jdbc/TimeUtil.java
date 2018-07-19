@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -481,29 +481,83 @@ public class TimeUtil {
         return buf.toString();
     }
 
-    public static String formatNanos(int nanos, boolean serverSupportsFracSecs, boolean usingMicros) {
-
-        // get only last 9 digits
-        if (nanos > 999999999) {
-            nanos %= 100000000;
+    /**
+     * Return a new Timestamp object which value is adjusted according to known DATE, DATETIME or TIMESTAMP field precision.
+     * 
+     * @param ts
+     *            an original Timestamp object, not modified by this method
+     * @param fsp
+     *            value in the range from 0 to 6 specifying fractional seconds precision
+     * @param serverRoundFracSecs
+     *            Flag indicating whether rounding or truncation occurs on server when inserting a TIME, DATE, or TIMESTAMP value with a fractional seconds part
+     *            into a column having the same type but fewer fractional digits: true means rounding, false means truncation. The proper value should be
+     *            detected by analyzing sql_mode server variable for TIME_TRUNCATE_FRACTIONAL presence.
+     * @return A new Timestamp object cloned from original ones and then rounded or truncated according to required fsp value
+     * @throws SQLException
+     *             if fsp value is out of range
+     */
+    public static Timestamp adjustTimestampNanosPrecision(Timestamp ts, int fsp, boolean serverRoundFracSecs) throws SQLException {
+        if (fsp < 0 || fsp > 6) {
+            throw SQLError.createSQLException("fsp value must be in 0 to 6 range.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        if (usingMicros) {
-            nanos /= 1000;
+        Timestamp res = (Timestamp) ts.clone();
+        int nanos = res.getNanos();
+        double tail = Math.pow(10, 9 - fsp);
+
+        if (serverRoundFracSecs) {
+            nanos = (int) Math.round(nanos / tail) * (int) tail;
+            if (nanos > 999999999) {
+                nanos %= 1000000000; // get only last 9 digits
+                res.setTime(res.getTime() + 1000); // increment seconds
+            }
+        } else {
+            nanos = (int) (nanos / tail) * (int) tail;
+        }
+        res.setNanos(nanos);
+
+        return res;
+    }
+
+    /**
+     * Return a string representation of a fractional seconds part. This method assumes that all Timestamp adjustments are already done before,
+     * thus no rounding is needed, only a proper "0" padding to be done.
+     * 
+     * @param nanos
+     *            fractional seconds value
+     * @param serverSupportsFracSecs
+     *            flag indicating does server support fractional seconds
+     * @param fsp
+     *            required fractional part length
+     * @return fractional seconds part as a string
+     * @throws SQLException
+     *             if nanos or fsp value is out of range
+     */
+    public static String formatNanos(int nanos, boolean serverSupportsFracSecs, int fsp) throws SQLException {
+
+        if (nanos < 0 || nanos > 999999999) {
+            throw SQLError.createSQLException("nanos value must be in 0 to 999999999 range but was " + nanos, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+        }
+        if (fsp < 0 || fsp > 6) {
+            throw SQLError.createSQLException("fsp value must be in 0 to 6 range but was " + fsp, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        if (!serverSupportsFracSecs || nanos == 0) {
+        if (!serverSupportsFracSecs || fsp == 0 || nanos == 0) {
             return "0";
         }
 
-        final int digitCount = usingMicros ? 6 : 9;
+        // just truncate because we expect the rounding was done before
+        nanos = (int) (nanos / Math.pow(10, 9 - fsp));
+        if (nanos == 0) {
+            return "0";
+        }
 
         String nanosString = Integer.toString(nanos);
-        final String zeroPadding = usingMicros ? "000000" : "000000000";
+        final String zeroPadding = "000000000";
 
-        nanosString = zeroPadding.substring(0, (digitCount - nanosString.length())) + nanosString;
+        nanosString = zeroPadding.substring(0, fsp - nanosString.length()) + nanosString;
 
-        int pos = digitCount - 1; // the end, we're padded to the end by the code above
+        int pos = fsp - 1; // the end, we're padded to the end by the code above
 
         while (nanosString.charAt(pos) == '0') {
             pos--;

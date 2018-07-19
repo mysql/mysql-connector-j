@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2595,8 +2595,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         return ((c == 'y') && (n == 2)) ? 'X'
                 : (((c == 'y') && (n < 4)) ? 'y' : ((c == 'y') ? 'M' : (((c == 'M') && (n == 2)) ? 'Y'
                         : (((c == 'M') && (n < 3)) ? 'M' : ((c == 'M') ? 'd' : (((c == 'd') && (n < 2)) ? 'd' : ((c == 'd') ? 'H' : (((c == 'H') && (n < 2))
-                                ? 'H' : ((c == 'H') ? 'm'
-                                        : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
+                                ? 'H'
+                                : ((c == 'H') ? 'm' : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
     }
 
     /**
@@ -4168,7 +4168,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      */
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimestampInternal(parameterIndex, x, cal, cal.getTimeZone(), true);
+            int fractLen = -1;
+            if (!this.sendFractionalSeconds || !this.serverSupportsFracSecs) {
+                fractLen = 0;
+            } else if (this.parameterMetaData != null && parameterIndex <= this.parameterMetaData.metadata.fields.length && parameterIndex >= 0
+                    && this.parameterMetaData.metadata.getField(parameterIndex).getDecimals() > 0) {
+                fractLen = this.parameterMetaData.metadata.getField(parameterIndex).getDecimals();
+            }
+
+            setTimestampInternal(parameterIndex, x, cal, cal.getTimeZone(), true, fractLen, this.connection.getUseSSPSCompatibleTimezoneShift());
         }
     }
 
@@ -4186,7 +4194,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      */
     public void setTimestamp(int parameterIndex, Timestamp x) throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            setTimestampInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false);
+            int fractLen = -1;
+            if (!this.sendFractionalSeconds || !this.serverSupportsFracSecs) {
+                fractLen = 0;
+            } else if (this.parameterMetaData != null && parameterIndex <= this.parameterMetaData.metadata.fields.length && parameterIndex >= 0) {
+                fractLen = this.parameterMetaData.metadata.getField(parameterIndex).getDecimals();
+            }
+
+            setTimestampInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false, fractLen,
+                    this.connection.getUseSSPSCompatibleTimezoneShift());
         }
     }
 
@@ -4204,15 +4220,25 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
      * @throws SQLException
      *             if a database-access error occurs.
      */
-    private void setTimestampInternal(int parameterIndex, Timestamp x, Calendar targetCalendar, TimeZone tz, boolean rollForward) throws SQLException {
+    protected void setTimestampInternal(int parameterIndex, Timestamp x, Calendar targetCalendar, TimeZone tz, boolean rollForward, int fractionalLength,
+            boolean useSSPSCompatibleTimezoneShift) throws SQLException {
         if (x == null) {
             setNull(parameterIndex, java.sql.Types.TIMESTAMP);
         } else {
             checkClosed();
 
-            if (!this.sendFractionalSeconds) {
+            x = (Timestamp) x.clone();
+
+            if (!this.serverSupportsFracSecs || !this.sendFractionalSeconds && fractionalLength == 0) {
                 x = TimeUtil.truncateFractionalSeconds(x);
             }
+
+            if (fractionalLength < 0) {
+                // default to 6 fractional positions
+                fractionalLength = 6;
+            }
+
+            x = TimeUtil.adjustTimestampNanosPrecision(x, fractionalLength, !this.connection.isServerTruncatesFracSecs());
 
             if (!this.useLegacyDatetimeCode) {
                 newSetTimestampInternal(parameterIndex, x, targetCalendar);
@@ -4222,8 +4248,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                 x = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
 
-                if (this.connection.getUseSSPSCompatibleTimezoneShift()) {
-                    doSSPSCompatibleTimezoneShift(parameterIndex, x);
+                if (useSSPSCompatibleTimezoneShift) {
+                    doSSPSCompatibleTimezoneShift(parameterIndex, x, fractionalLength);
                 } else {
                     synchronized (this) {
                         if (this.tsdf == null) {
@@ -4233,12 +4259,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         StringBuffer buf = new StringBuffer();
                         buf.append(this.tsdf.format(x));
 
-                        if (this.serverSupportsFracSecs) {
+                        if (fractionalLength > 0) {
                             int nanos = x.getNanos();
 
                             if (nanos != 0) {
                                 buf.append('.');
-                                buf.append(TimeUtil.formatNanos(nanos, this.serverSupportsFracSecs, true));
+                                buf.append(TimeUtil.formatNanos(nanos, this.serverSupportsFracSecs, fractionalLength));
                             }
                         }
 
@@ -4269,7 +4295,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             StringBuffer buf = new StringBuffer();
             buf.append(this.tsdf.format(x));
             buf.append('.');
-            buf.append(TimeUtil.formatNanos(x.getNanos(), this.serverSupportsFracSecs, true));
+            buf.append(TimeUtil.formatNanos(x.getNanos(), this.serverSupportsFracSecs, 6));
             buf.append('\'');
 
             setInternal(parameterIndex, buf.toString());
@@ -4310,7 +4336,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         }
     }
 
-    private void doSSPSCompatibleTimezoneShift(int parameterIndex, Timestamp x) throws SQLException {
+    private void doSSPSCompatibleTimezoneShift(int parameterIndex, Timestamp x, int fractionalLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             Calendar sessionCalendar2 = (this.connection.getUseJDBCCompliantTimezoneShift()) ? this.connection.getUtcCalendar()
                     : getCalendarInstanceForSessionOrNew();
@@ -4375,7 +4401,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     tsBuf.append(seconds);
 
                     tsBuf.append('.');
-                    tsBuf.append(TimeUtil.formatNanos(x.getNanos(), this.serverSupportsFracSecs, true));
+                    tsBuf.append(TimeUtil.formatNanos(x.getNanos(), this.serverSupportsFracSecs, fractionalLength));
                     tsBuf.append('\'');
 
                     setInternal(parameterIndex, tsBuf.toString());

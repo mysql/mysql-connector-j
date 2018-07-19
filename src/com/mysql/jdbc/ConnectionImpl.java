@@ -529,6 +529,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     private boolean noBackslashEscapes = false;
 
+    private boolean serverTruncatesFracSecs = false;
+
     private long numberOfPreparedExecutes = 0;
 
     private long numberOfPrepares = 0;
@@ -3303,6 +3305,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 } else if (sqlModeAsString != null) {
                     this.useAnsiQuotes = sqlModeAsString.indexOf("ANSI_QUOTES") != -1;
                     this.noBackslashEscapes = sqlModeAsString.indexOf("NO_BACKSLASH_ESCAPES") != -1;
+                    this.serverTruncatesFracSecs = sqlModeAsString.indexOf("TIME_TRUNCATE_FRACTIONAL") != -1; // truncate instead of round
                 }
             }
         }
@@ -5499,6 +5502,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
         this.eventSink = h;
+    }
+
+    public boolean isServerTruncatesFracSecs() {
+        return this.serverTruncatesFracSecs;
     }
 
     private static class NetworkTimeoutSetter implements Runnable {

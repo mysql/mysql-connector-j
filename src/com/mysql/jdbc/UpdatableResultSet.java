@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -447,16 +447,9 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.deleter.clearParameters();
 
             int numKeys = this.primaryKeyIndicies.size();
-
-            if (numKeys == 1) {
-                int index = this.primaryKeyIndicies.get(0).intValue();
-                this.setParamValue(this.deleter, 1, this.thisRow, index, this.fields[index].getSQLType());
-            } else {
-                for (int i = 0; i < numKeys; i++) {
-                    int index = this.primaryKeyIndicies.get(i).intValue();
-                    this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.fields[index].getSQLType());
-
-                }
+            for (int i = 0; i < numKeys; i++) {
+                int index = this.primaryKeyIndicies.get(i).intValue();
+                this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.fields[index]);
             }
 
             this.deleter.executeUpdate();
@@ -467,13 +460,13 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    private void setParamValue(PreparedStatement ps, int psIdx, ResultSetRow row, int rsIdx, int sqlType) throws SQLException {
+    private void setParamValue(PreparedStatement ps, int psIdx, ResultSetRow row, int rsIdx, Field field) throws SQLException {
         byte[] val = row.getColumnValue(rsIdx);
         if (val == null) {
             ps.setNull(psIdx, Types.NULL);
             return;
         }
-        switch (sqlType) {
+        switch (field.getSQLType()) {
             case Types.NULL:
                 ps.setNull(psIdx, Types.NULL);
                 break;
@@ -496,9 +489,13 @@ public class UpdatableResultSet extends ResultSetImpl {
                 ps.setDate(psIdx, row.getDateFast(rsIdx, this.connection, this, this.fastDefaultCal), this.fastDefaultCal);
                 break;
             case Types.TIMESTAMP:
-                ps.setTimestamp(psIdx, row.getTimestampFast(rsIdx, this.fastDefaultCal, this.connection.getDefaultTimeZone(), false, this.connection, this));
+                boolean useGmtMillis = false; // to prevent conversion of key values
+                boolean useJdbcCompliantTimezoneShift = false; // to prevent conversion of key values
+                ps.setTimestampInternal(psIdx, row.getTimestampFast(rsIdx, this.fastDefaultCal, this.connection.getDefaultTimeZone(), false, this.connection,
+                        this, useGmtMillis, useJdbcCompliantTimezoneShift), null, this.connection.getDefaultTimeZone(), false, field.getDecimals(), false);
                 break;
             case Types.TIME:
+                // TODO adjust nanos to decimal numbers
                 ps.setTime(psIdx, row.getTimeFast(rsIdx, this.fastDefaultCal, this.connection.getDefaultTimeZone(), false, this.connection, this));
                 break;
             case Types.FLOAT:
@@ -1017,6 +1014,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 }
 
                 this.inserter = (PreparedStatement) this.connection.clientPrepareStatement(this.insertSQL);
+                this.inserter.parameterMetaData = new MysqlParameterMetadata(this.fields, this.fields.length, getExceptionInterceptor());
+
                 if (this.populateInserterWithDefaultValues) {
                     extractDefaultValues();
                 }
@@ -1264,6 +1263,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             }
 
             this.refresher = (PreparedStatement) this.connection.clientPrepareStatement(this.refreshSQL);
+            this.refresher.parameterMetaData = new MysqlParameterMetadata(this.fields, this.fields.length, getExceptionInterceptor());
         }
 
         this.refresher.clearParameters();
@@ -1473,6 +1473,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             }
 
             this.updater = (PreparedStatement) this.connection.clientPrepareStatement(this.updateSQL);
+            this.updater.parameterMetaData = new MysqlParameterMetadata(this.fields, this.fields.length, getExceptionInterceptor());
         }
 
         int numFields = this.fields.length;
@@ -1492,15 +1493,9 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
 
         int numKeys = this.primaryKeyIndicies.size();
-
-        if (numKeys == 1) {
-            int index = this.primaryKeyIndicies.get(0).intValue();
-            this.setParamValue(this.updater, numFields + 1, this.thisRow, index, this.fields[index].getSQLType());
-        } else {
-            for (int i = 0; i < numKeys; i++) {
-                int idx = this.primaryKeyIndicies.get(i).intValue();
-                this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, this.fields[idx].getSQLType());
-            }
+        for (int i = 0; i < numKeys; i++) {
+            int idx = this.primaryKeyIndicies.get(i).intValue();
+            this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, this.fields[idx]);
         }
     }
 

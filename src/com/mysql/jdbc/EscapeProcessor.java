@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -373,6 +373,9 @@ class EscapeProcessor {
             try {
                 if (!conn.getUseLegacyDatetimeCode()) {
                     Timestamp ts = Timestamp.valueOf(argument);
+
+                    ts = TimeUtil.adjustTimestampNanosPrecision(ts, 6, !conn.isServerTruncatesFracSecs());
+
                     SimpleDateFormat tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
 
                     tsdf.setTimeZone(conn.getServerTimezoneTZ());
@@ -381,7 +384,7 @@ class EscapeProcessor {
 
                     if (ts.getNanos() > 0 && conn.versionMeetsMinimum(5, 6, 4)) {
                         newSql.append('.');
-                        newSql.append(TimeUtil.formatNanos(ts.getNanos(), true, true));
+                        newSql.append(TimeUtil.formatNanos(ts.getNanos(), true, 6));
                     }
 
                     newSql.append('\'');
