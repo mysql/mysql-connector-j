@@ -5597,6 +5597,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
         boolean useFastDateParsing = false;
 
         do {
+            // TIME_TRUNCATE_FRACTIONAL was added in MySQL 8.0
+            if (sqlModeTimeTruncateFractional && !versionMeetsMinimum(8, 0)) {
+                continue;
+            }
+
             final String testCase = String.format(
                     "Case: [TIME_TRUNCATE_FRACTIONAL=%s, sendFractionalSeconds=%s, useServerPrepStmts=%s," + " useLegacyDatetimeCode=%s,"
                             + " useJDBCCompliantTimezoneShift=%s," + " useGmtMillisForDatetimes=%s," + " useSSPSCompatibleTimezoneShift=%s,"
@@ -5696,6 +5701,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
                 st.close();
             }
+
+            testConn.close();
 
         } while ((sqlModeTimeTruncateFractional = !sqlModeTimeTruncateFractional) || (sendFractionalSeconds = !sendFractionalSeconds)
                 || (useServerPrepStmts = !useServerPrepStmts) || (useLegacyDatetimeCode = !useLegacyDatetimeCode)
