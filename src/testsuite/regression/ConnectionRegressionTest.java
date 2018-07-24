@@ -10879,4 +10879,91 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.stmt.execute("SET GLOBAL autocommit=" + prevAutocommit);
         }
     }
+
+    /**
+     * Test fix for Bug#89948 (27658489), Batched statements are not committed for useLocalTransactionState=true.
+     */
+    public void testBug89948() throws Exception {
+        createTable("testBug89948", "(id INT PRIMARY KEY)");
+
+        boolean resetConn = false;
+        boolean allowMQ = false;
+        boolean rwBatchStmts = false;
+        boolean useLTS = false;
+        boolean useLSS = false;
+
+        do {
+            final String testCase = String.format("Case: [resetConn: %s, allowMQ: %s, rwBatchStmts: %s, useLTS: %s, useLSS: %s ]", resetConn ? "Y" : "N",
+                    allowMQ ? "Y" : "N", rwBatchStmts ? "Y" : "N", useLTS ? "Y" : "N", useLSS ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty("allowMultiQueries", Boolean.toString(allowMQ));
+            props.setProperty("rewriteBatchedStatements", Boolean.toString(rwBatchStmts));
+            props.setProperty("useLocalTransactionState", Boolean.toString(useLTS));
+            props.setProperty("useLocalSessionState", Boolean.toString(useLTS));
+
+            Connection testConn = getConnectionWithProps(props);
+            testConn.setAutoCommit(false);
+
+            this.pstmt = testConn.prepareStatement("INSERT INTO testBug89948 VALUES (?)");
+            for (int i = 1; i <= 10; i++) {
+                this.pstmt.setInt(1, i);
+                this.pstmt.addBatch();
+            }
+            this.pstmt.executeBatch();
+            testConn.commit();
+            this.pstmt.close();
+
+            testBug89948Check(testCase, 10, 0);
+
+            if (resetConn) {
+                testConn.close();
+                testConn = getConnectionWithProps(props);
+                testConn.setAutoCommit(false);
+            }
+
+            this.pstmt = testConn.prepareStatement("UPDATE testBug89948 SET id = id + 100 WHERE id = ?");
+            for (int i = 1; i <= 10; i++) {
+                this.pstmt.setInt(1, i);
+                this.pstmt.addBatch();
+            }
+            this.pstmt.executeBatch();
+            testConn.commit();
+            this.pstmt.close();
+
+            testBug89948Check(testCase, 10, 100);
+
+            if (resetConn) {
+                testConn.close();
+                testConn = getConnectionWithProps(props);
+                testConn.setAutoCommit(false);
+            }
+
+            this.pstmt = testConn.prepareStatement("DELETE FROM testBug89948 WHERE id % 100 = ?"); // match N or (100 + N)
+            for (int i = 1; i <= 10; i++) {
+                this.pstmt.setInt(1, i);
+                this.pstmt.addBatch();
+            }
+            this.pstmt.executeBatch();
+            testConn.commit();
+            this.pstmt.close();
+
+            testBug89948Check(testCase, 0, 0);
+
+            testConn.close();
+
+            this.stmt.executeUpdate("TRUNCATE TABLE testBug89948");
+        } while ((resetConn = !resetConn) || (rwBatchStmts = !rwBatchStmts) || (useLTS = !useLTS) || (useLSS = !useLSS));
+    }
+
+    private void testBug89948Check(String testCase, int expectedCount, int idOffset) throws Exception {
+        // Run this query in a different connection.
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug89948");
+        int c = 0;
+        while (this.rs.next()) {
+            c++;
+            assertEquals(testCase, idOffset + c, this.rs.getInt(1));
+        }
+        assertEquals(testCase, expectedCount, c);
+    }
 }

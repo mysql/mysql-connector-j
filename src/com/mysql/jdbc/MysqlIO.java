@@ -3658,6 +3658,7 @@ public class MysqlIO {
         buf.writeByte((byte) MysqlDefs.COM_SET_OPTION);
         buf.writeInt(0);
         sendCommand(MysqlDefs.COM_SET_OPTION, null, buf, false, null, 0);
+        preserveOldTransactionState();
     }
 
     void disableMultiQueries() throws SQLException {
@@ -3667,6 +3668,7 @@ public class MysqlIO {
         buf.writeByte((byte) MysqlDefs.COM_SET_OPTION);
         buf.writeInt(1);
         sendCommand(MysqlDefs.COM_SET_OPTION, null, buf, false, null, 0);
+        preserveOldTransactionState();
     }
 
     /**
