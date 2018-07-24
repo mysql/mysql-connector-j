@@ -5724,7 +5724,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 final String testCase = String.format("Case: [characterEncoding=%s, useServerPrepStmts=%s]", enc, useSSPS);
                 System.out.println(testCase);
 
-                createTable("testBug80532", "(id char(50) NOT NULL, data longtext, num int, PRIMARY KEY (id,num)) CHARACTER SET utf8mb4");
+                createTable("testBug80532", "(id char(50) NOT NULL, data longtext, num int, PRIMARY KEY (id,num)) CHARACTER SET "
+                        + (versionMeetsMinimum(5, 5) ? "utf8mb4" : "utf8"));
 
                 props.setProperty("characterEncoding", enc);
                 props.setProperty("useServerPrepStmts", useSSPS);
