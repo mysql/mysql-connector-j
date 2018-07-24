@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -785,6 +785,12 @@ public class Field {
     private boolean isNativeDateTimeType() {
         return (this.mysqlType == MysqlDefs.FIELD_TYPE_DATE || this.mysqlType == MysqlDefs.FIELD_TYPE_NEWDATE || this.mysqlType == MysqlDefs.FIELD_TYPE_DATETIME
                 || this.mysqlType == MysqlDefs.FIELD_TYPE_TIME || this.mysqlType == MysqlDefs.FIELD_TYPE_TIMESTAMP);
+    }
+
+    public boolean isCharsetApplicableType() {
+        return (this.mysqlType == MysqlDefs.FIELD_TYPE_ENUM || this.mysqlType == MysqlDefs.FIELD_TYPE_JSON || this.mysqlType == MysqlDefs.FIELD_TYPE_SET
+                || this.mysqlType == MysqlDefs.FIELD_TYPE_STRING || this.mysqlType == MysqlDefs.FIELD_TYPE_VAR_STRING
+                || this.mysqlType == MysqlDefs.FIELD_TYPE_VARCHAR);
     }
 
     public void setConnection(MySQLConnection conn) {

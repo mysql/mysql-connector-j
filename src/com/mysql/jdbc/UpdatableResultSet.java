@@ -483,7 +483,8 @@ public class UpdatableResultSet extends ResultSetImpl {
             case Types.LONGVARCHAR:
             case Types.DECIMAL:
             case Types.NUMERIC:
-                ps.setString(psIdx, row.getString(rsIdx, this.charEncoding, this.connection));
+                Field f = this.fields[rsIdx];
+                ps.setString(psIdx, row.getString(rsIdx, f.getEncoding(), this.connection));
                 break;
             case Types.DATE:
                 ps.setDate(psIdx, row.getDateFast(rsIdx, this.connection, this, this.fastDefaultCal), this.fastDefaultCal);
@@ -1483,7 +1484,11 @@ public class UpdatableResultSet extends ResultSetImpl {
             if (this.thisRow.getColumnValue(i) != null) {
 
                 if (this.fields[i].getvalueNeedsQuoting()) {
-                    this.updater.setBytes(i + 1, this.thisRow.getColumnValue(i), this.fields[i].isBinary(), false);
+                    if (this.fields[i].isCharsetApplicableType() && !this.fields[i].getEncoding().equals(this.connection.getEncoding())) {
+                        this.updater.setString(i + 1, this.thisRow.getString(i, this.fields[i].getEncoding(), this.connection));
+                    } else {
+                        this.updater.setBytes(i + 1, this.thisRow.getColumnValue(i), this.fields[i].isBinary(), false);
+                    }
                 } else {
                     this.updater.setBytesNoEscapeNoQuotes(i + 1, this.thisRow.getColumnValue(i));
                 }
