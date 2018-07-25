@@ -3,6 +3,9 @@
 
 Version 5.1.47
 
+  - Fix for Bug#87534 (26730196), UNION ALL query fails when useServerPrepStmts=true on database connection.
+    Test case only. Base bug fixed in MySQL 5.7.22.
+
   - Fix for Bug#89948 (27658489), Batched statements are not committed for useLocalTransactionState=true.
 
   - Fix for BUG#80532 (22847443), ENCODING OF RESULTSET.UPDATEROW IS BROKEN FOR NON ASCII CHARCTERS.
