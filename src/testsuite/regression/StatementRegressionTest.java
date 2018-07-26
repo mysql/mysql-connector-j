@@ -8604,4 +8604,62 @@ public class StatementRegressionTest extends BaseTestCase {
             testConn.close();
         } while (useSPS = !useSPS);
     }
+
+    /**
+     * Tests fix for Bug#84813 (25501750), rewriteBatchedStatements fails in INSERT.
+     */
+    public void testBug84813() throws Exception {
+        createTable("testBug84813", "(id INT AUTO_INCREMENT PRIMARY KEY, z INT, n INT)");
+
+        boolean rwBS = false;
+        boolean useSPS = false;
+
+        do {
+            final String testCase = String.format("Case [rwBS: %s, useSPS: %s]", rwBS ? "Y" : "N", useSPS ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty("rewriteBatchedStatements", Boolean.toString(rwBS));
+            props.setProperty("useServerPrepStmts", Boolean.toString(useSPS));
+            props.setProperty("emulateUnsupportedPstmts", "false");
+
+            Connection testConn = getConnectionWithProps(props);
+
+            for (int r = 1; r <= 5; r++) {
+                for (String odku : new String[] { "", " ON DUPLICATE KEY UPDATE id = -id" }) {
+                    final String testCaseExtra = odku.length() > 0 ? "/ODKU" : "/non-ODKU";
+                    this.pstmt = testConn.prepareStatement("INSERT INTO testBug84813 VALUES (NULL, 0, 0) /* Comment (?) */" + odku);
+                    for (int i = 0; i < r; i++) {
+                        this.pstmt.addBatch();
+                    }
+                    this.pstmt.executeBatch();
+                    testBug84813CheckAndReset(testCase + testCaseExtra, r, true);
+                    this.pstmt.close();
+
+                    this.pstmt = testConn.prepareStatement("INSERT INTO testBug84813 VALUES (NULL, ?, ?) /* Comment (?) */ " + odku);
+                    for (int i = 0; i < r; i++) {
+                        this.pstmt.setInt(1, 0);
+                        this.pstmt.setInt(2, i);
+                        this.pstmt.addBatch();
+                    }
+                    this.pstmt.executeBatch();
+                    testBug84813CheckAndReset(testCase + testCaseExtra, r, false);
+                    this.pstmt.close();
+                }
+            }
+
+            testConn.close();
+        } while ((rwBS = !rwBS) || (useSPS = !useSPS));
+    }
+
+    private void testBug84813CheckAndReset(String testCase, int repetitions, boolean allZero) throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug84813");
+        for (int i = 0; i < repetitions; i++) {
+            assertTrue(this.rs.next());
+            assertEquals(testCase, i + 1, this.rs.getInt(1));
+            assertEquals(testCase, 0, this.rs.getInt(2));
+            assertEquals(testCase, allZero ? 0 : i, this.rs.getInt(3));
+        }
+        assertFalse(this.rs.next());
+        this.stmt.execute("TRUNCATE TABLE testBug84813");
+    }
 }

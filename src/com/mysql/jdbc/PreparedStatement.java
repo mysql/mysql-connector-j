@@ -53,7 +53,6 @@ import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TimeZone;
@@ -154,6 +153,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
         boolean canRewriteAsMultiValueInsert = false;
 
         byte[][] staticSql = null;
+
+        boolean hasPlaceholders = false;
 
         boolean isOnDuplicateKeyUpdate = false;
 
@@ -314,6 +315,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                 endpointList.add(new int[] { lastParmEnd, this.statementLength });
                 this.staticSql = new byte[endpointList.size()][];
+                this.hasPlaceholders = this.staticSql.length > 1;
 
                 for (i = 0; i < this.staticSql.length; i++) {
                     int[] ep = endpointList.get(i);
@@ -427,17 +429,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 return null;
             }
 
-            int endOfValuesClause = sql.lastIndexOf(')');
+            int endOfValuesClause = this.isOnDuplicateKeyUpdate ? this.locationOfOnDuplicateKeyUpdate : sql.length();
 
-            if (endOfValuesClause == -1) {
-                return null;
-            }
-
-            if (this.isOnDuplicateKeyUpdate) {
-                endOfValuesClause = this.locationOfOnDuplicateKeyUpdate - 1;
-            }
-
-            return sql.substring(indexOfFirstParen, endOfValuesClause + 1);
+            return sql.substring(indexOfFirstParen, endOfValuesClause);
         }
 
         /**
@@ -498,55 +492,84 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
          * efficient to convert a LinkedList to an array.
          */
         private void buildInfoForBatch(int numBatch, BatchVisitor visitor) {
+            if (!this.hasPlaceholders) {
+                if (numBatch == 1) {
+                    // ParseInfo for a multi-value INSERT that doesn't have any placeholder may require two or more batches (depends on if ODKU is present or not).
+                    // The original sql should be able to handle it.
+                    visitor.append(this.staticSql[0]);
+
+                    return;
+                }
+
+                // Without placeholders, only the values segment of the query needs repeating.
+
+                final byte[] headStaticSql = this.batchHead.staticSql[0];
+                visitor.append(headStaticSql).increment();
+
+                int numValueRepeats = numBatch - 1; // First one is in the "head".
+                if (this.batchODKUClause != null) {
+                    numValueRepeats--; // Last one is in the ODKU clause.
+                }
+
+                final byte[] valuesStaticSql = this.batchValues.staticSql[0];
+                for (int i = 0; i < numValueRepeats; i++) {
+                    visitor.mergeWithLast(valuesStaticSql).increment();
+                }
+
+                if (this.batchODKUClause != null) {
+                    final byte[] batchOdkuStaticSql = this.batchODKUClause.staticSql[0];
+                    visitor.mergeWithLast(batchOdkuStaticSql).increment();
+                }
+
+                return;
+            }
+
+            // Placeholders require assembling all the parts in each segment of the query and repeat them as needed.
+
+            // Add the head section except the last part.
             final byte[][] headStaticSql = this.batchHead.staticSql;
             final int headStaticSqlLength = headStaticSql.length;
-
-            if (headStaticSqlLength > 1) {
-                for (int i = 0; i < headStaticSqlLength - 1; i++) {
-                    visitor.append(headStaticSql[i]).increment();
-                }
-            }
-
-            // merge end of head, with beginning of a value clause
             byte[] endOfHead = headStaticSql[headStaticSqlLength - 1];
-            final byte[][] valuesStaticSql = this.batchValues.staticSql;
-            byte[] beginOfValues = valuesStaticSql[0];
 
-            visitor.merge(endOfHead, beginOfValues).increment();
-
-            int numValueRepeats = numBatch - 1; // first one is in the "head"
-
-            if (this.batchODKUClause != null) {
-                numValueRepeats--; // Last one is in the ODKU clause
+            for (int i = 0; i < headStaticSqlLength - 1; i++) {
+                visitor.append(headStaticSql[i]).increment();
             }
 
+            // Repeat the values section as many times as needed.
+            int numValueRepeats = numBatch - 1; // First one is in the "head".
+            if (this.batchODKUClause != null) {
+                numValueRepeats--; // Last one is in the ODKU clause.
+            }
+
+            final byte[][] valuesStaticSql = this.batchValues.staticSql;
             final int valuesStaticSqlLength = valuesStaticSql.length;
+            byte[] beginOfValues = valuesStaticSql[0];
             byte[] endOfValues = valuesStaticSql[valuesStaticSqlLength - 1];
 
             for (int i = 0; i < numValueRepeats; i++) {
+                visitor.merge(endOfValues, beginOfValues).increment();
                 for (int j = 1; j < valuesStaticSqlLength - 1; j++) {
                     visitor.append(valuesStaticSql[j]).increment();
                 }
-                visitor.merge(endOfValues, beginOfValues).increment();
             }
 
+            // Append the last value and/or ending.
             if (this.batchODKUClause != null) {
                 final byte[][] batchOdkuStaticSql = this.batchODKUClause.staticSql;
-                byte[] beginOfOdku = batchOdkuStaticSql[0];
-                visitor.decrement().merge(endOfValues, beginOfOdku).increment();
-
                 final int batchOdkuStaticSqlLength = batchOdkuStaticSql.length;
+                byte[] beginOfOdku = batchOdkuStaticSql[0];
+                byte[] endOfOdku = batchOdkuStaticSql[batchOdkuStaticSqlLength - 1];
 
                 if (numBatch > 1) {
+                    visitor.merge(numValueRepeats > 0 ? endOfValues : endOfHead, beginOfOdku).increment();
                     for (int i = 1; i < batchOdkuStaticSqlLength; i++) {
                         visitor.append(batchOdkuStaticSql[i]).increment();
                     }
                 } else {
-                    visitor.decrement().append(batchOdkuStaticSql[(batchOdkuStaticSqlLength - 1)]);
+                    visitor.append(endOfOdku).increment();
                 }
             } else {
-                // Everything after the values clause, but not ODKU, which today is nothing but a syntax error, but we should still not mangle the SQL!
-                visitor.decrement().append(this.staticSql[this.staticSql.length - 1]);
+                visitor.append(endOfHead);
             }
         }
 
@@ -563,13 +586,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     }
 
     interface BatchVisitor {
-        abstract BatchVisitor increment();
+        BatchVisitor increment();
 
-        abstract BatchVisitor decrement();
+        BatchVisitor decrement();
 
-        abstract BatchVisitor append(byte[] values);
+        BatchVisitor append(byte[] values);
 
-        abstract BatchVisitor merge(byte[] begin, byte[] end);
+        BatchVisitor merge(byte[] begin, byte[] end);
+
+        BatchVisitor mergeWithLast(byte[] values);
     }
 
     static class AppendingBatchVisitor implements BatchVisitor {
@@ -601,6 +626,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             return this;
         }
 
+        public BatchVisitor mergeWithLast(byte[] values) {
+            if (this.statementComponents.isEmpty()) {
+                return append(values);
+            }
+            return merge(this.statementComponents.removeLast(), values);
+        }
+
         public byte[][] getStaticSqlStrings() {
             byte[][] asBytes = new byte[this.statementComponents.size()][];
             this.statementComponents.toArray(asBytes);
@@ -610,15 +642,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
         @Override
         public String toString() {
-            StringBuilder buf = new StringBuilder();
-            Iterator<byte[]> iter = this.statementComponents.iterator();
-            while (iter.hasNext()) {
-                buf.append(StringUtils.toString(iter.next()));
+            StringBuilder sb = new StringBuilder();
+            for (byte[] comp : this.statementComponents) {
+                sb.append(StringUtils.toString(comp));
             }
-
-            return buf.toString();
+            return sb.toString();
         }
-
     }
 
     private final static byte[] HEX_DIGITS = new byte[] { (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4', (byte) '5', (byte) '6', (byte) '7',
