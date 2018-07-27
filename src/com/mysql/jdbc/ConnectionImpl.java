@@ -1628,6 +1628,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 configureCharsetProperties();
                 realJavaEncoding = getEncoding(); // we need to do this again to grab this for versions > 4.1.0
 
+                String connectionCollationSuffix = "";
+
+                if (!StringUtils.isNullOrEmpty(getConnectionCollation())) {
+                    for (int i = 1; i < CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME.length; i++) {
+                        if (CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i].equals(getConnectionCollation())) {
+                            connectionCollationSuffix = " COLLATE " + CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i];
+                            realJavaEncoding = CharsetMapping.getJavaEncodingForCollationIndex(i);
+                        }
+                    }
+                }
+
                 try {
 
                     // Fault injection for testing server character set indices
@@ -1697,18 +1708,22 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                             // charset names are case-sensitive
 
                             boolean utf8mb4Supported = versionMeetsMinimum(5, 5, 2);
-                            boolean useutf8mb4 = utf8mb4Supported && (CharsetMapping.UTF8MB4_INDEXES.contains(this.io.serverCharsetIndex));
+                            String utf8CharsetName = connectionCollationSuffix.length() > 0
+                                    ? CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), this)
+                                    : (utf8mb4Supported ? "utf8mb4" : "utf8");
 
                             if (!getUseOldUTF8Behavior()) {
-                                if (dontCheckServerMatch || !characterSetNamesMatches("utf8") || (utf8mb4Supported && !characterSetNamesMatches("utf8mb4"))) {
-                                    execSQL(null, "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8"), -1, null, DEFAULT_RESULT_SET_TYPE,
+                                if (dontCheckServerMatch || !characterSetNamesMatches("utf8") || (utf8mb4Supported && !characterSetNamesMatches("utf8mb4"))
+                                        || (connectionCollationSuffix.length() > 0
+                                                && !getConnectionCollation().equalsIgnoreCase(this.serverVariables.get("collation_server")))) {
+                                    execSQL(null, "SET NAMES " + utf8CharsetName + connectionCollationSuffix, -1, null, DEFAULT_RESULT_SET_TYPE,
                                             DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
-                                    this.serverVariables.put("character_set_client", useutf8mb4 ? "utf8mb4" : "utf8");
-                                    this.serverVariables.put("character_set_connection", useutf8mb4 ? "utf8mb4" : "utf8");
+                                    this.serverVariables.put("character_set_client", utf8CharsetName);
+                                    this.serverVariables.put("character_set_connection", utf8CharsetName);
                                 }
                             } else {
-                                execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null,
-                                        false);
+                                execSQL(null, "SET NAMES latin1" + connectionCollationSuffix, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY,
+                                        false, this.database, null, false);
                                 this.serverVariables.put("character_set_client", "latin1");
                                 this.serverVariables.put("character_set_connection", "latin1");
                             }
@@ -1729,8 +1744,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                             if (mysqlCharsetName != null) {
 
                                 if (dontCheckServerMatch || !characterSetNamesMatches(mysqlCharsetName)) {
-                                    execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
-                                            this.database, null, false);
+                                    execSQL(null, "SET NAMES " + mysqlCharsetName + connectionCollationSuffix, -1, null, DEFAULT_RESULT_SET_TYPE,
+                                            DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
                                     this.serverVariables.put("character_set_client", mysqlCharsetName);
                                     this.serverVariables.put("character_set_connection", mysqlCharsetName);
                                 }
@@ -1760,8 +1775,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                         if (dontCheckServerMatch || !characterSetNamesMatches(mysqlCharsetName) || ucs2) {
                             try {
-                                execSQL(null, "SET NAMES " + mysqlCharsetName, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false,
-                                        this.database, null, false);
+                                execSQL(null, "SET NAMES " + mysqlCharsetName + connectionCollationSuffix, -1, null, DEFAULT_RESULT_SET_TYPE,
+                                        DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
                                 this.serverVariables.put("character_set_client", mysqlCharsetName);
                                 this.serverVariables.put("character_set_connection", mysqlCharsetName);
                             } catch (SQLException ex) {
@@ -1812,8 +1827,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                     if (getUseOldUTF8Behavior()) {
                         try {
-                            execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null,
-                                    false);
+                            execSQL(null, "SET NAMES latin1" + connectionCollationSuffix, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY,
+                                    false, this.database, null, false);
                             this.serverVariables.put("character_set_client", "latin1");
                             this.serverVariables.put("character_set_connection", "latin1");
                         } catch (SQLException ex) {
@@ -1864,19 +1879,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                     } else {
                         this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
-                    }
-                }
-
-                if (getConnectionCollation() != null) {
-                    StringBuilder setBuf = new StringBuilder("SET collation_connection = ".length() + getConnectionCollation().length());
-                    setBuf.append("SET collation_connection = ").append(getConnectionCollation());
-
-                    try {
-                        execSQL(null, setBuf.toString(), -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
-                    } catch (SQLException ex) {
-                        if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
-                            throw ex;
-                        }
                     }
                 }
             } else {
@@ -3762,6 +3764,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     queryBuf.append(", @@character_set_results AS character_set_results");
                     queryBuf.append(", @@character_set_server AS character_set_server");
                     queryBuf.append(", @@collation_server AS collation_server");
+                    queryBuf.append(", @@collation_connection AS collation_connection");
                     queryBuf.append(", @@init_connect AS init_connect");
                     queryBuf.append(", @@interactive_timeout AS interactive_timeout");
                     if (!versionMeetsMinimum(5, 5, 0)) {
