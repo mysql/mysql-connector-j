@@ -3,6 +3,8 @@
 
 Version 5.1.47
 
+  - Fix for Bug#81063 (23098159), w/ rewriteBatchedStatements, when 2 tables involved, the rewriting not correct.
+
   - Fix for Bug#84813 (25501750), rewriteBatchedStatements fails in INSERT.
 
   - Fix for Bug#81196 (23227334), CONNECTOR/J NOT FOLLOWING DATABASE CHARACTER SET.

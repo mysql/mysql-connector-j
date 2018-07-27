@@ -1036,7 +1036,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
         boolean canHandleAsStatement = true;
 
-        if (!versionMeetsMinimum(5, 0, 7) && (StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "SELECT")
+        boolean allowBackslashEscapes = !this.noBackslashEscapes;
+        String quoteChar = this.useAnsiQuotes ? "\"" : "'";
+
+        if (this.getAllowMultiQueries()) {
+            if (StringUtils.indexOfIgnoreCase(0, sql, ";", quoteChar, quoteChar,
+                    allowBackslashEscapes ? StringUtils.SEARCH_MODE__ALL : StringUtils.SEARCH_MODE__MRK_COM_WS) != -1) {
+                canHandleAsStatement = false;
+            }
+        } else if (!versionMeetsMinimum(5, 0, 7) && (StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "SELECT")
                 || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "DELETE") || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "INSERT")
                 || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "UPDATE") || StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "REPLACE"))) {
 
@@ -1049,8 +1057,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             int currentPos = 0;
             int statementLength = sql.length();
             int lastPosToLook = statementLength - 7; // "LIMIT ".length()
-            boolean allowBackslashEscapes = !this.noBackslashEscapes;
-            String quoteChar = this.useAnsiQuotes ? "\"" : "'";
             boolean foundLimitWithPlaceholder = false;
 
             while (currentPos < lastPosToLook) {

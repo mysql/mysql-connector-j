@@ -156,6 +156,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
         boolean hasPlaceholders = false;
 
+        int numberOfQueries = 1;
+
         boolean isOnDuplicateKeyUpdate = false;
 
         int locationOfOnDuplicateKeyUpdate = -1;
@@ -293,12 +295,27 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         }
                     }
 
-                    if ((c == '?') && !inQuotes && !inQuotedId) {
-                        endpointList.add(new int[] { lastParmEnd, i });
-                        lastParmEnd = i + 1;
+                    if (!inQuotes && !inQuotedId) {
+                        if ((c == '?')) {
+                            endpointList.add(new int[] { lastParmEnd, i });
+                            lastParmEnd = i + 1;
 
-                        if (this.isOnDuplicateKeyUpdate && i > this.locationOfOnDuplicateKeyUpdate) {
-                            this.parametersInDuplicateKeyClause = true;
+                            if (this.isOnDuplicateKeyUpdate && i > this.locationOfOnDuplicateKeyUpdate) {
+                                this.parametersInDuplicateKeyClause = true;
+                            }
+                        } else if (c == ';') {
+                            int j = i + 1;
+                            if (j < this.statementLength) {
+                                for (; j < this.statementLength; j++) {
+                                    if (!Character.isWhitespace(sql.charAt(j))) {
+                                        break;
+                                    }
+                                }
+                                if (j < this.statementLength) {
+                                    this.numberOfQueries++;
+                                }
+                                i = j - 1;
+                            }
                         }
                     }
                 }
@@ -351,8 +368,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             }
 
             if (buildRewriteInfo) {
-                this.canRewriteAsMultiValueInsert = PreparedStatement.canRewrite(sql, this.isOnDuplicateKeyUpdate, this.locationOfOnDuplicateKeyUpdate,
-                        this.statementStartPos) && !this.parametersInDuplicateKeyClause;
+                this.canRewriteAsMultiValueInsert = this.numberOfQueries == 1 && !this.parametersInDuplicateKeyClause
+                        && PreparedStatement.canRewrite(sql, this.isOnDuplicateKeyUpdate, this.locationOfOnDuplicateKeyUpdate, this.statementStartPos);
 
                 if (this.canRewriteAsMultiValueInsert && conn.getRewriteBatchedStatements()) {
                     buildRewriteBatchedParams(sql, conn, dbmd, encoding, converter);
@@ -1347,7 +1364,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 int numberToExecuteAsMultiValue = 0;
                 int batchCounter = 0;
                 int updateCountCounter = 0;
-                long[] updateCounts = new long[numBatchedArgs];
+                long[] updateCounts = new long[numBatchedArgs * this.parseInfo.numberOfQueries];
                 SQLException sqlEx = null;
 
                 try {

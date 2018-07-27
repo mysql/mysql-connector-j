@@ -2606,42 +2606,6 @@ public class ServerPreparedStatement extends PreparedStatement {
         }
     }
 
-    public boolean canRewriteAsMultivalueInsertStatement() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            if (!canRewriteAsMultiValueInsertAtSqlLevel()) {
-                return false;
-            }
-
-            BindValue[] currentBindValues = null;
-            BindValue[] previousBindValues = null;
-
-            int nbrCommands = this.batchedArgs.size();
-
-            // Can't have type changes between sets of bindings for this to work...
-
-            for (int commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
-                Object arg = this.batchedArgs.get(commandIndex);
-
-                if (!(arg instanceof String)) {
-
-                    currentBindValues = ((BatchedBindValues) arg).batchedParameterValues;
-
-                    // We need to check types each time, as the user might have bound different types in each addBatch()
-
-                    if (previousBindValues != null) {
-                        for (int j = 0; j < this.parameterBindings.length; j++) {
-                            if (currentBindValues[j].bufferType != previousBindValues[j].bufferType) {
-                                return false;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return true;
-        }
-    }
-
     private int locationOfOnDuplicateKeyUpdate = -2;
 
     @Override
