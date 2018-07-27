@@ -44,7 +44,6 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -70,6 +69,7 @@ import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.NotUpdatable;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StatementImpl;
+import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.StandardLogger;
 
@@ -4865,7 +4865,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         testStmt.executeUpdate("INSERT INTO testBug80522 VALUES ('00:00:00', '0000-00-00', 'Zeros')");
         final ResultSet testRs = testStmt.executeQuery("SELECT * FROM testBug80522");
         assertTrue(testRs.next());
-        assertEquals(new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("1970-01-01 00:00:00").getTime()), testRs.getTimestamp(1));
+        assertEquals(new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null).parse("1970-01-01 00:00:00").getTime()),
+                testRs.getTimestamp(1));
         assertThrows(SQLException.class, "Value '0000-00-00' can not be represented as java\\.sql\\.Timestamp", new Callable<Void>() {
             public Void call() throws Exception {
                 System.out.println(testRs.getTimestamp(2));
@@ -5451,7 +5452,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         testConn2 = getConnectionWithProps(props);
 
-        Timestamp ts2 = new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse("2019-12-30 13:59:57.789").getTime());
+        Timestamp ts2 = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.SSS", null, null).parse("2019-12-30 13:59:57.789").getTime());
         createTable("testBug22305979_orig_1",
                 "(id int, tmp int,ts1 timestamp(6),ts2 timestamp(3) NOT NULL DEFAULT '2001-01-01 00:00:01',primary key(id,ts1) )");
         this.stmt.execute("insert into testBug22305979_orig_1 values (1,100,'2014-12-31 23:59:59.123','2015-12-31 23:59:59.456')");
@@ -5769,5 +5770,120 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 assertEquals(data1, this.rs.getString("data"));
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#72609 (18749544), SETDATE() NOT USING A PROLEPTIC GREGORIAN CALENDAR.
+     */
+    public void testBug72609() throws Exception {
+        GregorianCalendar prolepticGc = new GregorianCalendar();
+        prolepticGc.setGregorianChange(new Date(Long.MIN_VALUE));
+        prolepticGc.clear();
+        prolepticGc.set(Calendar.DAY_OF_MONTH, 8);
+        prolepticGc.set(Calendar.MONTH, Calendar.OCTOBER);
+        prolepticGc.set(Calendar.YEAR, 1582);
+
+        GregorianCalendar gc = new GregorianCalendar();
+        gc.clear();
+        gc.setTimeInMillis(prolepticGc.getTimeInMillis());
+
+        assertEquals(1582, gc.get(Calendar.YEAR));
+        assertEquals(8, gc.get(Calendar.MONTH));
+        assertEquals(28, gc.get(Calendar.DAY_OF_MONTH));
+
+        // TIMESTAMP can't represent dates before 1970-01-01, so we need to test only DATE and DATETIME types
+        createTable("testBug72609", "(d date, pd date, dt datetime, pdt datetime)");
+
+        Properties props = new Properties();
+        props.setProperty("useSSL", "false");
+        props.setProperty("allowPublicKeyRetrieval", "true");
+
+        boolean sendFractionalSeconds = false;
+        boolean useServerPrepStmts = false;
+        boolean useLegacyDatetimeCode = false;
+        boolean useJDBCCompliantTimezoneShift = false;
+        boolean useGmtMillisForDatetimes = false;
+        boolean useSSPSCompatibleTimezoneShift = false;
+        boolean useFastDateParsing = false;
+
+        do {
+
+            final String testCase = String.format(
+                    "Case: [sendFractionalSeconds=%s, useServerPrepStmts=%s," + " useLegacyDatetimeCode=%s," + " useJDBCCompliantTimezoneShift=%s,"
+                            + " useGmtMillisForDatetimes=%s," + " useSSPSCompatibleTimezoneShift=%s," + " useFastDateParsing=%s]",
+                    sendFractionalSeconds ? "Y" : "N", useServerPrepStmts ? "Y" : "N", useLegacyDatetimeCode ? "Y" : "N",
+                    useJDBCCompliantTimezoneShift ? "Y" : "N", useGmtMillisForDatetimes ? "Y" : "N", useSSPSCompatibleTimezoneShift ? "Y" : "N",
+                    useFastDateParsing ? "Y" : "N"
+
+            );
+            System.out.println(testCase);
+
+            props.setProperty("sendFractionalSeconds", "" + sendFractionalSeconds);
+            props.setProperty("useServerPrepStmts", "" + useServerPrepStmts);
+            props.setProperty("useLegacyDatetimeCode", "" + useLegacyDatetimeCode);
+            props.setProperty("useJDBCCompliantTimezoneShift", "" + useJDBCCompliantTimezoneShift);
+            props.setProperty("useGmtMillisForDatetimes", "" + useGmtMillisForDatetimes);
+            props.setProperty("useSSPSCompatibleTimezoneShift", "" + useSSPSCompatibleTimezoneShift);
+            props.setProperty("useFastDateParsing", "" + useFastDateParsing);
+
+            Connection c1 = getConnectionWithProps(props);
+            Statement st1 = c1.createStatement();
+
+            st1.execute("truncate table testBug72609");
+
+            java.sql.Date d1 = new java.sql.Date(prolepticGc.getTime().getTime());
+            Timestamp ts1 = new Timestamp(prolepticGc.getTime().getTime());
+
+            this.pstmt = c1.prepareStatement("insert into testBug72609 values(?,?,?,?)");
+            this.pstmt.setDate(1, d1);
+            this.pstmt.setDate(2, d1, prolepticGc);
+            this.pstmt.setTimestamp(3, ts1);
+            this.pstmt.setTimestamp(4, ts1, prolepticGc);
+            this.pstmt.execute();
+
+            /*
+             * Checking stored values by retrieving them as strings to avoid conversions on c/J side.
+             */
+            this.rs = st1.executeQuery("select DATE_FORMAT(d, '%Y-%m-%d') as d, DATE_FORMAT(pd, '%Y-%m-%d') as pd,"
+                    + " DATE_FORMAT(dt, '%Y-%m-%d %H:%i:%s.%f') as dt, DATE_FORMAT(pdt, '%Y-%m-%d %H:%i:%s.%f') as pdt from testBug72609");
+            this.rs.next();
+            System.out.println(this.rs.getString(1) + ", " + this.rs.getString(2) + ", " + this.rs.getString(3) + ", " + this.rs.getString(4));
+
+            assertEquals(testCase, "1582-09-28", this.rs.getString(1)); // according to Julian calendar
+            assertEquals(testCase, "1582-10-08", this.rs.getString(2)); // according to proleptic Gregorian calendar
+
+            // the exact day depends on adjustments between time zones, but that's not interesting for this test
+            assertTrue(testCase, this.rs.getString(3).startsWith("1582-09-2"));
+            assertTrue(testCase, this.rs.getString(4).startsWith("1582-10-0"));
+
+            /*
+             * Getting stored values back.
+             * 
+             * Default Julian to Gregorian calendar switch is: October 4, 1582 (Julian) is followed by October 15, 1582 (Gregorian).
+             * So when default non-proleptic calendar is used the given 1582-10-08 date is in a "missing" period. In this case GregorianCalendar
+             * uses a Julian calendar system for counting date in milliseconds, thus adding another 10 days to the date and returning 1582-10-18.
+             * 
+             * With explicit proleptic calendar we get the symmetric back conversion.
+             */
+            this.rs = this.stmt.executeQuery("select * from testBug72609");
+            this.rs.next();
+
+            assertEquals(testCase, "1582-09-28", this.rs.getDate(1).toString());
+
+            assertEquals(testCase, "1582-10-18", this.rs.getDate(2).toString()); // according to Julian calendar
+            assertEquals(testCase, "1582-09-28", this.rs.getDate(2, prolepticGc).toString()); // according to proleptic Gregorian calendar
+
+            assertTrue(this.rs.getTimestamp(3).toString().startsWith("1582-09-2"));
+
+            // the exact day depends on adjustments between time zones, but that's not interesting for this test
+            assertTrue(testCase, this.rs.getTimestamp(4).toString().startsWith("1582-10-1")); // according to Julian calendar
+            assertTrue(this.rs.getTimestamp(4, prolepticGc).toString().startsWith("1582-09-2")); // according to proleptic Gregorian calendar
+
+            c1.close();
+
+        } while ((sendFractionalSeconds = !sendFractionalSeconds) || (useServerPrepStmts = !useServerPrepStmts)
+                || (useLegacyDatetimeCode = !useLegacyDatetimeCode) || (useJDBCCompliantTimezoneShift = !useJDBCCompliantTimezoneShift)
+                || (useGmtMillisForDatetimes = !useGmtMillisForDatetimes) || (useSSPSCompatibleTimezoneShift = !useSSPSCompatibleTimezoneShift)
+                || (useFastDateParsing = !useFastDateParsing));
     }
 }

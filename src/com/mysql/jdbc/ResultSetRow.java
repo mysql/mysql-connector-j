@@ -907,6 +907,7 @@ public abstract class ResultSetRow {
 
         try {
             Calendar sessionCalendar = useJDBCCompliantTimezoneShift ? conn.getUtcCalendar() : rs.getCalendarInstanceForSessionOrNew();
+            sessionCalendar = TimeUtil.setProlepticIfNeeded(sessionCalendar, targetCalendar);
 
             boolean allZeroTimestamp = true;
 

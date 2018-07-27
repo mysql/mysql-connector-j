@@ -376,9 +376,7 @@ class EscapeProcessor {
 
                     ts = TimeUtil.adjustTimestampNanosPrecision(ts, 6, !conn.isServerTruncatesFracSecs());
 
-                    SimpleDateFormat tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
-
-                    tsdf.setTimeZone(conn.getServerTimezoneTZ());
+                    SimpleDateFormat tsdf = TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss", null, conn.getServerTimezoneTZ());
 
                     newSql.append(tsdf.format(ts));
 

@@ -7404,9 +7404,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
             TimeZone.setDefault(TimeZone.getTimeZone(clientTZ));
 
-            SimpleDateFormat longDateFrmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            SimpleDateFormat longDateFrmt = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null);
             longDateFrmt.setTimeZone(TimeZone.getDefault());
-            SimpleDateFormat shortDateFrmt = new SimpleDateFormat("yyyy-MM-dd");
+            SimpleDateFormat shortDateFrmt = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd", null, null);
             shortDateFrmt.setTimeZone(TimeZone.getDefault());
 
             Calendar targetCal = null;

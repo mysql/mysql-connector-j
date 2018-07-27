@@ -56,7 +56,6 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.TimeZone;
 
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
@@ -1809,7 +1808,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
     }
 
     public String getDateTime(String pattern) {
-        SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+        SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, pattern, null, null);
         return sdf.format(new java.util.Date());
     }
 
@@ -3227,12 +3226,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 newSetDateInternal(parameterIndex, x, cal);
             } else {
                 synchronized (checkClosed().getConnectionMutex()) {
-                    if (this.ddf == null) {
-                        this.ddf = new SimpleDateFormat("''yyyy-MM-dd''", Locale.US);
-                    }
-                    if (cal != null) {
-                        this.ddf.setTimeZone(cal.getTimeZone());
-                    }
+                    this.ddf = TimeUtil.getSimpleDateFormat(this.ddf, "''yyyy-MM-dd''", cal, null);
 
                     setInternal(parameterIndex, this.ddf.format(x));
 
@@ -3700,7 +3694,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                             if (parameterObj instanceof String) {
                                 ParsePosition pp = new ParsePosition(0);
-                                java.text.DateFormat sdf = new java.text.SimpleDateFormat(getDateTimePattern((String) parameterObj, false), Locale.US);
+                                // TODO set proleptic if needed ?
+                                java.text.DateFormat sdf = TimeUtil.getSimpleDateFormat(null, getDateTimePattern((String) parameterObj, false), null, null);
                                 parameterAsDate = sdf.parse((String) parameterObj, pp);
                             } else {
                                 parameterAsDate = (java.util.Date) parameterObj;
@@ -3733,7 +3728,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                         case Types.TIME:
 
                             if (parameterObj instanceof String) {
-                                java.text.DateFormat sdf = new java.text.SimpleDateFormat(getDateTimePattern((String) parameterObj, true), Locale.US);
+                                java.text.DateFormat sdf = TimeUtil.getSimpleDateFormat(null, getDateTimePattern((String) parameterObj, true), null, null);
                                 setTime(parameterIndex, new java.sql.Time(sdf.parse((String) parameterObj).getTime()));
                             } else if (parameterObj instanceof Timestamp) {
                                 Timestamp xT = (Timestamp) parameterObj;
@@ -4246,14 +4241,21 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
                         : getCalendarInstanceForSessionOrNew();
 
+                // check if proleptic calendar is needed
+                sessionCalendar = TimeUtil.setProlepticIfNeeded(sessionCalendar, targetCalendar);
+
                 x = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(), rollForward);
 
                 if (useSSPSCompatibleTimezoneShift) {
-                    doSSPSCompatibleTimezoneShift(parameterIndex, x, fractionalLength);
+                    doSSPSCompatibleTimezoneShift(parameterIndex, x, fractionalLength, targetCalendar);
                 } else {
                     synchronized (this) {
-                        if (this.tsdf == null) {
-                            this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
+
+                        this.tsdf = TimeUtil.getSimpleDateFormat(this.tsdf, "''yyyy-MM-dd HH:mm:ss", null, null);
+
+                        Calendar adjCal = TimeUtil.setProlepticIfNeeded(this.tsdf.getCalendar(), targetCalendar);
+                        if (this.tsdf.getCalendar() != adjCal) {
+                            this.tsdf.setCalendar(adjCal);
                         }
 
                         StringBuffer buf = new StringBuffer();
@@ -4282,15 +4284,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
     private void newSetTimestampInternal(int parameterIndex, Timestamp x, Calendar targetCalendar) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (this.tsdf == null) {
-                this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
-            }
-
-            if (targetCalendar != null) {
-                this.tsdf.setTimeZone(targetCalendar.getTimeZone());
-            } else {
-                this.tsdf.setTimeZone(this.connection.getServerTimezoneTZ());
-            }
+            this.tsdf = TimeUtil.getSimpleDateFormat(this.tsdf, "''yyyy-MM-dd HH:mm:ss", targetCalendar,
+                    targetCalendar != null ? null : this.connection.getServerTimezoneTZ());
 
             StringBuffer buf = new StringBuffer();
             buf.append(this.tsdf.format(x));
@@ -4304,15 +4299,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
     private void newSetTimeInternal(int parameterIndex, Time x, Calendar targetCalendar) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (this.tdf == null) {
-                this.tdf = new SimpleDateFormat("''HH:mm:ss''", Locale.US);
-            }
-
-            if (targetCalendar != null) {
-                this.tdf.setTimeZone(targetCalendar.getTimeZone());
-            } else {
-                this.tdf.setTimeZone(this.connection.getServerTimezoneTZ());
-            }
+            this.tdf = TimeUtil.getSimpleDateFormat(this.tdf, "''HH:mm:ss''", targetCalendar,
+                    targetCalendar != null ? null : this.connection.getServerTimezoneTZ());
 
             setInternal(parameterIndex, this.tdf.format(x));
         }
@@ -4320,26 +4308,20 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
     private void newSetDateInternal(int parameterIndex, Date x, Calendar targetCalendar) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (this.ddf == null) {
-                this.ddf = new SimpleDateFormat("''yyyy-MM-dd''", Locale.US);
-            }
-
-            if (targetCalendar != null) {
-                this.ddf.setTimeZone(targetCalendar.getTimeZone());
-            } else if (this.connection.getNoTimezoneConversionForDateType()) {
-                this.ddf.setTimeZone(this.connection.getDefaultTimeZone());
-            } else {
-                this.ddf.setTimeZone(this.connection.getServerTimezoneTZ());
-            }
+            this.ddf = TimeUtil.getSimpleDateFormat(this.ddf, "''yyyy-MM-dd''", targetCalendar, targetCalendar != null ? null
+                    : (this.connection.getNoTimezoneConversionForDateType() ? this.connection.getDefaultTimeZone() : this.connection.getServerTimezoneTZ()));
 
             setInternal(parameterIndex, this.ddf.format(x));
         }
     }
 
-    private void doSSPSCompatibleTimezoneShift(int parameterIndex, Timestamp x, int fractionalLength) throws SQLException {
+    private void doSSPSCompatibleTimezoneShift(int parameterIndex, Timestamp x, int fractionalLength, Calendar targetCalendar) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Calendar sessionCalendar2 = (this.connection.getUseJDBCCompliantTimezoneShift()) ? this.connection.getUtcCalendar()
+            Calendar sessionCalendar2 = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
                     : getCalendarInstanceForSessionOrNew();
+
+            // check if proleptic calendar is needed
+            sessionCalendar2 = TimeUtil.setProlepticIfNeeded(sessionCalendar2, targetCalendar);
 
             synchronized (sessionCalendar2) {
                 java.util.Date oldTime = sessionCalendar2.getTime();

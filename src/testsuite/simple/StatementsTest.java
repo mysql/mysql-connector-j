@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -42,7 +42,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
-import java.util.Locale;
 import java.util.Properties;
 
 import com.mysql.jdbc.CharsetMapping;
@@ -51,6 +50,7 @@ import com.mysql.jdbc.NotImplemented;
 import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
+import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.interceptors.ServerStatusDiffInterceptor;
@@ -1136,14 +1136,13 @@ public class StatementsTest extends BaseTestCase {
         props.put("noDatetimeStringSync", "true"); // value=true for #5
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
-        createTable("t1",
-                " (c1 DECIMAL," // instance of String
-                        + "c2 VARCHAR(255)," // instance of String
-                        + "c3 BLOB," // instance of byte[]
-                        + "c4 DATE," // instance of java.util.Date
-                        + "c5 TIMESTAMP," // instance of String
-                        + "c6 TIME," // instance of String
-                        + "c7 TIME)"); // instance of java.sql.Timestamp
+        createTable("t1", " (c1 DECIMAL," // instance of String
+                + "c2 VARCHAR(255)," // instance of String
+                + "c3 BLOB," // instance of byte[]
+                + "c4 DATE," // instance of java.util.Date
+                + "c5 TIMESTAMP," // instance of String
+                + "c6 TIME," // instance of String
+                + "c7 TIME)"); // instance of java.sql.Timestamp
 
         this.pstmt = conn1.prepareStatement("INSERT INTO t1 VALUES (?, ?, ?, ?, ?, ?, ?)");
 
@@ -1351,7 +1350,7 @@ public class StatementsTest extends BaseTestCase {
 
             // We need to format this ourselves, since we have to strip the nanos off of TIMESTAMPs, so .equals() doesn't really work...
 
-            SimpleDateFormat sdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US);
+            SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss''", null, null);
 
             while (this.rs.next()) {
                 for (int k = 0; k < 14; k++) {

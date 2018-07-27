@@ -62,6 +62,7 @@ import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
+import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.log.StandardLogger;
@@ -1820,7 +1821,7 @@ public class ConnectionTest extends BaseTestCase {
         Properties connProps = new Properties();
         connProps.setProperty("useTimezone", "true");
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null);
 
         for (boolean cacheDefTZ : new boolean[] { true, false }) {
             try {
@@ -1917,7 +1918,7 @@ public class ConnectionTest extends BaseTestCase {
             testUrl = testUrl.substring(0, b) + testUrl.substring(e, testUrl.length());
         }
         String query = "SELECT /* testEnableEscapeProcessing: (%d) */ {fn sin(pi()/2)}, {ts '2015-08-16 11:22:33'}, {fn ucase('this is mysql')}";
-        Timestamp testTimestamp = new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2015-08-16 11:22:33").getTime());
+        Timestamp testTimestamp = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null).parse("2015-08-16 11:22:33").getTime());
 
         for (int tst = 0; tst < 8; tst++) {
             boolean enableEscapeProcessing = (tst & 0x1) != 0;

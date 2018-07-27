@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,13 +31,12 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
 
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.TimeUtil;
 
 import testsuite.BaseTestCase;
 
@@ -84,7 +83,7 @@ public class DateTest extends BaseTestCase {
         System.out.println(cal);
 
         // DateFormat df = SimpleDateFormat.getInstance();
-        DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss z");
+        DateFormat df = TimeUtil.getSimpleDateFormat(null, "yyyy/MM/dd HH:mm:ss z", null, null);
 
         Calendar calGMT = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         // df.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -203,18 +202,18 @@ public class DateTest extends BaseTestCase {
             this.rs.next();
 
             assertEquals("0001-01-01", this.rs.getDate(1).toString());
-            assertEquals("0001-01-01 00:00:00.0", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0", Locale.US).format(this.rs.getTimestamp(1)));
+            assertEquals("0001-01-01 00:00:00.0", TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.0", null, null).format(this.rs.getTimestamp(1)));
             assertEquals("0001-01-01", this.rs.getDate(2).toString());
-            assertEquals("0001-01-01 00:00:00.0", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0", Locale.US).format(this.rs.getTimestamp(2)));
+            assertEquals("0001-01-01 00:00:00.0", TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.0", null, null).format(this.rs.getTimestamp(2)));
 
             PreparedStatement roundPrepStmt = roundConn.prepareStatement("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
             this.rs = roundPrepStmt.executeQuery();
             this.rs.next();
 
             assertEquals("0001-01-01", this.rs.getDate(1).toString());
-            assertEquals("0001-01-01 00:00:00.0", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0", Locale.US).format(this.rs.getTimestamp(1)));
+            assertEquals("0001-01-01 00:00:00.0", TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.0", null, null).format(this.rs.getTimestamp(1)));
             assertEquals("0001-01-01", this.rs.getDate(2).toString());
-            assertEquals("0001-01-01 00:00:00.0", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0", Locale.US).format(this.rs.getTimestamp(2)));
+            assertEquals("0001-01-01 00:00:00.0", TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.0", null, null).format(this.rs.getTimestamp(2)));
 
             nullConn = getConnectionWithProps("zeroDateTimeBehavior=convertToNull");
             Statement nullStmt = nullConn.createStatement();

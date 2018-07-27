@@ -30,8 +30,10 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
 
@@ -594,5 +596,38 @@ public class TimeUtil {
         Timestamp truncatedTimestamp = new Timestamp(timestamp.getTime());
         truncatedTimestamp.setNanos(0);
         return truncatedTimestamp;
+    }
+
+    public static SimpleDateFormat getSimpleDateFormat(SimpleDateFormat cachedSimpleDateFormat, String pattern, Calendar cal, TimeZone tz) {
+        SimpleDateFormat sdf = cachedSimpleDateFormat != null ? cachedSimpleDateFormat : new SimpleDateFormat(pattern, Locale.US);
+
+        if (cal != null) {
+            sdf.setCalendar((Calendar) cal.clone()); // cloning the original calendar to avoid it's modification
+        }
+
+        if (tz != null) {
+            sdf.setTimeZone(tz);
+        }
+        return sdf;
+    }
+
+    /**
+     * Return the proleptic version of origCalendar if refCalendar is proleptic. Applied only to GregorianCalendar parameters.
+     * 
+     * @param origCalendar
+     *            original Calendar
+     * @param refCalendar
+     *            reference Calendar
+     * @return the original Calendar if no adjustments are needed or the new proleptic GregorianCalendar with preserved Timezone of origCalendar and other
+     *         fields unset.
+     */
+    public static Calendar setProlepticIfNeeded(Calendar origCalendar, Calendar refCalendar) {
+        if (origCalendar != null && refCalendar != null && origCalendar instanceof GregorianCalendar && refCalendar instanceof GregorianCalendar
+                && ((GregorianCalendar) refCalendar).getGregorianChange().getTime() == Long.MIN_VALUE) {
+            origCalendar = (GregorianCalendar) origCalendar.clone();
+            ((GregorianCalendar) origCalendar).setGregorianChange(new Date(Long.MIN_VALUE));
+            origCalendar.clear();
+        }
+        return origCalendar;
     }
 }

@@ -3,6 +3,8 @@
 
 Version 5.1.47
 
+  - Fix for Bug#72609 (18749544), SETDATE() NOT USING A PROLEPTIC GREGORIAN CALENDAR.
+
   - Fix for Bug#87534 (26730196), UNION ALL query fails when useServerPrepStmts=true on database connection.
     Test case only. Base bug fixed in MySQL 5.7.22.
 

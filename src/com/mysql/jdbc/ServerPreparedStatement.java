@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -114,6 +114,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
         public Object value; /* The value to store */
 
+        public Calendar calendar; /* Calendar to be used for DATE and DATETIME values storing */
+
         BindValue() {
         }
 
@@ -127,6 +129,7 @@ public class ServerPreparedStatement extends PreparedStatement {
             this.longBinding = copyMe.longBinding;
             this.floatBinding = copyMe.floatBinding;
             this.doubleBinding = copyMe.doubleBinding;
+            this.calendar = copyMe.calendar;
         }
 
         void reset() {
@@ -138,6 +141,8 @@ public class ServerPreparedStatement extends PreparedStatement {
             this.longBinding = 0L;
             this.floatBinding = 0;
             this.doubleBinding = 0D;
+
+            this.calendar = null;
         }
 
         @Override
@@ -1854,6 +1859,9 @@ public class ServerPreparedStatement extends PreparedStatement {
             resetToType(binding, MysqlDefs.FIELD_TYPE_DATE);
 
             binding.value = x;
+            if (cal != null) {
+                binding.calendar = (Calendar) cal.clone();
+            }
         }
     }
 
@@ -2044,6 +2052,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 
             if (!this.useLegacyDatetimeCode) {
                 binding.value = x;
+                if (targetCalendar != null) {
+                    binding.calendar = (Calendar) targetCalendar.clone();
+                }
             } else {
                 Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
 
@@ -2109,9 +2120,14 @@ public class ServerPreparedStatement extends PreparedStatement {
             } else {
                 Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ? this.connection.getUtcCalendar()
                         : getCalendarInstanceForSessionOrNew();
+                // check if proleptic calendar is needed
+                sessionCalendar = TimeUtil.setProlepticIfNeeded(sessionCalendar, targetCalendar);
 
                 binding.value = TimeUtil.changeTimezone(this.connection, sessionCalendar, targetCalendar, x, tz, this.connection.getServerTimezoneTZ(),
                         rollForward);
+            }
+            if (targetCalendar != null) {
+                binding.calendar = (Calendar) targetCalendar.clone();
             }
         }
     }
@@ -2214,7 +2230,7 @@ public class ServerPreparedStatement extends PreparedStatement {
                     case MysqlDefs.FIELD_TYPE_DATE:
                     case MysqlDefs.FIELD_TYPE_DATETIME:
                     case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-                        storeDateTime(packet, (java.util.Date) value, mysql, bindValue.bufferType);
+                        storeDateTime(packet, (java.util.Date) value, mysql, bindValue.bufferType, bindValue.calendar);
                         return;
                     case MysqlDefs.FIELD_TYPE_VAR_STRING:
                     case MysqlDefs.FIELD_TYPE_STRING:
@@ -2293,29 +2309,31 @@ public class ServerPreparedStatement extends PreparedStatement {
      * @param bufferType
      * @throws SQLException
      */
-    private void storeDateTime(Buffer intoBuf, java.util.Date dt, MysqlIO mysql, int bufferType) throws SQLException {
+    private void storeDateTime(Buffer intoBuf, java.util.Date dt, MysqlIO mysql, int bufferType, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.connection.versionMeetsMinimum(4, 1, 3)) {
-                storeDateTime413AndNewer(intoBuf, dt, bufferType);
+                storeDateTime413AndNewer(intoBuf, dt, bufferType, cal);
             } else {
                 storeDateTime412AndOlder(intoBuf, dt, bufferType);
             }
         }
     }
 
-    private void storeDateTime413AndNewer(Buffer intoBuf, java.util.Date dt, int bufferType) throws SQLException {
+    private void storeDateTime413AndNewer(Buffer intoBuf, java.util.Date dt, int bufferType, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Calendar sessionCalendar = null;
+            Calendar sessionCalendar = cal;
 
-            if (!this.useLegacyDatetimeCode) {
-                if (bufferType == MysqlDefs.FIELD_TYPE_DATE) {
-                    sessionCalendar = getDefaultTzCalendar();
+            if (cal == null) {
+                if (!this.useLegacyDatetimeCode) {
+                    if (bufferType == MysqlDefs.FIELD_TYPE_DATE) {
+                        sessionCalendar = getDefaultTzCalendar();
+                    } else {
+                        sessionCalendar = getServerTzCalendar();
+                    }
                 } else {
-                    sessionCalendar = getServerTzCalendar();
+                    sessionCalendar = (dt instanceof Timestamp && this.connection.getUseJDBCCompliantTimezoneShift()) ? this.connection.getUtcCalendar()
+                            : getCalendarInstanceForSessionOrNew();
                 }
-            } else {
-                sessionCalendar = (dt instanceof Timestamp && this.connection.getUseJDBCCompliantTimezoneShift()) ? this.connection.getUtcCalendar()
-                        : getCalendarInstanceForSessionOrNew();
             }
 
             java.util.Date oldTime = sessionCalendar.getTime();

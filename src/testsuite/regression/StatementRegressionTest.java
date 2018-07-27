@@ -1771,8 +1771,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
             long offsetDifference = clientTimezoneOffsetMillis - serverTimezoneOffsetMillis;
 
-            SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+            SimpleDateFormat timestampFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null);
+            SimpleDateFormat timeFormat = TimeUtil.getSimpleDateFormat(null, "HH:mm:ss", null, null);
 
             long pointInTime = timestampFormat.parse("2004-10-04 09:19:00").getTime();
 
@@ -3874,8 +3874,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(earlier, datetimeSeconds1);
             assertEquals(earlier, timestampSeconds1);
 
-            SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm z");
-            sdf.setTimeZone(TimeZone.getTimeZone("America/New_York"));
+            SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, "MM/dd/yyyy HH:mm z", null, TimeZone.getTimeZone("America/New_York"));
             System.out.println(sdf.format(ts2));
             System.out.println(sdf.format(ts1));
         } finally {
@@ -7285,9 +7284,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             TimeZone.setDefault(TimeZone.getTimeZone("America/Chicago")); // ~~ CST (UTC-06)
-            final SimpleDateFormat tsFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            final SimpleDateFormat tsFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null);
             final Timestamp timestamp = new Timestamp(tsFormat.parse("2015-01-01 10:00:00").getTime());
-            final SimpleDateFormat tFormat = new SimpleDateFormat("HH:mm:ss");
+            final SimpleDateFormat tFormat = TimeUtil.getSimpleDateFormat(null, "HH:mm:ss", null, null);
             final Time time = new Time(tFormat.parse("10:00:00").getTime());
 
             // Test a number of time zones that coincide with 'GMT' on the some specifip point in time.
@@ -7391,7 +7390,8 @@ public class StatementRegressionTest extends BaseTestCase {
             return;
         }
 
-        Timestamp originalTs = new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse("2014-12-31 23:59:59.999").getTime());
+        Timestamp originalTs = new Timestamp(
+                TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.SSS", null, null).parse("2014-12-31 23:59:59.999").getTime());
         Timestamp roundedTs = new Timestamp(originalTs.getTime() + 1);
         Timestamp truncatedTs = new Timestamp(originalTs.getTime() - 999);
 
