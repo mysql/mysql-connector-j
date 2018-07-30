@@ -54,6 +54,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.security.cert.CertificateException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
@@ -117,6 +118,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyDefinitions.ZeroDatetimeBehavior;
 import com.mysql.cj.conf.url.ReplicationConnectionUrl;
 import com.mysql.cj.exceptions.ClosedOnExpiredPasswordException;
@@ -7973,95 +7975,111 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug21947042() throws Exception {
+        System.setProperty("javax.net.ssl.trustStore", "");
+        System.setProperty("javax.net.ssl.trustStorePassword", "");
+
         Connection sslConn = null;
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_logger, "StandardLogger");
 
-        StandardLogger.startLoggingToBuffer();
+        // 1. No explicit useSSL
+        sslConn = getConnectionWithProps(props);
+        assertFalse(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
-        try {
-            int searchFrom = 0;
-            int found = 0;
+        testBug21947042_PrintCipher(sslConn);
+        testBug21947042_PrintVersion(sslConn);
+        sslConn.close();
 
-            // 1. No explicit useSSL
-            sslConn = getConnectionWithProps(props);
-            if (((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 7, 0)) {
-                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
-                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).isExplicitlySet());
+        // 2. Explicit useSSL=false
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.DISABLED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
-                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).getValue());
-                assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue());
-                assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
-            } else {
-                assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).getValue());
-                assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue());
-                assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+        testBug21947042_PrintCipher(sslConn);
+        testBug21947042_PrintVersion(sslConn);
+        sslConn.close();
+
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "no");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.DISABLED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+
+        testBug21947042_PrintCipher(sslConn);
+        testBug21947042_PrintVersion(sslConn);
+        sslConn.close();
+
+        // 3. Explicit useSSL=true
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        sslConn = getConnectionWithProps(props);
+        assertFalse(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+
+        testBug21947042_PrintCipher(sslConn);
+        testBug21947042_PrintVersion(sslConn);
+        sslConn.close();
+
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "yes");
+        sslConn = getConnectionWithProps(props);
+        assertFalse(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+
+        testBug21947042_PrintCipher(sslConn);
+        testBug21947042_PrintVersion(sslConn);
+        sslConn.close();
+
+        // 4. Explicit useSSL=true, verifyServerCertificate=true, no trust store
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "true");
+        assertThrows(SQLException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
             }
+        });
 
-            testBug21947042_PrintCipher(sslConn);
-            testBug21947042_PrintVersion(sslConn);
-            sslConn.close();
-
-            // check for warning
-            String log = StandardLogger.getBuffer().toString();
-            found = log.indexOf(Messages.getString("MysqlIO.SSLWarning"), searchFrom);
-            searchFrom = found + 1;
-            if (((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 7, 0)) {
-                assertTrue(found != -1);
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "yes");
+        assertThrows(SQLException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
             }
+        });
 
-            // 2. Explicit useSSL=false
-            props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-            sslConn = getConnectionWithProps(props);
+        // 5. Explicit useSSL=true, verifyServerCertificate=true
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "true");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.VERIFY_CA, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
-            assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).isExplicitlySet());
+        testBug21947042_PrintCipher(sslConn);
+        testBug21947042_PrintVersion(sslConn);
+        sslConn.close();
 
-            assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).getValue());
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue()); // we left with default value here
-            assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "yes");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "yes");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.VERIFY_CA, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
-            testBug21947042_PrintCipher(sslConn);
-            testBug21947042_PrintVersion(sslConn);
-            sslConn.close();
-
-            // check for warning
-            log = StandardLogger.getBuffer().toString();
-            found = log.indexOf(Messages.getString("MysqlIO.SSLWarning"), searchFrom);
-            if (found != -1) {
-                searchFrom = found + 1;
-                fail("Warning is not expected when useSSL is explicitly set to 'false'.");
-            }
-
-            // 3. Explicit useSSL=true
-            props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
-            props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
-            props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
-            props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
-            sslConn = getConnectionWithProps(props);
-
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).isExplicitlySet());
-            assertFalse(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).isExplicitlySet());
-
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useSSL).getValue());
-            assertTrue(((JdbcConnection) sslConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue()); // we left with default value here
-            assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
-
-            testBug21947042_PrintCipher(sslConn);
-            testBug21947042_PrintVersion(sslConn);
-            sslConn.close();
-
-            // check for warning
-            log = StandardLogger.getBuffer().toString();
-            found = log.indexOf(Messages.getString("MysqlIO.SSLWarning"), searchFrom);
-            if (found != -1) {
-                searchFrom = found + 1;
-                fail("Warning is not expected when useSSL is explicitly set to 'false'.");
-            }
-
-        } finally {
-            StandardLogger.dropBuffer();
-        }
+        testBug21947042_PrintCipher(sslConn);
+        testBug21947042_PrintVersion(sslConn);
+        sslConn.close();
     }
 
     private void testBug21947042_PrintCipher(Connection con) throws Exception {
@@ -10743,6 +10761,149 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String sqlMode = getMysqlVariable(c1, "sql_mode");
             assertTrue(sqlMode.indexOf("ANSI") != -1);
             assertTrue(sqlMode.indexOf("IGNORE_SPACE") != -1);
+        }
+    }
+
+    /**
+     * Tests fix for BUG#27102307, CHANGE USESSL AND VERIFYSERVERCERTIFICATE TO SSLMODE OPTION.
+     * 
+     * @throws Exception
+     *             if an error ocurrs.
+     */
+    public void testBug27102307() throws Exception {
+        // Basic SSL properties translation is tested in testBug21947042(). Testing only missing variants here.
+        System.setProperty("javax.net.ssl.trustStore", "");
+        System.setProperty("javax.net.ssl.trustStorePassword", "");
+
+        Connection sslConn = null;
+        Properties props = new Properties();
+
+        // 1. Explicit sslMode, no explicit useSSL
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.DISABLED.toString());
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.DISABLED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+        sslConn.close();
+
+        // 2. Explicit sslMode, explicit useSSL=false
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.REQUIRED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+        sslConn.close();
+
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.REQUIRED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "no");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+        sslConn.close();
+
+        // 3. Explicit sslMode, explicit useSSL=true
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.DISABLED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.DISABLED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+        sslConn.close();
+
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.DISABLED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "yes");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.DISABLED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+        sslConn.close();
+
+        // 4. Explicit sslMode=REQUIRED, explicit useSSL=true, verifyServerCertificate=true, no trust store
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.REQUIRED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "true");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+        sslConn.close();
+
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.REQUIRED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "yes");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+        sslConn.close();
+
+        // 5. Explicit sslMode=VERIFY_CA, explicit useSSL=true, verifyServerCertificate=false, no trust store
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
+        assertThrows(SQLException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "no");
+        assertThrows(SQLException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        // 5. Explicit sslMode=VERIFY_CA, explicit useSSL=false, verifyServerCertificate=false, with trust store
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).isExplicitlySet());
+        assertEquals(SslMode.VERIFY_CA, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+        sslConn.close();
+
+        // 6. Explicit sslMode=VERIFY_IDENTITY, explicit useSSL=true, verifyServerCertificate=false, no trust store
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.VERIFY_IDENTITY.toString());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
+        assertThrows(SQLException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                getConnectionWithProps(props);
+                return null;
+            }
+        });
+
+        // 7. Explicit sslMode=VERIFY_IDENTITY, explicit useSSL=false, verifyServerCertificate=false, with trust store
+        // The server certificate used in this test has "CN=MySQL Connector/J Server" thus expecting identity check failure
+        props.setProperty(PropertyDefinitions.PNAME_sslMode, SslMode.VERIFY_IDENTITY.toString());
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
+        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
+        Throwable cause = null;
+        try {
+            sslConn = getConnectionWithProps(props);
+            fail("CertificateException expected but not thrown.");
+        } catch (Throwable t) {
+            cause = t.getCause();
+            while (cause != null && !(cause instanceof CertificateException)) {
+                cause = cause.getCause();
+            }
+            assertTrue("CertificateException expected", cause != null && cause instanceof CertificateException);
+            assertTrue(cause.getMessage()
+                    .contains("Server certificate identity check failed. The certificate Common Name 'MySQL Connector/J Server' does not match"));
         }
     }
 

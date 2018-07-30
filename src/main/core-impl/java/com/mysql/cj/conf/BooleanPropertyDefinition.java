@@ -61,19 +61,12 @@ public class BooleanPropertyDefinition extends AbstractPropertyDefinition<Boolea
 
     @Override
     public String[] getAllowableValues() {
-        return Arrays.stream(AllowableValues.values()).map(AllowableValues::toString).toArray(String[]::new);
+        return getBooleanAllowableValues();
     }
 
     @Override
     public Boolean parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
-        try {
-            return AllowableValues.valueOf(value.toUpperCase()).asBoolean();
-        } catch (Exception e) {
-            throw ExceptionFactory.createException(
-                    Messages.getString("PropertyDefinition.1",
-                            new Object[] { getName(), StringUtils.stringArrayToString(getAllowableValues(), "'", "', '", "' or '", "'"), value }),
-                    e, exceptionInterceptor);
-        }
+        return booleanFrom(getName(), value, exceptionInterceptor);
     }
 
     /**
@@ -84,6 +77,21 @@ public class BooleanPropertyDefinition extends AbstractPropertyDefinition<Boolea
     @Override
     public RuntimeProperty<Boolean> createRuntimeProperty() {
         return new BooleanProperty(this);
+    }
+
+    public static Boolean booleanFrom(String name, String value, ExceptionInterceptor exceptionInterceptor) {
+        try {
+            return AllowableValues.valueOf(value.toUpperCase()).asBoolean();
+        } catch (Exception e) {
+            throw ExceptionFactory.createException(
+                    Messages.getString("PropertyDefinition.1",
+                            new Object[] { name, StringUtils.stringArrayToString(getBooleanAllowableValues(), "'", "', '", "' or '", "'"), value }),
+                    e, exceptionInterceptor);
+        }
+    }
+
+    public static String[] getBooleanAllowableValues() {
+        return Arrays.stream(AllowableValues.values()).map(AllowableValues::toString).toArray(String[]::new);
     }
 
 }

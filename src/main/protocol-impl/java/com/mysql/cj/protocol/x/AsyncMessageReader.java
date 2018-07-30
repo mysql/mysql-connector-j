@@ -136,7 +136,7 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
     public AsyncMessageReader(PropertySet propertySet, SocketConnection socketConnection) {
         this.propertySet = propertySet;
         this.sc = socketConnection;
-        this.asyncTimeout = this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_asyncResponseTimeout);
+        this.asyncTimeout = this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_xdevapi_asyncResponseTimeout);
 
     }
 

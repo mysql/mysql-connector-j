@@ -133,7 +133,7 @@ public class InternalXBaseTestCase {
         XProtocol protocol = createTestProtocol();
         XMessageBuilder messageBuilder = (XMessageBuilder) protocol.getMessageBuilder();
 
-        AuthMech authMech = protocol.getPropertySet().<AuthMech> getEnumProperty(PropertyDefinitions.PNAME_auth).getValue();
+        AuthMech authMech = protocol.getPropertySet().<AuthMech> getEnumProperty(PropertyDefinitions.PNAME_xdevapi_auth).getValue();
         boolean overTLS = ((XServerCapabilities) protocol.getServerSession().getCapabilities()).getTls();
 
         // Choose the best default auth mechanism.

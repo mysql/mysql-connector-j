@@ -36,6 +36,7 @@ import java.util.Properties;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -141,6 +142,24 @@ public class DefaultPropertySet implements PropertySet, Serializable {
                     throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
                 }
             }
+
+            // Translate legacy SSL properties if sslMode isn't explicitly set. Default sslMode is REQUIRED.
+            RuntimeProperty<SslMode> sslMode = this.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode);
+            if (!sslMode.isExplicitlySet()) {
+                String useSSL = infoCopy.getProperty(PropertyDefinitions.PNAME_useSSL);
+                if (useSSL != null && !BooleanPropertyDefinition.booleanFrom(PropertyDefinitions.PNAME_useSSL, useSSL, null)) {
+                    sslMode.setValue(SslMode.DISABLED);
+                } else {
+                    String verifyServerCertificate = infoCopy.getProperty(PropertyDefinitions.PNAME_verifyServerCertificate);
+                    if (verifyServerCertificate != null
+                            && BooleanPropertyDefinition.booleanFrom(PropertyDefinitions.PNAME_verifyServerCertificate, verifyServerCertificate, null)) {
+                        sslMode.setValue(SslMode.VERIFY_CA);
+                    }
+                }
+            }
+            infoCopy.remove(PropertyDefinitions.PNAME_useSSL);
+            infoCopy.remove(PropertyDefinitions.PNAME_requireSSL);
+            infoCopy.remove(PropertyDefinitions.PNAME_verifyServerCertificate);
 
             // add user-defined properties
             for (Object key : infoCopy.keySet()) {

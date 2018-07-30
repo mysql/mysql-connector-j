@@ -247,17 +247,6 @@ public class PropertyDefinitions {
 
     public static final String PNAME_paranoid = "paranoid";
     public static final String PNAME_passwordCharacterEncoding = "passwordCharacterEncoding";
-    public static final String PNAME_serverRSAPublicKeyFile = "serverRSAPublicKeyFile";
-    public static final String PNAME_allowPublicKeyRetrieval = "allowPublicKeyRetrieval";
-    public static final String PNAME_clientCertificateKeyStoreUrl = "clientCertificateKeyStoreUrl";
-    public static final String PNAME_trustCertificateKeyStoreUrl = "trustCertificateKeyStoreUrl";
-    public static final String PNAME_clientCertificateKeyStoreType = "clientCertificateKeyStoreType";
-    public static final String PNAME_clientCertificateKeyStorePassword = "clientCertificateKeyStorePassword";
-    public static final String PNAME_trustCertificateKeyStoreType = "trustCertificateKeyStoreType";
-    public static final String PNAME_trustCertificateKeyStorePassword = "trustCertificateKeyStorePassword";
-    public static final String PNAME_verifyServerCertificate = "verifyServerCertificate";
-    public static final String PNAME_enabledSSLCipherSuites = "enabledSSLCipherSuites";
-    public static final String PNAME_enabledTLSProtocols = "enabledTLSProtocols";
     public static final String PNAME_useUnbufferedInput = "useUnbufferedInput";
     public static final String PNAME_profilerEventHandler = "profilerEventHandler";
     public static final String PNAME_allowLoadLocalInfile = "allowLoadLocalInfile";
@@ -361,7 +350,6 @@ public class PropertyDefinitions {
     public static final String PNAME_queryTimeoutKillsConnection = "queryTimeoutKillsConnection";
     public static final String PNAME_reconnectAtTxEnd = "reconnectAtTxEnd";
     public static final String PNAME_reportMetricsIntervalMillis = "reportMetricsIntervalMillis";
-    public static final String PNAME_requireSSL = "requireSSL";
     public static final String PNAME_resourceId = "resourceId";
     public static final String PNAME_resultSetSizeThreshold = "resultSetSizeThreshold";
     public static final String PNAME_rewriteBatchedStatements = "rewriteBatchedStatements";
@@ -405,7 +393,6 @@ public class PropertyDefinitions {
     public static final String PNAME_useOldUTF8Behavior = "useOldUTF8Behavior";
     public static final String PNAME_useOnlyServerErrorMessages = "useOnlyServerErrorMessages";
     public static final String PNAME_useReadAheadInput = "useReadAheadInput";
-    public static final String PNAME_useSSL = "useSSL";
     public static final String PNAME_useStreamLengthsInPrepStmts = "useStreamLengthsInPrepStmts";
     public static final String PNAME_ultraDevHack = "ultraDevHack";
     public static final String PNAME_useUsageAdvisor = "useUsageAdvisor";
@@ -423,13 +410,31 @@ public class PropertyDefinitions {
     public static final String PNAME_readOnlyPropagatesToServer = "readOnlyPropagatesToServer";
     public static final String PNAME_replicationConnectionGroup = "replicationConnectionGroup";
 
-    public static final String PNAME_useAsyncProtocol = "xdevapi.useAsyncProtocol";
-    public static final String PNAME_sslMode = "xdevapi.ssl-mode";
-    public static final String PNAME_sslTrustStoreUrl = "xdevapi.ssl-truststore";
-    public static final String PNAME_sslTrustStoreType = "xdevapi.ssl-truststore-type";
-    public static final String PNAME_sslTrustStorePassword = "xdevapi.ssl-truststore-password";
-    public static final String PNAME_asyncResponseTimeout = "xdevapi.asyncResponseTimeout";
-    public static final String PNAME_auth = "xdevapi.auth";
+    public static final String PNAME_serverRSAPublicKeyFile = "serverRSAPublicKeyFile";
+    public static final String PNAME_allowPublicKeyRetrieval = "allowPublicKeyRetrieval";
+    public static final String PNAME_enabledSSLCipherSuites = "enabledSSLCipherSuites";
+    public static final String PNAME_enabledTLSProtocols = "enabledTLSProtocols";
+
+    public static final String PNAME_sslMode = "ssl-mode";
+    public static final String PNAME_requireSSL = "requireSSL";
+    public static final String PNAME_useSSL = "useSSL";
+    public static final String PNAME_verifyServerCertificate = "verifyServerCertificate";
+
+    public static final String PNAME_trustCertificateKeyStoreUrl = "trustCertificateKeyStoreUrl";
+    public static final String PNAME_trustCertificateKeyStoreType = "trustCertificateKeyStoreType";
+    public static final String PNAME_trustCertificateKeyStorePassword = "trustCertificateKeyStorePassword";
+    public static final String PNAME_clientCertificateKeyStoreUrl = "clientCertificateKeyStoreUrl";
+    public static final String PNAME_clientCertificateKeyStoreType = "clientCertificateKeyStoreType";
+    public static final String PNAME_clientCertificateKeyStorePassword = "clientCertificateKeyStorePassword";
+
+    public static final String PNAME_xdevapi_sslMode = "xdevapi.ssl-mode";
+    public static final String PNAME_xdevapi_sslTrustStoreUrl = "xdevapi.ssl-truststore";
+    public static final String PNAME_xdevapi_sslTrustStoreType = "xdevapi.ssl-truststore-type";
+    public static final String PNAME_xdevapi_sslTrustStorePassword = "xdevapi.ssl-truststore-password";
+
+    public static final String PNAME_xdevapi_useAsyncProtocol = "xdevapi.useAsyncProtocol";
+    public static final String PNAME_xdevapi_asyncResponseTimeout = "xdevapi.asyncResponseTimeout";
+    public static final String PNAME_xdevapi_auth = "xdevapi.auth";
 
     public static final String PNAME_enableEscapeProcessing = "enableEscapeProcessing";
 
@@ -476,7 +481,7 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PNAME_clientCertificateKeyStoreUrl, NO_ALIAS, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.clientCertificateKeyStoreUrl"), "5.1.0", CATEGORY_SECURITY, 5),
 
-                new StringPropertyDefinition(PNAME_trustCertificateKeyStoreUrl, NO_ALIAS, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_trustCertificateKeyStoreUrl, NO_ALIAS, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.trustCertificateKeyStoreUrl"), "5.1.0", CATEGORY_SECURITY, 8),
 
                 new StringPropertyDefinition(PNAME_clientCertificateKeyStoreType, NO_ALIAS, "JKS", RUNTIME_NOT_MODIFIABLE,
@@ -485,14 +490,11 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PNAME_clientCertificateKeyStorePassword, NO_ALIAS, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.clientCertificateKeyStorePassword"), "5.1.0", CATEGORY_SECURITY, 7),
 
-                new StringPropertyDefinition(PNAME_trustCertificateKeyStoreType, NO_ALIAS, "JKS", RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_trustCertificateKeyStoreType, NO_ALIAS, "JKS", RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.trustCertificateKeyStoreType"), "5.1.0", CATEGORY_SECURITY, 9),
 
-                new StringPropertyDefinition(PNAME_trustCertificateKeyStorePassword, NO_ALIAS, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_trustCertificateKeyStorePassword, NO_ALIAS, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.trustCertificateKeyStorePassword"), "5.1.0", CATEGORY_SECURITY, 10),
-
-                new BooleanPropertyDefinition(PNAME_verifyServerCertificate, NO_ALIAS, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.verifyServerCertificate"), "5.1.6", CATEGORY_SECURITY, 4),
 
                 new StringPropertyDefinition(PNAME_enabledSSLCipherSuites, NO_ALIAS, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enabledSSLCipherSuites"), "5.1.35", CATEGORY_SECURITY, 11),
@@ -811,9 +813,6 @@ public class PropertyDefinitions {
                 new IntegerPropertyDefinition(PNAME_reportMetricsIntervalMillis, NO_ALIAS, 30000, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.reportMetricsIntervalMillis"), "3.1.2", CATEGORY_DEBUGING_PROFILING, 3, 0, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_requireSSL, NO_ALIAS, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.requireSSL"), "3.1.0", CATEGORY_SECURITY, 3),
-
                 new StringPropertyDefinition(PNAME_resourceId, NO_ALIAS, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.resourceId"), "5.0.1", CATEGORY_HA, Integer.MIN_VALUE),
 
@@ -946,8 +945,8 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PNAME_useReadAheadInput, NO_ALIAS, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useReadAheadInput"), "3.1.5", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PNAME_useSSL, NO_ALIAS, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useSSL"), "3.0.2", CATEGORY_SECURITY, 2),
+                new EnumPropertyDefinition<>(PNAME_sslMode, "sslMode", SslMode.REQUIRED, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.sslMode"),
+                        "8.0.13", CATEGORY_SECURITY, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_useStreamLengthsInPrepStmts, NO_ALIAS, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useStreamLengthsInPrepStmts"), "3.0.2", CATEGORY_PREPARED_STATEMENTS, Integer.MIN_VALUE),
@@ -999,20 +998,20 @@ public class PropertyDefinitions {
 
                 // TODO improve X DevAPI properties descriptions
 
-                new BooleanPropertyDefinition(PNAME_useAsyncProtocol, "xdevapiUseAsyncProtocol", DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
+                new BooleanPropertyDefinition(PNAME_xdevapi_useAsyncProtocol, "xdevapiUseAsyncProtocol", DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new EnumPropertyDefinition<>(PNAME_sslMode, "xdevapiSSLMode", SslMode.REQUIRED, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.sslMode"), "8.0.7", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new StringPropertyDefinition(PNAME_sslTrustStoreUrl, "xdevapiSSLTruststore", DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
+                new EnumPropertyDefinition<>(PNAME_xdevapi_sslMode, "xdevapiSSLMode", SslMode.REQUIRED, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.xdevapiSslMode"), "8.0.7", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new StringPropertyDefinition(PNAME_xdevapi_sslTrustStoreUrl, "xdevapiSSLTruststore", DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.sslTrustStoreUrl"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new StringPropertyDefinition(PNAME_sslTrustStoreType, "xdevapiSSLTruststoreType", "JKS", RUNTIME_NOT_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_xdevapi_sslTrustStoreType, "xdevapiSSLTruststoreType", "JKS", RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.sslTrustStoreType"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new StringPropertyDefinition(PNAME_sslTrustStorePassword, "xdevapiSSLTruststorePassword", DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.sslTrustStorePassword"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new IntegerPropertyDefinition(PNAME_asyncResponseTimeout, "xdevapiAsyncResponseTimeout", 300, RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PNAME_xdevapi_sslTrustStorePassword, "xdevapiSSLTruststorePassword", DEFAULT_VALUE_NULL_STRING,
+                        RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.sslTrustStorePassword"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new IntegerPropertyDefinition(PNAME_xdevapi_asyncResponseTimeout, "xdevapiAsyncResponseTimeout", 300, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.asyncResponseTimeout"), "8.0.7", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new EnumPropertyDefinition<>(PNAME_auth, "xdevapiAuth", AuthMech.PLAIN, RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.auth"),
-                        "8.0.8", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new EnumPropertyDefinition<>(PNAME_xdevapi_auth, "xdevapiAuth", AuthMech.PLAIN, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.auth"), "8.0.8", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PNAME_enableEscapeProcessing, NO_ALIAS, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),

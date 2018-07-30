@@ -40,13 +40,13 @@ import java.util.Properties;
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.UnableToConnectException;
 import com.mysql.cj.exceptions.WrongArgumentException;
-import com.mysql.cj.log.Log;
 import com.mysql.cj.protocol.AuthenticationPlugin;
 import com.mysql.cj.protocol.AuthenticationProvider;
 import com.mysql.cj.protocol.Protocol;
@@ -75,10 +75,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
     private Protocol<NativePacketPayload> protocol;
 
-    private Log log;
-
-    public NativeAuthenticationProvider(Log log) {
-        this.log = log;
+    public NativeAuthenticationProvider() {
     }
 
     @Override
@@ -160,16 +157,6 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
             clientParam |= NativeServerSession.CLIENT_CONNECT_WITH_DB;
         }
 
-        // Changing SSL defaults for 5.7+ server: useSSL=true, requireSSL=false, verifyServerCertificate=false
-        RuntimeProperty<Boolean> useSSL = this.propertySet.getProperty(PropertyDefinitions.PNAME_useSSL);
-        if (this.protocol.versionMeetsMinimum(5, 7, 0) && !useSSL.getValue() && !useSSL.isExplicitlySet()) {
-            useSSL.setValue(true);
-            this.propertySet.getProperty(PropertyDefinitions.PNAME_verifyServerCertificate).setValue(false);
-            if (this.log != null) {
-                this.log.logWarn(Messages.getString("MysqlIO.SSLWarning"));
-            }
-        }
-
         // Changing defaults for 8.0.3+ server: PNAME_useInformationSchema=true
         RuntimeProperty<Boolean> useInformationSchema = this.propertySet.<Boolean> getProperty(PropertyDefinitions.PNAME_useInformationSchema);
         if (this.protocol.versionMeetsMinimum(8, 0, 3) && !useInformationSchema.getValue() && !useInformationSchema.isExplicitlySet()) {
@@ -177,12 +164,9 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         }
 
         // check SSL availability
-        if (((capabilityFlags & NativeServerSession.CLIENT_SSL) == 0) && useSSL.getValue()) {
-            if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_requireSSL).getValue()) {
-                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("MysqlIO.15"), getExceptionInterceptor());
-            }
-
-            useSSL.setValue(false);
+        SslMode sslMode = this.propertySet.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue();
+        if (((capabilityFlags & NativeServerSession.CLIENT_SSL) == 0) && sslMode != SslMode.DISABLED) {
+            throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("MysqlIO.15"), getExceptionInterceptor());
         }
 
         if ((capabilityFlags & NativeServerSession.CLIENT_LONG_FLAG) != 0) {
@@ -499,7 +483,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
                     sessState.setClientParam(clientParam);
 
-                    if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useSSL).getValue()) {
+                    if (this.propertySet.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue() != SslMode.DISABLED) {
                         negotiateSSLConnection(packLength);
                     }
 

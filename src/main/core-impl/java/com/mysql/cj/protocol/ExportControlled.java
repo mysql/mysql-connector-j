@@ -288,8 +288,8 @@ public class ExportControlled {
 
         PropertySet pset = socketConnection.getPropertySet();
 
-        boolean verifyServerCert = pset.getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).getValue();
         SslMode sslMode = pset.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue();
+        boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
 
         KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf()
                 : getTrustStoreConf(pset, PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, PropertyDefinitions.PNAME_trustCertificateKeyStorePassword,
@@ -619,10 +619,9 @@ public class ExportControlled {
         SslMode sslMode = propertySet.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue();
 
         boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
-        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf() : getTrustStoreConf(propertySet, PropertyDefinitions.PNAME_sslTrustStoreUrl,
-                PropertyDefinitions.PNAME_sslTrustStorePassword, PropertyDefinitions.PNAME_sslTrustStoreType, true);
+        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf() : getTrustStoreConf(propertySet, PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl,
+                PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, PropertyDefinitions.PNAME_trustCertificateKeyStoreType, true);
 
-        // TODO WL#9925 will redefine other SSL connection properties for X Protocol
         KeyStoreConf keyStore = getKeyStoreConf(propertySet, PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl,
                 PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, PropertyDefinitions.PNAME_clientCertificateKeyStoreType);
 

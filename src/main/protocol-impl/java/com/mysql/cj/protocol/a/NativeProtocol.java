@@ -288,7 +288,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             calculateSlowQueryThreshold();
         }
 
-        this.authProvider = new NativeAuthenticationProvider(this.log);
+        this.authProvider = new NativeAuthenticationProvider();
         this.authProvider.init(this, this.getPropertySet(), this.socketConnection.getExceptionInterceptor());
 
         Map<Class<? extends ProtocolEntity>, ProtocolEntityReader<? extends ProtocolEntity, NativePacketPayload>> protocolEntityClassToTextReader = new HashMap<>();

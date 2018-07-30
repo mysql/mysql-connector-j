@@ -74,28 +74,29 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             System.clearProperty("javax.net.ssl.trustStoreType");
             System.clearProperty("javax.net.ssl.trustStorePassword");
 
-            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_sslMode);
-            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_sslTrustStoreUrl);
-            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_sslTrustStorePassword);
-            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_sslTrustStoreType);
+            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_xdevapi_sslMode);
+            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl);
+            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword);
+            this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreType);
 
             this.sslFreeBaseUrl = this.baseUrl;
-            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_sslMode + "=", PropertyDefinitions.PNAME_sslMode + "VOID=");
-            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_sslTrustStoreUrl + "=",
-                    PropertyDefinitions.PNAME_sslTrustStoreUrl + "VOID=");
-            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_sslTrustStorePassword + "=",
-                    PropertyDefinitions.PNAME_sslTrustStorePassword + "VOID=");
-            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_sslTrustStoreType + "=",
-                    PropertyDefinitions.PNAME_sslTrustStoreType + "VOID=");
+            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_xdevapi_sslMode + "=",
+                    PropertyDefinitions.PNAME_xdevapi_sslMode + "VOID=");
+            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl + "=",
+                    PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl + "VOID=");
+            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword + "=",
+                    PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword + "VOID=");
+            this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreType + "=",
+                    PropertyDefinitions.PNAME_xdevapi_sslTrustStoreType + "VOID=");
             if (!this.sslFreeBaseUrl.contains("?")) {
                 this.sslFreeBaseUrl += "?";
             }
         }
         if (this.isSetForOpensslXTests) {
-            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_sslMode);
-            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_sslTrustStoreUrl);
-            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_sslTrustStorePassword);
-            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_sslTrustStoreType);
+            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_xdevapi_sslMode);
+            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl);
+            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword);
+            this.sslFreeTestPropertiesOpenSSL.remove(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreType);
         }
     }
 
@@ -126,26 +127,28 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyKey.USER.getKeyName() + "=", PropertyKey.USER.getKeyName() + "VOID=");
             userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyKey.PASSWORD.getKeyName() + "=", PropertyKey.PASSWORD.getKeyName() + "VOID=");
 
-            testSession = this.fact.getSession(userAndSslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED)
-                    + makeParam(PropertyKey.USER.getKeyName(), "testPlainAuth") + makeParam(PropertyKey.PASSWORD.getKeyName(), "pwd"));
+            testSession = this.fact
+                    .getSession(userAndSslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.DISABLED)
+                            + makeParam(PropertyKey.USER.getKeyName(), "testPlainAuth") + makeParam(PropertyKey.PASSWORD.getKeyName(), "pwd"));
             assertNonSecureSession(testSession);
             testSession.close();
 
-            testSession = this.fact.getSession(userAndSslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED)
-                    + makeParam(PropertyKey.USER.getKeyName(), "testPlainAuth") + makeParam(PropertyKey.PASSWORD.getKeyName(), "pwd")
-                    + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
+            testSession = this.fact
+                    .getSession(userAndSslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.DISABLED)
+                            + makeParam(PropertyKey.USER.getKeyName(), "testPlainAuth") + makeParam(PropertyKey.PASSWORD.getKeyName(), "pwd")
+                            + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true"));
             assertNonSecureSession(testSession);
             testSession.close();
 
             Properties props = new Properties(this.sslFreeTestProperties);
-            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
             props.setProperty(PropertyKey.USER.getKeyName(), "testPlainAuth");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
             testSession.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
             testSession.close();
@@ -173,16 +176,16 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED)
-                + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED)
+                + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
@@ -190,19 +193,19 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertSecureSession(testSession);
         testSession.close();
 
-        this.sslFreeTestProperties.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        this.sslFreeTestProperties.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         testSession = this.fact.getSession(this.sslFreeTestProperties);
         assertSecureSession(testSession);
         testSession.close();
-        this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_useAsyncProtocol);
+        this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol);
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
@@ -224,16 +227,16 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED)
-                + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED)
+                + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
@@ -241,19 +244,19 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertSecureSession(testSession);
         testSession.close();
 
-        this.sslFreeTestProperties.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        this.sslFreeTestProperties.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         testSession = this.fact.getSession(this.sslFreeTestProperties);
         assertSecureSession(testSession);
         testSession.close();
-        this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_useAsyncProtocol);
+        this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol);
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
@@ -268,28 +271,29 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             return;
         }
 
-        Session testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)
-                + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
-                + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword));
+        Session testSession = this.fact
+                .getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)
-                + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
-                + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword)
-                + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)
+                + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)
+                + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword)
+                + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword);
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
@@ -307,22 +311,23 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         System.setProperty("javax.net.ssl.trustStore", this.trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword", this.trustStorePassword);
 
-        Session testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA));
+        Session testSession = this.fact
+                .getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)
-                + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)
+                + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
@@ -340,35 +345,37 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         }
 
         Session testSession = this.fact
-                .getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword)
-                        + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
+                .getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
-                + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
-                + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword));
+        testSession = this.fact
+                .getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
-                + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
-                + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword)
-                + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
+        testSession = this.fact
+                .getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY.toString());
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword);
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
@@ -384,32 +391,33 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         }
 
         assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.",
-                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)));
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)));
 
         assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.",
-                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)
-                        + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true")));
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true")));
+
+        assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.", () -> this.fact
+                .getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)));
 
         assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.",
-                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)));
-
-        assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.",
-                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
-                        + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true")));
+                () -> this.fact
+                        .getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
+                                + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true")));
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
         assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.", () -> this.fact.getSession(props));
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.", () -> this.fact.getSession(props));
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY.toString());
         assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.", () -> this.fact.getSession(props));
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY.toString());
         assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.", () -> this.fact.getSession(props));
     }
 
@@ -425,24 +433,26 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
         // Meaningful error message is deep inside the stack trace.
         assertThrows(CJCommunicationsException.class,
-                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword)));
+                () -> this.fact
+                        .getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
+                                + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)
+                                + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword)));
 
         assertThrows(CJCommunicationsException.class,
-                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword)
-                        + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true")));
+                () -> this.fact
+                        .getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
+                                + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)
+                                + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword)
+                                + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true")));
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY.toString());
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword);
         // Meaningful error message is deep inside the stack trace.
         assertThrows(CJCommunicationsException.class, () -> this.fact.getSession(props));
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         assertThrows(CJCommunicationsException.class, () -> this.fact.getSession(props));
     }
 
@@ -458,50 +468,51 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         String expectedError = "Incompatible security settings\\. "
                 + "The property 'xdevapi.ssl-truststore' requires 'xdevapi.ssl-mode' as 'VERIFY_CA' or 'VERIFY_IDENTITY'\\.";
         assertThrows(CJCommunicationsException.class, expectedError,
-                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)));
-
-        assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(this.sslFreeBaseUrl
-                + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl) + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true")));
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)));
 
         assertThrows(CJCommunicationsException.class, expectedError,
-                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED)
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)));
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true")));
 
         assertThrows(CJCommunicationsException.class, expectedError,
-                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED)
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
-                        + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true")));
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)));
 
         assertThrows(CJCommunicationsException.class, expectedError,
-                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED)
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)));
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true")));
 
         assertThrows(CJCommunicationsException.class, expectedError,
-                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED)
-                        + makeParam(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl)
-                        + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true")));
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.DISABLED)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)));
+
+        assertThrows(CJCommunicationsException.class, expectedError,
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.DISABLED)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl)
+                        + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true")));
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl);
         assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl);
         assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl);
         assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
     }
 
@@ -560,14 +571,14 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
             assertUser("testAuthMechNative", testSession);
             testSession.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
@@ -579,14 +590,14 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
                 assertUser("testAuthMechSha256", testSession);
                 testSession.close();
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
@@ -599,14 +610,14 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
                 assertUser("testAuthMechCachingSha2", testSession);
                 testSession.close();
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
@@ -619,16 +630,16 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             // *** User: testAuthMechNative; Auth: PLAIN.
             props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
-            props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "PLAIN");
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
             assertUser("testAuthMechNative", testSession);
             testSession.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
@@ -636,16 +647,16 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.close();
 
             // *** User: testAuthMechNative; Auth: MYSQL41.
-            props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "MYSQL41");
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
             assertUser("testAuthMechNative", testSession);
             testSession.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
@@ -654,16 +665,16 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
                 // *** User: testAuthMechNative; Auth: SHA256_MEMORY.
-                props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "SHA256_MEMORY");
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
                 assertUser("testAuthMechNative", testSession);
                 testSession.close();
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -675,16 +686,16 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 // *** User: testAuthMechSha256; Auth: PLAIN.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
-                props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "PLAIN");
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
                 assertUser("testAuthMechSha256", testSession);
                 testSession.close();
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
@@ -692,29 +703,29 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 testSession.close();
 
                 // *** User: testAuthMechSha256; Auth: MYSQL41.
-                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "MYSQL41");
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.12"))) {
                     accessDeniedErrMsg = "ERROR 1045 \\(HY000\\) Access denied for user 'testAuthMechSha256'@.*";
                 }
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
                     // *** User: testAuthMechSha256; Auth: SHA256_MEMORY.
-                    props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "SHA256_MEMORY");
 
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                     testSession = this.fact.getSession(props);
                     assertSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
                     assertUser("testAuthMechSha256", testSession);
                     testSession.close();
 
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                     testSession = this.fact.getSession(props);
                     assertSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -727,16 +738,16 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 // *** User: testAuthMechCachingSha2; Auth: PLAIN.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
-                props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "PLAIN");
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
                 assertUser("testAuthMechCachingSha2", testSession);
                 testSession.close();
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
                 assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
@@ -744,29 +755,29 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 testSession.close();
 
                 // *** User: testAuthMechCachingSha2; Auth: MYSQL41.
-                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "MYSQL41");
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.12"))) {
                     accessDeniedErrMsg = "ERROR 1045 \\(HY000\\) Access denied for user 'testAuthMechCachingSha2'@.*";
                 }
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
                     // User: testAuthMechCachingSha2; Auth: SHA256_MEMORY.
-                    props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "SHA256_MEMORY");
 
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                     testSession = this.fact.getSession(props);
                     assertSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
                     assertUser("testAuthMechCachingSha2", testSession);
                     testSession.close();
 
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                     testSession = this.fact.getSession(props);
                     assertSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -778,20 +789,20 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             // *** User: external; Auth: EXTERNAL.
             props.setProperty(PropertyKey.USER.getKeyName(), "external");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "external");
-            props.setProperty(PropertyDefinitions.PNAME_auth, "EXTERNAL");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "EXTERNAL");
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             assertThrows(XProtocolError.class, "ERROR 1251 \\(HY000\\) Invalid authentication method EXTERNAL", () -> this.fact.getSession(props));
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             assertThrows(XProtocolError.class, "ERROR 1251 \\(HY000\\) Invalid authentication method EXTERNAL", () -> this.fact.getSession(props));
 
-            props.remove(PropertyDefinitions.PNAME_auth);
+            props.remove(PropertyDefinitions.PNAME_xdevapi_auth);
 
             /*
              * Authenticate using non-secure connections.
              */
-            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.DISABLED.toString());
 
             // With default auth mechanism for non-secure connections (MYSQL41|SHA2_MEMORY).
 
@@ -799,14 +810,14 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
             assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
             assertUser("testAuthMechNative", testSession);
             testSession.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
             assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
@@ -818,14 +829,14 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
                 assertUser("testAuthMechSha256", testSession);
                 testSession.close();
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -838,14 +849,14 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
                 assertUser("testAuthMechCachingSha2", testSession);
                 testSession.close();
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -858,25 +869,25 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             // *** User: testAuthMechNative; Auth: PLAIN.
             props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
-            props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "PLAIN");
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
             // *** User: testAuthMechNative; Auth: MYSQL41.
-            props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "MYSQL41");
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
             assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
             assertUser("testAuthMechNative", testSession);
             testSession.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             testSession = this.fact.getSession(props);
             assertNonSecureSession(testSession);
             assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
@@ -885,16 +896,16 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
                 // *** User: testAuthMechNative; Auth: SHA256_MEMORY.
-                props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "SHA256_MEMORY");
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
                 assertUser("testAuthMechNative", testSession);
                 testSession.close();
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
                 assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -906,38 +917,38 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 // *** User: testAuthMechSha256; Auth: PLAIN.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechSha256");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "sha256");
-                props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "PLAIN");
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
                 // *** User: testAuthMechSha256; Auth: MYSQL41.
-                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "MYSQL41");
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.12"))) {
                     accessDeniedErrMsg = "ERROR 1045 \\(HY000\\) Access denied for user 'testAuthMechSha256'@.*";
                 }
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
                     // *** User: testAuthMechSha256; Auth: SHA256_MEMORY.
-                    props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "SHA256_MEMORY");
 
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                     testSession = this.fact.getSession(props);
                     assertNonSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
                     assertUser("testAuthMechSha256", testSession);
                     testSession.close();
 
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                     testSession = this.fact.getSession(props);
                     assertNonSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -950,38 +961,38 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 // *** User: testAuthMechCachingSha2; Auth: PLAIN.
                 props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechCachingSha2");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "cachingsha2");
-                props.setProperty(PropertyDefinitions.PNAME_auth, "PLAIN");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "PLAIN");
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
                 // *** User: testAuthMechCachingSha2; Auth: MYSQL41.
-                props.setProperty(PropertyDefinitions.PNAME_auth, "MYSQL41");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "MYSQL41");
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.12"))) {
                     accessDeniedErrMsg = "ERROR 1045 \\(HY000\\) Access denied for user 'testAuthMechCachingSha2'@.*";
                 }
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                 assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
-                props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                 assertThrows(XProtocolError.class, accessDeniedErrMsg, () -> this.fact.getSession(props)); // Auth mech mismatch.
 
                 if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
                     // *** User: testAuthMechCachingSha2; Auth: SHA256_MEMORY.
-                    props.setProperty(PropertyDefinitions.PNAME_auth, "SHA256_MEMORY");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "SHA256_MEMORY");
 
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
                     testSession = this.fact.getSession(props);
                     assertNonSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
                     assertUser("testAuthMechCachingSha2", testSession);
                     testSession.close();
 
-                    props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+                    props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
                     testSession = this.fact.getSession(props);
                     assertNonSecureSession(testSession);
                     assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
@@ -993,15 +1004,15 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             // *** User: external; Auth: EXTERNAL.
             props.setProperty(PropertyKey.USER.getKeyName(), "external");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "external");
-            props.setProperty(PropertyDefinitions.PNAME_auth, "EXTERNAL");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_auth, "EXTERNAL");
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             assertThrows(XProtocolError.class, "ERROR 1251 \\(HY000\\) Invalid authentication method EXTERNAL", () -> this.fact.getSession(props));
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             assertThrows(XProtocolError.class, "ERROR 1251 \\(HY000\\) Invalid authentication method EXTERNAL", () -> this.fact.getSession(props));
 
-            props.remove(PropertyDefinitions.PNAME_auth);
+            props.remove(PropertyDefinitions.PNAME_xdevapi_auth);
         } finally {
             this.session.sql("DROP USER IF EXISTS testAuthMechNative").execute();
             this.session.sql("DROP USER IF EXISTS testAuthMechSha256").execute();
@@ -1032,9 +1043,9 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         boolean gplWithRSA = allowsRsa(this.fact.getSession(this.sslFreeBaseUrl));
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword);
 
         /* Against yaSSL server */
 
@@ -1046,7 +1057,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertEquals("TLSv1.1", actual);
         testSession.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
@@ -1055,7 +1066,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         testSession.close();
 
         // restricted to TLSv1
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
         props.setProperty(PropertyDefinitions.PNAME_enabledTLSProtocols, "TLSv1");
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
@@ -1064,7 +1075,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertEquals("TLSv1", actual);
         testSession.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
@@ -1075,7 +1086,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         // TLSv1.2 should fail
         props.setProperty(PropertyDefinitions.PNAME_enabledTLSProtocols, "TLSv1.2,TLSv1");
         if (gplWithRSA) {
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
@@ -1083,7 +1094,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             assertEquals("TLSv1.2", actual);
             testSession.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
             rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
@@ -1091,11 +1102,11 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             assertEquals("TLSv1.2", actual);
             testSession.close();
         } else {
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             assertThrows(CJCommunicationsException.class, "javax.net.ssl.SSLHandshakeException: Remote host closed connection during handshake",
                     () -> this.fact.getSession(props));
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             assertThrows(CJCommunicationsException.class, "Server does not provide enough data to proceed with SSL handshake.",
                     () -> this.fact.getSession(props));
         }
@@ -1103,9 +1114,9 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         /* Against OpenSSL server */
         if (this.baseOpensslUrl != null && this.baseOpensslUrl.length() > 0) {
             Properties propsOpenSSL = new Properties(this.sslFreeTestPropertiesOpenSSL);
-            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
-            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
-            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl);
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword);
 
             // defaults to TLSv1.1
             testSession = this.fact.getSession(propsOpenSSL);
@@ -1115,7 +1126,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             assertEquals("TLSv1.1", actual);
             testSession.close();
 
-            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             testSession = this.fact.getSession(propsOpenSSL);
             assertSecureSession(testSession);
             rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
@@ -1124,7 +1135,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.close();
 
             // restricted to TLSv1
-            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             propsOpenSSL.setProperty(PropertyDefinitions.PNAME_enabledTLSProtocols, "TLSv1");
             testSession = this.fact.getSession(propsOpenSSL);
             assertSecureSession(testSession);
@@ -1133,7 +1144,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             assertEquals("TLSv1", actual);
             testSession.close();
 
-            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             testSession = this.fact.getSession(propsOpenSSL);
             assertSecureSession(testSession);
             rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
@@ -1142,7 +1153,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.close();
 
             // TLSv1.2
-            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             propsOpenSSL.setProperty(PropertyDefinitions.PNAME_enabledTLSProtocols, "TLSv1.2,TLSv1.1,TLSv1");
             testSession = this.fact.getSession(propsOpenSSL);
             assertSecureSession(testSession);
@@ -1151,7 +1162,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             assertEquals("TLSv1.2", actual);
             testSession.close();
 
-            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            propsOpenSSL.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             testSession = this.fact.getSession(propsOpenSSL);
             assertSecureSession(testSession);
             rs = testSession.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
@@ -1204,9 +1215,9 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.sql("CREATE USER 'bug25494338user'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd' REQUIRE CIPHER 'AES128-SHA'").execute();
             testSession.sql("GRANT SELECT ON *.* TO 'bug25494338user'@'%'").execute();
 
-            props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
-            props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
-            props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl);
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword);
             props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, this.clientKeyStoreUrl);
             props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, this.clientKeyStorePassword);
 
@@ -1216,20 +1227,20 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
             sess.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             sess = this.fact.getSession(props);
             assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
             sess.close();
 
             // 2. Allow only TLS_RSA_WITH_AES_128_CBC_SHA cipher
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             props.setProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites, "TLS_RSA_WITH_AES_128_CBC_SHA");
             sess = this.fact.getSession(props);
             assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "AES128-SHA");
             assertSessionStatusEquals(sess, "ssl_cipher", "");
             sess.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             sess = this.fact.getSession(props);
             assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "AES128-SHA");
             assertSessionStatusEquals(sess, "ssl_cipher", "");
@@ -1239,13 +1250,13 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             props.setProperty(PropertyKey.USER.getKeyName(), "bug25494338user");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             sess = this.fact.getSession(props);
             assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "AES128-SHA");
             assertSessionStatusEquals(sess, "ssl_cipher", "");
             sess.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             sess = this.fact.getSession(props);
             assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "AES128-SHA");
             assertSessionStatusEquals(sess, "ssl_cipher", "");
@@ -1270,18 +1281,18 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         }
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword);
 
         Session nSession;
         for (int i = 0; i < 100; i++) {
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "false");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "false");
             nSession = this.fact.getSession(props);
             nSession.close();
             nSession = null;
 
-            props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+            props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
             nSession = this.fact.getSession(props);
             nSession.close();
             nSession = null;
@@ -1307,16 +1318,16 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED)
-                + makeParam(PropertyDefinitions.PNAME_useAsyncProtocol, "true"));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED)
+                + makeParam(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
@@ -1324,19 +1335,19 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertSecureSession(testSession);
         testSession.close();
 
-        this.sslFreeTestProperties.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        this.sslFreeTestProperties.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         testSession = this.fact.getSession(this.sslFreeTestProperties);
         assertSecureSession(testSession);
         testSession.close();
-        this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_useAsyncProtocol);
+        this.sslFreeTestProperties.remove(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol);
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslMode, PropertyDefinitions.SslMode.REQUIRED.toString());
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_useAsyncProtocol, "true");
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol, "true");
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
@@ -1360,8 +1371,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         props.setProperty("user", "testBug27629553");
         props.remove("password");
         props.setProperty(PropertyDefinitions.PNAME_sslMode, PropertyDefinitions.SslMode.VERIFY_CA.toString());
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl, this.trustStoreUrl);
-        props.setProperty(PropertyDefinitions.PNAME_sslTrustStorePassword, this.trustStorePassword);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl, this.trustStoreUrl);
+        props.setProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword, this.trustStorePassword);
         props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, this.clientKeyStoreUrl);
         props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, this.clientKeyStorePassword);
 

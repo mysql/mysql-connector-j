@@ -45,10 +45,10 @@ import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.QueryResult;
 import com.mysql.cj.Session;
 import com.mysql.cj.TransactionEventHandler;
-import com.mysql.cj.conf.AbstractRuntimeProperty;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJConnectionFeatureNotAvailableException;
@@ -108,8 +108,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     public static XProtocol getInstance(String host, int port, PropertySet propertySet) {
 
-        SocketConnection socketConnection = propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useAsyncProtocol).getValue() ? new XAsyncSocketConnection()
-                : new NativeSocketConnection();
+        SocketConnection socketConnection = propertySet.getBooleanProperty(PropertyDefinitions.PNAME_xdevapi_useAsyncProtocol).getValue()
+                ? new XAsyncSocketConnection() : new NativeSocketConnection();
 
         socketConnection.connect(host, port, propertySet, null, null, 0);
 
@@ -196,33 +196,40 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
         this.serverSession.setCapabilities(readServerCapabilities());
 
-        SslMode sslMode = this.propertySet.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue();
-        boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
-        String trustStoreUrl = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_sslTrustStoreUrl).getValue();
+        // Override common SSL properties with xdevapi ones to provide unified logic in ExportControlled via common SSL properties
+        RuntimeProperty<SslMode> xdevapiSslMode = this.propertySet.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_xdevapi_sslMode);
+        if (xdevapiSslMode.isExplicitlySet()) {
+            this.propertySet.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode).setValue(xdevapiSslMode.getValue());
+        }
+        RuntimeProperty<String> sslTrustStoreUrl = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl);
+        if (sslTrustStoreUrl.isExplicitlySet()) {
+            this.propertySet.getStringProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl).setValue(sslTrustStoreUrl.getValue());
+        }
+        RuntimeProperty<String> sslTrustStoreType = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreType);
+        if (sslTrustStoreType.isExplicitlySet()) {
+            this.propertySet.getStringProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType).setValue(sslTrustStoreType.getValue());
+        }
+        RuntimeProperty<String> sslTrustStorePassword = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_xdevapi_sslTrustStorePassword);
+        if (sslTrustStorePassword.isExplicitlySet()) {
+            this.propertySet.getStringProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword).setValue(sslTrustStorePassword.getValue());
+        }
+
+        // TODO WL#9925 will redefine other SSL connection properties for X Protocol
+
+        RuntimeProperty<SslMode> sslMode = this.propertySet.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode);
+        boolean verifyServerCert = sslMode.getValue() == SslMode.VERIFY_CA || sslMode.getValue() == SslMode.VERIFY_IDENTITY;
+        String trustStoreUrl = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl).getValue();
 
         if (!verifyServerCert && !StringUtils.isNullOrEmpty(trustStoreUrl)) {
             StringBuilder msg = new StringBuilder("Incompatible security settings. The property '");
-            msg.append(PropertyDefinitions.PNAME_sslTrustStoreUrl).append("' requires '");
-            msg.append(PropertyDefinitions.PNAME_sslMode).append("' as '");
+            msg.append(PropertyDefinitions.PNAME_xdevapi_sslTrustStoreUrl).append("' requires '");
+            msg.append(PropertyDefinitions.PNAME_xdevapi_sslMode).append("' as '");
             msg.append(PropertyDefinitions.SslMode.VERIFY_CA).append("' or '");
             msg.append(PropertyDefinitions.SslMode.VERIFY_IDENTITY).append("'.");
             throw new CJCommunicationsException(msg.toString());
         }
 
-        if (sslMode != SslMode.DISABLED) {
-            if (this.socketConnection.isSynchronous()) {
-                // for synchronous connection we reuse the legacy code thus we need
-                // to translate X Protocol specific connection options to legacy ones
-                this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useSSL).setValue(true);
-                this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_verifyServerCertificate).setValue(sslMode == SslMode.REQUIRED ? false : true);
-
-                ((AbstractRuntimeProperty<String>) this.propertySet.getStringProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl))
-                        .setValueInternal(trustStoreUrl, null);
-                ((AbstractRuntimeProperty<String>) this.propertySet.getStringProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword))
-                        .setValueInternal(this.propertySet.getStringProperty(PropertyDefinitions.PNAME_sslTrustStorePassword).getValue(), null);
-                ((AbstractRuntimeProperty<String>) this.propertySet.getStringProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType))
-                        .setValueInternal(this.propertySet.getStringProperty(PropertyDefinitions.PNAME_sslTrustStoreType).getValue(), null);
-            }
+        if (xdevapiSslMode.getValue() != SslMode.DISABLED) {
             negotiateSSLConnection(0);
         }
     }

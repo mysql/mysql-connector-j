@@ -76,10 +76,10 @@ public class ExceptionsTest extends BaseTestCase {
             }
         });
         assertThrows(SQLException.class,
-                "The connection property 'useSSL' acceptable values are: 'TRUE', 'FALSE', 'YES' or 'NO'\\. The value 'wrongvalue' is not acceptable\\.",
+                "The connection property 'useServerPrepStmts' acceptable values are: 'TRUE', 'FALSE', 'YES' or 'NO'\\. The value 'wrongvalue' is not acceptable\\.",
                 new Callable<Void>() {
                     public Void call() throws Exception {
-                        new NonRegisteringDriver().getPropertyInfo(dbUrl + "&useSSL=wrongvalue", null);
+                        new NonRegisteringDriver().getPropertyInfo(dbUrl + "&useServerPrepStmts=wrongvalue", null);
                         return null;
                     }
                 });
