@@ -1489,7 +1489,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
 
         Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession().getServerSession().getDefaultTimeZone(),
-                getMultiHostSafeProxy().getSession().getServerSession().getCapabilities().serverSupportsFracSecs(), getExceptionInterceptor());
+                getMultiHostSafeProxy().getSession().getServerSession().getCapabilities().serverSupportsFracSecs(),
+                getMultiHostSafeProxy().getSession().getServerSession().isServerTruncatesFracSecs(), getExceptionInterceptor());
 
         if (escapedSqlResult instanceof String) {
             return (String) escapedSqlResult;
@@ -1500,7 +1501,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     private CallableStatement parseCallableStatement(String sql) throws SQLException {
         Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession().getServerSession().getDefaultTimeZone(),
-                getMultiHostSafeProxy().getSession().getServerSession().getCapabilities().serverSupportsFracSecs(), getExceptionInterceptor());
+                getMultiHostSafeProxy().getSession().getServerSession().getCapabilities().serverSupportsFracSecs(),
+                getMultiHostSafeProxy().getSession().getServerSession().isServerTruncatesFracSecs(), getExceptionInterceptor());
 
         boolean isFunctionCall = false;
         String parsedSql = null;

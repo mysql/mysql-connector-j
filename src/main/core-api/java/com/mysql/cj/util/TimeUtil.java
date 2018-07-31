@@ -42,6 +42,7 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
+import com.mysql.cj.exceptions.WrongArgumentException;
 
 /**
  * Timezone conversion routines and other time related methods
@@ -129,29 +130,77 @@ public class TimeUtil {
                 Messages.getString("TimeUtil.UnrecognizedTimezoneId", new Object[] { timezoneStr }), exceptionInterceptor);
     }
 
-    public static String formatNanos(int nanos, boolean usingMicros) {
-
-        // get only last 9 digits
-        if (nanos > 999999999) {
-            nanos %= 100000000;
+    /**
+     * Return a new Timestamp object which value is adjusted according to known DATE, DATETIME or TIMESTAMP field precision.
+     * 
+     * @param ts
+     *            an original Timestamp object, not modified by this method
+     * @param fsp
+     *            value in the range from 0 to 6 specifying fractional seconds precision
+     * @param serverRoundFracSecs
+     *            Flag indicating whether rounding or truncation occurs on server when inserting a TIME, DATE, or TIMESTAMP value with a fractional seconds part
+     *            into a column having the same type but fewer fractional digits: true means rounding, false means truncation. The proper value should be
+     *            detected by analyzing sql_mode server variable for TIME_TRUNCATE_FRACTIONAL presence.
+     * @return A new Timestamp object cloned from original ones and then rounded or truncated according to required fsp value
+     */
+    public static Timestamp adjustTimestampNanosPrecision(Timestamp ts, int fsp, boolean serverRoundFracSecs) {
+        if (fsp < 0 || fsp > 6) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, "fsp value must be in 0 to 6 range.");
         }
 
-        if (usingMicros) {
-            nanos /= 1000;
+        Timestamp res = (Timestamp) ts.clone();
+        int nanos = res.getNanos();
+        double tail = Math.pow(10, 9 - fsp);
+
+        if (serverRoundFracSecs) {
+            nanos = (int) Math.round(nanos / tail) * (int) tail;
+            if (nanos > 999999999) {
+                nanos %= 1000000000; // get only last 9 digits
+                res.setTime(res.getTime() + 1000); // increment seconds
+            }
+        } else {
+            nanos = (int) (nanos / tail) * (int) tail;
+        }
+        res.setNanos(nanos);
+
+        return res;
+    }
+
+    /**
+     * Return a string representation of a fractional seconds part. This method assumes that all Timestamp adjustments are already done before,
+     * thus no rounding is needed, only a proper "0" padding to be done.
+     * 
+     * @param nanos
+     *            fractional seconds value
+     * @param fsp
+     *            required fractional part length
+     * @return fractional seconds part as a string
+     */
+    public static String formatNanos(int nanos, int fsp) {
+
+        if (nanos < 0 || nanos > 999999999) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, "nanos value must be in 0 to 999999999 range but was " + nanos);
+        }
+        if (fsp < 0 || fsp > 6) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, "fsp value must be in 0 to 6 range but was " + fsp);
         }
 
+        if (fsp == 0 || nanos == 0) {
+            return "0";
+        }
+
+        // just truncate because we expect the rounding was done before
+        nanos = (int) (nanos / Math.pow(10, 9 - fsp));
         if (nanos == 0) {
             return "0";
         }
 
-        final int digitCount = usingMicros ? 6 : 9;
-
         String nanosString = Integer.toString(nanos);
-        final String zeroPadding = usingMicros ? "000000" : "000000000";
+        final String zeroPadding = "000000000";
 
-        nanosString = zeroPadding.substring(0, (digitCount - nanosString.length())) + nanosString;
+        nanosString = zeroPadding.substring(0, fsp - nanosString.length()) + nanosString;
 
-        int pos = digitCount - 1; // the end, we're padded to the end by the code above
+        int pos = fsp - 1; // the end, we're padded to the end by the code above
 
         while (nanosString.charAt(pos) == '0') {
             pos--;
@@ -365,7 +414,7 @@ public class TimeUtil {
         return ((c == 'y') && (n == 2)) ? 'X'
                 : (((c == 'y') && (n < 4)) ? 'y' : ((c == 'y') ? 'M' : (((c == 'M') && (n == 2)) ? 'Y'
                         : (((c == 'M') && (n < 3)) ? 'M' : ((c == 'M') ? 'd' : (((c == 'd') && (n < 2)) ? 'd' : ((c == 'd') ? 'H' : (((c == 'H') && (n < 2))
-                                ? 'H' : ((c == 'H') ? 'm'
-                                        : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
+                                ? 'H'
+                                : ((c == 'H') ? 'm' : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
     }
 }

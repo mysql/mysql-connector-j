@@ -421,16 +421,10 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.deleter.clearParameters();
 
             int numKeys = this.primaryKeyIndicies.size();
+            for (int i = 0; i < numKeys; i++) {
+                int index = this.primaryKeyIndicies.get(i).intValue();
+                this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.getMetadata().getFields()[index]);
 
-            if (numKeys == 1) {
-                int index = this.primaryKeyIndicies.get(0).intValue();
-                this.setParamValue(this.deleter, 1, this.thisRow, index, this.getMetadata().getFields()[index].getMysqlType());
-            } else {
-                for (int i = 0; i < numKeys; i++) {
-                    int index = this.primaryKeyIndicies.get(i).intValue();
-                    this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.getMetadata().getFields()[index].getMysqlType());
-
-                }
             }
 
             this.deleter.executeUpdate();
@@ -441,13 +435,13 @@ public class UpdatableResultSet extends ResultSetImpl {
         }
     }
 
-    private void setParamValue(ClientPreparedStatement ps, int psIdx, Row row, int rsIdx, MysqlType mysqlType) throws SQLException {
+    private void setParamValue(ClientPreparedStatement ps, int psIdx, Row row, int rsIdx, Field field) throws SQLException {
         byte[] val = row.getBytes(rsIdx);
         if (val == null) {
             ps.setNull(psIdx, MysqlType.NULL);
             return;
         }
-        switch (mysqlType) {
+        switch (field.getMysqlType()) {
             case NULL:
                 ps.setNull(psIdx, MysqlType.NULL);
                 break;
@@ -486,9 +480,10 @@ public class UpdatableResultSet extends ResultSetImpl {
                 break;
             case TIMESTAMP:
             case DATETIME:
-                ps.setTimestamp(psIdx, getTimestamp(rsIdx + 1));
+                ps.setTimestamp(psIdx, getTimestamp(rsIdx + 1), null, null, field.getDecimals());
                 break;
             case TIME:
+                // TODO adjust nanos to decimal numbers
                 ps.setTime(psIdx, getTime(rsIdx + 1));
                 break;
             case DOUBLE:
@@ -886,6 +881,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 }
 
                 this.inserter = (ClientPreparedStatement) this.getConnection().clientPrepareStatement(this.insertSQL);
+                this.inserter.getQueryBindings().setColumnDefinition(this.getMetadata());
+
                 if (this.populateInserterWithDefaultValues) {
                     extractDefaultValues();
                 }
@@ -1074,6 +1071,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             } else {
                 this.refresher = (ClientPreparedStatement) this.getConnection().clientPrepareStatement(this.refreshSQL);
             }
+            this.refresher.getQueryBindings().setColumnDefinition(this.getMetadata());
         }
 
         this.refresher.clearParameters();
@@ -1215,6 +1213,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             }
 
             this.updater = (ClientPreparedStatement) this.getConnection().clientPrepareStatement(this.updateSQL);
+            this.updater.getQueryBindings().setColumnDefinition(this.getMetadata());
         }
 
         Field[] fields = this.getMetadata().getFields();
@@ -1223,22 +1222,31 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         for (int i = 0; i < numFields; i++) {
             if (this.thisRow.getBytes(i) != null) {
-                this.updater.setObject(i + 1, getObject(i + 1), fields[i].getMysqlType());
+                switch (fields[i].getMysqlType()) {
+                    case DATE:
+                    case DATETIME:
+                    case TIME:
+                    case TIMESTAMP:
+                        // TODO this is a temporary workaround until Bug#71143 "Calling ResultSet.updateRow should not set all field values in UPDATE" is fixed.
+                        // We handle these types separately to avoid fractional seconds truncation (when sendFractionalSeconds=true)
+                        // that happens for fields we don't touch with ResultSet.updateNN(). For those fields we should pass the value as is or,
+                        // better don't put them into final updater statement as requested by Bug#71143.
+                        this.updater.setString(i + 1, getString(i + 1));
+                        break;
+                    default:
+                        this.updater.setObject(i + 1, getObject(i + 1), fields[i].getMysqlType());
+                        break;
+                }
+
             } else {
                 this.updater.setNull(i + 1, 0);
             }
         }
 
         int numKeys = this.primaryKeyIndicies.size();
-
-        if (numKeys == 1) {
-            int index = this.primaryKeyIndicies.get(0).intValue();
-            this.setParamValue(this.updater, numFields + 1, this.thisRow, index, fields[index].getMysqlType());
-        } else {
-            for (int i = 0; i < numKeys; i++) {
-                int idx = this.primaryKeyIndicies.get(i).intValue();
-                this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, fields[idx].getMysqlType());
-            }
+        for (int i = 0; i < numKeys; i++) {
+            int idx = this.primaryKeyIndicies.get(i).intValue();
+            this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, fields[idx]);
         }
     }
 

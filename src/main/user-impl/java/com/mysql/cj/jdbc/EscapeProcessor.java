@@ -88,6 +88,8 @@ class EscapeProcessor {
      *            time zone
      * @param serverSupportsFractionalSecond
      *            flag indicating if server supports fractional seconds
+     * @param serverTruncatesFractionalSecond
+     *            flag indicating if server truncates fractional seconds (sql_mode contains TIME_TRUNCATE_FRACTIONAL)
      * @param exceptionInterceptor
      *            exception interceptor
      * 
@@ -96,7 +98,7 @@ class EscapeProcessor {
      * @throws SQLException
      *             if error occurs
      */
-    public static final Object escapeSQL(String sql, TimeZone defaultTimeZone, boolean serverSupportsFractionalSecond,
+    public static final Object escapeSQL(String sql, TimeZone defaultTimeZone, boolean serverSupportsFractionalSecond, boolean serverTruncatesFractionalSecond,
             ExceptionInterceptor exceptionInterceptor) throws java.sql.SQLException {
         boolean replaceEscapeSequence = false;
         String escapeSequence = null;
@@ -139,7 +141,7 @@ class EscapeProcessor {
                             StringBuilder buf = new StringBuilder(token.substring(0, 1));
 
                             Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), defaultTimeZone, serverSupportsFractionalSecond,
-                                    exceptionInterceptor);
+                                    serverTruncatesFractionalSecond, exceptionInterceptor);
 
                             String remaining = null;
 
@@ -221,7 +223,8 @@ class EscapeProcessor {
                             }
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{ts")) {
-                        processTimestampToken(defaultTimeZone, newSql, token, serverSupportsFractionalSecond, exceptionInterceptor);
+                        processTimestampToken(defaultTimeZone, newSql, token, serverSupportsFractionalSecond, serverTruncatesFractionalSecond,
+                                exceptionInterceptor);
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{t")) {
                         processTimeToken(newSql, token, serverSupportsFractionalSecond, exceptionInterceptor);
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{call") || StringUtils.startsWithIgnoreCase(collapsedToken, "{?=call")) {
@@ -339,7 +342,7 @@ class EscapeProcessor {
     }
 
     private static void processTimestampToken(TimeZone tz, StringBuilder newSql, String token, boolean serverSupportsFractionalSecond,
-            ExceptionInterceptor exceptionInterceptor) throws SQLException {
+            boolean serverTruncatesFractionalSecond, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         int startPos = token.indexOf('\'') + 1;
         int endPos = token.lastIndexOf('\''); // no }
 
@@ -351,6 +354,7 @@ class EscapeProcessor {
 
             try {
                 Timestamp ts = Timestamp.valueOf(argument);
+                ts = TimeUtil.adjustTimestampNanosPrecision(ts, 6, !serverTruncatesFractionalSecond);
                 SimpleDateFormat tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
 
                 tsdf.setTimeZone(tz);
@@ -359,7 +363,7 @@ class EscapeProcessor {
 
                 if (serverSupportsFractionalSecond && ts.getNanos() > 0) {
                     newSql.append('.');
-                    newSql.append(TimeUtil.formatNanos(ts.getNanos(), true));
+                    newSql.append(TimeUtil.formatNanos(ts.getNanos(), 6));
                 }
 
                 newSql.append('\'');

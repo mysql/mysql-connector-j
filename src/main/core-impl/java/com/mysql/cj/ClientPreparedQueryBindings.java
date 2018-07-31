@@ -334,8 +334,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
                 boolean useLength = this.useStreamLengthsInPrepStmts.getValue();
 
-                String forcedEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
-                        .getStringValue();
+                String forcedEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
 
                 if (useLength && (length != -1)) {
                     c = new char[length];
@@ -393,8 +392,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
             setNull(i);
         } else {
             try {
-                String forcedEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_clobCharacterEncoding)
-                        .getStringValue();
+                String forcedEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
 
                 if (forcedEncoding == null) {
                     setString(i, x.getSubString(1L, (int) x.length()));
@@ -767,22 +765,48 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) {
-        setTimestamp(parameterIndex, x, this.session.getServerSession().getDefaultTimeZone());
+        int fractLen = -1;
+        if (!this.sendFractionalSeconds.getValue() || !this.session.getServerSession().getCapabilities().serverSupportsFracSecs()) {
+            fractLen = 0;
+        } else if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0) {
+            fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+        }
+
+        setTimestamp(parameterIndex, x, null, this.session.getServerSession().getDefaultTimeZone(), fractLen);
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) {
-        setTimestamp(parameterIndex, x, cal.getTimeZone());
+        int fractLen = -1;
+        if (!this.sendFractionalSeconds.getValue() || !this.session.getServerSession().getCapabilities().serverSupportsFracSecs()) {
+            fractLen = 0;
+        } else if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0
+                && this.columnDefinition.getFields()[parameterIndex].getDecimals() > 0) {
+            fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+        }
+
+        setTimestamp(parameterIndex, x, cal, cal.getTimeZone(), fractLen);
     }
 
     @Override
-    public void setTimestamp(int parameterIndex, Timestamp x, TimeZone tz) {
+    public void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, TimeZone tz, int fractionalLength) {
         if (x == null) {
             setNull(parameterIndex);
         } else {
-            if (!this.sendFractionalSeconds.getValue()) {
+
+            x = (Timestamp) x.clone();
+
+            if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs()
+                    || !this.sendFractionalSeconds.getValue() && fractionalLength == 0) {
                 x = TimeUtil.truncateFractionalSeconds(x);
             }
+
+            if (fractionalLength < 0) {
+                // default to 6 fractional positions
+                fractionalLength = 6;
+            }
+
+            x = TimeUtil.adjustTimestampNanosPrecision(x, fractionalLength, !this.session.getServerSession().isServerTruncatesFracSecs());
 
             if (this.tsdf == null) {
                 this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
@@ -790,11 +814,17 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
             this.tsdf.setTimeZone(tz);
 
+            if (targetCalendar != null) {
+                this.tsdf.setTimeZone(targetCalendar.getTimeZone());
+            } else {
+                this.tsdf.setTimeZone(this.session.getServerSession().getDefaultTimeZone());
+            }
+
             StringBuffer buf = new StringBuffer();
             buf.append(this.tsdf.format(x));
             if (this.session.getServerSession().getCapabilities().serverSupportsFracSecs()) {
                 buf.append('.');
-                buf.append(TimeUtil.formatNanos(x.getNanos(), true));
+                buf.append(TimeUtil.formatNanos(x.getNanos(), 6));
             }
             buf.append('\'');
 

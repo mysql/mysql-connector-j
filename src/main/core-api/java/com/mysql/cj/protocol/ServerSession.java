@@ -234,6 +234,8 @@ public interface ServerSession {
 
     boolean useAnsiQuotedIdentifiers();
 
+    public boolean isServerTruncatesFracSecs();
+
     long getThreadId();
 
     public void setThreadId(long threadId);

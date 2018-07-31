@@ -41,9 +41,13 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import com.mysql.cj.protocol.ColumnDefinition;
+
 public interface QueryBindings<T extends BindValue> {
 
     QueryBindings<T> clone();
+
+    void setColumnDefinition(ColumnDefinition colDef);
 
     boolean isLoadDataQuery();
 
@@ -217,7 +221,7 @@ public interface QueryBindings<T extends BindValue> {
 
     void setTimestamp(int parameterIndex, Timestamp x);
 
-    void setTimestamp(int parameterIndex, Timestamp x, TimeZone tz);
+    void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, TimeZone tz, int fractionalLength);
 
     // Timestamp getTimestamp(int parameterIndex);
 

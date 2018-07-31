@@ -470,16 +470,31 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) {
-        setTimestamp(parameterIndex, x, this.session.getServerSession().getDefaultTimeZone());
+        int fractLen = -1;
+        if (!this.sendFractionalSeconds.getValue() || !this.session.getServerSession().getCapabilities().serverSupportsFracSecs()) {
+            fractLen = 0;
+        } else if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0) {
+            fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+        }
+
+        setTimestamp(parameterIndex, x, null, this.session.getServerSession().getDefaultTimeZone(), fractLen);
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) {
-        setTimestamp(parameterIndex, x, cal.getTimeZone());
+        int fractLen = -1;
+        if (!this.sendFractionalSeconds.getValue() || !this.session.getServerSession().getCapabilities().serverSupportsFracSecs()) {
+            fractLen = 0;
+        } else if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0
+                && this.columnDefinition.getFields()[parameterIndex].getDecimals() > 0) {
+            fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+        }
+
+        setTimestamp(parameterIndex, x, cal, cal.getTimeZone(), fractLen);
     }
 
     @Override
-    public void setTimestamp(int parameterIndex, Timestamp x, TimeZone tz) {
+    public void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, TimeZone tz, int fractionalLength) {
         if (x == null) {
             setNull(parameterIndex);
         } else {

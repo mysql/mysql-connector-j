@@ -518,6 +518,12 @@ public class NativeServerSession implements ServerSession {
     }
 
     @Override
+    public boolean isServerTruncatesFracSecs() {
+        String sqlModeAsString = this.serverVariables.get("sql_mode");
+        return sqlModeAsString != null && sqlModeAsString.indexOf("TIME_TRUNCATE_FRACTIONAL") != -1;
+    }
+
+    @Override
     public long getThreadId() {
         return this.capabilities.getThreadId();
     }

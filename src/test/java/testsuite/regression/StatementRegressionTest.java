@@ -99,6 +99,7 @@ import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.interceptors.QueryInterceptor;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.JdbcConnection;
@@ -3275,6 +3276,7 @@ public class StatementRegressionTest extends BaseTestCase {
             conn2 = super.getConnectionWithProps(props);
             this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
             Calendar c = Calendar.getInstance();
+            c.set(Calendar.MILLISECOND, 789);
             this.pstmt.setTimestamp(1, new Timestamp(c.getTime().getTime()));
             this.pstmt.execute();
             this.pstmt.close();
@@ -6806,23 +6808,43 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug18091639() throws SQLException {
-        String str = TimeUtil.formatNanos(1, false);
-        assertEquals("000000001", str);
+        String str = TimeUtil.formatNanos(900000000, 1);
+        assertEquals("9", str);
 
-        str = TimeUtil.formatNanos(1, true);
+        str = TimeUtil.formatNanos(90000000, 1);
         assertEquals("0", str);
 
-        str = TimeUtil.formatNanos(1999, false);
-        assertEquals("000001999", str);
+        str = TimeUtil.formatNanos(900000000, 0);
+        assertEquals("0", str);
 
-        str = TimeUtil.formatNanos(1999, true);
+        assertThrows(WrongArgumentException.class, "fsp value must be in 0 to 6 range but was 9", new Callable<Void>() {
+            public Void call() throws Exception {
+                TimeUtil.formatNanos(1, 9);
+                return null;
+            }
+        });
+
+        str = TimeUtil.formatNanos(1, 6);
+        assertEquals("0", str);
+
+        str = TimeUtil.formatNanos(1999, 6);
         assertEquals("000001", str);
 
-        str = TimeUtil.formatNanos(1000000010, false);
-        assertEquals("00000001", str);
-
-        str = TimeUtil.formatNanos(1000000010, true);
+        str = TimeUtil.formatNanos(123999, 3);
         assertEquals("0", str);
+
+        str = TimeUtil.formatNanos(123999, 4);
+        assertEquals("0001", str);
+
+        assertThrows(WrongArgumentException.class, "nanos value must be in 0 to 999999999 range but was 1000000010", new Callable<Void>() {
+            public Void call() throws Exception {
+                TimeUtil.formatNanos(1000000010, 6);
+                return null;
+            }
+        });
+
+        str = TimeUtil.formatNanos(100000000, 6);
+        assertEquals("1", str);
     }
 
     /**

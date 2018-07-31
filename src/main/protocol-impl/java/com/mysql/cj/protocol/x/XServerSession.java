@@ -297,6 +297,11 @@ public class XServerSession implements ServerSession {
     }
 
     @Override
+    public boolean isServerTruncatesFracSecs() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
+    @Override
     public long getThreadId() {
         return this.clientId;
     }

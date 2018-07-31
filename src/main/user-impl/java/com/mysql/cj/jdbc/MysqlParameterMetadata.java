@@ -50,7 +50,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
     private ExceptionInterceptor exceptionInterceptor;
 
-    MysqlParameterMetadata(Session session, Field[] fieldInfo, int parameterCount, ExceptionInterceptor exceptionInterceptor) {
+    public MysqlParameterMetadata(Session session, Field[] fieldInfo, int parameterCount, ExceptionInterceptor exceptionInterceptor) {
         this.metadata = new ResultSetMetaData(session, fieldInfo, false, true, exceptionInterceptor);
 
         this.parameterCount = parameterCount;

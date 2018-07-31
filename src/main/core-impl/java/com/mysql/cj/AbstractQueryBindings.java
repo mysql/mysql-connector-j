@@ -49,6 +49,7 @@ import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.util.StringUtils;
@@ -76,6 +77,8 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
     /** Is this query a LOAD DATA query? */
     protected boolean isLoadDataQuery = false;
 
+    protected ColumnDefinition columnDefinition;
+
     public AbstractQueryBindings(int parameterCount, Session sess) {
         this.session = sess;
         this.charEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
@@ -90,6 +93,11 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
 
     @Override
     public abstract AbstractQueryBindings<T> clone();
+
+    @Override
+    public void setColumnDefinition(ColumnDefinition colDef) {
+        this.columnDefinition = colDef;
+    }
 
     @Override
     public boolean isLoadDataQuery() {
