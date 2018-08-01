@@ -10335,4 +10335,53 @@ public class StatementRegressionTest extends BaseTestCase {
         } while (useSPS = !useSPS);
 
     }
+
+    /**
+     * Tests fix for Bug#87534 - UNION ALL query fails when useServerPrepStmts=true on database connection.
+     * Base Bug#27422376 - NEWDATE TYPE IS LEAKING OUT, fixed in MySQL 5.7.22.
+     */
+    public void testBug87534() throws Exception {
+        if (versionMeetsMinimum(5, 7) && !versionMeetsMinimum(5, 7, 22)) {
+            return;
+        }
+
+        System.out.println("running");
+
+        boolean useSPS = false;
+        do {
+            Connection testConn = getConnectionWithProps(PropertyDefinitions.PNAME_useServerPrepStmts + "=" + Boolean.toString(useSPS));
+
+            this.pstmt = testConn.prepareStatement("SELECT CAST(NOW() AS DATE) UNION SELECT CAST(NOW() AS DATE)");
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertFalse(this.rs.next());
+            this.pstmt.close();
+
+            this.pstmt = testConn.prepareStatement("SELECT CAST(NOW() AS DATE) UNION ALL SELECT CAST(NOW() AS DATE)");
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertTrue(this.rs.next());
+            assertFalse(this.rs.next());
+            this.pstmt.close();
+
+            createTable("testBug87534", "(dt DATE DEFAULT NULL)");
+            this.stmt.execute("INSERT INTO testBug87534 VALUES ('2018-01-01')");
+
+            this.pstmt = testConn.prepareStatement("SELECT dt FROM testBug87534 UNION SELECT dt FROM testBug87534");
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertFalse(this.rs.next());
+            this.pstmt.close();
+
+            this.pstmt = testConn.prepareStatement("SELECT dt FROM testBug87534 UNION ALL SELECT dt FROM testBug87534");
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertTrue(this.rs.next());
+            assertFalse(this.rs.next());
+            this.pstmt.close();
+
+            testConn.close();
+        } while (useSPS = !useSPS);
+    }
+
 }
