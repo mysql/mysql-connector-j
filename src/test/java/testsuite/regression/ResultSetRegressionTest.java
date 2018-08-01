@@ -6419,4 +6419,64 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 || (useServerPrepStmts = !useServerPrepStmts));
 
     }
+
+    /**
+     * Tests fix for Bug#80532 (22847443), ENCODING OF RESULTSET.UPDATEROW IS BROKEN FOR NON ASCII CHARCTERS.
+     */
+    public void testBug80532() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+
+        for (String enc : new String[] { "ISO8859_1", "UTF-8" }) {
+            for (String useSSPS : new String[] { "false", "true" }) {
+                final String testCase = String.format("Case: [characterEncoding=%s, useServerPrepStmts=%s]", enc, useSSPS);
+                System.out.println(testCase);
+
+                createTable("testBug80532", "(id char(50) NOT NULL, data longtext, num int, PRIMARY KEY (id,num)) CHARACTER SET "
+                        + (versionMeetsMinimum(5, 5) ? "utf8mb4" : "utf8"));
+
+                props.setProperty(PropertyDefinitions.PNAME_characterEncoding, enc);
+                props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, useSSPS);
+
+                Connection c1 = getConnectionWithProps(props);
+
+                String id1 = "äöü";
+                String id2 = "öäü";
+                String data1 = "my data";
+                String data2 = "new data";
+
+                c1.createStatement().executeUpdate("INSERT INTO testBug80532(id,data,num) VALUES( '" + id1 + "', '" + data1 + "', 1 )");
+
+                Statement st = this.conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                this.rs = st.executeQuery("select * From testBug80532"); // where id='" + id1 + "'"
+                this.rs.next();
+
+                System.out.println(this.rs.getString("id") + ", " + this.rs.getString("data"));
+                assertEquals(id1, this.rs.getString("id"));
+                assertEquals(data1, this.rs.getString("data"));
+                this.rs.updateString("data", data2);
+                this.rs.updateRow();
+                System.out.println(this.rs.getString("id") + ", " + this.rs.getString("data"));
+                assertEquals(id1, this.rs.getString("id"));
+                assertEquals(data2, this.rs.getString("data"));
+
+                this.rs.moveToInsertRow();
+                this.rs.updateString("id", id2);
+                this.rs.updateString("data", data1);
+                this.rs.updateInt("num", 2);
+                this.rs.insertRow();
+                assertTrue(this.rs.last());
+                System.out.println(this.rs.getString("id") + ", " + this.rs.getString("data"));
+                assertEquals(id2, this.rs.getString("id"));
+                assertEquals(data1, this.rs.getString("data"));
+
+                this.rs.updateString("id", id1);
+                this.rs.updateRow();
+                System.out.println(this.rs.getString("id") + ", " + this.rs.getString("data"));
+                assertEquals(id1, this.rs.getString("id"));
+                assertEquals(data1, this.rs.getString("data"));
+            }
+        }
+    }
 }
