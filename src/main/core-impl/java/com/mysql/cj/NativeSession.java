@@ -220,10 +220,12 @@ public class NativeSession extends CoreSession implements Serializable {
 
     public void enableMultiQueries() {
         sendCommand(this.commandBuilder.buildComSetOption(((NativeProtocol) this.protocol).getSharedSendPacket(), 0), false, 0);
+        ((NativeServerSession) getServerSession()).preserveOldTransactionState();
     }
 
     public void disableMultiQueries() {
         sendCommand(this.commandBuilder.buildComSetOption(((NativeProtocol) this.protocol).getSharedSendPacket(), 1), false, 0);
+        ((NativeServerSession) getServerSession()).preserveOldTransactionState();
     }
 
     @Override

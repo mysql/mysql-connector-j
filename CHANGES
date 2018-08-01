@@ -3,6 +3,8 @@
 
 Version 8.0.13
 
+  - Fix for Bug#89948 (27658489), Batched statements are not committed for useLocalTransactionState=true.
+
   - Fix for BUG#22305979, WRONG RECORD UPDATED IF SENDFRACTIONALSECONDS=FALSE AND SMT IS SCROLLABLE.
 
   - Fix for Bug#27102307, CHANGE USESSL AND VERIFYSERVERCERTIFICATE TO SSLMODE OPTION.
