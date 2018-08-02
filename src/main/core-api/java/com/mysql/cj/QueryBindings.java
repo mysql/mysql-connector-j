@@ -39,7 +39,6 @@ import java.sql.NClob;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.TimeZone;
 
 import com.mysql.cj.protocol.ColumnDefinition;
 
@@ -151,8 +150,6 @@ public interface QueryBindings<T extends BindValue> {
 
     void setDate(int parameterIndex, Date x, Calendar cal);
 
-    void setDate(int parameterIndex, Date x, TimeZone tz);
-
     // Date getDate(int parameterIndex);
 
     void setDouble(int parameterIndex, double x);
@@ -213,15 +210,13 @@ public interface QueryBindings<T extends BindValue> {
 
     void setTime(int parameterIndex, Time x, Calendar cal);
 
-    void setTime(int parameterIndex, Time x, TimeZone tz);
-
     // Time getTime(int parameterIndex);
 
     void setTimestamp(int parameterIndex, Timestamp x, Calendar cal);
 
     void setTimestamp(int parameterIndex, Timestamp x);
 
-    void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, TimeZone tz, int fractionalLength);
+    void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, int fractionalLength);
 
     // Timestamp getTimestamp(int parameterIndex);
 

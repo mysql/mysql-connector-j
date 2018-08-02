@@ -36,28 +36,31 @@ import java.util.TimeZone;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.DataReadException;
+import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.exceptions.WrongArgumentException;
 
 /**
  * Value factory to create {@link java.sql.Timestamp} instances. Timestamp instances are created from fields returned from the db without a timezone. In order
  * to create a <i>point-in-time</i>, a time zone must be provided to interpret the fields.
  */
 public class SqlTimestampValueFactory extends DefaultValueFactory<Timestamp> {
-    private TimeZone tz;
     // cached per instance to avoid re-creation on every create*() call
     private Calendar cal;
 
     /**
+     * @param calendar
+     *            Calendar used to interpret the fields.
      * @param tz
      *            The time zone used to interpret the fields.
      */
-    public SqlTimestampValueFactory(TimeZone tz) {
-        this.tz = tz;
-        this.cal = Calendar.getInstance(this.tz, Locale.US);
-        this.cal.setLenient(false);
-    }
-
-    public TimeZone getTimeZone() {
-        return this.tz;
+    public SqlTimestampValueFactory(Calendar calendar, TimeZone tz) {
+        if (calendar != null) {
+            this.cal = (Calendar) calendar.clone();
+        } else {
+            // c.f. Bug#11540 for details on locale
+            this.cal = Calendar.getInstance(tz, Locale.US);
+            this.cal.setLenient(false);
+        }
     }
 
     /**
@@ -91,11 +94,15 @@ public class SqlTimestampValueFactory extends DefaultValueFactory<Timestamp> {
         }
 
         synchronized (this.cal) {
-            // this method is HUGEly faster than Java 8's Calendar.Builder()
-            this.cal.set(year, month - 1, day, hours, minutes, seconds);
-            Timestamp ts = new Timestamp(this.cal.getTimeInMillis());
-            ts.setNanos(nanos);
-            return ts;
+            try {
+                // this method is HUGEly faster than Java 8's Calendar.Builder()
+                this.cal.set(year, month - 1, day, hours, minutes, seconds);
+                Timestamp ts = new Timestamp(this.cal.getTimeInMillis());
+                ts.setNanos(nanos);
+                return ts;
+            } catch (IllegalArgumentException e) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
+            }
         }
     }
 

@@ -355,9 +355,7 @@ class EscapeProcessor {
             try {
                 Timestamp ts = Timestamp.valueOf(argument);
                 ts = TimeUtil.adjustTimestampNanosPrecision(ts, 6, !serverTruncatesFractionalSecond);
-                SimpleDateFormat tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
-
-                tsdf.setTimeZone(tz);
+                SimpleDateFormat tsdf = TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss", null, tz);
 
                 newSql.append(tsdf.format(ts));
 

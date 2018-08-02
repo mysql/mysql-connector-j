@@ -122,7 +122,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public Date getDate(int pos) {
-        return this.row.getValue(pos, new SqlDateValueFactory(this.defaultTimeZone));
+        return this.row.getValue(pos, new SqlDateValueFactory(null, this.defaultTimeZone));
     }
 
     public DbDoc getDbDoc(String fieldName) {
@@ -171,7 +171,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public Time getTime(int pos) {
-        return this.row.getValue(pos, new SqlTimeValueFactory(this.defaultTimeZone));
+        return this.row.getValue(pos, new SqlTimeValueFactory(null, this.defaultTimeZone));
     }
 
     public Timestamp getTimestamp(String fieldName) {
@@ -179,6 +179,6 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public Timestamp getTimestamp(int pos) {
-        return this.row.getValue(pos, new SqlTimestampValueFactory(this.defaultTimeZone));
+        return this.row.getValue(pos, new SqlTimestampValueFactory(null, this.defaultTimeZone));
     }
 }

@@ -480,7 +480,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 break;
             case TIMESTAMP:
             case DATETIME:
-                ps.setTimestamp(psIdx, getTimestamp(rsIdx + 1), null, null, field.getDecimals());
+                ps.setTimestamp(psIdx, getTimestamp(rsIdx + 1), null, field.getDecimals());
                 break;
             case TIME:
                 // TODO adjust nanos to decimal numbers

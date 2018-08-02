@@ -40,7 +40,6 @@ import java.sql.NClob;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mysql.cj.conf.PropertyDefinitions;
@@ -70,7 +69,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
     protected void initBindValues(int parameterCount) {
         this.bindValues = new ServerPreparedQueryBindValue[parameterCount];
         for (int i = 0; i < parameterCount; i++) {
-            this.bindValues[i] = new ServerPreparedQueryBindValue();
+            this.bindValues[i] = new ServerPreparedQueryBindValue(this.session.getServerSession().getDefaultTimeZone());
         }
     }
 
@@ -317,23 +316,18 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
 
     @Override
     public void setDate(int parameterIndex, Date x) {
-        setDate(parameterIndex, x, this.session.getServerSession().getDefaultTimeZone());
+        setDate(parameterIndex, x, null);
     }
 
     @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) {
-        setDate(parameterIndex, x, cal.getTimeZone());
-    }
-
-    @Override
-    public void setDate(int parameterIndex, Date x, TimeZone tz) {
         if (x == null) {
             setNull(parameterIndex);
         } else {
             ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
             this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATE, this.numberOfExecutions));
             binding.value = x;
-            binding.tz = tz;
+            binding.calendar = cal == null ? null : (Calendar) cal.clone();
         }
     }
 
@@ -449,23 +443,18 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
     }
 
     public void setTime(int parameterIndex, Time x, Calendar cal) {
-        setTime(parameterIndex, x, cal.getTimeZone());
-    }
-
-    public void setTime(int parameterIndex, Time x) {
-        setTime(parameterIndex, x, this.session.getServerSession().getDefaultTimeZone());
-    }
-
-    @Override
-    public void setTime(int parameterIndex, Time x, TimeZone tz) {
         if (x == null) {
             setNull(parameterIndex);
         } else {
             ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
             this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_TIME, this.numberOfExecutions));
             binding.value = x;
-            binding.tz = tz;
+            binding.calendar = cal == null ? null : (Calendar) cal.clone();
         }
+    }
+
+    public void setTime(int parameterIndex, Time x) {
+        setTime(parameterIndex, x, null); // this.session.getServerSession().getDefaultTimeZone()
     }
 
     @Override
@@ -477,7 +466,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
         }
 
-        setTimestamp(parameterIndex, x, null, this.session.getServerSession().getDefaultTimeZone(), fractLen);
+        setTimestamp(parameterIndex, x, null, fractLen);
     }
 
     @Override
@@ -490,23 +479,33 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
         }
 
-        setTimestamp(parameterIndex, x, cal, cal.getTimeZone(), fractLen);
+        setTimestamp(parameterIndex, x, cal, fractLen);
     }
 
     @Override
-    public void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, TimeZone tz, int fractionalLength) {
+    public void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, int fractionalLength) {
         if (x == null) {
             setNull(parameterIndex);
         } else {
             ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
             this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATETIME, this.numberOfExecutions));
 
-            if (!this.sendFractionalSeconds.getValue()) {
+            x = (Timestamp) x.clone();
+
+            if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs()
+                    || !this.sendFractionalSeconds.getValue() && fractionalLength == 0) {
                 x = TimeUtil.truncateFractionalSeconds(x);
             }
 
+            if (fractionalLength < 0) {
+                // default to 6 fractional positions
+                fractionalLength = 6;
+            }
+
+            x = TimeUtil.adjustTimestampNanosPrecision(x, fractionalLength, !this.session.getServerSession().isServerTruncatesFracSecs());
+
             binding.value = x;
-            binding.tz = tz;
+            binding.calendar = targetCalendar == null ? null : (Calendar) targetCalendar.clone();
         }
     }
 }

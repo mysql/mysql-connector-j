@@ -34,7 +34,10 @@ import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
 
@@ -236,6 +239,19 @@ public class TimeUtil {
         Timestamp truncatedTimestamp = new Timestamp(timestamp.getTime());
         truncatedTimestamp.setNanos(0);
         return truncatedTimestamp;
+    }
+
+    public static SimpleDateFormat getSimpleDateFormat(SimpleDateFormat cachedSimpleDateFormat, String pattern, Calendar cal, TimeZone tz) {
+        SimpleDateFormat sdf = cachedSimpleDateFormat != null ? cachedSimpleDateFormat : new SimpleDateFormat(pattern, Locale.US);
+
+        if (cal != null) {
+            sdf.setCalendar((Calendar) cal.clone()); // cloning the original calendar to avoid it's modification
+        }
+
+        if (tz != null) {
+            sdf.setTimeZone(tz);
+        }
+        return sdf;
     }
 
     /**

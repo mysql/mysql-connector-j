@@ -53,7 +53,6 @@ import java.sql.Wrapper;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.TimeZone;
 
 import com.mysql.cj.BindValue;
 import com.mysql.cj.CancelQueryTask;
@@ -1818,9 +1817,9 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
-    public void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, TimeZone tz, int fractionalLength) throws SQLException {
+    public void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, int fractionalLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ((PreparedQuery<?>) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x, targetCalendar, tz, fractionalLength);
+            ((PreparedQuery<?>) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x, targetCalendar, fractionalLength);
         }
     }
 

@@ -101,6 +101,7 @@ import com.mysql.cj.log.StandardLogger;
 import com.mysql.cj.protocol.a.result.NativeResultset;
 import com.mysql.cj.protocol.a.result.ResultsetRowsCursor;
 import com.mysql.cj.result.SqlDateValueFactory;
+import com.mysql.cj.util.TimeUtil;
 import com.mysql.cj.util.Util;
 
 import testsuite.BaseTestCase;
@@ -4682,7 +4683,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         testStmt.executeUpdate("INSERT INTO testBug80522 VALUES ('00:00:00', '0000-00-00', 'Zeros')");
         final ResultSet testRs = testStmt.executeQuery("SELECT * FROM testBug80522");
         assertTrue(testRs.next());
-        assertEquals(new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("1970-01-01 00:00:00").getTime()), testRs.getTimestamp(1));
+        assertEquals(new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null).parse("1970-01-01 00:00:00").getTime()),
+                testRs.getTimestamp(1));
         assertThrows(SQLException.class, "Zero date value prohibited", new Callable<Void>() {
             public Void call() throws Exception {
                 System.out.println(testRs.getTimestamp(2));
@@ -5372,7 +5374,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(LocalDateTime.of(2016, 3, 27, 2, 15), rs1.getObject(1, LocalDateTime.class));
             assertEquals(LocalTime.of(2, 15), rs1.getObject(1, LocalTime.class));
             // "2016-03-27 02:15:00" is an impossible datetime for Europe/Berlin tz 
-            assertThrows(IllegalArgumentException.class, "HOUR_OF_DAY: 2 -> 3", new Callable<Void>() {
+            assertThrows(SQLException.class, "HOUR_OF_DAY: 2 -> 3", new Callable<Void>() {
                 public Void call() throws Exception {
                     rs1.getTimestamp(1).toLocalDateTime();
                     return null;
@@ -5764,12 +5766,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug23702040() throws Exception {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        sdf.setTimeZone(TimeZone.getTimeZone("Europe/Bucharest"));
+        SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd", null, TimeZone.getTimeZone("Europe/Bucharest"));
         sdf.setLenient(false);
 
         java.util.Date expected = sdf.parse("1994-03-27");
-        Date fromFactory = new SqlDateValueFactory(TimeZone.getTimeZone("Europe/Bucharest")).createFromDate(1994, 3, 27);
+        Date fromFactory = new SqlDateValueFactory(null, TimeZone.getTimeZone("Europe/Bucharest")).createFromDate(1994, 3, 27);
 
         assertEquals(expected.getTime(), fromFactory.getTime());
     }
@@ -6180,7 +6181,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         testConn2 = getConnectionWithProps(props);
 
-        Timestamp ts2 = new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse("2019-12-30 13:59:57.789").getTime());
+        Timestamp ts2 = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.SSS", null, null).parse("2019-12-30 13:59:57.789").getTime());
         createTable("testBug22305979_orig_1",
                 "(id int, tmp int,ts1 timestamp(6),ts2 timestamp(3) NOT NULL DEFAULT '2001-01-01 00:00:01',primary key(id,ts1) )");
         this.stmt.execute("insert into testBug22305979_orig_1 values (1,100,'2014-12-31 23:59:59.123','2015-12-31 23:59:59.456')");
@@ -6478,5 +6479,112 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 assertEquals(data1, this.rs.getString("data"));
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#72609 (18749544), SETDATE() NOT USING A PROLEPTIC GREGORIAN CALENDAR.
+     */
+    public void testBug72609() throws Exception {
+        GregorianCalendar prolepticGc = new GregorianCalendar();
+        prolepticGc.setGregorianChange(new Date(Long.MIN_VALUE));
+        prolepticGc.clear();
+        prolepticGc.set(Calendar.DAY_OF_MONTH, 8);
+        prolepticGc.set(Calendar.MONTH, Calendar.OCTOBER);
+        prolepticGc.set(Calendar.YEAR, 1582);
+
+        GregorianCalendar gc = new GregorianCalendar();
+        gc.clear();
+        gc.setTimeInMillis(prolepticGc.getTimeInMillis());
+
+        assertEquals(1582, gc.get(Calendar.YEAR));
+        assertEquals(8, gc.get(Calendar.MONTH));
+        assertEquals(28, gc.get(Calendar.DAY_OF_MONTH));
+
+        // TIMESTAMP can't represent dates before 1970-01-01, so we need to test only DATE and DATETIME types
+        createTable("testBug72609", "(d date, pd date, dt datetime, pdt datetime)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
+        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+
+        boolean sendFractionalSeconds = false;
+        boolean useServerPrepStmts = false;
+
+        do {
+            final String testCase = String.format("Case: [sendFractionalSeconds=%s, useServerPrepStmts=%s]", sendFractionalSeconds ? "Y" : "N",
+                    useServerPrepStmts ? "Y" : "N");
+            System.out.println(testCase);
+
+            props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, "" + sendFractionalSeconds);
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "" + useServerPrepStmts);
+
+            Connection c1 = getConnectionWithProps(props);
+            Statement st1 = c1.createStatement();
+
+            st1.execute("truncate table testBug72609");
+
+            java.sql.Date d1 = new java.sql.Date(prolepticGc.getTime().getTime());
+            Timestamp ts1 = new Timestamp(prolepticGc.getTime().getTime());
+
+            this.pstmt = c1.prepareStatement("insert into testBug72609 values(?,?,?,?)");
+            this.pstmt.setDate(1, d1);
+            this.pstmt.setDate(2, d1, prolepticGc);
+            this.pstmt.setTimestamp(3, ts1);
+            this.pstmt.setTimestamp(4, ts1, prolepticGc);
+            this.pstmt.execute();
+
+            /*
+             * Checking stored values by retrieving them as strings to avoid conversions on c/J side.
+             */
+            this.rs = st1.executeQuery("select DATE_FORMAT(d, '%Y-%m-%d') as d, DATE_FORMAT(pd, '%Y-%m-%d') as pd,"
+                    + " DATE_FORMAT(dt, '%Y-%m-%d %H:%i:%s.%f') as dt, DATE_FORMAT(pdt, '%Y-%m-%d %H:%i:%s.%f') as pdt from testBug72609");
+            this.rs.next();
+            System.out.println(this.rs.getString(1) + ", " + this.rs.getString(2) + ", " + this.rs.getString(3) + ", " + this.rs.getString(4));
+
+            assertEquals(testCase, "1582-09-28", this.rs.getString(1)); // according to Julian calendar
+            assertEquals(testCase, "1582-10-08", this.rs.getString(2)); // according to proleptic Gregorian calendar
+
+            // the exact day depends on adjustments between time zones, but that's not interesting for this test
+            assertTrue(testCase, this.rs.getString(3).startsWith("1582-09-2"));
+            assertTrue(testCase, this.rs.getString(4).startsWith("1582-10-0"));
+
+            /*
+             * Getting stored values back.
+             * 
+             * Default Julian to Gregorian calendar switch is: October 4, 1582 (Julian) is followed by October 15, 1582 (Gregorian).
+             * So when default non-proleptic calendar is used the given 1582-10-08 date is in a "missing" period. In this case GregorianCalendar
+             * uses a Julian calendar system for counting date in milliseconds, thus adding another 10 days to the date and returning 1582-10-18.
+             * 
+             * With explicit proleptic calendar we get the symmetric back conversion.
+             */
+            ResultSet rs1 = this.stmt.executeQuery("select * from testBug72609");
+            rs1.next();
+
+            assertEquals(testCase, "1582-09-28", rs1.getDate(1).toString());
+
+            assertThrows(SQLException.class, "the specified date doesn't exist", new Callable<Void>() {
+                public Void call() throws Exception {
+                    // 1582-10-18 can't be represented because it falls to "missed" period in a Julian->Gregorian switch
+                    rs1.getDate(2).toString();
+                    return null;
+                }
+            });
+            assertEquals(testCase, "1582-09-28", rs1.getDate(2, prolepticGc).toString()); // according to proleptic Gregorian calendar
+
+            assertTrue(rs1.getTimestamp(3).toString().startsWith("1582-09-2"));
+
+            // the exact day depends on adjustments between time zones, but that's not interesting for this test
+            assertThrows(SQLException.class, "the specified date doesn't exist", new Callable<Void>() {
+                public Void call() throws Exception {
+                    // 1582-10-18 can't be represented because it falls to "missed" period in a Julian->Gregorian switch
+                    rs1.getTimestamp(4).toString();
+                    return null;
+                }
+            });
+            assertTrue(rs1.getTimestamp(4, prolepticGc).toString().startsWith("1582-09-2")); // according to proleptic Gregorian calendar
+
+            c1.close();
+
+        } while ((sendFractionalSeconds = !sendFractionalSeconds) || (useServerPrepStmts = !useServerPrepStmts));
     }
 }

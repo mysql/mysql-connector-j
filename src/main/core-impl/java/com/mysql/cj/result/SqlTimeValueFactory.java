@@ -37,25 +37,30 @@ import java.util.TimeZone;
 import com.mysql.cj.Messages;
 import com.mysql.cj.WarningListener;
 import com.mysql.cj.exceptions.DataReadException;
+import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.exceptions.WrongArgumentException;
 
 /**
  * A value factory to create {@link java.sql.Time} instances. As with other date/time types, a time zone is necessary to interpret the
  * time values returned from the server.
  */
 public class SqlTimeValueFactory extends DefaultValueFactory<Time> {
-    private TimeZone tz;
     private WarningListener warningListener;
     // cached per instance to avoid re-creation on every create*() call
     private Calendar cal;
 
-    public SqlTimeValueFactory(TimeZone tz) {
-        this.tz = tz;
-        this.cal = Calendar.getInstance(this.tz, Locale.US);
-        this.cal.setLenient(false);
+    public SqlTimeValueFactory(Calendar calendar, TimeZone tz) {
+        if (calendar != null) {
+            this.cal = (Calendar) calendar.clone();
+        } else {
+            // c.f. Bug#11540 for details on locale
+            this.cal = Calendar.getInstance(tz, Locale.US);
+            this.cal.setLenient(false);
+        }
     }
 
-    public SqlTimeValueFactory(TimeZone tz, WarningListener warningListener) {
-        this(tz);
+    public SqlTimeValueFactory(Calendar calendar, TimeZone tz, WarningListener warningListener) {
+        this(calendar, tz);
         this.warningListener = warningListener;
     }
 
@@ -66,11 +71,15 @@ public class SqlTimeValueFactory extends DefaultValueFactory<Time> {
         }
 
         synchronized (this.cal) {
-            // c.f. java.sql.Time "The date components should be set to the "zero epoch" value of January 1, 1970 and should not be accessed."
-            this.cal.set(1970, 0, 1, hours, minutes, seconds);
-            this.cal.set(Calendar.MILLISECOND, 0);
-            long ms = (nanos / 1000000) + this.cal.getTimeInMillis();
-            return new Time(ms);
+            try {
+                // c.f. java.sql.Time "The date components should be set to the "zero epoch" value of January 1, 1970 and should not be accessed."
+                this.cal.set(1970, 0, 1, hours, minutes, seconds);
+                this.cal.set(Calendar.MILLISECOND, 0);
+                long ms = (nanos / 1000000) + this.cal.getTimeInMillis();
+                return new Time(ms);
+            } catch (IllegalArgumentException e) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
+            }
         }
     }
 

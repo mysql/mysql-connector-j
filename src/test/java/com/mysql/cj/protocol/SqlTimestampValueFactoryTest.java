@@ -49,7 +49,7 @@ public class SqlTimestampValueFactoryTest {
      */
     @Test
     public void testBasicTimestamp() {
-        SqlTimestampValueFactory vf = new SqlTimestampValueFactory(TimeZone.getDefault());
+        SqlTimestampValueFactory vf = new SqlTimestampValueFactory(null, TimeZone.getDefault());
         Timestamp ts = vf.createFromTimestamp(2015, 05, 01, 12, 20, 02, 4);
         // should be the same (in system timezone)
         assertEquals("2015-05-01 12:20:02.000000004", ts.toString());
@@ -60,7 +60,7 @@ public class SqlTimestampValueFactoryTest {
      */
     @Test
     public void testTimestampFromTime() {
-        SqlTimestampValueFactory vf = new SqlTimestampValueFactory(TimeZone.getDefault());
+        SqlTimestampValueFactory vf = new SqlTimestampValueFactory(null, TimeZone.getDefault());
         Timestamp ts = vf.createFromTime(12, 20, 02, 4);
         assertEquals("1970-01-01 12:20:02.000000004", ts.toString());
     }
@@ -70,7 +70,7 @@ public class SqlTimestampValueFactoryTest {
      */
     @Test
     public void testTimestampFromDate() {
-        SqlTimestampValueFactory vf = new SqlTimestampValueFactory(TimeZone.getDefault());
+        SqlTimestampValueFactory vf = new SqlTimestampValueFactory(null, TimeZone.getDefault());
         Timestamp ts = vf.createFromDate(2015, 5, 1); // May 1st
         // verify a midnight on may 1st timestamp
         assertEquals("2015-05-01 00:00:00.0", ts.toString());

@@ -285,12 +285,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
         this.zeroDateTimeBehavior = this.connection
                 .getPropertySet().<PropertyDefinitions.ZeroDatetimeBehavior> getEnumProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue();
-        this.defaultDateValueFactory = decorateDateTimeValueFactory(new SqlDateValueFactory(this.session.getServerSession().getDefaultTimeZone(), this),
+        this.defaultDateValueFactory = decorateDateTimeValueFactory(new SqlDateValueFactory(null, this.session.getServerSession().getDefaultTimeZone(), this),
                 this.zeroDateTimeBehavior);
-        this.defaultTimeValueFactory = decorateDateTimeValueFactory(new SqlTimeValueFactory(this.session.getServerSession().getDefaultTimeZone(), this),
+        this.defaultTimeValueFactory = decorateDateTimeValueFactory(new SqlTimeValueFactory(null, this.session.getServerSession().getDefaultTimeZone(), this),
                 this.zeroDateTimeBehavior);
-        this.defaultTimestampValueFactory = decorateDateTimeValueFactory(new SqlTimestampValueFactory(this.session.getServerSession().getDefaultTimeZone()),
-                this.zeroDateTimeBehavior);
+        this.defaultTimestampValueFactory = decorateDateTimeValueFactory(
+                new SqlTimestampValueFactory(null, this.session.getServerSession().getDefaultTimeZone()), this.zeroDateTimeBehavior);
 
         this.defaultLocalDateValueFactory = decorateDateTimeValueFactory(new LocalDateValueFactory(this), this.zeroDateTimeBehavior);
         this.defaultLocalTimeValueFactory = decorateDateTimeValueFactory(new LocalTimeValueFactory(this), this.zeroDateTimeBehavior);
@@ -850,7 +850,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public Date getDate(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        ValueFactory<Date> vf = new SqlDateValueFactory(cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone(), this);
+        ValueFactory<Date> vf = new SqlDateValueFactory(cal, cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone(), this);
         return getDateOrTimestampValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.zeroDateTimeBehavior));
     }
 
@@ -997,7 +997,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public Time getTime(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        ValueFactory<Time> vf = new SqlTimeValueFactory(cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone());
+        ValueFactory<Time> vf = new SqlTimeValueFactory(cal, cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone());
         return getNonStringValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.zeroDateTimeBehavior));
     }
 
@@ -1052,7 +1052,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         if (this.customTsVf != null && tz == this.lastTsCustomTz) {
             return getDateOrTimestampValueFromRow(columnIndex, this.customTsVf);
         }
-        ValueFactory<Timestamp> vf = decorateDateTimeValueFactory(new SqlTimestampValueFactory(tz), this.zeroDateTimeBehavior);
+        ValueFactory<Timestamp> vf = decorateDateTimeValueFactory(new SqlTimestampValueFactory(cal, tz), this.zeroDateTimeBehavior);
         this.lastTsCustomTz = tz;
         this.customTsVf = vf;
         return getDateOrTimestampValueFromRow(columnIndex, vf);

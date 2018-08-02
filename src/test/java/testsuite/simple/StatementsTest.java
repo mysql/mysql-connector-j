@@ -58,7 +58,6 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
-import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
@@ -74,6 +73,7 @@ import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor;
 import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.TimeUtil;
 
 import testsuite.BaseTestCase;
 import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
@@ -1433,7 +1433,7 @@ public class StatementsTest extends BaseTestCase {
 
             // We need to format this ourselves, since we have to strip the nanos off of TIMESTAMPs, so .equals() doesn't really work...
 
-            SimpleDateFormat sdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US);
+            SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss''", null, null);
 
             while (this.rs.next()) {
                 for (int k = 0; k < 14; k++) {

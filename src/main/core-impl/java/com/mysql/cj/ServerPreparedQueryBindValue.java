@@ -30,6 +30,7 @@
 package com.mysql.cj;
 
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import com.mysql.cj.exceptions.CJException;
@@ -66,10 +67,13 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     /** The value to store */
     public Object value;
 
-    /** The TimeZone for date/time types */
-    public TimeZone tz;
+    /* Calendar to be used for DATE and DATETIME values storing */
+    public Calendar calendar;
 
-    public ServerPreparedQueryBindValue() {
+    private TimeZone defaultTimeZone;
+
+    public ServerPreparedQueryBindValue(TimeZone defaultTZ) {
+        this.defaultTimeZone = defaultTZ;
     }
 
     @Override
@@ -80,6 +84,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     private ServerPreparedQueryBindValue(ServerPreparedQueryBindValue copyMe) {
         super(copyMe);
 
+        this.defaultTimeZone = copyMe.defaultTimeZone;
         this.value = copyMe.value;
         this.isSet = copyMe.isSet;
         this.isLongData = copyMe.isLongData;
@@ -88,7 +93,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
         this.longBinding = copyMe.longBinding;
         this.floatBinding = copyMe.floatBinding;
         this.doubleBinding = copyMe.doubleBinding;
-        this.tz = copyMe.tz;
+        this.calendar = copyMe.calendar;
     }
 
     @Override
@@ -102,7 +107,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
         this.longBinding = 0L;
         this.floatBinding = 0;
         this.doubleBinding = 0D;
-        this.tz = null;
+        this.calendar = null;
     }
 
     /**
@@ -291,12 +296,14 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
         intoPacket.writeInteger(IntegerDataType.INT1, 0); // neg flag
         intoPacket.writeInteger(IntegerDataType.INT4, 0); // tm->day, not used
 
-        Calendar cal = Calendar.getInstance(this.tz);
+        if (this.calendar == null) {
+            this.calendar = Calendar.getInstance(this.defaultTimeZone, Locale.US);
+        }
 
-        cal.setTime((java.util.Date) this.value);
-        intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.HOUR_OF_DAY));
-        intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.MINUTE));
-        intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.SECOND));
+        this.calendar.setTime((java.util.Date) this.value);
+        intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.HOUR_OF_DAY));
+        intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.MINUTE));
+        intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.SECOND));
     }
 
     /**
@@ -305,14 +312,16 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
      */
     private void storeDateTime(NativePacketPayload intoPacket) {
         synchronized (this) {
-            Calendar cal = Calendar.getInstance(this.tz);
+            if (this.calendar == null) {
+                this.calendar = Calendar.getInstance(this.defaultTimeZone, Locale.US);
+            }
 
-            cal.setTime((java.util.Date) this.value);
+            this.calendar.setTime((java.util.Date) this.value);
 
             if (this.value instanceof java.sql.Date) {
-                cal.set(Calendar.HOUR_OF_DAY, 0);
-                cal.set(Calendar.MINUTE, 0);
-                cal.set(Calendar.SECOND, 0);
+                this.calendar.set(Calendar.HOUR_OF_DAY, 0);
+                this.calendar.set(Calendar.MINUTE, 0);
+                this.calendar.set(Calendar.SECOND, 0);
             }
 
             byte length = (byte) 7;
@@ -325,9 +334,9 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
 
             intoPacket.writeInteger(IntegerDataType.INT1, length); // length
 
-            int year = cal.get(Calendar.YEAR);
-            int month = cal.get(Calendar.MONTH) + 1;
-            int date = cal.get(Calendar.DAY_OF_MONTH);
+            int year = this.calendar.get(Calendar.YEAR);
+            int month = this.calendar.get(Calendar.MONTH) + 1;
+            int date = this.calendar.get(Calendar.DAY_OF_MONTH);
 
             intoPacket.writeInteger(IntegerDataType.INT2, year);
             intoPacket.writeInteger(IntegerDataType.INT1, month);
@@ -338,9 +347,9 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
                 intoPacket.writeInteger(IntegerDataType.INT1, 0);
                 intoPacket.writeInteger(IntegerDataType.INT1, 0);
             } else {
-                intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.HOUR_OF_DAY));
-                intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.MINUTE));
-                intoPacket.writeInteger(IntegerDataType.INT1, cal.get(Calendar.SECOND));
+                intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.HOUR_OF_DAY));
+                intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.MINUTE));
+                intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.SECOND));
             }
 
             if (length == 11) {

@@ -56,7 +56,6 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -98,6 +97,7 @@ import com.mysql.cj.protocol.a.TimeTrackingPacketSender;
 import com.mysql.cj.protocol.a.TracingPacketReader;
 import com.mysql.cj.protocol.a.TracingPacketSender;
 import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.TimeUtil;
 import com.mysql.jdbc.Driver;
 
 import testsuite.BaseQueryInterceptor;
@@ -1936,7 +1936,7 @@ public class ConnectionTest extends BaseTestCase {
             testUrl = testUrl.substring(0, b) + testUrl.substring(e, testUrl.length());
         }
         String query = "SELECT /* testEnableEscapeProcessing: (%d) */ {fn sin(pi()/2)}, {ts '2015-08-16 11:22:33'}, {fn ucase('this is mysql')}";
-        Timestamp testTimestamp = new Timestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2015-08-16 11:22:33").getTime());
+        Timestamp testTimestamp = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null).parse("2015-08-16 11:22:33").getTime());
 
         for (int tst = 0; tst < 8; tst++) {
             boolean enableEscapeProcessing = (tst & 0x1) != 0;

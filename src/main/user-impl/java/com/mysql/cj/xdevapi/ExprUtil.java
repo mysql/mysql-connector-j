@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import com.google.protobuf.ByteString;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.util.TimeUtil;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Collection;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar;
@@ -49,10 +50,10 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
  */
 public class ExprUtil {
     // Date formats for sending dates and times to the server as strings.
-    private static SimpleDateFormat javaSqlDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    private static SimpleDateFormat javaSqlTimestampFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
-    private static SimpleDateFormat javaSqlTimeFormat = new SimpleDateFormat("HH:mm:ss.S");
-    private static SimpleDateFormat javaUtilDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+    private static SimpleDateFormat javaSqlDateFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd", null, null);
+    private static SimpleDateFormat javaSqlTimestampFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd'T'HH:mm:ss.S", null, null);
+    private static SimpleDateFormat javaSqlTimeFormat = TimeUtil.getSimpleDateFormat(null, "HH:mm:ss.S", null, null);
+    private static SimpleDateFormat javaUtilDateFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd'T'HH:mm:ss.S", null, null);
 
     /**
      * Protocol buffers helper to build a LITERAL Expr with a Scalar NULL type.

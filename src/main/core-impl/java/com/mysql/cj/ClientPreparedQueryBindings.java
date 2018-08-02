@@ -48,8 +48,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Locale;
-import java.util.TimeZone;
 
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -409,23 +407,15 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
     @Override
     public void setDate(int parameterIndex, Date x) {
-        setDate(parameterIndex, x, this.session.getServerSession().getDefaultTimeZone());
+        setDate(parameterIndex, x, null);
     }
 
     @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) {
-        setDate(parameterIndex, x, cal.getTimeZone());
-    }
-
-    @Override
-    public void setDate(int parameterIndex, Date x, TimeZone tz) {
         if (x == null) {
             setNull(parameterIndex);
         } else {
-            if (this.ddf == null) {
-                this.ddf = new SimpleDateFormat("''yyyy-MM-dd''", Locale.US);
-            }
-            this.ddf.setTimeZone(tz);
+            this.ddf = TimeUtil.getSimpleDateFormat(this.ddf, "''yyyy-MM-dd''", cal, cal != null ? null : this.session.getServerSession().getDefaultTimeZone());
             setValue(parameterIndex, this.ddf.format(x)); // TODO set MysqlType?
         }
     }
@@ -743,24 +733,16 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
     }
 
     public void setTime(int parameterIndex, Time x, Calendar cal) {
-        setTime(parameterIndex, x, cal.getTimeZone());
-    }
-
-    public void setTime(int parameterIndex, Time x) {
-        setTime(parameterIndex, x, this.session.getServerSession().getDefaultTimeZone());
-    }
-
-    @Override
-    public void setTime(int parameterIndex, Time x, TimeZone tz) {
         if (x == null) {
             setNull(parameterIndex);
         } else {
-            if (this.tdf == null) {
-                this.tdf = new SimpleDateFormat("''HH:mm:ss''", Locale.US);
-            }
-            this.tdf.setTimeZone(tz);
+            this.tdf = TimeUtil.getSimpleDateFormat(this.tdf, "''HH:mm:ss''", cal, cal != null ? null : this.session.getServerSession().getDefaultTimeZone());
             setValue(parameterIndex, this.tdf.format(x), MysqlType.TIME);
         }
+    }
+
+    public void setTime(int parameterIndex, Time x) {
+        setTime(parameterIndex, x, null);
     }
 
     @Override
@@ -772,7 +754,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
             fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
         }
 
-        setTimestamp(parameterIndex, x, null, this.session.getServerSession().getDefaultTimeZone(), fractLen);
+        setTimestamp(parameterIndex, x, null, fractLen);
     }
 
     @Override
@@ -785,11 +767,11 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
             fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
         }
 
-        setTimestamp(parameterIndex, x, cal, cal.getTimeZone(), fractLen);
+        setTimestamp(parameterIndex, x, cal, fractLen);
     }
 
     @Override
-    public void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, TimeZone tz, int fractionalLength) {
+    public void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, int fractionalLength) {
         if (x == null) {
             setNull(parameterIndex);
         } else {
@@ -808,17 +790,8 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
             x = TimeUtil.adjustTimestampNanosPrecision(x, fractionalLength, !this.session.getServerSession().isServerTruncatesFracSecs());
 
-            if (this.tsdf == null) {
-                this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US);
-            }
-
-            this.tsdf.setTimeZone(tz);
-
-            if (targetCalendar != null) {
-                this.tsdf.setTimeZone(targetCalendar.getTimeZone());
-            } else {
-                this.tsdf.setTimeZone(this.session.getServerSession().getDefaultTimeZone());
-            }
+            this.tsdf = TimeUtil.getSimpleDateFormat(this.tsdf, "''yyyy-MM-dd HH:mm:ss", targetCalendar,
+                    targetCalendar != null ? null : this.session.getServerSession().getDefaultTimeZone());
 
             StringBuffer buf = new StringBuffer();
             buf.append(this.tsdf.format(x));
