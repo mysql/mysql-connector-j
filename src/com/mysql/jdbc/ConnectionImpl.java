@@ -1635,11 +1635,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 realJavaEncoding = getEncoding(); // we need to do this again to grab this for versions > 4.1.0
 
                 String connectionCollationSuffix = "";
+                String connectionCollationCharset = "";
 
-                if (!StringUtils.isNullOrEmpty(getConnectionCollation())) {
+                if (!getUseOldUTF8Behavior() && !StringUtils.isNullOrEmpty(getConnectionCollation())) {
                     for (int i = 1; i < CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME.length; i++) {
                         if (CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i].equals(getConnectionCollation())) {
                             connectionCollationSuffix = " COLLATE " + CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i];
+                            connectionCollationCharset = CharsetMapping.COLLATION_INDEX_TO_CHARSET[i].charsetName;
                             realJavaEncoding = CharsetMapping.getJavaEncodingForCollationIndex(i);
                         }
                     }
@@ -1714,8 +1716,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                             // charset names are case-sensitive
 
                             boolean utf8mb4Supported = versionMeetsMinimum(5, 5, 2);
-                            String utf8CharsetName = connectionCollationSuffix.length() > 0
-                                    ? CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), this)
+                            String utf8CharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset
                                     : (utf8mb4Supported ? "utf8mb4" : "utf8");
 
                             if (!getUseOldUTF8Behavior()) {
@@ -1728,15 +1729,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                                     this.serverVariables.put("character_set_connection", utf8CharsetName);
                                 }
                             } else {
-                                execSQL(null, "SET NAMES latin1" + connectionCollationSuffix, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY,
-                                        false, this.database, null, false);
+                                execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null,
+                                        false);
                                 this.serverVariables.put("character_set_client", "latin1");
                                 this.serverVariables.put("character_set_connection", "latin1");
                             }
 
                             setEncoding(realJavaEncoding);
                         } /* not utf-8 */else {
-                            String mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), this);
+                            String mysqlCharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset
+                                    : CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), this);
 
                             /*
                              * if ("koi8_ru".equals(mysqlEncodingName)) { //
@@ -1763,11 +1765,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                         }
                     } else if (getEncoding() != null) {
                         // Tell the server we'll use the server default charset to send our queries from now on....
-                        String mysqlCharsetName = getServerCharset();
-
-                        if (getUseOldUTF8Behavior()) {
-                            mysqlCharsetName = "latin1";
-                        }
+                        String mysqlCharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset
+                                : (getUseOldUTF8Behavior() ? "latin1" : getServerCharset());
 
                         boolean ucs2 = false;
                         if ("ucs2".equalsIgnoreCase(mysqlCharsetName) || "utf16".equalsIgnoreCase(mysqlCharsetName)
@@ -1833,8 +1832,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
                     if (getUseOldUTF8Behavior()) {
                         try {
-                            execSQL(null, "SET NAMES latin1" + connectionCollationSuffix, -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY,
-                                    false, this.database, null, false);
+                            execSQL(null, "SET NAMES latin1", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null,
+                                    false);
                             this.serverVariables.put("character_set_client", "latin1");
                             this.serverVariables.put("character_set_connection", "latin1");
                         } catch (SQLException ex) {

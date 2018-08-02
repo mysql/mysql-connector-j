@@ -172,6 +172,17 @@ public class CharsetRegressionTest extends BaseTestCase {
             assertTrue(rs2.next());
             assertEquals(fourBytesValue, rs2.getString(2));
 
+            /* With a UTF-8 encoding and connectionCollation=utf8mb4_unicode_ci */
+            st1.executeUpdate("TRUNCATE TABLE testBug81196");
+            p.setProperty("characterEncoding", "UTF-8");
+            p.setProperty("connectionCollation", "utf8mb4_unicode_ci");
+            Connection conn2_1 = getConnectionWithProps(p);
+            Statement st2_1 = conn2_1.createStatement();
+            st2_1.executeUpdate("INSERT INTO testBug81196(name) VALUES ('" + fourBytesValue + "')");
+            ResultSet rs2_1 = st2_1.executeQuery("SELECT * from testBug81196");
+            assertTrue(rs2_1.next());
+            assertEquals(fourBytesValue, rs2_1.getString(2));
+
             /* With connectionCollation=utf8_bin, SET NAMES utf8 is expected */
             st1.executeUpdate("TRUNCATE TABLE testBug81196");
             p.setProperty("characterEncoding", "UTF-8");
