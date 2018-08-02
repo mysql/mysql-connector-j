@@ -29,7 +29,6 @@
 
 package com.mysql.cj;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 
 import com.mysql.cj.util.StringUtils;
@@ -63,6 +62,14 @@ public class AppendingBatchVisitor implements BatchVisitor {
         return this;
     }
 
+    @Override
+    public BatchVisitor mergeWithLast(byte[] values) {
+        if (this.statementComponents.isEmpty()) {
+            return append(values);
+        }
+        return merge(this.statementComponents.removeLast(), values);
+    }
+
     public byte[][] getStaticSqlStrings() {
         byte[][] asBytes = new byte[this.statementComponents.size()][];
         this.statementComponents.toArray(asBytes);
@@ -72,12 +79,10 @@ public class AppendingBatchVisitor implements BatchVisitor {
 
     @Override
     public String toString() {
-        StringBuilder buf = new StringBuilder();
-        Iterator<byte[]> iter = this.statementComponents.iterator();
-        while (iter.hasNext()) {
-            buf.append(StringUtils.toString(iter.next()));
+        StringBuilder sb = new StringBuilder();
+        for (byte[] comp : this.statementComponents) {
+            sb.append(StringUtils.toString(comp));
         }
-
-        return buf.toString();
+        return sb.toString();
     }
 }

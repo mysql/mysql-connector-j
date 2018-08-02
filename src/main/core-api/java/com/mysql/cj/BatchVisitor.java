@@ -31,11 +31,13 @@ package com.mysql.cj;
 
 public interface BatchVisitor {
 
-    abstract BatchVisitor increment();
+    BatchVisitor increment();
 
-    abstract BatchVisitor decrement();
+    BatchVisitor decrement();
 
-    abstract BatchVisitor append(byte[] values);
+    BatchVisitor append(byte[] values);
 
-    abstract BatchVisitor merge(byte[] begin, byte[] end);
+    BatchVisitor merge(byte[] begin, byte[] end);
+
+    BatchVisitor mergeWithLast(byte[] values);
 }
