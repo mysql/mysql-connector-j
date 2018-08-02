@@ -10442,4 +10442,79 @@ public class StatementRegressionTest extends BaseTestCase {
         this.stmt.execute("TRUNCATE TABLE testBug84813");
     }
 
+    /**
+     * Tests fix for Bug#81063 (23098159), w/ rewriteBatchedStatements, when 2 tables involved, the rewriting not correct.
+     */
+    public void testBug81063() throws Exception {
+        createTable("testBug81063a", "(c1 INT, c2 INT, c3 INT DEFAULT 0, c4 INT DEFAULT 0)");
+        createTable("testBug81063b", "(c1 INT, c2 INT)");
+
+        boolean rwBS = false;
+        boolean useSPS = false;
+
+        do {
+            final String testCase = String.format("Case [rwBS: %s, useSPS: %s]", rwBS ? "Y" : "N", useSPS ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts, "true");
+            props.setProperty(PropertyDefinitions.PNAME_allowMultiQueries, "true");
+            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, Boolean.toString(rwBS));
+            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
+
+            Connection testConn = getConnectionWithProps(props);
+
+            for (String sql : new String[] { "INSERT INTO testBug81063a VALUES (?, ?, ?, ?)",
+                    "INSERT INTO testBug81063a (c1, c2) VALUES (?, ?); INSERT INTO testBug81063b VALUES (?, ?)" }) {
+                int valsTbl1 = 4;
+                int valsTbl2 = 0;
+                if (sql.indexOf(';') != -1) {
+                    valsTbl1 = 2;
+                    valsTbl2 = 2;
+                }
+                for (int r = 1; r <= 5; r++) {
+                    this.pstmt = testConn.prepareStatement(sql);
+                    for (int i = 0; i < r; i++) {
+                        this.pstmt.setLong(1, 4 * i + 1);
+                        this.pstmt.setLong(2, 4 * i + 2);
+                        this.pstmt.setLong(3, 4 * i + 3);
+                        this.pstmt.setLong(4, 4 * i + 4);
+                        this.pstmt.addBatch();
+                    }
+                    this.pstmt.executeBatch();
+                    this.pstmt.close();
+                    testBug81063CheckAndReset(testCase, valsTbl1, valsTbl2, r);
+                }
+            }
+            testConn.close();
+        } while ((rwBS = !rwBS) || (useSPS = !useSPS));
+    }
+
+    private void testBug81063CheckAndReset(String testCase, int t1Vals, int t2Vals, int repetitions) throws Exception {
+        testCase += " (" + repetitions + " x " + t1Vals + "/" + t2Vals + ")";
+
+        if (t1Vals > 0) {
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug81063a");
+            for (int r = 1, e = 1; r <= repetitions; r++, e += 4 - t1Vals) {
+                assertTrue(testCase, this.rs.next());
+                for (int c = 1; c <= t1Vals; c++, e++) {
+                    assertEquals(testCase, e, this.rs.getInt(c));
+                }
+            }
+            assertFalse(this.rs.next());
+        }
+        this.stmt.execute("TRUNCATE TABLE testBug81063a");
+
+        if (t2Vals > 0) {
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug81063b");
+            for (int r = 1, e = 3; r <= repetitions; r++, e += 4 - t2Vals) {
+                assertTrue(testCase, this.rs.next());
+                for (int c = 1; c <= t2Vals; c++, e++) {
+                    assertEquals(testCase, e, this.rs.getInt(c));
+                }
+            }
+            assertFalse(this.rs.next());
+        }
+        this.stmt.execute("TRUNCATE TABLE testBug81063b");
+    }
+
 }

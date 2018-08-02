@@ -508,7 +508,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 int numberToExecuteAsMultiValue = 0;
                 int batchCounter = 0;
                 int updateCountCounter = 0;
-                long[] updateCounts = new long[numBatchedArgs];
+                long[] updateCounts = new long[numBatchedArgs * ((PreparedQuery<?>) this.query).getParseInfo().numberOfQueries];
                 SQLException sqlEx = null;
 
                 try {

@@ -513,6 +513,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             return false;
         }
 
+        boolean allowMultiQueries = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue();
+
         if (this.cachePrepStmts.getValue()) {
             synchronized (this.serverSideStatementCheckCache) {
                 Boolean flag = this.serverSideStatementCheckCache.get(sql);
@@ -521,7 +523,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     return flag.booleanValue();
                 }
 
-                boolean canHandle = StringUtils.canHandleAsServerPreparedStatementNoCache(sql, getServerVersion());
+                boolean canHandle = StringUtils.canHandleAsServerPreparedStatementNoCache(sql, getServerVersion(), allowMultiQueries,
+                        this.session.getServerSession().isNoBackslashEscapesSet(), this.session.getServerSession().useAnsiQuotedIdentifiers());
 
                 if (sql.length() < this.prepStmtCacheSqlLimit.getValue()) {
                     this.serverSideStatementCheckCache.put(sql, canHandle ? Boolean.TRUE : Boolean.FALSE);
@@ -531,7 +534,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
         }
 
-        return StringUtils.canHandleAsServerPreparedStatementNoCache(sql, getServerVersion());
+        return StringUtils.canHandleAsServerPreparedStatementNoCache(sql, getServerVersion(), allowMultiQueries,
+                this.session.getServerSession().isNoBackslashEscapesSet(), this.session.getServerSession().useAnsiQuotedIdentifiers());
     }
 
     @Override

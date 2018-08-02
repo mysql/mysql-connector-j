@@ -1919,7 +1919,8 @@ public class StringUtils {
         return asBytes;
     }
 
-    public static boolean canHandleAsServerPreparedStatementNoCache(String sql, ServerVersion serverVersion) {
+    public static boolean canHandleAsServerPreparedStatementNoCache(String sql, ServerVersion serverVersion, boolean allowMultiQueries,
+            boolean noBackslashEscapes, boolean useAnsiQuotes) {
 
         // Can't use server-side prepare for CALL
         if (startsWithIgnoreCaseAndNonAlphaNumeric(sql, "CALL")) {
@@ -1928,7 +1929,15 @@ public class StringUtils {
 
         boolean canHandleAsStatement = true;
 
-        if (startsWithIgnoreCaseAndWs(sql, "XA ")) {
+        boolean allowBackslashEscapes = !noBackslashEscapes;
+        String quoteChar = useAnsiQuotes ? "\"" : "'";
+
+        if (allowMultiQueries) {
+            if (StringUtils.indexOfIgnoreCase(0, sql, ";", quoteChar, quoteChar,
+                    allowBackslashEscapes ? StringUtils.SEARCH_MODE__ALL : StringUtils.SEARCH_MODE__MRK_COM_WS) != -1) {
+                canHandleAsStatement = false;
+            }
+        } else if (startsWithIgnoreCaseAndWs(sql, "XA ")) {
             canHandleAsStatement = false;
         } else if (startsWithIgnoreCaseAndWs(sql, "CREATE TABLE")) {
             canHandleAsStatement = false;

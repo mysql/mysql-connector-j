@@ -60,6 +60,8 @@ public class ParseInfo {
 
     boolean hasPlaceholders = false;
 
+    public int numberOfQueries = 1;
+
     boolean isOnDuplicateKeyUpdate = false;
 
     int locationOfOnDuplicateKeyUpdate = -1;
@@ -212,12 +214,27 @@ public class ParseInfo {
                     }
                 }
 
-                if ((c == '?') && !inQuotes && !inQuotedId) {
-                    endpointList.add(new int[] { lastParmEnd, i });
-                    lastParmEnd = i + 1;
+                if (!inQuotes && !inQuotedId) {
+                    if ((c == '?')) {
+                        endpointList.add(new int[] { lastParmEnd, i });
+                        lastParmEnd = i + 1;
 
-                    if (this.isOnDuplicateKeyUpdate && i > this.locationOfOnDuplicateKeyUpdate) {
-                        this.parametersInDuplicateKeyClause = true;
+                        if (this.isOnDuplicateKeyUpdate && i > this.locationOfOnDuplicateKeyUpdate) {
+                            this.parametersInDuplicateKeyClause = true;
+                        }
+                    } else if (c == ';') {
+                        int j = i + 1;
+                        if (j < this.statementLength) {
+                            for (; j < this.statementLength; j++) {
+                                if (!Character.isWhitespace(sql.charAt(j))) {
+                                    break;
+                                }
+                            }
+                            if (j < this.statementLength) {
+                                this.numberOfQueries++;
+                            }
+                            i = j - 1;
+                        }
                     }
                 }
             }
@@ -262,9 +279,8 @@ public class ParseInfo {
         }
 
         if (buildRewriteInfo) {
-            this.canRewriteAsMultiValueInsert = canRewrite(sql, this.isOnDuplicateKeyUpdate, this.locationOfOnDuplicateKeyUpdate, this.statementStartPos)
-                    && !this.parametersInDuplicateKeyClause;
-
+            this.canRewriteAsMultiValueInsert = this.numberOfQueries == 1 && !this.parametersInDuplicateKeyClause
+                    && canRewrite(sql, this.isOnDuplicateKeyUpdate, this.locationOfOnDuplicateKeyUpdate, this.statementStartPos);
             if (this.canRewriteAsMultiValueInsert
                     && session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).getValue()) {
                 buildRewriteBatchedParams(sql, session, encoding);
