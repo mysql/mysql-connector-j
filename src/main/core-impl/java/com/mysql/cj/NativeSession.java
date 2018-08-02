@@ -450,6 +450,20 @@ public class NativeSession extends CoreSession implements Serializable {
             configureCharsetProperties();
             realJavaEncoding = this.characterEncoding.getValue(); // we need to do this again to grab this for versions > 4.1.0
 
+            String connectionCollationSuffix = "";
+            String connectionCollationCharset = null;
+
+            String connectionCollation = getPropertySet().getStringProperty(PropertyDefinitions.PNAME_connectionCollation).getStringValue();
+            if (!this.useOldUTF8Behavior.getValue() && connectionCollation != null) {
+                for (int i = 1; i < CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME.length; i++) {
+                    if (CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i].equals(connectionCollation)) {
+                        connectionCollationSuffix = " COLLATE " + CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i];
+                        connectionCollationCharset = CharsetMapping.COLLATION_INDEX_TO_CHARSET[i].charsetName;
+                        realJavaEncoding = CharsetMapping.getJavaEncodingForCollationIndex(i);
+                    }
+                }
+            }
+
             try {
 
                 // Fault injection for testing server character set indices
@@ -507,17 +521,17 @@ public class NativeSession extends CoreSession implements Serializable {
                 //
                 if (realJavaEncoding.equalsIgnoreCase("UTF-8") || realJavaEncoding.equalsIgnoreCase("UTF8")) {
                     // charset names are case-sensitive
-
-                    boolean useutf8mb4 = CharsetMapping.UTF8MB4_INDEXES.contains(this.protocol.getServerSession().getServerDefaultCollationIndex());
+                    String utf8CharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset : "utf8mb4";
 
                     if (!this.useOldUTF8Behavior.getValue()) {
                         if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches("utf8")
-                                || (!this.protocol.getServerSession().characterSetNamesMatches("utf8mb4"))) {
+                                || (!this.protocol.getServerSession().characterSetNamesMatches("utf8mb4")) || (connectionCollationSuffix.length() > 0
+                                        && !connectionCollation.equalsIgnoreCase(this.protocol.getServerSession().getServerVariable("collation_server")))) {
 
-                            sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8")), false, 0);
+                            sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES " + utf8CharsetName + connectionCollationSuffix), false, 0);
 
-                            this.protocol.getServerSession().getServerVariables().put("character_set_client", useutf8mb4 ? "utf8mb4" : "utf8");
-                            this.protocol.getServerSession().getServerVariables().put("character_set_connection", useutf8mb4 ? "utf8mb4" : "utf8");
+                            this.protocol.getServerSession().getServerVariables().put("character_set_client", utf8CharsetName);
+                            this.protocol.getServerSession().getServerVariables().put("character_set_connection", utf8CharsetName);
                         }
                     } else {
                         sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES latin1"), false, 0);
@@ -528,13 +542,13 @@ public class NativeSession extends CoreSession implements Serializable {
 
                     this.characterEncoding.setValue(realJavaEncoding);
                 } /* not utf-8 */else {
-                    String mysqlCharsetName = CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH),
-                            getServerSession().getServerVersion());
+                    String mysqlCharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset : CharsetMapping
+                            .getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), getServerSession().getServerVersion());
 
                     if (mysqlCharsetName != null) {
 
                         if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches(mysqlCharsetName)) {
-                            sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES " + mysqlCharsetName), false, 0);
+                            sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES " + mysqlCharsetName + connectionCollationSuffix), false, 0);
 
                             this.protocol.getServerSession().getServerVariables().put("character_set_client", mysqlCharsetName);
                             this.protocol.getServerSession().getServerVariables().put("character_set_connection", mysqlCharsetName);
@@ -547,11 +561,8 @@ public class NativeSession extends CoreSession implements Serializable {
                 }
             } else if (this.characterEncoding.getValue() != null) {
                 // Tell the server we'll use the server default charset to send our queries from now on....
-                String mysqlCharsetName = getServerSession().getServerDefaultCharset();
-
-                if (this.useOldUTF8Behavior.getValue()) {
-                    mysqlCharsetName = "latin1";
-                }
+                String mysqlCharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset
+                        : (this.useOldUTF8Behavior.getValue() ? "latin1" : getServerSession().getServerDefaultCharset());
 
                 boolean ucs2 = false;
                 if ("ucs2".equalsIgnoreCase(mysqlCharsetName) || "utf16".equalsIgnoreCase(mysqlCharsetName) || "utf16le".equalsIgnoreCase(mysqlCharsetName)
@@ -565,7 +576,7 @@ public class NativeSession extends CoreSession implements Serializable {
 
                 if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches(mysqlCharsetName) || ucs2) {
                     try {
-                        sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES " + mysqlCharsetName), false, 0);
+                        sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES " + mysqlCharsetName + connectionCollationSuffix), false, 0);
 
                         this.protocol.getServerSession().getServerVariables().put("character_set_client", mysqlCharsetName);
                         this.protocol.getServerSession().getServerVariables().put("character_set_connection", mysqlCharsetName);
@@ -661,20 +672,6 @@ public class NativeSession extends CoreSession implements Serializable {
                 }
             }
 
-            String connectionCollation = getPropertySet().getStringProperty(PropertyDefinitions.PNAME_connectionCollation).getStringValue();
-            if (connectionCollation != null) {
-                StringBuilder setBuf = new StringBuilder("SET collation_connection = ".length() + connectionCollation.length());
-                setBuf.append("SET collation_connection = ").append(connectionCollation);
-
-                try {
-                    sendCommand(this.commandBuilder.buildComQuery(null, setBuf.toString()), false, 0);
-
-                } catch (PasswordExpiredException ex) {
-                    if (this.disconnectOnExpiredPasswords.getValue()) {
-                        throw ex;
-                    }
-                }
-            }
         } finally {
             // Failsafe, make sure that the driver's notion of character encoding matches what the user has specified.
             //
@@ -836,6 +833,7 @@ public class NativeSession extends CoreSession implements Serializable {
                 queryBuf.append(", @@character_set_results AS character_set_results");
                 queryBuf.append(", @@character_set_server AS character_set_server");
                 queryBuf.append(", @@collation_server AS collation_server");
+                queryBuf.append(", @@collation_connection AS collation_connection");
                 queryBuf.append(", @@init_connect AS init_connect");
                 queryBuf.append(", @@interactive_timeout AS interactive_timeout");
                 if (!versionMeetsMinimum(5, 5, 0)) {

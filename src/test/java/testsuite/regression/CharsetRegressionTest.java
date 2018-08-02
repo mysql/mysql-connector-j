@@ -29,7 +29,10 @@
 
 package testsuite.regression;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -150,5 +153,67 @@ public class CharsetRegressionTest extends BaseTestCase {
         p.setProperty(PropertyDefinitions.PNAME_characterEncoding, cjCharset);
 
         getConnectionWithProps(p);
+    }
+
+    /**
+     * Tests fix for Bug#81196 (23227334), CONNECTOR/J NOT FOLLOWING DATABASE CHARACTER SET.
+     * 
+     * @throws Exception
+     */
+    public void testBug81196() throws Exception {
+        // utf8mb4 was added in MySQL 5.5.2
+        if (versionMeetsMinimum(5, 5, 2)) {
+            final String fourBytesValue = "\ud841\udf0e";
+
+            createTable("testBug81196", //"TestDb.TestTable",
+                    "(`id` int AUTO_INCREMENT NOT NULL, `name` varchar(50)  NULL," + "CONSTRAINT `PK_LastViewedMatch_id` PRIMARY KEY  (`id`))"
+                            + " ENGINE=InnoDB AUTO_INCREMENT=1 CHARSET=utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci");
+
+            Properties p = new Properties();
+
+            /* With a single-byte encoding */
+            p.setProperty(PropertyDefinitions.PNAME_characterEncoding, CharsetMapping.getJavaEncodingForMysqlCharset("latin1"));
+            Connection conn1 = getConnectionWithProps(p);
+            Statement st1 = conn1.createStatement();
+            st1.executeUpdate("INSERT INTO testBug81196(name) VALUES ('" + fourBytesValue + "')");
+            ResultSet rs1 = st1.executeQuery("SELECT * from testBug81196");
+            assertTrue(rs1.next());
+            assertFalse(fourBytesValue.equals(rs1.getString(2)));
+
+            /* With a UTF-8 encoding */
+            st1.executeUpdate("TRUNCATE TABLE testBug81196");
+            p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
+            Connection conn2 = getConnectionWithProps(p);
+            Statement st2 = conn2.createStatement();
+            st2.executeUpdate("INSERT INTO testBug81196(name) VALUES ('" + fourBytesValue + "')");
+            ResultSet rs2 = st2.executeQuery("SELECT * from testBug81196");
+            assertTrue(rs2.next());
+            assertEquals(fourBytesValue, rs2.getString(2));
+
+            /* With a UTF-8 encoding and connectionCollation=utf8mb4_unicode_ci */
+            st1.executeUpdate("TRUNCATE TABLE testBug81196");
+            p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
+            p.setProperty(PropertyDefinitions.PNAME_connectionCollation, "utf8mb4_unicode_ci");
+            Connection conn2_1 = getConnectionWithProps(p);
+            Statement st2_1 = conn2_1.createStatement();
+            st2_1.executeUpdate("INSERT INTO testBug81196(name) VALUES ('" + fourBytesValue + "')");
+            ResultSet rs2_1 = st2_1.executeQuery("SELECT * from testBug81196");
+            assertTrue(rs2_1.next());
+            assertEquals(fourBytesValue, rs2_1.getString(2));
+
+            /* With connectionCollation=utf8_bin, SET NAMES utf8 is expected */
+            st1.executeUpdate("TRUNCATE TABLE testBug81196");
+            p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
+            p.setProperty(PropertyDefinitions.PNAME_connectionCollation, "utf8_bin");
+            Connection conn3 = getConnectionWithProps(p);
+            final Statement st3 = conn3.createStatement();
+
+            assertThrows(SQLException.class, "Incorrect string value: '\\\\xF0\\\\xA0\\\\x9C\\\\x8E' for column 'name' at row 1", new Callable<Void>() {
+                public Void call() throws Exception {
+                    st3.executeUpdate("INSERT INTO testBug81196(name) VALUES ('" + fourBytesValue + "')");
+                    return null;
+                }
+            });
+        }
     }
 }

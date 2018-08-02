@@ -3,6 +3,8 @@
 
 Version 8.0.13
 
+  - Fix for Bug#81196 (23227334), CONNECTOR/J NOT FOLLOWING DATABASE CHARACTER SET.
+
   - Fix for Bug#72609 (18749544), SETDATE() NOT USING A PROLEPTIC GREGORIAN CALENDAR.
 
   - Fix for Bug#87534 (26730196), UNION ALL query fails when useServerPrepStmts=true on database connection.
