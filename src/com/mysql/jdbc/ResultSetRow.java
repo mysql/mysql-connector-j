@@ -32,6 +32,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
@@ -883,6 +884,9 @@ public abstract class ResultSetRow {
                 // TODO: return rs.fastTimeCreate(targetCalendar, hr, min, sec, nanos);
                 // java.sql.Time doesn't contain fractional part, so PreparedStatement.setTime/getTime can't deal with TIME(n) fractional part.
                 // There may be better mappings to high-precision time coming in JDBC-5 with the adoption of JSR-310.
+                if (targetCalendar == null) {
+                    targetCalendar = Calendar.getInstance(tz, Locale.US);
+                }
                 return rs.fastTimeCreate(targetCalendar, hr, min, sec);
             }
 

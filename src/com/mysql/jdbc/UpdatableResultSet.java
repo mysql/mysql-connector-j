@@ -492,12 +492,12 @@ public class UpdatableResultSet extends ResultSetImpl {
             case Types.TIMESTAMP:
                 boolean useGmtMillis = false; // to prevent conversion of key values
                 boolean useJdbcCompliantTimezoneShift = false; // to prevent conversion of key values
-                ps.setTimestampInternal(psIdx, row.getTimestampFast(rsIdx, this.fastDefaultCal, this.connection.getDefaultTimeZone(), false, this.connection,
+                ps.setTimestampInternal(psIdx, row.getTimestampFast(rsIdx, this.fastDefaultCal, this.connection.getServerTimezoneTZ(), false, this.connection,
                         this, useGmtMillis, useJdbcCompliantTimezoneShift), null, this.connection.getDefaultTimeZone(), false, field.getDecimals(), false);
                 break;
             case Types.TIME:
                 // TODO adjust nanos to decimal numbers
-                ps.setTime(psIdx, row.getTimeFast(rsIdx, this.fastDefaultCal, this.connection.getDefaultTimeZone(), false, this.connection, this));
+                ps.setTime(psIdx, row.getTimeFast(rsIdx, this.fastDefaultCal, this.connection.getServerTimezoneTZ(), false, this.connection, this));
                 break;
             case Types.FLOAT:
             case Types.DOUBLE:
