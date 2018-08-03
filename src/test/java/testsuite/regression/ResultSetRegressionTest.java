@@ -6179,32 +6179,40 @@ public class ResultSetRegressionTest extends BaseTestCase {
         props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
         props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, "false");
 
-        testConn2 = getConnectionWithProps(props);
+        for (String serverTimezone : new String[] { null, "GMT", "Asia/Calcutta" }) {
+            System.out.println("serverTimezone=" + serverTimezone);
+            if (serverTimezone != null) {
+                props.setProperty(PropertyDefinitions.PNAME_serverTimezone, serverTimezone);
+            }
+            testConn2 = getConnectionWithProps(props);
 
-        Timestamp ts2 = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.SSS", null, null).parse("2019-12-30 13:59:57.789").getTime());
-        createTable("testBug22305979_orig_1",
-                "(id int, tmp int,ts1 timestamp(6),ts2 timestamp(3) NOT NULL DEFAULT '2001-01-01 00:00:01',primary key(id,ts1) )");
-        this.stmt.execute("insert into testBug22305979_orig_1 values (1,100,'2014-12-31 23:59:59.123','2015-12-31 23:59:59.456')");
-        this.stmt.execute("insert into testBug22305979_orig_1 values (1,200,'2014-12-31 23:59:59','2022-12-31 23:59:59.456')");
+            Timestamp ts2 = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.SSS", null, null).parse("2019-12-30 13:59:57.789").getTime());
+            createTable("testBug22305979_orig_1",
+                    "(id int, tmp int,ts1 timestamp(6),ts2 timestamp(3) NOT NULL DEFAULT '2001-01-01 00:00:01',primary key(id,ts1) )");
+            this.stmt.execute("insert into testBug22305979_orig_1 values (1,100,'2014-12-31 23:59:59.123','2015-12-31 23:59:59.456')");
+            this.stmt.execute("insert into testBug22305979_orig_1 values (1,200,'2014-12-31 23:59:59','2022-12-31 23:59:59.456')");
 
-        Statement scrollableStmt = testConn2.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-        ResultSet rs1 = scrollableStmt.executeQuery("SELECT * FROM testBug22305979_orig_1 where id=1 and ts1='2014-12-31 23:59:59.123'");
-        if (rs1.next()) {
-            rs1.updateTimestamp(3, ts2); //Updating part of primary key
-            rs1.updateRow();
+            Statement scrollableStmt = testConn2.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            ResultSet rs1 = scrollableStmt.executeQuery("SELECT * FROM testBug22305979_orig_1 where id=1 and ts1='2014-12-31 23:59:59.123'");
+            if (rs1.next()) {
+                rs1.updateTimestamp(3, ts2); //Updating part of primary key
+                rs1.updateRow();
+            }
+
+            this.rs = scrollableStmt.executeQuery("SELECT * FROM testBug22305979_orig_1 order by tmp");
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+            assertEquals(100, this.rs.getInt(2));
+            assertEquals("2019-12-30 13:59:57.0", this.rs.getTimestamp(3).toString());
+            // TODO this.rs.getString(3) here doesn't take into account the serverTimezone thus returns the value as it is stored in table; is it a bug?
+            // assertEquals("2019-12-30 13:59:57", this.rs.getString(3));
+            assertEquals("2015-12-31 23:59:59.456000000", this.rs.getString(4));
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+            assertEquals(200, this.rs.getInt(2));
+            assertEquals("2014-12-31 23:59:59", this.rs.getString(3)); // we didn't change this date, so getString() matches the getTimestamp()
+            assertEquals("2022-12-31 23:59:59.456000000", this.rs.getString(4));
         }
-
-        this.rs = scrollableStmt.executeQuery("SELECT * FROM testBug22305979_orig_1 order by tmp");
-        assertTrue(this.rs.next());
-        assertEquals(1, this.rs.getInt(1));
-        assertEquals(100, this.rs.getInt(2));
-        assertEquals("2019-12-30 13:59:57", this.rs.getString(3));
-        assertEquals("2015-12-31 23:59:59.456000000", this.rs.getString(4));
-        assertTrue(this.rs.next());
-        assertEquals(1, this.rs.getInt(1));
-        assertEquals(200, this.rs.getInt(2));
-        assertEquals("2014-12-31 23:59:59", this.rs.getString(3));
-        assertEquals("2022-12-31 23:59:59.456000000", this.rs.getString(4));
 
         /* Unified test */
 
@@ -6314,9 +6322,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Connection testConn;
 
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
-
         boolean sqlModeTimeTruncateFractional = false;
         boolean sendFractionalSeconds = false;
         boolean useServerPrepStmts = false;
@@ -6326,96 +6331,102 @@ public class ResultSetRegressionTest extends BaseTestCase {
             if (sqlModeTimeTruncateFractional && !versionMeetsMinimum(8, 0)) {
                 continue;
             }
-
-            final String testCase = String.format("Case: [TIME_TRUNCATE_FRACTIONAL=%s, sendFractionalSeconds=%s, useServerPrepStmts=%s,",
-                    sqlModeTimeTruncateFractional ? "Y" : "N", sendFractionalSeconds ? "Y" : "N", useServerPrepStmts ? "Y" : "N");
-            System.out.println(testCase);
-
-            String sqlMode = getMysqlVariable("sql_mode");
-            sqlMode = removeSqlMode("TIME_TRUNCATE_FRACTIONAL", sqlMode);
-            if (sqlModeTimeTruncateFractional) {
-                if (sqlMode.length() > 0) {
-                    sqlMode += ",";
+            for (String serverTimezone : new String[] { null, "GMT", "Asia/Calcutta" }) {
+                if (serverTimezone != null) {
+                    props.setProperty(PropertyDefinitions.PNAME_serverTimezone, serverTimezone);
+                } else {
+                    props.remove(PropertyDefinitions.PNAME_serverTimezone);
                 }
-                sqlMode += "TIME_TRUNCATE_FRACTIONAL";
+
+                final String testCase = String.format("Case: [TIME_TRUNCATE_FRACTIONAL=%s, sendFractionalSeconds=%s, useServerPrepStmts=%s,",
+                        sqlModeTimeTruncateFractional ? "Y" : "N", sendFractionalSeconds ? "Y" : "N", useServerPrepStmts ? "Y" : "N");
+                System.out.println(testCase);
+
+                String sqlMode = getMysqlVariable("sql_mode");
+                sqlMode = removeSqlMode("TIME_TRUNCATE_FRACTIONAL", sqlMode);
+                if (sqlModeTimeTruncateFractional) {
+                    if (sqlMode.length() > 0) {
+                        sqlMode += ",";
+                    }
+                    sqlMode += "TIME_TRUNCATE_FRACTIONAL";
+                }
+
+                props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, "" + sendFractionalSeconds);
+                props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "" + useServerPrepStmts);
+
+                testConn = getConnectionWithProps(props);
+
+                // specifying different fractional length
+                for (int len = 0; len < 10; len++) {
+
+                    int fieldLen = len > 6 ? 6 : len;
+                    //System.out.println("len: " + len);
+
+                    String tableName = "testBug22305979_" + len;
+                    createTable(tableName,
+                            "(id INTEGER, dt DATETIME" + (fieldLen == 0 ? "" : "(" + fieldLen + ")") + ", ts TIMESTAMP"
+                                    + (fieldLen == 0 ? "" : "(" + fieldLen + ")") + ", tm TIME" + (fieldLen == 0 ? "" : "(" + fieldLen + ")")
+                                    + ", PRIMARY KEY(id,dt,ts,tm))");
+
+                    Statement st = testConn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                    this.rs = st.executeQuery("SELECT id,dt,ts,tm FROM " + tableName + " FOR UPDATE");
+                    this.rs.next(); // No rows
+                    this.rs.moveToInsertRow();
+                    this.rs.updateInt("id", 1);
+                    this.rs.updateTimestamp("dt", ts_ins[len]);
+                    this.rs.updateTimestamp("ts", ts_ins[len]);
+                    this.rs.updateTime("tm", new Time(ts_ins[len].getTime()));
+                    this.rs.insertRow();
+                    assertTrue(testCase, this.rs.last());
+
+                    // checking only seconds and nanos, other date parts are not relevant to this bug
+                    Calendar c_exp = new GregorianCalendar();
+                    c_exp.setTime(sendFractionalSeconds ? (sqlModeTimeTruncateFractional ? ts_ins_expected_truncate[len] : ts_ins_expected_round[len])
+                            : ts_ins_expected_not_sendFractionalSeconds[len]);
+                    Calendar c_res = new GregorianCalendar();
+                    c_res.setTime(this.rs.getTimestamp("dt"));
+                    assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
+                    assertEquals(testCase, c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND));
+                    c_res.setTime(this.rs.getTimestamp("ts"));
+                    assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
+                    assertEquals(testCase, c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND));
+
+                    // TODO java.sql.Time does not provide any way for setting/getting milliseconds and removes them from toString() method.
+                    // So the rs.updateTime(String columnName, java.sql.Time x) will always truncate milliseconds. Probably it is a bug because
+                    // java.sql.Time contains milliseconds internally. We have a Bug#76775 feature request about that.
+                    if (sendFractionalSeconds) {
+                        c_exp.setTime(ts_ins_expected_truncate[len]);
+                    }
+                    c_res.setTime(this.rs.getTime("tm"));
+                    assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
+                    assertEquals(testCase, 0, c_res.get(Calendar.MILLISECOND));
+
+                    this.rs.updateTimestamp("dt", ts_upd[len]);
+                    this.rs.updateTimestamp("ts", ts_upd[len]);
+                    this.rs.updateTime("tm", new Time(ts_upd[len].getTime()));
+                    this.rs.updateRow();
+                    c_exp.setTime(sendFractionalSeconds ? (sqlModeTimeTruncateFractional ? ts_upd_expected_truncate[len] : ts_upd_expected_round[len])
+                            : ts_upd_expected_not_sendFractionalSeconds[len]);
+                    c_res.setTime(this.rs.getTimestamp("dt"));
+                    assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
+                    assertEquals(testCase, c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND));
+                    c_res.setTime(this.rs.getTimestamp("ts"));
+                    assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
+                    assertEquals(testCase, c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND));
+
+                    if (sendFractionalSeconds) {
+                        c_exp.setTime(ts_upd_expected_truncate[len]);
+                    }
+                    c_res.setTime(this.rs.getTime("tm"));
+                    assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
+                    assertEquals(testCase, 0, c_res.get(Calendar.MILLISECOND));
+
+                    st.close();
+                }
+
+                testConn.close();
             }
-
-            props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
-            props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, "" + sendFractionalSeconds);
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "" + useServerPrepStmts);
-
-            testConn = getConnectionWithProps(props);
-
-            // specifying different fractional length
-            for (int len = 0; len < 10; len++) {
-
-                int fieldLen = len > 6 ? 6 : len;
-                //System.out.println("len: " + len);
-
-                String tableName = "testBug22305979_" + len;
-                createTable(tableName,
-                        "(id INTEGER, dt DATETIME" + (fieldLen == 0 ? "" : "(" + fieldLen + ")") + ", ts TIMESTAMP"
-                                + (fieldLen == 0 ? "" : "(" + fieldLen + ")") + ", tm TIME" + (fieldLen == 0 ? "" : "(" + fieldLen + ")")
-                                + ", PRIMARY KEY(id,dt,ts,tm))");
-
-                Statement st = testConn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-                this.rs = st.executeQuery("SELECT id,dt,ts,tm FROM " + tableName + " FOR UPDATE");
-                this.rs.next(); // No rows
-                this.rs.moveToInsertRow();
-                this.rs.updateInt("id", 1);
-                this.rs.updateTimestamp("dt", ts_ins[len]);
-                this.rs.updateTimestamp("ts", ts_ins[len]);
-                this.rs.updateTime("tm", new Time(ts_ins[len].getTime()));
-                this.rs.insertRow();
-                assertTrue(testCase, this.rs.last());
-
-                // checking only seconds and nanos, other date parts are not relevant to this bug
-                Calendar c_exp = new GregorianCalendar();
-                c_exp.setTime(sendFractionalSeconds ? (sqlModeTimeTruncateFractional ? ts_ins_expected_truncate[len] : ts_ins_expected_round[len])
-                        : ts_ins_expected_not_sendFractionalSeconds[len]);
-                Calendar c_res = new GregorianCalendar();
-                c_res.setTime(this.rs.getTimestamp("dt"));
-                assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
-                assertEquals(testCase, c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND));
-                c_res.setTime(this.rs.getTimestamp("ts"));
-                assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
-                assertEquals(testCase, c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND));
-
-                // TODO java.sql.Time does not provide any way for setting/getting milliseconds and removes them from toString() method.
-                // So the rs.updateTime(String columnName, java.sql.Time x) will always truncate milliseconds. Probably it is a bug because
-                // java.sql.Time contains milliseconds internally. We have a Bug#76775 feature request about that.
-                if (sendFractionalSeconds) {
-                    c_exp.setTime(ts_ins_expected_truncate[len]);
-                }
-                c_res.setTime(this.rs.getTime("tm"));
-                assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
-                assertEquals(testCase, 0, c_res.get(Calendar.MILLISECOND));
-
-                this.rs.updateTimestamp("dt", ts_upd[len]);
-                this.rs.updateTimestamp("ts", ts_upd[len]);
-                this.rs.updateTime("tm", new Time(ts_upd[len].getTime()));
-                this.rs.updateRow();
-                c_exp.setTime(sendFractionalSeconds ? (sqlModeTimeTruncateFractional ? ts_upd_expected_truncate[len] : ts_upd_expected_round[len])
-                        : ts_upd_expected_not_sendFractionalSeconds[len]);
-                c_res.setTime(this.rs.getTimestamp("dt"));
-                assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
-                assertEquals(testCase, c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND));
-                c_res.setTime(this.rs.getTimestamp("ts"));
-                assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
-                assertEquals(testCase, c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND));
-
-                if (sendFractionalSeconds) {
-                    c_exp.setTime(ts_upd_expected_truncate[len]);
-                }
-                c_res.setTime(this.rs.getTime("tm"));
-                assertEquals(testCase, c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND));
-                assertEquals(testCase, 0, c_res.get(Calendar.MILLISECOND));
-
-                st.close();
-            }
-
-            testConn.close();
-
         } while ((sqlModeTimeTruncateFractional = !sqlModeTimeTruncateFractional) || (sendFractionalSeconds = !sendFractionalSeconds)
                 || (useServerPrepStmts = !useServerPrepStmts));
 
