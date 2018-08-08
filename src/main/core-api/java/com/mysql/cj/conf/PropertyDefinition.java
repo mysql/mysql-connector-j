@@ -48,6 +48,13 @@ public interface PropertyDefinition<T> {
     boolean isRangeBased();
 
     /**
+     * Get the property key.
+     * 
+     * @return {@link PropertyKey} or null if it's a custom property.
+     */
+    PropertyKey getPropertyKey();
+
+    /**
      * Returns the property name.
      * 
      * @return the property name

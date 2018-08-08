@@ -59,7 +59,7 @@ import java.util.Map;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.PreparedQuery;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -293,14 +293,14 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             MysqlType mysqlType = MysqlType.getByName(mysqlTypeName);
             switch (mysqlType) {
                 case YEAR:
-                    if (!CallableStatement.this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue()) {
+                    if (!CallableStatement.this.session.getPropertySet().getBooleanProperty(PropertyKey.yearIsDateType).getValue()) {
                         return Short.class.getName();
                     }
                     // TODO Adjust for pseudo-boolean ?
                     //if (length == 1) {
-                    //    if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue()) {
+                    //    if (propertySet.getBooleanReadableProperty(PropertyKey.transformedBitIsBoolean).getValue()) {
                     //        return MysqlType.BOOLEAN;
-                    //    } else if (propertySet.getBooleanReadableProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue()) {
+                    //    } else if (propertySet.getBooleanReadableProperty(PropertyKey.tinyInt1isBit).getValue()) {
                     //        return MysqlType.BIT;
                     //    }
                     //}
@@ -461,7 +461,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
         this.retrieveGeneratedKeys = true; // not provided for in the JDBC spec
 
-        this.noAccessToProcedureBodies = conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue();
+        this.noAccessToProcedureBodies = conn.getPropertySet().getBooleanProperty(PropertyKey.noAccessToProcedureBodies).getValue();
     }
 
     /**
@@ -594,7 +594,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         }
 
         this.retrieveGeneratedKeys = true; // not provided for in the JDBC spec
-        this.noAccessToProcedureBodies = conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue();
+        this.noAccessToProcedureBodies = conn.getPropertySet().getBooleanProperty(PropertyKey.noAccessToProcedureBodies).getValue();
     }
 
     @Override

@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 
 public class ReplicationConnectionUrl extends ConnectionUrl {
     private static final String TYPE_MASTER = "MASTER";

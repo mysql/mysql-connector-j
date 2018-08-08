@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -45,42 +44,63 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     private static final long serialVersionUID = -5156024634430650528L;
 
+    private final Map<PropertyKey, RuntimeProperty<?>> PROPERTY_KEY_TO_RUNTIME_PROPERTY = new HashMap<>();
     private final Map<String, RuntimeProperty<?>> PROPERTY_NAME_TO_RUNTIME_PROPERTY = new HashMap<>();
 
     public DefaultPropertySet() {
-
-        for (PropertyDefinition<?> pdef : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.values()) {
+        for (PropertyDefinition<?> pdef : PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.values()) {
             addProperty(pdef.createRuntimeProperty());
         }
-
     }
 
     @Override
     public void addProperty(RuntimeProperty<?> prop) {
         PropertyDefinition<?> def = prop.getPropertyDefinition();
-        this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(def.getName(), prop);
-        if (def.hasCcAlias()) {
-            this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(def.getCcAlias(), prop);
+        if (def.getPropertyKey() != null) {
+            this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.put(def.getPropertyKey(), prop);
+        } else {
+            this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(def.getName(), prop);
+            if (def.hasCcAlias()) {
+                this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.put(def.getCcAlias(), prop);
+            }
         }
     }
 
     @Override
     public void removeProperty(String name) {
-        RuntimeProperty<?> prop = this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(name);
-        if (prop != null) {
-            if (!name.equals(prop.getPropertyDefinition().getName())) {
-                this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(prop.getPropertyDefinition().getName());
-            } else if (prop.getPropertyDefinition().hasCcAlias()) {
-                this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(prop.getPropertyDefinition().getCcAlias());
+        PropertyKey key = PropertyKey.fromValue(name);
+        if (key != null) {
+            this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.remove(key);
+        } else {
+            RuntimeProperty<?> prop = this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(name);
+            if (prop != null) {
+                if (!name.equals(prop.getPropertyDefinition().getName())) {
+                    this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(prop.getPropertyDefinition().getName());
+                } else if (prop.getPropertyDefinition().hasCcAlias()) {
+                    this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.remove(prop.getPropertyDefinition().getCcAlias());
+                }
             }
         }
+    }
+
+    @Override
+    public void removeProperty(PropertyKey key) {
+        this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.remove(key);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <T> RuntimeProperty<T> getProperty(String name) {
         try {
-            RuntimeProperty<T> prop = (RuntimeProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+            RuntimeProperty<T> prop = null;
+            PropertyKey key = PropertyKey.fromValue(name);
+            if (key != null) {
+                prop = (RuntimeProperty<T>) this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.get(key);
+            }
+            // for some of PropertyKey values we don't have property definitions, thus they are cached as custom properties
+            if (prop == null) {
+                prop = (RuntimeProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
+            }
             if (prop != null) {
                 return prop;
             }
@@ -92,9 +112,20 @@ public class DefaultPropertySet implements PropertySet, Serializable {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> RuntimeProperty<T> getProperty(PropertyKey key) {
+        return (RuntimeProperty<T>) this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.get(key);
+    }
+
     @Override
     public RuntimeProperty<Boolean> getBooleanProperty(String name) {
         return getProperty(name);
+    }
+
+    @Override
+    public RuntimeProperty<Boolean> getBooleanProperty(PropertyKey key) {
+        return getProperty(key);
     }
 
     @Override
@@ -103,8 +134,18 @@ public class DefaultPropertySet implements PropertySet, Serializable {
     }
 
     @Override
+    public RuntimeProperty<Integer> getIntegerProperty(PropertyKey key) {
+        return getProperty(key);
+    }
+
+    @Override
     public RuntimeProperty<Long> getLongProperty(String name) {
         return getProperty(name);
+    }
+
+    @Override
+    public RuntimeProperty<Long> getLongProperty(PropertyKey key) {
+        return getProperty(key);
     }
 
     @Override
@@ -113,13 +154,28 @@ public class DefaultPropertySet implements PropertySet, Serializable {
     }
 
     @Override
+    public RuntimeProperty<Integer> getMemorySizeProperty(PropertyKey key) {
+        return getProperty(key);
+    }
+
+    @Override
     public RuntimeProperty<String> getStringProperty(String name) {
         return getProperty(name);
     }
 
     @Override
+    public RuntimeProperty<String> getStringProperty(PropertyKey key) {
+        return getProperty(key);
+    }
+
+    @Override
     public <T extends Enum<T>> RuntimeProperty<T> getEnumProperty(String name) {
         return getProperty(name);
+    }
+
+    @Override
+    public <T extends Enum<T>> RuntimeProperty<T> getEnumProperty(PropertyKey key) {
+        return getProperty(key);
     }
 
     public void initializeProperties(Properties props) {
@@ -133,9 +189,9 @@ public class DefaultPropertySet implements PropertySet, Serializable {
             infoCopy.remove(PropertyKey.PASSWORD.getKeyName());
             infoCopy.remove(PropertyKey.DBNAME.getKeyName());
 
-            for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
+            for (PropertyKey propKey : PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.keySet()) {
                 try {
-                    RuntimeProperty<?> propToSet = getProperty(propName);
+                    RuntimeProperty<?> propToSet = getProperty(propKey);
                     propToSet.initializeFrom(infoCopy, null);
 
                 } catch (CJException e) {
@@ -144,22 +200,22 @@ public class DefaultPropertySet implements PropertySet, Serializable {
             }
 
             // Translate legacy SSL properties if sslMode isn't explicitly set. Default sslMode is REQUIRED.
-            RuntimeProperty<SslMode> sslMode = this.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode);
+            RuntimeProperty<SslMode> sslMode = this.<SslMode> getEnumProperty(PropertyKey.sslMode);
             if (!sslMode.isExplicitlySet()) {
-                String useSSL = infoCopy.getProperty(PropertyDefinitions.PNAME_useSSL);
-                if (useSSL != null && !BooleanPropertyDefinition.booleanFrom(PropertyDefinitions.PNAME_useSSL, useSSL, null)) {
+                String useSSL = infoCopy.getProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL);
+                if (useSSL != null && !BooleanPropertyDefinition.booleanFrom(PropertyDefinitions.PNAME_DEPRECATED_useSSL, useSSL, null)) {
                     sslMode.setValue(SslMode.DISABLED);
                 } else {
-                    String verifyServerCertificate = infoCopy.getProperty(PropertyDefinitions.PNAME_verifyServerCertificate);
+                    String verifyServerCertificate = infoCopy.getProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate);
                     if (verifyServerCertificate != null
-                            && BooleanPropertyDefinition.booleanFrom(PropertyDefinitions.PNAME_verifyServerCertificate, verifyServerCertificate, null)) {
+                            && BooleanPropertyDefinition.booleanFrom(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, verifyServerCertificate, null)) {
                         sslMode.setValue(SslMode.VERIFY_CA);
                     }
                 }
             }
-            infoCopy.remove(PropertyDefinitions.PNAME_useSSL);
-            infoCopy.remove(PropertyDefinitions.PNAME_requireSSL);
-            infoCopy.remove(PropertyDefinitions.PNAME_verifyServerCertificate);
+            infoCopy.remove(PropertyDefinitions.PNAME_DEPRECATED_useSSL);
+            infoCopy.remove(PropertyDefinitions.PNAME_DEPRECATED_requireSSL);
+            infoCopy.remove(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate);
 
             // add user-defined properties
             for (Object key : infoCopy.keySet()) {
@@ -181,6 +237,15 @@ public class DefaultPropertySet implements PropertySet, Serializable {
     @Override
     public Properties exposeAsProperties() {
         Properties props = new Properties();
+        for (PropertyKey propKey : this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.keySet()) {
+            if (!props.containsKey(propKey.getKeyName())) {
+                RuntimeProperty<?> propToGet = getProperty(propKey);
+                String propValue = propToGet.getStringValue();
+                if (propValue != null) {
+                    props.setProperty(propToGet.getPropertyDefinition().getName(), propValue);
+                }
+            }
+        }
 
         for (String propName : this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.keySet()) {
             if (!props.containsKey(propName)) {

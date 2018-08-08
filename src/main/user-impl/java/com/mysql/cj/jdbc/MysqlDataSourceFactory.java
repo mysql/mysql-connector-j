@@ -38,7 +38,7 @@ import javax.naming.Reference;
 import javax.naming.spi.ObjectFactory;
 
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 
 /**
  * Factory class for MysqlDataSource objects

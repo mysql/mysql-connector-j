@@ -58,7 +58,7 @@ import java.util.concurrent.Callable;
 
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
@@ -160,7 +160,7 @@ public class ResultSetTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_padCharsWithSpace, "true");
+            props.setProperty(PropertyKey.padCharsWithSpace.getKeyName(), "true");
 
             paddedConn = getConnectionWithProps(props);
 

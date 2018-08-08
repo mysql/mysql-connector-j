@@ -40,6 +40,11 @@ public class StringPropertyDefinition extends AbstractPropertyDefinition<String>
         super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
     }
 
+    public StringPropertyDefinition(PropertyKey key, String defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
+            int orderInCategory) {
+        super(key, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+    }
+
     @Override
     public String parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
         return value;

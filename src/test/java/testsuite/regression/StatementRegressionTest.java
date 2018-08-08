@@ -95,7 +95,7 @@ import com.mysql.cj.Query;
 import com.mysql.cj.ServerPreparedQuery;
 import com.mysql.cj.Session;
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -390,7 +390,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     private void innerBug6823(boolean continueBatchOnError) throws SQLException {
         Properties continueBatchOnErrorProps = new Properties();
-        continueBatchOnErrorProps.setProperty(PropertyDefinitions.PNAME_continueBatchOnError, String.valueOf(continueBatchOnError));
+        continueBatchOnErrorProps.setProperty(PropertyKey.continueBatchOnError.getKeyName(), String.valueOf(continueBatchOnError));
         this.conn = getConnectionWithProps(continueBatchOnErrorProps);
         Statement statement = this.conn.createStatement();
 
@@ -546,7 +546,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("INSERT INTO testBug11540 VALUES (NOW(), NOW())");
             Locale.setDefault(new Locale("th", "TH"));
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+            props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
 
             thaiConn = getConnectionWithProps(props);
             thaiStmt = thaiConn.createStatement();
@@ -588,7 +588,7 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug11663() throws Exception {
-        if (((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useServerPrepStmts).getValue()) {
+        if (((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyKey.useServerPrepStmts).getValue()) {
             Connection testcaseGenCon = null;
             PrintStream oldErr = System.err;
 
@@ -596,7 +596,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 createTable("testBug11663", "(field1 int)");
 
                 Properties props = new Properties();
-                props.setProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript, "true");
+                props.setProperty(PropertyKey.autoGenerateTestcaseScript.getKeyName(), "true");
                 testcaseGenCon = getConnectionWithProps(props);
                 ByteArrayOutputStream testStream = new ByteArrayOutputStream();
                 PrintStream testErr = new PrintStream(testStream);
@@ -663,7 +663,7 @@ public class StatementRegressionTest extends BaseTestCase {
         createTable("testBug13255", "(field_1 int)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
+        props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
 
         Connection reconnectConn = null;
         Statement reconnectStmt = null;
@@ -745,7 +745,7 @@ public class StatementRegressionTest extends BaseTestCase {
             testStreamsForBug15024(false, false);
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useConfigs, "3-0-Compat");
+            props.setProperty(PropertyKey.useConfigs.getKeyName(), "3-0-Compat");
 
             Connection compatConn = null;
 
@@ -823,8 +823,8 @@ public class StatementRegressionTest extends BaseTestCase {
         createTable("testBug18041", "(`a` tinyint(4) NOT NULL, `b` char(4) default NULL)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+        props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
 
         Connection truncConn = null;
         PreparedStatement stm = null;
@@ -975,7 +975,7 @@ public class StatementRegressionTest extends BaseTestCase {
         try {
             Properties props = new Properties();
 
-            props.setProperty(PropertyDefinitions.PNAME_maxRows, "1");
+            props.setProperty(PropertyKey.maxRows.getKeyName(), "1");
 
             maxRowsConn = getConnectionWithProps(props);
 
@@ -997,7 +997,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             assertTrue(!this.rs.next());
 
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
 
             maxRowsConn.close();
             maxRowsConn = getConnectionWithProps(props);
@@ -1196,11 +1196,10 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if test fails.
      */
     public void testBug3557() throws Exception {
-        boolean populateDefaults = ((JdbcConnection) this.conn).getPropertySet()
-                .getBooleanProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).getValue();
+        boolean populateDefaults = ((JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyKey.populateInsertRowWithDefaultValues).getValue();
 
         try {
-            ((JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).setValue(true);
+            ((JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyKey.populateInsertRowWithDefaultValues).setValue(true);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
 
@@ -1217,8 +1216,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals("XYZ", this.rs.getObject(1));
             assertEquals("123", this.rs.getObject(2));
         } finally {
-            ((JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues)
-                    .setValue(populateDefaults);
+            ((JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyKey.populateInsertRowWithDefaultValues).setValue(populateDefaults);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
         }
@@ -1637,7 +1635,7 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws SQLException
      */
     public void testBug4718() throws SQLException {
-        if (((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useServerPrepStmts).getValue()) {
+        if (((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyKey.useServerPrepStmts).getValue()) {
             this.pstmt = this.conn.prepareStatement("SELECT 1 LIMIT ?");
             assertTrue(this.pstmt instanceof ClientPreparedStatement);
 
@@ -1779,16 +1777,16 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     public void testBug5235() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "CONVERT_TO_NULL");
+        props.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "CONVERT_TO_NULL");
         if (versionMeetsMinimum(5, 7, 4)) {
-            props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+            props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
         }
 
         if (versionMeetsMinimum(5, 7, 5)) {
             String sqlMode = getMysqlVariable("sql_mode");
             if (sqlMode.contains("STRICT_TRANS_TABLES")) {
                 sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode='" + sqlMode + "'");
             }
         }
 
@@ -1816,7 +1814,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "utf-8");
+            props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf-8");
 
             Connection utf8Conn = getConnectionWithProps(props);
             Statement utfStmt = utf8Conn.createStatement();
@@ -2057,7 +2055,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_allowMultiQueries, "true");
+            props.setProperty(PropertyKey.allowMultiQueries.getKeyName(), "true");
 
             multiStmtConn = getConnectionWithProps(props);
 
@@ -2140,7 +2138,7 @@ public class StatementRegressionTest extends BaseTestCase {
             createTable(tableNameText, "(field1 TEXT)" + charset);
 
             Properties windows31JProps = new Properties();
-            windows31JProps.setProperty(PropertyDefinitions.PNAME_characterEncoding, "Windows-31J");
+            windows31JProps.setProperty(PropertyKey.characterEncoding.getKeyName(), "Windows-31J");
 
             windows31JConn = getConnectionWithProps(windows31JProps);
             testCsc4194InsertCheckBlob(windows31JConn, tableNameBlob);
@@ -2148,7 +2146,7 @@ public class StatementRegressionTest extends BaseTestCase {
             testCsc4194InsertCheckText(windows31JConn, tableNameText, "Windows-31J");
 
             Properties sjisProps = new Properties();
-            sjisProps.setProperty(PropertyDefinitions.PNAME_characterEncoding, "sjis");
+            sjisProps.setProperty(PropertyKey.characterEncoding.getKeyName(), "sjis");
 
             sjisConn = getConnectionWithProps(sjisProps);
             testCsc4194InsertCheckBlob(sjisConn, tableNameBlob);
@@ -2380,10 +2378,11 @@ public class StatementRegressionTest extends BaseTestCase {
                 fileNameBuf = new StringBuilder(tempFile.getAbsolutePath());
             }
 
-            int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "
-                    + CharsetMapping.getMysqlCharsetForJavaEncoding(
-                            ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
-                            this.serverVersion));
+            int updateCount = this.stmt
+                    .executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "
+                            + CharsetMapping.getMysqlCharsetForJavaEncoding(
+                                    ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
+                                    this.serverVersion));
             assertTrue(updateCount == rowCount);
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");
@@ -2576,7 +2575,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     public void testSetCharacterStream() throws Exception {
         try {
-            ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(true);
+            ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyKey.traceProtocol).setValue(true);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS charStreamRegressTest");
             this.stmt.executeUpdate("CREATE TABLE charStreamRegressTest(field1 text)");
@@ -2649,7 +2648,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             assertTrue("Retrieved value of length " + result.length() + " != length of inserted value " + charBuf.length, result.length() == charBuf.length);
         } finally {
-            ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(false);
+            ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyKey.traceProtocol).setValue(false);
 
             if (this.rs != null) {
                 try {
@@ -2991,8 +2990,8 @@ public class StatementRegressionTest extends BaseTestCase {
         Connection poolingConn = null;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_cachePrepStmts, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+        props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         PreparedStatement pstmt1 = null;
         PreparedStatement pstmt2 = null;
 
@@ -3027,7 +3026,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode=NO_BACKSLASH_ESCAPES");
+            props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode=NO_BACKSLASH_ESCAPES");
 
             noBackslashEscapesConn = getConnectionWithProps(props);
 
@@ -3195,7 +3194,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='STRICT_TRANS_TABLES'");
+            props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode='STRICT_TRANS_TABLES'");
 
             configuredConn = getConnectionWithProps(props);
 
@@ -3234,7 +3233,7 @@ public class StatementRegressionTest extends BaseTestCase {
         Connection c = null;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
 
         try {
             c = getConnectionWithProps(props);
@@ -3272,7 +3271,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
             conn2 = super.getConnectionWithProps(props);
             this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
             Calendar c = Calendar.getInstance();
@@ -3282,7 +3281,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.pstmt.close();
             conn2.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
             conn2 = super.getConnectionWithProps(props);
             this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
             this.pstmt.setTimestamp(1, new Timestamp(c.getTime().getTime()));
@@ -3317,7 +3316,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     public void testBug25073() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
         Connection multiConn = getConnectionWithProps(props);
         createTable("testBug25073", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
         Statement multiStmt = multiConn.createStatement();
@@ -3338,10 +3337,10 @@ public class StatementRegressionTest extends BaseTestCase {
 
         createTable("testBug25073", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
         props.clear();
-        props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
-        props.setProperty(PropertyDefinitions.PNAME_maxAllowedPacket, "1024");
-        props.setProperty(PropertyDefinitions.PNAME_dumpQueriesOnException, "true");
-        props.setProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog, String.valueOf(1024 * 1024 * 2));
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+        props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "1024");
+        props.setProperty(PropertyKey.dumpQueriesOnException.getKeyName(), "true");
+        props.setProperty(PropertyKey.maxQuerySizeToLog.getKeyName(), String.valueOf(1024 * 1024 * 2));
         multiConn = getConnectionWithProps(props);
         multiStmt = multiConn.createStatement();
 
@@ -3360,10 +3359,10 @@ public class StatementRegressionTest extends BaseTestCase {
         createTable("testBug25073", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
 
         props.clear();
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
-        props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
-        props.setProperty(PropertyDefinitions.PNAME_dumpQueriesOnException, "true");
-        props.setProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog, String.valueOf(1024 * 1024 * 2));
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+        props.setProperty(PropertyKey.dumpQueriesOnException.getKeyName(), "true");
+        props.setProperty(PropertyKey.maxQuerySizeToLog.getKeyName(), String.valueOf(1024 * 1024 * 2));
         multiConn = getConnectionWithProps(props);
         PreparedStatement pStmt = multiConn.prepareStatement("INSERT INTO testBug25073(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
 
@@ -3381,11 +3380,11 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
 
         createTable("testBug25073", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
-        props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
-        props.setProperty(PropertyDefinitions.PNAME_maxAllowedPacket, "1024");
-        props.setProperty(PropertyDefinitions.PNAME_dumpQueriesOnException, "true");
-        props.setProperty(PropertyDefinitions.PNAME_maxQuerySizeToLog, String.valueOf(1024 * 1024 * 2));
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+        props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "1024");
+        props.setProperty(PropertyKey.dumpQueriesOnException.getKeyName(), "true");
+        props.setProperty(PropertyKey.maxQuerySizeToLog.getKeyName(), String.valueOf(1024 * 1024 * 2));
         multiConn = getConnectionWithProps(props);
         pStmt = multiConn.prepareStatement("INSERT INTO testBug25073(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
 
@@ -3412,7 +3411,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     public void testBug25009() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_allowMultiQueries, "true");
+        props.setProperty(PropertyKey.allowMultiQueries.getKeyName(), "true");
 
         Connection multiConn = getConnectionWithProps(props);
         createTable("testBug25009", "(field1 INT)");
@@ -3462,8 +3461,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
 
             multiConn = getConnectionWithProps(props);
 
@@ -3710,9 +3709,9 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     public void testBug27412() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
-        props.setProperty(PropertyDefinitions.PNAME_cachePrepStmts, "true");
-        props.setProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata, "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
+        props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "true");
+        props.setProperty(PropertyKey.cacheResultSetMetadata.getKeyName(), "true");
         Connection conn2 = getConnectionWithProps(props);
         PreparedStatement pstm = conn2.prepareStatement("SELECT 1");
         try {
@@ -3824,8 +3823,8 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug32577() throws Exception {
         createTable("testBug32577", "(id INT, field_datetime DATETIME, field_timestamp TIMESTAMP)");
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "time_zone='+0:00'");
-        props.setProperty(PropertyDefinitions.PNAME_serverTimezone, "UTC");
+        props.setProperty(PropertyKey.sessionVariables.getKeyName(), "time_zone='+0:00'");
+        props.setProperty(PropertyKey.serverTimezone.getKeyName(), "UTC");
 
         Connection nonLegacyConn = getConnectionWithProps(props);
 
@@ -5086,8 +5085,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     for (int i = 0; i < 2; i++) {
                         createTable(tableName, "(k int primary key auto_increment, p varchar(4)) ENGINE=" + engineName);
 
-                        ((com.mysql.cj.jdbc.JdbcConnection) twoConn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements)
-                                .setValue(i == 1);
+                        ((com.mysql.cj.jdbc.JdbcConnection) twoConn).getPropertySet().getBooleanProperty(PropertyKey.rewriteBatchedStatements).setValue(i == 1);
 
                         this.pstmt = twoConn.prepareStatement("INSERT INTO " + tableName + " (p) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
                         this.pstmt.setString(1, "a");
@@ -5709,7 +5707,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     public void testBug51776() throws Exception {
         Properties props = getHostFreePropertiesFromTestsuiteUrl();
-        props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
+        props.setProperty(PropertyKey.socketFactory.getKeyName(), "testsuite.UnreliableSocketFactory");
 
         Properties parsed = getPropertiesFromTestsuiteUrl();
         String db = parsed.getProperty(PropertyKey.DBNAME.getKeyName());
@@ -5966,9 +5964,9 @@ public class StatementRegressionTest extends BaseTestCase {
         // and b) to generate the wrong query with multiple ON DUPLICATE KEY
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
-        props.setProperty(PropertyDefinitions.PNAME_enablePacketDebug, "true");
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
+        props.setProperty(PropertyKey.enablePacketDebug.getKeyName(), "true");
         this.conn = getConnectionWithProps(props);
         this.stmt = this.conn.createStatement();
 
@@ -6019,7 +6017,7 @@ public class StatementRegressionTest extends BaseTestCase {
         PreparedStatement s = null;
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
 
             _conn = getConnectionWithProps(props);
             s = _conn.prepareStatement("select 1 FROM testBug36478");
@@ -6069,11 +6067,11 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_serverTimezone, "UTC");
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false");
+            props.setProperty(PropertyKey.serverTimezone.getKeyName(), "UTC");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
             ps_conn = getConnectionWithProps(props);
 
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
             ssps_conn = getConnectionWithProps(props);
 
             this.pstmt = ps_conn.prepareStatement("INSERT INTO testBug40279(f1, f2) VALUES (?, ?)");
@@ -6314,13 +6312,13 @@ public class StatementRegressionTest extends BaseTestCase {
 
         Properties properties = new Properties();
         if (useAffectedRows) {
-            properties.setProperty(PropertyDefinitions.PNAME_useAffectedRows, "true");
+            properties.setProperty(PropertyKey.useAffectedRows.getKeyName(), "true");
             tableName += "_affected";
         } else {
             tableName += "_found";
         }
         if (rewriteBatchedStatements) {
-            properties.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
+            properties.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
         }
         Connection connection = getConnectionWithProps(properties);
 
@@ -6856,9 +6854,9 @@ public class StatementRegressionTest extends BaseTestCase {
         Connection con = null;
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
-            props.setProperty(PropertyDefinitions.PNAME_cachePrepStmts, "true");
-            props.setProperty(PropertyDefinitions.PNAME_prepStmtCacheSize, "2");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+            props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "true");
+            props.setProperty(PropertyKey.prepStmtCacheSize.getKeyName(), "2");
 
             con = getConnectionWithProps(props);
 
@@ -8827,7 +8825,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 System.out.println("\nServer time zone: " + tz);
                 System.out.println("---------------------------------------------------");
 
-                testConnProps.setProperty(PropertyDefinitions.PNAME_serverTimezone, tz);
+                testConnProps.setProperty(PropertyKey.serverTimezone.getKeyName(), tz);
                 testConn = getConnectionWithProps(testConnProps);
 
                 checkResultSetForTestBug50348(testConn, "2015-01-01 04:00:00.0", tz.equals("Europe/Lisbon") ? "03:00:00" : "04:00:00");
@@ -8848,7 +8846,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
                     System.out.println("\nServer time zone: " + tz.toString());
                     System.out.println("---------------------------------------------------");
-                    testConnProps.setProperty(PropertyDefinitions.PNAME_serverTimezone, tz.toString());
+                    testConnProps.setProperty(PropertyKey.serverTimezone.getKeyName(), tz.toString());
                     testConn = getConnectionWithProps(testConnProps);
 
                     final int diffTzOffset = tzOffset + 6; // CST offset = -6 hours
@@ -8946,9 +8944,9 @@ public class StatementRegressionTest extends BaseTestCase {
                     useServerPrepStmts ? "useSSPS" : "-", sendFractionalSeconds ? "sendFracSecs" : "-");
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, TestBug77449QueryInterceptor.class.getName());
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerPrepStmts));
-            props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, Boolean.toString(sendFractionalSeconds));
+            props.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestBug77449QueryInterceptor.class.getName());
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useServerPrepStmts));
+            props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), Boolean.toString(sendFractionalSeconds));
 
             Connection testConn = getConnectionWithProps(props);
 
@@ -9028,7 +9026,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         @Override
         public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
-            this.sendFracSecs = Boolean.parseBoolean(props.getProperty(PropertyDefinitions.PNAME_sendFractionalSeconds));
+            this.sendFracSecs = Boolean.parseBoolean(props.getProperty(PropertyKey.sendFractionalSeconds.getKeyName()));
             return this;
         }
 
@@ -9066,11 +9064,11 @@ public class StatementRegressionTest extends BaseTestCase {
         createTable("testBug77681", "(id INT, txt VARCHAR(50), PRIMARY KEY (id))");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, TestBug77681QueryInterceptor.class.getName());
+        props.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestBug77681QueryInterceptor.class.getName());
 
         for (int tst = 0; tst < 4; tst++) {
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString((tst & 0x1) != 0));
-            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, Boolean.toString((tst & 0x2) != 0));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString((tst & 0x1) != 0));
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), Boolean.toString((tst & 0x2) != 0));
             Connection testConn = getConnectionWithProps(props);
 
             PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug77681 VALUES (?, ?)");
@@ -9137,10 +9135,10 @@ public class StatementRegressionTest extends BaseTestCase {
         public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
             // TODO Auto-generated method stub
             super.init(conn, props, log);
-            System.out.println("\nuseServerPrepStmts: " + props.getProperty(PropertyDefinitions.PNAME_useServerPrepStmts) + " | rewriteBatchedStatements: "
-                    + props.getProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements));
+            System.out.println("\nuseServerPrepStmts: " + props.getProperty(PropertyKey.useServerPrepStmts.getKeyName()) + " | rewriteBatchedStatements: "
+                    + props.getProperty(PropertyKey.rewriteBatchedStatements.getKeyName()));
             System.out.println("--------------------------------------------------------------------------------");
-            this.expected = Boolean.parseBoolean(props.getProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements)) ? expectedRWBS : expectedNonRWBS;
+            this.expected = Boolean.parseBoolean(props.getProperty(PropertyKey.rewriteBatchedStatements.getKeyName())) ? expectedRWBS : expectedNonRWBS;
             return this;
         }
 
@@ -9176,8 +9174,8 @@ public class StatementRegressionTest extends BaseTestCase {
             boolean rewriteBatchedStatements = (tst & 0x2) != 0;
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerPrepStmts));
-            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, Boolean.toString(rewriteBatchedStatements));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useServerPrepStmts));
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), Boolean.toString(rewriteBatchedStatements));
 
             String testCase = String.format("Case: %d [ %s | %s ]", tst, useServerPrepStmts ? "useSPS" : "-",
                     rewriteBatchedStatements ? "rwBatchedStmts" : "-");
@@ -9370,18 +9368,18 @@ public class StatementRegressionTest extends BaseTestCase {
                     + "f4 INT DEFAULT 1, f5 INT DEFAULT 1, fl LONGBLOB)");
 
             final Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useSSL, Boolean.toString(useSSL));
-            props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+            props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, Boolean.toString(useSSL));
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             if (useSSL) {
-                props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
-                props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
+                props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
+                props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
             }
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
-            props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, Boolean.toString(useCursor));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.useCursorFetch.getKeyName(), Boolean.toString(useCursor));
             if (useCursor) {
-                props.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "1");
+                props.setProperty(PropertyKey.defaultFetchSize.getKeyName(), "1");
             }
-            props.setProperty(PropertyDefinitions.PNAME_useCompression, Boolean.toString(useCompr));
+            props.setProperty(PropertyKey.useCompression.getKeyName(), Boolean.toString(useCompr));
 
             final JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(props);
 
@@ -9504,11 +9502,11 @@ public class StatementRegressionTest extends BaseTestCase {
                 createTable("testBug80615", "(id INT)");
 
                 final Properties props = new Properties();
-                props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
-                props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
-                props.setProperty(PropertyDefinitions.PNAME_cachePrepStmts, Boolean.toString(useCache));
+                props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+                props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), Boolean.toString(useCache));
                 if (useCache) {
-                    props.setProperty(PropertyDefinitions.PNAME_prepStmtCacheSize, String.valueOf(prepStmtCacheSize));
+                    props.setProperty(PropertyKey.prepStmtCacheSize.getKeyName(), String.valueOf(prepStmtCacheSize));
                 }
 
                 final Connection testConn = getConnectionWithProps(props);
@@ -9639,9 +9637,9 @@ public class StatementRegressionTest extends BaseTestCase {
                     readOnly ? "Y" : "N");
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
-            props.setProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata, Boolean.toString(cacheRsMd));
-            props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, TestBug81706QueryInterceptor.class.getName());
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.cacheResultSetMetadata.getKeyName(), Boolean.toString(cacheRsMd));
+            props.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestBug81706QueryInterceptor.class.getName());
 
             Connection testConn = getConnectionWithProps(props);
             testConn.setReadOnly(readOnly);
@@ -9719,8 +9717,8 @@ public class StatementRegressionTest extends BaseTestCase {
             final String testCase = String.format("Case: [useSPS: %s, cachePS: %s ]", useSPS ? "Y" : "N", cachePS ? "Y" : "N");
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_cachePrepStmts, Boolean.toString(cachePS));
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), Boolean.toString(cachePS));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
 
             Connection testConn = getConnectionWithProps(props);
 
@@ -9783,7 +9781,7 @@ public class StatementRegressionTest extends BaseTestCase {
         boolean useSPS = false;
         do {
             final Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
 
             final String testCase = String.format("Case [SPS: %s]", useSPS ? "Y" : "N");
 
@@ -9862,9 +9860,9 @@ public class StatementRegressionTest extends BaseTestCase {
         String sql2 = "SELECT * FROM testBug74932 WHERE c2 = ?";
 
         final Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_prepStmtCacheSize, "10");
-        props.setProperty(PropertyDefinitions.PNAME_cachePrepStmts, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+        props.setProperty(PropertyKey.prepStmtCacheSize.getKeyName(), "10");
+        props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
 
         // Prepare different statements.
         Connection testConn = getConnectionWithProps(props);
@@ -9950,8 +9948,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
         // Plain connection with proxied result sets.
         final Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, ResultSetScannerInterceptor.class.getName());
-        props.setProperty(PropertyDefinitions.PNAME_resultSetScannerRegex, ".*");
+        props.setProperty(PropertyKey.queryInterceptors.getKeyName(), ResultSetScannerInterceptor.class.getName());
+        props.setProperty(ResultSetScannerInterceptor.PNAME_resultSetScannerRegex, ".*");
         testConn = getConnectionWithProps(props);
         assertFalse(testConn.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
         assertTrue(testConn.equals(testConn));
@@ -10054,9 +10052,9 @@ public class StatementRegressionTest extends BaseTestCase {
         boolean cachePS = false;
         do {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
-            props.setProperty(PropertyDefinitions.PNAME_cachePrepStmts, Boolean.toString(cachePS));
-            props.setProperty(PropertyDefinitions.PNAME_prepStmtCacheSize, "5");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), Boolean.toString(cachePS));
+            props.setProperty(PropertyKey.prepStmtCacheSize.getKeyName(), "5");
 
             boolean cachedSPS = useSPS && cachePS;
 
@@ -10127,10 +10125,10 @@ public class StatementRegressionTest extends BaseTestCase {
         boolean useSPS = false;
         do {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
-            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
-            props.setProperty(PropertyDefinitions.PNAME_autoGenerateTestcaseScript, "true");
-            props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode=STRICT_TRANS_TABLES");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+            props.setProperty(PropertyKey.autoGenerateTestcaseScript.getKeyName(), "true");
+            props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode=STRICT_TRANS_TABLES");
 
             Connection con = null;
             try {
@@ -10282,14 +10280,14 @@ public class StatementRegressionTest extends BaseTestCase {
         PreparedStatement ps3 = null;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         boolean useSPS = false;
 
         do {
 
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
 
             try {
                 con = getConnectionWithProps(props);
@@ -10349,7 +10347,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         boolean useSPS = false;
         do {
-            Connection testConn = getConnectionWithProps(PropertyDefinitions.PNAME_useServerPrepStmts + "=" + Boolean.toString(useSPS));
+            Connection testConn = getConnectionWithProps(PropertyKey.useServerPrepStmts + "=" + Boolean.toString(useSPS));
 
             this.pstmt = testConn.prepareStatement("SELECT CAST(NOW() AS DATE) UNION SELECT CAST(NOW() AS DATE)");
             this.rs = this.pstmt.executeQuery();
@@ -10397,9 +10395,9 @@ public class StatementRegressionTest extends BaseTestCase {
             final String testCase = String.format("Case [rwBS: %s, useSPS: %s]", rwBS ? "Y" : "N", useSPS ? "Y" : "N");
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, Boolean.toString(rwBS));
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
-            props.setProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts, "false");
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), Boolean.toString(rwBS));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.emulateUnsupportedPstmts.getKeyName(), "false");
 
             Connection testConn = getConnectionWithProps(props);
 
@@ -10456,10 +10454,10 @@ public class StatementRegressionTest extends BaseTestCase {
             final String testCase = String.format("Case [rwBS: %s, useSPS: %s]", rwBS ? "Y" : "N", useSPS ? "Y" : "N");
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts, "true");
-            props.setProperty(PropertyDefinitions.PNAME_allowMultiQueries, "true");
-            props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, Boolean.toString(rwBS));
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.emulateUnsupportedPstmts.getKeyName(), "true");
+            props.setProperty(PropertyKey.allowMultiQueries.getKeyName(), "true");
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), Boolean.toString(rwBS));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
 
             Connection testConn = getConnectionWithProps(props);
 

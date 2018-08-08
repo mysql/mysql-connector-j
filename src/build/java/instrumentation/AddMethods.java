@@ -45,6 +45,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.CtNewMethod;
+import javassist.bytecode.DuplicateMemberException;
 
 public class AddMethods {
     public static void main(String[] args) throws Exception {
@@ -54,7 +55,7 @@ public class AddMethods {
         System.out.println("---");
         CtClass clazz = pool.get(MysqlDataSource.class.getName());
         System.out.println("Add properties setters/getters to " + clazz.getName());
-        addPropertiesGettersSetters(clazz, PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.values());
+        addPropertiesGettersSetters(clazz, PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.values());
         clazz.writeFile(args[0]);
 
     }
@@ -97,10 +98,13 @@ public class AddMethods {
         String mname = "get" + pname.substring(0, 1).toUpperCase() + pname.substring(1);
         String mbody = "public " + paramType + " " + mname + "() throws java.sql.SQLException { return " + getPropertyMethod + "(\"" + pname + "\");}";
         System.out.println(mbody);
-
-        CtMethod m = CtNewMethod.make(mbody, clazz);
-        clazz.addMethod(m);
-        System.out.println(m);
+        try {
+            CtMethod m = CtNewMethod.make(mbody, clazz);
+            clazz.addMethod(m);
+            System.out.println(m);
+        } catch (DuplicateMemberException ex) {
+            // ignore
+        }
     }
 
     private static void addSetter(CtClass clazz, String pname, String paramType, String setPropertyMethod) throws Exception {
@@ -108,9 +112,12 @@ public class AddMethods {
         String mbody = "public void " + mname + "(" + paramType + " value) throws java.sql.SQLException { " + setPropertyMethod + "(\"" + pname
                 + "\", value);}";
         System.out.println(mbody);
-
-        CtMethod m = CtNewMethod.make(mbody, clazz);
-        clazz.addMethod(m);
-        System.out.println(m);
+        try {
+            CtMethod m = CtNewMethod.make(mbody, clazz);
+            clazz.addMethod(m);
+            System.out.println(m);
+        } catch (DuplicateMemberException ex) {
+            // ignore
+        }
     }
 }

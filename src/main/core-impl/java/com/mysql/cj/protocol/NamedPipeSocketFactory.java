@@ -36,11 +36,11 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Properties;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.Session;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
 
 /**
  * A socket factory for named pipes (on Windows)
@@ -211,14 +211,14 @@ public class NamedPipeSocketFactory implements SocketFactory {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends Closeable> T connect(String host, int portNumber /* ignored */, Properties props, int loginTimeout) throws IOException {
-        String namedPipePath = props.getProperty(PropertyDefinitions.NAMED_PIPE_PROP_NAME);
+    public <T extends Closeable> T connect(String host, int portNumber /* ignored */, PropertySet props, int loginTimeout) throws IOException {
+        String namedPipePath = props.getStringProperty(PropertyKey.PATH).getValue();
 
         if (namedPipePath == null) {
             namedPipePath = "\\\\.\\pipe\\MySQL";
         } else if (namedPipePath.length() == 0) {
             throw new SocketException(
-                    Messages.getString("NamedPipeSocketFactory.2") + PropertyDefinitions.NAMED_PIPE_PROP_NAME + Messages.getString("NamedPipeSocketFactory.3"));
+                    Messages.getString("NamedPipeSocketFactory.2") + PropertyKey.PATH.getCcAlias() + Messages.getString("NamedPipeSocketFactory.3"));
         }
 
         this.namedPipeSocket = new NamedPipeSocket(namedPipePath);

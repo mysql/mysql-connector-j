@@ -43,7 +43,7 @@ import java.sql.Statement;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 
 import testsuite.BaseTestCase;
 
@@ -214,7 +214,7 @@ public class BlobRegressionTest extends BaseTestCase {
         int dataSize = 256;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_emulateLocators, "true");
+        props.setProperty(PropertyKey.emulateLocators.getKeyName(), "true");
         Connection locatorConn = getConnectionWithProps(props);
 
         String select = "SELECT ID, 'DATA' AS BLOB_DATA FROM testBug8096 WHERE ID = ?";
@@ -427,7 +427,7 @@ public class BlobRegressionTest extends BaseTestCase {
         this.pstmt.executeUpdate();
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_enablePacketDebug, "true");
+        props.setProperty(PropertyKey.enablePacketDebug.getKeyName(), "true");
         Connection con = getConnectionWithProps(props);
 
         for (int i = 0; i < 100; i++) {

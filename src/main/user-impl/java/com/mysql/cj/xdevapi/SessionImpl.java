@@ -39,6 +39,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -175,8 +176,8 @@ public class SessionImpl implements Session {
 
         boolean isFirstParam = true;
 
-        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            RuntimeProperty<?> propToGet = pset.getProperty(propName);
+        for (PropertyKey propKey : PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.keySet()) {
+            RuntimeProperty<?> propToGet = pset.getProperty(propKey);
             if (propToGet.isExplicitlySet()) {
                 String propValue = propToGet.getStringValue();
                 Object defaultValue = propToGet.getPropertyDefinition().getDefaultValue();
@@ -187,10 +188,12 @@ public class SessionImpl implements Session {
                     } else {
                         sb.append("&");
                     }
-                    sb.append(propName);
+                    sb.append(propKey.getKeyName());
                     sb.append("=");
                     sb.append(propValue);
                 }
+
+                // TODO custom properties?
             }
         }
 

@@ -31,7 +31,7 @@ package com.mysql.cj.protocol.a.result;
 
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -125,23 +125,21 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
                 }
             }
 
-            if (!this.protocol.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_clobberStreamingResults).getValue()
-                    && this.protocol.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults).getValue() > 0) {
+            if (!this.protocol.getPropertySet().getBooleanProperty(PropertyKey.clobberStreamingResults).getValue()
+                    && this.protocol.getPropertySet().getIntegerProperty(PropertyKey.netTimeoutForStreamingResults).getValue() > 0) {
                 int oldValue = this.protocol.getServerSession().getServerVariable("net_write_timeout", 60);
 
                 this.protocol.clearInputStream();
 
                 try {
-                    this.protocol.sendCommand(
-                            this.commandBuilder.buildComQuery(this.protocol.getSharedSendPacket(), "SET net_write_timeout=" + oldValue,
-                                    this.protocol.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue()),
-                            false, 0);
+                    this.protocol.sendCommand(this.commandBuilder.buildComQuery(this.protocol.getSharedSendPacket(), "SET net_write_timeout=" + oldValue,
+                            this.protocol.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue()), false, 0);
                 } catch (Exception ex) {
                     throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
                 }
             }
 
-            if (this.protocol.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
+            if (this.protocol.getPropertySet().getBooleanProperty(PropertyKey.useUsageAdvisor).getValue()) {
                 if (hadMore) {
 
                     ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.owner.getSession());

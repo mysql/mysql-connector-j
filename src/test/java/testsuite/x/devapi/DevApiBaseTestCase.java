@@ -32,6 +32,7 @@ package testsuite.x.devapi;
 import java.lang.reflect.Field;
 
 import com.mysql.cj.MysqlxSession;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.Schema;
@@ -102,11 +103,11 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
         }
     }
 
-    protected String makeParam(String key, Enum<?> value) {
+    protected String makeParam(PropertyKey key, Enum<?> value) {
         return makeParam(key, value.toString());
     }
 
-    protected String makeParam(String key, String value) {
-        return "&" + key + "=" + value;
+    protected String makeParam(PropertyKey key, String value) {
+        return "&" + key.getKeyName() + "=" + value;
     }
 }

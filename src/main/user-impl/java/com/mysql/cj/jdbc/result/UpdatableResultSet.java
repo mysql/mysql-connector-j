@@ -48,7 +48,7 @@ import java.util.TreeMap;
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -146,8 +146,8 @@ public class UpdatableResultSet extends ResultSetImpl {
         super(tuples, conn, creatorStmt);
         checkUpdatability();
 
-        this.populateInserterWithDefaultValues = this.getSession().getPropertySet()
-                .getBooleanProperty(PropertyDefinitions.PNAME_populateInsertRowWithDefaultValues).getValue();
+        this.populateInserterWithDefaultValues = this.getSession().getPropertySet().getBooleanProperty(PropertyKey.populateInsertRowWithDefaultValues)
+                .getValue();
         this.hasLongColumnInfo = this.getSession().getServerSession().hasLongColumnInfo();
     }
 
@@ -301,7 +301,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 return;
             }
 
-            if (this.getSession().getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_strictUpdates).getValue()) {
+            if (this.getSession().getPropertySet().getBooleanProperty(PropertyKey.strictUpdates).getValue()) {
                 java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
 
                 java.sql.ResultSet rs = null;

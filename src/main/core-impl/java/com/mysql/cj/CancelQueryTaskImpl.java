@@ -33,7 +33,7 @@ import java.util.TimerTask;
 
 import com.mysql.cj.Query.CancelStatus;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.OperationCancelledException;
 import com.mysql.cj.protocol.a.NativeMessageBuilder;
 import com.mysql.cj.util.StringUtils;
@@ -54,8 +54,7 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
     public CancelQueryTaskImpl(Query cancellee) {
         this.queryToCancel = cancellee;
         NativeSession session = (NativeSession) cancellee.getSession();
-        this.queryTimeoutKillsConnection = session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_queryTimeoutKillsConnection)
-                .getValue();
+        this.queryTimeoutKillsConnection = session.getPropertySet().getBooleanProperty(PropertyKey.queryTimeoutKillsConnection).getValue();
     }
 
     @Override
@@ -102,7 +101,8 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
                                 public void transactionBegun() {
                                 }
                             });
-                            newSession.sendCommand(new NativeMessageBuilder().buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + origConnId), false, 0);
+                            newSession.sendCommand(new NativeMessageBuilder().buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + origConnId),
+                                    false, 0);
 
                             localQueryToCancel.setCancelStatus(CancelStatus.CANCELED_BY_TIMEOUT);
                         }

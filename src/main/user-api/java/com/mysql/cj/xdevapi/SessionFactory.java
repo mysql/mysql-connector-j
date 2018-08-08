@@ -49,20 +49,6 @@ import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
  *
  */
 public class SessionFactory {
-    /**
-     * Parses the connection string URL.
-     * 
-     * @param url
-     *            the connection string URL.
-     * @return a {@link ConnectionUrl} instance containing the URL components.
-     */
-    private ConnectionUrl parseUrl(String url) {
-        ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(url, null);
-        if (connUrl == null || connUrl.getType() != ConnectionUrl.Type.XDEVAPI_SESSION) {
-            throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "Initialization via URL failed for \"" + url + "\"");
-        }
-        return connUrl;
-    }
 
     /**
      * Creates {@link Session} by given URL.
@@ -73,7 +59,12 @@ public class SessionFactory {
      */
     public Session getSession(String url) {
         CJCommunicationsException latestException = null;
-        ConnectionUrl connUrl = parseUrl(url);
+
+        ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(url, null);
+        if (connUrl == null || connUrl.getType() != ConnectionUrl.Type.XDEVAPI_SESSION) {
+            throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "Initialization via URL failed for \"" + url + "\"");
+        }
+
         for (HostInfo hi : connUrl.getHostsList()) {
             try {
                 return new SessionImpl(hi);

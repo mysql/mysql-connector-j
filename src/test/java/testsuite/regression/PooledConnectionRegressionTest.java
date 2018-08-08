@@ -50,7 +50,7 @@ import javax.sql.PooledConnection;
 
 import com.mysql.cj.NativeSession;
 import com.mysql.cj.ServerVersion;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.jdbc.Blob;
 import com.mysql.cj.jdbc.CallableStatementWrapper;
 import com.mysql.cj.jdbc.Clob;
@@ -420,7 +420,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 
         xads = new MysqlXADataSource();
         xads.setUrl(dbUrl);
-        xads.getProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).setValue(true);
+        xads.getProperty(PropertyKey.pinGlobalTxToPhysicalConnection).setValue(true);
         this.pstmt = xads.getXAConnection().getConnection().prepareStatement("SELECT 1");
         this.pstmt.execute();
         this.pstmt.close();

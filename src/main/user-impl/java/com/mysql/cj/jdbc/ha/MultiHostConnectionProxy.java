@@ -41,7 +41,7 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.JdbcConnection;
@@ -152,8 +152,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
 
         Properties props = connUrl.getConnectionArgumentsAsProperties();
 
-        this.autoReconnect = "true".equalsIgnoreCase(props.getProperty(PropertyDefinitions.PNAME_autoReconnect))
-                || "true".equalsIgnoreCase(props.getProperty(PropertyDefinitions.PNAME_autoReconnectForPools));
+        this.autoReconnect = "true".equalsIgnoreCase(props.getProperty(PropertyKey.autoReconnect.getKeyName()))
+                || "true".equalsIgnoreCase(props.getProperty(PropertyKey.autoReconnectForPools.getKeyName()));
 
         this.hostsList = new ArrayList<>(hosts);
         int numHosts = this.hostsList.size();
@@ -348,7 +348,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
             return;
         }
 
-        RuntimeProperty<Boolean> sourceUseLocalSessionState = source.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useLocalSessionState);
+        RuntimeProperty<Boolean> sourceUseLocalSessionState = source.getPropertySet().getBooleanProperty(PropertyKey.useLocalSessionState);
         boolean prevUseLocalSessionState = sourceUseLocalSessionState.getValue();
         sourceUseLocalSessionState.setValue(true);
         boolean readOnly = source.isReadOnly();
@@ -378,7 +378,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
             return;
         }
 
-        RuntimeProperty<Boolean> sourceUseLocalSessionState = source.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useLocalSessionState);
+        RuntimeProperty<Boolean> sourceUseLocalSessionState = source.getPropertySet().getBooleanProperty(PropertyKey.useLocalSessionState);
         boolean prevUseLocalSessionState = sourceUseLocalSessionState.getValue();
         sourceUseLocalSessionState.setValue(true);
 

@@ -44,10 +44,10 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.protocol.StandardSocketFactory;
 
 /**
@@ -75,7 +75,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
     private String hostname;
     private int portNumber;
-    private Properties props;
+    private PropertySet propSet;
 
     public static String getHostConnectedStatus(String host) {
         return STATUS_CONNECTED + host;
@@ -167,11 +167,11 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends Closeable> T connect(String host_name, int port_number, Properties prop, int loginTimeout) throws IOException {
+    public <T extends Closeable> T connect(String host_name, int port_number, PropertySet pset, int loginTimeout) throws IOException {
         this.loginTimeoutCountdown = loginTimeout;
         this.hostname = host_name;
         this.portNumber = port_number;
-        this.props = prop;
+        this.propSet = pset;
 
         Socket socket = null;
         String result = STATUS_UNKNOWN;
@@ -193,7 +193,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
     private Socket getNewSocket() throws SocketException, IOException {
         if (IMMEDIATELY_DOWNED_HOSTS.contains(this.hostname)) {
 
-            sleepMillisForProperty(this.props, PropertyDefinitions.PNAME_connectTimeout);
+            sleepMillisForProperty(this.propSet, PropertyKey.connectTimeout);
 
             throw new SocketTimeoutException();
         }
@@ -204,14 +204,15 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
             hostnameToConnectTo = this.hostname;
         }
 
-        this.rawSocket = new HangingSocket(super.connect(hostnameToConnectTo, this.portNumber, this.props, this.loginTimeoutCountdown), this.props,
+        this.rawSocket = new HangingSocket(super.connect(hostnameToConnectTo, this.portNumber, this.propSet, this.loginTimeoutCountdown), this.propSet,
                 this.hostname);
         return this.rawSocket;
     }
 
-    static void sleepMillisForProperty(Properties props, String name) {
+    static void sleepMillisForProperty(PropertySet pset, PropertyKey name) {
         try {
-            Thread.sleep(Long.parseLong(props.getProperty(name, String.valueOf(DEFAULT_TIMEOUT_MILLIS))));
+            Integer timeout = pset.getIntegerProperty(name).getValue();
+            Thread.sleep(timeout != null ? timeout : DEFAULT_TIMEOUT_MILLIS);
         } catch (NumberFormatException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
@@ -222,12 +223,12 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
     class HangingSocket extends Socket {
 
         final Socket underlyingSocket;
-        final Properties props;
+        final PropertySet propSet;
         final String aliasedHostname;
 
-        HangingSocket(Socket realSocket, Properties props, String aliasedHostname) {
+        HangingSocket(Socket realSocket, PropertySet pset, String aliasedHostname) {
             this.underlyingSocket = realSocket;
-            this.props = props;
+            this.propSet = pset;
             this.aliasedHostname = aliasedHostname;
         }
 
@@ -258,7 +259,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         @Override
         public InputStream getInputStream() throws IOException {
 
-            return new HangingInputStream(this.underlyingSocket.getInputStream(), this.props, this.aliasedHostname);
+            return new HangingInputStream(this.underlyingSocket.getInputStream(), this.propSet, this.aliasedHostname);
         }
 
         @Override
@@ -293,7 +294,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
         @Override
         public OutputStream getOutputStream() throws IOException {
-            return new HangingOutputStream(this.underlyingSocket.getOutputStream(), this.props, this.aliasedHostname);
+            return new HangingOutputStream(this.underlyingSocket.getOutputStream(), this.propSet, this.aliasedHostname);
         }
 
         @Override
@@ -441,12 +442,12 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
     static class HangingInputStream extends InputStream {
         final InputStream underlyingInputStream;
-        final Properties props;
+        final PropertySet propSet;
         final String aliasedHostname;
 
-        HangingInputStream(InputStream realInputStream, Properties props, String aliasedHostname) {
+        HangingInputStream(InputStream realInputStream, PropertySet pset, String aliasedHostname) {
             this.underlyingInputStream = realInputStream;
-            this.props = props;
+            this.propSet = pset;
             this.aliasedHostname = aliasedHostname;
         }
 
@@ -505,7 +506,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
         private void failIfRequired() throws SocketTimeoutException {
             if (HUNG_READ_HOSTS.contains(this.aliasedHostname) || IMMEDIATELY_DOWNED_HOSTS.contains(this.aliasedHostname)) {
-                sleepMillisForProperty(this.props, PropertyDefinitions.PNAME_socketTimeout);
+                sleepMillisForProperty(this.propSet, PropertyKey.socketTimeout);
 
                 throw new SocketTimeoutException();
             }
@@ -514,13 +515,13 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
     static class HangingOutputStream extends OutputStream {
 
-        final Properties props;
+        final PropertySet propSet;
         final String aliasedHostname;
         final OutputStream underlyingOutputStream;
 
-        HangingOutputStream(OutputStream realOutputStream, Properties props, String aliasedHostname) {
+        HangingOutputStream(OutputStream realOutputStream, PropertySet pset, String aliasedHostname) {
             this.underlyingOutputStream = realOutputStream;
-            this.props = props;
+            this.propSet = pset;
             this.aliasedHostname = aliasedHostname;
         }
 
@@ -555,7 +556,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
         private void failIfRequired() throws SocketTimeoutException {
             if (HUNG_WRITE_HOSTS.contains(this.aliasedHostname) || IMMEDIATELY_DOWNED_HOSTS.contains(this.aliasedHostname)) {
-                sleepMillisForProperty(this.props, PropertyDefinitions.PNAME_socketTimeout);
+                sleepMillisForProperty(this.propSet, PropertyKey.socketTimeout);
 
                 throw new SocketTimeoutException();
             }

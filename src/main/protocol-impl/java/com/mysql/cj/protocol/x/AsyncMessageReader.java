@@ -45,7 +45,7 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.AssertionFailedException;
@@ -136,7 +136,7 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
     public AsyncMessageReader(PropertySet propertySet, SocketConnection socketConnection) {
         this.propertySet = propertySet;
         this.sc = socketConnection;
-        this.asyncTimeout = this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_xdevapi_asyncResponseTimeout);
+        this.asyncTimeout = this.propertySet.getIntegerProperty(PropertyKey.xdevapiAsyncResponseTimeout);
 
     }
 

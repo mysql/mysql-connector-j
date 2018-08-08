@@ -55,7 +55,7 @@ import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeSession;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -89,7 +89,7 @@ import com.mysql.cj.util.StringUtils;
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     /**
-     * Default max buffer size. See {@link PropertyDefinitions#PNAME_maxAllowedPacket}.
+     * Default max buffer size. See {@link PropertyKey#maxAllowedPacket}.
      */
     protected static int maxBufferSize = 65535; // TODO find a way to use actual (not default) value
 
@@ -726,7 +726,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     protected static DatabaseMetaData getInstance(JdbcConnection connToSet, String databaseToSet, boolean checkForInfoSchema, ResultSetFactory resultSetFactory)
             throws SQLException {
-        if (checkForInfoSchema && connToSet.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useInformationSchema).getValue()) {
+        if (checkForInfoSchema && connToSet.getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue()) {
             return new DatabaseMetaDataUsingInfoSchema(connToSet, databaseToSet, resultSetFactory);
         }
 
@@ -749,11 +749,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         this.database = databaseToSet;
         this.resultSetFactory = resultSetFactory;
         this.exceptionInterceptor = this.conn.getExceptionInterceptor();
-        this.nullCatalogMeansCurrent = this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_nullCatalogMeansCurrent).getValue();
-        this.pedantic = this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_pedantic).getValue();
-        this.tinyInt1isBit = this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_tinyInt1isBit).getValue();
-        this.transformedBitIsBoolean = this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_transformedBitIsBoolean).getValue();
-        this.useHostsInPrivileges = this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useHostsInPrivileges).getValue();
+        this.nullCatalogMeansCurrent = this.conn.getPropertySet().getBooleanProperty(PropertyKey.nullCatalogMeansCurrent).getValue();
+        this.pedantic = this.conn.getPropertySet().getBooleanProperty(PropertyKey.pedantic).getValue();
+        this.tinyInt1isBit = this.conn.getPropertySet().getBooleanProperty(PropertyKey.tinyInt1isBit).getValue();
+        this.transformedBitIsBoolean = this.conn.getPropertySet().getBooleanProperty(PropertyKey.transformedBitIsBoolean).getValue();
+        this.useHostsInPrivileges = this.conn.getPropertySet().getBooleanProperty(PropertyKey.useHostsInPrivileges).getValue();
         this.quotedId = this.session.getIdentifierQuoteString();
     }
 
@@ -1480,7 +1480,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (paramRetrievalRs.next()) {
                 String procedureDef = paramRetrievalRs.getString(fieldName);
 
-                if (!this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies).getValue()
+                if (!this.conn.getPropertySet().getBooleanProperty(PropertyKey.noAccessToProcedureBodies).getValue()
                         && (procedureDef == null || procedureDef.length() == 0)) {
                     throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.4"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                             getExceptionInterceptor());
@@ -3022,7 +3022,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         Field[] fields = createProcedureColumnsFields();
 
         return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern, true,
-                this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue());
+                this.conn.getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
     }
 
     protected Field[] createProcedureColumnsFields() {
@@ -3159,7 +3159,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         Field[] fields = createFieldMetadataForGetProcedures();
 
         return getProceduresAndOrFunctions(fields, catalog, schemaPattern, procedureNamePattern, true,
-                this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue());
+                this.conn.getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
     }
 
     protected Field[] createFieldMetadataForGetProcedures() {
@@ -4179,7 +4179,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public boolean locatorsUpdateCopy() throws SQLException {
-        return !this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_emulateLocators).getValue();
+        return !this.conn.getPropertySet().getBooleanProperty(PropertyKey.emulateLocators).getValue();
     }
 
     @Override
@@ -4503,7 +4503,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public boolean supportsIntegrityEnhancementFacility() throws SQLException {
-        if (!this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_overrideSupportsIntegrityEnhancementFacility).getValue()) {
+        if (!this.conn.getPropertySet().getBooleanProperty(PropertyKey.overrideSupportsIntegrityEnhancementFacility).getValue()) {
             return false;
         }
 

@@ -66,7 +66,7 @@ public class XAsyncSocketConnection extends AbstractSocketConnection implements 
         this.socketFactory = new AsyncSocketFactory(); // TODO reuse PNAME_socketFactory
 
         try {
-            this.channel = this.socketFactory.connect(hostName, portNumber, propSet.exposeAsProperties(), loginTimeout);
+            this.channel = this.socketFactory.connect(hostName, portNumber, propSet, loginTimeout);
 
         } catch (CJCommunicationsException e) {
             throw e;

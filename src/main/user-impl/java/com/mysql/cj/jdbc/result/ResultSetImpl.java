@@ -71,6 +71,7 @@ import com.mysql.cj.NativeSession;
 import com.mysql.cj.Session;
 import com.mysql.cj.WarningListener;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -239,7 +240,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
 
             this.connectionId = this.connection.getSession().getThreadId();
-            this.padCharsWithSpace = this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_padCharsWithSpace).getValue();
+            this.padCharsWithSpace = this.connection.getPropertySet().getBooleanProperty(PropertyKey.padCharsWithSpace).getValue();
         }
     }
 
@@ -266,11 +267,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         if (this.connection != null) {
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
             this.connectionId = this.session.getThreadId();
-            this.profileSQL = this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
-            this.emptyStringsConvertToZero = this.connection.getPropertySet().getProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero);
-            this.emulateLocators = this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_emulateLocators);
-            this.padCharsWithSpace = this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_padCharsWithSpace).getValue();
-            this.yearIsDateType = this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue();
+            this.profileSQL = this.connection.getPropertySet().getBooleanProperty(PropertyKey.profileSQL).getValue();
+            this.emptyStringsConvertToZero = this.connection.getPropertySet().getProperty(PropertyKey.emptyStringsConvertToZero);
+            this.emulateLocators = this.connection.getPropertySet().getBooleanProperty(PropertyKey.emulateLocators);
+            this.padCharsWithSpace = this.connection.getPropertySet().getBooleanProperty(PropertyKey.padCharsWithSpace).getValue();
+            this.yearIsDateType = this.connection.getPropertySet().getBooleanProperty(PropertyKey.yearIsDateType).getValue();
         }
 
         this.booleanValueFactory = new BooleanValueFactory();
@@ -284,7 +285,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         this.binaryStreamValueFactory = new BinaryStreamValueFactory();
 
         this.zeroDateTimeBehavior = this.connection
-                .getPropertySet().<PropertyDefinitions.ZeroDatetimeBehavior> getEnumProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior).getValue();
+                .getPropertySet().<PropertyDefinitions.ZeroDatetimeBehavior> getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue();
         this.defaultDateValueFactory = decorateDateTimeValueFactory(new SqlDateValueFactory(null, this.session.getServerSession().getDefaultTimeZone(), this),
                 this.zeroDateTimeBehavior);
         this.defaultTimeValueFactory = decorateDateTimeValueFactory(new SqlTimeValueFactory(null, this.session.getServerSession().getDefaultTimeZone(), this),
@@ -297,7 +298,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         this.defaultLocalDateTimeValueFactory = decorateDateTimeValueFactory(new LocalDateTimeValueFactory(), this.zeroDateTimeBehavior);
 
         // TODO we always check initial value here (was cached in jdbcCompliantTruncationForReads variable), whatever the setupServerForTruncationChecks() does for writes. It also means that runtime changes of this variable have no effect on reads.
-        if (this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation).getInitialValue()) {
+        if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.jdbcCompliantTruncation).getInitialValue()) {
             this.byteValueFactory = new IntegerBoundsEnforcer<>(this.byteValueFactory, Byte.MIN_VALUE, Byte.MAX_VALUE);
             this.shortValueFactory = new IntegerBoundsEnforcer<>(this.shortValueFactory, Short.MIN_VALUE, Short.MAX_VALUE);
             this.integerValueFactory = new IntegerBoundsEnforcer<>(this.integerValueFactory, Integer.MIN_VALUE, Integer.MAX_VALUE);
@@ -329,7 +330,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             initializeWithMetadata();
         } // else called by Connection.initializeResultsMetadataFromCache() when cached
 
-        this.useColumnNamesInFindColumn = this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useColumnNamesInFindColumn).getValue();
+        this.useColumnNamesInFindColumn = this.connection.getPropertySet().getBooleanProperty(PropertyKey.useColumnNamesInFindColumn).getValue();
 
         setRowPositionValidity();
     }
@@ -339,15 +340,15 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         synchronized (checkClosed().getConnectionMutex()) {
             initRowsWithMetadata();
 
-            if (this.profileSQL || this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
+            if (this.profileSQL || this.connection.getPropertySet().getBooleanProperty(PropertyKey.useUsageAdvisor).getValue()) {
                 this.columnUsed = new boolean[this.columnDefinition.getFields().length];
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
                 this.resultId = resultCounter++;
-                this.useUsageAdvisor = this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue();
+                this.useUsageAdvisor = this.connection.getPropertySet().getBooleanProperty(PropertyKey.useUsageAdvisor).getValue();
                 this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
             }
 
-            if (this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_gatherPerfMetrics).getValue()) {
+            if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.gatherPerfMetrics).getValue()) {
                 this.session.incrementNumberOfResultSetsCreated();
 
                 Set<String> tableNamesSet = new HashSet<>();
@@ -969,7 +970,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     private String getStringForClob(int columnIndex) throws SQLException {
         String asString = null;
 
-        String forcedEncoding = this.connection.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
+        String forcedEncoding = this.connection.getPropertySet().getStringProperty(PropertyKey.clobCharacterEncoding).getStringValue();
 
         if (forcedEncoding == null) {
             asString = getString(columnIndex);
@@ -1186,7 +1187,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkClosed();
 
         return new ResultSetMetaData(this.session, this.columnDefinition.getFields(),
-                this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(), this.yearIsDateType,
+                this.session.getPropertySet().getBooleanProperty(PropertyKey.useOldAliasMetadataBehavior).getValue(), this.yearIsDateType,
                 getExceptionInterceptor());
     }
 
@@ -1209,7 +1210,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 if (field.isBinary() || field.isBlob()) {
                     byte[] data = getBytes(columnIndex);
 
-                    if (this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue()) {
+                    if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.autoDeserialize).getValue()) {
                         Object obj = data;
 
                         if ((data != null) && (data.length >= 2)) {
@@ -1313,7 +1314,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 if (field.isBinary() || field.isBlob()) {
                     byte[] data = getBytes(columnIndex);
 
-                    if (this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue()) {
+                    if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.autoDeserialize).getValue()) {
                         Object obj = data;
 
                         if ((data != null) && (data.length >= 2)) {
@@ -1460,7 +1461,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
             }
 
-            if (this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoDeserialize).getValue()) {
+            if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.autoDeserialize).getValue()) {
                 try {
                     return (T) getObject(columnIndex);
                 } catch (ClassCastException cce) {
@@ -1915,8 +1916,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
                         // Report on possibly too-large result sets
 
-                        int resultSetSizeThreshold = locallyScopedConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold)
-                                .getValue();
+                        int resultSetSizeThreshold = locallyScopedConn.getPropertySet().getIntegerProperty(PropertyKey.resultSetSizeThreshold).getValue();
                         if (this.rowData.size() > resultSetSizeThreshold) {
                             this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
                                     (this.owningStatement == null) ? Messages.getString("ResultSet.N/A_159") : this.owningStatement.getCurrentCatalog(),

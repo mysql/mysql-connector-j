@@ -58,7 +58,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.ha.ReplicationConnection;
@@ -393,7 +393,7 @@ public abstract class BaseTestCase extends TestCase {
     protected Connection getNewSha256Connection() throws SQLException {
         if (sha256Url != null) {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             return DriverManager.getConnection(sha256Url, props);
         }
         return null;
@@ -634,8 +634,8 @@ public abstract class BaseTestCase extends TestCase {
         this.createdObjects = new ArrayList<>();
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false"); // testsuite is built upon non-SSL default connection
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false"); // testsuite is built upon non-SSL default connection
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         this.conn = DriverManager.getConnection(dbUrl, props);
 
         this.sha256Conn = sha256Url == null ? null : DriverManager.getConnection(sha256Url, props);
@@ -1128,7 +1128,7 @@ public abstract class BaseTestCase extends TestCase {
         }
 
         props = getHostFreePropertiesFromTestsuiteUrl(props);
-        props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
+        props.setProperty(PropertyKey.socketFactory.getKeyName(), "testsuite.UnreliableSocketFactory");
 
         HostInfo defaultHost = mainConnectionUrl.getMainHost();
         String db = defaultHost.getDatabase();
@@ -1212,7 +1212,7 @@ public abstract class BaseTestCase extends TestCase {
 
     protected ReplicationConnection getUnreliableReplicationConnection(Set<MockConnectionConfiguration> configs, Properties props) throws Exception {
         props = getHostFreePropertiesFromTestsuiteUrl(props);
-        props.setProperty(PropertyDefinitions.PNAME_socketFactory, "testsuite.UnreliableSocketFactory");
+        props.setProperty(PropertyKey.socketFactory.getKeyName(), "testsuite.UnreliableSocketFactory");
 
         HostInfo defaultHost = mainConnectionUrl.getMainHost();
         String db = defaultHost.getDatabase();

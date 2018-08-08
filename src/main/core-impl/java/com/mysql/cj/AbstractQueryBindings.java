@@ -45,7 +45,7 @@ import java.time.LocalTime;
 import java.util.Calendar;
 import java.util.Locale;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -81,10 +81,10 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
 
     public AbstractQueryBindings(int parameterCount, Session sess) {
         this.session = sess;
-        this.charEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
-        this.sendFractionalSeconds = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_sendFractionalSeconds);
-        this.treatUtilDateAsTimestamp = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp);
-        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts);
+        this.charEncoding = this.session.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
+        this.sendFractionalSeconds = this.session.getPropertySet().getBooleanProperty(PropertyKey.sendFractionalSeconds);
+        this.treatUtilDateAsTimestamp = this.session.getPropertySet().getBooleanProperty(PropertyKey.treatUtilDateAsTimestamp);
+        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyKey.useStreamLengthsInPrepStmts);
 
         initBindValues(parameterCount);
     }

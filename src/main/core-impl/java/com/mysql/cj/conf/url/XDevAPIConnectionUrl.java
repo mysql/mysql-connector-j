@@ -41,7 +41,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.ConnectionUrlParser.Pair;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 
@@ -105,11 +105,6 @@ public class XDevAPIConnectionUrl extends ConnectionUrl {
             this.hosts.sort(
                     Comparator.<HostInfo, Integer> comparing(hi -> Integer.parseInt(hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()))).reversed());
         }
-    }
-
-    @Override
-    protected void processColdFusionAutoConfiguration() {
-        // Not needed. Abort this operation.
     }
 
     @Override

@@ -30,7 +30,7 @@
 package com.mysql.cj.log;
 
 import com.mysql.cj.Session;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.util.Util;
 
 public class ProfilerEventHandlerFactory {
@@ -46,9 +46,8 @@ public class ProfilerEventHandlerFactory {
         ProfilerEventHandler handler = sess.getProfilerEventHandler();
 
         if (handler == null) {
-            handler = (ProfilerEventHandler) Util.getInstance(
-                    sess.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_profilerEventHandler).getStringValue(), new Class<?>[0],
-                    new Object[0], sess.getExceptionInterceptor());
+            handler = (ProfilerEventHandler) Util.getInstance(sess.getPropertySet().getStringProperty(PropertyKey.profilerEventHandler).getStringValue(),
+                    new Class<?>[0], new Object[0], sess.getExceptionInterceptor());
 
             handler.init(sess.getLog());
             sess.setProfilerEventHandler(handler);

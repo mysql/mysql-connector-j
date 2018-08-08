@@ -33,10 +33,10 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 
 public class AsyncSocketFactory implements SocketFactory {
@@ -45,7 +45,7 @@ public class AsyncSocketFactory implements SocketFactory {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends Closeable> T connect(String host, int port, Properties props, int loginTimeout) throws IOException {
+    public <T extends Closeable> T connect(String host, int port, PropertySet props, int loginTimeout) throws IOException {
         try {
             this.channel = AsynchronousSocketChannel.open();
             //channel.setOption(java.net.StandardSocketOptions.TCP_NODELAY, true);

@@ -32,7 +32,7 @@ package testsuite.simple;
 import java.util.Properties;
 
 import com.mysql.cj.conf.ConnectionPropertiesTransform;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 
 /**
  * Used for testing the ConnectionPropertiesTransform functionality.

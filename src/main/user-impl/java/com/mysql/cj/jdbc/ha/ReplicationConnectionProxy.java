@@ -40,7 +40,7 @@ import java.util.concurrent.Executor;
 import com.mysql.cj.Messages;
 import com.mysql.cj.PingTarget;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.url.LoadbalanceConnectionUrl;
 import com.mysql.cj.conf.url.ReplicationConnectionUrl;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -104,7 +104,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
 
         this.connectionUrl = connectionUrl;
 
-        String enableJMXAsString = props.getProperty(PropertyDefinitions.PNAME_ha_enableJMX, "false");
+        String enableJMXAsString = props.getProperty(PropertyKey.ha_enableJMX.getKeyName(), "false");
         try {
             this.enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
@@ -112,7 +112,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String allowMasterDownConnectionsAsString = props.getProperty(PropertyDefinitions.PNAME_allowMasterDownConnections, "false");
+        String allowMasterDownConnectionsAsString = props.getProperty(PropertyKey.allowMasterDownConnections.getKeyName(), "false");
         try {
             this.allowMasterDownConnections = Boolean.parseBoolean(allowMasterDownConnectionsAsString);
         } catch (Exception e) {
@@ -121,7 +121,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String allowSlaveDownConnectionsAsString = props.getProperty(PropertyDefinitions.PNAME_allowSlaveDownConnections, "false");
+        String allowSlaveDownConnectionsAsString = props.getProperty(PropertyKey.allowSlaveDownConnections.getKeyName(), "false");
         try {
             this.allowSlaveDownConnections = Boolean.parseBoolean(allowSlaveDownConnectionsAsString);
         } catch (Exception e) {
@@ -130,7 +130,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String readFromMasterWhenNoSlavesAsString = props.getProperty(PropertyDefinitions.PNAME_readFromMasterWhenNoSlaves);
+        String readFromMasterWhenNoSlavesAsString = props.getProperty(PropertyKey.readFromMasterWhenNoSlaves.getKeyName());
         try {
             this.readFromMasterWhenNoSlavesOriginal = Boolean.parseBoolean(readFromMasterWhenNoSlavesAsString);
 
@@ -140,7 +140,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String group = props.getProperty(PropertyDefinitions.PNAME_replicationConnectionGroup, null);
+        String group = props.getProperty(PropertyKey.replicationConnectionGroup.getKeyName(), null);
         if (group != null) {
             this.connectionGroup = ReplicationConnectionGroupManager.getConnectionGroupInstance(group);
             if (this.enableJMX) {

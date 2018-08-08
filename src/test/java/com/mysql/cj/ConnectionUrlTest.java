@@ -57,9 +57,8 @@ import com.mysql.cj.conf.ConnectionPropertiesTransform;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.conf.PropertyDefinitions.ZeroDatetimeBehavior;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.WrongArgumentException;
 
 public class ConnectionUrlTest {
@@ -850,9 +849,9 @@ public class ConnectionUrlTest {
 
         for (String cs : connStr) {
             Properties props = new Properties();
-            if (cs.indexOf(PropertyDefinitions.PNAME_useConfigs) == -1) {
+            if (cs.indexOf(PropertyKey.useConfigs.getKeyName()) == -1) {
                 // Send "useConfigs" through external properties.
-                props.setProperty(PropertyDefinitions.PNAME_useConfigs, "fullDebug");
+                props.setProperty(PropertyKey.useConfigs.getKeyName(), "fullDebug");
             }
             ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(cs, props);
 
@@ -894,9 +893,9 @@ public class ConnectionUrlTest {
 
         for (String cs : connStr) {
             Properties props = new Properties();
-            if (cs.indexOf(PropertyDefinitions.PNAME_propertiesTransform) == -1) {
+            if (cs.indexOf(PropertyKey.propertiesTransform.getKeyName()) == -1) {
                 // Send "propertiesTransform" parameter through external properties.
-                props.setProperty(PropertyDefinitions.PNAME_propertiesTransform, propsTransClassName);
+                props.setProperty(PropertyKey.propertiesTransform.getKeyName(), propsTransClassName);
             }
             if (cs.indexOf("stars") == -1) {
                 // Send "stars" parameter through external properties.
@@ -1086,11 +1085,11 @@ public class ConnectionUrlTest {
         connStr.add("jdbc:mysql://address=(port=3306)(user=root)(password=pwd)(zeroDateTimeBehavior=convertToNull)/test");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "convertToNull");
+        props.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "convertToNull");
 
         for (String cs : connStr) {
             ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(cs, props);
-            assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL.name(), connUrl.getMainHost().getProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior));
+            assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL.name(), connUrl.getMainHost().getProperty(PropertyKey.zeroDateTimeBehavior.getKeyName()));
         }
     }
 

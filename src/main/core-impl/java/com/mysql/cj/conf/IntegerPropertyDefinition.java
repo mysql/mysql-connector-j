@@ -39,14 +39,14 @@ public class IntegerPropertyDefinition extends AbstractPropertyDefinition<Intege
 
     protected int multiplier = 1;
 
-    public IntegerPropertyDefinition(String name, String alias, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
-            String category, int orderInCategory) {
-        super(name, alias, Integer.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+    public IntegerPropertyDefinition(PropertyKey key, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
+            int orderInCategory) {
+        super(key, Integer.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
     }
 
-    public IntegerPropertyDefinition(String name, String alias, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
-            String category, int orderInCategory, int lowerBound, int upperBound) {
-        super(name, alias, Integer.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory, lowerBound, upperBound);
+    public IntegerPropertyDefinition(PropertyKey key, int defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
+            int orderInCategory, int lowerBound, int upperBound) {
+        super(key, Integer.valueOf(defaultValue), isRuntimeModifiable, description, sinceVersion, category, orderInCategory, lowerBound, upperBound);
     }
 
     @Override

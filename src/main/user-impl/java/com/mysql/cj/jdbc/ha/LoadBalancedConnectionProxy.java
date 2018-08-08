@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 import com.mysql.cj.Messages;
 import com.mysql.cj.PingTarget;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.url.LoadbalanceConnectionUrl;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJException;
@@ -132,9 +132,9 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         List<HostInfo> hosts;
         Properties props = connectionUrl.getConnectionArgumentsAsProperties();
 
-        String group = props.getProperty(PropertyDefinitions.PNAME_loadBalanceConnectionGroup, null);
+        String group = props.getProperty(PropertyKey.loadBalanceConnectionGroup.getKeyName(), null);
         boolean enableJMX = false;
-        String enableJMXAsString = props.getProperty(PropertyDefinitions.PNAME_ha_enableJMX, "false");
+        String enableJMXAsString = props.getProperty(PropertyKey.ha_enableJMX.getKeyName(), "false");
         try {
             enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
@@ -164,7 +164,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         this.connectionsToHostsMap = new HashMap<>(numHosts);
         this.responseTimes = new long[numHosts];
 
-        String retriesAllDownAsString = props.getProperty(PropertyDefinitions.PNAME_retriesAllDown, "120");
+        String retriesAllDownAsString = props.getProperty(PropertyKey.retriesAllDown.getKeyName(), "120");
         try {
             this.retriesAllDown = Integer.parseInt(retriesAllDownAsString);
         } catch (NumberFormatException nfe) {
@@ -173,7 +173,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String blacklistTimeoutAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceBlacklistTimeout, "0");
+        String blacklistTimeoutAsString = props.getProperty(PropertyKey.loadBalanceBlacklistTimeout.getKeyName(), "0");
         try {
             this.globalBlacklistTimeout = Integer.parseInt(blacklistTimeoutAsString);
         } catch (NumberFormatException nfe) {
@@ -182,7 +182,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String hostRemovalGracePeriodAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceHostRemovalGracePeriod, "15000");
+        String hostRemovalGracePeriodAsString = props.getProperty(PropertyKey.loadBalanceHostRemovalGracePeriod.getKeyName(), "15000");
         try {
             this.hostRemovalGracePeriod = Integer.parseInt(hostRemovalGracePeriodAsString);
         } catch (NumberFormatException nfe) {
@@ -190,7 +190,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     new Object[] { hostRemovalGracePeriodAsString }), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String strategy = props.getProperty(PropertyDefinitions.PNAME_loadBalanceStrategy, "random");
+        String strategy = props.getProperty(PropertyKey.ha_loadBalanceStrategy.getKeyName(), "random");
         try {
             switch (strategy) {
                 case "random":
@@ -200,7 +200,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     this.balancer = new BestResponseTimeBalanceStrategy();
                     break;
                 case "serverAffinity":
-                    this.balancer = new ServerAffinityStrategy(props.getProperty(PropertyDefinitions.PNAME_serverAffinityOrder, null));
+                    this.balancer = new ServerAffinityStrategy(props.getProperty(PropertyKey.serverAffinityOrder.getKeyName(), null));
                     break;
                 default:
                     this.balancer = (BalanceStrategy) Class.forName(strategy).newInstance();
@@ -210,7 +210,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, t, null);
         }
 
-        String autoCommitSwapThresholdAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "0");
+        String autoCommitSwapThresholdAsString = props.getProperty(PropertyKey.loadBalanceAutoCommitStatementThreshold.getKeyName(), "0");
         try {
             Integer.parseInt(autoCommitSwapThresholdAsString);
         } catch (NumberFormatException nfe) {
@@ -218,7 +218,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     new Object[] { autoCommitSwapThresholdAsString }), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String autoCommitSwapRegex = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex, "");
+        String autoCommitSwapRegex = props.getProperty(PropertyKey.loadBalanceAutoCommitStatementRegex.getKeyName(), "");
         if (!("".equals(autoCommitSwapRegex))) {
             try {
                 "".matches(autoCommitSwapRegex);
@@ -230,7 +230,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         }
 
         try {
-            String lbExceptionChecker = props.getProperty(PropertyDefinitions.PNAME_loadBalanceExceptionChecker,
+            String lbExceptionChecker = props.getProperty(PropertyKey.loadBalanceExceptionChecker.getKeyName(),
                     StandardLoadBalanceExceptionChecker.class.getName());
             this.exceptionChecker = (LoadBalanceExceptionChecker) Util.getInstance(lbExceptionChecker, new Class<?>[0], new Object[0], null,
                     Messages.getString("InvalidLoadBalanceExceptionChecker"));
@@ -347,9 +347,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             invalidateCurrentConnection();
         }
 
-        int pingTimeout = this.currentConnection.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout).getValue();
-        boolean pingBeforeReturn = this.currentConnection.getPropertySet()
-                .getBooleanProperty(PropertyDefinitions.PNAME_loadBalanceValidateConnectionOnSwapServer).getValue();
+        int pingTimeout = this.currentConnection.getPropertySet().getIntegerProperty(PropertyKey.loadBalancePingTimeout).getValue();
+        boolean pingBeforeReturn = this.currentConnection.getPropertySet().getBooleanProperty(PropertyKey.loadBalanceValidateConnectionOnSwapServer).getValue();
 
         for (int hostsTried = 0, hostsToTry = this.hostsList.size(); hostsTried < hostsToTry; hostsTried++) {
             ConnectionImpl newConn = null;
@@ -608,7 +607,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     public synchronized void doPing() throws SQLException {
         SQLException se = null;
         boolean foundHost = false;
-        int pingTimeout = this.currentConnection.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_loadBalancePingTimeout).getValue();
+        int pingTimeout = this.currentConnection.getPropertySet().getIntegerProperty(PropertyKey.loadBalancePingTimeout).getValue();
 
         synchronized (this) {
             for (HostInfo hi : this.hostsList) {

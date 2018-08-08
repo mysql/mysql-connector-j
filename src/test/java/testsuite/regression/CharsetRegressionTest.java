@@ -40,8 +40,7 @@ import java.util.function.Supplier;
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
-import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.protocol.Resultset;
 
@@ -71,8 +70,8 @@ public class CharsetRegressionTest extends BaseTestCase {
         if (collation != null && collation.startsWith("utf8mb4")
                 && "utf8mb4".equals(((MysqlConnection) this.conn).getSession().getServerSession().getServerVariable("character_set_server"))) {
             Properties p = new Properties();
-            p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
-            p.setProperty(PropertyDefinitions.PNAME_queryInterceptors, Bug73663QueryInterceptor.class.getName());
+            p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+            p.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug73663QueryInterceptor.class.getName());
 
             getConnectionWithProps(p);
             // exception will be thrown from the statement interceptor if any "SET NAMES utf8" statement is issued instead of "SET NAMES utf8mb4"
@@ -113,7 +112,7 @@ public class CharsetRegressionTest extends BaseTestCase {
                 final Properties props = new Properties();
                 props.setProperty(PropertyKey.USER.getKeyName(), "Bug72630User");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
-                props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "NonexistentEncoding");
+                props.setProperty(PropertyKey.characterEncoding.getKeyName(), "NonexistentEncoding");
 
                 assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'", new Callable<Void>() {
                     public Void call() throws Exception {
@@ -127,8 +126,8 @@ public class CharsetRegressionTest extends BaseTestCase {
                     }
                 });
 
-                props.remove(PropertyDefinitions.PNAME_characterEncoding);
-                props.setProperty(PropertyDefinitions.PNAME_passwordCharacterEncoding, "NonexistentEncoding");
+                props.remove(PropertyKey.characterEncoding.getKeyName());
+                props.setProperty(PropertyKey.passwordCharacterEncoding.getKeyName(), "NonexistentEncoding");
                 assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'", new Callable<Void>() {
                     public Void call() throws Exception {
                         getConnectionWithProps(props);
@@ -150,7 +149,7 @@ public class CharsetRegressionTest extends BaseTestCase {
 
         Properties p = new Properties();
         String cjCharset = CharsetMapping.getJavaEncodingForMysqlCharset("latin7");
-        p.setProperty(PropertyDefinitions.PNAME_characterEncoding, cjCharset);
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), cjCharset);
 
         getConnectionWithProps(p);
     }
@@ -172,7 +171,7 @@ public class CharsetRegressionTest extends BaseTestCase {
             Properties p = new Properties();
 
             /* With a single-byte encoding */
-            p.setProperty(PropertyDefinitions.PNAME_characterEncoding, CharsetMapping.getJavaEncodingForMysqlCharset("latin1"));
+            p.setProperty(PropertyKey.characterEncoding.getKeyName(), CharsetMapping.getJavaEncodingForMysqlCharset("latin1"));
             Connection conn1 = getConnectionWithProps(p);
             Statement st1 = conn1.createStatement();
             st1.executeUpdate("INSERT INTO testBug81196(name) VALUES ('" + fourBytesValue + "')");
@@ -182,7 +181,7 @@ public class CharsetRegressionTest extends BaseTestCase {
 
             /* With a UTF-8 encoding */
             st1.executeUpdate("TRUNCATE TABLE testBug81196");
-            p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
+            p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
             Connection conn2 = getConnectionWithProps(p);
             Statement st2 = conn2.createStatement();
             st2.executeUpdate("INSERT INTO testBug81196(name) VALUES ('" + fourBytesValue + "')");
@@ -192,8 +191,8 @@ public class CharsetRegressionTest extends BaseTestCase {
 
             /* With a UTF-8 encoding and connectionCollation=utf8mb4_unicode_ci */
             st1.executeUpdate("TRUNCATE TABLE testBug81196");
-            p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
-            p.setProperty(PropertyDefinitions.PNAME_connectionCollation, "utf8mb4_unicode_ci");
+            p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+            p.setProperty(PropertyKey.connectionCollation.getKeyName(), "utf8mb4_unicode_ci");
             Connection conn2_1 = getConnectionWithProps(p);
             Statement st2_1 = conn2_1.createStatement();
             st2_1.executeUpdate("INSERT INTO testBug81196(name) VALUES ('" + fourBytesValue + "')");
@@ -203,8 +202,8 @@ public class CharsetRegressionTest extends BaseTestCase {
 
             /* With connectionCollation=utf8_bin, SET NAMES utf8 is expected */
             st1.executeUpdate("TRUNCATE TABLE testBug81196");
-            p.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
-            p.setProperty(PropertyDefinitions.PNAME_connectionCollation, "utf8_bin");
+            p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+            p.setProperty(PropertyKey.connectionCollation.getKeyName(), "utf8_bin");
             Connection conn3 = getConnectionWithProps(p);
             final Statement st3 = conn3.createStatement();
 

@@ -35,7 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.util.StringUtils;
@@ -87,8 +87,8 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
 
     @Override
     public void init(Properties props) {
-        configureSQLStateList(props.getProperty(PropertyDefinitions.PNAME_loadBalanceSQLStateFailover, null));
-        configureSQLExceptionSubclassList(props.getProperty(PropertyDefinitions.PNAME_loadBalanceSQLExceptionSubclassFailover, null));
+        configureSQLStateList(props.getProperty(PropertyKey.loadBalanceSQLStateFailover.getKeyName(), null));
+        configureSQLExceptionSubclassList(props.getProperty(PropertyKey.loadBalanceSQLExceptionSubclassFailover.getKeyName(), null));
     }
 
     private void configureSQLStateList(String sqlStates) {

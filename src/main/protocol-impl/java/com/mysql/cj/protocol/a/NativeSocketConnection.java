@@ -35,7 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.AsynchronousSocketChannel;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -61,10 +61,10 @@ public class NativeSocketConnection extends AbstractSocketConnection implements 
             this.propertySet = propSet;
             this.exceptionInterceptor = excInterceptor;
 
-            this.socketFactory = createSocketFactory(propSet.getStringProperty(PropertyDefinitions.PNAME_socketFactory).getStringValue());
-            this.mysqlSocket = this.socketFactory.connect(this.host, this.port, propSet.exposeAsProperties(), loginTimeout);
+            this.socketFactory = createSocketFactory(propSet.getStringProperty(PropertyKey.socketFactory).getStringValue());
+            this.mysqlSocket = this.socketFactory.connect(this.host, this.port, propSet, loginTimeout);
 
-            int socketTimeout = propSet.getIntegerProperty(PropertyDefinitions.PNAME_socketTimeout).getValue();
+            int socketTimeout = propSet.getIntegerProperty(PropertyKey.socketTimeout).getValue();
             if (socketTimeout != 0) {
                 try {
                     this.mysqlSocket.setSoTimeout(socketTimeout);
@@ -76,10 +76,10 @@ public class NativeSocketConnection extends AbstractSocketConnection implements 
             this.socketFactory.beforeHandshake();
 
             InputStream rawInputStream;
-            if (propSet.getBooleanProperty(PropertyDefinitions.PNAME_useReadAheadInput).getValue()) {
+            if (propSet.getBooleanProperty(PropertyKey.useReadAheadInput).getValue()) {
                 rawInputStream = new ReadAheadInputStream(this.mysqlSocket.getInputStream(), 16384,
-                        propSet.getBooleanProperty(PropertyDefinitions.PNAME_traceProtocol).getValue(), log);
-            } else if (propSet.getBooleanProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValue()) {
+                        propSet.getBooleanProperty(PropertyKey.traceProtocol).getValue(), log);
+            } else if (propSet.getBooleanProperty(PropertyKey.useUnbufferedInput).getValue()) {
                 rawInputStream = this.mysqlSocket.getInputStream();
             } else {
                 rawInputStream = new BufferedInputStream(this.mysqlSocket.getInputStream(), 16384);
@@ -98,7 +98,7 @@ public class NativeSocketConnection extends AbstractSocketConnection implements 
 
         this.mysqlSocket = this.socketFactory.performTlsHandshake(this, serverSession);
 
-        this.mysqlInput = new FullReadInputStream(this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useUnbufferedInput).getValue()
+        this.mysqlInput = new FullReadInputStream(this.propertySet.getBooleanProperty(PropertyKey.useUnbufferedInput).getValue()
                 ? getMysqlSocket().getInputStream() : new BufferedInputStream(getMysqlSocket().getInputStream(), 16384));
 
         this.mysqlOutput = new BufferedOutputStream(getMysqlSocket().getOutputStream(), 16384);

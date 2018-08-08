@@ -45,7 +45,7 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrl.Type;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.url.LoadbalanceConnectionUrl;
 import com.mysql.cj.conf.url.ReplicationConnectionUrl;
 import com.mysql.cj.exceptions.CJException;

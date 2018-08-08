@@ -32,12 +32,9 @@ package com.mysql.cj.conf;
 import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
 
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 
 /**
  * This class holds the following MySQL host information:
@@ -131,27 +128,6 @@ public class HostInfo implements DatabaseUrlContainer {
         this.isPasswordless = isPasswordless;
         if (properties != null) {
             this.hostProperties.putAll(properties);
-        }
-    }
-
-    /**
-     * Constructs a {@link HostInfo} instance initialized with the provided properties.
-     * 
-     * @param props
-     *            a connection arguments map.
-     */
-    public HostInfo(Properties props) {
-        this.originalUrl = null;
-
-        this.host = props.getProperty(PropertyKey.HOST.getKeyName());
-        this.port = Integer.parseInt(props.getProperty(PropertyKey.PORT.getKeyName()));
-        this.user = props.getProperty(PropertyKey.USER.getKeyName());
-        this.password = props.getProperty(PropertyKey.PASSWORD.getKeyName());
-        this.isPasswordless = this.password == null;
-        Enumeration<Object> keyEnum = props.keys();
-        while (keyEnum.hasMoreElements()) {
-            String key = (String) keyEnum.nextElement();
-            this.hostProperties.put(key, props.getProperty(key));
         }
     }
 

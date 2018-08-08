@@ -92,6 +92,7 @@ import javax.security.auth.x500.X500Principal;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -124,7 +125,7 @@ public class ExportControlled {
     private static String[] getAllowedCiphers(PropertySet pset, ServerVersion serverVersion, String[] socketCipherSuites) {
         List<String> allowedCiphers = null;
 
-        String enabledSSLCipherSuites = pset.getStringProperty(PropertyDefinitions.PNAME_enabledSSLCipherSuites).getValue();
+        String enabledSSLCipherSuites = pset.getStringProperty(PropertyKey.enabledSSLCipherSuites).getValue();
         if (!StringUtils.isNullOrEmpty(enabledSSLCipherSuites)) {
             // If "enabledSSLCipherSuites" is set we check that JVM allows provided values.
             // We don't disable DH algorithm. That allows c/J to deal with custom server builds with different security restrictions.
@@ -159,7 +160,7 @@ public class ExportControlled {
         // If enabledTLSProtocols configuration option is set, overriding the default TLS version restrictions.
         // This allows enabling TLSv1.2 for self-compiled MySQL versions supporting it, as well as the ability
         // for users to restrict TLS connections to approved protocols (e.g., prohibiting TLSv1) on the client side.
-        String enabledTLSProtocols = pset.getStringProperty(PropertyDefinitions.PNAME_enabledTLSProtocols).getValue();
+        String enabledTLSProtocols = pset.getStringProperty(PropertyKey.enabledTLSProtocols).getValue();
 
         // Note that it is problematic to enable TLSv1.2 on the client side when the server is compiled with yaSSL. When client attempts to connect with
         // TLSv1.2 yaSSL just closes the socket instead of re-attempting handshake with lower TLS version.
@@ -204,19 +205,19 @@ public class ExportControlled {
         }
     }
 
-    private static KeyStoreConf getTrustStoreConf(PropertySet propertySet, String keyStoreUrlPropertyName, String keyStorePasswordPropertyName,
-            String keyStoreTypePropertyName, boolean required) {
+    private static KeyStoreConf getTrustStoreConf(PropertySet propertySet, PropertyKey keyStoreUrlPropertyKey, PropertyKey keyStorePasswordPropertyKey,
+            PropertyKey keyStoreTypePropertyKey, boolean required) {
 
-        String trustStoreUrl = propertySet.getStringProperty(keyStoreUrlPropertyName).getValue();
-        String trustStorePassword = propertySet.getStringProperty(keyStorePasswordPropertyName).getValue();
-        String trustStoreType = propertySet.getStringProperty(keyStoreTypePropertyName).getValue();
+        String trustStoreUrl = propertySet.getStringProperty(keyStoreUrlPropertyKey).getValue();
+        String trustStorePassword = propertySet.getStringProperty(keyStorePasswordPropertyKey).getValue();
+        String trustStoreType = propertySet.getStringProperty(keyStoreTypePropertyKey).getValue();
 
         if (StringUtils.isNullOrEmpty(trustStoreUrl)) {
             trustStoreUrl = System.getProperty("javax.net.ssl.trustStore");
             trustStorePassword = System.getProperty("javax.net.ssl.trustStorePassword");
             trustStoreType = System.getProperty("javax.net.ssl.trustStoreType");
             if (StringUtils.isNullOrEmpty(trustStoreType)) {
-                trustStoreType = propertySet.getStringProperty(keyStoreTypePropertyName).getInitialValue();
+                trustStoreType = propertySet.getStringProperty(keyStoreTypePropertyKey).getInitialValue();
             }
             // check URL
             if (!StringUtils.isNullOrEmpty(trustStoreUrl)) {
@@ -235,19 +236,19 @@ public class ExportControlled {
         return new KeyStoreConf(trustStoreUrl, trustStorePassword, trustStoreType);
     }
 
-    private static KeyStoreConf getKeyStoreConf(PropertySet propertySet, String keyStoreUrlPropertyName, String keyStorePasswordPropertyName,
-            String keyStoreTypePropertyName) {
+    private static KeyStoreConf getKeyStoreConf(PropertySet propertySet, PropertyKey keyStoreUrlPropertyKey, PropertyKey keyStorePasswordPropertyKey,
+            PropertyKey keyStoreTypePropertyKey) {
 
-        String keyStoreUrl = propertySet.getStringProperty(keyStoreUrlPropertyName).getValue();
-        String keyStorePassword = propertySet.getStringProperty(keyStorePasswordPropertyName).getValue();
-        String keyStoreType = propertySet.getStringProperty(keyStoreTypePropertyName).getValue();
+        String keyStoreUrl = propertySet.getStringProperty(keyStoreUrlPropertyKey).getValue();
+        String keyStorePassword = propertySet.getStringProperty(keyStorePasswordPropertyKey).getValue();
+        String keyStoreType = propertySet.getStringProperty(keyStoreTypePropertyKey).getValue();
 
         if (StringUtils.isNullOrEmpty(keyStoreUrl)) {
             keyStoreUrl = System.getProperty("javax.net.ssl.keyStore");
             keyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
             keyStoreType = System.getProperty("javax.net.ssl.keyStoreType");
             if (StringUtils.isNullOrEmpty(keyStoreType)) {
-                keyStoreType = propertySet.getStringProperty(keyStoreTypePropertyName).getInitialValue();
+                keyStoreType = propertySet.getStringProperty(keyStoreTypePropertyKey).getInitialValue();
             }
             // check URL
             if (!StringUtils.isNullOrEmpty(keyStoreUrl)) {
@@ -288,15 +289,14 @@ public class ExportControlled {
 
         PropertySet pset = socketConnection.getPropertySet();
 
-        SslMode sslMode = pset.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue();
+        SslMode sslMode = pset.<SslMode> getEnumProperty(PropertyKey.sslMode).getValue();
         boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
 
-        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf()
-                : getTrustStoreConf(pset, PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, PropertyDefinitions.PNAME_trustCertificateKeyStorePassword,
-                        PropertyDefinitions.PNAME_trustCertificateKeyStoreType, verifyServerCert && serverVersion == null);
+        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf() : getTrustStoreConf(pset, PropertyKey.trustCertificateKeyStoreUrl,
+                PropertyKey.trustCertificateKeyStorePassword, PropertyKey.trustCertificateKeyStoreType, verifyServerCert && serverVersion == null);
 
-        KeyStoreConf keyStore = getKeyStoreConf(pset, PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl,
-                PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, PropertyDefinitions.PNAME_clientCertificateKeyStoreType);
+        KeyStoreConf keyStore = getKeyStoreConf(pset, PropertyKey.clientCertificateKeyStoreUrl, PropertyKey.clientCertificateKeyStorePassword,
+                PropertyKey.clientCertificateKeyStoreType);
 
         SSLSocketFactory socketFactory = getSSLContext(keyStore.keyStoreUrl, keyStore.keyStoreType, keyStore.keyStorePassword, trustStore.keyStoreUrl,
                 trustStore.keyStoreType, trustStore.keyStorePassword, serverVersion != null, verifyServerCert,
@@ -616,14 +616,14 @@ public class ExportControlled {
 
         PropertySet propertySet = socketConnection.getPropertySet();
 
-        SslMode sslMode = propertySet.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue();
+        SslMode sslMode = propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).getValue();
 
         boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
-        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf() : getTrustStoreConf(propertySet, PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl,
-                PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, PropertyDefinitions.PNAME_trustCertificateKeyStoreType, true);
+        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf() : getTrustStoreConf(propertySet, PropertyKey.trustCertificateKeyStoreUrl,
+                PropertyKey.trustCertificateKeyStorePassword, PropertyKey.trustCertificateKeyStoreType, true);
 
-        KeyStoreConf keyStore = getKeyStoreConf(propertySet, PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl,
-                PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, PropertyDefinitions.PNAME_clientCertificateKeyStoreType);
+        KeyStoreConf keyStore = getKeyStoreConf(propertySet, PropertyKey.clientCertificateKeyStoreUrl, PropertyKey.clientCertificateKeyStorePassword,
+                PropertyKey.clientCertificateKeyStoreType);
 
         SSLContext sslContext = ExportControlled.getSSLContext(keyStore.keyStoreUrl, keyStore.keyStoreType, keyStore.keyStorePassword, trustStore.keyStoreUrl,
                 trustStore.keyStoreType, trustStore.keyStorePassword, false, verifyServerCert,

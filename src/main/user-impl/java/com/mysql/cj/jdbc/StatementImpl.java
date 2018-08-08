@@ -56,6 +56,7 @@ import com.mysql.cj.SimpleQuery;
 import com.mysql.cj.TransactionEventHandler;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.exceptions.CJException;
@@ -127,7 +128,7 @@ public class StatementImpl implements JdbcStatement {
     protected long lastInsertId = -1;
 
     /** The max field size for this statement */
-    protected int maxFieldSize = (Integer) PropertyDefinitions.getPropertyDefinition(PropertyDefinitions.PNAME_maxAllowedPacket).getDefaultValue();
+    protected int maxFieldSize = (Integer) PropertyDefinitions.getPropertyDefinition(PropertyKey.maxAllowedPacket).getDefaultValue();
 
     /**
      * The maximum number of rows to return for this statement (-1 means _all_
@@ -228,19 +229,19 @@ public class StatementImpl implements JdbcStatement {
 
         JdbcPropertySet pset = c.getPropertySet();
 
-        this.dontTrackOpenResources = pset.getBooleanProperty(PropertyDefinitions.PNAME_dontTrackOpenResources);
-        this.dumpQueriesOnException = pset.getBooleanProperty(PropertyDefinitions.PNAME_dumpQueriesOnException);
-        this.continueBatchOnError = pset.getBooleanProperty(PropertyDefinitions.PNAME_continueBatchOnError).getValue();
-        this.pedantic = pset.getBooleanProperty(PropertyDefinitions.PNAME_pedantic).getValue();
-        this.rewriteBatchedStatements = pset.getBooleanProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements);
-        this.charEncoding = pset.getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
-        this.profileSQL = pset.getBooleanProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
-        this.useUsageAdvisor = pset.getBooleanProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue();
-        this.logSlowQueries = pset.getBooleanProperty(PropertyDefinitions.PNAME_logSlowQueries).getValue();
-        this.maxAllowedPacket = pset.getIntegerProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
-        this.dontCheckOnDuplicateKeyUpdateInSQL = pset.getBooleanProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL).getValue();
-        this.sendFractionalSeconds = pset.getBooleanProperty(PropertyDefinitions.PNAME_sendFractionalSeconds);
-        this.doEscapeProcessing = pset.getBooleanProperty(PropertyDefinitions.PNAME_enableEscapeProcessing).getValue();
+        this.dontTrackOpenResources = pset.getBooleanProperty(PropertyKey.dontTrackOpenResources);
+        this.dumpQueriesOnException = pset.getBooleanProperty(PropertyKey.dumpQueriesOnException);
+        this.continueBatchOnError = pset.getBooleanProperty(PropertyKey.continueBatchOnError).getValue();
+        this.pedantic = pset.getBooleanProperty(PropertyKey.pedantic).getValue();
+        this.rewriteBatchedStatements = pset.getBooleanProperty(PropertyKey.rewriteBatchedStatements);
+        this.charEncoding = pset.getStringProperty(PropertyKey.characterEncoding).getValue();
+        this.profileSQL = pset.getBooleanProperty(PropertyKey.profileSQL).getValue();
+        this.useUsageAdvisor = pset.getBooleanProperty(PropertyKey.useUsageAdvisor).getValue();
+        this.logSlowQueries = pset.getBooleanProperty(PropertyKey.logSlowQueries).getValue();
+        this.maxAllowedPacket = pset.getIntegerProperty(PropertyKey.maxAllowedPacket);
+        this.dontCheckOnDuplicateKeyUpdateInSQL = pset.getBooleanProperty(PropertyKey.dontCheckOnDuplicateKeyUpdateInSQL).getValue();
+        this.sendFractionalSeconds = pset.getBooleanProperty(PropertyKey.sendFractionalSeconds);
+        this.doEscapeProcessing = pset.getBooleanProperty(PropertyKey.enableEscapeProcessing).getValue();
 
         this.maxFieldSize = this.maxAllowedPacket.getValue();
 
@@ -248,7 +249,7 @@ public class StatementImpl implements JdbcStatement {
             c.registerStatement(this);
         }
 
-        int defaultFetchSize = pset.getIntegerProperty(PropertyDefinitions.PNAME_defaultFetchSize).getValue();
+        int defaultFetchSize = pset.getIntegerProperty(PropertyKey.defaultFetchSize).getValue();
         if (defaultFetchSize != 0) {
             setFetchSize(defaultFetchSize);
         }
@@ -264,13 +265,13 @@ public class StatementImpl implements JdbcStatement {
             }
         }
 
-        int maxRowsConn = pset.getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue();
+        int maxRowsConn = pset.getIntegerProperty(PropertyKey.maxRows).getValue();
 
         if (maxRowsConn != -1) {
             setMaxRows(maxRowsConn);
         }
 
-        this.holdResultsOpenOverClose = pset.getBooleanProperty(PropertyDefinitions.PNAME_holdResultsOpenOverStatementClose).getValue();
+        this.holdResultsOpenOverClose = pset.getBooleanProperty(PropertyKey.holdResultsOpenOverStatementClose).getValue();
 
         this.resultSetFactory = new ResultSetFactory(this.connection, this);
     }
@@ -643,8 +644,7 @@ public class StatementImpl implements JdbcStatement {
      *             if a database error occurs
      */
     protected void setupStreamingTimeout(JdbcConnection con) throws SQLException {
-        int netTimeoutForStreamingResults = this.session.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_netTimeoutForStreamingResults)
-                .getValue();
+        int netTimeoutForStreamingResults = this.session.getPropertySet().getIntegerProperty(PropertyKey.netTimeoutForStreamingResults).getValue();
 
         if (createStreamingResultSet() && netTimeoutForStreamingResults > 0) {
             executeSimpleNonQuery(con, "SET net_write_timeout=" + netTimeoutForStreamingResults);
@@ -730,7 +730,7 @@ public class StatementImpl implements JdbcStatement {
                         }
 
                         // Check if we have cached metadata for this query...
-                        if (locallyScopedConn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
+                        if (locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
                             cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
                         }
 
@@ -769,7 +769,7 @@ public class StatementImpl implements JdbcStatement {
                     if (rs.hasRows()) {
                         if (cachedMetaData != null) {
                             locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData, this.results);
-                        } else if (this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
+                        } else if (this.session.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
                             locallyScopedConn.initializeResultsMetadataFromCache(sql, null /* will be created */, this.results);
                         }
                     }
@@ -852,12 +852,10 @@ public class StatementImpl implements JdbcStatement {
 
                         this.batchedGeneratedKeys = new ArrayList<>(batchedArgs.size());
 
-                        boolean multiQueriesEnabled = locallyScopedConn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_allowMultiQueries)
-                                .getValue();
+                        boolean multiQueriesEnabled = locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.allowMultiQueries).getValue();
 
-                        if (multiQueriesEnabled
-                                || (locallyScopedConn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).getValue()
-                                        && nbrCommands > 4)) {
+                        if (multiQueriesEnabled || (locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.rewriteBatchedStatements).getValue()
+                                && nbrCommands > 4)) {
                             return executeBatchUsingMultiQueries(multiQueriesEnabled, nbrCommands, individualStatementTimeout);
                         }
 
@@ -995,7 +993,7 @@ public class StatementImpl implements JdbcStatement {
 
                 int counter = 0;
 
-                String connectionEncoding = locallyScopedConn.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+                String connectionEncoding = locallyScopedConn.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
 
                 int numberOfBytesPerChar = StringUtils.startsWithIgnoreCase(connectionEncoding, "utf") ? 3
                         : (CharsetMapping.isMultibyteCharset(connectionEncoding) ? 2 : 1);
@@ -1177,7 +1175,7 @@ public class StatementImpl implements JdbcStatement {
                 //
                 // Check if we have cached metadata for this query...
                 //
-                if (locallyScopedConn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
+                if (locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
                     cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
                 }
 
@@ -1211,7 +1209,7 @@ public class StatementImpl implements JdbcStatement {
             if (cachedMetaData != null) {
                 locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData, this.results);
             } else {
-                if (this.connection.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
+                if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
                     locallyScopedConn.initializeResultsMetadataFromCache(sql, null /* will be created */, this.results);
                 }
             }
@@ -2006,7 +2004,7 @@ public class StatementImpl implements JdbcStatement {
 
     private boolean useServerFetch() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            return this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue() && this.query.getResultFetchSize() > 0
+            return this.session.getPropertySet().getBooleanProperty(PropertyKey.useCursorFetch).getValue() && this.query.getResultFetchSize() > 0
                     && this.query.getResultType() == Type.FORWARD_ONLY;
         }
     }

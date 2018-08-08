@@ -62,8 +62,6 @@ public class Util {
 
     private static int jvmUpdateNumber = -1;
 
-    private static boolean isColdFusion = false;
-
     static {
         int startPos = Constants.JVM_VERSION.indexOf('.');
         int endPos = startPos + 1;
@@ -88,19 +86,6 @@ public class Util {
             jvmUpdateNumber = Integer.parseInt(Constants.JVM_VERSION.substring(startPos, endPos));
         }
 
-        //
-        // Detect the ColdFusion MX environment
-        // 
-        // Unfortunately, no easy-to-discern classes are available to our classloader to check...
-        //
-
-        String loadedFrom = stackTraceToString(new Throwable());
-
-        if (loadedFrom != null) {
-            isColdFusion = loadedFrom.indexOf("coldfusion") != -1;
-        } else {
-            isColdFusion = false;
-        }
     }
 
     public static int getJVMVersion() {
@@ -113,10 +98,6 @@ public class Util {
 
     public static int getJVMUpdateNumber() {
         return jvmUpdateNumber;
-    }
-
-    public static boolean isColdFusion() {
-        return isColdFusion;
     }
 
     /**

@@ -49,7 +49,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -332,7 +332,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
                 boolean useLength = this.useStreamLengthsInPrepStmts.getValue();
 
-                String forcedEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
+                String forcedEncoding = this.session.getPropertySet().getStringProperty(PropertyKey.clobCharacterEncoding).getStringValue();
 
                 if (useLength && (length != -1)) {
                     c = new char[length];
@@ -390,7 +390,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
             setNull(i);
         } else {
             try {
-                String forcedEncoding = this.session.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_clobCharacterEncoding).getStringValue();
+                String forcedEncoding = this.session.getPropertySet().getStringProperty(PropertyKey.clobCharacterEncoding).getStringValue();
 
                 if (forcedEncoding == null) {
                     setString(i, x.getSubString(1L, (int) x.length()));
@@ -422,7 +422,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
     @Override
     public void setDouble(int parameterIndex, double x) {
-        if (!this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue()
+        if (!this.session.getPropertySet().getBooleanProperty(PropertyKey.allowNanAndInf).getValue()
                 && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("PreparedStatement.64", new Object[] { x }),
                     this.session.getExceptionInterceptor());

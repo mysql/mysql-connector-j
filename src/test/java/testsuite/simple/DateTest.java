@@ -41,7 +41,7 @@ import java.util.Calendar;
 import java.util.Properties;
 import java.util.TimeZone;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.util.TimeUtil;
 
@@ -187,12 +187,12 @@ public class DateTest extends BaseTestCase {
         try {
             if (versionMeetsMinimum(5, 7, 4)) {
                 Properties props = new Properties();
-                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+                props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
                 if (versionMeetsMinimum(5, 7, 5)) {
                     String sqlMode = getMysqlVariable("sql_mode");
                     if (sqlMode.contains("STRICT_TRANS_TABLES")) {
                         sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                        props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode='" + sqlMode + "'");
                     }
                 }
                 testConn = getConnectionWithProps(props);

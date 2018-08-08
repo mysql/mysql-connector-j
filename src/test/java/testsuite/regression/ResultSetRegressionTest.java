@@ -83,6 +83,7 @@ import javax.sql.rowset.CachedRowSet;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.ExceptionInterceptorChain;
@@ -297,7 +298,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testClobberStreamingRS() throws Exception {
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_clobberStreamingResults, "true");
+            props.setProperty(PropertyKey.clobberStreamingResults.getKeyName(), "true");
 
             Connection clobberConn = getConnectionWithProps(props);
 
@@ -621,7 +622,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testUpdatabilityAndEscaping() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "big5");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "big5");
 
         Connection updConn = getConnectionWithProps(props);
         Statement updStmt = updConn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
@@ -1110,7 +1111,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
 
-        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "SJIS");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "SJIS");
 
         Connection sjisConn = null;
         Statement sjisStmt = null;
@@ -1167,12 +1168,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             if (versionMeetsMinimum(5, 7, 4)) {
                 Properties props = new Properties();
-                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+                props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
                 if (versionMeetsMinimum(5, 7, 5)) {
                     String sqlMode = getMysqlVariable("sql_mode");
                     if (sqlMode.contains("STRICT_TRANS_TABLES")) {
                         sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                        props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode='" + sqlMode + "'");
                     }
                 }
                 testConn = getConnectionWithProps(props);
@@ -1269,9 +1270,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.stmt.executeUpdate("INSERT INTO testBug8428 VALUES ('1999', '2005-02-11 12:54:41')");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_noDatetimeStringSync, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useUsageAdvisor, "true");
-        props.setProperty(PropertyDefinitions.PNAME_yearIsDateType, "false");
+        props.setProperty(PropertyKey.noDatetimeStringSync.getKeyName(), "true");
+        props.setProperty(PropertyKey.useUsageAdvisor.getKeyName(), "true");
+        props.setProperty(PropertyKey.yearIsDateType.getKeyName(), "false");
 
         noSyncConn = getConnectionWithProps(props);
 
@@ -1334,12 +1335,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             if (versionMeetsMinimum(5, 7, 4)) {
                 Properties props = new Properties();
-                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+                props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
                 if (versionMeetsMinimum(5, 7, 5)) {
                     String sqlMode = getMysqlVariable("sql_mode");
                     if (sqlMode.contains("STRICT_TRANS_TABLES")) {
                         sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                        props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode='" + sqlMode + "'");
                     }
                 }
                 testConn = getConnectionWithProps(props);
@@ -1624,7 +1625,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
+            props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
 
             infoSchemConn = getConnectionWithProps(props);
 
@@ -1650,7 +1651,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug15604() throws Exception {
         createTable("testBug15604_date_cal", "(field1 DATE)");
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "time_zone='America/Chicago'");
+        props.setProperty(PropertyKey.sessionVariables.getKeyName(), "time_zone='America/Chicago'");
 
         Connection nonLegacyConn = getConnectionWithProps(props);
 
@@ -1884,7 +1885,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Statement updStmt = null;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode=ansi");
+        props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode=ansi");
 
         try {
             ansiConn = getConnectionWithProps(props);
@@ -2006,7 +2007,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Connection advisorConn = null;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useUsageAdvisor, "true");
+        props.setProperty(PropertyKey.useUsageAdvisor.getKeyName(), "true");
 
         advisorConn = getConnectionWithProps(props);
         this.pstmt = advisorConn.prepareStatement("SELECT 1");
@@ -2017,8 +2018,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     public void testAllTypesForNull() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
-        props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "ROUND");
+        props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
+        props.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "ROUND");
         Connection conn2 = getConnectionWithProps(props);
         Statement stmt2 = conn2.createStatement();
 
@@ -2314,7 +2315,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         //
 
         props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero, "false");
+        props.setProperty(PropertyKey.emptyStringsConvertToZero.getKeyName(), "false");
 
         Connection pedanticConn = getConnectionWithProps(props);
         Statement pedanticStmt = pedanticConn.createStatement();
@@ -2329,7 +2330,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         checkEmptyConvertToZeroException();
 
         props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_emptyStringsConvertToZero, "false");
+        props.setProperty(PropertyKey.emptyStringsConvertToZero.getKeyName(), "false");
 
         pedanticConn = getConnectionWithProps(props);
         pedanticStmt = pedanticConn.createStatement();
@@ -2439,7 +2440,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(newYears2005.toString(), this.rs.getString(1));
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_yearIsDateType, "false");
+        props.setProperty(PropertyKey.yearIsDateType.getKeyName(), "false");
 
         Connection yearShortConn = getConnectionWithProps(props);
         this.rs = yearShortConn.createStatement().executeQuery("SELECT field1 FROM " + tableName);
@@ -2892,7 +2893,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior, "true");
+            props.setProperty(PropertyKey.useOldAliasMetadataBehavior.getKeyName(), "true");
             legacyConn = getConnectionWithProps(props);
             legacyStmt = legacyConn.createStatement();
 
@@ -3001,8 +3002,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
-            props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+            props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
 
             fetchConn = getConnectionWithProps(props);
             fetchStmt = fetchConn.createStatement();
@@ -3096,8 +3097,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Connection deserializeConn = null;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_autoDeserialize, "true");
-        props.setProperty(PropertyDefinitions.PNAME_treatUtilDateAsTimestamp, "false");
+        props.setProperty(PropertyKey.autoDeserialize.getKeyName(), "true");
+        props.setProperty(PropertyKey.treatUtilDateAsTimestamp.getKeyName(), "false");
 
         deserializeConn = getConnectionWithProps(props);
 
@@ -3115,7 +3116,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     public void testTruncationDisable() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+        props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
         Connection truncConn = null;
 
         truncConn = getConnectionWithProps(props);
@@ -3131,7 +3132,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useUsageAdvisor, "true");
+            props.setProperty(PropertyKey.useUsageAdvisor.getKeyName(), "true");
 
             advisorConn = getConnectionWithProps(props);
 
@@ -3155,8 +3156,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
             advisorConn.close();
 
-            props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+            props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
 
             advisorConn = getConnectionWithProps(props);
 
@@ -3230,10 +3231,10 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Statement stmtRead = null;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
 
         try {
 
@@ -3445,7 +3446,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     public void testBug24886() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_blobsAreStrings, "true");
+        props.setProperty(PropertyKey.blobsAreStrings.getKeyName(), "true");
 
         Connection noBlobConn = getConnectionWithProps(props);
 
@@ -3458,7 +3459,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals("java.lang.String", this.rs.getObject(1).getClass().getName());
 
         props.clear();
-        props.setProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs, "true");
+        props.setProperty(PropertyKey.functionsNeverReturnBlobs.getKeyName(), "true");
         noBlobConn = getConnectionWithProps(props);
         this.rs = noBlobConn.createStatement()
                 .executeQuery("SELECT concat(Class,petallength), COUNT(*) FROM `testBug24886` GROUP BY `concat(Class,petallength)`");
@@ -3782,7 +3783,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug38387() throws Exception {
         Connection noBlobConn = null;
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_functionsNeverReturnBlobs, "true");// toggle, no change
+        props.setProperty(PropertyKey.functionsNeverReturnBlobs.getKeyName(), "true");// toggle, no change
         noBlobConn = getConnectionWithProps(props);
         try {
             Statement noBlobStmt = noBlobConn.createStatement();
@@ -3972,12 +3973,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             if (versionMeetsMinimum(5, 7, 4)) {
                 Properties props = new Properties();
-                props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+                props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
                 if (versionMeetsMinimum(5, 7, 5)) {
                     String sqlMode = getMysqlVariable("sql_mode");
                     if (sqlMode.contains("STRICT_TRANS_TABLES")) {
                         sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                        props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode='" + sqlMode + "'");
                     }
                 }
                 testConn = getConnectionWithProps(props);
@@ -4089,7 +4090,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs.close();
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         Connection sspsCon = getConnectionWithProps(props);
         PreparedStatement ssPStmt = sspsCon.prepareStatement("select repeat('Z', 3000), now() + interval 1 microsecond");
         this.rs = ssPStmt.executeQuery();
@@ -4143,7 +4144,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug64204() throws Exception {
         final Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_socketTimeout, "30000");
+        props.setProperty(PropertyKey.socketTimeout.getKeyName(), "30000");
 
         this.conn = getConnectionWithProps(props);
         this.conn.setCatalog("information_schema");
@@ -4281,8 +4282,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug67318() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
-        props.setProperty(PropertyDefinitions.PNAME_exceptionInterceptors, "testsuite.regression.ResultSetRegressionTest$TestBug67318ExceptionInterceptor");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        props.setProperty(PropertyKey.exceptionInterceptors.getKeyName(), "testsuite.regression.ResultSetRegressionTest$TestBug67318ExceptionInterceptor");
 
         Connection c = null;
         try {
@@ -4674,9 +4675,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
             sqlMode = removeSqlMode("NO_ZERO_DATE", sqlMode);
             props.put("sessionVariables", "sql_mode='" + sqlMode + "'");
         }
-        props.setProperty(PropertyDefinitions.PNAME_traceProtocol, "false");
-        props.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "5");
-        props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
+        props.setProperty(PropertyKey.traceProtocol.getKeyName(), "false");
+        props.setProperty(PropertyKey.defaultFetchSize.getKeyName(), "5");
+        props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
         Statement testStmt = testConn.createStatement();
 
@@ -5028,7 +5029,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             // Test result set from prepared statements
             testCase = String.format("Case [useSPS: %s, StmtType: %s]", useServerPrepStmts ? "Y" : "N", "PrepStmt");
 
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerPrepStmts));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useServerPrepStmts));
             testConn = getConnectionWithProps(props);
             this.pstmt = testConn.prepareStatement("SELECT b1, b1 + 0, BIN(b1), b2, b2 + 0, BIN(b2), b3, b3 + 0, BIN(b3) FROM testBug78685");
             this.rs = this.pstmt.executeQuery();
@@ -5172,12 +5173,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
         createProcedure("testBug80631SELECT", "() BEGIN SELECT * FROM testBug80631; END;");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
 
         boolean useSPS = false;
         do {
             final String testCase = String.format("Case: [SPS: %s]", useSPS ? "Y" : "N");
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "" + useSPS);
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSPS);
             final Connection testConn = getConnectionWithProps(props);
 
             // Insert and select using a Statement.
@@ -5243,9 +5244,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         String[] docs = new String[] { "{\"key10\": \"value10\"}", "{\"key2\": \"value2\"}", "{\"key3\": \"value3\"}" };
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
 
         Statement testStmt = testConn.createStatement();
@@ -5366,7 +5367,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"));
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_serverTimezone, "Europe/Berlin");
+            props.setProperty(PropertyKey.serverTimezone.getKeyName(), "Europe/Berlin");
 
             ResultSet rs1 = getConnectionWithProps(props).createStatement().executeQuery("SELECT '2016-03-27 02:15:00'");
             assertTrue(rs1.next());
@@ -5382,7 +5383,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             });
 
             // checking with ZeroDateTimeToNullValueFactory decorator
-            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "CONVERT_TO_NULL");
+            props.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "CONVERT_TO_NULL");
             this.rs = getConnectionWithProps(props).createStatement().executeQuery("SELECT '0000-00-00 00:00:00'");
             assertTrue(this.rs.next());
             assertNull(this.rs.getObject(1, LocalDate.class));
@@ -5391,7 +5392,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertFalse(this.rs.next());
 
             // checking with ZeroDateTimeToDefaultValueFactory decorator
-            props.setProperty(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "ROUND");
+            props.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "ROUND");
             this.rs = getConnectionWithProps(props).createStatement().executeQuery("SELECT '0000-00-00 00:00:00'");
             assertTrue(this.rs.next());
             assertEquals(LocalDate.of(1, 1, 1), this.rs.getObject(1, LocalDate.class));
@@ -5678,10 +5679,10 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.stmt.execute("insert into testBug24527173 (a) values (101),(102),(103),(104)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
-        props.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "2");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
+        props.setProperty(PropertyKey.defaultFetchSize.getKeyName(), "2");
         Connection con = getConnectionWithProps(props);
 
         PreparedStatement ps = con.prepareStatement("select * from testBug24527173");
@@ -5820,8 +5821,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         // test 1 - OK
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         Connection conn1 = getConnectionWithProps(props);
         PreparedStatement pstm1 = conn1.prepareStatement("select id, val_one, val_blob, val_three from testBug25215008 where val_one = ?");
         pstm1.setString(1, VALUE_ONE);
@@ -5836,7 +5837,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         // then test with useServerPrepStmts=true
 
         // - test 2 - OK
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         Connection conn2 = getConnectionWithProps(props);
         PreparedStatement pstm2 = conn2.prepareStatement("select id, val_one, val_three from testBug25215008 where val_one = ?"); // let's not request val_blob for now
         pstm2.setString(1, VALUE_ONE);
@@ -6045,8 +6046,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Connection testConn;
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         testConn = getConnectionWithProps(props);
         this.rs = testConn.createStatement().executeQuery("SELECT * FROM testBug25650305");
         this.rs.next();
@@ -6084,8 +6085,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         long expected2 = 8 * 60 * 60 * 1000 + 59 * 60 * 1000 + 59 * 1000 + 10; // '8:59:59.01' in milliseconds
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
 
         PreparedStatement ps = testConn.prepareStatement("select * from testBug26750705", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
@@ -6130,7 +6131,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(3, getRowCount("testBug26266731"));
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
         Connection c = getConnectionWithProps(props);
 
         this.pstmt = c.prepareStatement("SELECT * FROM testBug26266731 order by c1", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
@@ -6175,14 +6176,14 @@ public class ResultSetRegressionTest extends BaseTestCase {
         /* Test from bug report */
         Connection testConn2;
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
-        props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, "false");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "false");
 
         for (String serverTimezone : new String[] { null, "GMT", "Asia/Calcutta" }) {
             System.out.println("serverTimezone=" + serverTimezone);
             if (serverTimezone != null) {
-                props.setProperty(PropertyDefinitions.PNAME_serverTimezone, serverTimezone);
+                props.setProperty(PropertyKey.serverTimezone.getKeyName(), serverTimezone);
             }
             testConn2 = getConnectionWithProps(props);
 
@@ -6333,9 +6334,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
             }
             for (String serverTimezone : new String[] { null, "GMT", "Asia/Calcutta" }) {
                 if (serverTimezone != null) {
-                    props.setProperty(PropertyDefinitions.PNAME_serverTimezone, serverTimezone);
+                    props.setProperty(PropertyKey.serverTimezone.getKeyName(), serverTimezone);
                 } else {
-                    props.remove(PropertyDefinitions.PNAME_serverTimezone);
+                    props.remove(PropertyKey.serverTimezone);
                 }
 
                 final String testCase = String.format("Case: [TIME_TRUNCATE_FRACTIONAL=%s, sendFractionalSeconds=%s, useServerPrepStmts=%s,",
@@ -6351,9 +6352,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     sqlMode += "TIME_TRUNCATE_FRACTIONAL";
                 }
 
-                props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
-                props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, "" + sendFractionalSeconds);
-                props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "" + useServerPrepStmts);
+                props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode='" + sqlMode + "'");
+                props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
+                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useServerPrepStmts);
 
                 testConn = getConnectionWithProps(props);
 
@@ -6437,8 +6438,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug80532() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         for (String enc : new String[] { "ISO8859_1", "UTF-8" }) {
             for (String useSSPS : new String[] { "false", "true" }) {
@@ -6448,8 +6449,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 createTable("testBug80532", "(id char(50) NOT NULL, data longtext, num int, PRIMARY KEY (id,num)) CHARACTER SET "
                         + (versionMeetsMinimum(5, 5) ? "utf8mb4" : "utf8"));
 
-                props.setProperty(PropertyDefinitions.PNAME_characterEncoding, enc);
-                props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, useSSPS);
+                props.setProperty(PropertyKey.characterEncoding.getKeyName(), enc);
+                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), useSSPS);
 
                 Connection c1 = getConnectionWithProps(props);
 
@@ -6515,8 +6516,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         createTable("testBug72609", "(d date, pd date, dt datetime, pdt datetime)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         boolean sendFractionalSeconds = false;
         boolean useServerPrepStmts = false;
@@ -6526,8 +6527,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     useServerPrepStmts ? "Y" : "N");
             System.out.println(testCase);
 
-            props.setProperty(PropertyDefinitions.PNAME_sendFractionalSeconds, "" + sendFractionalSeconds);
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "" + useServerPrepStmts);
+            props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useServerPrepStmts);
 
             Connection c1 = getConnectionWithProps(props);
             Statement st1 = c1.createStatement();

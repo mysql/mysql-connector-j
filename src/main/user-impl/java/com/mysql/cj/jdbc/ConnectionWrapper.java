@@ -50,7 +50,7 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.Session;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -551,8 +551,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
                 return;
             }
 
-            if (!isInGlobalTx() && this.mc.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_rollbackOnPooledClose).getValue()
-                    && !this.getAutoCommit()) {
+            if (!isInGlobalTx() && this.mc.getPropertySet().getBooleanProperty(PropertyKey.rollbackOnPooledClose).getValue() && !this.getAutoCommit()) {
                 rollback();
             }
 

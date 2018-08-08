@@ -38,7 +38,7 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 
 public class SuspendableXAConnection extends MysqlPooledConnection implements XAConnection, XAResource {
 
@@ -68,8 +68,7 @@ public class SuspendableXAConnection extends MysqlPooledConnection implements XA
         XAConnection conn = XIDS_TO_PHYSICAL_CONNECTIONS.get(xid);
 
         if (conn == null) {
-            conn = new MysqlXAConnection(connectionToWrap,
-                    connectionToWrap.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_logXaCommands).getValue());
+            conn = new MysqlXAConnection(connectionToWrap, connectionToWrap.getPropertySet().getBooleanProperty(PropertyKey.logXaCommands).getValue());
             XIDS_TO_PHYSICAL_CONNECTIONS.put(xid, conn);
         }
 

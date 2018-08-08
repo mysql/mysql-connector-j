@@ -40,7 +40,7 @@ import java.util.Map;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.ServerVersion;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.ResultSetFactory;
@@ -606,7 +606,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" END AS PROCEDURE_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES");
 
         StringBuilder conditionBuf = new StringBuilder();
-        if (!this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue()) {
+        if (!this.conn.getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue()) {
             conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'");
         }
         if (catalog != null) {
@@ -722,7 +722,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" FROM INFORMATION_SCHEMA.PARAMETERS");
 
         StringBuilder conditionBuf = new StringBuilder();
-        if (!this.conn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_getProceduresReturnsFunctions).getValue()) {
+        if (!this.conn.getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue()) {
             conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'");
         }
         if (catalog != null) {

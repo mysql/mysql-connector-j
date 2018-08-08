@@ -37,6 +37,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
 
     private static final long serialVersionUID = 2696624840927848766L;
 
+    private PropertyKey key = null;
     private String name;
     private String ccAlias;
     private T defaultValue;
@@ -62,9 +63,23 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.setOrder(orderInCategory);
     }
 
-    public AbstractPropertyDefinition(String name, String alias, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
-            String category, int orderInCategory, int lowerBound, int upperBound) {
-        this(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+    public AbstractPropertyDefinition(PropertyKey key, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
+            int orderInCategory) {
+
+        this.key = key;
+        this.name = key.getKeyName();
+        this.ccAlias = key.getCcAlias();
+        this.setDefaultValue(defaultValue);
+        this.setRuntimeModifiable(isRuntimeModifiable);
+        this.setDescription(description);
+        this.setSinceVersion(sinceVersion);
+        this.setCategory(category);
+        this.setOrder(orderInCategory);
+    }
+
+    public AbstractPropertyDefinition(PropertyKey key, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
+            int orderInCategory, int lowerBound, int upperBound) {
+        this(key, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
         this.setLowerBound(lowerBound);
         this.setUpperBound(upperBound);
     }
@@ -75,6 +90,11 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
 
     public boolean isRangeBased() {
         return false;
+    }
+
+    @Override
+    public PropertyKey getPropertyKey() {
+        return this.key;
     }
 
     public String getName() {

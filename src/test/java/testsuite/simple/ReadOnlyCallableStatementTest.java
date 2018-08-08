@@ -34,7 +34,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 
 import testsuite.BaseTestCase;
 
@@ -46,7 +46,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
     public void testReadOnlyWithProcBodyAccess() throws Exception {
         Connection replConn = null;
         Properties props = getHostFreePropertiesFromTestsuiteUrl();
-        props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
+        props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
 
         try {
             createProcedure("testProc1", "()\nREADS SQL DATA\nbegin\nSELECT NOW();\nend\n");
@@ -77,7 +77,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
     public void testNotReadOnlyWithProcBodyAccess() throws Exception {
         Connection replConn = null;
         Properties props = getHostFreePropertiesFromTestsuiteUrl();
-        props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
+        props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
 
         try {
             createProcedure("testProc2", "()\nMODIFIES SQL DATA\nbegin\nSELECT NOW();\nend\n");

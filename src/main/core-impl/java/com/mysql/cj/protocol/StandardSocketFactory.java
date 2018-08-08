@@ -35,10 +35,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Properties;
 
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
 
 /**
  * Socket factory for vanilla TCP/IP sockets (the standard)
@@ -73,7 +73,7 @@ public class StandardSocketFactory implements SocketFactory {
      *            properties available to affect behaviour during socket creation.
      * @return socket
      */
-    protected Socket createSocket(Properties props) {
+    protected Socket createSocket(PropertySet props) {
         return new Socket();
     }
 
@@ -83,68 +83,50 @@ public class StandardSocketFactory implements SocketFactory {
      * 
      * @param sock
      *            socket
-     * @param props
+     * @param pset
      *            properties
      * @throws SocketException
      *             if an error occurs
      * @throws IOException
      *             if an error occurs
      */
-    private void configureSocket(Socket sock, Properties props) throws SocketException, IOException {
-        sock.setTcpNoDelay(Boolean.valueOf(props.getProperty(PropertyDefinitions.PNAME_tcpNoDelay, TCP_NO_DELAY_DEFAULT_VALUE)).booleanValue());
+    private void configureSocket(Socket sock, PropertySet pset) throws SocketException, IOException {
+        sock.setTcpNoDelay(pset.getBooleanProperty(PropertyKey.tcpNoDelay).getValue());
+        sock.setKeepAlive(pset.getBooleanProperty(PropertyKey.tcpKeepAlive).getValue());
 
-        String keepAlive = props.getProperty(PropertyDefinitions.PNAME_tcpKeepAlive, TCP_KEEP_ALIVE_DEFAULT_VALUE);
-
-        if (keepAlive != null && keepAlive.length() > 0) {
-            sock.setKeepAlive(Boolean.valueOf(keepAlive).booleanValue());
-        }
-
-        int receiveBufferSize = Integer.parseInt(props.getProperty(PropertyDefinitions.PNAME_tcpRcvBuf, TCP_RCV_BUF_DEFAULT_VALUE));
-
+        int receiveBufferSize = pset.getIntegerProperty(PropertyKey.tcpRcvBuf).getValue();
         if (receiveBufferSize > 0) {
             sock.setReceiveBufferSize(receiveBufferSize);
         }
 
-        int sendBufferSize = Integer.parseInt(props.getProperty(PropertyDefinitions.PNAME_tcpSndBuf, TCP_SND_BUF_DEFAULT_VALUE));
-
+        int sendBufferSize = pset.getIntegerProperty(PropertyKey.tcpSndBuf).getValue();
         if (sendBufferSize > 0) {
             sock.setSendBufferSize(sendBufferSize);
         }
 
-        int trafficClass = Integer.parseInt(props.getProperty(PropertyDefinitions.PNAME_tcpTrafficClass, TCP_TRAFFIC_CLASS_DEFAULT_VALUE));
-
+        int trafficClass = pset.getIntegerProperty(PropertyKey.tcpTrafficClass).getValue();
         if (trafficClass > 0) {
             sock.setTrafficClass(trafficClass);
         }
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Closeable> T connect(String hostname, int portNumber, Properties props, int loginTimeout) throws IOException {
+    public <T extends Closeable> T connect(String hostname, int portNumber, PropertySet pset, int loginTimeout) throws IOException {
 
         this.loginTimeoutCountdown = loginTimeout;
 
-        if (props != null) {
+        if (pset != null) {
             this.host = hostname;
 
             this.port = portNumber;
 
-            String localSocketHostname = props.getProperty(PropertyDefinitions.PNAME_localSocketAddress);
+            String localSocketHostname = pset.getStringProperty(PropertyKey.localSocketAddress).getValue();
             InetSocketAddress localSockAddr = null;
             if (localSocketHostname != null && localSocketHostname.length() > 0) {
                 localSockAddr = new InetSocketAddress(InetAddress.getByName(localSocketHostname), 0);
             }
 
-            String connectTimeoutStr = props.getProperty(PropertyDefinitions.PNAME_connectTimeout);
-
-            int connectTimeout = 0;
-
-            if (connectTimeoutStr != null) {
-                try {
-                    connectTimeout = Integer.parseInt(connectTimeoutStr);
-                } catch (NumberFormatException nfe) {
-                    throw new SocketException("Illegal value '" + connectTimeoutStr + "' for connectTimeout");
-                }
-            }
+            int connectTimeout = pset.getIntegerProperty(PropertyKey.connectTimeout).getValue();
 
             if (this.host != null) {
                 InetAddress[] possibleAddresses = InetAddress.getAllByName(this.host);
@@ -160,9 +142,9 @@ public class StandardSocketFactory implements SocketFactory {
                 // MySQL don't listen on the IPv6 address so we try all addresses.
                 for (int i = 0; i < possibleAddresses.length; i++) {
                     try {
-                        this.rawSocket = createSocket(props);
+                        this.rawSocket = createSocket(pset);
 
-                        configureSocket(this.rawSocket, props);
+                        configureSocket(this.rawSocket, pset);
 
                         InetSocketAddress sockAddr = new InetSocketAddress(possibleAddresses[i], this.port);
                         // bind to the local port if not using the ephemeral port

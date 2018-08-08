@@ -46,7 +46,7 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.conf.AbstractRuntimeProperty;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 
 /**
@@ -183,6 +183,15 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
     }
 
     /**
+     * Get the password.
+     * 
+     * @return password
+     */
+    public String getPassword() {
+        return this.password;
+    }
+
+    /**
      * Sets the database port.
      * 
      * @param p
@@ -231,8 +240,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      *             if error occurs
      */
     public void setPropertiesViaRef(Reference ref) throws SQLException {
-        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            RuntimeProperty<?> propToSet = getProperty(propName);
+        for (PropertyKey propKey : PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.keySet()) {
+            RuntimeProperty<?> propToSet = getProperty(propKey);
 
             if (ref != null) {
                 propToSet.initializeFrom(ref, null);
@@ -265,8 +274,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         //
         // Now store all of the 'non-standard' properties...
         //
-        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            RuntimeProperty<?> propToStore = getProperty(propName);
+        for (PropertyKey propKey : PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.keySet()) {
+            RuntimeProperty<?> propToStore = getProperty(propKey);
 
             String val = propToStore.getStringValue();
             if (val != null) {
@@ -574,8 +583,8 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
     public Properties exposeAsProperties() {
         Properties props = new Properties();
 
-        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            RuntimeProperty<?> propToGet = getProperty(propName);
+        for (PropertyKey propKey : PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.keySet()) {
+            RuntimeProperty<?> propToGet = getProperty(propKey);
 
             String propValue = propToGet.getStringValue();
 

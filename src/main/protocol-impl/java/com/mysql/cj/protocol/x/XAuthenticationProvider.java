@@ -33,8 +33,8 @@ import java.nio.channels.ClosedChannelException;
 import java.util.Arrays;
 import java.util.List;
 
-import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.AuthMech;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJCommunicationsException;
@@ -65,7 +65,7 @@ public class XAuthenticationProvider implements AuthenticationProvider<XMessage>
     @Override
     public void changeUser(ServerSession serverSession, String userName, String password, String database) {
         boolean overTLS = ((XServerCapabilities) this.protocol.getServerSession().getCapabilities()).getTls();
-        RuntimeProperty<AuthMech> authMechProp = this.protocol.getPropertySet().<AuthMech> getEnumProperty(PropertyDefinitions.PNAME_xdevapi_auth);
+        RuntimeProperty<AuthMech> authMechProp = this.protocol.getPropertySet().<AuthMech> getEnumProperty(PropertyKey.xdevapiAuth);
         List<AuthMech> tryAuthMech;
         if (overTLS || authMechProp.isExplicitlySet()) {
             tryAuthMech = Arrays.asList(authMechProp.getValue());

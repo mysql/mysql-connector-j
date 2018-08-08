@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.CJTimeoutException;
@@ -99,10 +99,10 @@ public abstract class AbstractQuery implements Query {
     public AbstractQuery(NativeSession sess) {
         statementCounter++;
         this.session = sess;
-        this.profileSQL = sess.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_profileSQL).getValue();
-        this.maxAllowedPacket = sess.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxAllowedPacket);
-        this.charEncoding = sess.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
-        this.useCursorFetch = sess.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue();
+        this.profileSQL = sess.getPropertySet().getBooleanProperty(PropertyKey.profileSQL).getValue();
+        this.maxAllowedPacket = sess.getPropertySet().getIntegerProperty(PropertyKey.maxAllowedPacket);
+        this.charEncoding = sess.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
+        this.useCursorFetch = sess.getPropertySet().getBooleanProperty(PropertyKey.useCursorFetch).getValue();
     }
 
     @Override
@@ -197,7 +197,7 @@ public abstract class AbstractQuery implements Query {
     }
 
     public CancelQueryTask startQueryTimer(Query stmtToCancel, int timeout) {
-        if (this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_enableQueryTimeouts).getValue() && timeout != 0) {
+        if (this.session.getPropertySet().getBooleanProperty(PropertyKey.enableQueryTimeouts).getValue() && timeout != 0) {
             CancelQueryTaskImpl timeoutTask = new CancelQueryTaskImpl(stmtToCancel);
             this.session.getCancelTimer().schedule(timeoutTask, timeout);
             return timeoutTask;

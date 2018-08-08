@@ -43,7 +43,7 @@ import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.AuthMech;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XMessageBuilder;
@@ -133,7 +133,7 @@ public class InternalXBaseTestCase {
         XProtocol protocol = createTestProtocol();
         XMessageBuilder messageBuilder = (XMessageBuilder) protocol.getMessageBuilder();
 
-        AuthMech authMech = protocol.getPropertySet().<AuthMech> getEnumProperty(PropertyDefinitions.PNAME_xdevapi_auth).getValue();
+        AuthMech authMech = protocol.getPropertySet().<AuthMech> getEnumProperty(PropertyKey.xdevapiAuth).getValue();
         boolean overTLS = ((XServerCapabilities) protocol.getServerSession().getCapabilities()).getTls();
 
         // Choose the best default auth mechanism.

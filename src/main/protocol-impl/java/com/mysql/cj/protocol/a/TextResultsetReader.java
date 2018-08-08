@@ -32,7 +32,7 @@ package com.mysql.cj.protocol.a;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.ProtocolEntityReader;
@@ -102,7 +102,7 @@ public class TextResultsetReader implements ProtocolEntityReader<Resultset, Nati
         } else {
             // check for file request
             if (columnCount == NativePacketPayload.NULL_LENGTH) {
-                String charEncoding = this.protocol.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+                String charEncoding = this.protocol.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
                 String fileName = resultPacket.readString(StringSelfDataType.STRING_TERM, this.protocol.doesPlatformDbCharsetMatches() ? charEncoding : null);
                 resultPacket = this.protocol.sendFileToServer(fileName);
             }

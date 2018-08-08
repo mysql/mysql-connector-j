@@ -29,9 +29,6 @@
 
 package com.mysql.cj.conf.url;
 
-import static com.mysql.cj.conf.PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold;
-import static com.mysql.cj.conf.PropertyDefinitions.PNAME_queryInterceptors;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +38,7 @@ import java.util.stream.Collectors;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.HostInfo;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.util.StringUtils;
 
 public class LoadbalanceConnectionUrl extends ConnectionUrl {
@@ -97,16 +95,16 @@ public class LoadbalanceConnectionUrl extends ConnectionUrl {
      */
     @Override
     protected void injectPerTypeProperties(Map<String, String> props) {
-        if (props.containsKey(PNAME_loadBalanceAutoCommitStatementThreshold)) {
+        if (props.containsKey(PropertyKey.loadBalanceAutoCommitStatementThreshold.getKeyName())) {
             try {
-                int autoCommitSwapThreshold = Integer.parseInt(props.get(PNAME_loadBalanceAutoCommitStatementThreshold));
+                int autoCommitSwapThreshold = Integer.parseInt(props.get(PropertyKey.loadBalanceAutoCommitStatementThreshold.getKeyName()));
                 if (autoCommitSwapThreshold > 0) {
-                    String queryInterceptors = props.get(PNAME_queryInterceptors);
+                    String queryInterceptors = props.get(PropertyKey.queryInterceptors.getKeyName());
                     String lbi = "com.mysql.cj.jdbc.ha.LoadBalancedAutoCommitInterceptor";
                     if (StringUtils.isNullOrEmpty(queryInterceptors)) {
-                        props.put(PNAME_queryInterceptors, lbi);
+                        props.put(PropertyKey.queryInterceptors.getKeyName(), lbi);
                     } else {
-                        props.put(PNAME_queryInterceptors, queryInterceptors + "," + lbi);
+                        props.put(PropertyKey.queryInterceptors.getKeyName(), queryInterceptors + "," + lbi);
                     }
                 }
             } catch (Throwable t) {

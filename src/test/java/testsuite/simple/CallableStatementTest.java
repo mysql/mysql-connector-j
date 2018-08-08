@@ -56,7 +56,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.CallableStatementWrapper;
 import com.mysql.cj.jdbc.ConnectionWrapper;
@@ -346,7 +346,7 @@ public class CallableStatementTest extends BaseTestCase {
         assertTrue(this.rs.getInt(1) == 1);
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_cacheCallableStmts, "true");
+        props.setProperty(PropertyKey.cacheCallableStmts.getKeyName(), "true");
 
         Connection cachedSpConn = getConnectionWithProps(props);
 
@@ -373,7 +373,7 @@ public class CallableStatementTest extends BaseTestCase {
         CallableStatement storedProc = null;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_noAccessToProcedureBodies, "true");
+        props.setProperty(PropertyKey.noAccessToProcedureBodies.getKeyName(), "true");
 
         Connection spConn = getConnectionWithProps(props);
 

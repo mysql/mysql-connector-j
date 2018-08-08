@@ -36,7 +36,7 @@ import java.util.TimeZone;
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.Messages;
 import com.mysql.cj.ServerVersion;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -393,9 +393,9 @@ public class NativeServerSession implements ServerSession {
     public String getEncodingForIndex(int charsetIndex) {
         String javaEncoding = null;
 
-        String characterEncoding = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+        String characterEncoding = this.propertySet.getStringProperty(PropertyKey.characterEncoding).getValue();
 
-        if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior).getValue()) {
+        if (this.propertySet.getBooleanProperty(PropertyKey.useOldUTF8Behavior).getValue()) {
             return characterEncoding;
         }
 

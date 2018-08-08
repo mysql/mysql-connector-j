@@ -35,12 +35,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -145,26 +144,25 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
         }
 
-        if (((capabilityFlags & NativeServerSession.CLIENT_COMPRESS) != 0)
-                && this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useCompression).getValue()) {
+        if (((capabilityFlags & NativeServerSession.CLIENT_COMPRESS) != 0) && this.propertySet.getBooleanProperty(PropertyKey.useCompression).getValue()) {
             clientParam |= NativeServerSession.CLIENT_COMPRESS;
         }
 
         this.useConnectWithDb = (database != null) && (database.length() > 0)
-                && !this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist).getValue();
+                && !this.propertySet.getBooleanProperty(PropertyKey.createDatabaseIfNotExist).getValue();
 
         if (this.useConnectWithDb) {
             clientParam |= NativeServerSession.CLIENT_CONNECT_WITH_DB;
         }
 
         // Changing defaults for 8.0.3+ server: PNAME_useInformationSchema=true
-        RuntimeProperty<Boolean> useInformationSchema = this.propertySet.<Boolean> getProperty(PropertyDefinitions.PNAME_useInformationSchema);
+        RuntimeProperty<Boolean> useInformationSchema = this.propertySet.<Boolean> getProperty(PropertyKey.useInformationSchema);
         if (this.protocol.versionMeetsMinimum(8, 0, 3) && !useInformationSchema.getValue() && !useInformationSchema.isExplicitlySet()) {
             useInformationSchema.setValue(true);
         }
 
         // check SSL availability
-        SslMode sslMode = this.propertySet.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue();
+        SslMode sslMode = this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).getValue();
         if (((capabilityFlags & NativeServerSession.CLIENT_SSL) == 0) && sslMode != SslMode.DISABLED) {
             throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("MysqlIO.15"), getExceptionInterceptor());
         }
@@ -175,15 +173,15 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         }
 
         // return FOUND rows
-        if (!this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useAffectedRows).getValue()) {
+        if (!this.propertySet.getBooleanProperty(PropertyKey.useAffectedRows).getValue()) {
             clientParam |= NativeServerSession.CLIENT_FOUND_ROWS;
         }
 
-        if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).getValue()) {
+        if (this.propertySet.getBooleanProperty(PropertyKey.allowLoadLocalInfile).getValue()) {
             clientParam |= NativeServerSession.CLIENT_LOCAL_FILES;
         }
 
-        if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_interactiveClient).getValue()) {
+        if (this.propertySet.getBooleanProperty(PropertyKey.interactiveClient).getValue()) {
             clientParam |= NativeServerSession.CLIENT_INTERACTIVE;
         }
 
@@ -248,7 +246,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     private void loadAuthenticationPlugins() {
 
         // default plugin
-        this.clientDefaultAuthenticationPlugin = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_defaultAuthenticationPlugin).getValue();
+        this.clientDefaultAuthenticationPlugin = this.propertySet.getStringProperty(PropertyKey.defaultAuthenticationPlugin).getValue();
         if (this.clientDefaultAuthenticationPlugin == null || "".equals(this.clientDefaultAuthenticationPlugin.trim())) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
                     Messages.getString("AuthenticationProvider.BadDefaultAuthenticationPlugin", new Object[] { this.clientDefaultAuthenticationPlugin }),
@@ -256,7 +254,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         }
 
         // disabled plugins
-        String disabledPlugins = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_disabledAuthenticationPlugins).getValue();
+        String disabledPlugins = this.propertySet.getStringProperty(PropertyKey.disabledAuthenticationPlugins).getValue();
         if (disabledPlugins != null && !"".equals(disabledPlugins)) {
             this.disabledAuthenticationPlugins = new ArrayList<>();
             List<String> pluginsToDisable = StringUtils.split(disabledPlugins, ",", true);
@@ -279,7 +277,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         pluginsToInit.add(new MysqlOldPasswordPlugin());
 
         // plugins from authenticationPluginClasses connection parameter
-        String authenticationPluginClasses = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_authenticationPlugins).getValue();
+        String authenticationPluginClasses = this.propertySet.getStringProperty(PropertyKey.authenticationPlugins).getValue();
         if (authenticationPluginClasses != null && !"".equals(authenticationPluginClasses)) {
             List<String> pluginsToCreate = StringUtils.split(authenticationPluginClasses, ",", true);
             String className = null;
@@ -465,16 +463,16 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                             | NativeServerSession.CLIENT_SECURE_CONNECTION; // protocol with pluggable authentication always support this
 
                     // We allow the user to configure whether or not they want to support multiple queries (by default, this is disabled).
-                    if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue()) {
+                    if (this.propertySet.getBooleanProperty(PropertyKey.allowMultiQueries).getValue()) {
                         clientParam |= NativeServerSession.CLIENT_MULTI_STATEMENTS;
                     }
 
                     if (((serverCapabilities & NativeServerSession.CLIENT_CAN_HANDLE_EXPIRED_PASSWORD) != 0)
-                            && !this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords).getValue()) {
+                            && !this.propertySet.getBooleanProperty(PropertyKey.disconnectOnExpiredPasswords).getValue()) {
                         clientParam |= NativeServerSession.CLIENT_CAN_HANDLE_EXPIRED_PASSWORD;
                     }
                     if (((serverCapabilities & NativeServerSession.CLIENT_CONNECT_ATTRS) != 0)
-                            && !NONE.equals(this.propertySet.getStringProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue())) {
+                            && !NONE.equals(this.propertySet.getStringProperty(PropertyKey.connectionAttributes).getValue())) {
                         clientParam |= NativeServerSession.CLIENT_CONNECT_ATTRS;
                     }
                     if ((serverCapabilities & NativeServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
@@ -483,7 +481,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
                     sessState.setClientParam(clientParam);
 
-                    if (this.propertySet.<SslMode> getEnumProperty(PropertyDefinitions.PNAME_sslMode).getValue() != SslMode.DISABLED) {
+                    if (this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).getValue() != SslMode.DISABLED) {
                         negotiateSSLConnection(packLength);
                     }
 
@@ -506,8 +504,8 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                          */
                         plugin = getAuthenticationPlugin(this.clientDefaultAuthenticationPluginName);
                     } else if (pluginName.equals(Sha256PasswordPlugin.PLUGIN_NAME) && !this.protocol.getSocketConnection().isSSLEstablished()
-                            && this.propertySet.getStringProperty(PropertyDefinitions.PNAME_serverRSAPublicKeyFile).getValue() == null
-                            && !this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
+                            && this.propertySet.getStringProperty(PropertyKey.serverRSAPublicKeyFile).getValue() == null
+                            && !this.propertySet.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).getValue()) {
                         /*
                          * Fall back to default if plugin is 'sha256_password' but required conditions for this to work aren't met. If default is other than
                          * 'sha256_password' this will result in an immediate authentication switch request, allowing for other plugins to authenticate
@@ -636,8 +634,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
                     // connection attributes
                     if ((clientParam & NativeServerSession.CLIENT_CONNECT_ATTRS) != 0) {
-                        appendConnectionAttributes(last_sent, this.propertySet.getStringProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue(),
-                                enc);
+                        appendConnectionAttributes(last_sent, this.propertySet.getStringProperty(PropertyKey.connectionAttributes).getValue(), enc);
                     }
 
                     this.protocol.send(last_sent, last_sent.getPosition());
@@ -687,8 +684,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
                     // connection attributes
                     if (((clientParam & NativeServerSession.CLIENT_CONNECT_ATTRS) != 0)) {
-                        appendConnectionAttributes(last_sent, this.propertySet.getStringProperty(PropertyDefinitions.PNAME_connectionAttributes).getValue(),
-                                enc);
+                        appendConnectionAttributes(last_sent, this.propertySet.getStringProperty(PropertyKey.connectionAttributes).getValue(), enc);
                     }
 
                     this.protocol.send(last_sent, last_sent.getPosition());
@@ -711,16 +707,16 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
     }
 
-    private Properties getConnectionAttributesAsProperties(String atts) {
+    private Map<String, String> getConnectionAttributesMap(String attStr) {
 
-        Properties props = new Properties();
+        Map<String, String> attMap = new HashMap<>();
 
-        if (atts != null) {
-            String[] pairs = atts.split(",");
+        if (attStr != null) {
+            String[] pairs = attStr.split(",");
             for (String pair : pairs) {
                 int keyEnd = pair.indexOf(":");
                 if (keyEnd > 0 && (keyEnd + 1) < pair.length()) {
-                    props.setProperty(pair.substring(0, keyEnd), pair.substring(keyEnd + 1));
+                    attMap.put(pair.substring(0, keyEnd), pair.substring(keyEnd + 1));
                 }
             }
         }
@@ -728,23 +724,23 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         // Leaving disabled until standard values are defined
         // props.setProperty("_os", NonRegisteringDriver.OS);
         // props.setProperty("_platform", NonRegisteringDriver.PLATFORM);
-        props.setProperty("_client_name", Constants.CJ_NAME);
-        props.setProperty("_client_version", Constants.CJ_VERSION);
-        props.setProperty("_runtime_vendor", Constants.JVM_VENDOR);
-        props.setProperty("_runtime_version", Constants.JVM_VERSION);
-        props.setProperty("_client_license", Constants.CJ_LICENSE);
+        attMap.put("_client_name", Constants.CJ_NAME);
+        attMap.put("_client_version", Constants.CJ_VERSION);
+        attMap.put("_runtime_vendor", Constants.JVM_VENDOR);
+        attMap.put("_runtime_version", Constants.JVM_VERSION);
+        attMap.put("_client_license", Constants.CJ_LICENSE);
 
-        return props;
+        return attMap;
     }
 
     private void appendConnectionAttributes(NativePacketPayload buf, String attributes, String enc) {
 
         NativePacketPayload lb = new NativePacketPayload(100);
-        Properties props = getConnectionAttributesAsProperties(attributes);
+        Map<String, String> attMap = getConnectionAttributesMap(attributes);
 
-        for (Object key : props.keySet()) {
-            lb.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes((String) key, enc));
-            lb.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes(props.getProperty((String) key), enc));
+        for (String key : attMap.keySet()) {
+            lb.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes(key, enc));
+            lb.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes(attMap.get(key), enc));
         }
 
         buf.writeInteger(IntegerDataType.INT_LENENC, lb.getPosition());
@@ -758,7 +754,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      * @return encoding name
      */
     public String getEncodingForHandshake() {
-        String enc = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+        String enc = this.propertySet.getStringProperty(PropertyKey.characterEncoding).getValue();
         if (enc == null) {
             enc = "UTF-8";
         }

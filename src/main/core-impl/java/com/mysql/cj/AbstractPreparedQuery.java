@@ -33,7 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -71,8 +71,8 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
     public AbstractPreparedQuery(NativeSession sess) {
         super(sess);
 
-        this.autoClosePStmtStreams = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams);
-        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts);
+        this.autoClosePStmtStreams = this.session.getPropertySet().getBooleanProperty(PropertyKey.autoClosePStmtStreams);
+        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyKey.useStreamLengthsInPrepStmts);
         this.usingAnsiMode = !this.session.getServerSession().useAnsiQuotedIdentifiers();
     }
 

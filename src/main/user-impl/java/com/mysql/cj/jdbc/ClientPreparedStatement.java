@@ -68,7 +68,7 @@ import com.mysql.cj.ParseInfo;
 import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.Query;
 import com.mysql.cj.QueryBindings;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
@@ -187,10 +187,9 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     protected ClientPreparedStatement(JdbcConnection conn, String catalog) throws SQLException {
         super(conn, catalog);
 
-        this.compensateForOnDuplicateKeyUpdate = this.session.getPropertySet()
-                .getBooleanProperty(PropertyDefinitions.PNAME_compensateOnDuplicateKeyUpdateCounts).getValue();
-        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useStreamLengthsInPrepStmts);
-        this.autoClosePStmtStreams = this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoClosePStmtStreams);
+        this.compensateForOnDuplicateKeyUpdate = this.session.getPropertySet().getBooleanProperty(PropertyKey.compensateOnDuplicateKeyUpdateCounts).getValue();
+        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyKey.useStreamLengthsInPrepStmts);
+        this.autoClosePStmtStreams = this.session.getPropertySet().getBooleanProperty(PropertyKey.autoClosePStmtStreams);
     }
 
     /**
@@ -379,7 +378,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             //
             CachedResultSetMetaData cachedMetadata = null;
 
-            boolean cacheResultSetMetadata = locallyScopedConn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue();
+            boolean cacheResultSetMetadata = locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue();
             if (cacheResultSetMetadata) {
                 cachedMetadata = locallyScopedConn.getCachedMetaData(((PreparedQuery<?>) this.query).getOriginalSql());
             }
@@ -484,7 +483,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
             JdbcConnection locallyScopedConn = this.connection;
 
-            boolean multiQueriesEnabled = locallyScopedConn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue();
+            boolean multiQueriesEnabled = locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.allowMultiQueries).getValue();
             CancelQueryTask timeoutTask = null;
 
             try {
@@ -1012,7 +1011,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             // Check if we have cached metadata for this query...
             //
             CachedResultSetMetaData cachedMetadata = null;
-            boolean cacheResultSetMetadata = locallyScopedConn.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue();
+            boolean cacheResultSetMetadata = locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue();
 
             String origSql = ((PreparedQuery<?>) this.query).getOriginalSql();
 
@@ -1232,9 +1231,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                         this.pstmtResultMetaData = mdRs.getMetaData();
                     } else {
                         this.pstmtResultMetaData = new ResultSetMetaData(this.session, new Field[0],
-                                this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
-                                this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(),
-                                this.exceptionInterceptor);
+                                this.session.getPropertySet().getBooleanProperty(PropertyKey.useOldAliasMetadataBehavior).getValue(),
+                                this.session.getPropertySet().getBooleanProperty(PropertyKey.yearIsDateType).getValue(), this.exceptionInterceptor);
                     }
                 } finally {
                     SQLException sqlExRethrow = null;
@@ -1280,7 +1278,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     public ParameterMetaData getParameterMetaData() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.parameterMetaData == null) {
-                if (this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_generateSimpleParameterMetadata).getValue()) {
+                if (this.session.getPropertySet().getBooleanProperty(PropertyKey.generateSimpleParameterMetadata).getValue()) {
                     this.parameterMetaData = new MysqlParameterMetadata(((PreparedQuery<?>) this.query).getParameterCount());
                 } else {
                     this.parameterMetaData = new MysqlParameterMetadata(this.session, null, ((PreparedQuery<?>) this.query).getParameterCount(),
@@ -1876,8 +1874,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                         break;
                     default:
                         try {
-                            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(ClientPreparedStatement.this.session.getPropertySet()
-                                    .getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
+                            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(
+                                    ClientPreparedStatement.this.session.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
                                     ClientPreparedStatement.this.session.getServerSession().getServerVersion());
                         } catch (RuntimeException ex) {
                             throw SQLError.createSQLException(ex.toString(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);

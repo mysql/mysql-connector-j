@@ -41,7 +41,6 @@ import java.util.regex.Pattern;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
-import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.interceptors.QueryInterceptor;
@@ -52,11 +51,13 @@ import com.mysql.cj.protocol.ServerSession;
 
 public class ResultSetScannerInterceptor implements QueryInterceptor {
 
+    public static final String PNAME_resultSetScannerRegex = "resultSetScannerRegex";
+
     protected Pattern regexP;
 
     @Override
     public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
-        String regexFromUser = props.getProperty(PropertyDefinitions.PNAME_resultSetScannerRegex);
+        String regexFromUser = props.getProperty(PNAME_resultSetScannerRegex);
 
         if (regexFromUser == null || regexFromUser.length() == 0) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ResultSetScannerInterceptor.0"));

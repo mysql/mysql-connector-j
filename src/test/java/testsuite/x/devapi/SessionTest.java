@@ -44,7 +44,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -421,8 +421,7 @@ public class SessionTest extends DevApiBaseTestCase {
         if (!url.contains("?")) {
             url += "?";
         }
-        Session sess = this.fact.getSession(
-                url + makeParam(PropertyDefinitions.PNAME_serverTimezone, "Asia/Calcutta") + makeParam(PropertyDefinitions.PNAME_serverConfigCacheFactory, ""));
+        Session sess = this.fact.getSession(url + makeParam(PropertyKey.serverTimezone, "Asia/Calcutta") + makeParam(PropertyKey.serverConfigCacheFactory, ""));
 
         String uri = sess.getUri();
         assertTrue(uri.contains("serverTimezone=Asia/Calcutta"));

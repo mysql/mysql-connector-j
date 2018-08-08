@@ -47,7 +47,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 
 import testsuite.BaseTestCase;
@@ -1058,82 +1058,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         }
     }
 
-    /**
-     * Tests fix for Bug#32246 - When unpacking rows directly, we don't hand off
-     * error message packets to the internal method which decodes them
-     * correctly, so no exception is rasied, and the driver than hangs trying to
-     * read rows that aren't there...
-     * 
-     * @throws Exception
-     *             if the test fails
-     */
-    public void testBug32246() throws Exception {
-        /*
-         * TODO useDirectRowUnpack property was removed
-         * 
-         * dropTable("test_table_2");
-         * dropTable("test_table_1");
-         * doBug32246(this.conn);
-         * dropTable("test_table_2");
-         * dropTable("test_table_1");
-         * doBug32246(getConnectionWithProps("useDirectRowUnpack=false"));
-         */
-    }
-
-    /*
-     * private void doBug32246(Connection aConn) throws SQLException {
-     * createTable("test_table_1", "(value_1 BIGINT PRIMARY KEY) ENGINE=InnoDB");
-     * this.stmt.executeUpdate("INSERT INTO test_table_1 VALUES (1)");
-     * createTable("test_table_2", "(value_2 BIGINT PRIMARY KEY) ENGINE=InnoDB");
-     * this.stmt.executeUpdate("DROP FUNCTION IF EXISTS test_function");
-     * createFunction("test_function", "() RETURNS BIGINT DETERMINISTIC MODIFIES SQL DATA BEGIN DECLARE max_value BIGINT; "
-     * + "SELECT MAX(value_1) INTO max_value FROM test_table_2; RETURN max_value; END;");
-     * 
-     * CallableStatement callable = null;
-     * 
-     * try {
-     * callable = aConn.prepareCall("{? = call test_function()}");
-     * 
-     * callable.registerOutParameter(1, Types.BIGINT);
-     * 
-     * try {
-     * callable.executeUpdate();
-     * fail("impossible; we should never get here.");
-     * } catch (SQLException sqlEx) {
-     * assertEquals("42S22", sqlEx.getSQLState());
-     * }
-     * 
-     * callable.close();
-     * 
-     * createTable("test_table_1", "(value_1 BIGINT PRIMARY KEY) ENGINE=InnoDB");
-     * this.stmt.executeUpdate("INSERT INTO test_table_1 VALUES (1)");
-     * createTable("test_table_2",
-     * "(value_2 BIGINT PRIMARY KEY, " + " FOREIGN KEY (value_2) REFERENCES test_table_1 (value_1) ON DELETE CASCADE) ENGINE=InnoDB");
-     * createFunction("test_function",
-     * "(value BIGINT) RETURNS BIGINT DETERMINISTIC MODIFIES SQL DATA BEGIN " + "INSERT INTO test_table_2 VALUES (value); RETURN value; END;");
-     * 
-     * callable = aConn.prepareCall("{? = call test_function(?)}");
-     * callable.registerOutParameter(1, Types.BIGINT);
-     * 
-     * callable.setLong(2, 1);
-     * callable.executeUpdate();
-     * 
-     * callable.setLong(2, 2);
-     * 
-     * try {
-     * callable.executeUpdate();
-     * fail("impossible; we should never get here.");
-     * } catch (SQLException sqlEx) {
-     * assertEquals("23000", sqlEx.getSQLState());
-     * }
-     * } finally {
-     * if (callable != null) {
-     * callable.close();
-     * }
-     * }
-     * }
-     */
-
     public void testBitSp() throws Exception {
 
         createTable("`Bit_Tab`", "( `MAX_VAL` tinyint(1) default NULL, `MIN_VAL` tinyint(1) default NULL, `NULL_VAL` tinyint(1) default NULL)");
@@ -1285,8 +1209,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 + "\nOUT fdoc VARCHAR(100))\nBEGIN\nSET nfact = 'ncfact string';\nSET ffact = 'ffact string';\nSET fdoc = 'fdoc string';\nEND");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useInformationSchema, "true");
+        props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "true");
+        props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
         Connection conn1 = null;
         conn1 = getConnectionWithProps(props);
         try {
@@ -1592,16 +1516,16 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 "(IN PARAMIN BIGINT, OUT PARAM_OUT_LONG BIGINT, OUT PARAM_OUT_STR VARCHAR(100))\nBEGIN\nSET PARAM_OUT_LONG = PARAMIN + 100000;\nSET PARAM_OUT_STR = concat('STR' ,PARAM_OUT_LONG);end\n");
 
         final Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
-        props.setProperty(PropertyDefinitions.PNAME_cachePrepStmts, "true");
-        props.setProperty(PropertyDefinitions.PNAME_prepStmtCacheSize, "500");
-        props.setProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit, "2048");
-        props.setProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior, "true");
-        props.setProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
-        props.setProperty(PropertyDefinitions.PNAME_defaultFetchSize, "100");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "true");
+        props.setProperty(PropertyKey.prepStmtCacheSize.getKeyName(), "500");
+        props.setProperty(PropertyKey.prepStmtCacheSqlLimit.getKeyName(), "2048");
+        props.setProperty(PropertyKey.useOldAliasMetadataBehavior.getKeyName(), "true");
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+        props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
+        props.setProperty(PropertyKey.defaultFetchSize.getKeyName(), "100");
 
         Connection con = getConnectionWithProps(props);
 

@@ -49,8 +49,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
@@ -91,7 +90,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         }
         Connection c = null;
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
 
         try {
             c = getConnectionWithProps(props);
@@ -456,7 +455,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         String dbname = props.getProperty(PropertyKey.DBNAME.getKeyName());
 
         props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         Connection c = null;
 
         boolean exceptionCaugth = false;
@@ -720,11 +719,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
         if (versionMeetsMinimum(5, 7, 10)) {
             // MySQL 5.7.10+ requires non STRICT_TRANS_TABLES to use these functions with invalid data.
             Properties props = new Properties();
-            props.put(PropertyDefinitions.PNAME_jdbcCompliantTruncation, "false");
+            props.put(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
             String sqlMode = getMysqlVariable("sql_mode");
             if (sqlMode.contains("STRICT_TRANS_TABLES")) {
                 sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
-                props.put(PropertyDefinitions.PNAME_sessionVariables, "sql_mode='" + sqlMode + "'");
+                props.put(PropertyKey.sessionVariables.getKeyName(), "sql_mode='" + sqlMode + "'");
             }
             testConn = getConnectionWithProps(props);
         }

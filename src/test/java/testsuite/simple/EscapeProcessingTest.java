@@ -33,7 +33,7 @@ import java.sql.Connection;
 import java.util.Properties;
 import java.util.TimeZone;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 
 import testsuite.BaseTestCase;
 
@@ -114,7 +114,7 @@ public class EscapeProcessingTest extends BaseTestCase {
 
         Properties props = new Properties();
 
-        props.setProperty(PropertyDefinitions.PNAME_serverTimezone, newTimezone);
+        props.setProperty(PropertyKey.serverTimezone.getKeyName(), newTimezone);
         Connection tzConn = null;
 
         try {

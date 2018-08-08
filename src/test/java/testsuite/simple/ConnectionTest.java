@@ -72,7 +72,7 @@ import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.Query;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -226,8 +226,8 @@ public class ConnectionTest extends BaseTestCase {
             this.conn.setAutoCommit(false);
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_includeInnodbStatusInDeadlockExceptions, "true");
-            props.setProperty(PropertyDefinitions.PNAME_includeThreadDumpInDeadlockExceptions, "true");
+            props.setProperty(PropertyKey.includeInnodbStatusInDeadlockExceptions.getKeyName(), "true");
+            props.setProperty(PropertyKey.includeThreadDumpInDeadlockExceptions.getKeyName(), "true");
 
             Connection deadlockConn = getConnectionWithProps(props);
             deadlockConn.setAutoCommit(false);
@@ -274,7 +274,7 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testCharsets() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
 
         Connection utfConn = getConnectionWithProps(props);
 
@@ -562,10 +562,10 @@ public class ConnectionTest extends BaseTestCase {
      */
     public void testIsolationLevel() throws Exception {
         // Check initial transaction isolation level
-        ((MysqlConnection) this.conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useLocalSessionState).setValue(true);
+        ((MysqlConnection) this.conn).getPropertySet().getBooleanProperty(PropertyKey.useLocalSessionState).setValue(true);
         int initialTransactionIsolation = this.conn.getTransactionIsolation();
 
-        ((MysqlConnection) this.conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useLocalSessionState).setValue(false);
+        ((MysqlConnection) this.conn).getPropertySet().getBooleanProperty(PropertyKey.useLocalSessionState).setValue(false);
         int actualTransactionIsolation = this.conn.getTransactionIsolation();
 
         assertEquals("Inital transaction isolation level doesn't match the server's", actualTransactionIsolation, initialTransactionIsolation);
@@ -663,8 +663,8 @@ public class ConnectionTest extends BaseTestCase {
         String characterSet = "utf-8";
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_connectionCollation, collationToSet);
-        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, characterSet);
+        props.setProperty(PropertyKey.connectionCollation.getKeyName(), collationToSet);
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), characterSet);
 
         Connection collConn = null;
         Statement collStmt = null;
@@ -688,7 +688,7 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testDumpQueriesOnException() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_dumpQueriesOnException, "true");
+        props.setProperty(PropertyKey.dumpQueriesOnException.getKeyName(), "true");
         String bogusSQL = "SELECT 1 TO BAZ";
         Connection dumpConn = getConnectionWithProps(props);
 
@@ -733,7 +733,7 @@ public class ConnectionTest extends BaseTestCase {
 
         Properties props = new Properties();
 
-        props.setProperty(PropertyDefinitions.PNAME_propertiesTransform, transformClassName);
+        props.setProperty(PropertyKey.propertiesTransform.getKeyName(), transformClassName);
 
         Properties transformedProps = ConnectionUrl.getConnectionUrlInstance(BaseTestCase.dbUrl, props).getConnectionArgumentsAsProperties();
 
@@ -758,13 +758,13 @@ public class ConnectionTest extends BaseTestCase {
         createTable("testLocalInfileWithUrl", "(field1 LONGTEXT)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_allowUrlInLocalInfile, "true");
+        props.setProperty(PropertyKey.allowUrlInLocalInfile.getKeyName(), "true");
 
         Connection loadConn = getConnectionWithProps(props);
         Statement loadStmt = loadConn.createStatement();
 
         String charset = " CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(
-                ((MysqlConnection) loadConn).getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue(),
+                ((MysqlConnection) loadConn).getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
                 ((JdbcConnection) loadConn).getServerVersion());
 
         try {
@@ -822,7 +822,7 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             // have to do this after connect, otherwise it's the server that's enforcing it
-            ((com.mysql.cj.jdbc.JdbcConnection) loadConn).getPropertySet().getProperty(PropertyDefinitions.PNAME_allowLoadLocalInfile).setValue(false);
+            ((com.mysql.cj.jdbc.JdbcConnection) loadConn).getPropertySet().getProperty(PropertyKey.allowLoadLocalInfile).setValue(false);
             try {
                 loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
                 fail("Should've thrown an exception.");
@@ -839,9 +839,9 @@ public class ConnectionTest extends BaseTestCase {
     public void testServerConfigurationCache() throws Exception {
         Properties props = new Properties();
 
-        props.setProperty(PropertyDefinitions.PNAME_cacheServerConfiguration, "true");
-        props.setProperty(PropertyDefinitions.PNAME_profileSQL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_logger, StandardLogger.class.getName());
+        props.setProperty(PropertyKey.cacheServerConfiguration.getKeyName(), "true");
+        props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
+        props.setProperty(PropertyKey.logger.getKeyName(), StandardLogger.class.getName());
 
         Connection conn1 = null;
         Connection conn2 = null;
@@ -881,9 +881,9 @@ public class ConnectionTest extends BaseTestCase {
     public void testUseLocalSessionState() throws Exception {
         Properties props = new Properties();
 
-        props.setProperty(PropertyDefinitions.PNAME_useLocalSessionState, "true");
-        props.setProperty(PropertyDefinitions.PNAME_profileSQL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_logger, StandardLogger.class.getName());
+        props.setProperty(PropertyKey.useLocalSessionState.getKeyName(), "true");
+        props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
+        props.setProperty(PropertyKey.logger.getKeyName(), StandardLogger.class.getName());
 
         Connection conn1 = getConnectionWithProps(props);
         conn1.setAutoCommit(true);
@@ -913,8 +913,8 @@ public class ConnectionTest extends BaseTestCase {
 
         if (!isServerRunningOnWindows()) { // windows sockets don't work for this test
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
-            props.setProperty(PropertyDefinitions.PNAME_failOverReadOnly, "false");
+            props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
+            props.setProperty(PropertyKey.failOverReadOnly.getKeyName(), "false");
 
             Connection failoverConnection = null;
 
@@ -961,8 +961,8 @@ public class ConnectionTest extends BaseTestCase {
 
         Properties cannedProps = ConnectionUrl.getConnectionUrlInstance("jdbc:mysql:///?useConfigs=clusterBase", null).getConnectionArgumentsAsProperties();
 
-        assertTrue("true".equals(cannedProps.getProperty(PropertyDefinitions.PNAME_autoReconnect)));
-        assertTrue("false".equals(cannedProps.getProperty(PropertyDefinitions.PNAME_failOverReadOnly)));
+        assertTrue("true".equals(cannedProps.getProperty(PropertyKey.autoReconnect.getKeyName())));
+        assertTrue("false".equals(cannedProps.getProperty(PropertyKey.failOverReadOnly.getKeyName())));
 
         // this will fail, but we test that too
         assertThrows(InvalidConnectionAttributeException.class, "Can't find configuration template named 'clusterBase2'", new Callable<Void>() {
@@ -981,10 +981,10 @@ public class ConnectionTest extends BaseTestCase {
     public void testUseOldUTF8Behavior() throws Exception {
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior, "true");
-        props.setProperty(PropertyDefinitions.PNAME_characterEncoding, "UTF-8");
-        props.setProperty(PropertyDefinitions.PNAME_logger, StandardLogger.class.getName());
-        props.setProperty(PropertyDefinitions.PNAME_profileSQL, "true");
+        props.setProperty(PropertyKey.useOldUTF8Behavior.getKeyName(), "true");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+        props.setProperty(PropertyKey.logger.getKeyName(), StandardLogger.class.getName());
+        props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
         StandardLogger.startLoggingToBuffer();
 
         try {
@@ -1005,7 +1005,7 @@ public class ConnectionTest extends BaseTestCase {
     public void testDontTrackOpenResources() throws Exception {
         Properties props = new Properties();
 
-        props.setProperty(PropertyDefinitions.PNAME_dontTrackOpenResources, "true");
+        props.setProperty(PropertyKey.dontTrackOpenResources.getKeyName(), "true");
         Connection noTrackConn = null;
         Statement noTrackStatement = null;
         PreparedStatement noTrackPstmt = null;
@@ -1060,7 +1060,7 @@ public class ConnectionTest extends BaseTestCase {
         // This feature caused BUG#8975, so check for that too!
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
+        props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
 
         getConnectionWithProps(props);
     }
@@ -1071,8 +1071,8 @@ public class ConnectionTest extends BaseTestCase {
         int newWaitTimeout = Integer.parseInt(getInitialWaitTimeout) + 10000;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_sessionVariables, "wait_timeout=" + newWaitTimeout);
-        props.setProperty(PropertyDefinitions.PNAME_profileSQL, "true");
+        props.setProperty(PropertyKey.sessionVariables.getKeyName(), "wait_timeout=" + newWaitTimeout);
+        props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
 
         Connection varConn = getConnectionWithProps(props);
 
@@ -1086,9 +1086,9 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs.
      */
     public void testSetProfileSql() throws Exception {
-        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getProperty(PropertyDefinitions.PNAME_profileSQL).setValue(false);
+        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getProperty(PropertyKey.profileSQL).setValue(false);
         this.stmt.execute("SELECT 1");
-        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getProperty(PropertyDefinitions.PNAME_profileSQL).setValue(true);
+        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getPropertySet().getProperty(PropertyKey.profileSQL).setValue(true);
         this.stmt.execute("SELECT 1");
     }
 
@@ -1098,7 +1098,7 @@ public class ConnectionTest extends BaseTestCase {
         this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + databaseName);
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_createDatabaseIfNotExist, "true");
+        props.setProperty(PropertyKey.createDatabaseIfNotExist.getKeyName(), "true");
         props.setProperty(PropertyKey.DBNAME.getKeyName(), databaseName);
 
         Connection con = getConnectionWithProps(props);
@@ -1122,12 +1122,12 @@ public class ConnectionTest extends BaseTestCase {
     public void testGatherPerfMetrics() throws Exception {
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_autoReconnect, "true");
-            props.setProperty(PropertyDefinitions.PNAME_logSlowQueries, "true");
-            props.setProperty(PropertyDefinitions.PNAME_slowQueryThresholdMillis, "2000");
+            props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
+            props.setProperty(PropertyKey.logSlowQueries.getKeyName(), "true");
+            props.setProperty(PropertyKey.slowQueryThresholdMillis.getKeyName(), "2000");
             // these properties were reported as the cause of NullPointerException
-            props.setProperty(PropertyDefinitions.PNAME_gatherPerfMetrics, "true");
-            props.setProperty(PropertyDefinitions.PNAME_reportMetricsIntervalMillis, "3000");
+            props.setProperty(PropertyKey.gatherPerfMetrics.getKeyName(), "true");
+            props.setProperty(PropertyKey.reportMetricsIntervalMillis.getKeyName(), "3000");
 
             Connection conn1 = getConnectionWithProps(props);
             Statement stmt1 = conn1.createStatement();
@@ -1209,7 +1209,7 @@ public class ConnectionTest extends BaseTestCase {
         bOut.close();
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useCompression, useCompression);
+        props.setProperty(PropertyKey.useCompression.getKeyName(), useCompression);
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
 
@@ -1366,8 +1366,8 @@ public class ConnectionTest extends BaseTestCase {
 
                 try {
                     Properties props = new Properties();
-                    props.setProperty(PropertyDefinitions.PNAME_localSocketAddress, addr.getHostAddress());
-                    props.setProperty(PropertyDefinitions.PNAME_connectTimeout, "2000");
+                    props.setProperty(PropertyKey.localSocketAddress.getKeyName(), addr.getHostAddress());
+                    props.setProperty(PropertyKey.connectTimeout.getKeyName(), "2000");
                     getConnectionWithProps(props).close();
 
                     this.atLeastOneWorked = true;
@@ -1391,9 +1391,9 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useUsageAdvisor, "true");
-            props.setProperty(PropertyDefinitions.PNAME_resultSetSizeThreshold, "4");
-            props.setProperty(PropertyDefinitions.PNAME_logger, "StandardLogger");
+            props.setProperty(PropertyKey.useUsageAdvisor.getKeyName(), "true");
+            props.setProperty(PropertyKey.resultSetSizeThreshold.getKeyName(), "4");
+            props.setProperty(PropertyKey.logger.getKeyName(), "StandardLogger");
 
             uaConn = getConnectionWithProps(props);
             this.rs = uaConn.createStatement().executeQuery("SHOW VARIABLES");
@@ -1417,9 +1417,9 @@ public class ConnectionTest extends BaseTestCase {
         }
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useLocalSessionState, "true");
-        props.setProperty(PropertyDefinitions.PNAME_useLocalTransactionState, "true");
-        props.setProperty(PropertyDefinitions.PNAME_profileSQL, "true");
+        props.setProperty(PropertyKey.useLocalSessionState.getKeyName(), "true");
+        props.setProperty(PropertyKey.useLocalTransactionState.getKeyName(), "true");
+        props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
 
         StandardLogger.startLoggingToBuffer();
 
@@ -1495,8 +1495,8 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, "false"); // force the issue
-            props.setProperty(PropertyDefinitions.PNAME_useCursorFetch, "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // force the issue
+            props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
             fetchConn = getConnectionWithProps(props);
 
             String classname = "com.mysql.cj.jdbc.ServerPreparedStatement";
@@ -1577,9 +1577,9 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testNonVerifyServerCert() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
-        props.setProperty(PropertyDefinitions.PNAME_requireSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
         getConnectionWithProps(props);
     }
 
@@ -1881,29 +1881,29 @@ public class ConnectionTest extends BaseTestCase {
         }
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_maxRows, "123");
+        props.setProperty(PropertyKey.maxRows.getKeyName(), "123");
 
         // Default property value.
         JdbcConnection testConn = (JdbcConnection) DriverManager.getConnection(testUrl);
-        assertEquals(-1, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(-1, testConn.getPropertySet().getIntegerProperty(PropertyKey.maxRows).getValue().intValue());
         testConn = (JdbcConnection) DriverManager.getConnection(testUrl, new Properties());
-        assertEquals(-1, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(-1, testConn.getPropertySet().getIntegerProperty(PropertyKey.maxRows).getValue().intValue());
 
         // Property in properties only.
         testConn = (JdbcConnection) DriverManager.getConnection(testUrl, props);
-        assertEquals(123, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(123, testConn.getPropertySet().getIntegerProperty(PropertyKey.maxRows).getValue().intValue());
 
         testUrl += (testUrl.indexOf('?') == -1 ? "?" : "&") + "maxRows=321";
 
         // Property in URL only.
         testConn = (JdbcConnection) DriverManager.getConnection(testUrl);
-        assertEquals(321, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(321, testConn.getPropertySet().getIntegerProperty(PropertyKey.maxRows).getValue().intValue());
         testConn = (JdbcConnection) DriverManager.getConnection(testUrl, new Properties());
-        assertEquals(321, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(321, testConn.getPropertySet().getIntegerProperty(PropertyKey.maxRows).getValue().intValue());
 
         // Property in both.
         testConn = (JdbcConnection) DriverManager.getConnection(testUrl, props);
-        assertEquals(123, testConn.getPropertySet().getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue().intValue());
+        assertEquals(123, testConn.getPropertySet().getIntegerProperty(PropertyKey.maxRows).getValue().intValue());
     }
 
     /**
@@ -1944,10 +1944,10 @@ public class ConnectionTest extends BaseTestCase {
             boolean useServerPrepStmts = (tst & 0x4) != 0;
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_queryInterceptors, TestEnableEscapeProcessingQueryInterceptor.class.getName());
-            props.setProperty(PropertyDefinitions.PNAME_enableEscapeProcessing, Boolean.toString(enableEscapeProcessing));
-            props.setProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts, Boolean.toString(processEscapeCodesForPrepStmts));
-            props.setProperty(PropertyDefinitions.PNAME_useServerPrepStmts, Boolean.toString(useServerPrepStmts));
+            props.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestEnableEscapeProcessingQueryInterceptor.class.getName());
+            props.setProperty(PropertyKey.enableEscapeProcessing.getKeyName(), Boolean.toString(enableEscapeProcessing));
+            props.setProperty(PropertyKey.processEscapeCodesForPrepStmts.getKeyName(), Boolean.toString(processEscapeCodesForPrepStmts));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useServerPrepStmts));
 
             Connection testConn = getConnectionWithProps(testUrl, props);
             this.stmt = testConn.createStatement();
@@ -2020,10 +2020,10 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_useCompression, "false");
-            props.setProperty(PropertyDefinitions.PNAME_maintainTimeStats, "true");
-            props.setProperty(PropertyDefinitions.PNAME_traceProtocol, "true");
-            props.setProperty(PropertyDefinitions.PNAME_enablePacketDebug, "true");
+            props.setProperty(PropertyKey.useCompression.getKeyName(), "false");
+            props.setProperty(PropertyKey.maintainTimeStats.getKeyName(), "true");
+            props.setProperty(PropertyKey.traceProtocol.getKeyName(), "true");
+            props.setProperty(PropertyKey.enablePacketDebug.getKeyName(), "true");
             c = getConnectionWithProps(props);
 
             NativeProtocol p = ((NativeSession) ((JdbcConnection) c).getSession()).getProtocol();
@@ -2042,7 +2042,7 @@ public class ConnectionTest extends BaseTestCase {
             assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().undecorate().undecorate().getClass());
 
             // remove traceProtocol
-            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(false);
+            p.getPropertySet().getProperty(PropertyKey.traceProtocol).setValue(false);
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 
@@ -2056,7 +2056,7 @@ public class ConnectionTest extends BaseTestCase {
             assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().undecorate().getClass());
 
             // remove maintainTimeStats
-            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_maintainTimeStats).setValue(false);
+            p.getPropertySet().getProperty(PropertyKey.maintainTimeStats).setValue(false);
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 
@@ -2071,7 +2071,7 @@ public class ConnectionTest extends BaseTestCase {
             assertNotEquals(TimeTrackingPacketReader.class, p.getPacketReceivedTimeHolder().getClass());
 
             // remove enablePacketDebug
-            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_enablePacketDebug).setValue(false);
+            p.getPropertySet().getProperty(PropertyKey.enablePacketDebug).setValue(false);
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 
@@ -2081,7 +2081,7 @@ public class ConnectionTest extends BaseTestCase {
             assertEquals(SimplePacketReader.class, reader.undecorate().getClass());
 
             // add maintainTimeStats
-            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_maintainTimeStats).setValue(true);
+            p.getPropertySet().getProperty(PropertyKey.maintainTimeStats).setValue(true);
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 
@@ -2096,8 +2096,8 @@ public class ConnectionTest extends BaseTestCase {
             assertEquals(TimeTrackingPacketReader.class, p.getPacketReceivedTimeHolder().getClass());
 
             // remove listener and try to enable traceProtocol, it should be missed in this case
-            p.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_traceProtocol).removeListener(p);
-            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_traceProtocol).setValue(true); // please note that the property is changed anyways, see the next step
+            p.getPropertySet().getBooleanProperty(PropertyKey.traceProtocol).removeListener(p);
+            p.getPropertySet().getProperty(PropertyKey.traceProtocol).setValue(true); // please note that the property is changed anyways, see the next step
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 
@@ -2109,7 +2109,7 @@ public class ConnectionTest extends BaseTestCase {
             assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().getClass());
 
             // ensure that other listeners are still working
-            p.getPropertySet().getProperty(PropertyDefinitions.PNAME_enablePacketDebug).setValue(true);
+            p.getPropertySet().getProperty(PropertyKey.enablePacketDebug).setValue(true);
             sender = p.getPacketSender();
             reader = p.getPacketReader();
 
@@ -2158,8 +2158,8 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * No SSL.
          */
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -2170,8 +2170,8 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
         testConn = getConnectionWithProps(props);
         testStmt = testConn.createStatement();
         this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
@@ -2182,10 +2182,10 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "true");
-        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
-        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
-        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "true");
+        props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
+        props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
+        props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
         testConn = getConnectionWithProps(props);
         testStmt = testConn.createStatement();
         this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
@@ -2196,9 +2196,9 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: server certificate validation & client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/client-keystore");
-        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType, "JKS");
-        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, "password");
+        props.setProperty(PropertyKey.clientCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/client-keystore");
+        props.setProperty(PropertyKey.clientCertificateKeyStoreType.getKeyName(), "JKS");
+        props.setProperty(PropertyKey.clientCertificateKeyStorePassword.getKeyName(), "password");
         testConn = getConnectionWithProps(props);
         testStmt = testConn.createStatement();
         this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
@@ -2209,10 +2209,10 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
-        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl);
-        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStoreType);
-        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword);
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.remove(PropertyKey.trustCertificateKeyStoreUrl.getKeyName());
+        props.remove(PropertyKey.trustCertificateKeyStoreType.getKeyName());
+        props.remove(PropertyKey.trustCertificateKeyStorePassword.getKeyName());
         testConn = getConnectionWithProps(props);
         testStmt = testConn.createStatement();
         this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
@@ -2248,8 +2248,8 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * No SSL.
          */
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -2260,8 +2260,8 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -2272,10 +2272,10 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "true");
-        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/ca-truststore");
-        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStoreType, "JKS");
-        props.setProperty(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword, "password");
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "true");
+        props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
+        props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
+        props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -2286,9 +2286,9 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: server certificate validation & client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreUrl, "file:src/test/config/ssl-test-certs/client-keystore");
-        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStoreType, "JKS");
-        props.setProperty(PropertyDefinitions.PNAME_clientCertificateKeyStorePassword, "password");
+        props.setProperty(PropertyKey.clientCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/client-keystore");
+        props.setProperty(PropertyKey.clientCertificateKeyStoreType.getKeyName(), "JKS");
+        props.setProperty(PropertyKey.clientCertificateKeyStorePassword.getKeyName(), "password");
         testConn = getConnectionWithProps(props);
         testStmt = testConn.createStatement();
         this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
@@ -2299,10 +2299,10 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_verifyServerCertificate, "false");
-        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStoreUrl);
-        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStoreType);
-        props.remove(PropertyDefinitions.PNAME_trustCertificateKeyStorePassword);
+        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.remove(PropertyKey.trustCertificateKeyStoreUrl.getKeyName());
+        props.remove(PropertyKey.trustCertificateKeyStoreType.getKeyName());
+        props.remove(PropertyKey.trustCertificateKeyStorePassword.getKeyName());
         testConn = getConnectionWithProps(props);
         testStmt = testConn.createStatement();
         this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");

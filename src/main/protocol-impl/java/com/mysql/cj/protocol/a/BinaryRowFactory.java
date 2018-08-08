@@ -31,7 +31,7 @@ package com.mysql.cj.protocol.a;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -55,7 +55,7 @@ public class BinaryRowFactory extends AbstractRowFactory implements ProtocolEnti
         this.columnDefinition = columnDefinition;
         this.resultSetConcurrency = resultSetConcurrency;
         this.canReuseRowPacketForBufferRow = canReuseRowPacketForBufferRow;
-        this.useBufferRowSizeThreshold = protocol.getPropertySet().getMemorySizeProperty(PropertyDefinitions.PNAME_largeRowSizeThreshold);
+        this.useBufferRowSizeThreshold = protocol.getPropertySet().getMemorySizeProperty(PropertyKey.largeRowSizeThreshold);
         this.exceptionInterceptor = protocol.getExceptionInterceptor();
         this.valueDecoder = new MysqlBinaryValueDecoder();
     }

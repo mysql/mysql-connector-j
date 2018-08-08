@@ -32,7 +32,7 @@ package com.mysql.cj.protocol.a;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.ProtocolEntityReader;
@@ -69,7 +69,7 @@ public class BinaryResultsetReader implements ProtocolEntityReader<Resultset, Na
             // Read in the column information
             ColumnDefinition cdef = this.protocol.read(ColumnDefinition.class, new MergingColumnDefinitionFactory(columnCount, metadata));
 
-            boolean isCursorPosible = this.protocol.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()
+            boolean isCursorPosible = this.protocol.getPropertySet().getBooleanProperty(PropertyKey.useCursorFetch).getValue()
                     && resultSetFactory.getResultSetType() == Type.FORWARD_ONLY && resultSetFactory.getFetchSize() > 0;
 
             // There is no EOF packet after fields when CLIENT_DEPRECATE_EOF is set;
@@ -110,7 +110,7 @@ public class BinaryResultsetReader implements ProtocolEntityReader<Resultset, Na
         } else {
             // check for file request
             if (columnCount == NativePacketPayload.NULL_LENGTH) {
-                String charEncoding = this.protocol.getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+                String charEncoding = this.protocol.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
                 String fileName = resultPacket.readString(StringSelfDataType.STRING_TERM, this.protocol.doesPlatformDbCharsetMatches() ? charEncoding : null);
                 resultPacket = this.protocol.sendFileToServer(fileName);
             }

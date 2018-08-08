@@ -50,7 +50,7 @@ import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.ServerPreparedQuery;
 import com.mysql.cj.ServerPreparedQueryBindValue;
 import com.mysql.cj.ServerPreparedQueryBindings;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -414,7 +414,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                 return serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadata);
             } catch (SQLException sqlEx) {
                 // don't wrap SQLExceptions
-                if (this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
+                if (this.session.getPropertySet().getBooleanProperty(PropertyKey.enablePacketDebug).getValue()) {
                     this.session.dumpPacketRingBuffer();
                 }
 
@@ -430,7 +430,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
                 throw sqlEx;
             } catch (Exception ex) {
-                if (this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_enablePacketDebug).getValue()) {
+                if (this.session.getPropertySet().getBooleanProperty(PropertyKey.enablePacketDebug).getValue()) {
                     this.session.dumpPacketRingBuffer();
                 }
 
@@ -476,9 +476,10 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
             ColumnDefinition resultFields = ((ServerPreparedQuery) this.query).getResultFields();
 
-            return resultFields == null || resultFields.getFields() == null ? null : new ResultSetMetaData(this.session, resultFields.getFields(),
-                    this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useOldAliasMetadataBehavior).getValue(),
-                    this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_yearIsDateType).getValue(), this.exceptionInterceptor);
+            return resultFields == null || resultFields.getFields() == null ? null
+                    : new ResultSetMetaData(this.session, resultFields.getFields(),
+                            this.session.getPropertySet().getBooleanProperty(PropertyKey.useOldAliasMetadataBehavior).getValue(),
+                            this.session.getPropertySet().getBooleanProperty(PropertyKey.yearIsDateType).getValue(), this.exceptionInterceptor);
         }
     }
 

@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -169,7 +169,7 @@ public class BlobFromLocator implements java.sql.Blob {
     public java.io.InputStream getBinaryStream() throws SQLException {
         // TODO: Make fetch size configurable
         return new BufferedInputStream(new LocatorInputStream(),
-                this.creatorResultSet.getSession().getPropertySet().getMemorySizeProperty(PropertyDefinitions.PNAME_locatorFetchBufferSize).getValue());
+                this.creatorResultSet.getSession().getPropertySet().getMemorySizeProperty(PropertyKey.locatorFetchBufferSize).getValue());
     }
 
     @Override

@@ -68,7 +68,7 @@ import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.Session.SessionEventListener;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -400,23 +400,23 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             this.session.addListener(this); // listen for session status changes
 
             // we can't cache fixed values here because properties are still not initialized with user provided values
-            this.autoReconnectForPools = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_autoReconnectForPools);
-            this.cachePrepStmts = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_cachePrepStmts);
-            this.autoReconnect = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_autoReconnect);
-            this.useUsageAdvisor = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useUsageAdvisor);
-            this.reconnectAtTxEnd = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_reconnectAtTxEnd);
-            this.emulateUnsupportedPstmts = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_emulateUnsupportedPstmts);
-            this.ignoreNonTxTables = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_ignoreNonTxTables);
-            this.pedantic = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_pedantic);
-            this.prepStmtCacheSqlLimit = this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_prepStmtCacheSqlLimit);
-            this.useLocalSessionState = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useLocalSessionState);
-            this.useServerPrepStmts = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useServerPrepStmts);
-            this.processEscapeCodesForPrepStmts = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_processEscapeCodesForPrepStmts);
-            this.useLocalTransactionState = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_useLocalTransactionState);
-            this.disconnectOnExpiredPasswords = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords);
-            this.readOnlyPropagatesToServer = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_readOnlyPropagatesToServer);
+            this.autoReconnectForPools = this.propertySet.getBooleanProperty(PropertyKey.autoReconnectForPools);
+            this.cachePrepStmts = this.propertySet.getBooleanProperty(PropertyKey.cachePrepStmts);
+            this.autoReconnect = this.propertySet.getBooleanProperty(PropertyKey.autoReconnect);
+            this.useUsageAdvisor = this.propertySet.getBooleanProperty(PropertyKey.useUsageAdvisor);
+            this.reconnectAtTxEnd = this.propertySet.getBooleanProperty(PropertyKey.reconnectAtTxEnd);
+            this.emulateUnsupportedPstmts = this.propertySet.getBooleanProperty(PropertyKey.emulateUnsupportedPstmts);
+            this.ignoreNonTxTables = this.propertySet.getBooleanProperty(PropertyKey.ignoreNonTxTables);
+            this.pedantic = this.propertySet.getBooleanProperty(PropertyKey.pedantic);
+            this.prepStmtCacheSqlLimit = this.propertySet.getIntegerProperty(PropertyKey.prepStmtCacheSqlLimit);
+            this.useLocalSessionState = this.propertySet.getBooleanProperty(PropertyKey.useLocalSessionState);
+            this.useServerPrepStmts = this.propertySet.getBooleanProperty(PropertyKey.useServerPrepStmts);
+            this.processEscapeCodesForPrepStmts = this.propertySet.getBooleanProperty(PropertyKey.processEscapeCodesForPrepStmts);
+            this.useLocalTransactionState = this.propertySet.getBooleanProperty(PropertyKey.useLocalTransactionState);
+            this.disconnectOnExpiredPasswords = this.propertySet.getBooleanProperty(PropertyKey.disconnectOnExpiredPasswords);
+            this.readOnlyPropagatesToServer = this.propertySet.getBooleanProperty(PropertyKey.readOnlyPropagatesToServer);
 
-            String exceptionInterceptorClasses = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_exceptionInterceptors).getStringValue();
+            String exceptionInterceptorClasses = this.propertySet.getStringProperty(PropertyKey.exceptionInterceptors).getStringValue();
             if (exceptionInterceptorClasses != null && !"".equals(exceptionInterceptorClasses)) {
                 this.exceptionInterceptor = new ExceptionInterceptorChain(exceptionInterceptorClasses, this.props, this.session.getLog());
             }
@@ -425,21 +425,20 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 createPreparedStatementCaches();
             }
 
-            if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_cacheCallableStmts).getValue()) {
-                this.parsedCallableStatementCache = new LRUCache<>(
-                        this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_callableStmtCacheSize).getValue());
+            if (this.propertySet.getBooleanProperty(PropertyKey.cacheCallableStmts).getValue()) {
+                this.parsedCallableStatementCache = new LRUCache<>(this.propertySet.getIntegerProperty(PropertyKey.callableStmtCacheSize).getValue());
             }
 
-            if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue()) {
-                this.propertySet.getProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).setValue(false); // we don't handle this yet
+            if (this.propertySet.getBooleanProperty(PropertyKey.allowMultiQueries).getValue()) {
+                this.propertySet.getProperty(PropertyKey.cacheResultSetMetadata).setValue(false); // we don't handle this yet
             }
 
-            if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_cacheResultSetMetadata).getValue()) {
-                this.resultSetMetadataCache = new LRUCache<>(this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_metadataCacheSize).getValue());
+            if (this.propertySet.getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
+                this.resultSetMetadataCache = new LRUCache<>(this.propertySet.getIntegerProperty(PropertyKey.metadataCacheSize).getValue());
             }
 
-            if (this.propertySet.getStringProperty(PropertyDefinitions.PNAME_socksProxyHost).getStringValue() != null) {
-                this.propertySet.getProperty(PropertyDefinitions.PNAME_socketFactory).setValue(SocksProxySocketFactory.class.getName());
+            if (this.propertySet.getStringProperty(PropertyKey.socksProxyHost).getStringValue() != null) {
+                this.propertySet.getProperty(PropertyKey.socketFactory).setValue(SocksProxySocketFactory.class.getName());
             }
 
             this.pointOfOrigin = this.useUsageAdvisor.getValue() ? LogUtils.findCallingClassAndMethod(new Throwable()) : "";
@@ -468,7 +467,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             throw SQLError
                     .createSQLException(
-                            this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_paranoid).getValue() ? Messages.getString("Connection.0")
+                            this.propertySet.getBooleanProperty(PropertyKey.paranoid).getValue() ? Messages.getString("Connection.0")
                                     : Messages.getString("Connection.1",
                                             new Object[] { this.session.getHostInfo().getHost(), this.session.getHostInfo().getPort() }),
                             MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
@@ -494,7 +493,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public void initializeSafeQueryInterceptors() throws SQLException {
         this.queryInterceptors = Util
-                .<QueryInterceptor> loadClasses(this.propertySet.getStringProperty(PropertyDefinitions.PNAME_queryInterceptors).getStringValue(),
+                .<QueryInterceptor> loadClasses(this.propertySet.getStringProperty(PropertyKey.queryInterceptors).getStringValue(),
                         "MysqlIo.BadQueryInterceptor", getExceptionInterceptor())
                 .stream().map(o -> new NoSubInterceptorWrapper(o.init(this, this.props, this.session.getLog()))).collect(Collectors.toList());
     }
@@ -513,7 +512,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             return false;
         }
 
-        boolean allowMultiQueries = this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_allowMultiQueries).getValue();
+        boolean allowMultiQueries = this.propertySet.getBooleanProperty(PropertyKey.allowMultiQueries).getValue();
 
         if (this.cachePrepStmts.getValue()) {
             synchronized (this.serverSideStatementCheckCache) {
@@ -836,12 +835,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     private void connectWithRetries(boolean isForReconnect) throws SQLException {
-        double timeout = this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_initialTimeout).getValue();
+        double timeout = this.propertySet.getIntegerProperty(PropertyKey.initialTimeout).getValue();
         boolean connectionGood = false;
 
         Exception connectionException = null;
 
-        for (int attemptCount = 0; (attemptCount < this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_maxReconnects).getValue())
+        for (int attemptCount = 0; (attemptCount < this.propertySet.getIntegerProperty(PropertyKey.maxReconnects).getValue())
                 && !connectionGood; attemptCount++) {
             try {
                 this.session.forceClose();
@@ -905,12 +904,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             // We've really failed!
             SQLException chainedEx = SQLError.createSQLException(
                     Messages.getString("Connection.UnableToConnectWithRetries",
-                            new Object[] { this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_maxReconnects).getValue() }),
+                            new Object[] { this.propertySet.getIntegerProperty(PropertyKey.maxReconnects).getValue() }),
                     MysqlErrorNumbers.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, connectionException, getExceptionInterceptor());
             throw chainedEx;
         }
 
-        if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_paranoid).getValue() && !this.autoReconnect.getValue()) {
+        if (this.propertySet.getBooleanProperty(PropertyKey.paranoid).getValue() && !this.autoReconnect.getValue()) {
             this.password = null;
             this.user = null;
         }
@@ -1016,8 +1015,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     private void createPreparedStatementCaches() throws SQLException {
         synchronized (getConnectionMutex()) {
-            int cacheSize = this.propertySet.getIntegerProperty(PropertyDefinitions.PNAME_prepStmtCacheSize).getValue();
-            String parseInfoCacheFactory = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_parseInfoCacheFactory).getValue();
+            int cacheSize = this.propertySet.getIntegerProperty(PropertyKey.prepStmtCacheSize).getValue();
+            String parseInfoCacheFactory = this.propertySet.getStringProperty(PropertyKey.parseInfoCacheFactory).getValue();
 
             try {
                 Class<?> factoryClass;
@@ -1031,14 +1030,16 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                         this.prepStmtCacheSqlLimit.getValue());
 
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.CantFindCacheFactory",
-                        new Object[] { parseInfoCacheFactory, PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(
+                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { parseInfoCacheFactory, PropertyKey.parseInfoCacheFactory }),
+                        getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
             } catch (Exception e) {
-                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.CantLoadCacheFactory",
-                        new Object[] { parseInfoCacheFactory, PropertyDefinitions.PNAME_parseInfoCacheFactory }), getExceptionInterceptor());
+                SQLException sqlEx = SQLError.createSQLException(
+                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { parseInfoCacheFactory, PropertyKey.parseInfoCacheFactory }),
+                        getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
@@ -1285,7 +1286,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      *             if a database access error occurs
      */
     private void initializePropsFromServer() throws SQLException {
-        String connectionInterceptorClasses = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors).getStringValue();
+        String connectionInterceptorClasses = this.propertySet.getStringProperty(PropertyKey.connectionLifecycleInterceptors).getStringValue();
 
         this.connectionLifecycleInterceptors = null;
 
@@ -1293,7 +1294,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             try {
                 this.connectionLifecycleInterceptors = Util
                         .<ConnectionLifecycleInterceptor> loadClasses(
-                                this.propertySet.getStringProperty(PropertyDefinitions.PNAME_connectionLifecycleInterceptors).getStringValue(),
+                                this.propertySet.getStringProperty(PropertyKey.connectionLifecycleInterceptors).getStringValue(),
                                 "Connection.badLifecycleInterceptor", getExceptionInterceptor())
                         .stream().map(o -> o.init(this, this.props, this.session.getLog())).collect(Collectors.toList());
             } catch (CJException e) {
@@ -1353,7 +1354,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
         // Server Bug#66884 (SERVER_STATUS is always initiated with SERVER_STATUS_AUTOCOMMIT=1) invalidates "elideSetAutoCommits" feature.
         // TODO Turn this feature back on as soon as the server bug is fixed. Consider making it version specific.
-        // if (!getPropertySet().getBooleanReadableProperty(PropertyDefinitions.PNAME_elideSetAutoCommits).getValue()) {
+        // if (!getPropertySet().getBooleanReadableProperty(PropertyKey.elideSetAutoCommits).getValue()) {
         String initConnectValue = this.session.getServerSession().getServerVariable("init_connect");
         if (initConnectValue != null && initConnectValue.length() > 0) {
             // auto-commit might have changed
@@ -1459,8 +1460,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             // Has the user explicitly set a resourceId?
-            String otherResourceId = ((ConnectionImpl) otherConnection).getPropertySet().getStringProperty(PropertyDefinitions.PNAME_resourceId).getValue();
-            String myResourceId = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_resourceId).getValue();
+            String otherResourceId = ((ConnectionImpl) otherConnection).getPropertySet().getStringProperty(PropertyKey.resourceId).getValue();
+            String myResourceId = this.propertySet.getStringProperty(PropertyKey.resourceId).getValue();
 
             if (otherResourceId != null || myResourceId != null) {
                 directCompare = nullSafeCompare(otherResourceId, myResourceId);
@@ -1542,7 +1543,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         CallableStatement cStmt = null;
 
-        if (!this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_cacheCallableStmts).getValue()) {
+        if (!this.propertySet.getBooleanProperty(PropertyKey.cacheCallableStmts).getValue()) {
 
             cStmt = parseCallableStatement(sql);
         } else {
@@ -1817,7 +1818,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void resetServerState() throws SQLException {
-        if (!this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_paranoid).getValue() && (this.session != null)) {
+        if (!this.propertySet.getBooleanProperty(PropertyKey.paranoid).getValue() && (this.session != null)) {
             changeUser(this.user, this.password);
         }
     }
@@ -2228,7 +2229,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             boolean shouldSendSet = false;
 
-            if (this.propertySet.getBooleanProperty(PropertyDefinitions.PNAME_alwaysSendSetIsolation).getValue()) {
+            if (this.propertySet.getBooleanProperty(PropertyKey.alwaysSendSetIsolation).getValue()) {
                 shouldSendSet = true;
             } else {
                 if (level != this.isolationLevel) {
@@ -2286,7 +2287,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     private void setupServerForTruncationChecks() throws SQLException {
         synchronized (getConnectionMutex()) {
-            RuntimeProperty<Boolean> jdbcCompliantTruncation = this.propertySet.getProperty(PropertyDefinitions.PNAME_jdbcCompliantTruncation);
+            RuntimeProperty<Boolean> jdbcCompliantTruncation = this.propertySet.getProperty(PropertyKey.jdbcCompliantTruncation);
             if (jdbcCompliantTruncation.getValue()) {
                 String currentSqlMode = this.session.getServerSession().getServerVariable("sql_mode");
 
@@ -2588,7 +2589,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
         synchronized (getConnectionMutex()) {
             if (this.infoProvider == null) {
-                String clientInfoProvider = this.propertySet.getStringProperty(PropertyDefinitions.PNAME_clientInfoProvider).getStringValue();
+                String clientInfoProvider = this.propertySet.getStringProperty(PropertyKey.clientInfoProvider).getStringValue();
                 try {
                     try {
                         this.infoProvider = (ClientInfoProvider) Util.getInstance(clientInfoProvider, new Class<?>[0], new Object[0],

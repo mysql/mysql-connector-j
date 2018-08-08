@@ -34,7 +34,7 @@ import java.sql.SQLException;
 
 import javax.sql.XAConnection;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 
 public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADataSource {
 
@@ -72,11 +72,11 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
      *             if an error occurs
      */
     private XAConnection wrapConnection(Connection conn) throws SQLException {
-        if (getBooleanProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()
-                || ((JdbcConnection) conn).getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_pinGlobalTxToPhysicalConnection).getValue()) {
+        if (getBooleanProperty(PropertyKey.pinGlobalTxToPhysicalConnection).getValue()
+                || ((JdbcConnection) conn).getPropertySet().getBooleanProperty(PropertyKey.pinGlobalTxToPhysicalConnection).getValue()) {
             return SuspendableXAConnection.getInstance((JdbcConnection) conn);
         }
 
-        return MysqlXAConnection.getInstance((JdbcConnection) conn, getBooleanProperty(PropertyDefinitions.PNAME_logXaCommands).getValue());
+        return MysqlXAConnection.getInstance((JdbcConnection) conn, getBooleanProperty(PropertyKey.logXaCommands).getValue());
     }
 }

@@ -35,7 +35,7 @@ import java.sql.SQLException;
 import java.util.concurrent.Executor;
 
 import com.mysql.cj.conf.ConnectionUrl;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -127,10 +127,10 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
         JdbcPropertySetImpl connProps = new JdbcPropertySetImpl();
         connProps.initializeProperties(connectionUrl.getConnectionArgumentsAsProperties());
 
-        this.secondsBeforeRetryPrimaryHost = connProps.getIntegerProperty(PropertyDefinitions.PNAME_secondsBeforeRetryMaster).getValue();
-        this.queriesBeforeRetryPrimaryHost = connProps.getIntegerProperty(PropertyDefinitions.PNAME_queriesBeforeRetryMaster).getValue();
-        this.failoverReadOnly = connProps.getBooleanProperty(PropertyDefinitions.PNAME_failOverReadOnly).getValue();
-        this.retriesAllDown = connProps.getIntegerProperty(PropertyDefinitions.PNAME_retriesAllDown).getValue();
+        this.secondsBeforeRetryPrimaryHost = connProps.getIntegerProperty(PropertyKey.secondsBeforeRetryMaster).getValue();
+        this.queriesBeforeRetryPrimaryHost = connProps.getIntegerProperty(PropertyKey.queriesBeforeRetryMaster).getValue();
+        this.failoverReadOnly = connProps.getBooleanProperty(PropertyKey.failOverReadOnly).getValue();
+        this.retriesAllDown = connProps.getIntegerProperty(PropertyKey.retriesAllDown).getValue();
 
         this.enableFallBackToPrimaryHost = this.secondsBeforeRetryPrimaryHost > 0 || this.queriesBeforeRetryPrimaryHost > 0;
 

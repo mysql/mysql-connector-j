@@ -36,9 +36,13 @@ import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.Properties;
 
-import com.mysql.cj.conf.PropertyDefinitions;
-
 public class ClientInfoProviderSP implements ClientInfoProvider {
+
+    public static final String PNAME_clientInfoSetSPName = "clientInfoSetSPName";
+    public static final String PNAME_clientInfoGetSPName = "clientInfoGetSPName";
+    public static final String PNAME_clientInfoGetBulkSPName = "clientInfoGetBulkSPName";
+    public static final String PNAME_clientInfoCatalog = "clientInfoCatalog";
+
     PreparedStatement setClientInfoSp;
 
     PreparedStatement getClientInfoSp;
@@ -48,10 +52,10 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
     @Override
     public synchronized void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException {
         String identifierQuote = ((com.mysql.cj.jdbc.JdbcConnection) conn).getSession().getIdentifierQuoteString();
-        String setClientInfoSpName = configurationProps.getProperty(PropertyDefinitions.PNAME_clientInfoSetSPName, "setClientInfo");
-        String getClientInfoSpName = configurationProps.getProperty(PropertyDefinitions.PNAME_clientInfoGetSPName, "getClientInfo");
-        String getClientInfoBulkSpName = configurationProps.getProperty(PropertyDefinitions.PNAME_clientInfoGetBulkSPName, "getClientInfoBulk");
-        String clientInfoCatalog = configurationProps.getProperty(PropertyDefinitions.PNAME_clientInfoCatalog, ""); // "" means use current from connection
+        String setClientInfoSpName = configurationProps.getProperty(PNAME_clientInfoSetSPName, "setClientInfo");
+        String getClientInfoSpName = configurationProps.getProperty(PNAME_clientInfoGetSPName, "getClientInfo");
+        String getClientInfoBulkSpName = configurationProps.getProperty(PNAME_clientInfoGetBulkSPName, "getClientInfoBulk");
+        String clientInfoCatalog = configurationProps.getProperty(PNAME_clientInfoCatalog, ""); // "" means use current from connection
 
         String catalog = "".equals(clientInfoCatalog) ? conn.getCatalog() : clientInfoCatalog;
 

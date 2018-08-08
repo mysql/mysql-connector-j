@@ -40,7 +40,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.conf.ConnectionUrl;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.Schema;
 import com.mysql.cj.xdevapi.Session;

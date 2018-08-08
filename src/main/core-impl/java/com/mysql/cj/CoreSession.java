@@ -40,7 +40,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
@@ -95,18 +95,18 @@ public abstract class CoreSession implements Session {
         this.hostInfo = hostInfo;
         this.propertySet = propSet;
 
-        this.gatherPerfMetrics = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_gatherPerfMetrics);
-        this.characterEncoding = getPropertySet().getStringProperty(PropertyDefinitions.PNAME_characterEncoding);
-        this.useOldUTF8Behavior = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useOldUTF8Behavior);
-        this.disconnectOnExpiredPasswords = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_disconnectOnExpiredPasswords);
-        this.cacheServerConfiguration = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_cacheServerConfiguration);
-        this.autoReconnect = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoReconnect);
-        this.autoReconnectForPools = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_autoReconnectForPools);
-        this.maintainTimeStats = getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_maintainTimeStats);
+        this.gatherPerfMetrics = getPropertySet().getBooleanProperty(PropertyKey.gatherPerfMetrics);
+        this.characterEncoding = getPropertySet().getStringProperty(PropertyKey.characterEncoding);
+        this.useOldUTF8Behavior = getPropertySet().getBooleanProperty(PropertyKey.useOldUTF8Behavior);
+        this.disconnectOnExpiredPasswords = getPropertySet().getBooleanProperty(PropertyKey.disconnectOnExpiredPasswords);
+        this.cacheServerConfiguration = getPropertySet().getBooleanProperty(PropertyKey.cacheServerConfiguration);
+        this.autoReconnect = getPropertySet().getBooleanProperty(PropertyKey.autoReconnect);
+        this.autoReconnectForPools = getPropertySet().getBooleanProperty(PropertyKey.autoReconnectForPools);
+        this.maintainTimeStats = getPropertySet().getBooleanProperty(PropertyKey.maintainTimeStats);
 
-        this.log = LogFactory.getLogger(getPropertySet().getStringProperty(PropertyDefinitions.PNAME_logger).getStringValue(), Log.LOGGER_INSTANCE_NAME);
-        if (getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_profileSQL).getValue()
-                || getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_useUsageAdvisor).getValue()) {
+        this.log = LogFactory.getLogger(getPropertySet().getStringProperty(PropertyKey.logger).getStringValue(), Log.LOGGER_INSTANCE_NAME);
+        if (getPropertySet().getBooleanProperty(PropertyKey.profileSQL).getValue()
+                || getPropertySet().getBooleanProperty(PropertyKey.useUsageAdvisor).getValue()) {
             ProfilerEventHandlerFactory.getInstance(this);
         }
     }

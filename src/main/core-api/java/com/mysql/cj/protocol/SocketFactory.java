@@ -31,22 +31,13 @@ package com.mysql.cj.protocol;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Properties;
+
+import com.mysql.cj.conf.PropertySet;
 
 /**
  * Interface to allow pluggable socket creation in the driver
  */
 public interface SocketFactory extends SocketMetadata {
-
-    public static final String TCP_KEEP_ALIVE_DEFAULT_VALUE = "true";
-
-    public static final String TCP_RCV_BUF_DEFAULT_VALUE = "0";
-
-    public static final String TCP_SND_BUF_DEFAULT_VALUE = "0";
-
-    public static final String TCP_TRAFFIC_CLASS_DEFAULT_VALUE = "0";
-
-    public static final String TCP_NO_DELAY_DEFAULT_VALUE = "true";
 
     /**
      * Creates a new socket or channel using the given properties. Properties are parsed by
@@ -76,7 +67,7 @@ public interface SocketFactory extends SocketMetadata {
      * @throws IOException
      *             if an I/O error occurs
      */
-    <T extends Closeable> T connect(String host, int portNumber, Properties props, int loginTimeout) throws IOException;
+    <T extends Closeable> T connect(String host, int portNumber, PropertySet props, int loginTimeout) throws IOException;
 
     /**
      * Called by the driver before issuing the MySQL protocol handshake.

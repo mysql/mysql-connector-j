@@ -32,7 +32,7 @@ package com.mysql.cj;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.util.StringUtils;
@@ -138,8 +138,8 @@ public class ParseInfo {
                     // no need to search for "ON DUPLICATE KEY UPDATE" if not an INSERT statement
                     if (this.firstStmtChar == 'I') {
                         this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(sql,
-                                session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_dontCheckOnDuplicateKeyUpdateInSQL).getValue(),
-                                session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).getValue(),
+                                session.getPropertySet().getBooleanProperty(PropertyKey.dontCheckOnDuplicateKeyUpdateInSQL).getValue(),
+                                session.getPropertySet().getBooleanProperty(PropertyKey.rewriteBatchedStatements).getValue(),
                                 session.getServerSession().isNoBackslashEscapesSet());
                         this.isOnDuplicateKeyUpdate = this.locationOfOnDuplicateKeyUpdate != -1;
                     }
@@ -281,8 +281,7 @@ public class ParseInfo {
         if (buildRewriteInfo) {
             this.canRewriteAsMultiValueInsert = this.numberOfQueries == 1 && !this.parametersInDuplicateKeyClause
                     && canRewrite(sql, this.isOnDuplicateKeyUpdate, this.locationOfOnDuplicateKeyUpdate, this.statementStartPos);
-            if (this.canRewriteAsMultiValueInsert
-                    && session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_rewriteBatchedStatements).getValue()) {
+            if (this.canRewriteAsMultiValueInsert && session.getPropertySet().getBooleanProperty(PropertyKey.rewriteBatchedStatements).getValue()) {
                 buildRewriteBatchedParams(sql, session, encoding);
             }
         }

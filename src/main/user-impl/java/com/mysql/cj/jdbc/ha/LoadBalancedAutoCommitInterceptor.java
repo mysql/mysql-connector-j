@@ -35,7 +35,7 @@ import java.util.function.Supplier;
 
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.interceptors.QueryInterceptor;
 import com.mysql.cj.jdbc.JdbcConnection;
@@ -69,13 +69,13 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
     public QueryInterceptor init(MysqlConnection connection, Properties props, Log log) {
         this.conn = (JdbcConnection) connection;
 
-        String autoCommitSwapThresholdAsString = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementThreshold, "0");
+        String autoCommitSwapThresholdAsString = props.getProperty(PropertyKey.loadBalanceAutoCommitStatementThreshold.getKeyName(), "0");
         try {
             this.matchingAfterStatementThreshold = Integer.parseInt(autoCommitSwapThresholdAsString);
         } catch (NumberFormatException nfe) {
             // nothing here, being handled in LoadBalancedConnectionProxy.
         }
-        String autoCommitSwapRegex = props.getProperty(PropertyDefinitions.PNAME_loadBalanceAutoCommitStatementRegex, "");
+        String autoCommitSwapRegex = props.getProperty(PropertyKey.loadBalanceAutoCommitStatementRegex.getKeyName(), "");
         if (!"".equals(autoCommitSwapRegex)) {
             this.matchingAfterStatementRegex = autoCommitSwapRegex;
         }

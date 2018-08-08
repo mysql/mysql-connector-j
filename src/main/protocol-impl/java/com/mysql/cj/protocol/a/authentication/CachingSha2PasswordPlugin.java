@@ -33,7 +33,7 @@ import java.security.DigestException;
 import java.util.List;
 
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.UnableToConnectException;
@@ -124,7 +124,7 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
                     toServer.add(bresp);
 
                 } else {
-                    if (!this.protocol.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_allowPublicKeyRetrieval).getValue()) {
+                    if (!this.protocol.getPropertySet().getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).getValue()) {
                         throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("Sha256PasswordPlugin.2"),
                                 this.protocol.getExceptionInterceptor());
 

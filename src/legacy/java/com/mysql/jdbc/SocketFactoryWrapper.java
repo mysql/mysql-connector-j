@@ -31,8 +31,8 @@ package com.mysql.jdbc;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Properties;
 
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.SocketConnection;
 import com.mysql.cj.protocol.SocketFactory;
@@ -53,8 +53,8 @@ public class SocketFactoryWrapper extends StandardSocketFactory implements Socke
 
     @SuppressWarnings({ "deprecation", "unchecked" })
     @Override
-    public <T extends Closeable> T connect(String hostname, int portNumber, Properties props, int loginTimeout) throws IOException {
-        this.rawSocket = this.socketFactory.connect(hostname, portNumber, props);
+    public <T extends Closeable> T connect(String hostname, int portNumber, PropertySet pset, int loginTimeout) throws IOException {
+        this.rawSocket = this.socketFactory.connect(hostname, portNumber, pset.exposeAsProperties());
         return (T) this.rawSocket;
     }
 

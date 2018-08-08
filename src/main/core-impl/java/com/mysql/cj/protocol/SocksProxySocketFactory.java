@@ -32,27 +32,19 @@ package com.mysql.cj.protocol;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Socket;
-import java.util.Properties;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
 
 /**
  * A socket factory used to create sockets connecting through a SOCKS proxy. The socket still supports all the same TCP features as the "standard" socket.
  */
 public class SocksProxySocketFactory extends StandardSocketFactory {
-    public static int SOCKS_DEFAULT_PORT = 1080;
 
     @Override
-    protected Socket createSocket(Properties props) {
-        String socksProxyHost = props.getProperty(PropertyDefinitions.PNAME_socksProxyHost);
-        String socksProxyPortString = props.getProperty(PropertyDefinitions.PNAME_socksProxyPort, String.valueOf(SOCKS_DEFAULT_PORT));
-        int socksProxyPort = SOCKS_DEFAULT_PORT;
-        try {
-            socksProxyPort = Integer.valueOf(socksProxyPortString);
-        } catch (NumberFormatException ex) {
-            // ignore. fall back to default
-        }
-
+    protected Socket createSocket(PropertySet props) {
+        String socksProxyHost = props.getStringProperty(PropertyKey.socksProxyHost).getValue();
+        int socksProxyPort = props.getIntegerProperty(PropertyKey.socksProxyPort).getValue();
         return new Socket(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(socksProxyHost, socksProxyPort)));
     }
 }

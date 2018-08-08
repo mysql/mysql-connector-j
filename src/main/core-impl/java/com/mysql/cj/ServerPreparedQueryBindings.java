@@ -42,7 +42,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.util.StringUtils;
@@ -333,7 +333,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
 
     @Override
     public void setDouble(int parameterIndex, double x) {
-        if (!this.session.getPropertySet().getBooleanProperty(PropertyDefinitions.PNAME_allowNanAndInf).getValue()
+        if (!this.session.getPropertySet().getBooleanProperty(PropertyKey.allowNanAndInf).getValue()
                 && (x == Double.POSITIVE_INFINITY || x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("PreparedStatement.64", new Object[] { x }),
                     this.session.getExceptionInterceptor());

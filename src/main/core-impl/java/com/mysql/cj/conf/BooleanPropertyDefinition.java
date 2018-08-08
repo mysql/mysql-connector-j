@@ -54,9 +54,9 @@ public class BooleanPropertyDefinition extends AbstractPropertyDefinition<Boolea
         }
     }
 
-    public BooleanPropertyDefinition(String name, String alias, Boolean defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
+    public BooleanPropertyDefinition(PropertyKey key, Boolean defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
             String category, int orderInCategory) {
-        super(name, alias, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
+        super(key, defaultValue, isRuntimeModifiable, description, sinceVersion, category, orderInCategory);
     }
 
     @Override

@@ -46,7 +46,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.PropertyDefinitions.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
@@ -309,36 +308,16 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         }
 
         // Collect properties from additional sources. 
-        processColdFusionAutoConfiguration();
         setupPropertiesTransformer();
         expandPropertiesFromConfigFiles(this.properties);
         injectPerTypeProperties(this.properties);
     }
 
     /**
-     * Checks if the conditions for the Cold Fusion auto configuration file are met. If so, adds a reference to its configuration file so that it can be loaded
-     * afterwards.
-     */
-    protected void processColdFusionAutoConfiguration() {
-        if (Util.isColdFusion()) {
-            String autoConfigCf = this.properties.get(PropertyDefinitions.PNAME_autoConfigureForColdFusion);
-            if (autoConfigCf == null || autoConfigCf.equalsIgnoreCase("TRUE") || autoConfigCf.equalsIgnoreCase("YES")) {
-                String currentConfigFiles = this.properties.get(PropertyDefinitions.PNAME_useConfigs);
-                StringBuilder newConfigFiles = new StringBuilder();
-                if (currentConfigFiles != null) {
-                    newConfigFiles.append(currentConfigFiles).append(",");
-                }
-                newConfigFiles.append("coldFusion");
-                this.properties.put(PropertyDefinitions.PNAME_useConfigs, newConfigFiles.toString());
-            }
-        }
-    }
-
-    /**
      * Sets up the {@link ConnectionPropertiesTransform} if one was provided.
      */
     protected void setupPropertiesTransformer() {
-        String propertiesTransformClassName = this.properties.get(PropertyDefinitions.PNAME_propertiesTransform);
+        String propertiesTransformClassName = this.properties.get(PropertyKey.propertiesTransform.getKeyName());
         if (!isNullOrEmpty(propertiesTransformClassName)) {
             try {
                 this.propertiesTransformer = (ConnectionPropertiesTransform) Class.forName(propertiesTransformClassName).newInstance();
@@ -357,7 +336,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      */
     protected void expandPropertiesFromConfigFiles(Map<String, String> props) {
         // Properties from config files should not override the existing ones.
-        String configFiles = props.get(PropertyDefinitions.PNAME_useConfigs);
+        String configFiles = props.get(PropertyKey.useConfigs.getKeyName());
         if (!isNullOrEmpty(configFiles)) {
             Properties configProps = getPropertiesFromConfigFiles(configFiles);
             configProps.stringPropertyNames().stream().map(PropertyKey::normalizeCase).filter(k -> !props.containsKey(k))
@@ -408,9 +387,9 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      */
     protected void replaceLegacyPropertyValues(Map<String, String> props) {
         // Workaround for zeroDateTimeBehavior=convertToNull hardcoded in NetBeans
-        String zeroDateTimeBehavior = props.get(PropertyDefinitions.PNAME_zeroDateTimeBehavior);
+        String zeroDateTimeBehavior = props.get(PropertyKey.zeroDateTimeBehavior.getKeyName());
         if (zeroDateTimeBehavior != null && zeroDateTimeBehavior.equalsIgnoreCase("convertToNull")) {
-            props.put(PropertyDefinitions.PNAME_zeroDateTimeBehavior, "CONVERT_TO_NULL");
+            props.put(PropertyKey.zeroDateTimeBehavior.getKeyName(), "CONVERT_TO_NULL");
         }
     }
 
@@ -548,11 +527,8 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
     protected void fixProtocolDependencies(Map<String, String> hostProps) {
         String protocol = hostProps.get(PropertyKey.PROTOCOL.getKeyName());
         if (!isNullOrEmpty(protocol) && protocol.equalsIgnoreCase("PIPE")) {
-            if (!hostProps.containsKey(PropertyDefinitions.PNAME_socketFactory)) {
-                hostProps.put(PropertyDefinitions.PNAME_socketFactory, "com.mysql.cj.protocol.NamedPipeSocketFactory");
-            }
-            if (hostProps.containsKey(PropertyKey.PATH.getKeyName()) && !hostProps.containsKey(PropertyDefinitions.NAMED_PIPE_PROP_NAME)) {
-                hostProps.put(PropertyDefinitions.NAMED_PIPE_PROP_NAME, hostProps.get(PropertyKey.PATH.getKeyName()));
+            if (!hostProps.containsKey(PropertyKey.socketFactory.getKeyName())) {
+                hostProps.put(PropertyKey.socketFactory.getKeyName(), "com.mysql.cj.protocol.NamedPipeSocketFactory");
             }
         }
     }

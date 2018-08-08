@@ -36,6 +36,7 @@ import java.util.Properties;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyDefinition;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.util.StringUtils;
 
@@ -47,15 +48,15 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
     public void postInitialization() {
 
         // Adjust max rows
-        if (getIntegerProperty(PropertyDefinitions.PNAME_maxRows).getValue() == 0) {
+        if (getIntegerProperty(PropertyKey.maxRows).getValue() == 0) {
             // adjust so that it will become MysqlDefs.MAX_ROWS in execSQL()
-            super.<Integer> getProperty(PropertyDefinitions.PNAME_maxRows).setValue(Integer.valueOf(-1), null);
+            super.<Integer> getProperty(PropertyKey.maxRows).setValue(Integer.valueOf(-1), null);
         }
 
         //
         // Check character encoding
         //
-        String testEncoding = getStringProperty(PropertyDefinitions.PNAME_characterEncoding).getValue();
+        String testEncoding = getStringProperty(PropertyKey.characterEncoding).getValue();
 
         if (testEncoding != null) {
             // Attempt to use the encoding, and bail out if it can't be used
@@ -63,9 +64,9 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
             StringUtils.getBytes(testString, testEncoding);
         }
 
-        if (getBooleanProperty(PropertyDefinitions.PNAME_useCursorFetch).getValue()) {
+        if (getBooleanProperty(PropertyKey.useCursorFetch).getValue()) {
             // assume server-side prepared statements are wanted because they're required for this functionality
-            super.<Boolean> getProperty(PropertyDefinitions.PNAME_useServerPrepStmts).setValue(true);
+            super.<Boolean> getProperty(PropertyKey.useServerPrepStmts).setValue(true);
         }
     }
 
@@ -73,7 +74,7 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
     public DriverPropertyInfo[] exposeAsDriverPropertyInfo(Properties info, int slotsToReserve) throws SQLException {
         initializeProperties(info);
 
-        int numProperties = PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.size();
+        int numProperties = PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.size();
 
         int listSize = numProperties + slotsToReserve;
 
@@ -81,8 +82,8 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
 
         int i = slotsToReserve;
 
-        for (String propName : PropertyDefinitions.PROPERTY_NAME_TO_PROPERTY_DEFINITION.keySet()) {
-            driverProperties[i++] = getAsDriverPropertyInfo(getProperty(propName));
+        for (PropertyKey propKey : PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.keySet()) {
+            driverProperties[i++] = getAsDriverPropertyInfo(getProperty(propKey));
         }
 
         return driverProperties;
