@@ -50,6 +50,11 @@
 %global sles12          1
 %endif
 
+%if 0%{?sle_version} == 150000 && 0%{?is_opensuse}
+%global dist                 .lp150
+%global sles15                1
+%endif
+
 %if 0%{?commercial:1}
 %global lic_tag        Commercial
 %else
@@ -81,7 +86,7 @@ BuildRequires:  ant
 BuildRequires:  java-devel >= 1:1.8.0
 %endif
 
-%if 0%{?sles12:1}
+%if 0%{?sles12:1} || 0%{?sles15:1}
 Requires:       java-headless >= 1.8.0
 %else
 Requires:       java-headless >= 1:1.8.0
