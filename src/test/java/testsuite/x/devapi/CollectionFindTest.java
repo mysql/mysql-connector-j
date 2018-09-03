@@ -131,7 +131,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         }
         try {
             this.collection.add("{\"_id\": \"1\"}").execute();
-            DocResult docs = this.collection.find().fields(expr("{'X':1-cast(pow(2,63) as signed)}")).execute();
+            DocResult docs = this.collection.find().fields(expr("{'X':1-cast(pow(2,100) as signed)}")).execute();
             docs.next(); // we are getting valid data from xplugin before the error, need this call to force the error
             fail("Statement should raise an error");
         } catch (XProtocolError err) {
