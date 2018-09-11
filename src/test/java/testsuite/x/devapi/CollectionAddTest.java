@@ -349,4 +349,24 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         });
 
     }
+
+    /**
+     * Test for Bug#92264 (28594434), JSONPARSER PUTS UNNECESSARY MAXIMUM LIMIT ON JSONNUMBER TO 10 DIGITS.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug92264() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        this.collection.add("{\"dataCreated\": 1546300800000}").execute();
+
+        DocResult docs = this.collection.find("dataCreated = 1546300800000").execute();
+        assertTrue(docs.hasNext());
+        DbDoc doc = docs.next();
+        assertEquals("1546300800000", doc.get("dataCreated").toString());
+        assertEquals(new BigDecimal("1546300800000"), ((JsonNumber) doc.get("dataCreated")).getBigDecimal());
+    }
 }

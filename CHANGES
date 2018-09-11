@@ -3,6 +3,8 @@
 
 Version 8.0.13
 
+  - Fix for Bug#92264 (28594434), JSONPARSER PUTS UNNECESSARY MAXIMUM LIMIT ON JSONNUMBER TO 10 DIGITS.
+
   - WL#12110, Extend PropertyDefinitions.PropertyKey usage.
 
   - Fix for Bug#81063 (23098159), w/ rewriteBatchedStatements, when 2 tables involved, the rewriting not correct.

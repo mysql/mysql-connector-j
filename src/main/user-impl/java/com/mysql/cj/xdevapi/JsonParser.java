@@ -430,7 +430,6 @@ public class JsonParser {
 
         StringBuilder sb = null;
         char lastChar = ' ';
-        int baseLength = 0;
         boolean hasFractionalPart = false;
         boolean hasExponent = false;
 
@@ -448,7 +447,6 @@ public class JsonParser {
                     // first char of number is digit
                     sb = new StringBuilder();
                     sb.append(ch);
-                    baseLength++;
                 } else if (!whitespaceChars.contains(ch)) {
                     // only white spaces are allowed before value
                     throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.1", new Character[] { ch }));
@@ -464,14 +462,6 @@ public class JsonParser {
 
             } else if (ch >= '\u0030' && ch <= '\u0039') { // 0-9
                 sb.append(ch);
-                if (!hasFractionalPart && !hasExponent) {
-                    if (baseLength < 10) {
-                        baseLength++;
-                    } else {
-                        throw ExceptionFactory.createException(WrongArgumentException.class,
-                                Messages.getString("JsonParser.9", new Object[] { sb.toString() }));
-                    }
-                }
 
             } else if (ch == 'E' || ch == 'e') {
                 // exponent character is allowed only after a digit

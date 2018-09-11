@@ -251,54 +251,35 @@ public class JsonDocTest {
         val = JsonParser.parseNumber(new StringReader("1234567890"));
         assertEquals(new BigDecimal("1234567890"), val.getBigDecimal());
 
-        assertThrows(WrongArgumentException.class, "Base part '-12345678901' is too long, only 10 digits are allowed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("-12345678901.5E+12"));
-                return null;
-            }
-        });
-        assertThrows(WrongArgumentException.class, "Base part '12345678901' is too long, only 10 digits are allowed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("12345678901.5E+12"));
-                return null;
-            }
-        });
-        assertThrows(WrongArgumentException.class, "Base part '-12345678901' is too long, only 10 digits are allowed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("-12345678901.5"));
-                return null;
-            }
-        });
-        assertThrows(WrongArgumentException.class, "Base part '12345678901' is too long, only 10 digits are allowed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("12345678901.5"));
-                return null;
-            }
-        });
-        assertThrows(WrongArgumentException.class, "Base part '-12345678901' is too long, only 10 digits are allowed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("-12345678901E+12"));
-                return null;
-            }
-        });
-        assertThrows(WrongArgumentException.class, "Base part '12345678901' is too long, only 10 digits are allowed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("12345678901E+12"));
-                return null;
-            }
-        });
-        assertThrows(WrongArgumentException.class, "Base part '-12345678901' is too long, only 10 digits are allowed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("-12345678901"));
-                return null;
-            }
-        });
-        assertThrows(WrongArgumentException.class, "Base part '12345678901' is too long, only 10 digits are allowed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("12345678901"));
-                return null;
-            }
-        });
+        val = JsonParser.parseNumber(new StringReader("-12345678901.5E+12"));
+        assertEquals(new BigDecimal("-12345678901.5E+12"), val.getBigDecimal());
+
+        val = JsonParser.parseNumber(new StringReader("12345678901.5E+12"));
+        assertEquals(new BigDecimal("12345678901.5E+12"), val.getBigDecimal());
+
+        val = JsonParser.parseNumber(new StringReader("-12345678901.5"));
+        assertEquals(new BigDecimal("-12345678901.5"), val.getBigDecimal());
+
+        val = JsonParser.parseNumber(new StringReader("12345678901.5"));
+        assertEquals(new BigDecimal("12345678901.5"), val.getBigDecimal());
+
+        val = JsonParser.parseNumber(new StringReader("-12345678901E+12"));
+        assertEquals(new BigDecimal("-12345678901E+12"), val.getBigDecimal());
+
+        val = JsonParser.parseNumber(new StringReader("12345678901E+12"));
+        assertEquals(new BigDecimal("12345678901E+12"), val.getBigDecimal());
+
+        val = JsonParser.parseNumber(new StringReader("-12345678901"));
+        assertEquals(new BigDecimal("-12345678901"), val.getBigDecimal());
+
+        val = JsonParser.parseNumber(new StringReader("12345678901"));
+        assertEquals(new BigDecimal("12345678901"), val.getBigDecimal());
+
+        val = JsonParser.parseNumber(new StringReader("-1546300800000"));
+        assertEquals(new BigDecimal("-1546300800000"), val.getBigDecimal());
+
+        val = JsonParser.parseNumber(new StringReader("1546300800000"));
+        assertEquals(new BigDecimal("1546300800000"), val.getBigDecimal());
 
         // integer
         val = JsonParser.parseNumber(new StringReader("12345"));
