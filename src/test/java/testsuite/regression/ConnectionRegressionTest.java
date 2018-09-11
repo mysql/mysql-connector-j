@@ -3011,17 +3011,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals("JKS", ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyKey.clientCertificateKeyStoreType).getStringValue());
     }
 
-    public void testBug57262() throws Exception {
-        Properties props = new Properties();
-        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf-8");
-        props.setProperty(PropertyKey.useOldUTF8Behavior.getKeyName(), "true");
-
-        Connection c = getConnectionWithProps(props);
-        ResultSet r = c.createStatement().executeQuery("SHOW SESSION VARIABLES LIKE 'character_set_connection'");
-        r.next();
-        assertEquals("latin1", r.getString(2));
-    }
-
     public void testBug58706() throws Exception {
         Properties props = getPropertiesFromTestsuiteUrl();
         props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");

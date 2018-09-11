@@ -640,9 +640,6 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.useOldAliasMetadataBehavior, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useOldAliasMetadataBehavior"), "5.0.4", CATEGORY_JDBC, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PropertyKey.useOldUTF8Behavior, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.useOldUtf8Behavior"), "3.1.6", CATEGORY_SESSION, Integer.MIN_VALUE),
-
                 new BooleanPropertyDefinition(PropertyKey.useOnlyServerErrorMessages, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useOnlyServerErrorMessages"), "3.0.15", CATEGORY_DEBUGING_PROFILING, Integer.MIN_VALUE),
 
@@ -714,8 +711,8 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.sslTrustStorePassword"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new IntegerPropertyDefinition(PropertyKey.xdevapiAsyncResponseTimeout, 300, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.asyncResponseTimeout"), "8.0.7", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new EnumPropertyDefinition<>(PropertyKey.xdevapiAuth, AuthMech.PLAIN, RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.auth"), "8.0.8",
-                        CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new EnumPropertyDefinition<>(PropertyKey.xdevapiAuth, AuthMech.PLAIN, RUNTIME_NOT_MODIFIABLE, Messages.getString("ConnectionProperties.auth"),
+                        "8.0.8", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.enableEscapeProcessing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),

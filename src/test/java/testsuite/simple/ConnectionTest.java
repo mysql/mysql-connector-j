@@ -96,7 +96,6 @@ import com.mysql.cj.protocol.a.TimeTrackingPacketReader;
 import com.mysql.cj.protocol.a.TimeTrackingPacketSender;
 import com.mysql.cj.protocol.a.TracingPacketReader;
 import com.mysql.cj.protocol.a.TracingPacketSender;
-import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TimeUtil;
 import com.mysql.jdbc.Driver;
 
@@ -976,24 +975,6 @@ public class ConnectionTest extends BaseTestCase {
                 }
             }
         });
-    }
-
-    public void testUseOldUTF8Behavior() throws Exception {
-
-        Properties props = new Properties();
-        props.setProperty(PropertyKey.useOldUTF8Behavior.getKeyName(), "true");
-        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
-        props.setProperty(PropertyKey.logger.getKeyName(), StandardLogger.class.getName());
-        props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
-        StandardLogger.startLoggingToBuffer();
-
-        try {
-            getConnectionWithProps(props);
-
-            assertTrue(StringUtils.indexOfIgnoreCase(StandardLogger.getBuffer().toString(), "SET NAMES utf8") == -1);
-        } finally {
-            StandardLogger.dropBuffer();
-        }
     }
 
     /**

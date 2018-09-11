@@ -226,7 +226,6 @@ public enum PropertyKey {
     useLocalTransactionState("useLocalTransactionState", true), //
     useNanosForElapsedTime("useNanosForElapsedTime", true), //
     useOldAliasMetadataBehavior("useOldAliasMetadataBehavior", true), //
-    useOldUTF8Behavior("useOldUTF8Behavior", true), //
     useOnlyServerErrorMessages("useOnlyServerErrorMessages", true), //
     useReadAheadInput("useReadAheadInput", true), //
     useServerPrepStmts("useServerPrepStmts", true), //

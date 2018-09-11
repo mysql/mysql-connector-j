@@ -395,10 +395,6 @@ public class NativeServerSession implements ServerSession {
 
         String characterEncoding = this.propertySet.getStringProperty(PropertyKey.characterEncoding).getValue();
 
-        if (this.propertySet.getBooleanProperty(PropertyKey.useOldUTF8Behavior).getValue()) {
-            return characterEncoding;
-        }
-
         if (charsetIndex != NativeConstants.NO_CHARSET_INFO) {
             try {
                 // getting charset name from dynamic maps in connection; we do it before checking against static maps because custom charset on server can be mapped

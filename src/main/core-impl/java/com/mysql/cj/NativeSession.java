@@ -454,7 +454,7 @@ public class NativeSession extends CoreSession implements Serializable {
             String connectionCollationCharset = null;
 
             String connectionCollation = getPropertySet().getStringProperty(PropertyKey.connectionCollation).getStringValue();
-            if (!this.useOldUTF8Behavior.getValue() && connectionCollation != null) {
+            if (connectionCollation != null) {
                 for (int i = 1; i < CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME.length; i++) {
                     if (CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i].equals(connectionCollation)) {
                         connectionCollationSuffix = " COLLATE " + CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i];
@@ -514,21 +514,14 @@ public class NativeSession extends CoreSession implements Serializable {
                     // charset names are case-sensitive
                     String utf8CharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset : "utf8mb4";
 
-                    if (!this.useOldUTF8Behavior.getValue()) {
-                        if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches("utf8")
-                                || (!this.protocol.getServerSession().characterSetNamesMatches("utf8mb4")) || (connectionCollationSuffix.length() > 0
-                                        && !connectionCollation.equalsIgnoreCase(this.protocol.getServerSession().getServerVariable("collation_server")))) {
+                    if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches("utf8")
+                            || (!this.protocol.getServerSession().characterSetNamesMatches("utf8mb4")) || (connectionCollationSuffix.length() > 0
+                                    && !connectionCollation.equalsIgnoreCase(this.protocol.getServerSession().getServerVariable("collation_server")))) {
 
-                            sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES " + utf8CharsetName + connectionCollationSuffix), false, 0);
+                        sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES " + utf8CharsetName + connectionCollationSuffix), false, 0);
 
-                            this.protocol.getServerSession().getServerVariables().put("character_set_client", utf8CharsetName);
-                            this.protocol.getServerSession().getServerVariables().put("character_set_connection", utf8CharsetName);
-                        }
-                    } else {
-                        sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES latin1"), false, 0);
-
-                        this.protocol.getServerSession().getServerVariables().put("character_set_client", "latin1");
-                        this.protocol.getServerSession().getServerVariables().put("character_set_connection", "latin1");
+                        this.protocol.getServerSession().getServerVariables().put("character_set_client", utf8CharsetName);
+                        this.protocol.getServerSession().getServerVariables().put("character_set_connection", utf8CharsetName);
                     }
 
                     this.characterEncoding.setValue(realJavaEncoding);
@@ -552,8 +545,7 @@ public class NativeSession extends CoreSession implements Serializable {
                 }
             } else if (this.characterEncoding.getValue() != null) {
                 // Tell the server we'll use the server default charset to send our queries from now on....
-                String mysqlCharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset
-                        : (this.useOldUTF8Behavior.getValue() ? "latin1" : getServerSession().getServerDefaultCharset());
+                String mysqlCharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset : getServerSession().getServerDefaultCharset();
 
                 boolean ucs2 = false;
                 if ("ucs2".equalsIgnoreCase(mysqlCharsetName) || "utf16".equalsIgnoreCase(mysqlCharsetName) || "utf16le".equalsIgnoreCase(mysqlCharsetName)
@@ -607,18 +599,6 @@ public class NativeSession extends CoreSession implements Serializable {
                 }
             } else {
 
-                if (this.useOldUTF8Behavior.getValue()) {
-                    try {
-                        sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES latin1"), false, 0);
-
-                        this.protocol.getServerSession().getServerVariables().put("character_set_client", "latin1");
-                        this.protocol.getServerSession().getServerVariables().put("character_set_connection", "latin1");
-                    } catch (PasswordExpiredException ex) {
-                        if (this.disconnectOnExpiredPasswords.getValue()) {
-                            throw ex;
-                        }
-                    }
-                }
                 String charsetResults = characterSetResults.getValue();
                 String mysqlEncodingName = null;
 

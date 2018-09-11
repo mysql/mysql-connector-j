@@ -77,7 +77,6 @@ public abstract class CoreSession implements Session {
 
     protected RuntimeProperty<Boolean> gatherPerfMetrics;
     protected RuntimeProperty<String> characterEncoding;
-    protected RuntimeProperty<Boolean> useOldUTF8Behavior;
     protected RuntimeProperty<Boolean> disconnectOnExpiredPasswords;
     protected RuntimeProperty<Boolean> cacheServerConfiguration;
     protected RuntimeProperty<Boolean> autoReconnect;
@@ -97,7 +96,6 @@ public abstract class CoreSession implements Session {
 
         this.gatherPerfMetrics = getPropertySet().getBooleanProperty(PropertyKey.gatherPerfMetrics);
         this.characterEncoding = getPropertySet().getStringProperty(PropertyKey.characterEncoding);
-        this.useOldUTF8Behavior = getPropertySet().getBooleanProperty(PropertyKey.useOldUTF8Behavior);
         this.disconnectOnExpiredPasswords = getPropertySet().getBooleanProperty(PropertyKey.disconnectOnExpiredPasswords);
         this.cacheServerConfiguration = getPropertySet().getBooleanProperty(PropertyKey.cacheServerConfiguration);
         this.autoReconnect = getPropertySet().getBooleanProperty(PropertyKey.autoReconnect);
