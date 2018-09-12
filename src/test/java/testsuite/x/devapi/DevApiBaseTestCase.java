@@ -108,6 +108,10 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
     }
 
     protected String makeParam(PropertyKey key, String value) {
-        return "&" + key.getKeyName() + "=" + value;
+        return makeParam(key, value, false);
+    }
+
+    protected String makeParam(PropertyKey key, String value, boolean isFirst) {
+        return (isFirst ? "" : "&") + key.getKeyName() + "=" + value;
     }
 }

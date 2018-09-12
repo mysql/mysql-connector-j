@@ -113,6 +113,14 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public XProtocol(String host, int port, String defaultSchema, PropertySet propertySet) {
 
         this.defaultSchemaName = defaultSchema;
+
+        // Override common connectTimeout with xdevapi.connect-timeout to provide unified logic in StandardSocketFactory
+        RuntimeProperty<Integer> connectTimeout = propertySet.getIntegerProperty(PropertyKey.connectTimeout);
+        RuntimeProperty<Integer> xdevapiConnectTimeout = propertySet.getIntegerProperty(PropertyKey.xdevapiConnectTimeout);
+        if (xdevapiConnectTimeout.isExplicitlySet() || !connectTimeout.isExplicitlySet()) {
+            connectTimeout.setValue(xdevapiConnectTimeout.getValue());
+        }
+
         SocketConnection socketConn = propertySet.getBooleanProperty(PropertyKey.xdevapiUseAsyncProtocol).getValue() ? new XAsyncSocketConnection()
                 : new NativeSocketConnection();
         socketConn.connect(host, port, propertySet, null, null, 0);
@@ -129,6 +137,14 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             port = 33060;
         }
         this.defaultSchemaName = hostInfo.getDatabase();
+
+        // Override common connectTimeout with xdevapi.connect-timeout to provide unified logic in StandardSocketFactory
+        RuntimeProperty<Integer> connectTimeout = propertySet.getIntegerProperty(PropertyKey.connectTimeout);
+        RuntimeProperty<Integer> xdevapiConnectTimeout = propertySet.getIntegerProperty(PropertyKey.xdevapiConnectTimeout);
+        if (xdevapiConnectTimeout.isExplicitlySet() || !connectTimeout.isExplicitlySet()) {
+            connectTimeout.setValue(xdevapiConnectTimeout.getValue());
+        }
+
         SocketConnection socketConn = propertySet.getBooleanProperty(PropertyKey.xdevapiUseAsyncProtocol).getValue() ? new XAsyncSocketConnection()
                 : new NativeSocketConnection();
         socketConn.connect(host, port, propertySet, null, null, 0);
