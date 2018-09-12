@@ -361,7 +361,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
             return;
         }
 
-        this.collection.add("{\"dataCreated\": 1546300800000}").execute();
+        this.collection.add("{\"_id\":\"1\",\"dataCreated\": 1546300800000}").execute();
 
         DocResult docs = this.collection.find("dataCreated = 1546300800000").execute();
         assertTrue(docs.hasNext());
