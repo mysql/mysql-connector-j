@@ -44,7 +44,7 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -70,7 +70,7 @@ public class SyncMessageReaderTest {
     /**
      * Serialize a message for testing.
      */
-    private static byte[] serializeMessage(GeneratedMessage msg, int type) {
+    private static byte[] serializeMessage(GeneratedMessageV3 msg, int type) {
         int packetLen = msg.getSerializedSize() + 1;
         byte[] packet = ByteBuffer.allocate(packetLen + 4).order(ByteOrder.LITTLE_ENDIAN).putInt(packetLen).put((byte) type).put(msg.toByteArray()).array();
         return packet;
@@ -174,12 +174,12 @@ public class SyncMessageReaderTest {
      */
     @Test
     public void testMappingTables() throws InvalidProtocolBufferException {
-        for (Map.Entry<Class<? extends GeneratedMessage>, Integer> entry : MessageConstants.MESSAGE_CLASS_TO_TYPE.entrySet()) {
+        for (Map.Entry<Class<? extends GeneratedMessageV3>, Integer> entry : MessageConstants.MESSAGE_CLASS_TO_TYPE.entrySet()) {
             /* int type = */entry.getValue();
-            Class<? extends GeneratedMessage> messageClass = entry.getKey();
-            Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
+            Class<? extends GeneratedMessageV3> messageClass = entry.getKey();
+            Parser<? extends GeneratedMessageV3> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
             assertNotNull(parser);
-            GeneratedMessage partiallyParsed = parser.parsePartialFrom(new byte[] {});
+            GeneratedMessageV3 partiallyParsed = parser.parsePartialFrom(new byte[] {});
             assertEquals("Parsed class should equal the class that mapped to it via type tag", messageClass, partiallyParsed.getClass());
         }
     }

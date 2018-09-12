@@ -31,7 +31,7 @@ package com.mysql.cj.protocol.x;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -56,7 +56,7 @@ public class StatementExecuteOkMessageListener implements MessageListener<XMessa
     public Boolean createFromMessage(XMessage message) {
         //GeneratedMessage msg = (GeneratedMessage) message.getMessage();
         @SuppressWarnings("unchecked")
-        Class<? extends GeneratedMessage> msgClass = (Class<? extends GeneratedMessage>) message.getMessage().getClass();
+        Class<? extends GeneratedMessageV3> msgClass = (Class<? extends GeneratedMessageV3>) message.getMessage().getClass();
         if (Frame.class.equals(msgClass)) {
             this.builder.addNotice(this.noticeFactory.createFromMessage(message));
             return false; /* done reading? */

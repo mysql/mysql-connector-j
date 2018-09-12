@@ -35,7 +35,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 import com.mysql.cj.exceptions.CJCommunicationsException;
@@ -104,7 +104,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends GeneratedMessage> T readMessageLocal(Class<T> messageClass) {
+    private <T extends GeneratedMessageV3> T readMessageLocal(Class<T> messageClass) {
         Parser<T> parser = (Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
         byte[] packet = new byte[this.header.getMessageSize()];
 
@@ -135,8 +135,8 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
         // waiting for ListenersDispatcher completion to perform sync call
         synchronized (this.waitingSyncOperationMonitor) {
             try {
-                Class<? extends GeneratedMessage> messageClass = MessageConstants.getMessageClassForType(readHeader().getMessageType());
-                Class<? extends GeneratedMessage> expectedClass = MessageConstants.getMessageClassForType(expectedType);
+                Class<? extends GeneratedMessageV3> messageClass = MessageConstants.getMessageClassForType(readHeader().getMessageType());
+                Class<? extends GeneratedMessageV3> expectedClass = MessageConstants.getMessageClassForType(expectedType);
 
                 // ensure that parsed message class matches incoming tag
                 if (expectedClass != messageClass) {

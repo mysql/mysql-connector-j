@@ -35,7 +35,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -89,8 +89,8 @@ public class SqlResultMessageListener implements MessageListener<XMessage> {
     }
 
     public Boolean createFromMessage(XMessage message) {
-        GeneratedMessage msg = (GeneratedMessage) message.getMessage();
-        Class<? extends GeneratedMessage> msgClass = msg.getClass();
+        GeneratedMessageV3 msg = (GeneratedMessageV3) message.getMessage();
+        Class<? extends GeneratedMessageV3> msgClass = msg.getClass();
         if (this.resultType == null) {
             if (ColumnMetaData.class.equals(msgClass)) {
                 this.resultType = ResultType.DATA;

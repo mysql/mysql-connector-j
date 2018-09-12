@@ -161,10 +161,10 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
             builder.setGroupingCriteria((Expr) filterParams.getGroupingCriteria());
         }
         if (filterParams.getLock() != null) {
-            builder.setLocking(RowLock.valueOf(filterParams.getLock().asNumber()));
+            builder.setLocking(RowLock.forNumber(filterParams.getLock().asNumber()));
         }
         if (filterParams.getLockOption() != null) {
-            builder.setLockingOptions(RowLockOptions.valueOf(filterParams.getLockOption().asNumber()));
+            builder.setLockingOptions(RowLockOptions.forNumber(filterParams.getLockOption().asNumber()));
         }
         applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         return new XMessage(builder.build());

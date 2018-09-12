@@ -30,7 +30,7 @@
 package com.mysql.cj.protocol.x;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 import com.mysql.cj.exceptions.CJCommunicationsException;
@@ -72,7 +72,7 @@ public class NoticeFactory implements ProtocolEntityFactory<Notice, XMessage> {
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends GeneratedMessage> T parseNotice(ByteString payload, Class<T> noticeClass) {
+    private <T extends GeneratedMessageV3> T parseNotice(ByteString payload, Class<T> noticeClass) {
         try {
             Parser<T> parser = (Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(noticeClass);
             return parser.parseFrom(payload);

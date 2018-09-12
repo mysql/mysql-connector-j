@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 import com.mysql.cj.conf.PropertyKey;
@@ -127,7 +127,7 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
 
     private static class CompletedRead {
         public XMessageHeader header = null;
-        public GeneratedMessage message = null;
+        public GeneratedMessageV3 message = null;
 
         public CompletedRead() {
         }
@@ -278,7 +278,7 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
                 ByteBuffer buf = AsyncMessageReader.this.messageBuf;
                 AsyncMessageReader.this.messageBuf = null;
 
-                Class<? extends GeneratedMessage> messageClass = MessageConstants
+                Class<? extends GeneratedMessageV3> messageClass = MessageConstants
                         .getMessageClassForType(AsyncMessageReader.this.currentReadResult.header.getMessageType());
 
                 // Capture this flag value before dispatching the message, otherwise we risk having a different value when using it later on.
@@ -328,14 +328,14 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
          * Parse a message.
          * 
          * @param messageClass
-         *            class extending {@link GeneratedMessage}
+         *            class extending {@link GeneratedMessageV3}
          * @param buf
          *            message buffer
-         * @return {@link GeneratedMessage}
+         * @return {@link GeneratedMessageV3}
          */
-        private GeneratedMessage parseMessage(Class<? extends GeneratedMessage> messageClass, ByteBuffer buf) {
+        private GeneratedMessageV3 parseMessage(Class<? extends GeneratedMessageV3> messageClass, ByteBuffer buf) {
             try {
-                Parser<? extends GeneratedMessage> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
+                Parser<? extends GeneratedMessageV3> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
                 return parser.parseFrom(CodedInputStream.newInstance(buf));
             } catch (InvalidProtocolBufferException ex) {
                 throw AssertionFailedException.shouldNotHappen(ex);
@@ -361,7 +361,7 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
                 throw new CJCommunicationsException("Failed to peek pending message", e);
             }
 
-            GeneratedMessage message = res.message;
+            GeneratedMessageV3 message = res.message;
 
             // we must ensure that the message has been delivered and the pending message is cleared atomically under the pending message lock. otherwise the
             // pending message may still be seen after the message has been delivered but before the pending message is cleared
@@ -465,10 +465,10 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
 
     @Override
     public XMessage readMessage(Optional<XMessage> reuse, int expectedType) throws IOException {
-        Class<? extends GeneratedMessage> expectedClass = MessageConstants.getMessageClassForType(expectedType);
+        Class<? extends GeneratedMessageV3> expectedClass = MessageConstants.getMessageClassForType(expectedType);
 
         CompletableFuture<XMessage> future = new CompletableFuture<>();
-        SyncXMessageListener<? extends GeneratedMessage> r = new SyncXMessageListener<>(future, expectedClass);
+        SyncXMessageListener<? extends GeneratedMessageV3> r = new SyncXMessageListener<>(future, expectedClass);
         pushMessageListener(r);
 
         try {
@@ -490,7 +490,7 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
      * @param <T>
      *            GeneratedMessage type
      */
-    private static final class SyncXMessageListener<T extends GeneratedMessage> implements MessageListener<XMessage> {
+    private static final class SyncXMessageListener<T extends GeneratedMessageV3> implements MessageListener<XMessage> {
         private CompletableFuture<XMessage> future;
         private Class<T> expectedClass;
 
@@ -502,7 +502,7 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
         @SuppressWarnings("unchecked")
         @Override
         public Boolean createFromMessage(XMessage msg) {
-            Class<? extends GeneratedMessage> msgClass = (Class<? extends GeneratedMessage>) msg.getMessage().getClass();
+            Class<? extends GeneratedMessageV3> msgClass = (Class<? extends GeneratedMessageV3>) msg.getMessage().getClass();
             if (Error.class.equals(msgClass)) {
                 this.future.completeExceptionally(new XProtocolError(Error.class.cast(msg.getMessage())));
                 return true; /* done reading? */

@@ -95,7 +95,7 @@ public class AsyncMessageSender implements MessageSender<XMessage> {
         try {
             // directly access the ByteBuffer's backing array as protobuf's CodedOutputStream.newInstance(ByteBuffer) is giving a stream that doesn't actually
             // write any data
-            msg.writeTo(CodedOutputStream.newInstance(messageBuf.array(), HEADER_LEN, size + HEADER_LEN));
+            msg.writeTo(CodedOutputStream.newInstance(messageBuf.array(), HEADER_LEN, size));
             messageBuf.position(messageBuf.limit());
         } catch (IOException ex) {
             throw new CJCommunicationsException("Unable to write message", ex);

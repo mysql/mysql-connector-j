@@ -31,7 +31,7 @@ package com.mysql.cj.protocol.x;
 
 import java.util.ArrayList;
 
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.MessageListener;
@@ -76,7 +76,7 @@ public class ResultMessageListener implements MessageListener<XMessage> {
 
     public Boolean createFromMessage(XMessage message) {
         @SuppressWarnings("unchecked")
-        Class<? extends GeneratedMessage> msgClass = (Class<? extends GeneratedMessage>) message.getMessage().getClass();
+        Class<? extends GeneratedMessageV3> msgClass = (Class<? extends GeneratedMessageV3>) message.getMessage().getClass();
 
         // accumulate metadata and deliver to listener on first non-metadata message
         if (ColumnMetaData.class.equals(msgClass)) {

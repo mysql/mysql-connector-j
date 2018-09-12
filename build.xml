@@ -275,6 +275,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <fileset dir="${com.mysql.cj.extra.libs}">
             <include name="**/*.jar" />
             <exclude name="**/javassist-3.15.0-GA.jar" />
+            <exclude name="**/protobuf-java-2.6.0.jar" />
         </fileset>
 
         <fileset dir="${com.mysql.cj.build.dir.driver}/lib">
@@ -294,6 +295,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <fileset dir="${com.mysql.cj.extra.libs}">
             <include name="**/*.jar" />
             <exclude name="**/javassist-3.15.0-GA.jar" />
+            <exclude name="**/protobuf-java-2.6.0.jar" />
         </fileset>
 
         <fileset dir="${com.mysql.cj.build.dir.driver}">
@@ -1200,6 +1202,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <classpath>
                     <fileset dir="${com.mysql.cj.extra.libs}">
                         <include name="**/*.jar" />
+                        <exclude name="**/protobuf-java-2.6.0.jar" />
                     </fileset>
                     <fileset dir="${com.mysql.cj.build.dir.driver}/lib">
                         <include name="**/*.jar" />

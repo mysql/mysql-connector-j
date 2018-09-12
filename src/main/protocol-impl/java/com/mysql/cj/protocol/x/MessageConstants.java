@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 import com.mysql.cj.exceptions.AssertionFailedException;
@@ -75,18 +75,18 @@ public class MessageConstants {
     /**
      * Store a mapping of "ServerMessages" class to message parsers. This is used to get the de-serializer after reading the type tag.
      */
-    public static final Map<Class<? extends GeneratedMessage>, Parser<? extends GeneratedMessage>> MESSAGE_CLASS_TO_PARSER;
+    public static final Map<Class<? extends GeneratedMessageV3>, Parser<? extends GeneratedMessageV3>> MESSAGE_CLASS_TO_PARSER;
 
     /**
      * Map of class to "ServerMessages" type tag for validation of parsed message class.
      */
     // TODO Find a clever way to generate both maps with a single set of input pairs.
-    public static final Map<Class<? extends GeneratedMessage>, Integer> MESSAGE_CLASS_TO_TYPE;
+    public static final Map<Class<? extends GeneratedMessageV3>, Integer> MESSAGE_CLASS_TO_TYPE;
 
     /**
      * Map of "ServerMessages" type tag to class.
      */
-    public static final Map<Integer, Class<? extends GeneratedMessage>> MESSAGE_TYPE_TO_CLASS;
+    public static final Map<Integer, Class<? extends GeneratedMessageV3>> MESSAGE_TYPE_TO_CLASS;
 
     /**
      * Store a mapping of message class to "ClientMessages" type tag. This is used to generate the header when sending a message.
@@ -97,9 +97,9 @@ public class MessageConstants {
         /*
          * ServerMessages mappings (including embedded noticed messages with no entry in ServerMessages)
          */
-        Map<Class<? extends GeneratedMessage>, Parser<? extends GeneratedMessage>> messageClassToParser = new HashMap<>();
-        Map<Class<? extends GeneratedMessage>, Integer> messageClassToType = new HashMap<>();
-        Map<Integer, Class<? extends GeneratedMessage>> messageTypeToClass = new HashMap<>();
+        Map<Class<? extends GeneratedMessageV3>, Parser<? extends GeneratedMessageV3>> messageClassToParser = new HashMap<>();
+        Map<Class<? extends GeneratedMessageV3>, Integer> messageClassToType = new HashMap<>();
+        Map<Integer, Class<? extends GeneratedMessageV3>> messageTypeToClass = new HashMap<>();
         // To add support for new messages, add an entry to both maps
         messageClassToParser.put(Error.class, Error.getDefaultInstance().getParserForType());
         messageClassToParser.put(Ok.class, Ok.getDefaultInstance().getParserForType());
@@ -128,7 +128,7 @@ public class MessageConstants {
         messageClassToType.put(Frame.class, ServerMessages.Type.NOTICE_VALUE);
         messageClassToType.put(Row.class, ServerMessages.Type.RESULTSET_ROW_VALUE);
         messageClassToType.put(StmtExecuteOk.class, ServerMessages.Type.SQL_STMT_EXECUTE_OK_VALUE);
-        for (Map.Entry<Class<? extends GeneratedMessage>, Integer> entry : messageClassToType.entrySet()) {
+        for (Map.Entry<Class<? extends GeneratedMessageV3>, Integer> entry : messageClassToType.entrySet()) {
             messageTypeToClass.put(entry.getValue(), entry.getKey());
         }
         MESSAGE_CLASS_TO_PARSER = Collections.unmodifiableMap(messageClassToParser);
@@ -171,11 +171,11 @@ public class MessageConstants {
         return tag;
     }
 
-    public static Class<? extends GeneratedMessage> getMessageClassForType(int type) {
-        Class<? extends GeneratedMessage> messageClass = MessageConstants.MESSAGE_TYPE_TO_CLASS.get(type);
+    public static Class<? extends GeneratedMessageV3> getMessageClassForType(int type) {
+        Class<? extends GeneratedMessageV3> messageClass = MessageConstants.MESSAGE_TYPE_TO_CLASS.get(type);
         if (messageClass == null) {
             // check if there's a mapping that we don't explicitly handle
-            ServerMessages.Type serverMessageMapping = ServerMessages.Type.valueOf(type);
+            ServerMessages.Type serverMessageMapping = ServerMessages.Type.forNumber(type);
             throw AssertionFailedException.shouldNotHappen("Unknown message type: " + type + " (server messages mapping: " + serverMessageMapping + ")");
         }
         return messageClass;
