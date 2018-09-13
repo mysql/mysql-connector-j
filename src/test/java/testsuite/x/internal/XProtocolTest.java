@@ -86,13 +86,10 @@ public class XProtocolTest extends InternalXBaseTestCase {
     public void destroyTestProtocol() throws IOException {
         if (this.isSetForXTests && this.protocol != null) {
             try {
-                this.protocol.send(this.messageBuilder.buildClose(), 0);
-                this.protocol.readOk();
+                this.protocol.close();
             } catch (Exception ex) {
                 System.err.println("Exception during destroy");
                 ex.printStackTrace();
-            } finally {
-                this.protocol.close();
             }
         }
     }

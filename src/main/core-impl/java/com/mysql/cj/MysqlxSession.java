@@ -48,7 +48,6 @@ import com.mysql.cj.protocol.x.StatementExecuteOkBuilder;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 import com.mysql.cj.protocol.x.XProtocol;
 import com.mysql.cj.result.RowList;
-import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.xdevapi.FilterParams;
 import com.mysql.cj.xdevapi.SqlDataResult;
 import com.mysql.cj.xdevapi.SqlResult;
@@ -57,48 +56,37 @@ import com.mysql.cj.xdevapi.SqlUpdateResult;
 
 public class MysqlxSession extends CoreSession {
 
-    private String host;
-    private int port;
-
     public MysqlxSession(HostInfo hostInfo, PropertySet propSet) {
-        super(hostInfo, propSet);
+        super(null, propSet);
 
         // create protocol instance
-        this.host = hostInfo.getHost();
-        if (this.host == null || StringUtils.isEmptyOrWhitespaceOnly(this.host)) {
-            this.host = "localhost";
-        }
-        this.port = hostInfo.getPort();
-        if (this.port < 0) {
-            this.port = 33060;
-        }
-
-        this.protocol = XProtocol.getInstance(this.host, this.port, propSet);
+        this.protocol = new XProtocol(hostInfo, propSet);
 
         this.messageBuilder = this.protocol.getMessageBuilder();
 
         this.protocol.connect(hostInfo.getUser(), hostInfo.getPassword(), hostInfo.getDatabase());
     }
 
+    public MysqlxSession(XProtocol prot) {
+        super(null, prot.getPropertySet());
+        this.protocol = prot;
+        this.messageBuilder = this.protocol.getMessageBuilder();
+    }
+
     @Override
     public String getProcessHost() {
-        return this.host;
+        return this.protocol.getSocketConnection().getHost();
     }
 
     public int getPort() {
-        return this.port;
+        return this.protocol.getSocketConnection().getPort();
     }
 
     public void quit() {
         try {
-            this.protocol.send(this.messageBuilder.buildClose(), 0);
-            ((XProtocol) this.protocol).readOk();
-        } finally {
-            try {
-                this.protocol.close();
-            } catch (IOException ex) {
-                throw new CJCommunicationsException(ex);
-            }
+            this.protocol.close();
+        } catch (IOException ex) {
+            throw new CJCommunicationsException(ex);
         }
     }
 

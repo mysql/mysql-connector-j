@@ -46,6 +46,7 @@ import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
+import com.mysql.cj.protocol.x.XProtocol;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.result.Row;
 import com.mysql.cj.result.StringValueFactory;
@@ -71,6 +72,12 @@ public class SessionImpl implements Session {
         pset.initializeProperties(hostInfo.exposeAsProperties());
         this.session = new MysqlxSession(hostInfo, pset);
         this.defaultSchemaName = hostInfo.getDatabase();
+        this.xbuilder = (XMessageBuilder) this.session.<XMessage> getMessageBuilder();
+    }
+
+    public SessionImpl(XProtocol prot) {
+        this.session = new MysqlxSession(prot);
+        this.defaultSchemaName = prot.defaultSchemaName;
         this.xbuilder = (XMessageBuilder) this.session.<XMessage> getMessageBuilder();
     }
 

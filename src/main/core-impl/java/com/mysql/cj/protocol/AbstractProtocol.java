@@ -102,4 +102,9 @@ public abstract class AbstractProtocol<M extends Message> implements Protocol<M>
         return this.messageBuilder;
     }
 
+    @Override
+    public void reset() {
+        // no-op
+    }
+
 }

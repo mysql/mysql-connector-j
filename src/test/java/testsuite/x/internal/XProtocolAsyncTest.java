@@ -72,8 +72,6 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
     @After
     public void destroyTestProtocol() throws IOException {
         if (this.isSetForXTests) {
-            this.protocol.send(this.messageBuilder.buildClose(), 0);
-            this.protocol.readOk();
             this.protocol.close();
         }
     }

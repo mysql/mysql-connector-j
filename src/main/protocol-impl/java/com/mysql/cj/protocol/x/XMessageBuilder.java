@@ -78,6 +78,7 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
 import com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateContinue;
 import com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateStart;
 import com.mysql.cj.x.protobuf.MysqlxSession.Close;
+import com.mysql.cj.x.protobuf.MysqlxSession.Reset;
 import com.mysql.cj.x.protobuf.MysqlxSql.StmtExecute;
 import com.mysql.cj.xdevapi.CreateIndexParams;
 import com.mysql.cj.xdevapi.CreateIndexParams.IndexField;
@@ -567,5 +568,9 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
             // TODO: better exception, should introduce a new exception class for auth?
             throw new RuntimeException(ex);
         }
+    }
+
+    public XMessage buildSessionReset() {
+        return new XMessage(Reset.newBuilder().build());
     }
 }

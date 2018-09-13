@@ -121,7 +121,7 @@ public class InternalXBaseTestCase {
      */
     public XProtocol createTestProtocol() {
         // TODO pass prop. set
-        XProtocol protocol = XProtocol.getInstance(getTestHost(), getTestPort(), new DefaultPropertySet());
+        XProtocol protocol = new XProtocol(getTestHost(), getTestPort(), getTestDatabase(), new DefaultPropertySet());
         protocol.beforeHandshake();
         return protocol;
     }

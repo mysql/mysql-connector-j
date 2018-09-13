@@ -207,8 +207,8 @@ public class DefaultPropertySet implements PropertySet, Serializable {
                     sslMode.setValue(SslMode.DISABLED);
                 } else {
                     String verifyServerCertificate = infoCopy.getProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate);
-                    if (verifyServerCertificate != null
-                            && BooleanPropertyDefinition.booleanFrom(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, verifyServerCertificate, null)) {
+                    if (verifyServerCertificate != null && BooleanPropertyDefinition.booleanFrom(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate,
+                            verifyServerCertificate, null)) {
                         sslMode.setValue(SslMode.VERIFY_CA);
                     }
                 }
@@ -257,5 +257,12 @@ public class DefaultPropertySet implements PropertySet, Serializable {
             }
         }
         return props;
+    }
+
+    @Override
+    public void reset() {
+        this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.values().forEach(p -> p.resetValue());
+        this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.values().forEach(p -> p.resetValue());
+        postInitialization();
     }
 }

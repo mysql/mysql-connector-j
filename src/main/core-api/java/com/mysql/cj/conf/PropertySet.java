@@ -79,4 +79,9 @@ public interface PropertySet {
     void postInitialization();
 
     Properties exposeAsProperties();
+
+    /**
+     * Reset all properties to their initial values.
+     */
+    void reset();
 }

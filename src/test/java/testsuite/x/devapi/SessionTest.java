@@ -31,28 +31,43 @@ package testsuite.x.devapi;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.CoreSession;
 import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.Client;
+import com.mysql.cj.xdevapi.Client.ClientProperty;
+import com.mysql.cj.xdevapi.ClientFactory;
+import com.mysql.cj.xdevapi.ClientImpl;
+import com.mysql.cj.xdevapi.ClientImpl.PooledXProtocol;
 import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.RowResult;
 import com.mysql.cj.xdevapi.Schema;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
+import com.mysql.cj.xdevapi.SessionImpl;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.SqlStatement;
 import com.mysql.cj.xdevapi.XDevAPIError;
@@ -427,5 +442,500 @@ public class SessionTest extends DevApiBaseTestCase {
         assertTrue(uri.contains("serverTimezone=Asia/Calcutta"));
         assertTrue(uri.contains("serverConfigCacheFactory="));
         assertFalse(uri.contains(","));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testPooledSessions() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        final ClientFactory cf = new ClientFactory();
+        final String url = this.baseUrl;
+        final Properties props = new Properties();
+
+        /*
+         * UT8/1: Verify that setting an incorrect value in the client options defined in the Pooling options in the HLS throw an exception with the expected
+         * message.
+         */
+        // pooling.enabled
+        props.clear();
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.enabled' does not support value 'sure'\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                props.setProperty(ClientProperty.POOLING_ENABLED.getKeyName(), "sure");
+                cf.getClient(url, props);
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.enabled' does not support value 'sure'\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                cf.getClient(url, "{\"pooling\": {\"enabled\": \"sure\"}}");
+                return null;
+            }
+        });
+        // pooling.maxSize
+        props.clear();
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxSize' does not support value '0'\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                props.setProperty(ClientProperty.POOLING_MAX_SIZE.getKeyName(), "0");
+                cf.getClient(url, props);
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxSize' does not support value '0'\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                cf.getClient(url, "{\"pooling\": {\"maxSize\": 0}}");
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxSize' does not support value 'one'\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                cf.getClient(url, "{\"pooling\": {\"maxSize\": \"one\"}}");
+                return null;
+            }
+        });
+        // pooling.maxIdleTime
+        props.clear();
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxIdleTime' does not support value '-1'\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                props.setProperty(ClientProperty.POOLING_MAX_IDLE_TIME.getKeyName(), "-1");
+                cf.getClient(url, props);
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxIdleTime' does not support value '-1'\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                cf.getClient(url, "{\"pooling\": {\"maxIdleTime\": -1}}");
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxIdleTime' does not support value 'one'\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                cf.getClient(url, "{\"pooling\": {\"maxIdleTime\": \"one\"}}");
+                return null;
+            }
+        });
+        // pooling.queueTimeout
+        props.clear();
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.queueTimeout' does not support value '-1'\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                props.setProperty(ClientProperty.POOLING_QUEUE_TIMEOUT.getKeyName(), "-1");
+                cf.getClient(url, props);
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.queueTimeout' does not support value '-1'\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                cf.getClient(url, "{\"pooling\": {\"queueTimeout\": -1}}");
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.queueTimeout' does not support value 'one'\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                cf.getClient(url, "{\"pooling\": {\"queueTimeout\": \"one\"}}");
+                return null;
+            }
+        });
+        // Unknown pooling option.
+        props.clear();
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.foo' is not recognized as valid\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                props.setProperty("pooling.foo", "bar");
+                cf.getClient(url, props);
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.foo' is not recognized as valid\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                cf.getClient(url, "{\"pooling\": {\"foo\": \"bar\"}}");
+                return null;
+            }
+        });
+        // Unknown clientProps option.
+        props.clear();
+        assertThrows(XDevAPIError.class, "Client option 'foo' is not recognized as valid\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                props.setProperty("foo", "bar");
+                cf.getClient(url, props);
+                return null;
+            }
+        });
+        assertThrows(XDevAPIError.class, "Client option 'foo' is not recognized as valid\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                cf.getClient(url, "{\"foo\": {\"bar\": \"baz\"}}");
+                return null;
+            }
+        });
+
+        /*
+         * UT9/1: Verify that when no pooling properties passed their values set to defaults: pooling.maxSize=25, pooling.maxIdleTime=0, pooling.queueTimeout=0.
+         */
+        props.clear();
+        testPooledSessions_checkClientProperties(cf.getClient(this.baseUrl, props), 25, 0, 0);
+        testPooledSessions_checkClientProperties(cf.getClient(this.baseUrl, (Properties) null), 25, 0, 0);
+        testPooledSessions_checkClientProperties(cf.getClient(this.baseUrl, "{}"), 25, 0, 0);
+        testPooledSessions_checkClientProperties(cf.getClient(this.baseUrl, (String) null), 25, 0, 0);
+
+        /*
+         * UT9/2: Verify that when all pooling properties passed via Properties object the Client is configured according to their values.
+         */
+        props.setProperty(ClientProperty.POOLING_ENABLED.getKeyName(), "true");
+        props.setProperty(ClientProperty.POOLING_MAX_SIZE.getKeyName(), "5");
+        props.setProperty(ClientProperty.POOLING_MAX_IDLE_TIME.getKeyName(), "6");
+        props.setProperty(ClientProperty.POOLING_QUEUE_TIMEOUT.getKeyName(), "7");
+        testPooledSessions_checkClientProperties(cf.getClient(this.baseUrl, props), 5, 6, 7);
+
+        /*
+         * UT9/3: Verify that when all pooling properties passed via json string ({"pooling" : {"enabled" : true, "maxSize" : 8, "maxIdleTime" : 9,
+         * "queueTimeout" : 10} }) the Client is configured according to their values.
+         */
+        testPooledSessions_checkClientProperties(
+                cf.getClient(this.baseUrl, "{\"pooling\" : {\"enabled\" : true, \"maxSize\" : 8, \"maxIdleTime\" : 9, \"queueTimeout\" : 10} }"), 8, 9, 10);
+
+        /*
+         * UT3/2: Start a client with pooling enabled, call Client.getSession() twice and verify that the objects returned are different and the internal
+         * connection instances are different too.
+         */
+        Client cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true}}");
+        Session s0 = cli0.getSession();
+        Session s1 = cli0.getSession();
+        assertNotEquals(s0, s1);
+
+        Field fProtocol = CoreSession.class.getDeclaredField("protocol");
+        fProtocol.setAccessible(true);
+        assertNotEquals(fProtocol.get(((SessionImpl) s0).getSession()), fProtocol.get(((SessionImpl) s1).getSession()));
+        cli0.close();
+
+        /*
+         * UT3/3: Start a client with pooling enabled, call Client.getSession() twice, closing the first session before getting the second one, and verify that
+         * the objects returned are different and that the internal connection instances are the same.
+         */
+        cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true}}");
+        s0 = cli0.getSession();
+        s0.close();
+        s1 = cli0.getSession();
+        s1.sql("SELECT 1").execute();
+        assertNotEquals(s0, s1);
+        assertEquals(fProtocol.get(((SessionImpl) s0).getSession()), fProtocol.get(((SessionImpl) s1).getSession()));
+        cli0.close();
+
+        /*
+         * UT3/4: Start a client with pooling disabled, call Client.getSession() twice and verify that the objects returned are different and the internal
+         * connection instances are different too.
+         */
+        cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": false}}");
+        s0 = cli0.getSession();
+        s1 = cli0.getSession();
+        assertNotEquals(s0, s1);
+        assertNotEquals(fProtocol.get(((SessionImpl) s0).getSession()), fProtocol.get(((SessionImpl) s1).getSession()));
+        cli0.close();
+
+        /*
+         * UT3/5: Start a client with pooling disabled, call Client.getSession() twice, closing the first session before getting the second one, and verify that
+         * the objects returned are different and that the internal connection instances are different too.
+         */
+        cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": false}}");
+        s0 = cli0.getSession();
+        s0.close();
+        s1 = cli0.getSession();
+        assertNotEquals(s0, s1);
+        assertNotEquals(fProtocol.get(((SessionImpl) s0).getSession()), fProtocol.get(((SessionImpl) s1).getSession()));
+        cli0.close();
+
+        /*
+         * UT5/1: Having a full pool and queueTimeout = 0, verify that a new Client.getSession() waits until a Session is released.
+         * UT6/1: Verify that that a client object can not open/create more sessions that the specified in the maxSize option.
+         */
+        props.setProperty(ClientProperty.POOLING_MAX_SIZE.getKeyName(), "3");
+        props.setProperty(ClientProperty.POOLING_MAX_IDLE_TIME.getKeyName(), "1000");
+        props.setProperty(ClientProperty.POOLING_QUEUE_TIMEOUT.getKeyName(), "1000");
+        Client cli1 = cf.getClient(this.baseUrl, props);
+        s1 = cli1.getSession();
+        Session s2 = cli1.getSession();
+        Session s3 = cli1.getSession();
+        testPooledSessions_assertFailureTimeout(cli1, 1000, 2000, XDevAPIError.class, "Session can not be obtained within 1000 milliseconds.");
+        cli1.close();
+
+        /*
+         * UT12/1: Having a pool with a single connection, close the Session, get another Session with Client.getSession(). Verify that the received Session
+         * object is new and uses the same internal connection (MysqlxSession) instance.
+         */
+        cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true, \"maxSize\" : 1}}");
+        s0 = cli0.getSession();
+        s0.close();
+        s1 = cli0.getSession();
+        s1.sql("SELECT 1").execute();
+        assertNotEquals(s0, s1);
+        assertEquals(fProtocol.get(((SessionImpl) s0).getSession()), fProtocol.get(((SessionImpl) s1).getSession()));
+        cli0.close();
+
+        /*
+         * UT12/2: Having a pool with a number of connections greater than 1 and lower than maxPoolSize, close on Session, get another Session with
+         * Client.getSession(). Verify that the received Session object is new and uses the same internal connection (MysqlxSession) instance.
+         */
+        cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true, \"maxSize\" : 3}}");
+        s0 = cli0.getSession();
+        s0.close();
+        s1 = cli0.getSession();
+        s1.sql("SELECT 1").execute();
+        assertNotEquals(s0, s1);
+        assertEquals(fProtocol.get(((SessionImpl) s0).getSession()), fProtocol.get(((SessionImpl) s1).getSession()));
+        cli0.close();
+
+        /*
+         * UT12/3: Having a full pool with all sessions in active state, close one Session, get another Session with Client.getSession(). Verify that the
+         * received Session object is new and uses the same internal connection (MysqlxSession) instance.
+         */
+        cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true, \"maxSize\" : 3}}");
+        s0 = cli0.getSession();
+        s1 = cli0.getSession();
+        s2 = cli0.getSession();
+        s0.close();
+        s3 = cli0.getSession();
+        s3.sql("SELECT 1").execute();
+        assertNotEquals(s0, s3);
+        assertEquals(fProtocol.get(((SessionImpl) s0).getSession()), fProtocol.get(((SessionImpl) s3).getSession()));
+        cli0.close();
+
+        /*
+         * UT11/2: Having a pool with a single idle connection and maxIdleTime = n, verify that after n milliseconds a Client.getSession() call will remove all
+         * expired sessions from pool and return a new Session object that uses a new MysqlxSession instance.
+         */
+        cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true, \"maxSize\" : 3, \"maxIdleTime\" : 1000}}");
+        s0 = cli0.getSession();
+        s0.close();
+        Thread.sleep(2000);
+        s1 = cli0.getSession();
+        assertNotEquals(s0, s1);
+        assertNotEquals(fProtocol.get(((SessionImpl) s0).getSession()), fProtocol.get(((SessionImpl) s1).getSession()));
+
+        Field fIdleSessions = ClientImpl.class.getDeclaredField("idleProtocols");
+        fIdleSessions.setAccessible(true);
+        assertTrue(((BlockingQueue<PooledXProtocol>) fIdleSessions.get(cli0)).isEmpty());
+
+        /*
+         * UT4/1: Verify that all idle and active sessions are closed after Client.close() call.
+         */
+        cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true, \"maxSize\" : 3}}");
+        s0 = cli0.getSession();
+        s1 = cli0.getSession();
+        s0.close();
+
+        Field fActiveSessions = ClientImpl.class.getDeclaredField("activeProtocols");
+        fActiveSessions.setAccessible(true);
+        assertEquals(1, ((BlockingQueue<PooledXProtocol>) fIdleSessions.get(cli0)).size());
+        assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) fActiveSessions.get(cli0)).size());
+
+        cli0.close();
+        assertEquals(0, ((BlockingQueue<PooledXProtocol>) fIdleSessions.get(cli0)).size());
+        assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) fActiveSessions.get(cli0)).size());
+
+        final Session ses = s1;
+        assertThrows(CJCommunicationsException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                ses.getSchemas();
+                return null;
+            }
+        });
+
+        /*
+         * UT4/2: Verify that after Client was closed the Client.getSession() throws an XDevAPIError with the message "Client is closed."
+         */
+        Client cli2 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true}}");
+        cli2.close();
+        assertThrows(XDevAPIError.class, "Client is closed.", new Callable<Void>() {
+            public Void call() throws Exception {
+                cli2.getSession();
+                return null;
+            }
+        });
+
+        /*
+         * UT11/1: Having a pool with a single active and maxIdleTime = 0, verify that if closing the session then after any long inactivity time a new Session
+         * object returned by Client.getSession() uses the same internal MysqlxSession object.
+         */
+        props.setProperty(ClientProperty.POOLING_MAX_SIZE.getKeyName(), "2");
+        props.setProperty(ClientProperty.POOLING_MAX_IDLE_TIME.getKeyName(), "0");
+        props.setProperty(ClientProperty.POOLING_QUEUE_TIMEOUT.getKeyName(), "20000");
+        Client cli3 = cf.getClient(this.baseUrl, props);
+        s0 = cli3.getSession();
+        s1 = cli3.getSession();
+        assertEquals(2, ((Set<WeakReference<PooledXProtocol>>) fActiveSessions.get(cli3)).size());
+        s0.close();
+        Thread.sleep(10000);
+        s2 = cli3.getSession();
+        s2.sql("SELECT 1").execute();
+        assertNotEquals(s0, s2);
+        assertEquals(fProtocol.get(((SessionImpl) s0).getSession()), fProtocol.get(((SessionImpl) s2).getSession()));
+        cli3.close();
+
+        /*
+         * UT5/1: Having a full pool and queueTimeout = 0, verify that a new Client.getSession() waits until a Session is released.
+         */
+        props.setProperty(ClientProperty.POOLING_MAX_SIZE.getKeyName(), "2");
+        props.setProperty(ClientProperty.POOLING_MAX_IDLE_TIME.getKeyName(), "1000");
+        props.setProperty(ClientProperty.POOLING_QUEUE_TIMEOUT.getKeyName(), "0");
+        cli3 = cf.getClient(this.baseUrl, props);
+        s1 = cli3.getSession();
+        Session s6 = cli3.getSession();
+
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(10000);
+                    s6.close();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+        });
+
+        long begin = System.currentTimeMillis();
+        t.start();
+        s1 = cli3.getSession();
+        long end = System.currentTimeMillis() - begin;
+        s1.sql("SELECT 1").execute();
+        assertTrue("Expected wait time 10000 ms but was " + end, end >= 10000);
+        assertEquals(fProtocol.get(((SessionImpl) s1).getSession()), fProtocol.get(((SessionImpl) s6).getSession()));
+
+        /*
+         * TS10_2 Verify that RuntimProperty objects are reset to initial values when Session returned to pool.
+         */
+        assertEquals(2, ((Set<WeakReference<PooledXProtocol>>) fActiveSessions.get(cli3)).size());
+        ((SessionImpl) s1).getSession().getPropertySet().getStringProperty(PropertyKey.connectionAttributes).setValue("orig:s1");
+        s1.close();
+        assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) fActiveSessions.get(cli3)).size());
+        s2 = cli3.getSession();
+        s2.sql("SELECT 1").execute();
+        assertEquals(fProtocol.get(((SessionImpl) s1).getSession()), fProtocol.get(((SessionImpl) s2).getSession()));
+        assertNotEquals("orig:s1", ((SessionImpl) s1).getSession().getPropertySet().getStringProperty(PropertyKey.connectionAttributes).getValue());
+        assertEquals(((SessionImpl) s1).getSession().getPropertySet().getStringProperty(PropertyKey.connectionAttributes).getInitialValue(),
+                ((SessionImpl) s1).getSession().getPropertySet().getStringProperty(PropertyKey.connectionAttributes).getValue());
+
+        /*
+         * TODO: Add when xplugin is ready
+         * UT10/1: Get the max sessions allowed in the pool, create the same variables and temp tables in all the sessions. Then close all the sessions and get
+         * a new one: the variables and the temp tables must not exist.
+         */
+        cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true, \"maxSize\" : 2}}");
+        s0 = cli0.getSession();
+        s1 = cli0.getSession();
+
+        s0.sql("SET @a='s0'").execute();
+        s0.sql("CREATE TEMPORARY TABLE testPooledSessionsTmpS0(x int)").execute();
+
+        s1.sql("SET @a='s1'").execute();
+        s1.sql("CREATE TEMPORARY TABLE testPooledSessionsTmpS1(x int)").execute();
+
+        SqlResult res = s0.sql("SELECT @a as a").execute();
+        assertTrue(res.hasNext());
+        assertEquals("s0", res.next().getString(0));
+        res = s0.sql("SHOW CREATE TABLE testPooledSessionsTmpS0").execute();
+        assertTrue(res.hasNext());
+        assertEquals("testPooledSessionsTmpS0", res.next().getString(0));
+
+        res = s1.sql("SELECT @a as a").execute();
+        assertTrue(res.hasNext());
+        assertEquals("s1", res.next().getString(0));
+        res = s1.sql("SHOW CREATE TABLE testPooledSessionsTmpS1").execute();
+        assertTrue(res.hasNext());
+        assertEquals("testPooledSessionsTmpS1", res.next().getString(0));
+
+        s0.close();
+        s1.close();
+
+        Session s0_new = cli0.getSession();
+        Session s1_new = cli0.getSession();
+
+        res = s0_new.sql("SELECT @a as a").execute();
+        assertTrue(res.hasNext());
+        assertNull(res.next().getString(0));
+
+        assertThrows(XProtocolError.class, ".*testPooledSessionsTmpS0' doesn't exist", new Callable<Void>() {
+            public Void call() throws Exception {
+                s0_new.sql("SHOW CREATE TABLE testPooledSessionsTmpS0").execute();
+                return null;
+            }
+        });
+
+        res = s1_new.sql("SELECT @a as a").execute();
+        assertTrue(res.hasNext());
+        assertNull(res.next().getString(0));
+
+        assertThrows(XProtocolError.class, ".*testPooledSessionsTmpS1' doesn't exist", new Callable<Void>() {
+            public Void call() throws Exception {
+                s1_new.sql("SHOW CREATE TABLE testPooledSessionsTmpS1").execute();
+                return null;
+            }
+        });
+
+        cli0.close();
+    }
+
+    private void testPooledSessions_checkClientProperties(Client cli, int maxSize, int maxIdleTime, int queueTimeout) throws Exception {
+        Field f = ClientImpl.class.getDeclaredField("maxSize");
+        f.setAccessible(true);
+        assertEquals(maxSize, f.get(cli));
+
+        f = ClientImpl.class.getDeclaredField("maxIdleTime");
+        f.setAccessible(true);
+        assertEquals(maxIdleTime, f.get(cli));
+
+        f = ClientImpl.class.getDeclaredField("queueTimeout");
+        f.setAccessible(true);
+        assertEquals(queueTimeout, f.get(cli));
+    }
+
+    private <EX extends Throwable> void testPooledSessions_assertFailureTimeout(Client cli, int expLowLimit, int expUpLimit, Class<EX> throwable,
+            String message) {
+        long begin = System.currentTimeMillis();
+        assertThrows(throwable, message, () -> cli.getSession());
+        long end = System.currentTimeMillis() - begin;
+        assertTrue("Expected: " + expLowLimit + ".." + expUpLimit + ". Got " + end, end >= expLowLimit && end < expUpLimit);
+    }
+
+    @Test
+    public void testBug28616573() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        RowResult res = this.session.sql(
+                "select @@global.mysqlx_max_connections, VARIABLE_VALUE FROM performance_schema.global_status WHERE VARIABLE_NAME='Mysqlx_worker_threads_active'")
+                .execute();
+        Row r = res.next();
+        int mysqlxMaxConnections = r.getInt(0);
+        int mysqlWorkerThreadsActive = Integer.parseInt(r.getString(1));
+        this.session.sql("SET @@global.mysqlx_max_connections=" + (mysqlWorkerThreadsActive + 2)).execute(); // allow only 2 additional connections
+
+        Properties props = new Properties();
+        props.setProperty(ClientProperty.POOLING_ENABLED.getKeyName(), "true");
+        props.setProperty(ClientProperty.POOLING_MAX_SIZE.getKeyName(), "2");
+        props.setProperty(ClientProperty.POOLING_MAX_IDLE_TIME.getKeyName(), "2000");
+        props.setProperty(ClientProperty.POOLING_QUEUE_TIMEOUT.getKeyName(), "2000");
+
+        try {
+            ClientFactory cf = new ClientFactory();
+            Client cli1 = cf.getClient(this.baseUrl, props);
+            Client cli2 = cf.getClient(this.baseUrl, props);
+
+            Session sess1 = cli1.getSession(); // new connection #1
+            sess1.sql("SELECT 1").execute();
+            sess1.close();
+            sess1 = cli1.getSession(); // reuse connection #1
+            Session sess2 = cli1.getSession(); // new connection #2
+            sess2.sql("SELECT 1").execute();
+
+            assertThrows(CJCommunicationsException.class, "Cannot read packet header", () -> cli2.getSession());
+
+            cli1.close();
+            cli2.close();
+
+        } finally {
+            this.session.sql("SET @@global.mysqlx_max_connections=" + mysqlxMaxConnections).execute();
+        }
     }
 }

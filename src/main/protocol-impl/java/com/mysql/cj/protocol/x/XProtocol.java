@@ -45,6 +45,7 @@ import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.QueryResult;
 import com.mysql.cj.Session;
 import com.mysql.cj.TransactionEventHandler;
+import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
@@ -107,16 +108,31 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     XServerSession serverSession = null;
 
-    public static XProtocol getInstance(String host, int port, PropertySet propertySet) {
+    public String defaultSchemaName;
 
-        SocketConnection socketConnection = propertySet.getBooleanProperty(PropertyKey.xdevapiUseAsyncProtocol).getValue() ? new XAsyncSocketConnection()
+    public XProtocol(String host, int port, String defaultSchema, PropertySet propertySet) {
+
+        this.defaultSchemaName = defaultSchema;
+        SocketConnection socketConn = propertySet.getBooleanProperty(PropertyKey.xdevapiUseAsyncProtocol).getValue() ? new XAsyncSocketConnection()
                 : new NativeSocketConnection();
+        socketConn.connect(host, port, propertySet, null, null, 0);
+        init(null, socketConn, propertySet, null);
+    }
 
-        socketConnection.connect(host, port, propertySet, null, null, 0);
-
-        XProtocol protocol = new XProtocol();
-        protocol.init(null, socketConnection, propertySet, null);
-        return protocol;
+    public XProtocol(HostInfo hostInfo, PropertySet propertySet) {
+        String host = hostInfo.getHost();
+        if (host == null || StringUtils.isEmptyOrWhitespaceOnly(host)) {
+            host = "localhost";
+        }
+        int port = hostInfo.getPort();
+        if (port < 0) {
+            port = 33060;
+        }
+        this.defaultSchemaName = hostInfo.getDatabase();
+        SocketConnection socketConn = propertySet.getBooleanProperty(PropertyKey.xdevapiUseAsyncProtocol).getValue() ? new XAsyncSocketConnection()
+                : new NativeSocketConnection();
+        socketConn.connect(host, port, propertySet, null, null, 0);
+        init(null, socketConn, propertySet, null);
     }
 
     public void init(Session sess, SocketConnection socketConn, PropertySet propSet, TransactionEventHandler transactionManager) {
@@ -235,13 +251,23 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
     }
 
+    private String currUser = null, currPassword = null, currDatabase = null; // TODO remove these variables after implementing mysql_reset_connection() in reset() method
+
     @Override
     public void connect(String user, String password, String database) {
+        this.currUser = user;
+        this.currPassword = password;
+        this.currDatabase = database;
+
         beforeHandshake();
         this.authProvider.connect(null, user, password, database);
     }
 
     public void changeUser(String user, String password, String database) {
+        this.currUser = user;
+        this.currPassword = password;
+        this.currDatabase = database;
+
         this.authProvider.changeUser(null, user, password, database);
     }
 
@@ -470,11 +496,22 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     }
 
     public void close() throws IOException {
-        if (this.managedResource == null) {
-            throw new ConnectionIsClosedException();
+        try {
+            send(this.messageBuilder.buildClose(), 0);
+            readOk();
+        } catch (Exception e) {
+            // ignore exceptions
+        } finally {
+            try {
+                if (this.managedResource == null) {
+                    throw new ConnectionIsClosedException();
+                }
+                this.managedResource.close();
+                this.managedResource = null;
+            } catch (IOException ex) {
+                throw new CJCommunicationsException(ex);
+            }
         }
-        this.managedResource.close();
-        this.managedResource = null;
     }
 
     public boolean isSqlResultPending() {
@@ -531,6 +568,18 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         } catch (IOException e) {
             throw new XProtocolError(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public void reset() {
+        newCommand();
+        this.propertySet.reset();
+
+        send(((XMessageBuilder) this.messageBuilder).buildSessionReset(), 0);
+        readOk();
+
+        // TODO changeUser() call should be removed after proper implementation of session reset in xplugin 
+        this.authProvider.changeUser(null, this.currUser, this.currPassword, this.currDatabase);
     }
 
     @Override

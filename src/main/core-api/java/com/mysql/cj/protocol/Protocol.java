@@ -280,4 +280,8 @@ public interface Protocol<M extends Message> {
 
     void initServerSession();
 
+    /**
+     * Return Protocol to its initial state right after successful connect.
+     */
+    void reset();
 }

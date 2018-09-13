@@ -56,17 +56,7 @@ public class IntegerPropertyDefinition extends AbstractPropertyDefinition<Intege
 
     @Override
     public Integer parseObject(String value, ExceptionInterceptor exceptionInterceptor) {
-        try {
-            // Parse decimals, too
-            int intValue = (int) (Double.valueOf(value).doubleValue() * this.multiplier);
-
-            return intValue;
-
-        } catch (NumberFormatException nfe) {
-            throw ExceptionFactory.createException(WrongArgumentException.class,
-                    "The connection property '" + getName() + "' only accepts integer values. The value '" + value + "' can not be converted to an integer.",
-                    exceptionInterceptor);
-        }
+        return integerFrom(getName(), value, this.multiplier, exceptionInterceptor);
     }
 
     /**
@@ -79,4 +69,19 @@ public class IntegerPropertyDefinition extends AbstractPropertyDefinition<Intege
         return new IntegerProperty(this);
     }
 
+    public static Integer integerFrom(String name, String value, int multiplier, ExceptionInterceptor exceptionInterceptor) {
+        try {
+            // Parse decimals, too
+            int intValue = (int) (Double.valueOf(value).doubleValue() * multiplier);
+
+            // TODO check bounds
+
+            return intValue;
+
+        } catch (NumberFormatException nfe) {
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    "The connection property '" + name + "' only accepts integer values. The value '" + value + "' can not be converted to an integer.",
+                    exceptionInterceptor);
+        }
+    }
 }
