@@ -470,6 +470,29 @@ public abstract class BaseTestCase extends TestCase {
         props.remove(PropertyKey.PORT.getKeyName());
     }
 
+    /**
+     * Some tests build connections strings for internal usage but, in order for them to work, they may require some connection properties set in the main test
+     * suite URL. For example 'serverTimezone' is one of those properties.
+     * 
+     * @param props
+     *            the Properties object where to add the missing connection properties
+     * @return
+     *         the modified Properties objects or a new one if <code>props</code> is <code>null</code>
+     */
+    protected Properties appendRequiredProperties(Properties props) {
+        if (props == null) {
+            props = new Properties();
+        }
+
+        // Add 'serverTimezone' if set in test suite URL and missing from props.
+        String propKey = PropertyKey.serverTimezone.getKeyName();
+        if (!props.containsKey(propKey)) {
+            props.setProperty(propKey, mainConnectionUrl.getOriginalProperties().get(propKey));
+        }
+
+        return props;
+    }
+
     protected String getHostFromTestsuiteUrl() throws SQLException {
         String host = mainConnectionUrl.getMainHost().getHost();
         return host;

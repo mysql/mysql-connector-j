@@ -3,6 +3,8 @@
 
 Version 8.0.13
 
+  - Fix for Bug#21774249, UNIT TEST FAILS WITH ERROR " 'CEST' IS UNRECOGNIZED TIME ZONE".
+
   - WL#11857, DevAPI: Implement connection pooling for xprotocol.
 
   - Fix for Bug#91873 (28444461), REMOVE USEOLDUTF8BEHAVIOR CONNECTION PROPERTY.

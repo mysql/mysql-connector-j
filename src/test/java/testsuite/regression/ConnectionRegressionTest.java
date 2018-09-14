@@ -983,11 +983,16 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Connection replConn = null;
 
             HostInfo hostInfo = mainConnectionUrl.getMainHost();
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.USER.getKeyName(), hostInfo.getUser());
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), hostInfo.getPassword());
+            props = appendRequiredProperties(props);
+
             String replUrl = String.format("%1$s//address=(host=%2$s)(port=%3$d),address=(host=%2$s)(port=%3$d)(isSlave=true)/%4$s",
                     ConnectionUrl.Type.REPLICATION_CONNECTION.getScheme(), getEncodedHostFromTestsuiteUrl(), getPortFromTestsuiteUrl(), hostInfo.getDatabase());
 
             try {
-                replConn = DriverManager.getConnection(replUrl, hostInfo.getUser(), hostInfo.getPassword());
+                replConn = DriverManager.getConnection(replUrl, props);
                 assertTrue(
                         !((ReplicationConnection) replConn).getMasterConnection().hasSameProperties(((ReplicationConnection) replConn).getSlavesConnection()));
             } finally {
@@ -9362,6 +9367,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         final String database = connProps.getProperty(PropertyKey.DBNAME.getKeyName());
         final String username = connProps.getProperty(PropertyKey.USER.getKeyName());
         final String password = connProps.getProperty(PropertyKey.PASSWORD.getKeyName(), "");
+        final String serverTimezone = connProps.getProperty(PropertyKey.serverTimezone.getKeyName());
 
         final Map<String, String> props = new HashMap<>();
         props.put(PropertyKey.USER.getKeyName(), username);
@@ -9374,6 +9380,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.put(PropertyKey.allowMasterDownConnections.getKeyName(), "true");
         props.put(PropertyKey.allowSlaveDownConnections.getKeyName(), "true");
         props.put(PropertyKey.readFromMasterWhenNoSlaves.getKeyName(), "true");
+        if (serverTimezone != null) {
+            props.put(PropertyKey.serverTimezone.getKeyName(), serverTimezone);
+        }
 
         ConnectionUrl replConnectionUrl = new ReplicationConnectionUrl(Collections.<HostInfo> emptyList(), Collections.<HostInfo> emptyList(), props);
 
@@ -10713,7 +10722,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 con.getPropertySet().<ZeroDatetimeBehavior> getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
 
         con = (JdbcConnection) getConnectionWithProps("jdbc:mysql://(port=" + getPortFromTestsuiteUrl() + ",user=" + mainConnectionUrl.getDefaultUser()
-                + ",password=" + mainConnectionUrl.getDefaultPassword() + ",zeroDateTimeBehavior=convertToNull)/" + this.dbName, new Properties());
+                + ",password=" + mainConnectionUrl.getDefaultPassword() + ",zeroDateTimeBehavior=convertToNull)/" + this.dbName,
+                appendRequiredProperties(null));
         assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL,
                 con.getPropertySet().<ZeroDatetimeBehavior> getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
     }
@@ -10737,7 +10747,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 getEncodedHostFromTestsuiteUrl(), getPortFromTestsuiteUrl(), "%2C", hostInfo.getUser(), hostInfo.getPassword(), hostInfo.getDatabase()));
 
         for (String cs : connStr) {
-            JdbcConnection c1 = (JdbcConnection) getConnectionWithProps(cs, new Properties());
+            JdbcConnection c1 = (JdbcConnection) getConnectionWithProps(cs, appendRequiredProperties(null));
 
             assertEquals("utf8mb4_unicode_ci", c1.getPropertySet().getStringProperty(PropertyKey.connectionCollation).getValue());
             String foreignKeyChecks = getMysqlVariable(c1, "FOREIGN_KEY_CHECKS");
