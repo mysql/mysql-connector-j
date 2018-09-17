@@ -95,6 +95,7 @@ import com.mysql.cj.protocol.AbstractProtocol;
 import com.mysql.cj.protocol.AuthenticationProvider;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ExportControlled;
+import com.mysql.cj.protocol.FullReadInputStream;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.protocol.MessageSender;
@@ -824,7 +825,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             // Due to a bug in some older Linux kernels (fixed after the patch "tcp: fix FIONREAD/SIOCINQ"), our SocketInputStream.available() may return 1 even
             // if there is no data in the Stream, so, we need to check if InputStream.skip() actually skipped anything.
-            while ((len = this.socketConnection.getMysqlInput().available()) > 0 && this.socketConnection.getMysqlInput().skip(len) > 0) {
+            FullReadInputStream inputStream = this.socketConnection.getMysqlInput();
+            while (inputStream != null && (len = inputStream.available()) > 0 && inputStream.skip(len) > 0) {
                 continue;
             }
         } catch (IOException ioEx) {
