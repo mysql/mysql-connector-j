@@ -486,8 +486,9 @@ public abstract class BaseTestCase extends TestCase {
 
         // Add 'serverTimezone' if set in test suite URL and missing from props.
         String propKey = PropertyKey.serverTimezone.getKeyName();
-        if (!props.containsKey(propKey)) {
-            props.setProperty(propKey, mainConnectionUrl.getOriginalProperties().get(propKey));
+        String origTzValue = null;
+        if (!props.containsKey(propKey) && (origTzValue = mainConnectionUrl.getOriginalProperties().get(propKey)) != null) {
+            props.setProperty(propKey, origTzValue);
         }
 
         return props;
