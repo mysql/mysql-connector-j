@@ -3,6 +3,8 @@
 
 Version 8.0.13
 
+  - Fix for Bug#91317 (28207422), Wrong defaults on collation mappings.
+
   - WL#12245, DevAPI: Implement connect timeout.
 
   - Fix for Bug#21774249, UNIT TEST FAILS WITH ERROR " 'CEST' IS UNRECOGNIZED TIME ZONE".

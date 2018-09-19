@@ -214,10 +214,10 @@ public class CharsetMapping {
         collation[2] = new Collation(2, "latin2_czech_cs", 0, MYSQL_CHARSET_NAME_latin2);
         collation[3] = new Collation(3, "dec8_swedish_ci", 0, MYSQL_CHARSET_NAME_dec8);
         collation[4] = new Collation(4, "cp850_general_ci", 1, MYSQL_CHARSET_NAME_cp850);
-        collation[5] = new Collation(5, "latin1_german1_ci", 1, MYSQL_CHARSET_NAME_latin1);
+        collation[5] = new Collation(5, "latin1_german1_ci", 0, MYSQL_CHARSET_NAME_latin1);
         collation[6] = new Collation(6, "hp8_english_ci", 0, MYSQL_CHARSET_NAME_hp8);
         collation[7] = new Collation(7, "koi8r_general_ci", 0, MYSQL_CHARSET_NAME_koi8r);
-        collation[8] = new Collation(8, "latin1_swedish_ci", 0, MYSQL_CHARSET_NAME_latin1);
+        collation[8] = new Collation(8, "latin1_swedish_ci", 1, MYSQL_CHARSET_NAME_latin1);
         collation[9] = new Collation(9, "latin2_general_ci", 1, MYSQL_CHARSET_NAME_latin2);
         collation[10] = new Collation(10, "swe7_swedish_ci", 0, MYSQL_CHARSET_NAME_swe7);
         collation[11] = new Collation(11, "ascii_general_ci", 0, MYSQL_CHARSET_NAME_ascii);
@@ -254,7 +254,7 @@ public class CharsetMapping {
         collation[42] = new Collation(42, "latin7_general_cs", 0, MYSQL_CHARSET_NAME_latin7);
         collation[43] = new Collation(43, "macce_bin", 0, MYSQL_CHARSET_NAME_macce);
         collation[44] = new Collation(44, "cp1250_croatian_ci", 0, MYSQL_CHARSET_NAME_cp1250);
-        collation[45] = new Collation(45, "utf8mb4_general_ci", 1, MYSQL_CHARSET_NAME_utf8mb4);
+        collation[45] = new Collation(45, "utf8mb4_general_ci", 0, MYSQL_CHARSET_NAME_utf8mb4);
         collation[46] = new Collation(46, "utf8mb4_bin", 0, MYSQL_CHARSET_NAME_utf8mb4);
         collation[47] = new Collation(47, "latin1_bin", 0, MYSQL_CHARSET_NAME_latin1);
         collation[48] = new Collation(48, "latin1_general_ci", 0, MYSQL_CHARSET_NAME_latin1);
@@ -440,7 +440,7 @@ public class CharsetMapping {
         collation[249] = new Collation(249, "gb18030_bin", 0, MYSQL_CHARSET_NAME_gb18030);
         collation[250] = new Collation(250, "gb18030_unicode_520_ci", 0, MYSQL_CHARSET_NAME_gb18030);
 
-        collation[255] = new Collation(255, "utf8mb4_0900_ai_ci", 0, MYSQL_CHARSET_NAME_utf8mb4);
+        collation[255] = new Collation(255, "utf8mb4_0900_ai_ci", 1, MYSQL_CHARSET_NAME_utf8mb4);
         collation[256] = new Collation(256, "utf8mb4_de_pb_0900_ai_ci", 0, MYSQL_CHARSET_NAME_utf8mb4);
         collation[257] = new Collation(257, "utf8mb4_is_0900_ai_ci", 0, MYSQL_CHARSET_NAME_utf8mb4);
         collation[258] = new Collation(258, "utf8mb4_lv_0900_ai_ci", 0, MYSQL_CHARSET_NAME_utf8mb4);
