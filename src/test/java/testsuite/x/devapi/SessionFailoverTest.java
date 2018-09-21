@@ -237,7 +237,7 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
         testConnectionTimeout_assertFailureTimeout(buildConnectionString(fakeHost), 10000, 11000);
 
         // TS4_1 Create a session to a remote offline host setting "connect-timeout" to zero (0). The connection must not timeout until cancelled.
-        testConnectionTimeout_assertFailureTimeout(buildConnectionString(fakeHost) + "?" + makeParam(PropertyKey.xdevapiConnectTimeout, "0", true), 120000,
+        testConnectionTimeout_assertFailureTimeout(buildConnectionString(fakeHost) + "?" + makeParam(PropertyKey.xdevapiConnectTimeout, "0", true), 12000,
                 600000);
 
         // TS6_1 Create a session using the fail over functionality passing two different Server address.
