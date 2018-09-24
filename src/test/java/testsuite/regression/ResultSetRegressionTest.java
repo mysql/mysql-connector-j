@@ -82,7 +82,6 @@ import javax.sql.rowset.CachedRowSet;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -3231,7 +3230,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Statement stmtRead = null;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
@@ -5244,7 +5243,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         String[] docs = new String[] { "{\"key10\": \"value10\"}", "{\"key2\": \"value2\"}", "{\"key3\": \"value3\"}" };
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
@@ -5679,7 +5678,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.stmt.execute("insert into testBug24527173 (a) values (101),(102),(103),(104)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
         props.setProperty(PropertyKey.defaultFetchSize.getKeyName(), "2");
@@ -5821,7 +5820,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         // test 1 - OK
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         Connection conn1 = getConnectionWithProps(props);
         PreparedStatement pstm1 = conn1.prepareStatement("select id, val_one, val_blob, val_three from testBug25215008 where val_one = ?");
@@ -6046,7 +6045,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Connection testConn;
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         testConn = getConnectionWithProps(props);
         this.rs = testConn.createStatement().executeQuery("SELECT * FROM testBug25650305");
@@ -6085,7 +6084,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         long expected2 = 8 * 60 * 60 * 1000 + 59 * 60 * 1000 + 59 * 1000 + 10; // '8:59:59.01' in milliseconds
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
 
@@ -6176,7 +6175,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         /* Test from bug report */
         Connection testConn2;
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "false");
 
@@ -6438,7 +6437,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     public void testBug80532() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         for (String enc : new String[] { "ISO8859_1", "UTF-8" }) {
@@ -6516,7 +6515,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         createTable("testBug72609", "(d date, pd date, dt datetime, pdt datetime)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         boolean sendFractionalSeconds = false;

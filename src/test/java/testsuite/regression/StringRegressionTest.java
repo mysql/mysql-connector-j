@@ -39,7 +39,6 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.Properties;
 
-import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.util.Base64Decoder;
 import com.mysql.cj.util.StringUtils;
@@ -547,7 +546,7 @@ public class StringRegressionTest extends BaseTestCase {
             System.setErr(newErr);
 
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf8");
             getConnectionWithProps(props).close();
             System.setOut(oldOut);

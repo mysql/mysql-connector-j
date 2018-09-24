@@ -163,7 +163,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
         // check SSL availability
         SslMode sslMode = this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).getValue();
-        if (((capabilityFlags & NativeServerSession.CLIENT_SSL) == 0) && sslMode != SslMode.DISABLED) {
+        if (((capabilityFlags & NativeServerSession.CLIENT_SSL) == 0) && sslMode != SslMode.DISABLED && sslMode != SslMode.PREFERRED) {
             throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("MysqlIO.15"), getExceptionInterceptor());
         }
 
@@ -481,7 +481,8 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
                     sessState.setClientParam(clientParam);
 
-                    if (this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).getValue() != SslMode.DISABLED) {
+                    if (((serverCapabilities & NativeServerSession.CLIENT_SSL) != 0)
+                            && this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).getValue() != SslMode.DISABLED) {
                         negotiateSSLConnection(packLength);
                     }
 

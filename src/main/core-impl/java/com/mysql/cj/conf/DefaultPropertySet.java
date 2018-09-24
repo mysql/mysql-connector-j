@@ -199,23 +199,22 @@ public class DefaultPropertySet implements PropertySet, Serializable {
                 }
             }
 
-            // Translate legacy SSL properties if sslMode isn't explicitly set. Default sslMode is REQUIRED.
+            // Translate legacy SSL properties if sslMode isn't explicitly set. Default sslMode is PREFERRED.
             RuntimeProperty<SslMode> sslMode = this.<SslMode> getEnumProperty(PropertyKey.sslMode);
             if (!sslMode.isExplicitlySet()) {
-                String useSSL = infoCopy.getProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL);
-                if (useSSL != null && !BooleanPropertyDefinition.booleanFrom(PropertyDefinitions.PNAME_DEPRECATED_useSSL, useSSL, null)) {
-                    sslMode.setValue(SslMode.DISABLED);
-                } else {
-                    String verifyServerCertificate = infoCopy.getProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate);
-                    if (verifyServerCertificate != null && BooleanPropertyDefinition.booleanFrom(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate,
-                            verifyServerCertificate, null)) {
+                RuntimeProperty<Boolean> useSSL = this.getBooleanProperty(PropertyKey.useSSL);
+                RuntimeProperty<Boolean> verifyServerCertificate = this.getBooleanProperty(PropertyKey.verifyServerCertificate);
+                RuntimeProperty<Boolean> requireSSL = this.getBooleanProperty(PropertyKey.requireSSL);
+                if (useSSL.isExplicitlySet() || verifyServerCertificate.isExplicitlySet() || requireSSL.isExplicitlySet()) {
+                    if (!useSSL.getValue()) {
+                        sslMode.setValue(SslMode.DISABLED);
+                    } else if (verifyServerCertificate.getValue()) {
                         sslMode.setValue(SslMode.VERIFY_CA);
+                    } else if (requireSSL.getValue()) {
+                        sslMode.setValue(SslMode.REQUIRED);
                     }
                 }
             }
-            infoCopy.remove(PropertyDefinitions.PNAME_DEPRECATED_useSSL);
-            infoCopy.remove(PropertyDefinitions.PNAME_DEPRECATED_requireSSL);
-            infoCopy.remove(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate);
 
             // add user-defined properties
             for (Object key : infoCopy.keySet()) {

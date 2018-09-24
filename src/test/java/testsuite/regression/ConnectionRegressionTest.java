@@ -1663,8 +1663,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-            props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
+            props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+            props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
 
             sslConn = getConnectionWithProps(props);
             sslConn.prepareCall("{ call testBug25545()}").execute();
@@ -1693,9 +1693,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String hostSpec = getEncodedHostPortPairFromTestsuiteUrl();
             Properties props = getHostFreePropertiesFromTestsuiteUrl();
             String db = props.getProperty(PropertyKey.DBNAME.getKeyName(), "test");
-            props.remove(PropertyDefinitions.PNAME_DEPRECATED_useSSL);
-            props.remove(PropertyDefinitions.PNAME_DEPRECATED_requireSSL);
-            props.remove(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate);
+            props.remove(PropertyKey.useSSL.getKeyName());
+            props.remove(PropertyKey.requireSSL.getKeyName());
+            props.remove(PropertyKey.verifyServerCertificate.getKeyName());
             props.remove(PropertyKey.trustCertificateKeyStoreUrl.getKeyName());
             props.remove(PropertyKey.trustCertificateKeyStoreType.getKeyName());
             props.remove(PropertyKey.trustCertificateKeyStorePassword.getKeyName());
@@ -3172,7 +3172,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Properties props = getPropertiesFromTestsuiteUrl();
         props.setProperty(PropertyKey.createDatabaseIfNotExist.getKeyName(), "true");
         props.setProperty(PropertyKey.DBNAME.getKeyName(), databaseName);
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         Connection con = getConnectionWithProps(props);
@@ -3875,7 +3875,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Properties props = new Properties();
             props.setProperty(PropertyKey.USER.getKeyName(), "wl5735user");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "");
-            props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
             Connection testConn = null;
             Statement testSt = null;
@@ -3898,7 +3898,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 System.setProperty("javax.net.ssl.keyStorePassword", "password");
                 System.setProperty("javax.net.ssl.trustStore", trustStorePath);
                 System.setProperty("javax.net.ssl.trustStorePassword", "password");
-                props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
                 testConn = getConnectionWithProps(props);
 
                 assertTrue("SSL connection isn't actually established!", ((MysqlConnection) testConn).getSession().isSSLEstablished());
@@ -3982,24 +3982,24 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 final Properties propsNoRetrieval = new Properties();
                 propsNoRetrieval.setProperty(PropertyKey.USER.getKeyName(), "wl5602user");
                 propsNoRetrieval.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 final Properties propsNoRetrievalNoPassword = new Properties();
                 propsNoRetrievalNoPassword.setProperty(PropertyKey.USER.getKeyName(), "wl5602nopassword");
                 propsNoRetrievalNoPassword.setProperty(PropertyKey.PASSWORD.getKeyName(), "");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 final Properties propsAllowRetrieval = new Properties();
                 propsAllowRetrieval.setProperty(PropertyKey.USER.getKeyName(), "wl5602user");
                 propsAllowRetrieval.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
                 propsAllowRetrieval.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 final Properties propsAllowRetrievalNoPassword = new Properties();
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.USER.getKeyName(), "wl5602nopassword");
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.PASSWORD.getKeyName(), "");
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 // 1. without SSL
                 // SQLException expected due to server doesn't recognize Public Key Retrieval packet
@@ -4047,10 +4047,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
                 // 3. over SSL
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
 
                 assertCurrentUser(null, propsNoRetrieval, "wl5602user", true);
                 assertCurrentUser(null, propsNoRetrievalNoPassword, "wl5602nopassword", false);
@@ -4128,8 +4128,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsAllowRetrieval.setProperty(PropertyKey.defaultAuthenticationPlugin.getKeyName(), MysqlNativePasswordPlugin.class.getName());
 
                 // 1.1. RSA
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
                     @SuppressWarnings("synthetic-access")
@@ -4144,10 +4144,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertCurrentUser(sha256Url, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
                 // 1.2. over SSL
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
 
                 assertCurrentUser(sha256Url, propsNoRetrieval, "wl5602user", true);
                 assertCurrentUser(sha256Url, propsNoRetrievalNoPassword, "wl5602nopassword", false);
@@ -4161,10 +4161,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.defaultAuthenticationPlugin.getKeyName(), Sha256PasswordPlugin.class.getName());
 
                 // 2.1. RSA
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
                     @SuppressWarnings("synthetic-access")
@@ -4179,10 +4179,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertCurrentUser(sha256Url, propsAllowRetrievalNoPassword, "wl5602nopassword", false);
 
                 // 2.2. over SSL
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
 
                 assertCurrentUser(sha256Url, propsNoRetrieval, "wl5602user", true);
                 assertCurrentUser(sha256Url, propsNoRetrievalNoPassword, "wl5602nopassword", false);
@@ -4196,10 +4196,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.serverRSAPublicKeyFile.getKeyName(), "src/test/config/ssl-test-certs/mykey.pub");
 
                 // 3.1. RSA
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 assertCurrentUser(sha256Url, propsNoRetrieval, "wl5602user", false);
                 assertCurrentUser(sha256Url, propsNoRetrievalNoPassword, "wl5602nopassword", false);
@@ -4228,10 +4228,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 c3.close();
 
                 // 3.4. over SSL
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
 
                 assertCurrentUser(sha256Url, propsNoRetrieval, "wl5602user", true);
                 assertCurrentUser(sha256Url, propsNoRetrievalNoPassword, "wl5602nopassword", false);
@@ -4245,10 +4245,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.serverRSAPublicKeyFile.getKeyName(), "unexistant/dummy.pub");
 
                 // 4.1. RSA
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 propsNoRetrieval.setProperty(PropertyKey.paranoid.getKeyName(), "false");
                 propsNoRetrievalNoPassword.setProperty(PropertyKey.paranoid.getKeyName(), "false");
@@ -4317,10 +4317,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 });
 
                 // 4.2. over SSL
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
 
                 propsNoRetrieval.setProperty(PropertyKey.paranoid.getKeyName(), "false");
                 propsNoRetrievalNoPassword.setProperty(PropertyKey.paranoid.getKeyName(), "false");
@@ -4498,7 +4498,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "EUC_JP");
 
         Connection testConn = null;
@@ -4639,7 +4639,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         if (normalState) {
             Properties props = new Properties();
             props.setProperty(PropertyKey.socketFactory.getKeyName(), NonLocalSocketFactory.class.getName());
-            props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
             boolean isLocal = ((ConnectionImpl) getConnectionWithProps(props)).isServerLocal();
 
@@ -5811,7 +5811,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 props.setProperty(PropertyKey.USER.getKeyName(), "wl6134user");
                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), pwd);
                 props.setProperty(PropertyKey.defaultAuthenticationPlugin.getKeyName(), Sha256PasswordPlugin.class.getName());
-                props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 Connection testConn = null;
                 try {
@@ -5832,9 +5832,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     System.setProperty("javax.net.ssl.trustStore", trustStorePath);
                     System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
-                    props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                    props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
-                    props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+                    props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                    props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
+                    props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
                     assertCurrentUser(sha256Url, props, "wl6134user", true);
 
                 } catch (Exception e) {
@@ -6042,7 +6042,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug71038() throws Exception {
         Properties p = new Properties();
-        p.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        p.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         p.setProperty(PropertyKey.detectCustomCollations.getKeyName(), "false");
         p.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug71038QueryInterceptor.class.getName());
 
@@ -6418,7 +6418,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 System.setProperty("javax.net.ssl.keyStorePassword", "password");
                 System.setProperty("javax.net.ssl.trustStore", trustStorePath);
                 System.setProperty("javax.net.ssl.trustStorePassword", "password");
-                props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
                 props.setProperty(PropertyKey.useCompression.getKeyName(), "false");
                 testBug18869381WithProperties(props);
                 props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
@@ -7138,9 +7138,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * case 1: non verifying server certificate
          */
         props.clear();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
 
         getConnectionWithProps(props);
 
@@ -7148,9 +7148,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * case 2: verifying server certificate using key store provided by connection properties
          */
         props.clear();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "true");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "true");
         props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
         props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
@@ -7161,9 +7161,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * case 3: verifying server certificate using key store provided by system properties
          */
         props.clear();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "true");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "true");
 
         String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
         System.setProperty("javax.net.ssl.keyStore", trustStorePath);
@@ -7522,8 +7522,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                             continue;
                         }
                         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-                        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "false");
+                        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                        props.setProperty(PropertyKey.requireSSL.getKeyName(), "false");
                         testCaseMsg = "Non-SSL/Non-RSA";
                         break;
 
@@ -7535,9 +7535,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                             continue;
                         }
                         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "false");
-                        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
-                        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+                        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                        props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
+                        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
                         testCaseMsg = "SSL";
                         break;
 
@@ -7687,7 +7687,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                                 props.setProperty(PropertyKey.PASSWORD.getKeyName(), pwd);
                                 props.setProperty(PropertyKey.defaultAuthenticationPlugin.getKeyName(), defAuthPlugin.getName());
                                 props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), Boolean.toString(allowPubKeyRetrieval));
-                                props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                                props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                                 if (expectedPubKeyRetrievalFail) {
                                     // connection will fail due to public key retrieval failure
@@ -7978,7 +7978,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         // 1. No explicit useSSL
         sslConn = getConnectionWithProps(props);
         assertFalse(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
-        assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
+        assertEquals(SslMode.PREFERRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
         assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
         testBug21947042_PrintCipher(sslConn);
@@ -7986,7 +7986,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         sslConn.close();
 
         // 2. Explicit useSSL=false
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         sslConn = getConnectionWithProps(props);
         assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
         assertEquals(SslMode.DISABLED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
@@ -7996,7 +7996,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testBug21947042_PrintVersion(sslConn);
         sslConn.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "no");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "no");
         sslConn = getConnectionWithProps(props);
         assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
         assertEquals(SslMode.DISABLED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
@@ -8005,11 +8005,57 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testBug21947042_PrintCipher(sslConn);
         testBug21947042_PrintVersion(sslConn);
         sslConn.close();
+
+        // 2.1. Explicit useSSL=false, requireSSL=true
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
+        assertEquals(SslMode.DISABLED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
+        assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+
+        testBug21947042_PrintCipher(sslConn);
+        testBug21947042_PrintVersion(sslConn);
+        sslConn.close();
+
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "no");
+        props.setProperty(PropertyKey.requireSSL.getKeyName(), "yes");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
+        assertEquals(SslMode.DISABLED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
+        assertFalse(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+
+        testBug21947042_PrintCipher(sslConn);
+        testBug21947042_PrintVersion(sslConn);
+        sslConn.close();
+        props.remove(PropertyKey.requireSSL.getKeyName());
 
         // 3. Explicit useSSL=true
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
         sslConn = getConnectionWithProps(props);
         assertFalse(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
+        assertEquals(SslMode.PREFERRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+
+        testBug21947042_PrintCipher(sslConn);
+        testBug21947042_PrintVersion(sslConn);
+        sslConn.close();
+
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "yes");
+        sslConn = getConnectionWithProps(props);
+        assertFalse(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
+        assertEquals(SslMode.PREFERRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
+        assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
+
+        testBug21947042_PrintCipher(sslConn);
+        testBug21947042_PrintVersion(sslConn);
+        sslConn.close();
+
+        // 3.1. Explicit useSSL=true, requireSSL=true
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
+        sslConn = getConnectionWithProps(props);
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
         assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
         assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
@@ -8017,9 +8063,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testBug21947042_PrintVersion(sslConn);
         sslConn.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "yes");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "yes");
+        props.setProperty(PropertyKey.requireSSL.getKeyName(), "yes");
         sslConn = getConnectionWithProps(props);
-        assertFalse(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
+        assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
         assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
         assertTrue(((MysqlConnection) sslConn).getSession().isSSLEstablished());
 
@@ -8028,8 +8075,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         sslConn.close();
 
         // 4. Explicit useSSL=true, verifyServerCertificate=true, no trust store
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "true");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "true");
         assertThrows(SQLException.class, new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -8037,8 +8084,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
         });
 
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "yes");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "yes");
         assertThrows(SQLException.class, new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -8047,8 +8094,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         });
 
         // 5. Explicit useSSL=true, verifyServerCertificate=true
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "true");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "true");
         props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
         props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
@@ -8061,8 +8108,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         testBug21947042_PrintVersion(sslConn);
         sslConn.close();
 
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "yes");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "yes");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "yes");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "yes");
         props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
         props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
@@ -8210,8 +8257,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         final String[] testDbUrls;
         Properties props = new Properties();
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
         props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
         props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
@@ -8277,8 +8324,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         final String[] testDbUrls;
         Properties props = new Properties();
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
         props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
         props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
@@ -9373,7 +9420,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.put(PropertyKey.USER.getKeyName(), username);
         props.put(PropertyKey.PASSWORD.getKeyName(), password);
         props.put(PropertyKey.DBNAME.getKeyName(), database);
-        props.put(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.put(PropertyKey.useSSL.getKeyName(), "false");
         props.put(PropertyKey.loadBalanceHostRemovalGracePeriod.getKeyName(), "0"); // Speed up the test execution.
         // Replicate the properties used in FabricMySQLConnectionProxy.getActiveConnection().
         props.put(PropertyKey.retriesAllDown.getKeyName(), "1");
@@ -9954,24 +10001,24 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 final Properties propsNoRetrieval = new Properties();
                 propsNoRetrieval.setProperty(PropertyKey.USER.getKeyName(), "wl11060user");
                 propsNoRetrieval.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 final Properties propsNoRetrievalNoPassword = new Properties();
                 propsNoRetrievalNoPassword.setProperty(PropertyKey.USER.getKeyName(), "wl11060nopassword");
                 propsNoRetrievalNoPassword.setProperty(PropertyKey.PASSWORD.getKeyName(), "");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 final Properties propsAllowRetrieval = new Properties();
                 propsAllowRetrieval.setProperty(PropertyKey.USER.getKeyName(), "wl11060user");
                 propsAllowRetrieval.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
                 propsAllowRetrieval.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 final Properties propsAllowRetrievalNoPassword = new Properties();
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.USER.getKeyName(), "wl11060nopassword");
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.PASSWORD.getKeyName(), "");
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 // 1. without SSL
                 // SQLException expected due to server doesn't recognize Public Key Retrieval packet
@@ -10021,10 +10068,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertCurrentUser(null, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
 
                 // 3. over SSL
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
 
                 this.stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
                 assertCurrentUser(null, propsNoRetrieval, "wl11060user", true);
@@ -10052,13 +10099,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsNoRetrieval.clear();
                 propsNoRetrieval.setProperty(PropertyKey.USER.getKeyName(), "wl11060user");
                 propsNoRetrieval.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 propsAllowRetrieval.clear();
                 propsAllowRetrieval.setProperty(PropertyKey.USER.getKeyName(), "wl11060user");
                 propsAllowRetrieval.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
                 propsAllowRetrieval.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 assertCurrentUser(null, propsNoRetrieval, "wl11060user", false); // note that is was failing on step 1
                 assertCurrentUser(null, propsAllowRetrieval, "wl11060user", false); // note that is was failing on step 1
@@ -10123,8 +10170,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsAllowRetrieval.setProperty(PropertyKey.defaultAuthenticationPlugin.getKeyName(), MysqlNativePasswordPlugin.class.getName());
 
                 // 1.1. RSA
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 assertThrows(SQLException.class, "Public Key Retrieval is not allowed", new Callable<Void>() {
                     @SuppressWarnings("synthetic-access")
@@ -10139,10 +10186,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertCurrentUser(sha256Url, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
 
                 // 1.2. over SSL
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
 
                 this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
                 assertCurrentUser(sha256Url, propsNoRetrieval, "wl11060user", true);
@@ -10159,10 +10206,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.defaultAuthenticationPlugin.getKeyName(), CachingSha2PasswordPlugin.class.getName());
 
                 // 2.1. RSA
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 assertCurrentUser(sha256Url, propsNoRetrieval, "wl11060user", false); // wl11060user scramble is cached now, thus authenticated successfully
 
@@ -10181,10 +10228,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertCurrentUser(sha256Url, propsAllowRetrievalNoPassword, "wl11060nopassword", false);
 
                 // 2.2. over SSL
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
 
                 this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
                 assertCurrentUser(sha256Url, propsNoRetrieval, "wl11060user", true);
@@ -10201,10 +10248,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.serverRSAPublicKeyFile.getKeyName(), "src/test/config/ssl-test-certs/mykey.pub");
 
                 // 3.1. RSA
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
                 assertCurrentUser(sha256Url, propsNoRetrieval, "wl11060user", false);
@@ -10236,10 +10283,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 c3.close();
 
                 // 3.4. over SSL
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
 
                 this.sha256Stmt.executeUpdate("flush privileges"); // to ensure that we'll go through the full authentication 
                 assertCurrentUser(sha256Url, propsNoRetrieval, "wl11060user", true);
@@ -10256,10 +10303,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 propsAllowRetrievalNoPassword.setProperty(PropertyKey.serverRSAPublicKeyFile.getKeyName(), "unexistant/dummy.pub");
 
                 // 4.1. RSA
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
                 propsNoRetrieval.setProperty(PropertyKey.paranoid.getKeyName(), "false");
                 propsNoRetrievalNoPassword.setProperty(PropertyKey.paranoid.getKeyName(), "false");
@@ -10331,10 +10378,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 });
 
                 // 4.2. over SSL
-                propsNoRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsNoRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrieval.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-                propsAllowRetrievalNoPassword.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+                propsNoRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsNoRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrieval.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+                propsAllowRetrievalNoPassword.setProperty(PropertyKey.useSSL.getKeyName(), "true");
 
                 propsNoRetrieval.setProperty(PropertyKey.paranoid.getKeyName(), "false");
                 propsNoRetrievalNoPassword.setProperty(PropertyKey.paranoid.getKeyName(), "false");
@@ -10420,8 +10467,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug88242() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
         props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
         props.setProperty(PropertyKey.socketTimeout.getKeyName(), "1500");
 
@@ -10466,7 +10513,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         createTable("testBug88232", "(id INT)", "INNODB");
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
         props.setProperty(PropertyKey.socketTimeout.getKeyName(), "2000");
@@ -10639,7 +10686,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         int seconds = 2;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
 
         try {
             getConnectionWithProps(props).createStatement().executeUpdate("SET @@global.wait_timeout=" + seconds + ", @@global.interactive_timeout=" + seconds);
@@ -10784,7 +10831,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // 2. Explicit sslMode, explicit useSSL=false
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.toString());
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         sslConn = getConnectionWithProps(props);
         assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
         assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
@@ -10792,7 +10839,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         sslConn.close();
 
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.toString());
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "no");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "no");
         sslConn = getConnectionWithProps(props);
         assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
         assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
@@ -10801,7 +10848,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // 3. Explicit sslMode, explicit useSSL=true
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.toString());
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
         sslConn = getConnectionWithProps(props);
         assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
         assertEquals(SslMode.DISABLED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
@@ -10809,7 +10856,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         sslConn.close();
 
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.toString());
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "yes");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "yes");
         sslConn = getConnectionWithProps(props);
         assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
         assertEquals(SslMode.DISABLED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
@@ -10818,8 +10865,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // 4. Explicit sslMode=REQUIRED, explicit useSSL=true, verifyServerCertificate=true, no trust store
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.toString());
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "true");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "true");
         sslConn = getConnectionWithProps(props);
         assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
         assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
@@ -10827,8 +10874,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         sslConn.close();
 
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.toString());
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "yes");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "yes");
         sslConn = getConnectionWithProps(props);
         assertTrue(((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).isExplicitlySet());
         assertEquals(SslMode.REQUIRED, ((JdbcConnection) sslConn).getPropertySet().getEnumProperty(PropertyKey.sslMode).getValue());
@@ -10837,8 +10884,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // 5. Explicit sslMode=VERIFY_CA, explicit useSSL=true, verifyServerCertificate=false, no trust store
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_CA.toString());
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
         assertThrows(SQLException.class, new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -10847,8 +10894,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         });
 
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_CA.toString());
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "no");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "no");
         assertThrows(SQLException.class, new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -10858,8 +10905,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // 5. Explicit sslMode=VERIFY_CA, explicit useSSL=false, verifyServerCertificate=false, with trust store
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_CA.toString());
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
         props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
         props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
@@ -10871,8 +10918,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         // 6. Explicit sslMode=VERIFY_IDENTITY, explicit useSSL=true, verifyServerCertificate=false, no trust store
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_IDENTITY.toString());
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
         assertThrows(SQLException.class, new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -10883,8 +10930,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         // 7. Explicit sslMode=VERIFY_IDENTITY, explicit useSSL=false, verifyServerCertificate=false, with trust store
         // The server certificate used in this test has "CN=MySQL Connector/J Server" thus expecting identity check failure
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_IDENTITY.toString());
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
         props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
         props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");

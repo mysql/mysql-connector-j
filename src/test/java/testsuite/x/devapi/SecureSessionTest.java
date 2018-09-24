@@ -133,7 +133,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.close();
 
             testSession = this.fact.getSession(userAndSslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.DISABLED)
-                    + makeParam(PropertyKey.USER, "testPlainAuth") + makeParam(PropertyKey.PASSWORD, "pwd") + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true"));
+                    + makeParam(PropertyKey.USER, "testPlainAuth") + makeParam(PropertyKey.PASSWORD, "pwd")
+                    + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true"));
             assertNonSecureSession(testSession);
             testSession.close();
 
@@ -269,13 +270,14 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         }
 
         Session testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.VERIFY_CA)
-                + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl) + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword));
+                + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)
+                + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword));
         assertSecureSession(testSession);
         testSession.close();
 
         testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.VERIFY_CA)
-                + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl) + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword)
-                + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true"));
+                + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)
+                + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword) + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
@@ -338,19 +340,20 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         }
 
         Session testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
-                + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl) + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword)
-                + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true"));
+                + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)
+                + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword) + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
         testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
-                + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl) + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword));
+                + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)
+                + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword));
         assertSecureSession(testSession);
         testSession.close();
 
         testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
-                + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl) + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword)
-                + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true"));
+                + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)
+                + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword) + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
 
@@ -416,11 +419,13 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         // Meaningful error message is deep inside the stack trace.
         assertThrows(CJCommunicationsException.class,
                 () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
-                        + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl) + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword)));
+                        + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)
+                        + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword)));
 
         assertThrows(CJCommunicationsException.class,
                 () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.VERIFY_IDENTITY)
-                        + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl) + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword)
+                        + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)
+                        + makeParam(PropertyKey.xdevapiSSLTrustStorePassword, this.trustStorePassword)
                         + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true")));
 
         Properties props = new Properties(this.sslFreeTestProperties);
@@ -448,18 +453,20 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertThrows(CJCommunicationsException.class, expectedError,
                 () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)));
 
-        assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(
-                this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl) + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true")));
-
         assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(this.sslFreeBaseUrl
-                + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.REQUIRED) + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)));
+                + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl) + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true")));
+
+        assertThrows(CJCommunicationsException.class, expectedError,
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.REQUIRED)
+                        + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)));
 
         assertThrows(CJCommunicationsException.class, expectedError,
                 () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.REQUIRED)
                         + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl) + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true")));
 
-        assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(this.sslFreeBaseUrl
-                + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.DISABLED) + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)));
+        assertThrows(CJCommunicationsException.class, expectedError,
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.DISABLED)
+                        + makeParam(PropertyKey.xdevapiSSLTrustStoreUrl, this.trustStoreUrl)));
 
         assertThrows(CJCommunicationsException.class, expectedError,
                 () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.DISABLED)
@@ -775,7 +782,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             /*
              * Authenticate using non-secure connections.
              */
-            props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.SslMode.DISABLED.toString());
+            props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.DISABLED.toString());
 
             // With default auth mechanism for non-secure connections (MYSQL41|SHA2_MEMORY).
 
@@ -1016,7 +1023,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         boolean gplWithRSA = allowsRsa(this.fact.getSession(this.sslFreeBaseUrl));
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.VERIFY_CA.toString());
         props.setProperty(PropertyKey.xdevapiSSLTrustStoreUrl.getKeyName(), this.trustStoreUrl);
         props.setProperty(PropertyKey.xdevapiSSLTrustStorePassword.getKeyName(), this.trustStorePassword);
 
@@ -1087,7 +1094,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         /* Against OpenSSL server */
         if (this.baseOpensslUrl != null && this.baseOpensslUrl.length() > 0) {
             Properties propsOpenSSL = new Properties(this.sslFreeTestPropertiesOpenSSL);
-            propsOpenSSL.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.SslMode.VERIFY_CA.toString());
+            propsOpenSSL.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.VERIFY_CA.toString());
             propsOpenSSL.setProperty(PropertyKey.xdevapiSSLTrustStoreUrl.getKeyName(), this.trustStoreUrl);
             propsOpenSSL.setProperty(PropertyKey.xdevapiSSLTrustStorePassword.getKeyName(), this.trustStorePassword);
 
@@ -1188,7 +1195,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.sql("CREATE USER 'bug25494338user'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd' REQUIRE CIPHER 'AES128-SHA'").execute();
             testSession.sql("GRANT SELECT ON *.* TO 'bug25494338user'@'%'").execute();
 
-            props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.SslMode.VERIFY_CA.toString());
+            props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.VERIFY_CA.toString());
             props.setProperty(PropertyKey.xdevapiSSLTrustStoreUrl.getKeyName(), this.trustStoreUrl);
             props.setProperty(PropertyKey.xdevapiSSLTrustStorePassword.getKeyName(), this.trustStorePassword);
             props.setProperty(PropertyKey.clientCertificateKeyStoreUrl.getKeyName(), this.clientKeyStoreUrl);
@@ -1254,7 +1261,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         }
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.VERIFY_CA.toString());
         props.setProperty(PropertyKey.xdevapiSSLTrustStoreUrl.getKeyName(), this.trustStoreUrl);
         props.setProperty(PropertyKey.xdevapiSSLTrustStorePassword.getKeyName(), this.trustStorePassword);
 
@@ -1295,11 +1302,11 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.REQUIRED));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.XdevapiSslMode.REQUIRED));
         assertSecureSession(testSession);
         testSession.close();
 
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.SslMode.REQUIRED)
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSSLMode, PropertyDefinitions.XdevapiSslMode.REQUIRED)
                 + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true"));
         assertSecureSession(testSession);
         testSession.close();
@@ -1315,7 +1322,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         this.sslFreeTestProperties.remove(PropertyKey.xdevapiUseAsyncProtocol);
 
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.SslMode.REQUIRED.toString());
+        props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.REQUIRED.toString());
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
         testSession.close();
@@ -1343,7 +1350,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         Properties props = (Properties) this.sslFreeTestProperties.clone();
         props.setProperty("user", "testBug27629553");
         props.remove("password");
-        props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.VERIFY_CA.toString());
         props.setProperty(PropertyKey.xdevapiSSLTrustStoreUrl.getKeyName(), this.trustStoreUrl);
         props.setProperty(PropertyKey.xdevapiSSLTrustStorePassword.getKeyName(), this.trustStorePassword);
         props.setProperty(PropertyKey.clientCertificateKeyStoreUrl.getKeyName(), this.clientKeyStoreUrl);

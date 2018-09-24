@@ -658,7 +658,7 @@ public abstract class BaseTestCase extends TestCase {
         this.createdObjects = new ArrayList<>();
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false"); // testsuite is built upon non-SSL default connection
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false"); // testsuite is built upon non-SSL default connection
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         this.conn = DriverManager.getConnection(dbUrl, props);
 

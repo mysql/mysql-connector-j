@@ -55,7 +55,6 @@ import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
-import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
@@ -4423,7 +4422,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             Properties props = new Properties();
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
-            props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
             Connection testConn = getConnectionWithProps(props);

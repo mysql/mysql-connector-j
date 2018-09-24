@@ -1558,9 +1558,9 @@ public class ConnectionTest extends BaseTestCase {
 
     public void testNonVerifyServerCert() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
+        props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
         getConnectionWithProps(props);
     }
 
@@ -2139,7 +2139,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * No SSL.
          */
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
@@ -2151,8 +2151,8 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
         testConn = getConnectionWithProps(props);
         testStmt = testConn.createStatement();
         this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
@@ -2163,7 +2163,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "true");
         props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
         props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
@@ -2190,7 +2190,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
         props.remove(PropertyKey.trustCertificateKeyStoreUrl.getKeyName());
         props.remove(PropertyKey.trustCertificateKeyStoreType.getKeyName());
         props.remove(PropertyKey.trustCertificateKeyStorePassword.getKeyName());
@@ -2229,7 +2229,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * No SSL.
          */
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
@@ -2241,8 +2241,8 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "true");
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -2253,7 +2253,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "true");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "true");
         props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
         props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
@@ -2280,7 +2280,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & client certificate.
          */
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
         props.remove(PropertyKey.trustCertificateKeyStoreUrl.getKeyName());
         props.remove(PropertyKey.trustCertificateKeyStoreType.getKeyName());
         props.remove(PropertyKey.trustCertificateKeyStorePassword.getKeyName());

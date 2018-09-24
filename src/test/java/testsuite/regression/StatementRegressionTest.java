@@ -94,7 +94,6 @@ import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
 import com.mysql.cj.ServerPreparedQuery;
 import com.mysql.cj.Session;
-import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -9368,11 +9367,11 @@ public class StatementRegressionTest extends BaseTestCase {
                     + "f4 INT DEFAULT 1, f5 INT DEFAULT 1, fl LONGBLOB)");
 
             final Properties props = new Properties();
-            props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, Boolean.toString(useSSL));
+            props.setProperty(PropertyKey.useSSL.getKeyName(), Boolean.toString(useSSL));
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             if (useSSL) {
-                props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_requireSSL, "true");
-                props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_verifyServerCertificate, "false");
+                props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
+                props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
             }
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
             props.setProperty(PropertyKey.useCursorFetch.getKeyName(), Boolean.toString(useCursor));
@@ -10280,7 +10279,7 @@ public class StatementRegressionTest extends BaseTestCase {
         PreparedStatement ps3 = null;
 
         Properties props = new Properties();
-        props.setProperty(PropertyDefinitions.PNAME_DEPRECATED_useSSL, "false");
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         boolean useSPS = false;

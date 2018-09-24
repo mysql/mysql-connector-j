@@ -180,6 +180,7 @@ public enum PropertyKey {
     reconnectAtTxEnd("reconnectAtTxEnd", true), //
     replicationConnectionGroup("replicationConnectionGroup", true), //
     reportMetricsIntervalMillis("reportMetricsIntervalMillis", true), //
+    requireSSL("requireSSL", true), //
     resourceId("resourceId", true), //
     resultSetSizeThreshold("resultSetSizeThreshold", true), //
     retriesAllDown("retriesAllDown", true), //
@@ -229,9 +230,11 @@ public enum PropertyKey {
     useOnlyServerErrorMessages("useOnlyServerErrorMessages", true), //
     useReadAheadInput("useReadAheadInput", true), //
     useServerPrepStmts("useServerPrepStmts", true), //
+    useSSL("useSSL", true), //
     useStreamLengthsInPrepStmts("useStreamLengthsInPrepStmts", true), //
     useUnbufferedInput("useUnbufferedInput", true), //
     useUsageAdvisor("useUsageAdvisor", true), //
+    verifyServerCertificate("verifyServerCertificate", true), //
 
     xdevapiAsyncResponseTimeout("xdevapi.asyncResponseTimeout", "xdevapiAsyncResponseTimeout", true), //
     xdevapiAuth("xdevapi.auth", "xdevapiAuth", true), //

@@ -143,7 +143,11 @@ public class PropertyDefinitions {
         CONVERT_TO_NULL, EXCEPTION, ROUND;
     }
 
-    public enum SslMode { // xdevapi.ssl-mode
+    public enum SslMode {
+        PREFERRED, REQUIRED, VERIFY_CA, VERIFY_IDENTITY, DISABLED;
+    }
+
+    public enum XdevapiSslMode {
         REQUIRED, VERIFY_CA, VERIFY_IDENTITY, DISABLED;
     }
 
@@ -155,10 +159,6 @@ public class PropertyDefinitions {
      * Static unmodifiable {@link PropertyKey} -&gt; {@link PropertyDefinition} map.
      */
     public static final Map<PropertyKey, PropertyDefinition<?>> PROPERTY_KEY_TO_PROPERTY_DEFINITION;
-
-    public static final String PNAME_DEPRECATED_useSSL = "useSSL";
-    public static final String PNAME_DEPRECATED_requireSSL = "requireSSL";
-    public static final String PNAME_DEPRECATED_verifyServerCertificate = "verifyServerCertificate";
 
     static {
         String STANDARD_LOGGER_NAME = StandardLogger.class.getName();
@@ -648,7 +648,14 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.useReadAheadInput, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useReadAheadInput"), "3.1.5", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
-                new EnumPropertyDefinition<>(PropertyKey.sslMode, SslMode.REQUIRED, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.sslMode"),
+                new BooleanPropertyDefinition(PropertyKey.useSSL, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.useSSL"),
+                        "3.0.2", CATEGORY_SECURITY, 2),
+                new BooleanPropertyDefinition(PropertyKey.requireSSL, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.requireSSL"), "3.1.0", CATEGORY_SECURITY, 3),
+                new BooleanPropertyDefinition(PropertyKey.verifyServerCertificate, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.verifyServerCertificate"), "5.1.6", CATEGORY_SECURITY, 4),
+
+                new EnumPropertyDefinition<>(PropertyKey.sslMode, SslMode.PREFERRED, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.sslMode"),
                         "8.0.13", CATEGORY_SECURITY, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.useStreamLengthsInPrepStmts, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
@@ -703,7 +710,7 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PropertyKey.xdevapiUseAsyncProtocol, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new EnumPropertyDefinition<>(PropertyKey.xdevapiSSLMode, SslMode.REQUIRED, RUNTIME_MODIFIABLE,
+                new EnumPropertyDefinition<>(PropertyKey.xdevapiSSLMode, XdevapiSslMode.REQUIRED, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.xdevapiSslMode"), "8.0.7", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new StringPropertyDefinition(PropertyKey.xdevapiSSLTrustStoreUrl, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.sslTrustStoreUrl"), "6.0.6", CATEGORY_XDEVAPI, Integer.MIN_VALUE),

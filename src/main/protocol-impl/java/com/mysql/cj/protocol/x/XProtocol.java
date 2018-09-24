@@ -48,6 +48,7 @@ import com.mysql.cj.TransactionEventHandler;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
+import com.mysql.cj.conf.PropertyDefinitions.XdevapiSslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
@@ -230,9 +231,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         this.serverSession.setCapabilities(readServerCapabilities());
 
         // Override common SSL properties with xdevapi ones to provide unified logic in ExportControlled via common SSL properties
-        RuntimeProperty<SslMode> xdevapiSslMode = this.propertySet.<SslMode> getEnumProperty(PropertyKey.xdevapiSSLMode);
+        RuntimeProperty<XdevapiSslMode> xdevapiSslMode = this.propertySet.<XdevapiSslMode> getEnumProperty(PropertyKey.xdevapiSSLMode);
         if (xdevapiSslMode.isExplicitlySet()) {
-            this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).setValue(xdevapiSslMode.getValue());
+            this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).setValue(SslMode.valueOf(xdevapiSslMode.getValue().toString()));
         }
         RuntimeProperty<String> sslTrustStoreUrl = this.propertySet.getStringProperty(PropertyKey.xdevapiSSLTrustStoreUrl);
         if (sslTrustStoreUrl.isExplicitlySet()) {
@@ -250,6 +251,11 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         // TODO WL#9925 will redefine other SSL connection properties for X Protocol
 
         RuntimeProperty<SslMode> sslMode = this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode);
+
+        if (sslMode.getValue() == SslMode.PREFERRED) { // PREFERRED mode is not applicable to X Protocol
+            sslMode.setValue(SslMode.REQUIRED);
+        }
+
         boolean verifyServerCert = sslMode.getValue() == SslMode.VERIFY_CA || sslMode.getValue() == SslMode.VERIFY_IDENTITY;
         String trustStoreUrl = this.propertySet.getStringProperty(PropertyKey.trustCertificateKeyStoreUrl).getValue();
 
@@ -262,7 +268,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             throw new CJCommunicationsException(msg.toString());
         }
 
-        if (xdevapiSslMode.getValue() != SslMode.DISABLED) {
+        if (xdevapiSslMode.getValue() != XdevapiSslMode.DISABLED) {
             negotiateSSLConnection(0);
         }
     }
