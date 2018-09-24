@@ -825,24 +825,24 @@ public class SessionTest extends DevApiBaseTestCase {
         s1 = cli0.getSession();
 
         s0.sql("SET @a='s0'").execute();
-        s0.sql("CREATE TEMPORARY TABLE testPooledSessionsTmpS0(x int)").execute();
+        s0.sql("CREATE TEMPORARY TABLE testpooledsessionstmps0(x int)").execute();
 
         s1.sql("SET @a='s1'").execute();
-        s1.sql("CREATE TEMPORARY TABLE testPooledSessionsTmpS1(x int)").execute();
+        s1.sql("CREATE TEMPORARY TABLE testpooledsessionstmps1(x int)").execute();
 
         SqlResult res = s0.sql("SELECT @a as a").execute();
         assertTrue(res.hasNext());
         assertEquals("s0", res.next().getString(0));
-        res = s0.sql("SHOW CREATE TABLE testPooledSessionsTmpS0").execute();
+        res = s0.sql("SHOW CREATE TABLE testpooledsessionstmps0").execute();
         assertTrue(res.hasNext());
-        assertEquals("testPooledSessionsTmpS0", res.next().getString(0));
+        assertEquals("testpooledsessionstmps0", res.next().getString(0));
 
         res = s1.sql("SELECT @a as a").execute();
         assertTrue(res.hasNext());
         assertEquals("s1", res.next().getString(0));
-        res = s1.sql("SHOW CREATE TABLE testPooledSessionsTmpS1").execute();
+        res = s1.sql("SHOW CREATE TABLE testpooledsessionstmps1").execute();
         assertTrue(res.hasNext());
-        assertEquals("testPooledSessionsTmpS1", res.next().getString(0));
+        assertEquals("testpooledsessionstmps1", res.next().getString(0));
 
         s0.close();
         s1.close();
@@ -854,9 +854,9 @@ public class SessionTest extends DevApiBaseTestCase {
         assertTrue(res.hasNext());
         assertNull(res.next().getString(0));
 
-        assertThrows(XProtocolError.class, ".*testPooledSessionsTmpS0' doesn't exist", new Callable<Void>() {
+        assertThrows(XProtocolError.class, ".*testpooledsessionstmps0' doesn't exist", new Callable<Void>() {
             public Void call() throws Exception {
-                s0_new.sql("SHOW CREATE TABLE testPooledSessionsTmpS0").execute();
+                s0_new.sql("SHOW CREATE TABLE testpooledsessionstmps0").execute();
                 return null;
             }
         });
@@ -865,9 +865,9 @@ public class SessionTest extends DevApiBaseTestCase {
         assertTrue(res.hasNext());
         assertNull(res.next().getString(0));
 
-        assertThrows(XProtocolError.class, ".*testPooledSessionsTmpS1' doesn't exist", new Callable<Void>() {
+        assertThrows(XProtocolError.class, ".*testpooledsessionstmps1' doesn't exist", new Callable<Void>() {
             public Void call() throws Exception {
-                s1_new.sql("SHOW CREATE TABLE testPooledSessionsTmpS1").execute();
+                s1_new.sql("SHOW CREATE TABLE testpooledsessionstmps1").execute();
                 return null;
             }
         });
