@@ -728,7 +728,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         Set<String> keys = blacklistClone.keySet();
 
         // We're only interested in blacklisted hosts that are in the hostList
-        keys.retainAll(this.hostsList.stream().map(hi -> hi.getHost()).collect(Collectors.toList()));
+        keys.retainAll(this.hostsList.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList()));
 
         // Don't need to synchronize here as we using a local copy
         for (Iterator<String> i = keys.iterator(); i.hasNext();) {
