@@ -45,7 +45,7 @@ public interface Client {
 
     /**
      * Close <code>Client</code>.
-     * Closes all Sessions it had created, and destroys the managed pool.
+     * Closes all Sessions it has created, and destroys the managed pool.
      * <p>
      * Calling the method <code>close</code> on a <code>Client</code>
      * object that is already closed is a no-op.
