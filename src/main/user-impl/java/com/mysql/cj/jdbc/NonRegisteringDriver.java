@@ -31,13 +31,10 @@ package com.mysql.cj.jdbc;
 
 import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
 
-import java.lang.ref.PhantomReference;
-import java.lang.ref.ReferenceQueue;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import com.mysql.cj.Constants;
@@ -55,7 +52,6 @@ import com.mysql.cj.exceptions.UnsupportedConnectionStringException;
 import com.mysql.cj.jdbc.ha.FailoverConnectionProxy;
 import com.mysql.cj.jdbc.ha.LoadBalancedConnectionProxy;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
-import com.mysql.cj.protocol.NetworkResources;
 import com.mysql.cj.util.StringUtils;
 
 /**
@@ -77,10 +73,6 @@ import com.mysql.cj.util.StringUtils;
  * </p>
  */
 public class NonRegisteringDriver implements java.sql.Driver {
-
-    protected static final ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference> connectionPhantomRefs = new ConcurrentHashMap<>();
-
-    protected static final ReferenceQueue<ConnectionImpl> refQueue = new ReferenceQueue<>();
 
     /*
      * Standardizes OS name information to align with other drivers/clients
@@ -229,12 +221,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
         }
     }
 
-    protected static void trackConnection(JdbcConnection newConn) {
-
-        ConnectionPhantomReference phantomRef = new ConnectionPhantomReference((ConnectionImpl) newConn, refQueue);
-        connectionPhantomRefs.put(phantomRef, phantomRef);
-    }
-
     @Override
     public int getMajorVersion() {
         return getMajorVersionInternal();
@@ -306,26 +292,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
         // NOTE: MySQL is not SQL92 compliant
         // TODO Is it true? DatabaseMetaData.supportsANSI92EntryLevelSQL() returns true...
         return false;
-    }
-
-    static class ConnectionPhantomReference extends PhantomReference<ConnectionImpl> {
-        private NetworkResources io;
-
-        ConnectionPhantomReference(ConnectionImpl connectionImpl, ReferenceQueue<ConnectionImpl> q) {
-            super(connectionImpl, q);
-
-            this.io = connectionImpl.getSession().getNetworkResources();
-        }
-
-        void cleanup() {
-            if (this.io != null) {
-                try {
-                    this.io.forceClose();
-                } finally {
-                    this.io = null;
-                }
-            }
-        }
     }
 
     @Override

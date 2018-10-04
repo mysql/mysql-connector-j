@@ -456,7 +456,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             unSafeQueryInterceptors();
 
-            NonRegisteringDriver.trackConnection(this);
+            AbandonedConnectionCleanupThread.trackConnection(this, this.getSession().getNetworkResources());
         } catch (SQLException ex) {
             cleanup(ex);
 

@@ -3,6 +3,8 @@
 
 Version 8.0.14
 
+  - Fix for Bug#92508 (28747636), mysql-connector in bootclasspath causing memory leak.
+
   - Fix for Bug#25650514, UPDATEROW() CALL FAILS WITH NPE WHEN SSPS=TRUE AND TABLE HAS MULTI-FLD KEY.
 
   - Fix for Bug#25650482, REFRESHROW() CALL AFTER UPDATEROW() API FAILS WHEN USESERVERPREPSTMTS=TRUE.
