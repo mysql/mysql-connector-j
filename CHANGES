@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.14
+
 Version 8.0.13
 
   - Fix for Bug#91317 (28207422), Wrong defaults on collation mappings.
