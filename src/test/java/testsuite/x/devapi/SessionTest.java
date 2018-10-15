@@ -36,6 +36,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -937,5 +938,34 @@ public class SessionTest extends DevApiBaseTestCase {
         } finally {
             this.session.sql("SET @@global.mysqlx_max_connections=" + mysqlxMaxConnections).execute();
         }
+    }
+
+    @Test
+    public void testBug28606708() throws Exception {
+        if (!this.isSetForXTests || !isServerRunningOnWindows()) {
+            return;
+        }
+
+        for (String path : new String[] { null, "\\\\.\\pipe\\MySQL80" }) {
+            String url = this.baseUrl + makeParam(PropertyKey.socketFactory, "com.mysql.cj.protocol.NamedPipeSocketFactory");
+            if (path != null) {
+                url += makeParam(PropertyKey.PATH, path);
+            }
+            try {
+                this.fact.getSession(url);
+                fail("The named-pipe connection attempt must fail with " + (path != null ? path : "default") + " path.");
+            } catch (Exception e) {
+                if (e instanceof CJCommunicationsException && e.getCause() != null && e.getCause() instanceof FileNotFoundException
+                        && ((path == null ? "\\\\.\\pipe\\MySQL" : path) + " (The system cannot find the file specified)").equals(e.getCause().getMessage())) {
+                    continue;
+                } else if (e instanceof XProtocolError && "ASSERTION FAILED: Unknown message type: 10 (server messages mapping: null)".equals(e.getMessage())) {
+                    // if named pipes are enabled on server then we expect this error because the pipe is bound to legacy protocol
+                    continue;
+                }
+                throw e;
+            }
+
+        }
+
     }
 }

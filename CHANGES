@@ -3,6 +3,8 @@
 
 Version 8.0.14
 
+  - Fix for Bug#28606708, NAMED PIPE CONNECTION FOR X PROTOCOL RETURNS NPE, EXPECTED PROPER ERROR MESSAGE.
+
 Version 8.0.13
 
   - Fix for Bug#91317 (28207422), Wrong defaults on collation mappings.

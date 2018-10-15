@@ -41,6 +41,7 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.Session;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.conf.RuntimeProperty;
 
 /**
  * A socket factory for named pipes (on Windows)
@@ -212,7 +213,12 @@ public class NamedPipeSocketFactory implements SocketFactory {
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Closeable> T connect(String host, int portNumber /* ignored */, PropertySet props, int loginTimeout) throws IOException {
-        String namedPipePath = props.getStringProperty(PropertyKey.PATH).getValue();
+        String namedPipePath = null;
+
+        RuntimeProperty<String> path = props.getStringProperty(PropertyKey.PATH);
+        if (path != null) {
+            namedPipePath = path.getValue();
+        }
 
         if (namedPipePath == null) {
             namedPipePath = "\\\\.\\pipe\\MySQL";

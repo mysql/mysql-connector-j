@@ -587,7 +587,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             this.sender.send(((XMessageBuilder) this.messageBuilder).buildCapabilitiesGet());
             return new XServerCapabilities(((Capabilities) this.reader.readMessage(null, ServerMessages.Type.CONN_CAPABILITIES_VALUE).getMessage())
                     .getCapabilitiesList().stream().collect(toMap(Capability::getName, Capability::getValue)));
-        } catch (IOException e) {
+        } catch (IOException | AssertionFailedException e) {
             throw new XProtocolError(e.getMessage(), e);
         }
     }

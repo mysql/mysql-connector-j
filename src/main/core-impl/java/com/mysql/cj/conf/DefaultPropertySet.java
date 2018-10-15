@@ -92,19 +92,12 @@ public class DefaultPropertySet implements PropertySet, Serializable {
     @Override
     public <T> RuntimeProperty<T> getProperty(String name) {
         try {
-            RuntimeProperty<T> prop = null;
             PropertyKey key = PropertyKey.fromValue(name);
             if (key != null) {
-                prop = (RuntimeProperty<T>) this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.get(key);
+                return getProperty(key);
             }
-            // for some of PropertyKey values we don't have property definitions, thus they are cached as custom properties
-            if (prop == null) {
-                prop = (RuntimeProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
-            }
-            if (prop != null) {
-                return prop;
-            }
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionProperties.notFound", new Object[] { name }));
+            // if there is no such PropertyKey then it could be a custom property
+            return (RuntimeProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(name);
 
         } catch (ClassCastException ex) {
             // TODO improve message
@@ -115,7 +108,18 @@ public class DefaultPropertySet implements PropertySet, Serializable {
     @SuppressWarnings("unchecked")
     @Override
     public <T> RuntimeProperty<T> getProperty(PropertyKey key) {
-        return (RuntimeProperty<T>) this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.get(key);
+        try {
+            RuntimeProperty<T> prop = (RuntimeProperty<T>) this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.get(key);
+            // for some of PropertyKey values we don't have property definitions, thus they are cached as custom properties
+            if (prop == null) {
+                prop = (RuntimeProperty<T>) this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.get(key.getKeyName());
+            }
+            return prop;
+
+        } catch (ClassCastException ex) {
+            // TODO improve message
+            throw ExceptionFactory.createException(WrongArgumentException.class, ex.getMessage(), ex);
+        }
     }
 
     @Override

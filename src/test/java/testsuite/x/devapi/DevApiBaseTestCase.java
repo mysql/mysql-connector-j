@@ -30,6 +30,7 @@
 package testsuite.x.devapi;
 
 import java.lang.reflect.Field;
+import java.sql.SQLException;
 
 import com.mysql.cj.MysqlxSession;
 import com.mysql.cj.conf.PropertyKey;
@@ -113,5 +114,10 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
 
     protected String makeParam(PropertyKey key, String value, boolean isFirst) {
         return (isFirst ? "" : "&") + key.getKeyName() + "=" + value;
+    }
+
+    protected boolean isServerRunningOnWindows() throws SQLException {
+        SqlResult res = this.session.sql("SHOW VARIABLES LIKE 'datadir'").execute();
+        return res.fetchOne().getString(1).indexOf('\\') != -1;
     }
 }
