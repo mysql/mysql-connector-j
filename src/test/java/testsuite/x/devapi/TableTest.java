@@ -114,4 +114,24 @@ public class TableTest extends BaseTableTestCase {
             sqlUpdate("drop view if exists viewBasics");
         }
     }
+
+    @Test
+    public void testCount() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        try {
+            sqlUpdate("drop table if exists testCount");
+            sqlUpdate("create table testCount (_id varchar(32), name varchar(20), birthday date, age int)");
+            sqlUpdate("insert into testCount values ('1', 'Sakila', '2000-05-27', 14)");
+            sqlUpdate("insert into testCount values ('2', 'Shakila', '2001-06-26', 13)");
+
+            Table table = this.schema.getTable("testCount");
+            assertEquals(2, table.count());
+            assertEquals(2, table.select("count(*)").execute().fetchOne().getInt(0));
+
+        } finally {
+            sqlUpdate("drop table if exists testCount");
+        }
+    }
 }

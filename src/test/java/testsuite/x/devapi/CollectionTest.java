@@ -44,6 +44,7 @@ import com.mysql.cj.xdevapi.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DbDocImpl;
 import com.mysql.cj.xdevapi.JsonArray;
+import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.SqlResult;
@@ -67,6 +68,7 @@ public class CollectionTest extends BaseCollectionTestCase {
             this.collection.add("{'c':'c'}".replaceAll("'", "\"")).execute();
         }
         assertEquals(3, this.collection.count());
+        assertEquals(3, ((JsonNumber) this.collection.find().fields("COUNT(*) as cnt").execute().fetchOne().get("cnt")).getInteger().intValue());
     }
 
     @Test
