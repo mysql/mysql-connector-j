@@ -292,7 +292,7 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
         }
     }
 
-    private final void streamToBytes(NativePacketPayload packet, InputStream in, boolean escape, int streamLength, boolean useLength) {
+    private final void streamToBytes(NativePacketPayload packet, InputStream in, boolean escape, long streamLength, boolean useLength) {
         try {
             if (this.streamConvertBuf == null) {
                 this.streamConvertBuf = new byte[4096];
@@ -304,9 +304,9 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
                 useLength = false;
             }
 
-            int bc = useLength ? readblock(in, this.streamConvertBuf, streamLength) : readblock(in, this.streamConvertBuf);
+            int bc = useLength ? readblock(in, this.streamConvertBuf, (int) streamLength) : readblock(in, this.streamConvertBuf);
 
-            int lengthLeftToRead = streamLength - bc;
+            int lengthLeftToRead = (int) streamLength - bc;
 
             packet.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(hexEscape ? "x" : "_binary"));
 
@@ -349,7 +349,7 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
         }
     }
 
-    protected final byte[] streamToBytes(InputStream in, boolean escape, int streamLength, boolean useLength) {
+    protected final byte[] streamToBytes(InputStream in, boolean escape, long streamLength, boolean useLength) {
         in.mark(Integer.MAX_VALUE); // we may need to read this same stream several times, so we need to reset it at the end.
         try {
             if (this.streamConvertBuf == null) {
@@ -361,9 +361,9 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
 
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
 
-            int bc = useLength ? readblock(in, this.streamConvertBuf, streamLength) : readblock(in, this.streamConvertBuf);
+            int bc = useLength ? readblock(in, this.streamConvertBuf, (int) streamLength) : readblock(in, this.streamConvertBuf);
 
-            int lengthLeftToRead = streamLength - bc;
+            int lengthLeftToRead = (int) streamLength - bc;
 
             if (escape) {
                 bytesOut.write('_');

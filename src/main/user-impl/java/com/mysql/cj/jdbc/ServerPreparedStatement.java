@@ -200,22 +200,22 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                             switch (bindValue.bufferType) {
 
                                 case MysqlType.FIELD_TYPE_TINY:
-                                    pStmtForSub.setByte(i + 1, (byte) bindValue.longBinding);
+                                    pStmtForSub.setByte(i + 1, ((Long) bindValue.value).byteValue());
                                     break;
                                 case MysqlType.FIELD_TYPE_SHORT:
-                                    pStmtForSub.setShort(i + 1, (short) bindValue.longBinding);
+                                    pStmtForSub.setShort(i + 1, ((Long) bindValue.value).shortValue());
                                     break;
                                 case MysqlType.FIELD_TYPE_LONG:
-                                    pStmtForSub.setInt(i + 1, (int) bindValue.longBinding);
+                                    pStmtForSub.setInt(i + 1, ((Long) bindValue.value).intValue());
                                     break;
                                 case MysqlType.FIELD_TYPE_LONGLONG:
-                                    pStmtForSub.setLong(i + 1, bindValue.longBinding);
+                                    pStmtForSub.setLong(i + 1, ((Long) bindValue.value).longValue());
                                     break;
                                 case MysqlType.FIELD_TYPE_FLOAT:
-                                    pStmtForSub.setFloat(i + 1, bindValue.floatBinding);
+                                    pStmtForSub.setFloat(i + 1, ((Float) bindValue.value).floatValue());
                                     break;
                                 case MysqlType.FIELD_TYPE_DOUBLE:
-                                    pStmtForSub.setDouble(i + 1, bindValue.doubleBinding);
+                                    pStmtForSub.setDouble(i + 1, ((Double) bindValue.value).doubleValue());
                                     break;
                                 default:
                                     pStmtForSub.setObject(i + 1, parameterBindings[i].value);
@@ -717,35 +717,35 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
             if (paramArg[j].isNull()) {
                 batchedStatement.setNull(batchedParamIndex++, MysqlType.NULL.getJdbcType());
             } else {
-                if (paramArg[j].isLongData) {
+                if (paramArg[j].isStream()) {
                     Object value = paramArg[j].value;
 
                     if (value instanceof InputStream) {
-                        batchedStatement.setBinaryStream(batchedParamIndex++, (InputStream) value, (int) paramArg[j].bindLength);
+                        batchedStatement.setBinaryStream(batchedParamIndex++, (InputStream) value, paramArg[j].getStreamLength());
                     } else {
-                        batchedStatement.setCharacterStream(batchedParamIndex++, (Reader) value, (int) paramArg[j].bindLength);
+                        batchedStatement.setCharacterStream(batchedParamIndex++, (Reader) value, paramArg[j].getStreamLength());
                     }
                 } else {
 
                     switch (paramArg[j].bufferType) {
 
                         case MysqlType.FIELD_TYPE_TINY:
-                            batchedStatement.setByte(batchedParamIndex++, (byte) paramArg[j].longBinding);
+                            batchedStatement.setByte(batchedParamIndex++, ((Long) paramArg[j].value).byteValue());
                             break;
                         case MysqlType.FIELD_TYPE_SHORT:
-                            batchedStatement.setShort(batchedParamIndex++, (short) paramArg[j].longBinding);
+                            batchedStatement.setShort(batchedParamIndex++, ((Long) paramArg[j].value).shortValue());
                             break;
                         case MysqlType.FIELD_TYPE_LONG:
-                            batchedStatement.setInt(batchedParamIndex++, (int) paramArg[j].longBinding);
+                            batchedStatement.setInt(batchedParamIndex++, ((Long) paramArg[j].value).intValue());
                             break;
                         case MysqlType.FIELD_TYPE_LONGLONG:
-                            batchedStatement.setLong(batchedParamIndex++, paramArg[j].longBinding);
+                            batchedStatement.setLong(batchedParamIndex++, ((Long) paramArg[j].value).longValue());
                             break;
                         case MysqlType.FIELD_TYPE_FLOAT:
-                            batchedStatement.setFloat(batchedParamIndex++, paramArg[j].floatBinding);
+                            batchedStatement.setFloat(batchedParamIndex++, ((Float) paramArg[j].value).floatValue());
                             break;
                         case MysqlType.FIELD_TYPE_DOUBLE:
-                            batchedStatement.setDouble(batchedParamIndex++, paramArg[j].doubleBinding);
+                            batchedStatement.setDouble(batchedParamIndex++, ((Double) paramArg[j].value).doubleValue());
                             break;
                         case MysqlType.FIELD_TYPE_TIME:
                             batchedStatement.setTime(batchedParamIndex++, (Time) paramArg[j].value);

@@ -307,11 +307,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     public void clearParameters() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             for (BindValue bv : ((PreparedQuery<?>) this.query).getQueryBindings().getBindValues()) {
-                bv.setNull(false);
-                bv.setIsStream(false);
-                bv.setMysqlType(MysqlType.NULL);
-                bv.setByteValue(null);
-                bv.setStreamValue(null, 0);
+                bv.reset();
             }
         }
     }

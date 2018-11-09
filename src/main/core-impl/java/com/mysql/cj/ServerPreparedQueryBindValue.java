@@ -47,25 +47,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
 
     public long boundBeforeExecutionNum = 0;
 
-    /** Default length of data */
-    public long bindLength;
-
     public int bufferType;
-
-    public double doubleBinding;
-
-    public float floatBinding;
-
-    public boolean isLongData;
-
-    /** has this parameter been set? */
-    private boolean isSet = false;
-
-    /** all integral values are stored here */
-    public long longBinding;
-
-    /** The value to store */
-    public Object value;
 
     /* Calendar to be used for DATE and DATETIME values storing */
     public Calendar calendar;
@@ -85,28 +67,13 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
         super(copyMe);
 
         this.defaultTimeZone = copyMe.defaultTimeZone;
-        this.value = copyMe.value;
-        this.isSet = copyMe.isSet;
-        this.isLongData = copyMe.isLongData;
         this.bufferType = copyMe.bufferType;
-        this.bindLength = copyMe.bindLength;
-        this.longBinding = copyMe.longBinding;
-        this.floatBinding = copyMe.floatBinding;
-        this.doubleBinding = copyMe.doubleBinding;
         this.calendar = copyMe.calendar;
     }
 
     @Override
     public void reset() {
         super.reset();
-
-        this.isSet = false;
-        this.value = null;
-        this.isLongData = false;
-
-        this.longBinding = 0L;
-        this.floatBinding = 0;
-        this.doubleBinding = 0D;
         this.calendar = null;
     }
 
@@ -144,7 +111,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     }
 
     public String toString(boolean quoteIfNeeded) {
-        if (this.isLongData) {
+        if (this.isStream) {
             return "' STREAM DATA '";
         }
 
@@ -157,11 +124,11 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
             case MysqlType.FIELD_TYPE_SHORT:
             case MysqlType.FIELD_TYPE_LONG:
             case MysqlType.FIELD_TYPE_LONGLONG:
-                return String.valueOf(this.longBinding);
+                return String.valueOf(((Long) this.value).longValue());
             case MysqlType.FIELD_TYPE_FLOAT:
-                return String.valueOf(this.floatBinding);
+                return String.valueOf(((Float) this.value).floatValue());
             case MysqlType.FIELD_TYPE_DOUBLE:
-                return String.valueOf(this.doubleBinding);
+                return String.valueOf(((Double) this.value).doubleValue());
             case MysqlType.FIELD_TYPE_TIME:
             case MysqlType.FIELD_TYPE_DATE:
             case MysqlType.FIELD_TYPE_DATETIME:
@@ -190,8 +157,8 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
             return 0;
         }
 
-        if (this.isLongData) {
-            return this.bindLength;
+        if (this.isStream) {
+            return this.streamLength;
         }
 
         switch (this.bufferType) {
@@ -230,11 +197,6 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
         }
     }
 
-    @Override
-    public boolean isSet() {
-        return this.isSet;
-    }
-
     public void storeBinding(NativePacketPayload intoPacket, boolean isLoadDataQuery, String characterEncoding, ExceptionInterceptor interceptor) {
         synchronized (this) {
             try {
@@ -242,22 +204,22 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
                 switch (this.bufferType) {
 
                     case MysqlType.FIELD_TYPE_TINY:
-                        intoPacket.writeInteger(IntegerDataType.INT1, this.longBinding);
+                        intoPacket.writeInteger(IntegerDataType.INT1, ((Long) this.value).longValue());
                         return;
                     case MysqlType.FIELD_TYPE_SHORT:
-                        intoPacket.writeInteger(IntegerDataType.INT2, this.longBinding);
+                        intoPacket.writeInteger(IntegerDataType.INT2, ((Long) this.value).longValue());
                         return;
                     case MysqlType.FIELD_TYPE_LONG:
-                        intoPacket.writeInteger(IntegerDataType.INT4, this.longBinding);
+                        intoPacket.writeInteger(IntegerDataType.INT4, ((Long) this.value).longValue());
                         return;
                     case MysqlType.FIELD_TYPE_LONGLONG:
-                        intoPacket.writeInteger(IntegerDataType.INT8, this.longBinding);
+                        intoPacket.writeInteger(IntegerDataType.INT8, ((Long) this.value).longValue());
                         return;
                     case MysqlType.FIELD_TYPE_FLOAT:
-                        intoPacket.writeInteger(IntegerDataType.INT4, Float.floatToIntBits(this.floatBinding));
+                        intoPacket.writeInteger(IntegerDataType.INT4, Float.floatToIntBits(((Float) this.value).floatValue()));
                         return;
                     case MysqlType.FIELD_TYPE_DOUBLE:
-                        intoPacket.writeInteger(IntegerDataType.INT8, Double.doubleToLongBits(this.doubleBinding));
+                        intoPacket.writeInteger(IntegerDataType.INT8, Double.doubleToLongBits(((Double) this.value).doubleValue()));
                         return;
                     case MysqlType.FIELD_TYPE_TIME:
                         storeTime(intoPacket);

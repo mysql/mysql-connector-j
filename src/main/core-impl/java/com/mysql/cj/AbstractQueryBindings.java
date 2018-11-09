@@ -125,7 +125,7 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
 
         if (this.bindValues != null) {
             for (int i = 0; i < this.bindValues.length; i++) {
-                if ((this.bindValues[i] != null) && ((ServerPreparedQueryBindValue) this.bindValues[i]).isLongData) { // TODO ServerPreparedQueryBindValue should not be referred here
+                if ((this.bindValues[i] != null) && this.bindValues[i].isStream()) {
                     hadLongData = true;
                 }
                 this.bindValues[i].reset();

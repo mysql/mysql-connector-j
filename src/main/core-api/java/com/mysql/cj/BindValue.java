@@ -55,9 +55,11 @@ public interface BindValue {
 
     InputStream getStreamValue();
 
-    void setStreamValue(InputStream parameterStream, int streamLength);
+    void setStreamValue(InputStream parameterStream, long streamLength);
 
-    int getStreamLength();
+    long getStreamLength();
+
+    void setStreamLength(long length);
 
     boolean isSet();
 }

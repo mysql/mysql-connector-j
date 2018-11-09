@@ -222,7 +222,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
             long boundTimeToCheck = 0;
 
             for (int i = 0; i < this.parameterCount - 1; i++) {
-                if (parameterBindings[i].isLongData) {
+                if (parameterBindings[i].isStream()) {
                     if (firstFound && boundTimeToCheck != parameterBindings[i].boundBeforeExecutionNum) {
                         throw ExceptionFactory.createException(
                                 Messages.getString("ServerPreparedStatement.11") + Messages.getString("ServerPreparedStatement.12"),
@@ -244,7 +244,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
         // Send all long data
         //
         for (int i = 0; i < this.parameterCount; i++) {
-            if (parameterBindings[i].isLongData) {
+            if (parameterBindings[i].isStream()) {
                 serverLongData(i, parameterBindings[i]);
             }
         }
@@ -298,7 +298,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
         // store the parameter values
         //
         for (int i = 0; i < this.parameterCount; i++) {
-            if (!parameterBindings[i].isLongData) {
+            if (!parameterBindings[i].isStream()) {
                 if (!parameterBindings[i].isNull()) {
                     parameterBindings[i].storeBinding(packet, this.queryBindings.isLoadDataQuery(), this.charEncoding, this.session.getExceptionInterceptor());
                 } else {
@@ -755,7 +755,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
 
                     long size = paramArg[j].getBoundLength();
 
-                    if (paramArg[j].isLongData) {
+                    if (paramArg[j].isStream()) {
                         if (size != -1) {
                             sizeOfParameterSet += size;
                         }

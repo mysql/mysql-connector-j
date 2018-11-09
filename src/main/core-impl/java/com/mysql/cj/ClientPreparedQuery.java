@@ -60,7 +60,7 @@ public class ClientPreparedQuery extends AbstractPreparedQuery<ClientPreparedQue
                 if (!bindValues[j].isNull()) {
 
                     if (bindValues[j].isStream()) {
-                        int streamLength = bindValues[j].getStreamLength();
+                        long streamLength = bindValues[j].getStreamLength();
 
                         if (streamLength != -1) {
                             sizeOfParameterSet += streamLength * 2; // for safety in escaping

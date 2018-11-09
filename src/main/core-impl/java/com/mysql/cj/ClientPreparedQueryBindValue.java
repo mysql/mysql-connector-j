@@ -38,15 +38,17 @@ public class ClientPreparedQueryBindValue implements BindValue {
     /** NULL indicator */
     protected boolean isNull;
 
-    private boolean isStream = false;
+    protected boolean isStream = false;
 
     protected MysqlType parameterType = MysqlType.NULL;
 
-    private byte[] parameterValue = null;
+    /** The value to store */
+    public Object value;
 
-    private InputStream parameterStream = null;
+    protected long streamLength;
 
-    private int streamLength;
+    /** has this parameter been set? */
+    protected boolean isSet = false;
 
     public ClientPreparedQueryBindValue() {
     }
@@ -60,18 +62,23 @@ public class ClientPreparedQueryBindValue implements BindValue {
         this.isNull = copyMe.isNull;
         this.isStream = copyMe.isStream;
         this.parameterType = copyMe.parameterType;
-        if (copyMe.parameterValue != null) {
-            this.parameterValue = new byte[copyMe.parameterValue.length];
-            System.arraycopy(copyMe.parameterValue, 0, this.parameterValue, 0, copyMe.parameterValue.length);
+        if (copyMe.value != null && copyMe.value instanceof byte[]) {
+            this.value = new byte[((byte[]) copyMe.value).length];
+            System.arraycopy(copyMe.value, 0, this.value, 0, ((byte[]) copyMe.value).length);
+        } else {
+            this.value = copyMe.value;
         }
-        this.parameterStream = copyMe.parameterStream;
         this.streamLength = copyMe.streamLength;
+        this.isSet = copyMe.isSet;
     }
 
     public void reset() {
         this.isNull = false;
         this.isStream = false;
         this.parameterType = MysqlType.NULL;
+        this.value = null;
+        this.streamLength = 0;
+        this.isSet = false;
     }
 
     @Override
@@ -84,6 +91,7 @@ public class ClientPreparedQueryBindValue implements BindValue {
         if (isNull) {
             this.parameterType = MysqlType.NULL;
         }
+        this.isSet = true;
     }
 
     public boolean isStream() {
@@ -105,31 +113,43 @@ public class ClientPreparedQueryBindValue implements BindValue {
     }
 
     public byte[] getByteValue() {
-        return this.parameterValue;
+        if (this.value instanceof byte[]) {
+            return (byte[]) this.value;
+        }
+        return null;
     }
 
     public void setByteValue(byte[] parameterValue) {
         this.isNull = false;
         this.isStream = false;
-        this.parameterValue = parameterValue;
-        this.parameterStream = null;
+        this.value = parameterValue;
         this.streamLength = 0;
+        this.isSet = true;
     }
 
     public InputStream getStreamValue() {
-        return this.parameterStream;
+        if (this.value instanceof InputStream) {
+            return (InputStream) this.value;
+        }
+        return null;
     }
 
-    public void setStreamValue(InputStream parameterStream, int streamLength) {
-        this.parameterStream = parameterStream;
+    public void setStreamValue(InputStream parameterStream, long streamLength) {
+        this.value = parameterStream;
         this.streamLength = streamLength;
+        this.isSet = true;
     }
 
-    public int getStreamLength() {
+    public long getStreamLength() {
         return this.streamLength;
     }
 
+    @Override
+    public void setStreamLength(long length) {
+        this.streamLength = length;
+    }
+
     public boolean isSet() {
-        return this.parameterValue != null || this.parameterStream != null;
+        return this.isSet;
     }
 }

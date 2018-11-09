@@ -1538,6 +1538,26 @@ public class StringUtils {
         return Arrays.asList(database, entityName);
     }
 
+    /**
+     * Builds and returns a fully qualified name, quoted if necessary, for the given catalog and database entity.
+     * 
+     * @param catalog
+     *            database name
+     * @param entity
+     *            identifier
+     * @param quoteId
+     *            quote character as defined on server
+     * @param isPedantic
+     *            are we in pedantic mode
+     * @return fully qualified name
+     */
+    public static String getFullyQualifiedName(String catalog, String entity, String quoteId, boolean isPedantic) {
+        StringBuilder fullyQualifiedName = new StringBuilder(StringUtils.quoteIdentifier(catalog == null ? "" : catalog, quoteId, isPedantic));
+        fullyQualifiedName.append('.');
+        fullyQualifiedName.append(StringUtils.quoteIdentifier(entity, quoteId, isPedantic));
+        return fullyQualifiedName.toString();
+    }
+
     public static boolean isEmptyOrWhitespaceOnly(String str) {
         if (str == null || str.length() == 0) {
             return true;

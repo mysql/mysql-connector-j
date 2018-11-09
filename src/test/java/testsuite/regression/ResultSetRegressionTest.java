@@ -6642,4 +6642,111 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertNotNull(theTime);
         assertEquals(Time.valueOf("00:00:00"), theTime);
     }
+
+    /**
+     * Tests fix for Bug#92536 (28692243), UPDATEING SERVER SIDE PREPSTMTS RESULTSET FAIL.
+     */
+    public void testBug92536() throws Exception {
+        createTable("testBug92536", "(`key` VARCHAR(45) NOT NULL, `value` BIGINT(20) NOT NULL,  PRIMARY KEY (`key`))");
+        this.stmt.executeUpdate("INSERT INTO `testBug92536` VALUES ('key', 0)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        for (String useSSPS : new String[] { "false", "true" }) {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), useSSPS);
+            Connection c1 = getConnectionWithProps(props);
+            try (PreparedStatement stmt1 = c1.prepareStatement("SELECT `key`, `value` FROM `testBug92536` WHERE `key`=? FOR UPDATE",
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE)) {
+                stmt1.setString(1, "key");
+                try (ResultSet res = stmt1.executeQuery()) {
+                    res.next();
+                    res.updateLong("value", 1);
+                    res.updateRow();
+                    res.refreshRow();
+
+                    assertEquals("key", res.getString(1));
+                    assertEquals(1, res.getInt(2));
+                }
+            }
+            c1.close();
+
+            this.rs = this.stmt.executeQuery("select * from testBug92536");
+            this.rs.next();
+            assertEquals("key", this.rs.getString(1));
+            assertEquals(1, this.rs.getInt(2));
+        }
+    }
+
+    /**
+     * Tests fix for Bug#25650482, REFRESHROW() CALL AFTER UPDATEROW() API FAILS WHEN USESERVERPREPSTMTS=TRUE.
+     */
+    public void testBug25650482() throws Exception {
+        createTable("testBug25650482", "(c1 int, c2 char(10),  primary key(c1))");
+        this.stmt.executeUpdate("INSERT INTO `testBug25650482` VALUES (1, 'a')");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+
+        for (String useSSPS : new String[] { "false", "true" }) {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), useSSPS);
+            Connection c1 = getConnectionWithProps(props);
+            try (PreparedStatement ps1 = c1.prepareStatement("SELECT * FROM `testBug25650482` order by c1 asc", ResultSet.TYPE_SCROLL_SENSITIVE,
+                    ResultSet.CONCUR_UPDATABLE)) {
+                try (ResultSet res = ps1.executeQuery()) {
+                    res.absolute(1);
+                    res.updateInt(1, res.getInt(1));
+                    res.updateString(2, "100");
+                    res.updateRow();
+                    res.refreshRow();
+
+                    assertEquals(1, res.getInt(1));
+                    assertEquals("100", res.getString(2));
+                }
+            }
+            c1.close();
+
+            this.rs = this.stmt.executeQuery("select * from testBug25650482");
+            this.rs.next();
+            assertEquals(1, this.rs.getInt(1));
+            assertEquals("100", this.rs.getString(2));
+        }
+    }
+
+    /**
+     * Tests fix for Bug#25650514, UPDATEROW() CALL FAILS WITH NPE WHEN SSPS=TRUE AND TABLE HAS MULTI-FLD KEY.
+     */
+    public void testBug25650514() throws Exception {
+        createTable("testBug25650514", "(c1 int,c2 char(10),  primary key(c1,c2))");
+        this.stmt.executeUpdate("INSERT INTO `testBug25650514` VALUES (1, 'a')");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+
+        for (String useSSPS : new String[] { "false", "true" }) {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), useSSPS);
+            Connection c1 = getConnectionWithProps(props);
+            try (PreparedStatement ps1 = c1.prepareStatement("SELECT * FROM `testBug25650514` order by c1 asc", ResultSet.TYPE_SCROLL_SENSITIVE,
+                    ResultSet.CONCUR_UPDATABLE)) {
+                try (ResultSet res = ps1.executeQuery()) {
+                    res.absolute(1);
+                    res.updateInt(1, res.getInt(1));
+                    res.updateString(2, "100");
+                    res.updateRow();
+                    res.refreshRow();
+
+                    assertEquals(1, res.getInt(1));
+                    assertEquals("100", res.getString(2));
+                }
+            }
+            c1.close();
+
+            this.rs = this.stmt.executeQuery("select * from testBug25650514");
+            this.rs.next();
+            assertEquals(1, this.rs.getInt(1));
+            assertEquals("100", this.rs.getString(2));
+        }
+    }
 }
