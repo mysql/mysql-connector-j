@@ -49,14 +49,6 @@ public class ZeroDateTimeToNullValueFactory<T> extends BaseDecoratingValueFactor
     }
 
     @Override
-    public T createFromTime(int hours, int minutes, int seconds, int nanos) {
-        if (hours + minutes + seconds + nanos == 0) {
-            return null;
-        }
-        return this.targetVf.createFromTime(hours, minutes, seconds, nanos);
-    }
-
-    @Override
     public T createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
         if (year + month + day + hours + minutes + seconds + nanos == 0) {
             return null;

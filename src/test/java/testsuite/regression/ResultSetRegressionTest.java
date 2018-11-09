@@ -6621,4 +6621,25 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(boolValues[i], this.rs.getBoolean(2));
         }
     }
+
+    /**
+     * Tests fix for Bug#91065 (28101003), ZERODATETIMEBEHAVIOR=CONVERT_TO_NULL SHOULD NOT APPLY TO 00:00:00 TIME COLUMNS.
+     */
+    public void testBug91065() throws Exception {
+        createTable("testBug91065", "(theTimeField time DEFAULT NULL)");
+        this.stmt.executeUpdate("insert into testBug91065 values('00:00:00')");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "CONVERT_TO_NULL");
+        Connection con = getConnectionWithProps(props);
+        Statement st = con.createStatement();
+
+        this.rs = st.executeQuery("SELECT theTimeField FROM testBug91065");
+        assertTrue(this.rs.next());
+        Time theTime = this.rs.getTime("theTimeField");
+        assertNotNull(theTime);
+        assertEquals(Time.valueOf("00:00:00"), theTime);
+    }
 }

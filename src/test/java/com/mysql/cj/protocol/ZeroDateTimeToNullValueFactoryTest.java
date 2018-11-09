@@ -30,10 +30,12 @@
 package com.mysql.cj.protocol;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.concurrent.Callable;
 
 import org.junit.Test;
@@ -51,7 +53,8 @@ public class ZeroDateTimeToNullValueFactoryTest extends CommonAsserts {
         assertNull(vf.createFromDate(0, 0, 0));
         assertEquals(LocalDateTime.of(2018, 1, 1, 0, 0, 0, 0), vf.createFromDate(2018, 1, 1));
 
-        assertNull(vf.createFromTime(0, 0, 0, 0));
+        assertNotNull(vf.createFromTime(0, 0, 0, 0));
+        assertEquals(LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC), vf.createFromTime(0, 0, 0, 0));
 
         assertThrows(DataReadException.class,
                 "The value '-1:0:0' is an invalid TIME value. JDBC Time objects represent a wall-clock time and not a duration as MySQL treats them. If you are treating this type as a duration, consider retrieving this value as a string and dealing with it according to your requirements.",
