@@ -96,6 +96,10 @@ public class AddStatementImpl implements AddStatement {
     }
 
     public CompletableFuture<AddResult> executeAsync() {
+        if (this.newDocs.size() == 0) { // according to X DevAPI specification, this is a no-op. we create an empty Result
+            StatementExecuteOk ok = new StatementExecuteOk(0, null, Collections.emptyList(), Collections.emptyList());
+            return CompletableFuture.completedFuture(new AddResultImpl(ok));
+        }
         CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncSendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder())
                 .buildDocInsert(this.schemaName, this.collectionName, serializeDocs(), this.upsert));
         return okF.thenApply(ok -> new AddResultImpl(ok));

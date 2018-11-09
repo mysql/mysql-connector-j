@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.After;
 import org.junit.Before;
@@ -253,11 +254,16 @@ public class CollectionAddTest extends BaseCollectionTestCase {
     }
 
     @Test
-    public void testAddNoDocs() {
+    public void testAddNoDocs() throws Exception {
         if (!this.isSetForXTests) {
             return;
         }
         Result res = this.collection.add(new DbDoc[] {}).execute();
+        assertEquals(0, res.getAffectedItemsCount());
+        assertEquals(0, res.getWarningsCount());
+
+        CompletableFuture<AddResult> f = this.collection.add(new DbDoc[] {}).executeAsync();
+        res = f.get();
         assertEquals(0, res.getAffectedItemsCount());
         assertEquals(0, res.getWarningsCount());
     }
