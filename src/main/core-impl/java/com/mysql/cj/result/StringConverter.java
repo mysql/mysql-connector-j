@@ -105,9 +105,9 @@ public class StringConverter<T> extends BaseDecoratingValueFactory<T> {
                 return this.targetVf.createFromLong(0);
             }
             // Else throw exception down below
-        } else if (s.equalsIgnoreCase("true")) {
+        } else if (s.equalsIgnoreCase("Y") || s.equalsIgnoreCase("true")) {
             return vf.createFromLong(1);
-        } else if (s.equalsIgnoreCase("false")) {
+        } else if (s.equalsIgnoreCase("N") || s.equalsIgnoreCase("false")) {
             return vf.createFromLong(0);
         } else if (s.contains("e") || s.contains("E") || s.matches("-?(\\d+)?\\.\\d+")) {
             // floating point

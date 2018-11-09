@@ -6598,4 +6598,27 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         } while ((sendFractionalSeconds = !sendFractionalSeconds) || (useServerPrepStmts = !useServerPrepStmts));
     }
+
+    /**
+     * Tests for fix to BUG#92574 (28706219), WHEN CONVERTING FROM VARCHAR TO JAVA BOOLEAN, 'N' IS NOT SUPPORTED.
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug92574() throws Exception {
+        String[] strValues = new String[] { null, "N", "n", "Y", "y", "0", "1" };
+        boolean[] boolValues = new boolean[] { false, false, false, true, true, false, true };
+
+        createTable("testBug92574", "(id int not null, f varchar(1), key(id))");
+        for (int i = 0; i < strValues.length; i++) {
+            String val = strValues[i] == null ? null : "'" + strValues[i] + "'";
+            this.stmt.executeUpdate("insert into testBug92574 values(" + i + "," + val + ")");
+        }
+        this.rs = this.stmt.executeQuery("SELECT * from testBug92574");
+        while (this.rs.next()) {
+            int i = this.rs.getInt(1);
+            assertEquals(strValues[i], this.rs.getString(2));
+            assertEquals(boolValues[i], this.rs.getBoolean(2));
+        }
+    }
 }
