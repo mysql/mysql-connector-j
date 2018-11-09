@@ -30,7 +30,7 @@
 package com.mysql.cj.protocol;
 
 import java.io.BufferedOutputStream;
-import java.io.InputStream;
+import java.io.IOException;
 import java.net.Socket;
 
 import com.mysql.cj.Messages;
@@ -65,17 +65,22 @@ public abstract class AbstractSocketConnection implements SocketConnection {
         return this.mysqlSocket;
     }
 
-    public FullReadInputStream getMysqlInput() {
-        return this.mysqlInput;
+    public FullReadInputStream getMysqlInput() throws IOException {
+        if (this.mysqlInput != null) {
+            return this.mysqlInput;
+        }
+        throw new IOException(Messages.getString("SocketConnection.2"));
     }
 
-    public void setMysqlInput(InputStream mysqlInput) {
-        // TODO: note: this is a temporary measure until MYSQLCONNJ-453 fixes the way SSL is supported
-        this.mysqlInput = new FullReadInputStream(mysqlInput);
+    public void setMysqlInput(FullReadInputStream mysqlInput) {
+        this.mysqlInput = mysqlInput;
     }
 
-    public BufferedOutputStream getMysqlOutput() {
-        return this.mysqlOutput;
+    public BufferedOutputStream getMysqlOutput() throws IOException {
+        if (this.mysqlOutput != null) {
+            return this.mysqlOutput;
+        }
+        throw new IOException(Messages.getString("SocketConnection.2"));
     }
 
     public boolean isSSLEstablished() {

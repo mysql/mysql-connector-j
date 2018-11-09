@@ -41,7 +41,6 @@ import java.lang.management.ThreadMXBean;
 import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.URL;
 import java.sql.DataTruncation;
 import java.sql.SQLWarning;
@@ -95,6 +94,7 @@ import com.mysql.cj.protocol.AbstractProtocol;
 import com.mysql.cj.protocol.AuthenticationProvider;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ExportControlled;
+import com.mysql.cj.protocol.FullReadInputStream;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.protocol.MessageSender;
@@ -271,8 +271,13 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         this.reusablePacket = new NativePacketPayload(INITIAL_PACKET_SIZE);
         //this.sendPacket = new Buffer(INITIAL_PACKET_SIZE);
 
-        this.packetSender = new SimplePacketSender(this.socketConnection.getMysqlOutput());
-        this.packetReader = new SimplePacketReader(this.socketConnection, this.maxAllowedPacket);
+        try {
+            this.packetSender = new SimplePacketSender(this.socketConnection.getMysqlOutput());
+            this.packetReader = new SimplePacketReader(this.socketConnection, this.maxAllowedPacket);
+        } catch (IOException ioEx) {
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder(),
+                    this.getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+        }
 
         //this.needToGrabQueryFromPacket = (this.profileSQL || this.logSlowQueries || this.autoGenerateTestcaseScript);
 
@@ -345,15 +350,17 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         try {
             this.socketConnection.performTlsHandshake(this.serverSession);
+
+            // i/o streams were replaced, build new packet sender/reader
+            this.packetSender = new SimplePacketSender(this.socketConnection.getMysqlOutput());
+            this.packetReader = new SimplePacketReader(this.socketConnection, this.maxAllowedPacket);
+
         } catch (FeatureNotAvailableException nae) {
             throw new CJConnectionFeatureNotAvailableException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder(), nae);
         } catch (IOException ioEx) {
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder(),
                     this.getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
         }
-        // i/o streams were replaced, build new packet sender/reader
-        this.packetSender = new SimplePacketSender(this.socketConnection.getMysqlOutput());
-        this.packetReader = new SimplePacketReader(this.socketConnection, this.maxAllowedPacket);
     }
 
     public void rejectProtocol(NativePacketPayload msg) {
@@ -406,22 +413,22 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         PropertySet pset = this.getPropertySet();
 
-        //
-        // Can't enable compression until after handshake
-        //
-        if (((this.serverSession.getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_COMPRESS) != 0)
-                && pset.getBooleanProperty(PropertyKey.useCompression).getValue()
-                && !(this.socketConnection.getMysqlInput().getUnderlyingStream() instanceof CompressedInputStream)) {
-            this.useCompression = true;
-            this.socketConnection.setMysqlInput(
-                    new CompressedInputStream(this.socketConnection.getMysqlInput(), pset.getBooleanProperty(PropertyKey.traceProtocol), this.log));
-            this.compressedPacketSender = new CompressedPacketSender(this.socketConnection.getMysqlOutput());
-            this.packetSender = this.compressedPacketSender;
-        }
-
-        applyPacketDecorators(this.packetSender, this.packetReader);
-
         try {
+            //
+            // Can't enable compression until after handshake
+            //
+            if (((this.serverSession.getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_COMPRESS) != 0)
+                    && pset.getBooleanProperty(PropertyKey.useCompression).getValue()
+                    && !(this.socketConnection.getMysqlInput().getUnderlyingStream() instanceof CompressedInputStream)) {
+                this.useCompression = true;
+                this.socketConnection.setMysqlInput(new FullReadInputStream(
+                        new CompressedInputStream(this.socketConnection.getMysqlInput(), pset.getBooleanProperty(PropertyKey.traceProtocol), this.log)));
+                this.compressedPacketSender = new CompressedPacketSender(this.socketConnection.getMysqlOutput());
+                this.packetSender = this.compressedPacketSender;
+            }
+
+            applyPacketDecorators(this.packetSender, this.packetReader);
+
             this.socketConnection.getSocketFactory().afterHandshake();
         } catch (IOException ioEx) {
             throw ExceptionFactory.createCommunicationsException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder(),
@@ -615,7 +622,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             try {
                 oldTimeout = this.socketConnection.getMysqlSocket().getSoTimeout();
                 this.socketConnection.getMysqlSocket().setSoTimeout(timeoutMillis);
-            } catch (SocketException e) {
+            } catch (IOException e) {
                 throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder(),
                         this.getPacketReceivedTimeHolder(), e, getExceptionInterceptor());
             }
@@ -681,7 +688,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             if (timeoutMillis != 0) {
                 try {
                     this.socketConnection.getMysqlSocket().setSoTimeout(oldTimeout);
-                } catch (SocketException e) {
+                } catch (IOException e) {
                     throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder(),
                             this.getPacketReceivedTimeHolder(), e, getExceptionInterceptor());
                 }
@@ -1423,7 +1430,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             if (soc != null) {
                 soc.setSoTimeout(milliseconds);
             }
-        } catch (SocketException e) {
+        } catch (IOException e) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.8"), e, getExceptionInterceptor());
         }
     }

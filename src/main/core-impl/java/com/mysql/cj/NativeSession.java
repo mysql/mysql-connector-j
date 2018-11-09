@@ -352,7 +352,11 @@ public class NativeSession extends CoreSession implements Serializable {
 
     @Override
     public SocketAddress getRemoteSocketAddress() {
-        return this.protocol.getSocketConnection().getMysqlSocket().getRemoteSocketAddress();
+        try {
+            return this.protocol.getSocketConnection().getMysqlSocket().getRemoteSocketAddress();
+        } catch (IOException e) {
+            throw new CJCommunicationsException(e);
+        }
     }
 
     public ProfilerEventHandler getProfilerEventHandlerInstanceFunction() {

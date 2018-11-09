@@ -31,7 +31,6 @@ package com.mysql.cj.protocol.x;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.nio.channels.AsynchronousSocketChannel;
 
@@ -116,7 +115,7 @@ public class XAsyncSocketConnection extends AbstractSocketConnection implements 
     }
 
     @Override
-    public void setMysqlInput(InputStream mysqlInput) {
+    public void setMysqlInput(FullReadInputStream mysqlInput) {
         // TODO not supported ?
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }

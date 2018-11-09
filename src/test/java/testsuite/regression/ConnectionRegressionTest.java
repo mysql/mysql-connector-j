@@ -11190,4 +11190,23 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests fix for BUG#92625 (28731795), CONTRIBUTION: FIX OBSERVED NPE IN CLEARINPUTSTREAM.
+     * 
+     * @throws Exception
+     */
+    public void testBug92625() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        Connection con = getConnectionWithProps(props);
+
+        ((NativeSession) ((JdbcConnection) con).getSession()).getProtocol().getSocketConnection().forceClose();
+        assertThrows(CommunicationsException.class, new Callable<Void>() {
+            public Void call() throws Exception {
+                ((JdbcConnection) con).serverPrepareStatement("SELECT 1");
+                return null;
+            }
+        });
+    }
 }

@@ -636,12 +636,14 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     protected void serverPrepare(String sql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            SQLException t = null;
+
             try {
 
                 ServerPreparedQuery q = (ServerPreparedQuery) this.query;
                 q.serverPrepare(sql);
             } catch (IOException ioEx) {
-                throw SQLError.createCommunicationsException(this.connection, this.session.getProtocol().getPacketSentTimeHolder(),
+                t = SQLError.createCommunicationsException(this.connection, this.session.getProtocol().getPacketSentTimeHolder(),
                         this.session.getProtocol().getPacketReceivedTimeHolder(), ioEx, this.exceptionInterceptor);
             } catch (CJException sqlEx) {
                 SQLException ex = SQLExceptionsMapping.translateException(sqlEx);
@@ -654,10 +656,20 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                     ex = appendMessageToException(ex, messageBuf.toString(), this.exceptionInterceptor);
                 }
 
-                throw ex;
+                t = ex;
             } finally {
                 // Leave the I/O channel in a known state...there might be packets out there that we're not interested in
-                this.session.clearInputStream();
+                try {
+                    this.session.clearInputStream();
+                } catch (Exception e) {
+                    if (t == null) {
+                        t = SQLError.createCommunicationsException(this.connection, this.session.getProtocol().getPacketSentTimeHolder(),
+                                this.session.getProtocol().getPacketReceivedTimeHolder(), e, this.exceptionInterceptor);
+                    }
+                }
+                if (t != null) {
+                    throw t;
+                }
             }
         }
     }

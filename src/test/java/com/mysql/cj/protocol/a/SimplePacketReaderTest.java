@@ -37,7 +37,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
@@ -290,7 +289,7 @@ public class SimplePacketReaderTest {
             return 0;
         }
 
-        public void setMysqlInput(InputStream mysqlInput) {
+        public void setMysqlInput(FullReadInputStream mysqlInput) {
         }
 
         public BufferedOutputStream getMysqlOutput() {

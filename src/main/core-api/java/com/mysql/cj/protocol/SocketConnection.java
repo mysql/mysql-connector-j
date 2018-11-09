@@ -31,7 +31,6 @@ package com.mysql.cj.protocol;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.nio.channels.AsynchronousSocketChannel;
 
@@ -79,13 +78,13 @@ public interface SocketConnection {
 
     int getPort();
 
-    Socket getMysqlSocket();
+    Socket getMysqlSocket() throws IOException;
 
-    FullReadInputStream getMysqlInput();
+    FullReadInputStream getMysqlInput() throws IOException;
 
-    void setMysqlInput(InputStream mysqlInput);
+    void setMysqlInput(FullReadInputStream mysqlInput);
 
-    BufferedOutputStream getMysqlOutput();
+    BufferedOutputStream getMysqlOutput() throws IOException;
 
     boolean isSSLEstablished();
 

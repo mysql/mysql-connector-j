@@ -203,29 +203,38 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             throw new CJCommunicationsException(e);
         }
 
-        if (this.socketConnection.isSynchronous()) {
-            // i/o streams were replaced, build new packet sender/reader
-            this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
-            this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
-        } else {
-            // resume message processing
-            ((AsyncMessageSender) this.sender).setChannel(this.socketConnection.getAsynchronousSocketChannel());
-            this.reader.start();
+        try {
+            if (this.socketConnection.isSynchronous()) {
+                // i/o streams were replaced, build new packet sender/reader
+                this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
+                this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
+            } else {
+                // resume message processing
+                ((AsyncMessageSender) this.sender).setChannel(this.socketConnection.getAsynchronousSocketChannel());
+                this.reader.start();
+            }
+        } catch (IOException e) {
+            throw new XProtocolError(e.getMessage(), e);
         }
+
     }
 
     public void beforeHandshake() {
         this.serverSession = new XServerSession();
 
-        if (this.socketConnection.isSynchronous()) {
-            this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
-            this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
-            this.managedResource = this.socketConnection.getMysqlSocket();
-        } else {
-            this.sender = new AsyncMessageSender(this.socketConnection.getAsynchronousSocketChannel());
-            this.reader = new AsyncMessageReader(this.propertySet, this.socketConnection);
-            this.reader.start();
-            this.managedResource = this.socketConnection.getAsynchronousSocketChannel();
+        try {
+            if (this.socketConnection.isSynchronous()) {
+                this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
+                this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
+                this.managedResource = this.socketConnection.getMysqlSocket();
+            } else {
+                this.sender = new AsyncMessageSender(this.socketConnection.getAsynchronousSocketChannel());
+                this.reader = new AsyncMessageReader(this.propertySet, this.socketConnection);
+                this.reader.start();
+                this.managedResource = this.socketConnection.getAsynchronousSocketChannel();
+            }
+        } catch (IOException e) {
+            throw new XProtocolError(e.getMessage(), e);
         }
 
         this.serverSession.setCapabilities(readServerCapabilities());

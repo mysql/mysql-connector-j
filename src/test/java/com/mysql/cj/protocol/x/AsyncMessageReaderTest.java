@@ -33,7 +33,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketOption;
@@ -226,7 +225,7 @@ public class AsyncMessageReaderTest {
         }
 
         @Override
-        public void setMysqlInput(InputStream mysqlInput) {
+        public void setMysqlInput(FullReadInputStream mysqlInput) {
         }
 
         @Override
