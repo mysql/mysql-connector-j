@@ -11095,4 +11095,99 @@ public class ConnectionRegressionTest extends BaseTestCase {
         // Assert that some charsets were tested.
         assertTrue(csCount > 35); // There are 39 charsets in MySQL 5.5.61, 40 in MySQL 5.6.41 and 41 in MySQL 5.7.23 and above, but these numbers can vary.
     }
+
+    /**
+     * Tests fix for Bug#25642226, CHANGEUSER() NOT SETTING THE DATABASE PROPERLY WITH SHA USER.
+     */
+    public void testBug25642226() throws Exception {
+        testBug25642226Task(dbUrl, "\u4F5C\u4F5C\u4F5C");
+        testBug25642226Task(sha256Url, "\u4F5C\u4F5C\u4F5C");
+    }
+
+    private void testBug25642226Task(String url, String pwd) throws Exception {
+        final Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "REQUIRED");
+        props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
+        props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+
+        Connection c1 = getConnectionWithProps(url, props);
+        Connection c2 = null;
+        Session sess = ((JdbcConnection) c1).getSession();
+
+        if (!sess.versionMeetsMinimum(5, 6, 5)) {
+            System.out.println("Skipped. Requires MySQL 5.6.5+ server.");
+            c1.close();
+            return;
+        }
+
+        Statement s1 = c1.createStatement();
+        if (!pluginIsActive(s1, "sha256_password")) {
+            c1.close();
+            fail("sha256_password required to run this test");
+        }
+
+        this.rs = s1.executeQuery("select database()");
+        this.rs.next();
+        String origDb = this.rs.getString(1);
+        System.out.println("URL [" + url + "]");
+        System.out.println("1. Original database [" + origDb + "]");
+
+        try {
+            // create user with required password and sha256_password auth
+            if (!sess.versionMeetsMinimum(8, 0, 5)) {
+                s1.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+                s1.executeUpdate("SET GLOBAL old_passwords= 2");
+                s1.executeUpdate("SET SESSION old_passwords= 2");
+            }
+            createUser(s1, "'Bug25642226u1'@'%'", "identified WITH sha256_password");
+            s1.executeUpdate("grant all on *.* to 'Bug25642226u1'@'%'");
+            s1.executeUpdate(sess.versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'Bug25642226u1'@'%' IDENTIFIED BY '" + pwd + "'"
+                    : "set password for 'Bug25642226u1'@'%' = PASSWORD('" + pwd + "')");
+            s1.executeUpdate("flush privileges");
+
+            c2 = getConnectionWithProps(url, props);
+            Statement s2 = c2.createStatement();
+
+            ((JdbcConnection) c2).changeUser("Bug25642226u1", pwd);
+            this.rs = s2.executeQuery("select database()");
+            this.rs.next();
+            System.out.println("2. Database after sha256 changeUser [" + this.rs.getString(1) + "]");
+            assertEquals(origDb, this.rs.getString(1)); // was returning null for database name
+            this.rs = s2.executeQuery("show tables"); // was failing with exception
+
+            // create user with required password and caching_sha2_password auth
+            if (sess.versionMeetsMinimum(8, 0, 3)) {
+                if (!pluginIsActive(s1, "caching_sha2_password")) {
+                    fail("caching_sha2_password required to run this test");
+                }
+                // create user with required password and sha256_password auth
+                createUser(s1, "'Bug25642226u2'@'%'", "identified WITH caching_sha2_password");
+                s1.executeUpdate("grant all on *.* to 'Bug25642226u2'@'%'");
+                s1.executeUpdate(sess.versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'Bug25642226u2'@'%' IDENTIFIED BY '" + pwd + "'"
+                        : "set password for 'Bug25642226u2'@'%' = PASSWORD('" + pwd + "')");
+                s1.executeUpdate("flush privileges");
+
+                ((JdbcConnection) c2).changeUser("Bug25642226u2", pwd);
+                this.rs = s2.executeQuery("select database()");
+                this.rs.next();
+                System.out.println("3. Database after sha2 changeUser [" + this.rs.getString(1) + "]");
+                assertEquals(origDb, this.rs.getString(1)); // was returning null for database name
+                this.rs = s2.executeQuery("show tables"); // was failing with exception
+            }
+
+            c2.close();
+
+        } finally {
+            s1.executeUpdate("flush privileges");
+            if (!sess.versionMeetsMinimum(8, 0, 5)) {
+                s1.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+            }
+            c1.close();
+
+            if (c2 != null) {
+                c2.close();
+            }
+        }
+    }
 }

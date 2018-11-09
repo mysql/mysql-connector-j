@@ -611,7 +611,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                     if (toServer.get(0).getPayloadLength() < 256) {
                         // non-mysql servers may use this information to authenticate without requiring another round-trip
                         last_sent.writeInteger(IntegerDataType.INT1, toServer.get(0).getPayloadLength());
-                        last_sent.writeBytes(StringSelfDataType.STRING_EOF, toServer.get(0).getByteBuffer());
+                        last_sent.writeBytes(StringSelfDataType.STRING_EOF, toServer.get(0).getByteBuffer(), 0, toServer.get(0).getPayloadLength());
                     } else {
                         last_sent.writeInteger(IntegerDataType.INT1, 0);
                     }
