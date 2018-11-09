@@ -31,14 +31,49 @@ package com.mysql.cj.protocol.x;
 
 import java.util.List;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Parser;
+import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.protocol.Warning;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar;
+import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
+import com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged;
+import com.mysql.cj.x.protobuf.MysqlxNotice.SessionVariableChanged;
 
-public class Notice implements Warning {
+public class Notice {
 
-    public static final int XProtocolNoticeFrameType_WARNING = 1;
-    public static final int XProtocolNoticeFrameType_SESS_VAR_CHANGED = 2;
-    public static final int XProtocolNoticeFrameType_SESS_STATE_CHANGED = 3;
+    public static Notice getInstance(XMessage message) {
+        Frame notice = (Frame) message.getMessage();
+        if (notice.getScope() != Frame.Scope.GLOBAL) { // TODO should we handle global notices somehow? What frame types are applicable there?
+            switch (notice.getType()) {
+                case Frame.Type.WARNING_VALUE:
+                    return new XWarning(notice);
+
+                case Frame.Type.SESSION_VARIABLE_CHANGED_VALUE:
+                    return new XSessionVariableChanged(notice);
+
+                case Frame.Type.SESSION_STATE_CHANGED_VALUE:
+                    return new XSessionStateChanged(notice);
+
+                case Frame.Type.GROUP_REPLICATION_STATE_CHANGED_VALUE:
+                    // TODO
+                    break;
+                default:
+                    break;
+            }
+        }
+        return new Notice(notice);
+    }
+
+    public static final int NoticeScope_Global = 1;
+    public static final int NoticeScope_Local = 2;
+
+    public static final int NoticeType_WARNING = 1;
+    public static final int NoticeType_SESSION_VARIABLE_CHANGED = 2;
+    public static final int NoticeType_SESSION_STATE_CHANGED = 3;
+    public static final int NoticeType_GROUP_REPLICATION_STATE_CHANGED = 4;
 
     public static final int SessionStateChanged_CURRENT_SCHEMA = 1;
     public static final int SessionStateChanged_ACCOUNT_EXPIRED = 2;
@@ -52,97 +87,109 @@ public class Notice implements Warning {
     public static final int SessionStateChanged_CLIENT_ID_ASSIGNED = 11;
     public static final int SessionStateChanged_GENERATED_DOCUMENT_IDS = 12;
 
-    private int noticeType = 0;
+    protected int scope = 0;
+    protected int type = 0;
 
-    private int level;
-    private long code;
-    private String message;
-
-    private Integer paramType = null;
-    private String paramName = null;
-    private Scalar value = null;
-    private List<Scalar> valueList = null;
-
-    /**
-     * Constructor for XProtocolNoticeFrameType_WARNING
-     * 
-     * @param level
-     *            level
-     * @param code
-     *            code
-     * @param message
-     *            message
-     */
-    public Notice(int level, long code, String message) {
-        this.noticeType = XProtocolNoticeFrameType_WARNING;
-        this.level = level;
-        this.code = code;
-        this.message = message;
-    }
-
-    /**
-     * Constructor for XProtocolNoticeFrameType_SESS_STATE_CHANGED
-     * 
-     * @param paramType
-     *            parameter type
-     * @param valueList
-     *            values
-     */
-    public Notice(int paramType, List<Scalar> valueList) {
-        this.noticeType = XProtocolNoticeFrameType_SESS_STATE_CHANGED;
-        this.paramType = paramType;
-        this.valueList = valueList;
-    }
-
-    /**
-     * Constructor for XProtocolNoticeFrameType_SESS_VAR_CHANGED
-     * 
-     * @param paramName
-     *            parameter name
-     * @param value
-     *            value
-     */
-    public Notice(String paramName, Scalar value) {
-        this.noticeType = XProtocolNoticeFrameType_SESS_VAR_CHANGED;
-        this.paramName = paramName;
-        this.value = value;
+    public Notice(Frame frm) {
+        this.scope = frm.getScope().getNumber();
+        this.type = frm.getType();
     }
 
     public int getType() {
-        return this.noticeType;
+        return this.type;
     }
 
-    @Override
-    public int getLevel() {
-        return this.level;
+    public int getScope() {
+        return this.scope;
     }
 
-    @Override
-    public long getCode() {
-        return this.code;
-    }
-
-    @Override
-    public String getMessage() {
-        return this.message;
-    }
-
-    public Integer getParamType() {
-        return this.paramType;
-    }
-
-    public String getParamName() {
-        return this.paramName;
-    }
-
-    public Scalar getValue() {
-        if (this.value == null && this.valueList != null && !this.valueList.isEmpty()) {
-            return this.valueList.get(0);
+    @SuppressWarnings("unchecked")
+    static <T extends GeneratedMessageV3> T parseNotice(ByteString payload, Class<T> noticeClass) {
+        try {
+            Parser<T> parser = (Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(noticeClass);
+            return parser.parseFrom(payload);
+        } catch (InvalidProtocolBufferException ex) {
+            throw new CJCommunicationsException(ex);
         }
-        return this.value;
     }
 
-    public List<Scalar> getValueList() {
-        return this.valueList;
+    public static class XWarning extends Notice implements Warning {
+
+        private int level;
+        private long code;
+        private String message;
+
+        public XWarning(Frame frm) {
+            super(frm);
+            com.mysql.cj.x.protobuf.MysqlxNotice.Warning warn = parseNotice(frm.getPayload(), com.mysql.cj.x.protobuf.MysqlxNotice.Warning.class);
+            this.level = warn.getLevel().getNumber();
+            this.code = Integer.toUnsignedLong(warn.getCode());
+            this.message = warn.getMsg();
+        }
+
+        @Override
+        public int getLevel() {
+            return this.level;
+        }
+
+        @Override
+        public long getCode() {
+            return this.code;
+        }
+
+        @Override
+        public String getMessage() {
+            return this.message;
+        }
+
+    }
+
+    public static class XSessionVariableChanged extends Notice {
+        private String paramName = null;
+        private Scalar value = null;
+
+        public XSessionVariableChanged(Frame frm) {
+            super(frm);
+            SessionVariableChanged svmsg = parseNotice(frm.getPayload(), SessionVariableChanged.class);
+            this.paramName = svmsg.getParam();
+            this.value = svmsg.getValue();
+        }
+
+        public String getParamName() {
+            return this.paramName;
+        }
+
+        public Scalar getValue() {
+            return this.value;
+        }
+
+    }
+
+    public static class XSessionStateChanged extends Notice {
+        private Integer paramType = null;
+        private List<Scalar> valueList = null;
+
+        public XSessionStateChanged(Frame frm) {
+            super(frm);
+            SessionStateChanged ssmsg = parseNotice(frm.getPayload(), SessionStateChanged.class);
+            this.paramType = ssmsg.getParam().getNumber();
+            this.valueList = ssmsg.getValueList();
+        }
+
+        public Integer getParamType() {
+            return this.paramType;
+        }
+
+        public List<Scalar> getValueList() {
+            return this.valueList;
+        }
+
+        public Scalar getValue() {
+            if (this.valueList != null && !this.valueList.isEmpty()) {
+                return this.valueList.get(0);
+            }
+            return null;
+        }
+
     }
 }

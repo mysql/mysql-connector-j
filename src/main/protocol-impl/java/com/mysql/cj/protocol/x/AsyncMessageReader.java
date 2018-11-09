@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.CompletionHandler;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -137,7 +139,6 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
         this.propertySet = propertySet;
         this.sc = socketConnection;
         this.asyncTimeout = this.propertySet.getIntegerProperty(PropertyKey.xdevapiAsyncResponseTimeout);
-
     }
 
     public void start() {
@@ -493,6 +494,7 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
     private static final class SyncXMessageListener<T extends GeneratedMessageV3> implements MessageListener<XMessage> {
         private CompletableFuture<XMessage> future;
         private Class<T> expectedClass;
+        List<Notice> notices = null;
 
         public SyncXMessageListener(CompletableFuture<XMessage> future, Class<T> expectedClass) {
             this.future = future;
@@ -505,13 +507,20 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
             Class<? extends GeneratedMessageV3> msgClass = (Class<? extends GeneratedMessageV3>) msg.getMessage().getClass();
             if (Error.class.equals(msgClass)) {
                 this.future.completeExceptionally(new XProtocolError(Error.class.cast(msg.getMessage())));
-                return true; /* done reading? */
+                return true; // done reading
             } else if (this.expectedClass.equals(msgClass)) {
-                this.future.complete(msg);
-                return true; /* done reading? */
+                this.future.complete(msg.addNotices(this.notices));
+                this.notices = null;
+                return true; // done reading
+            } else if (Frame.class.equals(msgClass)) {
+                if (this.notices == null) {
+                    this.notices = new ArrayList<>();
+                }
+                this.notices.add(Notice.getInstance(msg));
+                return false; // proceed with reading the next message
             }
             this.future.completeExceptionally(new WrongArgumentException("Unhandled msg class (" + msgClass + ") + msg=" + msg.getMessage()));
-            return true; /* done reading? */
+            return true; // done reading
         }
 
         public void error(Throwable ex) {

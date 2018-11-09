@@ -52,7 +52,6 @@ import com.mysql.cj.x.protobuf.MysqlxSql.StmtExecuteOk;
 public class ResultMessageListener implements MessageListener<XMessage> {
     private ResultListener<StatementExecuteOk> callbacks;
     private ProtocolEntityFactory<Field, XMessage> fieldFactory;
-    private ProtocolEntityFactory<Notice, XMessage> noticeFactory;
 
     /**
      * Accumulate metadata before delivering to client.
@@ -67,11 +66,9 @@ public class ResultMessageListener implements MessageListener<XMessage> {
 
     private StatementExecuteOkBuilder okBuilder = new StatementExecuteOkBuilder();
 
-    public ResultMessageListener(ProtocolEntityFactory<Field, XMessage> colToField, ProtocolEntityFactory<Notice, XMessage> noticeFactory,
-            ResultListener<StatementExecuteOk> callbacks) {
+    public ResultMessageListener(ProtocolEntityFactory<Field, XMessage> colToField, ResultListener<StatementExecuteOk> callbacks) {
         this.callbacks = callbacks;
         this.fieldFactory = colToField;
-        this.noticeFactory = noticeFactory;
     }
 
     public Boolean createFromMessage(XMessage message) {
@@ -114,7 +111,7 @@ public class ResultMessageListener implements MessageListener<XMessage> {
             return true; /* done reading? */
 
         } else if (Frame.class.equals(msgClass)) {
-            this.okBuilder.addNotice(this.noticeFactory.createFromMessage(message));
+            this.okBuilder.addNotice(Notice.getInstance(message));
             return false; /* done reading? */
         }
 

@@ -61,7 +61,6 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.SSLParamsException;
-import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.AbstractProtocol;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ExportControlled;
@@ -79,6 +78,7 @@ import com.mysql.cj.protocol.ServerCapabilities;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.SocketConnection;
 import com.mysql.cj.protocol.a.NativeSocketConnection;
+import com.mysql.cj.protocol.x.Notice.XSessionStateChanged;
 import com.mysql.cj.result.DefaultColumnDefinition;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.LongValueFactory;
@@ -102,7 +102,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     /** We take responsibility of the socket as the managed resource. We close it when we're done. */
     private Closeable managedResource;
     private ProtocolEntityFactory<Field, XMessage> fieldFactory;
-    private ProtocolEntityFactory<Notice, XMessage> noticeFactory;
     private String metadataCharacterSet;
 
     private ResultStreamer currentResultStreamer;
@@ -162,7 +161,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
         this.metadataCharacterSet = "latin1"; // TODO configure from server session
         this.fieldFactory = new FieldFactory(this.metadataCharacterSet);
-        this.noticeFactory = new NoticeFactory();
     }
 
     public ServerSession getServerSession() {
@@ -326,12 +324,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     public void readOk() {
         try {
-            XMessageHeader header;
-            while ((header = this.reader.readHeader()).getMessageType() == ServerMessages.Type.NOTICE_VALUE) {
-                this.reader.readMessage(null, header);
-                // TODO OkBuilder.addNotice(this.reader.read(Frame.class));
-            }
             this.reader.readMessage(null, ServerMessages.Type.OK_VALUE);
+            // TODO OkBuilder.addNotice(this.reader.read(Frame.class));
         } catch (IOException e) {
             throw new XProtocolError(e.getMessage(), e);
         }
@@ -339,24 +333,23 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     public void readAuthenticateOk() {
         try {
-            XMessageHeader header;
-            while ((header = this.reader.readHeader()).getMessageType() == ServerMessages.Type.NOTICE_VALUE) {
-                Notice notice = this.noticeFactory.createFromMessage(this.reader.readMessage(null, header));
-                if (notice.getType() == Notice.XProtocolNoticeFrameType_SESS_STATE_CHANGED) {
-                    switch (notice.getParamType()) {
-                        case Notice.SessionStateChanged_CLIENT_ID_ASSIGNED:
-                            this.getServerSession().setThreadId(notice.getValue().getVUnsignedInt());
-                            break;
-                        case Notice.SessionStateChanged_ACCOUNT_EXPIRED:
-                            // TODO
-                        default:
-                            throw new WrongArgumentException("Unknown SessionStateChanged notice received during authentication: " + notice.getParamType());
+            XMessage mess = this.reader.readMessage(null, ServerMessages.Type.SESS_AUTHENTICATE_OK_VALUE);
+            if (mess != null && mess.getNotices() != null) {
+                for (Notice notice : mess.getNotices()) {
+                    if (notice instanceof XSessionStateChanged) {
+                        switch (((XSessionStateChanged) notice).getParamType()) {
+                            case Notice.SessionStateChanged_CLIENT_ID_ASSIGNED:
+                                this.getServerSession().setThreadId(((XSessionStateChanged) notice).getValue().getVUnsignedInt());
+                                break;
+                            case Notice.SessionStateChanged_ACCOUNT_EXPIRED:
+                                // TODO
+                                break;
+                            default:
+                                break;
+                        }
                     }
-                } else {
-                    throw new WrongArgumentException("Unknown notice received during authentication: " + notice);
                 }
             }
-            this.reader.readMessage(null, ServerMessages.Type.SESS_AUTHENTICATE_OK_VALUE);
         } catch (IOException e) {
             throw new XProtocolError(e.getMessage(), e);
         }
@@ -397,14 +390,19 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public <QR extends QueryResult> QR readQueryResult() {
         try {
             StatementExecuteOkBuilder builder = new StatementExecuteOkBuilder();
+            XMessage mess = null;
+            List<Notice> notices;
             XMessageHeader header;
             if ((header = this.reader.readHeader()).getMessageType() == ServerMessages.Type.RESULTSET_FETCH_DONE_VALUE) {
-                this.reader.readMessage(null, header);
+                mess = this.reader.readMessage(null, header);
             }
-            while ((header = this.reader.readHeader()).getMessageType() == ServerMessages.Type.NOTICE_VALUE) {
-                builder.addNotice(this.noticeFactory.createFromMessage(this.reader.readMessage(null, header)));
+            if (mess != null && (notices = mess.getNotices()) != null) {
+                notices.stream().forEach(builder::addNotice);
             }
-            this.reader.readMessage(null, ServerMessages.Type.SQL_STMT_EXECUTE_OK_VALUE);
+            mess = this.reader.readMessage(null, ServerMessages.Type.SQL_STMT_EXECUTE_OK_VALUE);
+            if (mess != null && (notices = mess.getNotices()) != null) {
+                notices.stream().forEach(builder::addNotice);
+            }
             return (QR) builder.build();
         } catch (IOException e) {
             throw new XProtocolError(e.getMessage(), e);
@@ -441,15 +439,10 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     public ColumnDefinition readMetadata() {
         try {
-            XMessageHeader header;
-            while ((header = this.reader.readHeader()).getMessageType() == ServerMessages.Type.NOTICE_VALUE) {
-                // TODO put notices somewhere like it's done eg. in readStatementExecuteOk(): builder.addNotice(this.reader.read(Frame.class));
-                this.reader.readMessage(null, header);
-            }
             List<ColumnMetaData> fromServer = new LinkedList<>();
             do { // use this construct to read at least one
                 fromServer.add((ColumnMetaData) this.reader.readMessage(null, ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE).getMessage());
-
+                // TODO put notices somewhere like it's done eg. in readStatementExecuteOk(): builder.addNotice(this.reader.read(Frame.class));
             } while (this.reader.readHeader().getMessageType() == ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE);
             ArrayList<Field> metadata = new ArrayList<>(fromServer.size());
             fromServer.forEach(col -> metadata.add(this.fieldFactory.createFromMessage(new XMessage(col))));
@@ -499,8 +492,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public CompletableFuture<SqlResult> asyncExecuteSql(String sql, List<Object> args) {
         newCommand();
         CompletableFuture<SqlResult> f = new CompletableFuture<>();
-        com.mysql.cj.protocol.MessageListener<XMessage> l = new SqlResultMessageListener(f, this.fieldFactory, this.noticeFactory,
-                this.serverSession.getDefaultTimeZone());
+        com.mysql.cj.protocol.MessageListener<XMessage> l = new SqlResultMessageListener(f, this.fieldFactory, this.serverSession.getDefaultTimeZone());
         CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f, () -> this.reader.pushMessageListener(l));
         this.sender.send(this.messageBuilder.buildSqlStatement(sql, args), resultHandler);
         return f;
@@ -517,7 +509,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
      */
     public void asyncFind(FilterParams filterParams, ResultListener<StatementExecuteOk> callbacks, CompletableFuture<?> errorFuture) {
         newCommand();
-        MessageListener<XMessage> l = new ResultMessageListener(this.fieldFactory, this.noticeFactory, callbacks);
+        MessageListener<XMessage> l = new ResultMessageListener(this.fieldFactory, callbacks);
         CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(errorFuture, () -> this.reader.pushMessageListener(l));
         this.sender.send(((XMessageBuilder) this.messageBuilder).buildFind(filterParams), resultHandler);
     }
@@ -578,7 +570,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public <RES extends QueryResult> CompletableFuture<RES> sendAsync(Message message) {
         newCommand();
         CompletableFuture<StatementExecuteOk> f = new CompletableFuture<>();
-        final StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener(f, this.noticeFactory);
+        final StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener(f);
         CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f, () -> this.reader.pushMessageListener(l));
         this.sender.send((XMessage) message, resultHandler);
         return (CompletableFuture<RES>) f;

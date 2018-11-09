@@ -34,7 +34,6 @@ import java.util.concurrent.CompletableFuture;
 import com.google.protobuf.GeneratedMessageV3;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.MessageListener;
-import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.x.protobuf.Mysqlx.Error;
 import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
 import com.mysql.cj.x.protobuf.MysqlxResultset.FetchDone;
@@ -46,11 +45,9 @@ import com.mysql.cj.x.protobuf.MysqlxSql.StmtExecuteOk;
 public class StatementExecuteOkMessageListener implements MessageListener<XMessage> {
     private StatementExecuteOkBuilder builder = new StatementExecuteOkBuilder();
     private CompletableFuture<StatementExecuteOk> future = new CompletableFuture<>();
-    private ProtocolEntityFactory<Notice, XMessage> noticeFactory;
 
-    public StatementExecuteOkMessageListener(CompletableFuture<StatementExecuteOk> future, ProtocolEntityFactory<Notice, XMessage> noticeFactory) {
+    public StatementExecuteOkMessageListener(CompletableFuture<StatementExecuteOk> future) {
         this.future = future;
-        this.noticeFactory = noticeFactory;
     }
 
     public Boolean createFromMessage(XMessage message) {
@@ -58,7 +55,7 @@ public class StatementExecuteOkMessageListener implements MessageListener<XMessa
         @SuppressWarnings("unchecked")
         Class<? extends GeneratedMessageV3> msgClass = (Class<? extends GeneratedMessageV3>) message.getMessage().getClass();
         if (Frame.class.equals(msgClass)) {
-            this.builder.addNotice(this.noticeFactory.createFromMessage(message));
+            this.builder.addNotice(Notice.getInstance(message));
             return false; /* done reading? */
         } else if (StmtExecuteOk.class.equals(msgClass)) {
             this.future.complete(this.builder.build());

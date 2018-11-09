@@ -118,6 +118,10 @@ public class NativeCapabilities implements ServerCapabilities {
     }
 
     public void setProtocolVersion(byte protocolVersion) {
+        // TODO revise this check after server implementation of initial X Protocol Notice
+        //if (protocolVersion != 10) {
+        //    throw ExceptionFactory.createException(UnableToConnectException.class, "Unsupported protocol version: " + protocolVersion);
+        //}
         this.protocolVersion = protocolVersion;
     }
 

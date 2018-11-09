@@ -30,6 +30,8 @@
 package com.mysql.cj.protocol.x;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -135,16 +137,25 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
         // waiting for ListenersDispatcher completion to perform sync call
         synchronized (this.waitingSyncOperationMonitor) {
             try {
-                Class<? extends GeneratedMessageV3> messageClass = MessageConstants.getMessageClassForType(readHeader().getMessageType());
                 Class<? extends GeneratedMessageV3> expectedClass = MessageConstants.getMessageClassForType(expectedType);
 
+                List<Notice> notices = null;
+                XMessageHeader hdr;
+                while ((hdr = readHeader()).getMessageType() == ServerMessages.Type.NOTICE_VALUE && expectedType != ServerMessages.Type.NOTICE_VALUE) {
+                    if (notices == null) {
+                        notices = new ArrayList<>();
+                    }
+                    notices.add(Notice.getInstance(new XMessage(readMessageLocal(MessageConstants.getMessageClassForType(ServerMessages.Type.NOTICE_VALUE)))));
+                }
+
+                Class<? extends GeneratedMessageV3> messageClass = MessageConstants.getMessageClassForType(hdr.getMessageType());
                 // ensure that parsed message class matches incoming tag
                 if (expectedClass != messageClass) {
                     throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '"
                             + messageClass.getSimpleName() + "'");
                 }
 
-                return new XMessage(readMessageLocal(messageClass));
+                return new XMessage(readMessageLocal(messageClass)).addNotices(notices);
             } catch (IOException e) {
                 throw new XProtocolError(e.getMessage(), e);
             }

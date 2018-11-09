@@ -34,7 +34,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.x.Notice.XSessionStateChanged;
+import com.mysql.cj.protocol.x.Notice.XWarning;
 
 /**
  * Handle state necessary to accumulate noticed and build a {@link StatementExecuteOk} response.
@@ -46,39 +47,32 @@ public class StatementExecuteOkBuilder {
     private List<com.mysql.cj.protocol.Warning> warnings = new ArrayList<>();
 
     public void addNotice(Notice notice) {
-        if (notice.getType() == Notice.XProtocolNoticeFrameType_WARNING) {
-            this.warnings.add(notice);
-        } else if (notice.getType() == Notice.XProtocolNoticeFrameType_SESS_STATE_CHANGED) {
-            switch (notice.getParamType()) {
+        if (notice instanceof XWarning) {
+            this.warnings.add((XWarning) notice);
+
+        } else if (notice instanceof XSessionStateChanged) {
+            switch (((XSessionStateChanged) notice).getParamType()) {
                 case Notice.SessionStateChanged_GENERATED_INSERT_ID:
-                    // TODO: handle > 2^63-1?
-                    this.lastInsertId = notice.getValue().getVUnsignedInt();
+                    this.lastInsertId = ((XSessionStateChanged) notice).getValue().getVUnsignedInt(); // TODO: handle > 2^63-1?
                     break;
                 case Notice.SessionStateChanged_ROWS_AFFECTED:
-                    // TODO: handle > 2^63-1?
-                    this.rowsAffected = notice.getValue().getVUnsignedInt();
-                    break;
-                case Notice.SessionStateChanged_PRODUCED_MESSAGE:
-                    // TODO do something with notices. expose them to client
-                    //System.err.println("Ignoring NOTICE message: " + msg.getValue().getVString().getValue().toStringUtf8());
+                    this.rowsAffected = ((XSessionStateChanged) notice).getValue().getVUnsignedInt(); // TODO: handle > 2^63-1?
                     break;
                 case Notice.SessionStateChanged_GENERATED_DOCUMENT_IDS:
-                    this.generatedIds = notice.getValueList().stream().map(v -> v.getVOctets().getValue().toStringUtf8()).collect(Collectors.toList());
+                    this.generatedIds = ((XSessionStateChanged) notice).getValueList().stream().map(v -> v.getVOctets().getValue().toStringUtf8())
+                            .collect(Collectors.toList());
                     break;
+                case Notice.SessionStateChanged_PRODUCED_MESSAGE:
                 case Notice.SessionStateChanged_CURRENT_SCHEMA:
                 case Notice.SessionStateChanged_ACCOUNT_EXPIRED:
                 case Notice.SessionStateChanged_ROWS_FOUND:
                 case Notice.SessionStateChanged_ROWS_MATCHED:
                 case Notice.SessionStateChanged_TRX_COMMITTED:
                 case Notice.SessionStateChanged_TRX_ROLLEDBACK:
-                    // TODO: propagate state
+                case Notice.SessionStateChanged_CLIENT_ID_ASSIGNED:
                 default:
-                    // TODO: log warning normally instead of sysout
-                    new WrongArgumentException("unhandled SessionStateChanged notice! " + notice).printStackTrace();
+                    // TODO do something with notices, expose them to client
             }
-        } else {
-            // TODO log error normally instead of sysout
-            new WrongArgumentException("Got an unknown notice: " + notice).printStackTrace();
         }
     }
 

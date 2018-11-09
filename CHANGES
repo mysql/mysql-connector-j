@@ -3,6 +3,8 @@
 
 Version 8.0.14
 
+  - WL#12462, DevAPI: Be prepared for initial notice on connection.
+
   - Fix for Bug#28924137, WL#12463:IF COLLECTION DOESN'T EXIST, COLL.COUNT() IS GIVING A WRONG ERROR MESSAGE.
 
   - WL#12463, DevAPI: Standardize count method.

@@ -31,6 +31,7 @@ package com.mysql.cj.protocol.x;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +47,7 @@ import com.mysql.cj.protocol.Message;
 public class XMessage implements Message, com.google.protobuf.Message {
 
     private com.google.protobuf.Message message;
+    private List<Notice> notices = null;
 
     public XMessage(com.google.protobuf.Message mess) {
         this.message = mess;
@@ -174,6 +176,20 @@ public class XMessage implements Message, com.google.protobuf.Message {
     @Override
     public Builder toBuilder() {
         return this.message.toBuilder();
+    }
+
+    public List<Notice> getNotices() {
+        return this.notices;
+    }
+
+    public XMessage addNotices(List<Notice> n) {
+        if (n != null) {
+            if (this.notices == null) {
+                this.notices = new ArrayList<>();
+            }
+            this.notices.addAll(n);
+        }
+        return this;
     }
 
 }

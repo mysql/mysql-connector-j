@@ -67,14 +67,13 @@ public class SqlResultMessageListener implements MessageListener<XMessage> {
     private ResultMessageListener resultListener;
     private ResultCreatingResultListener<SqlResult> resultCreator;
 
-    public SqlResultMessageListener(CompletableFuture<SqlResult> resultF, ProtocolEntityFactory<Field, XMessage> colToField,
-            ProtocolEntityFactory<Notice, XMessage> noticeFactory, TimeZone defaultTimeZone) {
+    public SqlResultMessageListener(CompletableFuture<SqlResult> resultF, ProtocolEntityFactory<Field, XMessage> colToField, TimeZone defaultTimeZone) {
         // compose with non-data future
         this.resultF = resultF;
         Function<ColumnDefinition, BiFunction<RowList, Supplier<StatementExecuteOk>, SqlResult>> resultCtor = metadata -> (rows,
                 task) -> new SqlDataResult(metadata, defaultTimeZone, rows, task);
         this.resultCreator = new ResultCreatingResultListener<>(resultCtor, resultF);
-        this.resultListener = new ResultMessageListener(colToField, noticeFactory, this.resultCreator);
+        this.resultListener = new ResultMessageListener(colToField, this.resultCreator);
         // Propagate the ok packet (or exception) to the result promise
         CompletableFuture<StatementExecuteOk> okF = new CompletableFuture<>();
         // hope this doesn't get GC'd
@@ -85,7 +84,7 @@ public class SqlResultMessageListener implements MessageListener<XMessage> {
                 this.resultF.complete(new SqlUpdateResult(ok));
             }
         });
-        this.okListener = new StatementExecuteOkMessageListener(okF, noticeFactory);
+        this.okListener = new StatementExecuteOkMessageListener(okF);
     }
 
     public Boolean createFromMessage(XMessage message) {
