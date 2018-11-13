@@ -810,7 +810,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             throw sqlEx;
         }
 
-        NonRegisteringDriver.trackConnection(this);
+        AbandonedConnectionCleanupThread.trackConnection(this, this.io.getNetworkResources());
     }
 
     public void unSafeStatementInterceptors() throws SQLException {

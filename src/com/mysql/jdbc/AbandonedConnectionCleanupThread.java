@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,31 +23,47 @@
 
 package com.mysql.jdbc;
 
+import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-
-import com.mysql.jdbc.NonRegisteringDriver.ConnectionPhantomReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class implements a thread that is responsible for closing abandoned MySQL connections, i.e., connections that are not explicitly closed.
  * There is only one instance of this class and there is a single thread to do this task. This thread's executor is statically referenced in this same class.
  */
 public class AbandonedConnectionCleanupThread implements Runnable {
+    private static final Map<ConnectionFinalizerPhantomReference, ConnectionFinalizerPhantomReference> connectionFinalizerPhantomRefs;
+    private static final ReferenceQueue<MySQLConnection> referenceQueue = new ReferenceQueue<MySQLConnection>();
+
     private static final ExecutorService cleanupThreadExcecutorService;
     static Thread threadRef = null;
+    private static Lock threadRefLock = new ReentrantLock();
 
     static {
+        connectionFinalizerPhantomRefs = new ConcurrentHashMap<ConnectionFinalizerPhantomReference, ConnectionFinalizerPhantomReference>();
         cleanupThreadExcecutorService = Executors.newSingleThreadExecutor(new ThreadFactory() {
             public Thread newThread(Runnable r) {
-                Thread t = new Thread(r, "Abandoned connection cleanup thread");
+                Thread t = new Thread(r, "mysql-cj-abandoned-connection-cleanup");
                 t.setDaemon(true);
                 // Tie the thread's context ClassLoader to the ClassLoader that loaded the class instead of inheriting the context ClassLoader from the current
                 // thread, which would happen by default.
                 // Application servers may use this information if they attempt to shutdown this thread. By leaving the default context ClassLoader this thread
                 // could end up being shut down even when it is shared by other applications and, being it statically initialized, thus, never restarted again.
-                t.setContextClassLoader(AbandonedConnectionCleanupThread.class.getClassLoader());
+
+                ClassLoader classLoader = AbandonedConnectionCleanupThread.class.getClassLoader();
+                if (classLoader == null) {
+                    // This class was loaded by the Bootstrap ClassLoader, so lets tie the thread's context ClassLoader to the System ClassLoader instead.
+                    classLoader = ClassLoader.getSystemClassLoader();
+                }
+
+                t.setContextClassLoader(classLoader);
                 return threadRef = t;
             }
         });
@@ -60,20 +76,26 @@ public class AbandonedConnectionCleanupThread implements Runnable {
     public void run() {
         for (;;) {
             try {
-                checkContextClassLoaders();
-                Reference<? extends ConnectionImpl> ref = NonRegisteringDriver.refQueue.remove(5000);
-                if (ref != null) {
-                    try {
-                        ((ConnectionPhantomReference) ref).cleanup();
-                    } finally {
-                        NonRegisteringDriver.connectionPhantomRefs.remove(ref);
-                    }
+                checkThreadContextClassLoader();
+                Reference<? extends MySQLConnection> reference = referenceQueue.remove(5000);
+                if (reference != null) {
+                    finalizeResource((ConnectionFinalizerPhantomReference) reference);
                 }
-
             } catch (InterruptedException e) {
-                threadRef = null;
-                return;
+                threadRefLock.lock();
+                try {
+                    threadRef = null;
 
+                    // Finalize remaining references.
+                    Reference<? extends MySQLConnection> reference;
+                    while ((reference = referenceQueue.poll()) != null) {
+                        finalizeResource((ConnectionFinalizerPhantomReference) reference);
+                    }
+                    connectionFinalizerPhantomRefs.clear();
+                } finally {
+                    threadRefLock.unlock();
+                }
+                return;
             } catch (Exception ex) {
                 // Nowhere to really log this.
             }
@@ -85,7 +107,7 @@ public class AbandonedConnectionCleanupThread implements Runnable {
      * ClassLoaders that is linked to the corresponding application's life-cycle. As such, a stopped/ended application will have a ClassLoader unable to load
      * anything and, eventually, they throw an exception when trying to do so. When this happens, this thread has no point in being alive anymore.
      */
-    private void checkContextClassLoaders() {
+    private void checkThreadContextClassLoader() {
         try {
             threadRef.getContextClassLoader().getResource("");
         } catch (Throwable e) {
@@ -100,24 +122,17 @@ public class AbandonedConnectionCleanupThread implements Runnable {
      * @return true if both threads share the same context ClassLoader, false otherwise
      */
     private static boolean consistentClassLoaders() {
-        ClassLoader callerCtxClassLoader = Thread.currentThread().getContextClassLoader();
-        ClassLoader threadCtxClassLoader = threadRef.getContextClassLoader();
-        return callerCtxClassLoader != null && threadCtxClassLoader != null && callerCtxClassLoader == threadCtxClassLoader;
-    }
-
-    /**
-     * Performs a checked shutdown, i.e., the context ClassLoaders from this and the caller thread are checked for consistency prior to performing the shutdown
-     * operation.
-     */
-    public static void checkedShutdown() {
-        shutdown(true);
-    }
-
-    /**
-     * Performs an unchecked shutdown, i.e., the shutdown is performed independently of the context ClassLoaders from the involved threads.
-     */
-    public static void uncheckedShutdown() {
-        shutdown(false);
+        threadRefLock.lock();
+        try {
+            if (threadRef == null) {
+                return false;
+            }
+            ClassLoader callerCtxClassLoader = Thread.currentThread().getContextClassLoader();
+            ClassLoader threadCtxClassLoader = threadRef.getContextClassLoader();
+            return callerCtxClassLoader != null && threadCtxClassLoader != null && callerCtxClassLoader == threadCtxClassLoader;
+        } finally {
+            threadRefLock.unlock();
+        }
     }
 
     /**
@@ -136,12 +151,93 @@ public class AbandonedConnectionCleanupThread implements Runnable {
     }
 
     /**
-     * Shuts down this thread.
-     * 
-     * @deprecated use {@link #checkedShutdown()} instead.
+     * Performs a checked shutdown, i.e., the context ClassLoaders from this and the caller thread are checked for consistency prior to performing the shutdown
+     * operation.
      */
-    @Deprecated
-    public static void shutdown() {
-        checkedShutdown();
+    public static void checkedShutdown() {
+        shutdown(true);
+    }
+
+    /**
+     * Performs an unchecked shutdown, i.e., the shutdown is performed independently of the context ClassLoaders from the involved threads.
+     */
+    public static void uncheckedShutdown() {
+        shutdown(false);
+    }
+
+    /**
+     * Returns true if the working thread is alive. It is alive if it was initialized successfully and wasn't shutdown yet.
+     * 
+     * @return true if the working thread is alive; false otherwise.
+     */
+    public static boolean isAlive() {
+        threadRefLock.lock();
+        try {
+            return threadRef != null && threadRef.isAlive();
+        } finally {
+            threadRefLock.unlock();
+        }
+    }
+
+    /**
+     * Tracks the finalization of a {@link MysqlConnection} object and keeps a reference to its {@link NetworkResources} so that they can be later released.
+     * 
+     * @param conn
+     *            the Connection object to track for finalization
+     * @param io
+     *            the network resources to close on the connection finalization
+     */
+    protected static void trackConnection(MySQLConnection conn, NetworkResources io) {
+        threadRefLock.lock();
+        try {
+            if (isAlive()) {
+                ConnectionFinalizerPhantomReference reference = new ConnectionFinalizerPhantomReference(conn, io, referenceQueue);
+                connectionFinalizerPhantomRefs.put(reference, reference);
+            }
+        } finally {
+            threadRefLock.unlock();
+        }
+    }
+
+    /**
+     * Release resources from the given {@link ConnectionFinalizerPhantomReference} and remove it from the references set.
+     * 
+     * @param reference
+     *            the {@link ConnectionFinalizerPhantomReference} to finalize.
+     */
+    private static void finalizeResource(ConnectionFinalizerPhantomReference reference) {
+        try {
+            reference.finalizeResources();
+            reference.clear();
+        } finally {
+            connectionFinalizerPhantomRefs.remove(reference);
+        }
+    }
+
+    /**
+     * {@link PhantomReference} subclass to track {@link MysqlConnection} objects finalization.
+     * This class holds a reference to the Connection's {@link NetworkResources} so they it can be later closed.
+     */
+    private static class ConnectionFinalizerPhantomReference extends PhantomReference<MySQLConnection> {
+        private NetworkResources networkResources;
+
+        ConnectionFinalizerPhantomReference(MySQLConnection conn, NetworkResources networkResources, ReferenceQueue<? super MySQLConnection> refQueue) {
+            super(conn, refQueue);
+            this.networkResources = networkResources;
+        }
+
+        void finalizeResources() {
+            if (this.networkResources != null) {
+                try {
+                    this.networkResources.forceClose();
+                } finally {
+                    this.networkResources = null;
+                }
+            }
+        }
+    }
+
+    public static Thread getThread() {
+        return threadRef;
     }
 }

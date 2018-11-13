@@ -3,6 +3,8 @@
 
 Version 5.1.48
 
+  - Fix for Bug#92508 (28747636), mysql-connector in bootclasspath causing memory leak.
+
 Version 5.1.47
 
   - Fix for Bug#28449601, MASTER : UNITTEST FOR BUG#22305979 (TESTBUG22305979) STILL FAILS ON QA SETUP.

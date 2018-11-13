@@ -5560,7 +5560,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     public void testBug68400() throws Exception {
 
-        Field f = com.mysql.jdbc.NonRegisteringDriver.class.getDeclaredField("connectionPhantomRefs");
+        Field f = com.mysql.jdbc.AbandonedConnectionCleanupThread.class.getDeclaredField("connectionFinalizerPhantomRefs");
         f.setAccessible(true);
         Map<?, ?> connectionTrackingMap = (Map<?, ?>) f.get(com.mysql.jdbc.NonRegisteringDriver.class);
 

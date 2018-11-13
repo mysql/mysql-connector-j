@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,8 +26,6 @@ package com.mysql.jdbc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.ref.PhantomReference;
-import java.lang.ref.ReferenceQueue;
 import java.net.URLDecoder;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
@@ -37,7 +35,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The Java SQL framework allows for multiple database drivers. Each driver should supply a class that implements the Driver interface
@@ -68,12 +65,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
     public static final String LOADBALANCE_URL_PREFIX = "jdbc:mysql:loadbalance://";
 
-    protected static final ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference> connectionPhantomRefs = new ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference>();
-
-    protected static final ReferenceQueue<ConnectionImpl> refQueue = new ReferenceQueue<ConnectionImpl>();
-
-    public static final String OS = getOSName();
     public static final String PLATFORM = getPlatform();
+    public static final String OS = getOSName();
     public static final String LICENSE = "@MYSQL_CJ_LICENSE_TYPE@";
     public static final String RUNTIME_VENDOR = System.getProperty("java.vendor");
     public static final String RUNTIME_VERSION = System.getProperty("java.version");
@@ -343,12 +336,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
             throw sqlEx;
         }
-    }
-
-    protected static void trackConnection(Connection newConn) {
-
-        ConnectionPhantomReference phantomRef = new ConnectionPhantomReference((ConnectionImpl) newConn, refQueue);
-        connectionPhantomRefs.put(phantomRef, phantomRef);
     }
 
     private java.sql.Connection connectLoadBalanced(String url, Properties info) throws SQLException {
@@ -883,29 +870,5 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
     public static boolean isHostPropertiesList(String host) {
         return host != null && StringUtils.startsWithIgnoreCase(host, "address=");
-    }
-
-    static class ConnectionPhantomReference extends PhantomReference<ConnectionImpl> {
-        private NetworkResources io;
-
-        ConnectionPhantomReference(ConnectionImpl connectionImpl, ReferenceQueue<ConnectionImpl> q) {
-            super(connectionImpl, q);
-
-            try {
-                this.io = connectionImpl.getIO().getNetworkResources();
-            } catch (SQLException e) {
-                // if we somehow got here and there's really no i/o, we deal with it later
-            }
-        }
-
-        void cleanup() {
-            if (this.io != null) {
-                try {
-                    this.io.forceClose();
-                } finally {
-                    this.io = null;
-                }
-            }
-        }
     }
 }
