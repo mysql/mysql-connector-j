@@ -5419,25 +5419,25 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if any errors occur
      */
     public void testBug68400() throws Exception {
-
-        Field f = com.mysql.cj.jdbc.NonRegisteringDriver.class.getDeclaredField("connectionPhantomRefs");
+        Field f = com.mysql.cj.jdbc.AbandonedConnectionCleanupThread.class.getDeclaredField("connectionFinalizerPhantomRefs");
         f.setAccessible(true);
-        Map<?, ?> connectionTrackingMap = (Map<?, ?>) f.get(com.mysql.cj.jdbc.NonRegisteringDriver.class);
+        Set<?> connectionTrackingSet = (Set<?>) f.get(com.mysql.cj.jdbc.AbandonedConnectionCleanupThread.class);
 
         Field referentField = java.lang.ref.Reference.class.getDeclaredField("referent");
         referentField.setAccessible(true);
 
         createTable("testBug68400", "(x VARCHAR(255) NOT NULL DEFAULT '')");
-        String s1 = "a very very very very very very very very very very very very very very very very very very very very very very very very large string to ensure compression enabled";
+        String s1 = "a very very very very very very very very very very very very very very very very very very very very very very very very large string "
+                + "to ensure compression enabled";
         this.stmt.executeUpdate("insert into testBug68400 values ('" + s1 + "')");
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
         props.setProperty(PropertyKey.connectionAttributes.getKeyName(), "testBug68400:true");
 
-        testMemLeakBatch(props, connectionTrackingMap, referentField, 0, 0, s1, "testBug68400:true");
-        testMemLeakBatch(props, connectionTrackingMap, referentField, 0, 1, s1, "testBug68400:true");
-        testMemLeakBatch(props, connectionTrackingMap, referentField, 0, 2, s1, "testBug68400:true");
+        testMemLeakBatch(props, connectionTrackingSet, referentField, 0, 0, s1, "testBug68400:true");
+        testMemLeakBatch(props, connectionTrackingSet, referentField, 0, 1, s1, "testBug68400:true");
+        testMemLeakBatch(props, connectionTrackingSet, referentField, 0, 2, s1, "testBug68400:true");
 
         System.out.println("Done.");
 
@@ -5451,7 +5451,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *            0 - none, 1 - close(), 2 - abortInternal()
      * @throws Exception
      */
-    private void testMemLeakBatch(Properties props, Map<?, ?> connectionTrackingMap, Field referentField, int connectionType, int finType, String s1,
+    private void testMemLeakBatch(Properties props, Set<?> connectionTrackingSet, Field referentField, int connectionType, int finType, String s1,
             String attributeValue) throws Exception {
 
         Connection connection = null;
@@ -5527,10 +5527,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         // 2. Count connections before GC
-        System.out.println("MAP: " + connectionTrackingMap.size());
+        System.out.println("SET: " + connectionTrackingSet.size());
 
-        connectionNumber = countTestConnections(connectionTrackingMap, referentField, false, attributeValue);
-        System.out.println("Test related connections in MAP before GC: " + connectionNumber);
+        connectionNumber = countTestConnections(connectionTrackingSet, referentField, false, attributeValue);
+        System.out.println("Test related connections in SET before GC: " + connectionNumber);
 
         // 3. Run GC
         Runtime.getRuntime().gc();
@@ -5539,18 +5539,19 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Thread.sleep(2000);
 
         // 5. Count connections before GC
-        connectionNumber = countTestConnections(connectionTrackingMap, referentField, true, attributeValue);
-        System.out.println("Test related connections in MAP after GC: " + connectionNumber);
-        System.out.println("MAP: " + connectionTrackingMap.size());
+        connectionNumber = countTestConnections(connectionTrackingSet, referentField, true, attributeValue);
+        System.out.println("Test related connections in SET after GC: " + connectionNumber);
+        System.out.println("SET: " + connectionTrackingSet.size());
 
         assertEquals(
-                "No connection with \"" + attributeValue + "\" connection attribute should exist in NonRegisteringDriver.connectionPhantomRefs map after GC", 0,
-                connectionNumber);
+                "No connection with \"" + attributeValue
+                        + "\" connection attribute should exist in AbandonedConnectionCleanupThread.connectionFinalizerPhantomRefs map after GC",
+                0, connectionNumber);
     }
 
-    private int countTestConnections(Map<?, ?> connectionTrackingMap, Field referentField, boolean show, String attributValue) throws Exception {
+    private int countTestConnections(Set<?> connectionTrackingSet, Field referentField, boolean show, String attributValue) throws Exception {
         int connectionNumber = 0;
-        for (Object o1 : connectionTrackingMap.keySet()) {
+        for (Object o1 : connectionTrackingSet) {
             com.mysql.cj.jdbc.JdbcConnection ctmp = (com.mysql.cj.jdbc.JdbcConnection) referentField.get(o1);
             String atts = null;
             try {
