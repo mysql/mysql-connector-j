@@ -69,6 +69,17 @@ public class CollectionTest extends BaseCollectionTestCase {
         }
         assertEquals(3, this.collection.count());
         assertEquals(3, ((JsonNumber) this.collection.find().fields("COUNT(*) as cnt").execute().fetchOne().get("cnt")).getInteger().intValue());
+
+        // test "not exists" message
+        String collName = "testExists";
+        dropCollection(collName);
+        Collection coll = this.schema.getCollection(collName);
+        assertThrows(XProtocolError.class, "Collection '" + collName + "' does not exist in schema '" + this.schema.getName() + "'", new Callable<Void>() {
+            public Void call() throws Exception {
+                coll.count();
+                return null;
+            }
+        });
     }
 
     @Test

@@ -33,8 +33,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.concurrent.Callable;
+
 import org.junit.Test;
 
+import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.xdevapi.Table;
 
@@ -133,5 +136,16 @@ public class TableTest extends BaseTableTestCase {
         } finally {
             sqlUpdate("drop table if exists testCount");
         }
+
+        // test "not exists" message
+        String tableName = "testExists";
+        dropCollection(tableName);
+        Table t = this.schema.getTable(tableName);
+        assertThrows(XProtocolError.class, "Table '" + tableName + "' does not exist in schema '" + this.schema.getName() + "'", new Callable<Void>() {
+            public Void call() throws Exception {
+                t.count();
+                return null;
+            }
+        });
     }
 }

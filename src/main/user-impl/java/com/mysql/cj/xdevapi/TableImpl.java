@@ -38,6 +38,7 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlxSession;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
+import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.result.Row;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.ValueFactory;
@@ -114,7 +115,14 @@ public class TableImpl implements Table {
     }
 
     public long count() {
-        return this.mysqlxSession.getDataStoreMetadata().getTableRowCount(this.schema.getName(), this.name);
+        try {
+            return this.mysqlxSession.getDataStoreMetadata().getTableRowCount(this.schema.getName(), this.name);
+        } catch (XProtocolError e) {
+            if (e.getErrorCode() == 1146) {
+                throw new XProtocolError("Table '" + this.name + "' does not exist in schema '" + this.schema.getName() + "'", e);
+            }
+            throw e;
+        }
     }
 
     @Override

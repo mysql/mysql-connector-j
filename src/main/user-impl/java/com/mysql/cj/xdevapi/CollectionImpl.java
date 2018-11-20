@@ -145,7 +145,14 @@ public class CollectionImpl implements Collection {
     }
 
     public long count() {
-        return this.mysqlxSession.getDataStoreMetadata().getTableRowCount(this.schema.getName(), this.name);
+        try {
+            return this.mysqlxSession.getDataStoreMetadata().getTableRowCount(this.schema.getName(), this.name);
+        } catch (XProtocolError e) {
+            if (e.getErrorCode() == 1146) {
+                throw new XProtocolError("Collection '" + this.name + "' does not exist in schema '" + this.schema.getName() + "'", e);
+            }
+            throw e;
+        }
     }
 
     public DbDoc newDoc() {
