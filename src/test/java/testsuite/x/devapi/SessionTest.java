@@ -32,6 +32,7 @@ package testsuite.x.devapi;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -52,6 +53,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.CoreSession;
+import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
@@ -102,6 +104,165 @@ public class SessionTest extends DevApiBaseTestCase {
         String n = "cj_test_schema_no_" + new Random().nextInt(1000);
         this.createdTestSchemas.add(n);
         return n;
+    }
+
+    @Test
+    public void urlWithDefaultSchema() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        try {
+            // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
+            this.session.sql("CREATE USER IF NOT EXISTS 'testUserN'@'%' IDENTIFIED WITH mysql_native_password BY 'testUserN'").execute();
+            this.session.sql("GRANT SELECT ON *.* TO 'testUserN'@'%'").execute();
+
+            final String testSchemaName = getRandomTestSchemaName();
+            this.session.createSchema(testSchemaName);
+
+            final SessionFactory testSessionFactory = new SessionFactory();
+            final String testUriPattern = "mysqlx://testUserN:testUserN@%s:%s/%s?xdevapi.auth=%s";
+
+            // Check if the default schema is correctly sent when using different authentication mechanisms.
+            String[] authMechs = mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4")) ? new String[] { "PLAIN", "MYSQL41", "SHA256_MEMORY" }
+                    : new String[] { "PLAIN", "MYSQL41" };
+            for (String authMech : authMechs) {
+                final String testCase = "Testing default schema provided in authentication mecanism '" + authMech + "'.";
+
+                // Test using a connection String.
+                final String testUri = String.format(testUriPattern, getTestHost(), getTestPort(), testSchemaName, authMech);
+
+                Session testSession = testSessionFactory.getSession(testUri);
+                assertTrue(testCase, testSession.getUri().contains("/" + testSchemaName + "?"));
+                assertEquals(testCase, testSchemaName, testSession.getDefaultSchemaName());
+                assertNotNull(testCase, testSession.getDefaultSchema());
+                assertEquals(testCase, testSchemaName, testSession.getDefaultSchema().getName());
+                assertEquals(testCase, testSchemaName, testSession.sql("SELECT database()").execute().fetchOne().getString(0));
+                testSession.close();
+
+                // Test using a properties map.
+                final Properties testProps = new Properties();
+                testProps.setProperty(PropertyKey.USER.getKeyName(), "testUserN");
+                testProps.setProperty(PropertyKey.PASSWORD.getKeyName(), "testUserN");
+                testProps.setProperty(PropertyKey.HOST.getKeyName(), getTestHost());
+                testProps.setProperty(PropertyKey.PORT.getKeyName(), String.valueOf(getTestPort()));
+                testProps.setProperty(PropertyKey.DBNAME.getKeyName(), testSchemaName);
+                testProps.setProperty(PropertyKey.xdevapiAuth.getKeyName(), authMech);
+
+                testSession = testSessionFactory.getSession(testProps);
+                assertTrue(testCase, testSession.getUri().contains("/" + testSchemaName + "?"));
+                assertEquals(testCase, testSchemaName, testSession.getDefaultSchemaName());
+                assertNotNull(testCase, testSession.getDefaultSchema());
+                assertEquals(testCase, testSchemaName, testSession.getDefaultSchema().getName());
+                assertEquals(testCase, testSchemaName, testSession.sql("SELECT database()").execute().fetchOne().getString(0));
+                testSession.close();
+            }
+        } finally {
+            this.session.sql("DROP USER IF EXISTS testUserN").execute();
+        }
+    }
+
+    @Test
+    public void urlWithoutDefaultSchema() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        try {
+            // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
+            this.session.sql("CREATE USER IF NOT EXISTS 'testUserN'@'%' IDENTIFIED WITH mysql_native_password BY 'testUserN'").execute();
+            this.session.sql("GRANT SELECT ON *.* TO 'testUserN'@'%'").execute();
+
+            final SessionFactory testSessionFactory = new SessionFactory();
+            final String testUriPattern1 = "mysqlx://testUserN:testUserN@%s:%s/?xdevapi.auth=%s";
+            final String testUriPattern2 = "mysqlx://testUserN:testUserN@%s:%s?xdevapi.auth=%s";
+            final String testUriPattern3 = "mysqlx://testUserN:testUserN@address=(host=%s)(port=%s)(xdevapi.auth=%s)";
+
+            // Check if not setting a default schema works correctly when using different authentication mechanisms.
+            String[] authMechs = mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4")) ? new String[] { "PLAIN", "MYSQL41", "SHA256_MEMORY" }
+                    : new String[] { "PLAIN", "MYSQL41" };
+            for (String authMech : authMechs) {
+                for (String testUriPattern : new String[] { testUriPattern1, testUriPattern2, testUriPattern3 }) {
+                    // Test using a connection String.
+                    final String testUri = String.format(testUriPattern, getTestHost(), getTestPort(), authMech);
+                    final String testCase = "Testing no default schema with authentication mecanism '" + authMech + "' and URI '" + testUri + "'.";
+
+                    Session testSession = testSessionFactory.getSession(testUri);
+                    assertTrue(testCase, testSession.getUri().contains("/?"));
+                    assertEquals(testCase, "", testSession.getDefaultSchemaName());
+                    assertNull(testCase, testSession.getDefaultSchema());
+                    assertNull(testCase, testSession.sql("SELECT database()").execute().fetchOne().getString(0));
+                    testSession.close();
+                }
+
+                // Test using a properties map.
+                final String testCase = "Testing no default schema with authentication mecanism '" + authMech + "'.";
+                final Properties testProps = new Properties();
+                testProps.setProperty(PropertyKey.USER.getKeyName(), "testUserN");
+                testProps.setProperty(PropertyKey.PASSWORD.getKeyName(), "testUserN");
+                testProps.setProperty(PropertyKey.HOST.getKeyName(), getTestHost());
+                testProps.setProperty(PropertyKey.PORT.getKeyName(), String.valueOf(getTestPort()));
+                testProps.setProperty(PropertyKey.xdevapiAuth.getKeyName(), authMech);
+
+                Session testSession = testSessionFactory.getSession(testProps);
+                assertTrue(testCase, testSession.getUri().contains("/?"));
+                assertEquals(testCase, "", testSession.getDefaultSchemaName());
+                assertNull(testCase, testSession.getDefaultSchema());
+                assertNull(testCase, testSession.sql("SELECT database()").execute().fetchOne().getString(0));
+                testSession.close();
+            }
+        } finally {
+            this.session.sql("DROP USER IF EXISTS testUserN").execute();
+        }
+    }
+
+    @Test
+    public void invalidDefaultSchema() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        try {
+            // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
+            this.session.sql("CREATE USER IF NOT EXISTS 'testUserN'@'%' IDENTIFIED WITH mysql_native_password BY 'testUserN'").execute();
+            this.session.sql("GRANT SELECT ON *.* TO 'testUserN'@'%'").execute();
+
+            final String testSchemaName = getRandomTestSchemaName();
+
+            final SessionFactory testSessionFactory = new SessionFactory();
+            final String testUriPattern = "mysqlx://testUserN:testUserN@%s:%s/%s?xdevapi.auth=%s";
+
+            // Check if the default schema is correctly sent when using different authentication mechanisms.
+            String[] authMechs = mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4")) ? new String[] { "PLAIN", "MYSQL41", "SHA256_MEMORY" }
+                    : new String[] { "PLAIN", "MYSQL41" };
+            for (String authMech : authMechs) {
+                final String testCase = "Testing missing default schema provided in authentication mecanism '" + authMech + "'.";
+
+                // Test using a connection String.
+                final String testUri = String.format(testUriPattern, getTestHost(), getTestPort(), testSchemaName, authMech);
+
+                assertThrows(testCase, XProtocolError.class, "ERROR \\d{4} \\(HY000\\) Unknown database '" + testSchemaName + "'", () -> {
+                    testSessionFactory.getSession(testUri);
+                    return null;
+                });
+
+                // Test using a properties map.
+                final Properties testProps = new Properties();
+                testProps.setProperty(PropertyKey.USER.getKeyName(), "testUserN");
+                testProps.setProperty(PropertyKey.PASSWORD.getKeyName(), "testUserN");
+                testProps.setProperty(PropertyKey.HOST.getKeyName(), getTestHost());
+                testProps.setProperty(PropertyKey.PORT.getKeyName(), String.valueOf(getTestPort()));
+                testProps.setProperty(PropertyKey.DBNAME.getKeyName(), testSchemaName);
+                testProps.setProperty(PropertyKey.xdevapiAuth.getKeyName(), authMech);
+
+                assertThrows(testCase, XProtocolError.class, "ERROR \\d{4} \\(HY000\\) Unknown database '" + testSchemaName + "'", () -> {
+                    testSessionFactory.getSession(testUri);
+                    return null;
+                });
+            }
+        } finally {
+            this.session.sql("DROP USER IF EXISTS testUserN").execute();
+        }
     }
 
     @Test

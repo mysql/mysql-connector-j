@@ -43,7 +43,6 @@ import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 import com.mysql.cj.protocol.x.XProtocol;
@@ -100,8 +99,8 @@ public class SessionImpl implements Session {
     }
 
     public Schema getDefaultSchema() {
-        if (this.defaultSchemaName == null) {
-            throw new WrongArgumentException("Default schema not provided");
+        if (this.defaultSchemaName == null || this.defaultSchemaName.length() == 0) {
+            return null;
         }
         return new SchemaImpl(this.session, this, this.defaultSchemaName);
     }
