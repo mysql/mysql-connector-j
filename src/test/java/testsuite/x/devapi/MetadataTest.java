@@ -81,8 +81,14 @@ public class MetadataTest extends BaseTableTestCase {
         }
         assertEquals(0, idCol.getFractionalDigits());
         assertEquals(false, idCol.isNumberSigned()); // odd default
-        assertEquals(this.dbCollation, idCol.getCollationName());
-        assertEquals(this.dbCharset, idCol.getCharacterSetName());
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+            // after Bug#28180155 fix
+            assertEquals("utf8mb4_general_ci", idCol.getCollationName());
+            assertEquals("utf8mb4", idCol.getCharacterSetName());
+        } else {
+            assertEquals(this.dbCollation, idCol.getCollationName());
+            assertEquals(this.dbCharset, idCol.getCharacterSetName());
+        }
         assertEquals(false, idCol.isPadded());
         assertEquals(true, idCol.isNullable());
         assertEquals(false, idCol.isAutoIncrement());
@@ -104,8 +110,14 @@ public class MetadataTest extends BaseTableTestCase {
         }
         assertEquals(0, nameCol.getFractionalDigits());
         assertEquals(false, nameCol.isNumberSigned());
-        assertEquals(this.dbCollation, nameCol.getCollationName());
-        assertEquals(this.dbCharset, nameCol.getCharacterSetName());
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+            // after Bug#28180155 fix
+            assertEquals("utf8mb4_general_ci", nameCol.getCollationName());
+            assertEquals("utf8mb4", nameCol.getCharacterSetName());
+        } else {
+            assertEquals(this.dbCollation, nameCol.getCollationName());
+            assertEquals(this.dbCharset, nameCol.getCharacterSetName());
+        }
         assertEquals(false, nameCol.isPadded());
         assertEquals(true, nameCol.isNullable());
         assertEquals(false, nameCol.isAutoIncrement());
@@ -176,8 +188,14 @@ public class MetadataTest extends BaseTableTestCase {
         }
         assertEquals(0, idCol.getFractionalDigits());
         assertEquals(false, idCol.isNumberSigned());
-        assertEquals(this.dbCollation, idCol.getCollationName());
-        assertEquals(this.dbCharset, idCol.getCharacterSetName());
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+            // after Bug#28180155 fix
+            assertEquals("utf8mb4_general_ci", idCol.getCollationName());
+            assertEquals("utf8mb4", idCol.getCharacterSetName());
+        } else {
+            assertEquals(this.dbCollation, idCol.getCollationName());
+            assertEquals(this.dbCharset, idCol.getCharacterSetName());
+        }
         assertEquals(false, idCol.isPadded());
         assertEquals(true, idCol.isNullable());
         assertEquals(false, idCol.isAutoIncrement());
@@ -367,8 +385,14 @@ public class MetadataTest extends BaseTableTestCase {
         }
         // assertEquals(0, c.getFractionalDigits()); // irrelevant, we shouldn't expect any concrete value
         assertEquals(false, c.isNumberSigned());
-        assertEquals(this.dbCollation, c.getCollationName());
-        assertEquals(this.dbCharset, c.getCharacterSetName());
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+            // after Bug#28180155 fix
+            assertEquals("utf8mb4_general_ci", c.getCollationName());
+            assertEquals("utf8mb4", c.getCharacterSetName());
+        } else {
+            assertEquals(this.dbCollation, c.getCollationName());
+            assertEquals(this.dbCharset, c.getCharacterSetName());
+        }
         assertEquals(true, c.isPadded());
         assertEquals(false, c.isNullable());
         assertEquals(false, c.isAutoIncrement());
@@ -557,8 +581,14 @@ public class MetadataTest extends BaseTableTestCase {
         // assertEquals(3, c.getLength()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(0, c.getFractionalDigits()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(false, c.isNumberSigned()); // irrelevant, we shouldn't expect any concrete value
-        assertEquals(this.dbCollation, c.getCollationName());
-        assertEquals(this.dbCharset, c.getCharacterSetName());
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+            // after Bug#28180155 fix
+            assertEquals("utf8mb4_general_ci", c.getCollationName());
+            assertEquals("utf8mb4", c.getCharacterSetName());
+        } else {
+            assertEquals(this.dbCollation, c.getCollationName());
+            assertEquals(this.dbCharset, c.getCharacterSetName());
+        }
         // assertEquals(false, c.isPadded()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(true, c.isNullable()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(false, c.isAutoIncrement()); // irrelevant, we shouldn't expect any concrete value
@@ -576,8 +606,14 @@ public class MetadataTest extends BaseTableTestCase {
         // assertEquals(1, c.getLength()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(0, c.getFractionalDigits()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(false, c.isNumberSigned()); // irrelevant, we shouldn't expect any concrete value
-        assertEquals(this.dbCollation, c.getCollationName());
-        assertEquals(this.dbCharset, c.getCharacterSetName());
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+            // after Bug#28180155 fix
+            assertEquals("utf8mb4_general_ci", c.getCollationName());
+            assertEquals("utf8mb4", c.getCharacterSetName());
+        } else {
+            assertEquals(this.dbCollation, c.getCollationName());
+            assertEquals(this.dbCharset, c.getCharacterSetName());
+        }
         // assertEquals(false, c.isPadded()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(true, c.isNullable()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(false, c.isAutoIncrement()); // irrelevant, we shouldn't expect any concrete value
