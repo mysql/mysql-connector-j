@@ -57,7 +57,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
 
         Map<String, Long> blackList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlacklist();
 
-        for (int attempts = 0; attempts < numRetries;) {
+        for (int attempts = 0; attempts < numRetries; attempts++) {
             if (numHosts == 1) {
                 this.currentHostIndex = 0; // pathological case
             } else if (this.currentHostIndex == -1) {
