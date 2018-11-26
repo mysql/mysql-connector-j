@@ -120,6 +120,7 @@ com.mysql.cj.build.jdk - path to JDK used for building driver: [${com.mysql.cj.b
 com.mysql.cj.build.addDebugInfo - should the driver be compiled with debugging info: [${com.mysql.cj.build.addDebugInfo}]
 com.mysql.cj.build.noCleanBetweenCompiles - don't clean artifacts from previous build: [_unset_]
 com.mysql.cj.build.failOnWarnings - fail the build when any warning is found: [_unset_]
+com.mysql.cj.build.verbose - log the extended build info: [_unset_]
 
 com.mysql.cj.build.commercial - build commercial variant of the driver: [_unset_]
 com.mysql.cj.build.filterLicense - build ISV variant of the driver: [_unset_]
@@ -978,6 +979,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
               fork="yes"
               failonerror="true">
             <arg value="${com.mysql.cj.build.compiler.output}" />
+            <arg value="${com.mysql.cj.build.verbose}" />
         </java>
         <java jvm="${com.mysql.cj.build.jdk.java}"
               classname="instrumentation.TranslateExceptions"
@@ -985,6 +987,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
               fork="yes"
               failonerror="true">
             <arg value="${com.mysql.cj.build.compiler.output}" />
+            <arg value="${com.mysql.cj.build.verbose}" />
         </java>
         <java jvm="${com.mysql.cj.build.jdk.java}"
               classname="instrumentation.AddMethods"
@@ -992,6 +995,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
               fork="yes"
               failonerror="true">
             <arg value="${com.mysql.cj.build.compiler.output}" />
+            <arg value="${com.mysql.cj.build.verbose}" />
         </java>
     </target>
 

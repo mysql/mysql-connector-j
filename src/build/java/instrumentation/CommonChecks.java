@@ -40,7 +40,14 @@ import javassist.CtClass;
 import javassist.CtMethod;
 
 public class CommonChecks {
+    private static boolean verbose = false;
+
     public static void main(String[] args) throws Exception {
+
+        System.out.println("Applying CommonChecks.");
+
+        verbose = "true".equalsIgnoreCase(args[1]);
+
         ClassPool pool = ClassPool.getDefault();
         pool.insertClassPath(args[0]);
 
@@ -172,8 +179,14 @@ public class CommonChecks {
     }
 
     private static void addClosedCheck(CtMethod m) throws Exception {
-        System.out.println(m);
+        sysOut(m.toString());
         m.insertBefore("checkClosed();");
+    }
+
+    private static void sysOut(String s) {
+        if (verbose) {
+            System.out.println(s);
+        }
     }
 
 }

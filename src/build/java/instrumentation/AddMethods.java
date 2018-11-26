@@ -48,16 +48,29 @@ import javassist.CtNewMethod;
 import javassist.bytecode.DuplicateMemberException;
 
 public class AddMethods {
+    private static boolean verbose = false;
+
     public static void main(String[] args) throws Exception {
+
+        System.out.println("Applying AddMethods.");
+
+        verbose = "true".equalsIgnoreCase(args[1]);
+
         ClassPool pool = ClassPool.getDefault();
         pool.insertClassPath(args[0]);
 
-        System.out.println("---");
+        sysOut("---");
         CtClass clazz = pool.get(MysqlDataSource.class.getName());
-        System.out.println("Add properties setters/getters to " + clazz.getName());
+        sysOut("Add properties setters/getters to " + clazz.getName());
         addPropertiesGettersSetters(clazz, PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.values());
         clazz.writeFile(args[0]);
 
+    }
+
+    private static void sysOut(String s) {
+        if (verbose) {
+            System.out.println(s);
+        }
     }
 
     private static void addPropertiesGettersSetters(CtClass clazz, Collection<PropertyDefinition<?>> propertyDefinitions) throws Exception {
@@ -97,11 +110,11 @@ public class AddMethods {
     private static void addGetter(CtClass clazz, String pname, String paramType, String getPropertyMethod) throws Exception {
         String mname = "get" + pname.substring(0, 1).toUpperCase() + pname.substring(1);
         String mbody = "public " + paramType + " " + mname + "() throws java.sql.SQLException { return " + getPropertyMethod + "(\"" + pname + "\");}";
-        System.out.println(mbody);
+        sysOut(mbody);
         try {
             CtMethod m = CtNewMethod.make(mbody, clazz);
             clazz.addMethod(m);
-            System.out.println(m);
+            sysOut(m.toString());
         } catch (DuplicateMemberException ex) {
             // ignore
         }
@@ -111,11 +124,11 @@ public class AddMethods {
         String mname = "set" + pname.substring(0, 1).toUpperCase() + pname.substring(1);
         String mbody = "public void " + mname + "(" + paramType + " value) throws java.sql.SQLException { " + setPropertyMethod + "(\"" + pname
                 + "\", value);}";
-        System.out.println(mbody);
+        sysOut(mbody);
         try {
             CtMethod m = CtNewMethod.make(mbody, clazz);
             clazz.addMethod(m);
-            System.out.println(m);
+            sysOut(m.toString());
         } catch (DuplicateMemberException ex) {
             // ignore
         }

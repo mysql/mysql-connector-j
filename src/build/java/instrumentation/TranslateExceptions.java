@@ -93,8 +93,14 @@ public class TranslateExceptions {
 
     private static String EXCEPTION_INTERCEPTOR_GETTER = "getExceptionInterceptor()";
     private static String EXCEPTION_INTERCEPTOR_MEMBER = "this.exceptionInterceptor";
+    private static boolean verbose = false;
 
     public static void main(String[] args) throws Exception {
+
+        System.out.println("Applying TranslateExceptions.");
+
+        verbose = "true".equalsIgnoreCase(args[1]);
+
         pool.insertClassPath(args[0]);
         processed.clear();
 
@@ -634,8 +640,8 @@ public class TranslateExceptions {
      */
     private static void instrumentJdbcMethods(CtClass cjClazz, Class<?> jdbcClass, boolean declaredMethodsOnly, String exceptionInterceptorStr)
             throws Exception {
-        System.out.println("---");
-        System.out.println(cjClazz.getName());
+        sysOutPrintln("---");
+        sysOutPrintln(cjClazz.getName());
 
         Method[] methods;
         if (declaredMethodsOnly) {
@@ -666,16 +672,16 @@ public class TranslateExceptions {
                     break;
                 }
             }
-            System.out.print(prefix);
-            System.out.print(method.toGenericString());
+            sysOutPrint(prefix);
+            sysOutPrint(method.toGenericString());
             if (ctm != null) {
                 if (catchRuntimeException(cjClazz, ctm, exceptionInterceptorStr, false)) {
-                    System.out.print(" ... DONE.");
+                    sysOutPrint(" ... DONE.");
                 } else {
-                    System.out.print(" ... ALREADY PROCESSED!!!");
+                    sysOutPrint(" ... ALREADY PROCESSED!!!");
                 }
             }
-            System.out.println();
+            sysOutPrintln("");
         }
 
     }
@@ -687,12 +693,12 @@ public class TranslateExceptions {
     private static boolean catchRuntimeException(CtClass clazz, CtMethod m, String exceptionInterceptorStr, boolean log) throws Exception {
         if (isProcessed(clazz.getClassFile().getName(), m)) {
             if (log) {
-                System.out.println("ALREADY PROCESSED!!! " + m);
+                sysOutPrintln("ALREADY PROCESSED!!! " + m);
             }
             return false;
         }
         if (log) {
-            System.out.println(m + ", " + exceptionInterceptorStr);
+            sysOutPrintln(m + ", " + exceptionInterceptorStr);
         }
         if (exceptionInterceptorStr == null) {
             m.addCatch("{throw " + SQLExceptionsMapping.class.getName() + ".translateException(ex);}", runTimeException, "ex");
@@ -713,6 +719,18 @@ public class TranslateExceptions {
             processed.put(fileName, new LinkedList<CtMethod>());
         }
         return false;
+    }
+
+    private static void sysOutPrint(String s) {
+        if (verbose) {
+            System.out.print(s);
+        }
+    }
+
+    private static void sysOutPrintln(String s) {
+        if (verbose) {
+            System.out.println(s);
+        }
     }
 
 }
