@@ -152,7 +152,7 @@ ${ANT_CMD} \
 # We use the 'full-package-no-sources' as there are changes done only
 # when creating a package, 'dist' is not enough. To make it a bit easier
 # in the install step, we rename the directory with the content
-mv dist/toArchive/@MYSQL_CJ_PROD_NAME@* package-content
+mv dist/toArchive/@PACKAGE_NAME@ package-content
 
 # The 'package' target doesn't copy the HTML or PDF doc like 'dist',
 # we copy it here
@@ -176,6 +176,8 @@ rm -rf %{buildroot}
 # EL6 doesn't like 'license' macro here, so we use 'doc'
 %doc package-content/LICENSE
 %doc package-content/README
+%doc package-content/INFO_BIN
+%doc package-content/INFO_SRC
 
 %if 0%{?with_docs:1}
 # README.txt is a rename of "connector-j.txt"
