@@ -7867,6 +7867,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }, testConn.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(testConn)) + "_thread").start();
         }
 
+        TestBug21934573ExceptionInterceptor.initialized = true;
+
         // Let the two concurrent threads run concurrently for 2secs, at the most, before checking if they hit a deadlock situation.
         // Wait two times 1sec as TestBug21934573ExceptionInterceptor.mainThreadLock.notify() should be called twice (once per secondary thread).
         synchronized (TestBug21934573ExceptionInterceptor.mainThreadLock) {
@@ -7903,6 +7905,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * SQLException (not only communication related exceptions) and calls directly methods changing servers lists from ReplicationConnectionGroup.
      */
     public static class TestBug21934573ExceptionInterceptor implements ExceptionInterceptor {
+        static boolean initialized = false;
         static Object mainThreadLock = new Object();
         private static boolean threadIsWaiting = false;
         private static final Set<String> replConnGroupLocks = Collections.synchronizedSet(new HashSet<String>());
@@ -7920,6 +7923,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         public Exception interceptException(Exception sqlEx) {
+            if (!initialized) {
+                return sqlEx;
+            }
+
             // Make sure both threads execute the code after the synchronized block concurrently.
             synchronized (TestBug21934573ExceptionInterceptor.class) {
                 if (threadIsWaiting) {
