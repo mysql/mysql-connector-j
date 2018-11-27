@@ -3,6 +3,8 @@
 
 Version 8.0.14
 
+  - Fix for Bug#93111 (28894344), ConnectionUrl.java contains char U+00A7 (section sign).
+
   - WL#12621, DevAPI: Handling of Default Schema.
 
   - Fix for Bug#93340 (28970166), C/J BUILD SCRIPT IS TOO VERBOSE

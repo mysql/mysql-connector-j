@@ -241,7 +241,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      */
     private static String buildConnectionStringCacheKey(String connString, Properties info) {
         StringBuilder sbKey = new StringBuilder(connString);
-        sbKey.append("§");
+        sbKey.append("\u00A7"); // Section sign.
         sbKey.append(
                 info == null ? null : info.stringPropertyNames().stream().map(k -> k + "=" + info.getProperty(k)).collect(Collectors.joining(", ", "{", "}")));
         return sbKey.toString();

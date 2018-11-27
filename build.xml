@@ -508,7 +508,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <filter token="MYSQL_CJ_LICENSE_TYPE" value="${com.mysql.cj.build.licenseType}" />
         </filterset>
 
-        <copy todir="${com.mysql.cj.build.dir.driver}" filtering="true">
+        <copy todir="${com.mysql.cj.build.dir.driver}" filtering="true" encoding="UTF-8" outputencoding="UTF-8">
             <fileset dir="src/build/java" />
             <fileset dir="src/build/misc" />
             <fileset dir="src/generated/java" />
@@ -525,7 +525,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <filterset refid="licenseFilterset" />
         </copy>
 
-        <copy todir="${com.mysql.cj.build.dir.driver}/lib" filtering="false">
+        <copy todir="${com.mysql.cj.build.dir.driver}/lib">
             <fileset dir="lib" />
         </copy>
     </target>
@@ -537,7 +537,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
         <mkdir dir="${com.mysql.cj.testsuite.build.dir}" />
 
-        <copy todir="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}" filtering="true">
+        <copy todir="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}" filtering="true" encoding="UTF-8" outputencoding="UTF-8">
             <fileset dir="src/test/java" />
             <filterset refid="versionFilterset" />
             <filterset refid="licenseFilterset" />
@@ -859,9 +859,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.jar" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.jar" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 
-        <copy file="${com.mysql.cj.build.dir.driver}/pom.xml"
-              toFile="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom"
-              filtering="false" />
+        <copy file="${com.mysql.cj.build.dir.driver}/pom.xml" toFile="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom" />
         <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${com.mysql.cj.build.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 
@@ -965,7 +963,8 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                fork="yes"
                executable="${com.mysql.cj.build.jdk.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               encoding="UTF-8">
             <include name="**/*.java" />
             <exclude name="testsuite/**" />
             <exclude name="com/mysql/cj/jdbc/integration/**" />
@@ -1012,7 +1011,8 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                fork="yes"
                executable="${com.mysql.cj.build.jdk.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               encoding="UTF-8">
             <!--include name="testsuite/**" /-->
             <classpath refid="com.mysql.cj.testsuite.build.classpath" />
             <compilerarg line="${javac.compilerarg}" />
@@ -1038,7 +1038,8 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                fork="yes"
                executable="${com.mysql.cj.build.jdk.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               encoding="UTF-8">
             <include name="com/mysql/cj/jdbc/integration/c3p0/**" />
             <classpath refid="project.build.classpath" />
             <compilerarg line="${javac.compilerarg}" />
@@ -1058,7 +1059,8 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                fork="yes"
                executable="${com.mysql.cj.build.jdk.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               encoding="UTF-8">
             <include name="com/mysql/cj/jdbc/integration/jboss/**" />
             <classpath refid="project.build.classpath" />
             <compilerarg line="${javac.compilerarg}" />
@@ -1078,7 +1080,8 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                fork="yes"
                executable="${com.mysql.cj.build.jdk.javac}"
                compiler="modern"
-               includeantruntime="false">
+               includeantruntime="false"
+               encoding="UTF-8">
             <include name="com/mysql/cj/jdbc/log/Log4JLogger.java" />
             <classpath refid="project.build.classpath" />
             <compilerarg line="${javac.compilerarg}" />
@@ -1369,7 +1372,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
 
     <target name="build-rpm" depends="-init-copy-common, -prepare-rpm-deb-commercial-props, -prepare-rpm-deb-gpl-props">
-        <copy file="src/build/misc/rpm.spec.in" tofile="${com.mysql.cj.build.dir}/mysql-connector-java.spec">
+        <copy file="src/build/misc/rpm.spec.in" tofile="${com.mysql.cj.build.dir}/mysql-connector-java.spec" encoding="UTF-8" outputencoding="UTF-8">
             <filterset refid="versionFilterset" />
         </copy>
 
@@ -1449,7 +1452,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <format property="time.deb.packageTimeStamp" pattern="EEE, d MMM yyyy HH:mm:ss Z" />
         </tstamp>
 
-        <copy todir="build/deb/src/debian" overwrite="true">
+        <copy todir="build/deb/src/debian" overwrite="true" encoding="UTF-8" outputencoding="UTF-8">
             <fileset dir="src/build/misc/debian.in" />
             <filterset refid="versionFilterset" />
             <filterset>

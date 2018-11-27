@@ -322,7 +322,7 @@ public enum MysqlType implements SQLType {
     SET("SET", Types.CHAR, String.class, 0, MysqlType.IS_NOT_DECIMAL, 64L, "('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]"),
     /**
      * TINYBLOB
-     * A BLOB column with a maximum length of 255 (28 − 1) bytes. Each TINYBLOB value is stored using a
+     * A BLOB column with a maximum length of 255 (28 - 1) bytes. Each TINYBLOB value is stored using a
      * 1-byte length prefix that indicates the number of bytes in the value.
      * 
      * Protocol:FIELD_TYPE_TINY_BLOB = 249
@@ -330,7 +330,7 @@ public enum MysqlType implements SQLType {
     TINYBLOB("TINYBLOB", Types.VARBINARY, null, 0, MysqlType.IS_NOT_DECIMAL, 255L, ""),
     /**
      * TINYTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
-     * A TEXT column with a maximum length of 255 (28 − 1) characters. The effective maximum length
+     * A TEXT column with a maximum length of 255 (28 - 1) characters. The effective maximum length
      * is less if the value contains multibyte characters. Each TINYTEXT value is stored using
      * a 1-byte length prefix that indicates the number of bytes in the value.
      * 
@@ -339,7 +339,7 @@ public enum MysqlType implements SQLType {
     TINYTEXT("TINYTEXT", Types.VARCHAR, String.class, 0, MysqlType.IS_NOT_DECIMAL, 255L, " [CHARACTER SET charset_name] [COLLATE collation_name]"),
     /**
      * MEDIUMBLOB
-     * A BLOB column with a maximum length of 16,777,215 (224 − 1) bytes. Each MEDIUMBLOB value is stored
+     * A BLOB column with a maximum length of 16,777,215 (224 - 1) bytes. Each MEDIUMBLOB value is stored
      * using a 3-byte length prefix that indicates the number of bytes in the value.
      * 
      * Protocol: FIELD_TYPE_MEDIUM_BLOB = 250
@@ -347,7 +347,7 @@ public enum MysqlType implements SQLType {
     MEDIUMBLOB("MEDIUMBLOB", Types.LONGVARBINARY, null, 0, MysqlType.IS_NOT_DECIMAL, 16777215L, ""),
     /**
      * MEDIUMTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
-     * A TEXT column with a maximum length of 16,777,215 (224 − 1) characters. The effective maximum length
+     * A TEXT column with a maximum length of 16,777,215 (224 - 1) characters. The effective maximum length
      * is less if the value contains multibyte characters. Each MEDIUMTEXT value is stored using a 3-byte
      * length prefix that indicates the number of bytes in the value.
      * 
@@ -356,7 +356,7 @@ public enum MysqlType implements SQLType {
     MEDIUMTEXT("MEDIUMTEXT", Types.LONGVARCHAR, String.class, 0, MysqlType.IS_NOT_DECIMAL, 16777215L, " [CHARACTER SET charset_name] [COLLATE collation_name]"),
     /**
      * LONGBLOB
-     * A BLOB column with a maximum length of 4,294,967,295 or 4GB (232 − 1) bytes. The effective maximum length
+     * A BLOB column with a maximum length of 4,294,967,295 or 4GB (232 - 1) bytes. The effective maximum length
      * of LONGBLOB columns depends on the configured maximum packet size in the client/server protocol and available
      * memory. Each LONGBLOB value is stored using a 4-byte length prefix that indicates the number of bytes in the value.
      * 
@@ -365,7 +365,7 @@ public enum MysqlType implements SQLType {
     LONGBLOB("LONGBLOB", Types.LONGVARBINARY, null, 0, MysqlType.IS_NOT_DECIMAL, 4294967295L, ""),
     /**
      * LONGTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
-     * A TEXT column with a maximum length of 4,294,967,295 or 4GB (232 − 1) characters. The effective
+     * A TEXT column with a maximum length of 4,294,967,295 or 4GB (232 - 1) characters. The effective
      * maximum length is less if the value contains multibyte characters. The effective maximum length
      * of LONGTEXT columns also depends on the configured maximum packet size in the client/server protocol
      * and available memory. Each LONGTEXT value is stored using a 4-byte length prefix that indicates
@@ -376,7 +376,7 @@ public enum MysqlType implements SQLType {
     LONGTEXT("LONGTEXT", Types.LONGVARCHAR, String.class, 0, MysqlType.IS_NOT_DECIMAL, 4294967295L, " [CHARACTER SET charset_name] [COLLATE collation_name]"),
     /**
      * BLOB[(M)]
-     * A BLOB column with a maximum length of 65,535 (216 − 1) bytes. Each BLOB value is stored using
+     * A BLOB column with a maximum length of 65,535 (216 - 1) bytes. Each BLOB value is stored using
      * a 2-byte length prefix that indicates the number of bytes in the value.
      * An optional length M can be given for this type. If this is done, MySQL creates the column as
      * the smallest BLOB type large enough to hold values M bytes long.
@@ -386,7 +386,7 @@ public enum MysqlType implements SQLType {
     BLOB("BLOB", Types.LONGVARBINARY, null, 0, MysqlType.IS_NOT_DECIMAL, 65535L, "[(M)]"),
     /**
      * TEXT[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]
-     * A TEXT column with a maximum length of 65,535 (216 − 1) characters. The effective maximum length
+     * A TEXT column with a maximum length of 65,535 (216 - 1) characters. The effective maximum length
      * is less if the value contains multibyte characters. Each TEXT value is stored using a 2-byte length
      * prefix that indicates the number of bytes in the value.
      * An optional length M can be given for this type. If this is done, MySQL creates the column as
