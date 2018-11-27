@@ -131,7 +131,9 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         }
         try {
             this.collection.add("{\"_id\": \"1\"}").execute();
-            DocResult docs = this.collection.find().fields(expr("{'X':cast(pow(2,63) as signed)+1}")).execute();
+            DocResult docs = this.collection.find().fields(expr(
+                    mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.13")) ? "{'X':cast(pow(2,63) as signed)+1}" : "{'X':1-cast(pow(2,63) as signed)}"))
+                    .execute();
             docs.next(); // we are getting valid data from xplugin before the error, need this call to force the error
             fail("Statement should raise an error");
         } catch (XProtocolError err) {
