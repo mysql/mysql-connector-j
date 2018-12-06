@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.15
+
 Version 8.0.14
 
   - WL#12298, Connectors: Expose metadata about source and binaries in unified way.
