@@ -1435,16 +1435,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- ***************************** -->
 
 
-    <tstamp>
-        <format property="time.year" pattern="yyyy" />
-        <format property="time.month" pattern="mm" />
-        <format property="time.day" pattern="dd" />
-        <format property="time.dayOfWeek" pattern="EEE" />
-        <format property="time.dayTime" pattern="HH:mm:ss" />
-        <format property="time.timeZone" pattern="HH:mm:ss" />
-    </tstamp>
-
-
     <target name="-prepare-rpm-deb-commercial-props" if="${com.mysql.cj.build.commercial}">
         <echo>Using Commercial settings</echo>
         <property name="deb_version_suffix" value="+commercial" />
@@ -1556,7 +1546,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <filterset>
                 <filter token="PRODUCT" value="${com.mysql.cj.build.driver.displayName} ${com.mysql.cj.build.driver.version.series}" />
                 <filter token="WITH_JARDEPS" value="${com.mysql.cj.extra.libs}" />
-                <filter token="YEAR" value="${time.year}" />
                 <filter token="PACKAGE_TIMESTAMP" value="${time.deb.packageTimeStamp}" />
                 <filter token="ID_RELEASE" value="${id_release}" />
                 <filter token="CODENAME" value="${codename}" />
