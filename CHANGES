@@ -3,6 +3,8 @@
 
 Version 8.0.15
 
+  - Fix for Bug#25642021, CHANGEUSER() FAILS WHEN ENABLEPACKETDEBUG=TRUE.
+
 Version 8.0.14
 
   - WL#12298, Connectors: Expose metadata about source and binaries in unified way.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -158,12 +158,23 @@ import com.mysql.cj.log.Log;
 import com.mysql.cj.log.StandardLogger;
 import com.mysql.cj.protocol.AuthenticationPlugin;
 import com.mysql.cj.protocol.Message;
+import com.mysql.cj.protocol.MessageReader;
+import com.mysql.cj.protocol.MessageSender;
 import com.mysql.cj.protocol.PacketReceivedTimeHolder;
 import com.mysql.cj.protocol.PacketSentTimeHolder;
 import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.StandardSocketFactory;
+import com.mysql.cj.protocol.a.DebugBufferingPacketReader;
+import com.mysql.cj.protocol.a.DebugBufferingPacketSender;
+import com.mysql.cj.protocol.a.MultiPacketReader;
+import com.mysql.cj.protocol.a.NativePacketHeader;
 import com.mysql.cj.protocol.a.NativePacketPayload;
+import com.mysql.cj.protocol.a.NativeProtocol;
+import com.mysql.cj.protocol.a.SimplePacketReader;
+import com.mysql.cj.protocol.a.SimplePacketSender;
+import com.mysql.cj.protocol.a.TimeTrackingPacketReader;
+import com.mysql.cj.protocol.a.TimeTrackingPacketSender;
 import com.mysql.cj.protocol.a.authentication.CachingSha2PasswordPlugin;
 import com.mysql.cj.protocol.a.authentication.MysqlNativePasswordPlugin;
 import com.mysql.cj.protocol.a.authentication.MysqlOldPasswordPlugin;
@@ -11216,5 +11227,37 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 return null;
             }
         });
+    }
+
+    /**
+     * Tests fix for BUG#25642021, CHANGEUSER() FAILS WHEN ENABLEPACKETDEBUG=TRUE.
+     * 
+     * @throws Exception
+     */
+    public void testBug25642021() throws Exception {
+        Properties props = getPropertiesFromTestsuiteUrl();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.enablePacketDebug.getKeyName(), "true");
+        props.setProperty(PropertyKey.maintainTimeStats.getKeyName(), "true");
+
+        Connection newConn = getConnectionWithProps(props);
+        ((JdbcConnection) newConn).changeUser(props.getProperty(PropertyKey.USER.getKeyName()), props.getProperty(PropertyKey.PASSWORD.getKeyName()));
+
+        // check that decorators are still in place
+        NativeProtocol p = ((NativeSession) ((JdbcConnection) newConn).getSession()).getProtocol();
+        MessageSender<NativePacketPayload> sender = p.getPacketSender();
+        MessageReader<NativePacketHeader, NativePacketPayload> reader = p.getPacketReader();
+
+        assertEquals(DebugBufferingPacketSender.class, sender.getClass());
+        assertEquals(TimeTrackingPacketSender.class, sender.undecorate().getClass());
+        assertEquals(SimplePacketSender.class, sender.undecorate().undecorate().getClass());
+        assertEquals(SimplePacketSender.class, sender.undecorate().undecorate().undecorate().getClass());
+
+        assertEquals(MultiPacketReader.class, reader.getClass());
+        assertEquals(DebugBufferingPacketReader.class, reader.undecorate().getClass());
+        assertEquals(TimeTrackingPacketReader.class, reader.undecorate().undecorate().getClass());
+        assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().undecorate().getClass());
+        assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().undecorate().undecorate().getClass());
     }
 }

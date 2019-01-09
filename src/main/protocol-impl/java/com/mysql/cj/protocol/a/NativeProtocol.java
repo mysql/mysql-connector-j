@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1376,6 +1376,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      */
     public void changeUser(String user, String password, String database) {
         this.packetSequence = -1;
+        this.packetSender = this.packetSender.undecorateAll();
+        this.packetReader = this.packetReader.undecorateAll();
 
         this.authProvider.changeUser(this.serverSession, user, password, database);
     }
