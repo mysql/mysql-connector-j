@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,8 @@
 
 package com.mysql.cj.xdevapi;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -274,42 +276,55 @@ public class ExprUtil {
     public static Expr argObjectToExpr(Object value, boolean allowRelationalColumns) {
         if (value == null) {
             return buildLiteralNullScalar();
-        } else if (value.getClass() == Boolean.class) {
+        }
+
+        Class<? extends Object> cls = value.getClass();
+
+        if (cls == Boolean.class) {
             return buildLiteralScalar((boolean) value);
-        } else if (value.getClass() == Byte.class) {
-            return buildLiteralScalar(((Byte) value).longValue());
-        } else if (value.getClass() == Short.class) {
-            return buildLiteralScalar(((Short) value).longValue());
-        } else if (value.getClass() == Integer.class) {
-            return buildLiteralScalar(((Integer) value).longValue());
-        } else if (value.getClass() == Long.class) {
-            return buildLiteralScalar((long) value);
-        } else if (value.getClass() == Float.class) {
-            return buildLiteralScalar(((Float) value).doubleValue());
-        } else if (value.getClass() == Double.class) {
-            return buildLiteralScalar((double) value);
-        } else if (value.getClass() == String.class) {
+
+        } else if (cls == Byte.class || cls == Short.class || cls == Integer.class || cls == Long.class || cls == BigInteger.class) {
+            return buildLiteralScalar(((Number) value).longValue());
+
+        } else if (cls == Float.class || cls == Double.class || cls == BigDecimal.class) {
+            return buildLiteralScalar(((Number) value).doubleValue());
+
+        } else if (cls == String.class) {
             return buildLiteralScalar((String) value);
-        } else if (value.getClass() == Expression.class) {
+
+        } else if (cls == Character.class) {
+            return buildLiteralScalar(((Character) value).toString());
+
+        } else if (cls == Expression.class) {
             return new ExprParser(((Expression) value).getExpressionString(), allowRelationalColumns).parse();
-        } else if (value.getClass() == Date.class) {
+
+        } else if (cls == Date.class) {
             return buildLiteralScalar(javaSqlDateFormat.format((java.util.Date) value));
-        } else if (value.getClass() == Time.class) {
+
+        } else if (cls == Time.class) {
             return buildLiteralScalar(javaSqlTimeFormat.format((java.util.Date) value));
-        } else if (value.getClass() == Timestamp.class) {
+
+        } else if (cls == Timestamp.class) {
             return buildLiteralScalar(javaSqlTimestampFormat.format((java.util.Date) value));
-        } else if (value.getClass() == java.util.Date.class) {
+
+        } else if (cls == java.util.Date.class) {
             return buildLiteralScalar(javaUtilDateFormat.format((java.util.Date) value));
-        } else if (DbDoc.class.isAssignableFrom(value.getClass())) {
+
+        } else if (DbDoc.class.isAssignableFrom(cls)) {
             return (new ExprParser(((DbDoc) value).toString())).parse();
-        } else if (value.getClass() == JsonArray.class) {
+
+        } else if (cls == JsonArray.class) {
             return Expr.newBuilder().setType(Expr.Type.ARRAY).setArray(Expr.newBuilder().setType(Expr.Type.ARRAY).getArrayBuilder()
                     .addAllValue(((JsonArray) value).stream().map(f -> ExprUtil.argObjectToExpr(f, true)).collect(Collectors.toList()))).build();
-        } else if (value.getClass() == JsonString.class) {
+
+        } else if (cls == JsonString.class) {
             return buildLiteralScalar(((JsonString) value).getString());
-        } else if (value.getClass() == JsonNumber.class) {
+
+        } else if (cls == JsonNumber.class) {
             return buildLiteralScalar(((JsonNumber) value).getInteger());
         }
-        throw new FeatureNotAvailableException("TODO: other types: BigDecimal");
+        // TODO other types: LocalDate...
+
+        throw new FeatureNotAvailableException("Can not create an expression from " + cls);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,12 +33,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.DatabaseObject.DbObjectStatus;
+import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.RowResult;
 import com.mysql.cj.xdevapi.Table;
 
 /**
@@ -147,5 +151,50 @@ public class TableTest extends BaseTableTestCase {
                 return null;
             }
         });
+    }
+
+    @Test
+    public void testBug25650912() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        try {
+            sqlUpdate("drop table if exists testBug25650912");
+            sqlUpdate("create table testBug25650912 (x bigint,y char(220))");
+
+            Table table = this.schema.getTable("testBug25650912", false);
+
+            table.insert("x", "y").values(1, 'a').executeAsync().get();
+            RowResult rows = table.select("x, y").execute();
+            Row row = rows.next();
+            assertEquals(1, row.getInt("x"));
+            assertEquals("a", row.getString("y"));
+
+            assertThrows(XProtocolError.class, "ERROR 1366 \\(HY000\\) Incorrect integer value: 's' for column 'x' at row 1", new Callable<Void>() {
+                public Void call() throws Exception {
+                    table.update().set("x", 's').execute();
+                    return null;
+                }
+            });
+
+            table.update().set("x", (byte) 2).set("y", 's').execute();
+            rows = table.select("x, y").execute();
+            row = rows.next();
+            assertEquals(2, row.getInt("x"));
+            assertEquals("s", row.getString("y"));
+
+            table.update().set("x", BigInteger.valueOf(3)).execute();
+            rows = table.select("x").execute();
+            row = rows.next();
+            assertEquals(3, row.getInt("x"));
+
+            table.update().set("x", BigDecimal.valueOf(4.123)).execute();
+            rows = table.select("x").execute();
+            row = rows.next();
+            assertEquals(4, row.getInt("x"));
+
+        } finally {
+            sqlUpdate("drop table if exists testBug25650912");
+        }
     }
 }
