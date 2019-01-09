@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,6 @@
 
 package com.mysql.cj;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -43,6 +42,7 @@ import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.Util;
 
 // TODO should not be protocol-specific
 public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends AbstractQuery implements PreparedQuery<T> {
@@ -232,6 +232,8 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
     @SuppressWarnings("unchecked")
     @Override
     public <M extends Message> M fillSendPacket(QueryBindings<?> bindings) {
+        // TODO this method is specific to CSPS and a native protocol; must be unified with SSPS via message builder
+
         synchronized (this) {
             BindValue[] bindValues = bindings.getBindValues();
 
@@ -293,6 +295,7 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
     }
 
     private final void streamToBytes(NativePacketPayload packet, InputStream in, boolean escape, long streamLength, boolean useLength) {
+        // TODO this method should be unified with AbstractQueryBindings.streamToBytes()
         try {
             if (this.streamConvertBuf == null) {
                 this.streamConvertBuf = new byte[4096];
@@ -304,7 +307,8 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
                 useLength = false;
             }
 
-            int bc = useLength ? readblock(in, this.streamConvertBuf, (int) streamLength) : readblock(in, this.streamConvertBuf);
+            int bc = useLength ? Util.readBlock(in, this.streamConvertBuf, (int) streamLength, this.session.getExceptionInterceptor())
+                    : Util.readBlock(in, this.streamConvertBuf, this.session.getExceptionInterceptor());
 
             int lengthLeftToRead = (int) streamLength - bc;
 
@@ -324,13 +328,13 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
                 }
 
                 if (useLength) {
-                    bc = readblock(in, this.streamConvertBuf, lengthLeftToRead);
+                    bc = Util.readBlock(in, this.streamConvertBuf, lengthLeftToRead, this.session.getExceptionInterceptor());
 
                     if (bc > 0) {
                         lengthLeftToRead -= bc;
                     }
                 } else {
-                    bc = readblock(in, this.streamConvertBuf);
+                    bc = Util.readBlock(in, this.streamConvertBuf, this.session.getExceptionInterceptor());
                 }
             }
 
@@ -346,96 +350,6 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
 
                 in = null;
             }
-        }
-    }
-
-    protected final byte[] streamToBytes(InputStream in, boolean escape, long streamLength, boolean useLength) {
-        in.mark(Integer.MAX_VALUE); // we may need to read this same stream several times, so we need to reset it at the end.
-        try {
-            if (this.streamConvertBuf == null) {
-                this.streamConvertBuf = new byte[4096];
-            }
-            if (streamLength == -1) {
-                useLength = false;
-            }
-
-            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-
-            int bc = useLength ? readblock(in, this.streamConvertBuf, (int) streamLength) : readblock(in, this.streamConvertBuf);
-
-            int lengthLeftToRead = (int) streamLength - bc;
-
-            if (escape) {
-                bytesOut.write('_');
-                bytesOut.write('b');
-                bytesOut.write('i');
-                bytesOut.write('n');
-                bytesOut.write('a');
-                bytesOut.write('r');
-                bytesOut.write('y');
-                bytesOut.write('\'');
-            }
-
-            while (bc > 0) {
-                if (escape) {
-                    StringUtils.escapeblockFast(this.streamConvertBuf, bytesOut, bc, this.usingAnsiMode);
-                } else {
-                    bytesOut.write(this.streamConvertBuf, 0, bc);
-                }
-
-                if (useLength) {
-                    bc = readblock(in, this.streamConvertBuf, lengthLeftToRead);
-
-                    if (bc > 0) {
-                        lengthLeftToRead -= bc;
-                    }
-                } else {
-                    bc = readblock(in, this.streamConvertBuf);
-                }
-            }
-
-            if (escape) {
-                bytesOut.write('\'');
-            }
-
-            return bytesOut.toByteArray();
-        } finally {
-            try {
-                in.reset();
-            } catch (IOException e) {
-            }
-            if (this.autoClosePStmtStreams.getValue()) {
-                try {
-                    in.close();
-                } catch (IOException ioEx) {
-                }
-
-                in = null;
-            }
-        }
-    }
-
-    private final int readblock(InputStream i, byte[] b) {
-        try {
-            return i.read(b);
-        } catch (Throwable ex) {
-            throw ExceptionFactory.createException(Messages.getString("PreparedStatement.56") + ex.getClass().getName(),
-                    this.session.getExceptionInterceptor());
-        }
-    }
-
-    private final int readblock(InputStream i, byte[] b, int length) {
-        try {
-            int lengthToRead = length;
-
-            if (lengthToRead > b.length) {
-                lengthToRead = b.length;
-            }
-
-            return i.read(b, 0, lengthToRead);
-        } catch (Throwable ex) {
-            throw ExceptionFactory.createException(Messages.getString("PreparedStatement.56") + ex.getClass().getName(),
-                    this.session.getExceptionInterceptor());
         }
     }
 

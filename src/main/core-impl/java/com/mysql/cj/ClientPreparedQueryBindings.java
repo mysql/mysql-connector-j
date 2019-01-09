@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -193,7 +193,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
     @Override
     public void setBoolean(int parameterIndex, boolean x) {
-        setValue(parameterIndex, x ? "1" : "0");
+        setValue(parameterIndex, x ? "1" : "0", MysqlType.BOOLEAN);
     }
 
     @Override
@@ -231,7 +231,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
                 bOut.write('\'');
 
-                setValue(parameterIndex, bOut.toByteArray());
+                setValue(parameterIndex, bOut.toByteArray(), MysqlType.BINARY); // TODO VARBINARY ?
 
                 return;
             }
@@ -297,7 +297,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
             bOut.write('\'');
 
-            setValue(parameterIndex, bOut.toByteArray());
+            setValue(parameterIndex, bOut.toByteArray(), MysqlType.BINARY); // TODO VARBINARY ?
         }
     }
 
@@ -308,12 +308,12 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
         System.arraycopy(parameterAsBytes, 0, parameterWithQuotes, 1, parameterAsBytes.length);
         parameterWithQuotes[parameterAsBytes.length + 1] = '\'';
 
-        setValue(parameterIndex, parameterWithQuotes);
+        setValue(parameterIndex, parameterWithQuotes, MysqlType.BINARY); // TODO VARBINARY ?
     }
 
     @Override
     public void setBytesNoEscapeNoQuotes(int parameterIndex, byte[] parameterAsBytes) {
-        setValue(parameterIndex, parameterAsBytes);
+        setValue(parameterIndex, parameterAsBytes, MysqlType.BINARY); // TODO VARBINARY ?
     }
 
     @Override
@@ -416,7 +416,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
             setNull(parameterIndex);
         } else {
             this.ddf = TimeUtil.getSimpleDateFormat(this.ddf, "''yyyy-MM-dd''", cal, cal != null ? null : this.session.getServerSession().getDefaultTimeZone());
-            setValue(parameterIndex, this.ddf.format(x)); // TODO set MysqlType?
+            setValue(parameterIndex, this.ddf.format(x), MysqlType.DATE);
         }
     }
 
@@ -586,7 +586,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
     @Override
     public synchronized void setNull(int parameterIndex) {
-        setValue(parameterIndex, "null");
+        setValue(parameterIndex, "null", MysqlType.NULL);
         this.bindValues[parameterIndex].setNull(true);
     }
 
@@ -615,7 +615,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
                     byte[] parameterAsBytes = this.isLoadDataQuery ? StringUtils.getBytes(quotedString.toString())
                             : StringUtils.getBytes(quotedString.toString(), this.charEncoding);
-                    setValue(parameterIndex, parameterAsBytes);
+                    setValue(parameterIndex, parameterAsBytes, MysqlType.VARCHAR);
 
                 } else {
                     byte[] parameterAsBytes = this.isLoadDataQuery ? StringUtils.getBytes(x) : StringUtils.getBytes(x, this.charEncoding);

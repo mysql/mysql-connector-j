@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -735,7 +735,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             byte[][] newRow = new byte[fields.length][];
 
             for (int i = 0; i < fields.length; i++) {
-                newRow[i] = this.inserter.isNull(i) ? null : this.inserter.getBytesRepresentation(i);
+                newRow[i] = this.inserter.isNull(i + 1) ? null : this.inserter.getBytesRepresentation(i + 1);
 
                 // WARN: This non-variant only holds if MySQL never allows more than one auto-increment key (which is the way it is _today_)
                 if (fields[i].isAutoIncrement() && autoIncrementId > 0) {
@@ -1021,10 +1021,10 @@ public class UpdatableResultSet extends ResultSetImpl {
                 continue;
             }
 
-            dataFrom = updateInsertStmt.getBytesRepresentation(index);
+            dataFrom = updateInsertStmt.getBytesRepresentation(index + 1);
 
             // Primary keys not set?
-            if (updateInsertStmt.isNull(index) || (dataFrom.length == 0)) {
+            if (updateInsertStmt.isNull(index + 1) || (dataFrom.length == 0)) {
                 this.setParamValue(this.refresher, i + 1, this.thisRow, index, this.getMetadata().getFields()[index]);
                 continue;
             }
@@ -1284,7 +1284,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.updater.setBoolean(columnIndex, x);
             } else {
                 this.inserter.setBoolean(columnIndex, x);
-                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
         }
     }
@@ -1306,7 +1306,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.updater.setByte(columnIndex, x);
             } else {
                 this.inserter.setByte(columnIndex, x);
-                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
         }
     }
@@ -1388,7 +1388,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.updater.setDate(columnIndex, x);
             } else {
                 this.inserter.setDate(columnIndex, x);
-                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
         }
     }
@@ -1410,7 +1410,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.updater.setDouble(columnIndex, x);
             } else {
                 this.inserter.setDouble(columnIndex, x);
-                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
         }
     }
@@ -1432,7 +1432,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.updater.setFloat(columnIndex, x);
             } else {
                 this.inserter.setFloat(columnIndex, x);
-                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
         }
     }
@@ -1454,7 +1454,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.updater.setInt(columnIndex, x);
             } else {
                 this.inserter.setInt(columnIndex, x);
-                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
         }
     }
@@ -1476,7 +1476,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.updater.setLong(columnIndex, x);
             } else {
                 this.inserter.setLong(columnIndex, x);
-                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
         }
     }
@@ -1583,7 +1583,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                     this.inserter.setObject(columnIndex, x, targetType);
                 }
 
-                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
         }
     }
@@ -1625,7 +1625,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.updater.setShort(columnIndex, x);
             } else {
                 this.inserter.setShort(columnIndex, x);
-                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
         }
     }
@@ -1669,7 +1669,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.updater.setTime(columnIndex, x);
             } else {
                 this.inserter.setTime(columnIndex, x);
-                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
         }
     }
@@ -1691,7 +1691,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.updater.setTimestamp(columnIndex, x);
             } else {
                 this.inserter.setTimestamp(columnIndex, x);
-                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex - 1));
+                this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
         }
     }

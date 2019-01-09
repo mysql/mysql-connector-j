@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -83,6 +83,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     protected RuntimeProperty<Integer> slowQueryThresholdMillis;
 
     protected RuntimeProperty<Boolean> explainSlowQueries;
+    protected boolean useCursorFetch = false;
 
     protected boolean queryWasSlow = false;
 
@@ -102,7 +103,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
         this.useAutoSlowLog = sess.getPropertySet().getBooleanProperty(PropertyKey.autoSlowLog).getValue();
         this.slowQueryThresholdMillis = sess.getPropertySet().getIntegerProperty(PropertyKey.slowQueryThresholdMillis);
         this.explainSlowQueries = sess.getPropertySet().getBooleanProperty(PropertyKey.explainSlowQueries);
-
+        this.useCursorFetch = sess.getPropertySet().getBooleanProperty(PropertyKey.useCursorFetch).getValue();
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -162,6 +162,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
             this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_NEWDECIMAL, this.numberOfExecutions));
             binding.value = StringUtils.fixDecimalExponent(x.toPlainString());
+            binding.parameterType = MysqlType.DECIMAL;
         }
     }
 
@@ -185,6 +186,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             binding.value = x;
             binding.isStream = true;
             binding.streamLength = this.useStreamLengthsInPrepStmts.getValue() ? length : -1;
+            binding.parameterType = MysqlType.BLOB; // TODO use length to find the right BLOB type
         }
     }
 
@@ -215,6 +217,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
                 binding.value = x;
                 binding.isStream = true;
                 binding.streamLength = this.useStreamLengthsInPrepStmts.getValue() ? x.length() : -1;
+                binding.parameterType = MysqlType.BLOB;
             } catch (Throwable t) {
                 throw ExceptionFactory.createException(t.getMessage(), t);
             }
@@ -223,7 +226,10 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
 
     @Override
     public void setBoolean(int parameterIndex, boolean x) {
-        setByte(parameterIndex, (x ? (byte) 1 : (byte) 0));
+        ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
+        this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_TINY, this.numberOfExecutions));
+        binding.value = Long.valueOf(x ? (byte) 1 : (byte) 0);
+        binding.parameterType = MysqlType.BOOLEAN;
     }
 
     @Override
@@ -231,6 +237,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
         ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
         this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_TINY, this.numberOfExecutions));
         binding.value = Long.valueOf(x);
+        binding.parameterType = MysqlType.TINYINT;
     }
 
     @Override
@@ -241,6 +248,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
             this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_VAR_STRING, this.numberOfExecutions));
             binding.value = x;
+            binding.parameterType = MysqlType.BINARY; // TODO VARBINARY ?
         }
     }
 
@@ -274,6 +282,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             binding.value = reader;
             binding.isStream = true;
             binding.streamLength = this.useStreamLengthsInPrepStmts.getValue() ? length : -1;
+            binding.parameterType = MysqlType.TEXT;
         }
     }
 
@@ -303,6 +312,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
                 binding.value = x.getCharacterStream();
                 binding.isStream = true;
                 binding.streamLength = this.useStreamLengthsInPrepStmts.getValue() ? x.length() : -1;
+                binding.parameterType = MysqlType.TEXT;
             } catch (Throwable t) {
                 throw ExceptionFactory.createException(t.getMessage(), t);
             }
@@ -323,6 +333,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATE, this.numberOfExecutions));
             binding.value = x;
             binding.calendar = cal == null ? null : (Calendar) cal.clone();
+            binding.parameterType = MysqlType.DATE;
         }
     }
 
@@ -336,6 +347,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
         ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
         this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DOUBLE, this.numberOfExecutions));
         binding.value = Double.valueOf(x);
+        binding.parameterType = MysqlType.DOUBLE;
     }
 
     @Override
@@ -343,6 +355,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
         ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
         this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_FLOAT, this.numberOfExecutions));
         binding.value = Float.valueOf(x);
+        binding.parameterType = MysqlType.FLOAT; // TODO check; was Types.FLOAT but should be Types.REAL to map to SQL FLOAT
     }
 
     @Override
@@ -350,6 +363,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
         ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
         this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_LONG, this.numberOfExecutions));
         binding.value = Long.valueOf(x);
+        binding.parameterType = MysqlType.INT;
     }
 
     @Override
@@ -357,6 +371,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
         ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
         this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_LONGLONG, this.numberOfExecutions));
         binding.value = Long.valueOf(x);
+        binding.parameterType = MysqlType.BIGINT;
     }
 
     @Override
@@ -378,6 +393,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             binding.value = reader;
             binding.isStream = true;
             binding.streamLength = this.useStreamLengthsInPrepStmts.getValue() ? length : -1;
+            binding.parameterType = MysqlType.TEXT;
         }
     }
 
@@ -424,6 +440,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
         ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
         this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_SHORT, this.numberOfExecutions));
         binding.value = Long.valueOf(x);
+        binding.parameterType = MysqlType.SMALLINT;
     }
 
     @Override
@@ -434,6 +451,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
             this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_VAR_STRING, this.numberOfExecutions));
             binding.value = x;
+            binding.parameterType = MysqlType.VARCHAR;
         }
     }
 
@@ -445,6 +463,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_TIME, this.numberOfExecutions));
             binding.value = x;
             binding.calendar = cal == null ? null : (Calendar) cal.clone();
+            binding.parameterType = MysqlType.TIME;
         }
     }
 
@@ -501,6 +520,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
 
             binding.value = x;
             binding.calendar = targetCalendar == null ? null : (Calendar) targetCalendar.clone();
+            binding.parameterType = MysqlType.TIMESTAMP;
         }
     }
 }

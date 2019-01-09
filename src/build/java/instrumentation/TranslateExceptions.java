@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -315,8 +315,6 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("generateMultiStatementForBatch", new CtClass[] { CtClass.intType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getBytesRepresentation", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("getBytesRepresentationForBatch", new CtClass[] { CtClass.intType, CtClass.intType }),
-                EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getParameterBindings", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("initializeFromParseInfo", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("isNull", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);

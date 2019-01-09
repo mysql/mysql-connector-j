@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,6 +31,7 @@ package com.mysql.cj;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
@@ -54,6 +55,7 @@ import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TimeUtil;
+import com.mysql.cj.util.Util;
 
 //TODO should not be protocol-specific
 public abstract class AbstractQueryBindings<T extends BindValue> implements QueryBindings<T> {
@@ -151,18 +153,9 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
         this.numberOfExecutions = numberOfExecutions;
     }
 
-    public synchronized final void setValue(int paramIndex, byte[] val) {
-        this.bindValues[paramIndex].setByteValue(val);
-    }
-
     public synchronized final void setValue(int paramIndex, byte[] val, MysqlType type) {
         this.bindValues[paramIndex].setByteValue(val);
         this.bindValues[paramIndex].setMysqlType(type);
-    }
-
-    public synchronized final void setValue(int paramIndex, String val) {
-        byte[] parameterAsBytes = StringUtils.getBytes(val, this.charEncoding);
-        setValue(paramIndex, parameterAsBytes);
     }
 
     public synchronized final void setValue(int paramIndex, String val, MysqlType type) {
@@ -597,6 +590,86 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
         } catch (Exception ex) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("PreparedStatement.54") + ex.getClass().getName(), ex,
                     this.session.getExceptionInterceptor());
+        }
+    }
+
+    @Override
+    public boolean isNull(int parameterIndex) {
+        return this.bindValues[parameterIndex].isNull();
+    }
+
+    /**
+     * @return bytes
+     */
+    public byte[] getBytesRepresentation(int parameterIndex) {
+        if (this.bindValues[parameterIndex].isStream()) {
+            return streamToBytes(parameterIndex, this.session.getPropertySet().getBooleanProperty(PropertyKey.useStreamLengthsInPrepStmts).getValue());
+        }
+
+        byte[] parameterVal = this.bindValues[parameterIndex].getByteValue();
+
+        if (parameterVal == null) {
+            return null;
+        }
+
+        if ((parameterVal[0] == '\'') && (parameterVal[parameterVal.length - 1] == '\'')) {
+            byte[] valNoQuotes = new byte[parameterVal.length - 2];
+            System.arraycopy(parameterVal, 1, valNoQuotes, 0, parameterVal.length - 2);
+
+            return valNoQuotes;
+        }
+
+        return parameterVal;
+    }
+
+    private byte[] streamConvertBuf = null;
+
+    private final byte[] streamToBytes(int parameterIndex, boolean useLength) {
+        InputStream in = this.bindValues[parameterIndex].getStreamValue();
+        in.mark(Integer.MAX_VALUE); // we may need to read this same stream several times, so we need to reset it at the end.
+        try {
+            if (this.streamConvertBuf == null) {
+                this.streamConvertBuf = new byte[4096];
+            }
+            if (this.bindValues[parameterIndex].getStreamLength() == -1) {
+                useLength = false;
+            }
+
+            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+
+            int bc = useLength ? Util.readBlock(in, this.streamConvertBuf, (int) this.bindValues[parameterIndex].getStreamLength(), null)
+                    : Util.readBlock(in, this.streamConvertBuf, null);
+
+            int lengthLeftToRead = (int) this.bindValues[parameterIndex].getStreamLength() - bc;
+
+            while (bc > 0) {
+                bytesOut.write(this.streamConvertBuf, 0, bc);
+
+                if (useLength) {
+                    bc = Util.readBlock(in, this.streamConvertBuf, lengthLeftToRead, null);
+
+                    if (bc > 0) {
+                        lengthLeftToRead -= bc;
+                    }
+                } else {
+                    bc = Util.readBlock(in, this.streamConvertBuf, null);
+                }
+            }
+
+            return bytesOut.toByteArray();
+        } finally {
+            try {
+                in.reset();
+            } catch (IOException e) {
+            }
+            if (this.session.getPropertySet().getBooleanProperty(PropertyKey.autoClosePStmtStreams).getValue()) {
+                try {
+                    in.close();
+                } catch (IOException ioEx) {
+                }
+
+                in = null;
+            }
         }
     }
 }

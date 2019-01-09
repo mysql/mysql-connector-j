@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -70,11 +70,7 @@ public interface QueryBindings<T extends BindValue> {
 
     void setNumberOfExecutions(int numberOfExecutions);
 
-    void setValue(int paramIndex, byte[] val);
-
     void setValue(int paramIndex, byte[] val, MysqlType type);
-
-    void setValue(int paramIndex, String val);
 
     void setValue(int paramIndex, String val, MysqlType type);
 
@@ -186,7 +182,7 @@ public interface QueryBindings<T extends BindValue> {
 
     void setNull(int parameterIndex);
 
-    // boolean isNull(int parameterIndex);
+    boolean isNull(int parameterIndex);
 
     void setObject(int parameterIndex, Object parameterObj);
 
@@ -222,4 +218,5 @@ public interface QueryBindings<T extends BindValue> {
 
     // URL getURL(int parameterIndex);
 
+    byte[] getBytesRepresentation(int parameterIndex);
 }

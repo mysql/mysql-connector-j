@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,7 +42,6 @@ import java.sql.JDBCType;
 import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
-import java.sql.ResultSet;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLType;
@@ -52,13 +51,10 @@ import java.sql.Timestamp;
 import java.sql.Wrapper;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 
 import com.mysql.cj.BindValue;
 import com.mysql.cj.CancelQueryTask;
-import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.ClientPreparedQuery;
-import com.mysql.cj.ClientPreparedQueryBindValue;
 import com.mysql.cj.ClientPreparedQueryBindings;
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
@@ -69,7 +65,6 @@ import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.Query;
 import com.mysql.cj.QueryBindings;
 import com.mysql.cj.conf.PropertyKey;
-import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -79,7 +74,6 @@ import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
-import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.log.ProfilerEvent;
@@ -87,11 +81,7 @@ import com.mysql.cj.log.ProfilerEventImpl;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.a.NativePacketPayload;
-import com.mysql.cj.protocol.a.result.ByteArrayRow;
-import com.mysql.cj.protocol.a.result.ResultsetRowsStatic;
-import com.mysql.cj.result.DefaultColumnDefinition;
 import com.mysql.cj.result.Field;
-import com.mysql.cj.result.Row;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
 
@@ -126,9 +116,6 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     private boolean doPingInstead;
 
     private boolean compensateForOnDuplicateKeyUpdate = false;
-
-    protected RuntimeProperty<Boolean> useStreamLengthsInPrepStmts;
-    protected RuntimeProperty<Boolean> autoClosePStmtStreams;
 
     protected int rewrittenBatchSize = 0;
 
@@ -188,8 +175,6 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         super(conn, catalog);
 
         this.compensateForOnDuplicateKeyUpdate = this.session.getPropertySet().getBooleanProperty(PropertyKey.compensateOnDuplicateKeyUpdateCounts).getValue();
-        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyKey.useStreamLengthsInPrepStmts);
-        this.autoClosePStmtStreams = this.session.getPropertySet().getBooleanProperty(PropertyKey.autoClosePStmtStreams);
     }
 
     /**
@@ -1167,24 +1152,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     @Override
     public byte[] getBytesRepresentation(int parameterIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            return ((ClientPreparedQuery) this.query).getBytesRepresentation(parameterIndex);
-        }
-    }
-
-    /**
-     * Get bytes representation for a parameter in a statement batch.
-     * 
-     * @param parameterIndex
-     *            parameter index
-     * @param commandIndex
-     *            index in a batched args
-     * @return bytes
-     * @throws SQLException
-     *             if a database access error occurs or this method is called on a closed PreparedStatement
-     */
-    protected byte[] getBytesRepresentationForBatch(int parameterIndex, int commandIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            return ((ClientPreparedQuery) this.query).getBytesRepresentationForBatch(parameterIndex, commandIndex);
+            return ((PreparedQuery<?>) this.query).getQueryBindings().getBytesRepresentation(getCoreParameterIndex(parameterIndex));
         }
     }
 
@@ -1307,7 +1275,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     @Override
     public boolean isNull(int paramIndex) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            return ((PreparedQuery<?>) this.query).getQueryBindings().getBindValues()[paramIndex].isNull();
+            return ((PreparedQuery<?>) this.query).getQueryBindings().getBindValues()[getCoreParameterIndex(paramIndex)].isNull();
         }
     }
 
@@ -1379,7 +1347,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     public ParameterBindings getParameterBindings() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            return new EmulatedPreparedStatementBindings();
+            return new ParameterBindingsImpl((PreparedQuery<?>) this.query, this.session, this.resultSetFactory);
         }
     }
 
@@ -1831,226 +1799,6 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         } else {
             setString(parameterIndex, arg.toString());
             ((PreparedQuery<?>) this.query).getQueryBindings().getBindValues()[getCoreParameterIndex(parameterIndex)].setMysqlType(MysqlType.VARCHAR); // TODO was Types.DATALINK
-        }
-    }
-
-    class EmulatedPreparedStatementBindings implements ParameterBindings {
-
-        private ResultSetImpl bindingsAsRs;
-        private ClientPreparedQueryBindValue[] bindValues;
-
-        EmulatedPreparedStatementBindings() throws SQLException {
-            List<Row> rows = new ArrayList<>();
-            int paramCount = ((PreparedQuery<?>) ClientPreparedStatement.this.query).getParameterCount();
-            this.bindValues = new ClientPreparedQueryBindValue[paramCount];
-            for (int i = 0; i < paramCount; i++) {
-                this.bindValues[i] = ((ClientPreparedQueryBindings) ((PreparedQuery<?>) ClientPreparedStatement.this.query).getQueryBindings())
-                        .getBindValues()[i].clone();
-
-            }
-            byte[][] rowData = new byte[paramCount][];
-            Field[] typeMetadata = new Field[paramCount];
-
-            for (int i = 0; i < paramCount; i++) {
-                int batchCommandIndex = ((PreparedQuery<?>) ClientPreparedStatement.this.query).getBatchCommandIndex();
-                rowData[i] = batchCommandIndex == -1 ? getBytesRepresentation(i) : getBytesRepresentationForBatch(i, batchCommandIndex);
-
-                int charsetIndex = 0;
-
-                switch (((PreparedQuery<?>) ClientPreparedStatement.this.query).getQueryBindings().getBindValues()[i].getMysqlType()) {
-                    case BINARY:
-                    case BLOB:
-                    case GEOMETRY:
-                    case LONGBLOB:
-                    case MEDIUMBLOB:
-                    case TINYBLOB:
-                    case UNKNOWN:
-                    case VARBINARY:
-                        charsetIndex = CharsetMapping.MYSQL_COLLATION_INDEX_binary;
-                        break;
-                    default:
-                        try {
-                            charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(
-                                    ClientPreparedStatement.this.session.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
-                                    ClientPreparedStatement.this.session.getServerSession().getServerVersion());
-                        } catch (RuntimeException ex) {
-                            throw SQLError.createSQLException(ex.toString(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
-                        }
-                        break;
-                }
-
-                Field parameterMetadata = new Field(null, "parameter_" + (i + 1), charsetIndex, ClientPreparedStatement.this.charEncoding,
-                        ((PreparedQuery<?>) ClientPreparedStatement.this.query).getQueryBindings().getBindValues()[i].getMysqlType(), rowData[i].length);
-                typeMetadata[i] = parameterMetadata;
-            }
-
-            rows.add(new ByteArrayRow(rowData, ClientPreparedStatement.this.exceptionInterceptor));
-
-            this.bindingsAsRs = ClientPreparedStatement.this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY,
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, new ResultsetRowsStatic(rows, new DefaultColumnDefinition(typeMetadata)));
-            this.bindingsAsRs.next();
-        }
-
-        @Override
-        public Array getArray(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getArray(parameterIndex);
-        }
-
-        @Override
-        public InputStream getAsciiStream(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getAsciiStream(parameterIndex);
-        }
-
-        @Override
-        public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getBigDecimal(parameterIndex);
-        }
-
-        @Override
-        public InputStream getBinaryStream(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getBinaryStream(parameterIndex);
-        }
-
-        @Override
-        public java.sql.Blob getBlob(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getBlob(parameterIndex);
-        }
-
-        @Override
-        public boolean getBoolean(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getBoolean(parameterIndex);
-        }
-
-        @Override
-        public byte getByte(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getByte(parameterIndex);
-        }
-
-        @Override
-        public byte[] getBytes(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getBytes(parameterIndex);
-        }
-
-        @Override
-        public Reader getCharacterStream(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getCharacterStream(parameterIndex);
-        }
-
-        @Override
-        public java.sql.Clob getClob(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getClob(parameterIndex);
-        }
-
-        @Override
-        public Date getDate(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getDate(parameterIndex);
-        }
-
-        @Override
-        public double getDouble(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getDouble(parameterIndex);
-        }
-
-        @Override
-        public float getFloat(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getFloat(parameterIndex);
-        }
-
-        @Override
-        public int getInt(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getInt(parameterIndex);
-        }
-
-        @Override
-        public BigInteger getBigInteger(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getBigInteger(parameterIndex);
-        }
-
-        @Override
-        public long getLong(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getLong(parameterIndex);
-        }
-
-        @Override
-        public Reader getNCharacterStream(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getCharacterStream(parameterIndex);
-        }
-
-        @Override
-        public Reader getNClob(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getCharacterStream(parameterIndex);
-        }
-
-        @Override
-        public Object getObject(int parameterIndex) throws SQLException {
-            checkBounds(parameterIndex, 0);
-
-            if (this.bindValues[parameterIndex - 1].isNull()) {
-                return null;
-            }
-
-            // we can't rely on the default mapping for JDBC's ResultSet.getObject() for numerics, they're not one-to-one with PreparedStatement.setObject
-
-            switch (((PreparedQuery<?>) ClientPreparedStatement.this.query).getQueryBindings().getBindValues()[parameterIndex - 1].getMysqlType()) {
-                case TINYINT:
-                case TINYINT_UNSIGNED:
-                    return Byte.valueOf(getByte(parameterIndex));
-                case SMALLINT:
-                case SMALLINT_UNSIGNED:
-                    return Short.valueOf(getShort(parameterIndex));
-                case INT:
-                case INT_UNSIGNED:
-                    return Integer.valueOf(getInt(parameterIndex));
-                case BIGINT:
-                    return Long.valueOf(getLong(parameterIndex));
-                case BIGINT_UNSIGNED:
-                    return getBigInteger(parameterIndex);
-                case FLOAT:
-                case FLOAT_UNSIGNED:
-                    return Float.valueOf(getFloat(parameterIndex));
-                case DOUBLE:
-                case DOUBLE_UNSIGNED:
-                    return Double.valueOf(getDouble(parameterIndex));
-                default:
-                    return this.bindingsAsRs.getObject(parameterIndex);
-            }
-        }
-
-        @Override
-        public Ref getRef(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getRef(parameterIndex);
-        }
-
-        @Override
-        public short getShort(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getShort(parameterIndex);
-        }
-
-        @Override
-        public String getString(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getString(parameterIndex);
-        }
-
-        @Override
-        public Time getTime(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getTime(parameterIndex);
-        }
-
-        @Override
-        public Timestamp getTimestamp(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getTimestamp(parameterIndex);
-        }
-
-        @Override
-        public URL getURL(int parameterIndex) throws SQLException {
-            return this.bindingsAsRs.getURL(parameterIndex);
-        }
-
-        @Override
-        public boolean isNull(int parameterIndex) throws SQLException {
-            checkBounds(parameterIndex, 0);
-
-            return this.bindValues[parameterIndex - 1].isNull();
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -28,8 +28,6 @@
  */
 
 package com.mysql.cj;
-
-import com.mysql.cj.util.StringUtils;
 
 //TODO should not be protocol-specific
 
@@ -96,67 +94,5 @@ public class ClientPreparedQuery extends AbstractPreparedQuery<ClientPreparedQue
         }
 
         return new long[] { maxSizeOfParameterSet, sizeOfEntireBatch };
-    }
-
-    /**
-     * @param parameterIndex
-     *            parameter index
-     * @return bytes
-     */
-    public byte[] getBytesRepresentation(int parameterIndex) {
-        BindValue bv = this.queryBindings.getBindValues()[parameterIndex];
-
-        if (bv.isStream()) {
-            return streamToBytes(bv.getStreamValue(), false, bv.getStreamLength(), this.useStreamLengthsInPrepStmts.getValue());
-        }
-
-        byte[] parameterVal = bv.getByteValue();
-
-        if (parameterVal == null) {
-            return null;
-        }
-
-        if ((parameterVal[0] == '\'') && (parameterVal[parameterVal.length - 1] == '\'')) {
-            byte[] valNoQuotes = new byte[parameterVal.length - 2];
-            System.arraycopy(parameterVal, 1, valNoQuotes, 0, parameterVal.length - 2);
-
-            return valNoQuotes;
-        }
-
-        return parameterVal;
-    }
-
-    /**
-     * Get bytes representation for a parameter in a statement batch.
-     * 
-     * @param parameterIndex
-     *            parameter index
-     * @param commandIndex
-     *            command index
-     * @return bytes
-     */
-    public byte[] getBytesRepresentationForBatch(int parameterIndex, int commandIndex) {
-        Object batchedArg = this.batchedArgs.get(commandIndex);
-        if (batchedArg instanceof String) {
-            return StringUtils.getBytes((String) batchedArg, this.charEncoding);
-        }
-
-        BindValue bv = ((ClientPreparedQueryBindings) batchedArg).getBindValues()[parameterIndex];
-        if (bv.isStream()) {
-            return streamToBytes(bv.getStreamValue(), false, bv.getStreamLength(), this.useStreamLengthsInPrepStmts.getValue());
-        }
-        byte parameterVal[] = bv.getByteValue();
-        if (parameterVal == null) {
-            return null;
-        }
-
-        if ((parameterVal[0] == '\'') && (parameterVal[parameterVal.length - 1] == '\'')) {
-            byte[] valNoQuotes = new byte[parameterVal.length - 2];
-            System.arraycopy(parameterVal, 1, valNoQuotes, 0, parameterVal.length - 2);
-
-            return valNoQuotes;
-        }
-
-        return parameterVal;
     }
 }

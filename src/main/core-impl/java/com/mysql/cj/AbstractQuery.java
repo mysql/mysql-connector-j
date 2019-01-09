@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -76,8 +76,6 @@ public abstract class AbstractQuery implements Query {
     /** Holds batched commands */
     protected List<Object> batchedArgs;
 
-    protected boolean useCursorFetch = false;
-
     /** The type of this result set (scroll sensitive or in-sensitive) */
     protected Resultset.Type resultSetType = Type.FORWARD_ONLY;
 
@@ -102,7 +100,6 @@ public abstract class AbstractQuery implements Query {
         this.profileSQL = sess.getPropertySet().getBooleanProperty(PropertyKey.profileSQL).getValue();
         this.maxAllowedPacket = sess.getPropertySet().getIntegerProperty(PropertyKey.maxAllowedPacket);
         this.charEncoding = sess.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
-        this.useCursorFetch = sess.getPropertySet().getBooleanProperty(PropertyKey.useCursorFetch).getValue();
     }
 
     @Override

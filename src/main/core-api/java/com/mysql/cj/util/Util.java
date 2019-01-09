@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,6 +30,7 @@
 package com.mysql.cj.util;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -480,5 +481,27 @@ public class Util {
         }
 
         return numCharsRead;
+    }
+
+    public static final int readBlock(InputStream i, byte[] b, ExceptionInterceptor exceptionInterceptor) {
+        try {
+            return i.read(b);
+        } catch (Throwable ex) {
+            throw ExceptionFactory.createException(Messages.getString("Util.5") + ex.getClass().getName(), exceptionInterceptor);
+        }
+    }
+
+    public static final int readBlock(InputStream i, byte[] b, int length, ExceptionInterceptor exceptionInterceptor) {
+        try {
+            int lengthToRead = length;
+
+            if (lengthToRead > b.length) {
+                lengthToRead = b.length;
+            }
+
+            return i.read(b, 0, lengthToRead);
+        } catch (Throwable ex) {
+            throw ExceptionFactory.createException(Messages.getString("Util.5") + ex.getClass().getName(), exceptionInterceptor);
+        }
     }
 }

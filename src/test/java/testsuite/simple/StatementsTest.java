@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1789,47 +1789,56 @@ public class StatementsTest extends BaseTestCase {
     }
 
     public void testParameterBindings() throws Exception {
-        // Need to check character set stuff, so need a new connection
-        Connection utfConn = getConnectionWithProps("characterEncoding=utf-8,treatUtilDateAsTimestamp=false,autoDeserialize=true");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf-8");
+        props.setProperty(PropertyKey.treatUtilDateAsTimestamp.getKeyName(), "false");
+        props.setProperty(PropertyKey.autoDeserialize.getKeyName(), "true");
 
-        java.util.Date now = new java.util.Date();
+        for (boolean useSPS : new boolean[] { false, true }) {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
 
-        Object[] valuesToTest = new Object[] { new Byte(Byte.MIN_VALUE), new Short(Short.MIN_VALUE), new Integer(Integer.MIN_VALUE), new Long(Long.MIN_VALUE),
-                new Double(Double.MIN_VALUE), "\u4E2D\u6587", new BigDecimal(Math.PI), null, // to test isNull
-                now // to test serialization
-        };
+            // Need to check character set stuff, so need a new connection
+            Connection utfConn = getConnectionWithProps(props);
 
-        StringBuilder statementText = new StringBuilder("SELECT ?");
+            java.util.Date now = new java.util.Date();
 
-        for (int i = 1; i < valuesToTest.length; i++) {
-            statementText.append(",?");
-        }
+            Object[] valuesToTest = new Object[] { new Byte(Byte.MIN_VALUE), new Short(Short.MIN_VALUE), new Integer(Integer.MIN_VALUE),
+                    new Long(Long.MIN_VALUE), new Double(Double.MIN_VALUE), "\u4E2D\u6587", new BigDecimal(Math.PI), null, // to test isNull
+                    now // to test serialization
+            };
 
-        this.pstmt = utfConn.prepareStatement(statementText.toString());
+            StringBuilder statementText = new StringBuilder("SELECT ?");
 
-        for (int i = 0; i < valuesToTest.length; i++) {
-            this.pstmt.setObject(i + 1, valuesToTest[i]);
-        }
-
-        ParameterBindings bindings = ((ClientPreparedStatement) this.pstmt).getParameterBindings();
-
-        for (int i = 0; i < valuesToTest.length; i++) {
-            Object boundObject = bindings.getObject(i + 1);
-
-            if (boundObject == null || valuesToTest[i] == null) {
-                continue;
+            for (int i = 1; i < valuesToTest.length; i++) {
+                statementText.append(",?");
             }
 
-            Class<?> boundObjectClass = boundObject.getClass();
-            Class<?> testObjectClass = valuesToTest[i].getClass();
+            this.pstmt = utfConn.prepareStatement(statementText.toString());
 
-            if (boundObject instanceof Number) {
-                assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, boundObject.toString(),
-                        valuesToTest[i].toString());
-            } else if (boundObject instanceof Date) {
+            for (int i = 0; i < valuesToTest.length; i++) {
+                this.pstmt.setObject(i + 1, valuesToTest[i]);
+            }
 
-            } else {
-                assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, boundObject, valuesToTest[i]);
+            ParameterBindings bindings = ((ClientPreparedStatement) this.pstmt).getParameterBindings();
+
+            for (int i = 0; i < valuesToTest.length; i++) {
+                Object boundObject = bindings.getObject(i + 1);
+
+                if (boundObject == null || valuesToTest[i] == null) {
+                    continue;
+                }
+
+                Class<?> boundObjectClass = boundObject.getClass();
+                Class<?> testObjectClass = valuesToTest[i].getClass();
+
+                if (boundObject instanceof Number) {
+                    assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, boundObject.toString(),
+                            valuesToTest[i].toString());
+                } else if (boundObject instanceof Date) {
+
+                } else {
+                    assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, boundObject, valuesToTest[i]);
+                }
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -5545,9 +5545,6 @@ public class StatementRegressionTest extends BaseTestCase {
                     ParameterBindings b = ((ClientPreparedStatement) interceptedQuery).getParameterBindings();
                     vals.add(new Integer(b.getInt(1)));
 
-                    // TODO
-                    //QueryBindings<?> b = ((com.mysql.cj.jdbc.PreparedStatement) interceptedQuery).getQueryBindings();
-                    //vals.add(new Integer(new String(b.getBindValues()[0].getByteValue())));
                 } catch (SQLException ex) {
                     throw ExceptionFactory.createException(ex.getMessage(), ex);
                 }
@@ -5560,25 +5557,31 @@ public class StatementRegressionTest extends BaseTestCase {
      * Bug #39426 - executeBatch passes most recent PreparedStatement params to StatementInterceptor
      */
     public void testBug39426() throws Exception {
-        Connection c = null;
-        try {
-            createTable("testBug39426", "(x int)");
-            c = getConnectionWithProps("queryInterceptors=testsuite.regression.StatementRegressionTest$Bug39426Interceptor,useServerPrepStmts=false");
-            PreparedStatement ps = c.prepareStatement("insert into testBug39426 values (?)");
-            ps.setInt(1, 1);
-            ps.addBatch();
-            ps.setInt(1, 2);
-            ps.addBatch();
-            ps.setInt(1, 3);
-            ps.addBatch();
-            ps.executeBatch();
-            List<Integer> vals = Bug39426Interceptor.vals;
-            assertEquals(new Integer(1), vals.get(0));
-            assertEquals(new Integer(2), vals.get(1));
-            assertEquals(new Integer(3), vals.get(2));
-        } finally {
-            if (c != null) {
-                c.close();
+        for (boolean useSPS : new boolean[] { false, true }) {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.queryInterceptors.getKeyName(), "testsuite.regression.StatementRegressionTest$Bug39426Interceptor");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+
+            Connection c = null;
+            try {
+                createTable("testBug39426", "(x int)");
+                c = getConnectionWithProps(props);
+                PreparedStatement ps = c.prepareStatement("insert into testBug39426 values (?)");
+                ps.setInt(1, 1);
+                ps.addBatch();
+                ps.setInt(1, 2);
+                ps.addBatch();
+                ps.setInt(1, 3);
+                ps.addBatch();
+                ps.executeBatch();
+                List<Integer> vals = Bug39426Interceptor.vals;
+                assertEquals(new Integer(1), vals.get(0));
+                assertEquals(new Integer(2), vals.get(1));
+                assertEquals(new Integer(3), vals.get(2));
+            } finally {
+                if (c != null) {
+                    c.close();
+                }
             }
         }
     }
@@ -10512,6 +10515,34 @@ public class StatementRegressionTest extends BaseTestCase {
             assertFalse(this.rs.next());
         }
         this.stmt.execute("TRUNCATE TABLE testBug81063b");
+    }
+
+    /**
+     * Tests fix for Bug#22931700, BINDINGS.GETBOOLEAN() ALWAYS RETURNS FALSE.
+     */
+    public void testBug22931700() throws Exception {
+        createTable("testBug22931700", "(c1 int,c2 bool)");
+
+        for (boolean useSPS : new boolean[] { false, true }) {
+            this.stmt.executeUpdate("truncate table testBug22931700");
+            this.stmt.executeUpdate("INSERT INTO testBug22931700 values(100,false)");
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+
+            Connection testConn = getConnectionWithProps(props);
+
+            this.pstmt = testConn.prepareStatement("update testBug22931700 set c1=?,c2=? ");
+            this.pstmt.setNull(1, java.sql.Types.INTEGER);
+            this.pstmt.setBoolean(2, true);
+
+            ParameterBindings bindings = ((JdbcPreparedStatement) this.pstmt).getParameterBindings();
+            assertTrue(bindings.isNull(1));
+            assertFalse(bindings.isNull(2));
+            assertTrue(bindings.getBoolean(2));
+
+            this.pstmt.executeUpdate();
+        }
     }
 
 }
