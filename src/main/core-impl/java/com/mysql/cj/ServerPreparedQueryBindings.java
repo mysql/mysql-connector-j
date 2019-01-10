@@ -451,6 +451,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
             this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_VAR_STRING, this.numberOfExecutions));
             binding.value = x;
+            binding.charEncoding = this.charEncoding;
             binding.parameterType = MysqlType.VARCHAR;
         }
     }

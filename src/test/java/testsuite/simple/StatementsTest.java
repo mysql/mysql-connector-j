@@ -1790,7 +1790,7 @@ public class StatementsTest extends BaseTestCase {
 
     public void testParameterBindings() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf-8");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
         props.setProperty(PropertyKey.treatUtilDateAsTimestamp.getKeyName(), "false");
         props.setProperty(PropertyKey.autoDeserialize.getKeyName(), "true");
 
@@ -1832,12 +1832,12 @@ public class StatementsTest extends BaseTestCase {
                 Class<?> testObjectClass = valuesToTest[i].getClass();
 
                 if (boundObject instanceof Number) {
-                    assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, boundObject.toString(),
-                            valuesToTest[i].toString());
+                    assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, valuesToTest[i].toString(),
+                            boundObject.toString());
                 } else if (boundObject instanceof Date) {
 
                 } else {
-                    assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, boundObject, valuesToTest[i]);
+                    assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, valuesToTest[i], boundObject);
                 }
             }
         }

@@ -54,6 +54,8 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
 
     private TimeZone defaultTimeZone;
 
+    protected String charEncoding = null;
+
     public ServerPreparedQueryBindValue(TimeZone defaultTZ) {
         this.defaultTimeZone = defaultTZ;
     }
@@ -69,12 +71,14 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
         this.defaultTimeZone = copyMe.defaultTimeZone;
         this.bufferType = copyMe.bufferType;
         this.calendar = copyMe.calendar;
+        this.charEncoding = copyMe.charEncoding;
     }
 
     @Override
     public void reset() {
         super.reset();
         this.calendar = null;
+        this.charEncoding = null;
     }
 
     /**
@@ -324,7 +328,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     @Override
     public byte[] getByteValue() {
         if (!this.isStream) {
-            return toString().getBytes();
+            return this.charEncoding != null ? StringUtils.getBytes(toString(), this.charEncoding) : toString().getBytes();
         }
         return null;
     }
