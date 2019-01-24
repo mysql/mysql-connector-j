@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -292,7 +292,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         docs.next();
         docs = this.collection.find("$.x3 = 16 >> 1").execute();
         docs.next();
-        // lack of JSON_UNQUOTE() workaround
         docs = this.collection.find("cast($.x4 as unsigned) = ~1").execute();
         docs.next();
     }
@@ -388,7 +387,10 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
             // cont_in
 
-            docs = this.collection.find("$.b IN [100,101,102]").execute();
+            docs = this.collection.find("JSON_UNQUOTE($.b) IN [100,101,102]").execute();
+            assertEquals(1, docs.count());
+
+            docs = this.collection.find("$.b IN ['100','101','102']").execute();
             assertEquals(1, docs.count());
 
             docs = this.collection.find("'some text with 5432' in $.a").execute();
