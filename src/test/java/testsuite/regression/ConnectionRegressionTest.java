@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -4780,6 +4780,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "true");
         props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
@@ -4790,7 +4791,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         ((JdbcConnection) conn1).getServerVersion()));
 
         assertTrue(updateCount == loops);
-
     }
 
     public void testStackOverflowOnMissingInterceptor() throws Exception {

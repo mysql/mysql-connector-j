@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1838,13 +1838,19 @@ public class StatementsTest extends BaseTestCase {
         createTable("localInfileHooked", "(field1 int, field2 varchar(255))");
         String streamData = "1\tabcd\n2\tefgh\n3\tijkl";
         InputStream stream = new ByteArrayInputStream(streamData.getBytes());
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "true");
+        Connection testConn = getConnectionWithProps(props);
+        Statement testStmt = testConn.createStatement();
+
         try {
-            ((com.mysql.cj.jdbc.JdbcStatement) this.stmt).setLocalInfileInputStream(stream);
-            this.stmt.execute(
+            ((com.mysql.cj.jdbc.JdbcStatement) testStmt).setLocalInfileInputStream(stream);
+            testStmt.execute(
                     "LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(
                             ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(), this.serverVersion));
             assertEquals(-1, stream.read());
-            this.rs = this.stmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");
+            this.rs = testStmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");
             this.rs.next();
             assertEquals("abcd", this.rs.getString(1));
             this.rs.next();
@@ -1852,7 +1858,8 @@ public class StatementsTest extends BaseTestCase {
             this.rs.next();
             assertEquals("ijkl", this.rs.getString(1));
         } finally {
-            ((com.mysql.cj.jdbc.JdbcStatement) this.stmt).setLocalInfileInputStream(null);
+            ((com.mysql.cj.jdbc.JdbcStatement) testStmt).setLocalInfileInputStream(null);
+            testConn.close();
         }
     }
 

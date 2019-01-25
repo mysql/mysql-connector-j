@@ -3,6 +3,8 @@
 
 Version 8.0.15
 
+  - Fix for Bug#94051 (29261254), Not recommended default for 'allowLoadLocalInfile'.
+
 Version 8.0.14
 
   - WL#12298, Connectors: Expose metadata about source and binaries in unified way.
