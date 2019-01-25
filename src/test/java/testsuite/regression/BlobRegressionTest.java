@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -390,12 +390,14 @@ public class BlobRegressionTest extends BaseTestCase {
         });
 
         // check with wrong substring index
-        assertThrows(SQLException.class, "String index out of range: 12", new Callable<Void>() {
+        Throwable t = assertThrows(SQLException.class, new Callable<Void>() {
             public Void call() throws Exception {
                 c1.setString(1, s1, 8, 4);
                 return null;
             }
         });
+
+        assertTrue(StringIndexOutOfBoundsException.class.isAssignableFrom(t.getCause().getClass()));
 
         // full replace
         c1.setString(1, s1, 3, 4);

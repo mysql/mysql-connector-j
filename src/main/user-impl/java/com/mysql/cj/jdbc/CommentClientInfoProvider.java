@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,9 +32,6 @@ package com.mysql.cj.jdbc;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 
 /**
@@ -89,17 +86,19 @@ public class CommentClientInfoProvider implements ClientInfoProvider {
 
     private synchronized void setComment(java.sql.Connection conn) {
         StringBuilder commentBuf = new StringBuilder();
-        Iterator<Entry<Object, Object>> elements = this.clientInfo.entrySet().iterator();
 
-        while (elements.hasNext()) {
+        Enumeration<?> propNames = this.clientInfo.propertyNames();
+
+        while (propNames.hasMoreElements()) {
+            String name = (String) propNames.nextElement();
+
             if (commentBuf.length() > 0) {
                 commentBuf.append(", ");
             }
 
-            Map.Entry<?, ?> entry = elements.next();
-            commentBuf.append("" + entry.getKey());
+            commentBuf.append("" + name);
             commentBuf.append("=");
-            commentBuf.append("" + entry.getValue());
+            commentBuf.append("" + this.clientInfo.getProperty(name));
         }
 
         ((com.mysql.cj.jdbc.JdbcConnection) conn).setStatementComment(commentBuf.toString());
