@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import com.mysql.jdbc.DatabaseMetaDataUsingInfoSchema;
 import com.mysql.jdbc.StringUtils;
 
 import testsuite.BaseTestCase;
@@ -111,7 +112,11 @@ public class MetadataTest extends BaseTestCase {
             assertEquals(pkTableName, "cpd_foreign_3");
             assertEquals(fkColumnName, "cpd_foreign_1_id");
             assertEquals(fkTableName, "cpd_foreign_4");
-            assertEquals(deleteAction, "NO ACTION");
+            if (versionMeetsMinimum(8, 0, 14) || dbmd instanceof DatabaseMetaDataUsingInfoSchema) {
+                assertEquals(deleteAction, "RESTRICT");
+            } else {
+                assertEquals(deleteAction, "NO ACTION");
+            }
             assertEquals(updateAction, "CASCADE");
 
             this.rs.close();
@@ -747,11 +752,10 @@ public class MetadataTest extends BaseTestCase {
         }
 
         // Test GENERATED columns syntax.
-        createTable("pythagorean_triple",
-                "(side_a DOUBLE NULL, side_b DOUBLE NULL, "
-                        + "side_c_vir DOUBLE AS (SQRT(side_a * side_a + side_b * side_b)) VIRTUAL UNIQUE KEY COMMENT 'hypotenuse - virtual', "
-                        + "side_c_sto DOUBLE GENERATED ALWAYS AS (SQRT(POW(side_a, 2) + POW(side_b, 2))) STORED UNIQUE KEY COMMENT 'hypotenuse - stored' NOT NULL "
-                        + "PRIMARY KEY)");
+        createTable("pythagorean_triple", "(side_a DOUBLE NULL, side_b DOUBLE NULL, "
+                + "side_c_vir DOUBLE AS (SQRT(side_a * side_a + side_b * side_b)) VIRTUAL UNIQUE KEY COMMENT 'hypotenuse - virtual', "
+                + "side_c_sto DOUBLE GENERATED ALWAYS AS (SQRT(POW(side_a, 2) + POW(side_b, 2))) STORED UNIQUE KEY COMMENT 'hypotenuse - stored' NOT NULL "
+                + "PRIMARY KEY)");
 
         // Test data for generated columns.
         assertEquals(1, this.stmt.executeUpdate("INSERT INTO pythagorean_triple (side_a, side_b) VALUES (3, 4)"));
