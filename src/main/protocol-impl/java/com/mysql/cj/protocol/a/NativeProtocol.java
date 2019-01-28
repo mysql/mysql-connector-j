@@ -1045,6 +1045,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             int resultSetId = rs.getResultId();
             long eventDuration = queryEndTime - queryStartTime;
 
+            String eventCreationPoint = null;
+
             if (queryWasSlow && !this.serverSession.queryWasSlow() /* don't log slow queries twice */) {
                 StringBuilder mesgBuf = new StringBuilder(48 + profileQueryToLog.length());
 
@@ -1054,6 +1056,10 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 mesgBuf.append(profileQueryToLog);
 
                 ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
+
+                if (eventCreationPoint == null) {
+                    eventCreationPoint = LogUtils.findCallingClassAndMethod(new Throwable());
+                }
 
                 eventSink.consumeEvent(
                         new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
@@ -1069,11 +1075,13 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 }
             }
 
-            if (this.profileSQL || this.logSlowQueries) {
+            if (this.profileSQL) {
 
                 ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
 
-                String eventCreationPoint = LogUtils.findCallingClassAndMethod(new Throwable());
+                if (eventCreationPoint == null) {
+                    eventCreationPoint = LogUtils.findCallingClassAndMethod(new Throwable());
+                }
 
                 if (this.logSlowQueries) {
                     if (this.serverSession.noGoodIndexUsed()) {

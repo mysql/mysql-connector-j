@@ -254,7 +254,7 @@ public class StatementImpl implements JdbcStatement {
             setFetchSize(defaultFetchSize);
         }
 
-        boolean profiling = this.profileSQL || this.useUsageAdvisor || this.logSlowQueries;
+        boolean profiling = this.profileSQL || this.useUsageAdvisor;
 
         if (profiling) {
             this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
