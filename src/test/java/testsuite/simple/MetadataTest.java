@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -133,16 +133,8 @@ public class MetadataTest extends BaseTestCase {
             assertEquals(fkTableName, "cpd_foreign_4");
             assertEquals(updateAction, "CASCADE");
 
-            // SHOW CREATE TABLE `cjtest_5_1`.`cpd_foreign_4` doesn't return ON DELETE rule while it was used in a table creation:
-            //    CREATE TABLE cpd_foreign_4 (
-            //                 cpd_foreign_1_id int(8) not null, cpd_foreign_2_id int(8) not null,
-            //                 key(cpd_foreign_1_id), key(cpd_foreign_2_id),
-            //                 primary key (cpd_foreign_1_id, cpd_foreign_2_id),
-            //                 foreign key (cpd_foreign_1_id, cpd_foreign_2_id)
-            //                 references cpd_foreign_3(cpd_foreign_1_id, cpd_foreign_2_id) ON DELETE RESTRICT ON UPDATE CASCADE
-            //                 ) ENGINE = InnoDB
-            // I_S returns a correct info, thus we have different results here 
-            if (dbmd instanceof DatabaseMetaDataUsingInfoSchema) {
+            // "SHOW CREATE TABLE" without using I_S missed the "ON DELETE" rule until MySQL 8.0.14. With I_S all worked fine. 
+            if (versionMeetsMinimum(8, 0, 14) || dbmd instanceof DatabaseMetaDataUsingInfoSchema) {
                 assertEquals(deleteAction, "RESTRICT");
             } else {
                 assertEquals(deleteAction, "NO ACTION");
