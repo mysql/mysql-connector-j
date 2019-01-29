@@ -786,10 +786,11 @@ public class ExprParser {
             }
             case LSQBRACKET: { // Array
                 Array.Builder builder = Expr.newBuilder().setType(Expr.Type.ARRAY).getArrayBuilder();
-                parseCommaSeparatedList(() -> {
-                    return expr();
-                }).stream().forEach(builder::addValue);
-
+                if (!currentTokenTypeEquals(TokenType.RSQBRACKET)) {
+                    parseCommaSeparatedList(() -> {
+                        return expr();
+                    }).stream().forEach(builder::addValue);
+                }
                 consumeToken(TokenType.RSQBRACKET);
                 return Expr.newBuilder().setType(Expr.Type.ARRAY).setArray(builder).build();
             }

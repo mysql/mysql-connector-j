@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -374,5 +374,21 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         DbDoc doc = docs.next();
         assertEquals("1546300800000", doc.get("dataCreated").toString());
         assertEquals(new BigDecimal("1546300800000"), ((JsonNumber) doc.get("dataCreated")).getBigDecimal());
+    }
+
+    /**
+     * Test for Bug92819 (28834959), EXPRPARSER THROWS WRONGARGUMENTEXCEPTION WHEN PARSING EMPTY JSON ARRAY.
+     */
+    @Test
+    public void testBug92819() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        this.collection.add("{\"_id\":\"1\",\"emptyArray\": []}").execute();
+        DocResult docs = this.collection.find("_id = '1'").execute();
+        assertTrue(docs.hasNext());
+        DbDoc doc = docs.next();
+        assertEquals("[]", doc.get("emptyArray").toString());
     }
 }
