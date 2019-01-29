@@ -724,7 +724,8 @@ public class ExprParser {
      * @return {@link Expr}
      */
     Expr buildUnaryOp(String name, Expr param) {
-        Operator op = Operator.newBuilder().setName(name).addParam(param).build();
+        String opName = "-".equals(name) ? "sign_minus" : ("+".equals(name) ? "sign_plus" : name);
+        Operator op = Operator.newBuilder().setName(opName).addParam(param).build();
         return Expr.newBuilder().setType(Expr.Type.OPERATOR).setOperator(op).build();
     }
 

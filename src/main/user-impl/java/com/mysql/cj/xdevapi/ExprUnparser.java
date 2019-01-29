@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -226,6 +226,12 @@ public class ExprUnparser {
             return String.format("cast(%s AS %s)", params.get(0), params.get(1).replaceAll("\"", ""));
         } else if ((name.length() < 3 || infixOperators.contains(name)) && params.size() == 2) {
             return String.format("(%s %s %s)", params.get(0), name, params.get(1));
+        } else if ("sign_minus".equals(name)) {
+            name = name.replaceAll("sign_minus", "-");
+            return String.format("%s%s", name, params.get(0));
+        } else if ("sign_plus".equals(name)) {
+            name = name.replaceAll("sign_plus", "+");
+            return String.format("%s%s", name, params.get(0));
         } else if (params.size() == 1) {
             return String.format("%s%s", name, params.get(0));
         } else if (params.size() == 0) {

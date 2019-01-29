@@ -947,4 +947,36 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         assertEquals(0, ((JsonNumber) doc.get("something")).getInteger().intValue());
 
     }
+
+    /**
+     * Test for Bug#21921956, X DEVAPI: EXPRESSION PARSE ERROR WITH UNARY OPERATOR.
+     */
+    @Test
+    public void testBug21921956() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        this.collection.add("{\"_id\": \"1004\", \"F1\": 123}").execute();
+
+        DocResult res = this.collection.find().fields(expr("{'X':4<< -(1-2)}")).execute();
+        assertTrue(res.hasData());
+        DbDoc doc = res.fetchOne();
+        assertEquals(8, ((JsonNumber) doc.get("X")).getInteger().intValue());
+
+        res = this.collection.find().fields(expr("{'X':4<< +(3-2)}")).execute();
+        assertTrue(res.hasData());
+        doc = res.fetchOne();
+        assertEquals(8, ((JsonNumber) doc.get("X")).getInteger().intValue());
+
+        res = this.collection.find().fields(expr("{'X':4<< !(2-2)}")).execute();
+        assertTrue(res.hasData());
+        doc = res.fetchOne();
+        assertEquals(8, ((JsonNumber) doc.get("X")).getInteger().intValue());
+
+        res = this.collection.find("F1 = -(-123)").execute();
+        assertTrue(res.hasData());
+        doc = res.fetchOne();
+        assertEquals("1004", ((JsonString) doc.get("_id")).getString());
+    }
 }

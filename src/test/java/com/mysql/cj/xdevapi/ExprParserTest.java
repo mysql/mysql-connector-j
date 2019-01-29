@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -165,6 +165,7 @@ public class ExprParserTest {
         checkParseRoundTrip("a is true and b is null and C + 1 > 40 and (thetime == now() or hungry())",
                 "((((a is TRUE) && (b is NULL)) && ((C + 1) > 40)) && ((thetime == now()) || hungry()))");
         checkParseRoundTrip("a + b + -c > 2", "(((a + b) + -c) > 2)");
+        checkParseRoundTrip("a + b - +c > 2", "(((a + b) - +c) > 2)");
         checkParseRoundTrip("now () + b + c > 2", "(((now() + b) + c) > 2)");
         checkParseRoundTrip("now () + $.b + c > 2", "(((now() + $.b) + c) > 2)");
         checkParseRoundTrip("now () - interval +2 day > some_other_time() or something_else IS NOT NULL",
