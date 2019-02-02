@@ -4791,6 +4791,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "true");
         props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
@@ -4801,7 +4802,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         ((JdbcConnection) conn1).getServerVersion()));
 
         assertTrue(updateCount == loops);
-
     }
 
     public void testStackOverflowOnMissingInterceptor() throws Exception {

@@ -1,7 +1,7 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
-Version 8.0.15
+Version 8.0.16
 
   - Fix for Bug#92819 (28834959), EXPRPARSER THROWS WRONGARGUMENTEXCEPTION WHEN PARSING EMPTY JSON ARRAY.
 
@@ -14,6 +14,10 @@ Version 8.0.15
   - Fix for Bug#25650912, ERROR MESSAGE NOT CLEAR WHEN WE PASS A CHAR DATA TO ANY TABLE API.
 
   - Fix for Bug#25642021, CHANGEUSER() FAILS WHEN ENABLEPACKETDEBUG=TRUE.
+
+Version 8.0.15
+
+  - Fix for Bug#94051 (29261254), Not recommended default for 'allowLoadLocalInfile'.
 
 Version 8.0.14
 

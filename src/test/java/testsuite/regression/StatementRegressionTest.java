@@ -60,6 +60,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Statement;
@@ -2376,8 +2377,20 @@ public class StatementRegressionTest extends BaseTestCase {
             } else {
                 fileNameBuf = new StringBuilder(tempFile.getAbsolutePath());
             }
+            final String fileName = fileNameBuf.toString();
 
-            int updateCount = this.stmt
+            assertThrows(SQLSyntaxErrorException.class, "The used command is not allowed with this MySQL version", () -> {
+                this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileName + "' INTO TABLE loadDataRegress CHARACTER SET "
+                        + CharsetMapping.getMysqlCharsetForJavaEncoding(
+                                ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
+                                this.serverVersion));
+                return null;
+            });
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "true");
+            Connection testConn = getConnectionWithProps(props);
+            int updateCount = testConn.createStatement()
                     .executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "
                             + CharsetMapping.getMysqlCharsetForJavaEncoding(
                                     ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
