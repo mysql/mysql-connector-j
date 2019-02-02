@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.16
+
 Version 8.0.15
 
   - Fix for Bug#94051 (29261254), Not recommended default for 'allowLoadLocalInfile'.
