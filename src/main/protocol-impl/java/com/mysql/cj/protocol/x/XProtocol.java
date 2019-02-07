@@ -34,12 +34,15 @@ import static java.util.stream.Collectors.toMap;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.CharsetMapping;
@@ -63,6 +66,7 @@ import com.mysql.cj.exceptions.ConnectionIsClosedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.AbstractProtocol;
@@ -86,6 +90,7 @@ import com.mysql.cj.protocol.x.Notice.XSessionStateChanged;
 import com.mysql.cj.result.DefaultColumnDefinition;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.LongValueFactory;
+import com.mysql.cj.util.SequentialIdLease;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities;
@@ -94,12 +99,15 @@ import com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData;
 import com.mysql.cj.x.protobuf.MysqlxResultset.Row;
 import com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateContinue;
 import com.mysql.cj.xdevapi.FilterParams;
+import com.mysql.cj.xdevapi.PreparableStatement;
+import com.mysql.cj.xdevapi.PreparableStatement.PreparableStatementFinalizer;
 import com.mysql.cj.xdevapi.SqlResult;
 
 /**
  * Low-level interface to communications with X Plugin.
  */
 public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XMessage> {
+    private static int RETRY_PREPARE_STATEMENT_COUNTDOWN = 100;
 
     private MessageReader<XMessageHeader, XMessage> reader;
     private MessageSender<XMessage> sender;
@@ -116,6 +124,13 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public String defaultSchemaName;
 
     private Map<String, Object> clientCapabilities = new HashMap<>();
+
+    /** Keeps track of whether this X Server session supports prepared statements. True by default until first failure of a statement prepare. */
+    private boolean supportsPreparedStatements = true;
+    private int retryPrepareStatementCountdown = 0;
+    private SequentialIdLease preparedStatementIds = new SequentialIdLease();
+    private ReferenceQueue<PreparableStatement<?>> preparableStatementRefQueue = new ReferenceQueue<>();
+    private Map<Integer, PreparableStatementFinalizer> preparableStatementFinalizerReferences = new TreeMap<>();
 
     public XProtocol(String host, int port, String defaultSchema, PropertySet propertySet) {
 
@@ -547,6 +562,90 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     }
 
     /**
+     * Checks if the MySQL server currently connected supports prepared statements.
+     * 
+     * @return
+     *         {@code true} if the MySQL server currently connected supports prepared statements.
+     */
+    public boolean supportsPreparedStatements() {
+        return this.supportsPreparedStatements;
+    }
+
+    /**
+     * Checks if enough statements have been executed in this MySQL server so that another prepare statement attempt should be done.
+     * 
+     * @return
+     *         {@code true} if enough executions have been done since last time a prepared statement failed to prepare
+     */
+    public boolean readyForPreparingStatements() {
+        if (this.retryPrepareStatementCountdown == 0) {
+            return true;
+        }
+        this.retryPrepareStatementCountdown--;
+        return false;
+    }
+
+    /**
+     * Returns an id to be used as a client-managed prepared statement id. The method {@link #freePreparedStatementId(int)} must be called when the prepared
+     * statement is deallocated so that the same id can be re-used.
+     * 
+     * @return a new identifier to be used as prepared statement id
+     */
+    public int getNewPreparedStatementId(PreparableStatement<?> preparableStatement) {
+        if (!this.supportsPreparedStatements) {
+            throw new XProtocolError("The connected MySQL server does not support prepared statements.");
+        }
+        int preparedStatementId = this.preparedStatementIds.allocateSequentialId();
+        this.preparableStatementFinalizerReferences.put(preparedStatementId,
+                new PreparableStatementFinalizer(preparableStatement, this.preparableStatementRefQueue, preparedStatementId));
+        return preparedStatementId;
+    }
+
+    /**
+     * Frees a prepared statement id so that it can be reused. Note that freeing an id from an active prepared statement will result in a statement prepare
+     * conflict next time one gets prepared with the same released id.
+     * 
+     * @param preparedStatementId
+     *            the prepared statement id to release
+     */
+    public void freePreparedStatementId(int preparedStatementId) {
+        if (!this.supportsPreparedStatements) {
+            throw new XProtocolError("The connected MySQL server does not support prepared statements.");
+        }
+        this.preparedStatementIds.releaseSequentialId(preparedStatementId);
+        this.preparableStatementFinalizerReferences.remove(preparedStatementId);
+    }
+
+    /**
+     * Informs this protocol instance that preparing a statement on the connected server failed.
+     * 
+     * @param preparedStatementId
+     *            the id of the prepared statement that failed to prepare
+     * @return
+     *         {@code true} if the exception was properly handled
+     */
+    public boolean failedPreparingStatement(int preparedStatementId, XProtocolError e) {
+        freePreparedStatementId(preparedStatementId);
+
+        if (e.getErrorCode() == MysqlErrorNumbers.ER_MAX_PREPARED_STMT_COUNT_REACHED) {
+            this.retryPrepareStatementCountdown = RETRY_PREPARE_STATEMENT_COUNTDOWN;
+            return true;
+        }
+
+        if (e.getErrorCode() == MysqlErrorNumbers.ER_UNKNOWN_COM_ERROR && this.preparableStatementFinalizerReferences.isEmpty()) {
+            // The server doesn't recognize the protocol message, so it doesn't support prepared statements.
+            this.supportsPreparedStatements = false;
+            this.retryPrepareStatementCountdown = 0;
+            this.preparedStatementIds = null;
+            this.preparableStatementRefQueue = null;
+            this.preparableStatementFinalizerReferences = null;
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Signal the intent to start processing a new command. A session supports processing a single command at a time. Results are reading lazily from the
      * wire. It is necessary to flush any pending result before starting a new command. This method performs the flush if necessary.
      */
@@ -557,6 +656,25 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             } finally {
                 // so we don't call finishStreaming() again if there's an exception
                 this.currentResultStreamer = null;
+            }
+        }
+
+        // Before continuing clean up any abandoned prepared statements that were not properly deallocated.
+        if (this.supportsPreparedStatements) {
+            Reference<? extends PreparableStatement<?>> ref;
+            while ((ref = this.preparableStatementRefQueue.poll()) != null) {
+                PreparableStatementFinalizer psf = (PreparableStatementFinalizer) ref;
+                psf.clear();
+                try {
+                    this.sender.send(((XMessageBuilder) this.messageBuilder).buildPrepareDeallocate(psf.getPreparedStatementId()));
+                    readOk();
+                } catch (XProtocolError e) {
+                    if (e.getErrorCode() != MysqlErrorNumbers.ER_X_BAD_STATEMENT_ID) {
+                        throw e;
+                    } // Else ignore exception, the Statement may have been deallocated elsewhere.
+                } finally {
+                    freePreparedStatementId(psf.getPreparedStatementId());
+                }
             }
         }
     }
@@ -707,6 +825,13 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             this.authProvider.changeUser(null, this.currUser, this.currPassword, this.currDatabase);
         }
 
+        // No prepared statements survived to Mysqlx.Session.Reset. Reset all related control structures.
+        if (this.supportsPreparedStatements) {
+            this.retryPrepareStatementCountdown = 0;
+            this.preparedStatementIds = new SequentialIdLease();
+            this.preparableStatementRefQueue = new ReferenceQueue<>();
+            this.preparableStatementFinalizerReferences = new TreeMap<>();
+        }
     }
 
     @Override

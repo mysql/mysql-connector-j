@@ -47,8 +47,11 @@ import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.StatementExecuteOkBuilder;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 import com.mysql.cj.protocol.x.XProtocol;
+import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.result.RowList;
 import com.mysql.cj.xdevapi.FilterParams;
+import com.mysql.cj.xdevapi.FilterableStatement;
+import com.mysql.cj.xdevapi.PreparableStatement;
 import com.mysql.cj.xdevapi.SqlDataResult;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.SqlResultImpl;
@@ -90,9 +93,91 @@ public class MysqlxSession extends CoreSession {
         }
     }
 
+    /**
+     * Consume an OK packet from the underlying protocol.
+     * 
+     * @return <code>null</code>
+     */
+    public Void readOk() {
+        ((XProtocol) this.protocol).readOk();
+        return null;
+    }
+
+    /**
+     * Check if current session is using a MySQL server that supports prepared statements.
+     * 
+     * @return
+     *         {@code true} if the MySQL server in use supports prepared statements
+     */
+    public boolean supportsPreparedStatements() {
+        return ((XProtocol) this.protocol).supportsPreparedStatements();
+    }
+
+    /**
+     * Check if enough statements were executed in the underlying MySQL server so that another prepare statement attempt should be done.
+     * 
+     * @return
+     *         {@code true} if enough executions have been done since last time a prepared statement failed to be prepared
+     */
+    public boolean readyForPreparingStatements() {
+        return ((XProtocol) this.protocol).readyForPreparingStatements();
+    }
+
+    /**
+     * Return an id to be used as a client-managed prepared statement id.
+     * 
+     * @return a new identifier to be used as prepared statement id
+     */
+    public int getNewPreparedStatementId(PreparableStatement<?> preparableStatement) {
+        return ((XProtocol) this.protocol).getNewPreparedStatementId(preparableStatement);
+    }
+
+    /**
+     * Free a prepared statement id so that it can be reused.
+     * 
+     * @param preparedStatementId
+     *            the prepared statement id to release
+     */
+    public void freePreparedStatementId(int preparedStatementId) {
+        ((XProtocol) this.protocol).freePreparedStatementId(preparedStatementId);
+    }
+
+    /**
+     * Propagate to the underlying protocol instance that preparing a statement on the connected server failed.
+     * 
+     * @param preparedStatementId
+     *            the id of the prepared statement that failed to be prepared
+     * @return
+     *         {@code true} if the exception was properly handled
+     */
+    public boolean failedPreparingStatement(int preparedStatementId, XProtocolError e) {
+        return ((XProtocol) this.protocol).failedPreparingStatement(preparedStatementId, e);
+    }
+
     public <T extends ResultStreamer> T find(FilterParams filterParams,
             Function<ColumnDefinition, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> resultCtor) {
         this.protocol.send(((XMessageBuilder) this.messageBuilder).buildFind(filterParams), 0);
+        ColumnDefinition metadata = this.protocol.readMetadata();
+        T res = resultCtor.apply(metadata).apply(((XProtocol) this.protocol).getRowInputStream(metadata), this.protocol::readQueryResult);
+        this.protocol.setCurrentResultStreamer(res);
+        return res;
+    }
+
+    /**
+     * Execute a previously prepared find statement using the given arguments.
+     * 
+     * @param preparedStatementId
+     *            the prepared statement id to execute. This statement must be previously prepared
+     * @param filterParams
+     *            the {@link FilterableStatement} params that contain the arguments for the previously-defined placeholders
+     * @param resultCtor
+     *            a constructor that builds the results.
+     * @return
+     *         the result from the given constructor
+     */
+    public <T extends ResultStreamer> T executePreparedFind(int preparedStatementId, FilterParams filterParams,
+            Function<ColumnDefinition, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> resultCtor) {
+        this.protocol.send(((XMessageBuilder) this.messageBuilder).buildPrepareExecute(preparedStatementId, filterParams), 0);
         ColumnDefinition metadata = this.protocol.readMetadata();
         T res = resultCtor.apply(metadata).apply(((XProtocol) this.protocol).getRowInputStream(metadata), this.protocol::readQueryResult);
         this.protocol.setCurrentResultStreamer(res);
@@ -109,6 +194,16 @@ public class MysqlxSession extends CoreSession {
 
     public SqlResult executeSql(String sql, List<Object> args) {
         this.protocol.send(this.messageBuilder.buildSqlStatement(sql, args), 0);
+        return executeSqlProcessResult();
+    }
+
+    /**
+     * Process the response messages from a <i>StmtExecute</i> request.
+     * 
+     * @return
+     *         an {@link SqlResult} with the returned rows.
+     */
+    private SqlResult executeSqlProcessResult() {
         boolean readLastResult[] = new boolean[1];
         Supplier<StatementExecuteOk> okReader = () -> {
             if (readLastResult[0]) {
@@ -145,5 +240,4 @@ public class MysqlxSession extends CoreSession {
     public boolean isClosed() {
         return !((XProtocol) this.protocol).isOpen();
     }
-
 }

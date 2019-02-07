@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,6 +43,7 @@ import org.junit.Test;
 
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.xdevapi.AddResult;
+import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DbDocImpl;
 import com.mysql.cj.xdevapi.DocResult;
@@ -50,7 +51,10 @@ import com.mysql.cj.xdevapi.JsonArray;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonParser;
 import com.mysql.cj.xdevapi.JsonString;
+import com.mysql.cj.xdevapi.ModifyStatement;
 import com.mysql.cj.xdevapi.Result;
+import com.mysql.cj.xdevapi.Session;
+import com.mysql.cj.xdevapi.SessionFactory;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
 /**
@@ -688,5 +692,252 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         doc = this.collection.find("name='bob'").execute().fetchOne();
         int age = ((JsonNumber) doc.get("age")).getInteger();
         assertEquals(46, age);
+    }
+
+    @Test
+    public void testPreparedStatements() {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+            return;
+        }
+
+        try {
+            // Prepare test data.
+            testPreparedStatementsResetData();
+
+            SessionFactory sf = new SessionFactory();
+
+            /*
+             * Test common usage.
+             */
+            Session testSession = sf.getSession(this.testProperties);
+
+            int sessionThreadId = getThreadId(testSession);
+            assertPreparedStatementsCount(sessionThreadId, 0, 1);
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            Collection testCol1 = testSession.getDefaultSchema().getCollection(this.collectionName + "_1");
+            Collection testCol2 = testSession.getDefaultSchema().getCollection(this.collectionName + "_2");
+            Collection testCol3 = testSession.getDefaultSchema().getCollection(this.collectionName + "_3");
+            Collection testCol4 = testSession.getDefaultSchema().getCollection(this.collectionName + "_4");
+
+            // Initialize several ModifyStatement objects.
+            ModifyStatement testModify1 = testCol1.modify("true").set("ord", expr("$.ord * 10")); // Modify all.
+            ModifyStatement testModify2 = testCol2.modify("$.ord >= :n").set("ord", expr("$.ord * 10")); // Criteria with one placeholder.
+            ModifyStatement testModify3 = testCol3.modify("$.ord >= :n AND $.ord <= :n + 1").set("ord", expr("$.ord * 10")); // Criteria with same placeholder repeated.
+            ModifyStatement testModify4 = testCol4.modify("$.ord >= :n AND $.ord <= :m").set("ord", expr("$.ord * 10")); // Criteria with multiple placeholders.
+
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify1, 0, -1);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify2, 0, -1);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify3, 0, -1);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify4, 0, -1);
+
+            // A. Set binds: 1st execute -> non-prepared.
+            assertTestPreparedStatementsResult(testModify1.execute(), 4, testCol1.getName(), 10, 20, 30, 40);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify1, 0, -1);
+            assertTestPreparedStatementsResult(testModify2.bind("n", 2).execute(), 3, testCol2.getName(), 1, 20, 30, 40);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify2, 0, -1);
+            assertTestPreparedStatementsResult(testModify3.bind("n", 2).execute(), 2, testCol3.getName(), 1, 20, 30, 4);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify3, 0, -1);
+            assertTestPreparedStatementsResult(testModify4.bind("n", 2).bind("m", 3).execute(), 2, testCol4.getName(), 1, 20, 30, 4);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify4, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+            testPreparedStatementsResetData();
+
+            // B. Set sort resets execution count: 1st execute -> non-prepared.
+            assertTestPreparedStatementsResult(testModify1.sort("$._id").execute(), 4, testCol1.getName(), 10, 20, 30, 40);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify1, 0, -1);
+            assertTestPreparedStatementsResult(testModify2.sort("$._id").execute(), 3, testCol2.getName(), 1, 20, 30, 40);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify2, 0, -1);
+            assertTestPreparedStatementsResult(testModify3.sort("$._id").execute(), 2, testCol3.getName(), 1, 20, 30, 4);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify3, 0, -1);
+            assertTestPreparedStatementsResult(testModify4.sort("$._id").execute(), 2, testCol4.getName(), 1, 20, 30, 4);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify4, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+            testPreparedStatementsResetData();
+
+            // C. Set binds reuse statement: 2nd execute -> prepare + execute.
+            assertTestPreparedStatementsResult(testModify1.execute(), 4, testCol1.getName(), 10, 20, 30, 40);
+            assertPreparedStatementsCountsAndId(testSession, 1, testModify1, 1, 1);
+            assertTestPreparedStatementsResult(testModify2.bind("n", 3).execute(), 2, testCol2.getName(), 1, 2, 30, 40);
+            assertPreparedStatementsCountsAndId(testSession, 2, testModify2, 2, 1);
+            assertTestPreparedStatementsResult(testModify3.bind("n", 3).execute(), 2, testCol3.getName(), 1, 2, 30, 40);
+            assertPreparedStatementsCountsAndId(testSession, 3, testModify3, 3, 1);
+            assertTestPreparedStatementsResult(testModify4.bind("m", 4).execute(), 3, testCol4.getName(), 1, 20, 30, 40);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify4, 4, 1);
+
+            assertPreparedStatementsStatusCounts(testSession, 4, 4, 0);
+            testPreparedStatementsResetData();
+
+            // D. Set binds reuse statement: 3rd execute -> execute.
+            assertTestPreparedStatementsResult(testModify1.execute(), 4, testCol1.getName(), 10, 20, 30, 40);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify1, 1, 2);
+            assertTestPreparedStatementsResult(testModify2.bind("n", 4).execute(), 1, testCol2.getName(), 1, 2, 3, 40);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify2, 2, 2);
+            assertTestPreparedStatementsResult(testModify3.bind("n", 1).execute(), 2, testCol3.getName(), 10, 20, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify3, 3, 2);
+            assertTestPreparedStatementsResult(testModify4.bind("m", 2).execute(), 1, testCol4.getName(), 1, 20, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify4, 4, 2);
+
+            assertPreparedStatementsStatusCounts(testSession, 4, 8, 0);
+            testPreparedStatementsResetData();
+
+            // E. Set new values deallocates and resets execution count: 1st execute -> deallocate + non-prepared.
+            assertTestPreparedStatementsResult(testModify1.set("ord", expr("$.ord * 100")).execute(), 4, testCol1.getName(), 100, 200, 300, 400);
+            assertPreparedStatementsCountsAndId(testSession, 3, testModify1, 0, -1);
+            assertTestPreparedStatementsResult(testModify2.set("ord", expr("$.ord * 100")).execute(), 1, testCol2.getName(), 1, 2, 3, 400);
+            assertPreparedStatementsCountsAndId(testSession, 2, testModify2, 0, -1);
+            assertTestPreparedStatementsResult(testModify3.set("ord", expr("$.ord * 100")).execute(), 2, testCol3.getName(), 100, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 1, testModify3, 0, -1);
+            assertTestPreparedStatementsResult(testModify4.set("ord", expr("$.ord * 100")).execute(), 1, testCol4.getName(), 1, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify4, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 4, 8, 4);
+            testPreparedStatementsResetData();
+
+            // F. No Changes: 2nd execute -> prepare + execute.
+            assertTestPreparedStatementsResult(testModify1.execute(), 4, testCol1.getName(), 100, 200, 300, 400);
+            assertPreparedStatementsCountsAndId(testSession, 1, testModify1, 1, 1);
+            assertTestPreparedStatementsResult(testModify2.execute(), 1, testCol2.getName(), 1, 2, 3, 400);
+            assertPreparedStatementsCountsAndId(testSession, 2, testModify2, 2, 1);
+            assertTestPreparedStatementsResult(testModify3.execute(), 2, testCol3.getName(), 100, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 3, testModify3, 3, 1);
+            assertTestPreparedStatementsResult(testModify4.execute(), 1, testCol4.getName(), 1, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify4, 4, 1);
+
+            assertPreparedStatementsStatusCounts(testSession, 8, 12, 4);
+            testPreparedStatementsResetData();
+
+            // G. Set limit for the first time deallocates and re-prepares: 1st execute -> re-prepare + execute.
+            assertTestPreparedStatementsResult(testModify1.limit(1).execute(), 1, testCol1.getName(), 100, 2, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify1, 1, 1);
+            assertTestPreparedStatementsResult(testModify2.limit(1).execute(), 1, testCol2.getName(), 1, 2, 3, 400);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify2, 2, 1);
+            assertTestPreparedStatementsResult(testModify3.limit(1).execute(), 1, testCol3.getName(), 100, 2, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify3, 3, 1);
+            assertTestPreparedStatementsResult(testModify4.limit(1).execute(), 1, testCol4.getName(), 1, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify4, 4, 1);
+
+            assertPreparedStatementsStatusCounts(testSession, 12, 16, 8);
+            testPreparedStatementsResetData();
+
+            // H. Set limit reuse prepared statement: 2nd execute -> execute.
+            assertTestPreparedStatementsResult(testModify1.limit(2).execute(), 2, testCol1.getName(), 100, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify1, 1, 2);
+            assertTestPreparedStatementsResult(testModify2.limit(2).execute(), 1, testCol2.getName(), 1, 2, 3, 400);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify2, 2, 2);
+            assertTestPreparedStatementsResult(testModify3.limit(2).execute(), 2, testCol3.getName(), 100, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify3, 3, 2);
+            assertTestPreparedStatementsResult(testModify4.limit(2).execute(), 1, testCol4.getName(), 1, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify4, 4, 2);
+
+            assertPreparedStatementsStatusCounts(testSession, 12, 20, 8);
+            testPreparedStatementsResetData();
+
+            // I. Set sort deallocates and resets execution count, set limit has no effect: 1st execute -> deallocate + non-prepared.
+            assertTestPreparedStatementsResult(testModify1.sort("$._id").limit(1).execute(), 1, testCol1.getName(), 100, 2, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 3, testModify1, 0, -1);
+            assertTestPreparedStatementsResult(testModify2.sort("$._id").limit(1).execute(), 1, testCol2.getName(), 1, 2, 3, 400);
+            assertPreparedStatementsCountsAndId(testSession, 2, testModify2, 0, -1);
+            assertTestPreparedStatementsResult(testModify3.sort("$._id").limit(1).execute(), 1, testCol3.getName(), 100, 2, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 1, testModify3, 0, -1);
+            assertTestPreparedStatementsResult(testModify4.sort("$._id").limit(1).execute(), 1, testCol4.getName(), 1, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 0, testModify4, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 12, 20, 12);
+            testPreparedStatementsResetData();
+
+            // J. Set limit reuse statement: 2nd execute -> prepare + execute.
+            assertTestPreparedStatementsResult(testModify1.limit(2).execute(), 2, testCol1.getName(), 100, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 1, testModify1, 1, 1);
+            assertTestPreparedStatementsResult(testModify2.limit(2).execute(), 1, testCol2.getName(), 1, 2, 3, 400);
+            assertPreparedStatementsCountsAndId(testSession, 2, testModify2, 2, 1);
+            assertTestPreparedStatementsResult(testModify3.limit(2).execute(), 2, testCol3.getName(), 100, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 3, testModify3, 3, 1);
+            assertTestPreparedStatementsResult(testModify4.limit(2).execute(), 1, testCol4.getName(), 1, 200, 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testModify4, 4, 1);
+
+            assertPreparedStatementsStatusCounts(testSession, 16, 24, 12);
+            testPreparedStatementsResetData();
+
+            testSession.close();
+            assertPreparedStatementsCount(sessionThreadId, 0, 10); // Prepared statements won't live past the closing of the session.
+
+            /*
+             * Test falling back onto non-prepared statements.
+             */
+            testSession = sf.getSession(this.testProperties);
+            int origMaxPrepStmtCount = this.session.sql("SELECT @@max_prepared_stmt_count").execute().fetchOne().getInt(0);
+
+            try {
+                // Allow preparing only one more statement.
+                this.session.sql("SET GLOBAL max_prepared_stmt_count = ?").bind(getPreparedStatementsCount() + 1).execute();
+
+                sessionThreadId = getThreadId(testSession);
+                assertPreparedStatementsCount(sessionThreadId, 0, 1);
+                assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+                testCol1 = testSession.getDefaultSchema().getCollection(this.collectionName + "_1");
+                testCol2 = testSession.getDefaultSchema().getCollection(this.collectionName + "_2");
+
+                testModify1 = testCol1.modify("true").set("ord", expr("$.ord * 10"));
+                testModify2 = testCol2.modify("true").set("ord", expr("$.ord * 10"));
+
+                // 1st execute -> don't prepare.
+                assertTestPreparedStatementsResult(testModify1.execute(), 4, testCol1.getName(), 10, 20, 30, 40);
+                assertPreparedStatementsCountsAndId(testSession, 0, testModify1, 0, -1);
+                assertTestPreparedStatementsResult(testModify2.execute(), 4, testCol2.getName(), 10, 20, 30, 40);
+                assertPreparedStatementsCountsAndId(testSession, 0, testModify2, 0, -1);
+
+                assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+                testPreparedStatementsResetData();
+
+                // 2nd execute -> prepare + execute.
+                assertTestPreparedStatementsResult(testModify1.execute(), 4, testCol1.getName(), 10, 20, 30, 40);
+                assertPreparedStatementsCountsAndId(testSession, 1, testModify1, 1, 1);
+                assertTestPreparedStatementsResult(testModify2.execute(), 4, testCol2.getName(), 10, 20, 30, 40); // Fails preparing, execute as non-prepared.
+                assertPreparedStatementsCountsAndId(testSession, 1, testModify2, 0, -1);
+
+                assertPreparedStatementsStatusCounts(testSession, 2, 1, 0); // Failed prepare also counts.
+                testPreparedStatementsResetData();
+
+                // 3rd execute -> execute.
+                assertTestPreparedStatementsResult(testModify1.execute(), 4, testCol1.getName(), 10, 20, 30, 40);
+                assertPreparedStatementsCountsAndId(testSession, 1, testModify1, 1, 2);
+                assertTestPreparedStatementsResult(testModify2.execute(), 4, testCol2.getName(), 10, 20, 30, 40); // Execute as non-prepared.
+                assertPreparedStatementsCountsAndId(testSession, 1, testModify2, 0, -1);
+
+                assertPreparedStatementsStatusCounts(testSession, 2, 2, 0);
+                testPreparedStatementsResetData();
+
+                testSession.close();
+                assertPreparedStatementsCount(sessionThreadId, 0, 10); // Prepared statements won't live past the closing of the session.
+            } finally {
+                this.session.sql("SET GLOBAL max_prepared_stmt_count = ?").bind(origMaxPrepStmtCount).execute();
+            }
+        } finally {
+            for (int i = 0; i < 4; i++) {
+                dropCollection(this.collectionName + "_" + (i + 1));
+            }
+        }
+    }
+
+    private void testPreparedStatementsResetData() {
+        for (int i = 0; i < 4; i++) {
+            Collection col = this.session.getDefaultSchema().createCollection(this.collectionName + "_" + (i + 1), true);
+            col.remove("true").execute();
+            col.add("{\"_id\":\"1\", \"ord\": 1}", "{\"_id\":\"2\", \"ord\": 2}", "{\"_id\":\"3\", \"ord\": 3}", "{\"_id\":\"4\", \"ord\": 4}").execute();
+        }
+    }
+
+    @SuppressWarnings("hiding")
+    private void assertTestPreparedStatementsResult(Result res, int expectedAffectedItemsCount, String collectionName, int... expectedValues) {
+        assertEquals(expectedAffectedItemsCount, res.getAffectedItemsCount());
+        DocResult docRes = this.schema.getCollection(collectionName).find().execute();
+        assertEquals(expectedValues.length, docRes.count());
+        for (int v : expectedValues) {
+            assertEquals(v, ((JsonNumber) docRes.next().get("ord")).getInteger().intValue());
+        }
     }
 }

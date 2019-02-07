@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -27,44 +27,36 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package com.mysql.cj.xdevapi;
+package com.mysql.cj.util;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 
-/**
- * {@link FilterParams} implementation for {@link Table} syntax.
- */
-public class TableFilterParams extends AbstractFilterParams {
+public class SequentialIdLease {
+    private Set<Integer> sequentialIdsLease = new TreeSet<>();
+
     /**
-     * Constructor.
+     * Finds and allocates the first available sequential id.
      * 
-     * @param schemaName
-     *            Schema name
-     * @param collectionName
-     *            Collection name
+     * @return the next free sequential id.
      */
-    public TableFilterParams(String schemaName, String collectionName) {
-        this(schemaName, collectionName, true);
+    public int allocateSequentialId() {
+        int nextSequentialId = 0;
+        for (Iterator<Integer> it = this.sequentialIdsLease.iterator(); it.hasNext() && nextSequentialId + 1 == it.next(); nextSequentialId++) {
+            // Find the first free sequential id.
+        }
+        this.sequentialIdsLease.add(++nextSequentialId);
+        return nextSequentialId;
     }
 
     /**
-     * Constructor.
+     * Frees the given sequential id so that it can be reused.
      * 
-     * @param schemaName
-     *            Schema name
-     * @param collectionName
-     *            Collection name
-     * @param supportsOffset
-     *            Whether <i>offset</i> is supported or not
+     * @param sequentialId
+     *            the sequential id to release
      */
-    public TableFilterParams(String schemaName, String collectionName, boolean supportsOffset) {
-        super(schemaName, collectionName, supportsOffset, true);
-    }
-
-    @Override
-    public void setFields(String... projection) {
-        this.projection = projection;
-        this.fields = new ExprParser(Arrays.stream(projection).collect(Collectors.joining(", ")), true).parseTableSelectProjection();
+    public void releaseSequentialId(int sequentialId) {
+        this.sequentialIdsLease.remove(sequentialId);
     }
 }

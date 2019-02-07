@@ -32,6 +32,7 @@ package com.mysql.cj.xdevapi;
 import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.MysqlxSession;
+import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.xdevapi.FilterParams.RowLock;
 import com.mysql.cj.xdevapi.FilterParams.RowLockOptions;
 
@@ -39,8 +40,6 @@ import com.mysql.cj.xdevapi.FilterParams.RowLockOptions;
  * {@link SelectStatement} implementation.
  */
 public class SelectStatementImpl extends FilterableStatement<SelectStatement, RowResult> implements SelectStatement {
-    private MysqlxSession mysqlxSession;
-
     /* package private */ SelectStatementImpl(MysqlxSession mysqlxSession, String schema, String table, String... projection) {
         super(new TableFilterParams(schema, table));
         this.mysqlxSession = mysqlxSession;
@@ -49,8 +48,20 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
         }
     }
 
-    public RowResultImpl execute() {
+    @Override
+    protected RowResultImpl executeStatement() {
         return this.mysqlxSession.find(this.filterParams, metadata -> (rows, task) -> new RowResultImpl(metadata,
+                this.mysqlxSession.getServerSession().getDefaultTimeZone(), rows, task, this.mysqlxSession.getPropertySet()));
+    }
+
+    @Override
+    protected XMessage getPrepareStatementXMessage() {
+        return getMessageBuilder().buildPrepareFind(this.preparedStatementId, this.filterParams);
+    }
+
+    @Override
+    protected RowResultImpl executePreparedStatement() {
+        return this.mysqlxSession.executePreparedFind(this.preparedStatementId, this.filterParams, metadata -> (rows, task) -> new RowResultImpl(metadata,
                 this.mysqlxSession.getServerSession().getDefaultTimeZone(), rows, task, this.mysqlxSession.getPropertySet()));
     }
 
@@ -61,11 +72,13 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
 
     @Override
     public SelectStatement groupBy(String... groupBy) {
+        resetPrepareState();
         this.filterParams.setGrouping(groupBy);
         return this;
     }
 
     public SelectStatement having(String having) {
+        resetPrepareState();
         this.filterParams.setGroupingCriteria(having);
         return this;
     }
@@ -82,6 +95,7 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
 
     @Override
     public SelectStatement lockShared(LockContention lockContention) {
+        resetPrepareState();
         this.filterParams.setLock(RowLock.SHARED_LOCK);
         switch (lockContention) {
             case NOWAIT:
@@ -102,6 +116,7 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
 
     @Override
     public SelectStatement lockExclusive(LockContention lockContention) {
+        resetPrepareState();
         this.filterParams.setLock(RowLock.EXCLUSIVE_LOCK);
         switch (lockContention) {
             case NOWAIT:

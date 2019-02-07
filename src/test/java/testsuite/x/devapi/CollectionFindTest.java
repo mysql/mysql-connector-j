@@ -59,6 +59,7 @@ import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DocResult;
+import com.mysql.cj.xdevapi.FindStatement;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.Row;
@@ -984,6 +985,221 @@ public class CollectionFindTest extends BaseCollectionTestCase {
             doc = res.fetchOne();
             assertEquals("1004", ((JsonString) doc.get("_id")).getString());
         }
+    }
 
+    @Test
+    public void testPreparedStatements() {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+            return;
+        }
+
+        // Prepare test data.
+        this.collection.add("{\"_id\":\"1\", \"ord\": 1}", "{\"_id\":\"2\", \"ord\": 2}", "{\"_id\":\"3\", \"ord\": 3}", "{\"_id\":\"4\", \"ord\": 4}",
+                "{\"_id\":\"5\", \"ord\": 5}", "{\"_id\":\"6\", \"ord\": 6}", "{\"_id\":\"7\", \"ord\": 7}", "{\"_id\":\"8\", \"ord\": 8}").execute();
+
+        SessionFactory sf = new SessionFactory();
+
+        /*
+         * Test common usage.
+         */
+        Session testSession = sf.getSession(this.testProperties);
+
+        int sessionThreadId = getThreadId(testSession);
+        assertPreparedStatementsCount(sessionThreadId, 0, 1);
+        assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+        Collection testCol = testSession.getDefaultSchema().getCollection(this.collectionName);
+
+        // Initialize several FindStatement objects.
+        FindStatement testFind1 = testCol.find(); // Find all.
+        FindStatement testFind2 = testCol.find("$.ord >= :n"); // Criteria with one placeholder.
+        FindStatement testFind3 = testCol.find("$.ord >= :n AND $.ord <= :n + 3"); // Criteria with same placeholder repeated.
+        FindStatement testFind4 = testCol.find("$.ord >= :n AND $.ord <= :m"); // Criteria with multiple placeholders.
+
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind1, 0, -1);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind2, 0, -1);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind3, 0, -1);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind4, 0, -1);
+
+        assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+        // A. Set binds: 1st execute -> non-prepared.
+        assertTestPreparedStatementsResult(testFind1.execute(), 1, 8);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind1, 0, -1);
+        assertTestPreparedStatementsResult(testFind2.bind("n", 2).execute(), 2, 8);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind2, 0, -1);
+        assertTestPreparedStatementsResult(testFind3.bind("n", 2).execute(), 2, 5);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind3, 0, -1);
+        assertTestPreparedStatementsResult(testFind4.bind("n", 2).bind("m", 5).execute(), 2, 5);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind4, 0, -1);
+
+        assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+        // B. Set sort resets execution count: 1st execute -> non-prepared.
+        assertTestPreparedStatementsResult(testFind1.sort("$._id").execute(), 1, 8);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind1, 0, -1);
+        assertTestPreparedStatementsResult(testFind2.sort("$._id").execute(), 2, 8);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind2, 0, -1);
+        assertTestPreparedStatementsResult(testFind3.sort("$._id").execute(), 2, 5);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind3, 0, -1);
+        assertTestPreparedStatementsResult(testFind4.sort("$._id").execute(), 2, 5);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind4, 0, -1);
+
+        assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+        // C. Set binds reuse statement: 2nd execute -> prepare + execute.
+        assertTestPreparedStatementsResult(testFind1.execute(), 1, 8);
+        assertPreparedStatementsCountsAndId(testSession, 1, testFind1, 1, 1);
+        assertTestPreparedStatementsResult(testFind2.bind("n", 3).execute(), 3, 8);
+        assertPreparedStatementsCountsAndId(testSession, 2, testFind2, 2, 1);
+        assertTestPreparedStatementsResult(testFind3.bind("n", 3).execute(), 3, 6);
+        assertPreparedStatementsCountsAndId(testSession, 3, testFind3, 3, 1);
+        assertTestPreparedStatementsResult(testFind4.bind("m", 6).execute(), 2, 6);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind4, 4, 1);
+
+        assertPreparedStatementsStatusCounts(testSession, 4, 4, 0);
+
+        // D. Set binds reuse statement: 3rd execute -> execute.
+        assertTestPreparedStatementsResult(testFind1.execute(), 1, 8);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind1, 1, 2);
+        assertTestPreparedStatementsResult(testFind2.bind("n", 4).execute(), 4, 8);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind2, 2, 2);
+        assertTestPreparedStatementsResult(testFind3.bind("n", 4).execute(), 4, 7);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind3, 3, 2);
+        assertTestPreparedStatementsResult(testFind4.bind("n", 3).bind("m", 7).execute(), 3, 7);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind4, 4, 2);
+
+        assertPreparedStatementsStatusCounts(testSession, 4, 8, 0);
+
+        // E. Set sort deallocates and resets execution count: 1st execute -> deallocate + non-prepared.
+        assertTestPreparedStatementsResult(testFind1.sort("$._id").execute(), 1, 8);
+        assertPreparedStatementsCountsAndId(testSession, 3, testFind1, 0, -1);
+        assertTestPreparedStatementsResult(testFind2.sort("$._id").bind("n", 4).execute(), 4, 8);
+        assertPreparedStatementsCountsAndId(testSession, 2, testFind2, 0, -1);
+        assertTestPreparedStatementsResult(testFind3.sort("$._id").bind("n", 4).execute(), 4, 7);
+        assertPreparedStatementsCountsAndId(testSession, 1, testFind3, 0, -1);
+        assertTestPreparedStatementsResult(testFind4.sort("$._id").bind("n", 3).bind("m", 7).execute(), 3, 7);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind4, 0, -1);
+
+        assertPreparedStatementsStatusCounts(testSession, 4, 8, 4);
+
+        // F. No Changes: 2nd execute -> prepare + execute.
+        assertTestPreparedStatementsResult(testFind1.execute(), 1, 8);
+        assertPreparedStatementsCountsAndId(testSession, 1, testFind1, 1, 1);
+        assertTestPreparedStatementsResult(testFind2.bind("n", 4).execute(), 4, 8);
+        assertPreparedStatementsCountsAndId(testSession, 2, testFind2, 2, 1);
+        assertTestPreparedStatementsResult(testFind3.bind("n", 4).execute(), 4, 7);
+        assertPreparedStatementsCountsAndId(testSession, 3, testFind3, 3, 1);
+        assertTestPreparedStatementsResult(testFind4.bind("n", 3).bind("m", 7).execute(), 3, 7);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind4, 4, 1);
+
+        assertPreparedStatementsStatusCounts(testSession, 8, 12, 4);
+
+        // G. Set limit for the first time deallocates and re-prepares: 1st execute -> re-prepare + execute.
+        assertTestPreparedStatementsResult(testFind1.limit(2).execute(), 1, 2);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind1, 1, 1);
+        assertTestPreparedStatementsResult(testFind2.limit(2).execute(), 4, 5);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind2, 2, 1);
+        assertTestPreparedStatementsResult(testFind3.limit(2).execute(), 4, 5);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind3, 3, 1);
+        assertTestPreparedStatementsResult(testFind4.limit(2).execute(), 3, 4);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind4, 4, 1);
+
+        assertPreparedStatementsStatusCounts(testSession, 12, 16, 8);
+
+        // H. Set limit and offset reuse prepared statement: 2nd execute -> execute.
+        assertTestPreparedStatementsResult(testFind1.limit(1).offset(1).execute(), 2, 2);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind1, 1, 2);
+        assertTestPreparedStatementsResult(testFind2.limit(1).offset(1).execute(), 5, 5);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind2, 2, 2);
+        assertTestPreparedStatementsResult(testFind3.limit(1).offset(1).execute(), 5, 5);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind3, 3, 2);
+        assertTestPreparedStatementsResult(testFind4.limit(1).offset(1).execute(), 4, 4);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind4, 4, 2);
+
+        assertPreparedStatementsStatusCounts(testSession, 12, 20, 8);
+
+        // I. Set sort deallocates and resets execution count, set limit and bind has no effect: 1st execute -> deallocate + non-prepared.
+        assertTestPreparedStatementsResult(testFind1.sort("$._id").limit(2).execute(), 2, 3);
+        assertPreparedStatementsCountsAndId(testSession, 3, testFind1, 0, -1);
+        assertTestPreparedStatementsResult(testFind2.sort("$._id").limit(2).bind("n", 4).execute(), 5, 6);
+        assertPreparedStatementsCountsAndId(testSession, 2, testFind2, 0, -1);
+        assertTestPreparedStatementsResult(testFind3.sort("$._id").limit(2).bind("n", 4).execute(), 5, 6);
+        assertPreparedStatementsCountsAndId(testSession, 1, testFind3, 0, -1);
+        assertTestPreparedStatementsResult(testFind4.sort("$._id").limit(2).bind("n", 3).bind("m", 7).execute(), 4, 5);
+        assertPreparedStatementsCountsAndId(testSession, 0, testFind4, 0, -1);
+
+        assertPreparedStatementsStatusCounts(testSession, 12, 20, 12);
+
+        // J. Set offset reuse statement: 2nd execute -> prepare + execute.
+        assertTestPreparedStatementsResult(testFind1.offset(0).execute(), 1, 2);
+        assertPreparedStatementsCountsAndId(testSession, 1, testFind1, 1, 1);
+        assertTestPreparedStatementsResult(testFind2.offset(0).execute(), 4, 5);
+        assertPreparedStatementsCountsAndId(testSession, 2, testFind2, 2, 1);
+        assertTestPreparedStatementsResult(testFind3.offset(0).execute(), 4, 5);
+        assertPreparedStatementsCountsAndId(testSession, 3, testFind3, 3, 1);
+        assertTestPreparedStatementsResult(testFind4.offset(0).execute(), 3, 4);
+        assertPreparedStatementsCountsAndId(testSession, 4, testFind4, 4, 1);
+
+        assertPreparedStatementsStatusCounts(testSession, 16, 24, 12);
+
+        testSession.close();
+        assertPreparedStatementsCount(sessionThreadId, 0, 10); // Prepared statements won't live past the closing of the session.
+
+        /*
+         * Test falling back onto non-prepared statements.
+         */
+        testSession = sf.getSession(this.testProperties);
+        int origMaxPrepStmtCount = this.session.sql("SELECT @@max_prepared_stmt_count").execute().fetchOne().getInt(0);
+
+        try {
+            // Allow preparing only one more statement.
+            this.session.sql("SET GLOBAL max_prepared_stmt_count = ?").bind(getPreparedStatementsCount() + 1).execute();
+
+            sessionThreadId = getThreadId(testSession);
+            assertPreparedStatementsCount(sessionThreadId, 0, 1);
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            testCol = testSession.getDefaultSchema().getCollection(this.collectionName);
+
+            testFind1 = testCol.find();
+            testFind2 = testCol.find();
+
+            // 1st execute -> don't prepare.
+            assertTestPreparedStatementsResult(testFind1.execute(), 1, 8);
+            assertPreparedStatementsCountsAndId(testSession, 0, testFind1, 0, -1);
+            assertTestPreparedStatementsResult(testFind2.execute(), 1, 8);
+            assertPreparedStatementsCountsAndId(testSession, 0, testFind2, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            // 2nd execute -> prepare + execute.
+            assertTestPreparedStatementsResult(testFind1.execute(), 1, 8);
+            assertPreparedStatementsCountsAndId(testSession, 1, testFind1, 1, 1);
+            assertTestPreparedStatementsResult(testFind2.execute(), 1, 8); // Fails preparing, execute as non-prepared.
+            assertPreparedStatementsCountsAndId(testSession, 1, testFind2, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 2, 1, 0); // Failed prepare also counts.
+
+            // 3rd execute -> execute.
+            assertTestPreparedStatementsResult(testFind1.execute(), 1, 8);
+            assertPreparedStatementsCountsAndId(testSession, 1, testFind1, 1, 2);
+            assertTestPreparedStatementsResult(testFind2.execute(), 1, 8); // Execute as non-prepared.
+            assertPreparedStatementsCountsAndId(testSession, 1, testFind2, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 2, 2, 0);
+
+            testSession.close();
+            assertPreparedStatementsCount(sessionThreadId, 0, 10); // Prepared statements won't live past the closing of the session.
+        } finally {
+            this.session.sql("SET GLOBAL max_prepared_stmt_count = ?").bind(origMaxPrepStmtCount).execute();
+        }
+    }
+
+    private void assertTestPreparedStatementsResult(DocResult res, int expectedMin, int expectedMax) {
+        for (DbDoc d : res.fetchAll()) {
+            assertEquals(expectedMin++, ((JsonNumber) d.get("ord")).getInteger().intValue());
+        }
+        assertEquals(expectedMax, expectedMin - 1);
     }
 }

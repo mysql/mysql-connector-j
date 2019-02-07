@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,32 +41,44 @@ import com.mysql.cj.protocol.x.XMessageBuilder;
  * {@link UpdateStatement} implementation.
  */
 public class UpdateStatementImpl extends FilterableStatement<UpdateStatement, Result> implements UpdateStatement {
-    private MysqlxSession mysqlxSession;
     private UpdateParams updateParams = new UpdateParams();
 
     /* package private */ UpdateStatementImpl(MysqlxSession mysqlxSession, String schema, String table) {
-        super(new TableFilterParams(schema, table));
+        super(new TableFilterParams(schema, table, false));
         this.mysqlxSession = mysqlxSession;
     }
 
-    public Result execute() {
-        StatementExecuteOk ok = this.mysqlxSession
-                .sendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder()).buildRowUpdate(this.filterParams, this.updateParams));
+    @Override
+    protected Result executeStatement() {
+        StatementExecuteOk ok = this.mysqlxSession.sendMessage(getMessageBuilder().buildRowUpdate(this.filterParams, this.updateParams));
+        return new UpdateResult(ok);
+    }
+
+    @Override
+    protected XMessage getPrepareStatementXMessage() {
+        return getMessageBuilder().buildPrepareRowUpdate(this.preparedStatementId, this.filterParams, this.updateParams);
+    }
+
+    @Override
+    protected Result executePreparedStatement() {
+        StatementExecuteOk ok = this.mysqlxSession.sendMessage(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams));
         return new UpdateResult(ok);
     }
 
     public CompletableFuture<Result> executeAsync() {
         CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession
-                .asyncSendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder()).buildRowUpdate(this.filterParams, this.updateParams));
+                .asyncSendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildRowUpdate(this.filterParams, this.updateParams));
         return okF.thenApply(ok -> new UpdateResult(ok));
     }
 
     public UpdateStatement set(Map<String, Object> fieldsAndValues) {
+        resetPrepareState();
         this.updateParams.setUpdates(fieldsAndValues);
         return this;
     }
 
     public UpdateStatement set(String field, Object value) {
+        resetPrepareState();
         this.updateParams.addUpdate(field, value);
         return this;
     }

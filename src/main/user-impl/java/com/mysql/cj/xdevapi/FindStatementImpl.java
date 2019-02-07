@@ -32,6 +32,7 @@ package com.mysql.cj.xdevapi;
 import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.MysqlxSession;
+import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.xdevapi.FilterParams.RowLock;
 import com.mysql.cj.xdevapi.FilterParams.RowLockOptions;
 
@@ -39,18 +40,31 @@ import com.mysql.cj.xdevapi.FilterParams.RowLockOptions;
  * {@link FindStatement} implementation.
  */
 public class FindStatementImpl extends FilterableStatement<FindStatement, DocResult> implements FindStatement {
-    private MysqlxSession mysqlxSession;
-
     /* package private */ FindStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
         super(new DocFilterParams(schema, collection));
         this.mysqlxSession = mysqlxSession;
         if (criteria != null && criteria.length() > 0) {
             this.filterParams.setCriteria(criteria);
         }
+        if (!this.mysqlxSession.supportsPreparedStatements()) {
+            this.preparedState = PreparedState.UNSUPPORTED;
+        }
     }
 
-    public DocResultImpl execute() {
+    @Override
+    protected DocResultImpl executeStatement() {
         return this.mysqlxSession.find(this.filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task, this.mysqlxSession.getPropertySet()));
+    }
+
+    @Override
+    protected XMessage getPrepareStatementXMessage() {
+        return getMessageBuilder().buildPrepareFind(this.preparedStatementId, this.filterParams);
+    }
+
+    @Override
+    protected DocResultImpl executePreparedStatement() {
+        return this.mysqlxSession.executePreparedFind(this.preparedStatementId, this.filterParams,
+                metadata -> (rows, task) -> new DocResultImpl(rows, task, this.mysqlxSession.getPropertySet()));
     }
 
     public CompletableFuture<DocResult> executeAsync() {
@@ -59,22 +73,26 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
 
     @Override
     public FindStatement fields(String... projection) {
+        resetPrepareState();
         this.filterParams.setFields(projection);
         return this;
     }
 
     public FindStatement fields(Expression docProjection) {
+        resetPrepareState();
         ((DocFilterParams) this.filterParams).setFields(docProjection);
         return this;
     }
 
     @Override
     public FindStatement groupBy(String... groupBy) {
+        resetPrepareState();
         this.filterParams.setGrouping(groupBy);
         return this;
     }
 
     public FindStatement having(String having) {
+        resetPrepareState();
         this.filterParams.setGroupingCriteria(having);
         return this;
     }
@@ -86,6 +104,7 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
 
     @Override
     public FindStatement lockShared(LockContention lockContention) {
+        resetPrepareState();
         this.filterParams.setLock(RowLock.SHARED_LOCK);
         switch (lockContention) {
             case NOWAIT:
@@ -106,6 +125,7 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
 
     @Override
     public FindStatement lockExclusive(LockContention lockContention) {
+        resetPrepareState();
         this.filterParams.setLock(RowLock.EXCLUSIVE_LOCK);
         switch (lockContention) {
             case NOWAIT:

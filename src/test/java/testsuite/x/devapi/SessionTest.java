@@ -69,9 +69,11 @@ import com.mysql.cj.xdevapi.Client.ClientProperty;
 import com.mysql.cj.xdevapi.ClientFactory;
 import com.mysql.cj.xdevapi.ClientImpl;
 import com.mysql.cj.xdevapi.ClientImpl.PooledXProtocol;
+import com.mysql.cj.xdevapi.FindStatement;
 import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.RowResult;
 import com.mysql.cj.xdevapi.Schema;
+import com.mysql.cj.xdevapi.SelectStatement;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
 import com.mysql.cj.xdevapi.SessionImpl;
@@ -81,12 +83,12 @@ import com.mysql.cj.xdevapi.XDevAPIError;
 
 public class SessionTest extends DevApiBaseTestCase {
     @Before
-    public void setupCollectionTest() {
+    public void setupSessionTest() {
         setupTestSession();
     }
 
     @After
-    public void teardownCollectionTest() {
+    public void teardownSessionTest() {
         if (this.isSetForXTests) {
             this.createdTestSchemas.forEach(schemaName -> {
                 try {
@@ -1136,9 +1138,7 @@ public class SessionTest extends DevApiBaseTestCase {
                 }
                 throw e;
             }
-
         }
-
     }
 
     @Test
@@ -1367,6 +1367,198 @@ public class SessionTest extends DevApiBaseTestCase {
             testSessionAttributes_checkSession(s1, userAttributes);
         } finally {
             c.close();
+        }
+    }
+
+    @Test
+    public void testPreparedStatementsCleanup() {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+            return;
+        }
+
+        try {
+            // Prepare test data.
+            this.schema.createCollection("testPrepStmtClean", true).add("{\"_id\":\"1\"}").execute();
+
+            SessionFactory sf = new SessionFactory();
+
+            /*
+             * Test common usage.
+             */
+            Session testSession = sf.getSession(this.testProperties);
+
+            int sessionThreadId = getThreadId(testSession);
+            assertPreparedStatementsCount(sessionThreadId, 0, 1);
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            // Initialize several *Statement objects.
+            FindStatement testFind1 = testSession.getDefaultSchema().getCollection("testPrepStmtClean").find();
+            SelectStatement testSelect1 = testSession.getDefaultSchema().getCollectionAsTable("testPrepStmtClean").select("_id");
+            FindStatement testFind2 = testSession.getDefaultSchema().getCollection("testPrepStmtClean").find();
+            SelectStatement testSelect2 = testSession.getDefaultSchema().getCollectionAsTable("testPrepStmtClean").select("_id");
+
+            // 1st execute -> don't prepare.
+            testFind1.execute();
+            assertPreparedStatementsCountsAndId(testSession, 0, testFind1, 0, -1);
+            testSelect1.execute();
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect1, 0, -1);
+            testFind2.execute();
+            assertPreparedStatementsCountsAndId(testSession, 0, testFind2, 0, -1);
+            testSelect2.execute();
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect2, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            // 2nd execute -> prepare + execute.
+            testFind1.execute();
+            assertPreparedStatementsCountsAndId(testSession, 1, testFind1, 1, 1);
+            testSelect1.execute();
+            assertPreparedStatementsCountsAndId(testSession, 2, testSelect1, 2, 1);
+            testFind2.execute();
+            assertPreparedStatementsCountsAndId(testSession, 3, testFind2, 3, 1);
+            testSelect2.execute();
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect2, 4, 1);
+
+            assertPreparedStatementsStatusCounts(testSession, 4, 4, 0);
+            assertPreparedStatementsCount(sessionThreadId, 4, 1);
+
+            /*
+             * The following verifications are non-deterministic as System.gc() only hints the JVM to perform a garbage collection. This approach allows some
+             * time for the JVM to execute the GC. In case of failure the repeats or wait times may have to be adjusted.
+             * The test can be deleted entirely if no reasonable setup can be found.
+             */
+
+            // Nullify first statement.
+            testFind1 = null;
+            System.gc();
+            int psCount, countdown = 10;
+            do {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+                testSession.sql("SELECT 1").execute();
+                psCount = getPreparedStatementsCount(sessionThreadId);
+            } while (psCount != 3 && --countdown > 0);
+            assertPreparedStatementsStatusCounts(testSession, 4, 4, 1);
+            assertPreparedStatementsCount(sessionThreadId, 3, 1);
+
+            // Nullify second and third statements.
+            testSelect1 = null;
+            testFind2 = null;
+            System.gc();
+            countdown = 10;
+            do {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+                testSession.sql("SELECT 1").execute();
+                psCount = getPreparedStatementsCount(sessionThreadId);
+            } while (psCount != 1 && --countdown > 0);
+            assertPreparedStatementsStatusCounts(testSession, 4, 4, 3);
+            assertPreparedStatementsCount(sessionThreadId, 1, 1);
+
+            // Nullify last statement.
+            testSelect2 = null;
+            System.gc();
+            countdown = 10;
+            do {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+                testSession.sql("SELECT 1").execute();
+                psCount = getPreparedStatementsCount(sessionThreadId);
+            } while (psCount != 0 && --countdown > 0);
+            assertPreparedStatementsStatusCounts(testSession, 4, 4, 4);
+            assertPreparedStatementsCount(sessionThreadId, 0, 1);
+
+            testSession.close();
+            assertPreparedStatementsCount(sessionThreadId, 0, 1);
+        } finally {
+            this.schema.dropCollection("testPrepStmtClean");
+        }
+    }
+
+    @Test
+    public void testPreparedStatementsPooledConnections() {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+            return;
+        }
+
+        Properties props = new Properties();
+        props.setProperty(ClientProperty.POOLING_ENABLED.getKeyName(), "true");
+        props.setProperty(ClientProperty.POOLING_MAX_SIZE.getKeyName(), "1");
+
+        try {
+            this.schema.createCollection("testPrepStmtPooling", true).add("{\"_id\":\"1\"}").execute();
+
+            ClientFactory cf = new ClientFactory();
+            Client testClient = cf.getClient(this.baseUrl, props);
+
+            Session testSession = testClient.getSession();
+            int sessionThreadId = getThreadId(testSession);
+            assertPreparedStatementsCount(sessionThreadId, 0, 1);
+
+            FindStatement testFind = testSession.getDefaultSchema().getCollection("testPrepStmtPooling").find();
+
+            // 1st execute -> don't prepare.
+            testFind.execute();
+            assertPreparedStatementsCountsAndId(testSession, 0, testFind, 0, -1);
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            // 2nd execute -> prepare + execute.
+            testFind.execute();
+            assertPreparedStatementsCountsAndId(testSession, 1, testFind, 1, 1);
+            assertPreparedStatementsStatusCounts(testSession, 1, 1, 0);
+
+            assertPreparedStatementsCount(sessionThreadId, 1, 1);
+
+            // Prepared statements won't live past closing the session, or returning it to the pool.
+            testSession.close();
+            assertPreparedStatementsCount(sessionThreadId, 0, 10);
+
+            testSession = testClient.getSession();
+            sessionThreadId = getThreadId(testSession);
+            assertPreparedStatementsCount(sessionThreadId, 0, 1);
+
+            // The underlying connection object in testFind is the same as the one returned from the pool to the new session.
+            assertThrows(XProtocolError.class, "ERROR 5110 \\(HY000\\) Statement with ID=1 was not prepared", testFind::execute); // This exec attempt counts.
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.16"))) { // Mysqlx.Session.Reset doesn't clear PS counters.
+                assertPreparedStatementsStatusCounts(testSession, 1, 2, 0);
+            } else {
+                assertPreparedStatementsStatusCounts(testSession, 0, 1, 0);
+            }
+
+            testFind = testSession.getDefaultSchema().getCollection("testPrepStmtPooling").find();
+
+            // 1st execute -> don't prepare.
+            testFind.execute();
+            assertPreparedStatementsCountsAndId(testSession, 0, testFind, 0, -1);
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.16"))) { // Mysqlx.Session.Reset doesn't clear PS counters.
+                assertPreparedStatementsStatusCounts(testSession, 1, 2, 0);
+            } else {
+                assertPreparedStatementsStatusCounts(testSession, 0, 1, 0);
+            }
+            // 2nd execute -> prepare + execute.
+            testFind.execute();
+            assertPreparedStatementsCountsAndId(testSession, 1, testFind, 1, 1);
+            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.16"))) { // Mysqlx.Session.Reset doesn't clear PS counters.
+                assertPreparedStatementsStatusCounts(testSession, 2, 3, 0);
+            } else {
+                assertPreparedStatementsStatusCounts(testSession, 1, 2, 0);
+            }
+
+            assertPreparedStatementsCount(sessionThreadId, 1, 1);
+
+            // Prepared statements won't live past closing the client and its sessions.
+            testClient.close();
+            assertPreparedStatementsCount(sessionThreadId, 0, 10);
+
+            assertThrows(CJCommunicationsException.class, "Unable to write message", testFind::execute);
+        } finally {
+            this.schema.dropCollection("testPrepStmtPooling");
         }
     }
 }

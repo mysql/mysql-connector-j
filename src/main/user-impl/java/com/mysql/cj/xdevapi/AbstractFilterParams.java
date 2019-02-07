@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,6 +49,7 @@ public abstract class AbstractFilterParams implements FilterParams {
     protected Collection collection;
     protected Long limit;
     protected Long offset;
+    protected boolean supportsOffset;
     protected String[] orderExpr;
     private List<Order> order;
     protected String criteriaStr;
@@ -73,11 +74,14 @@ public abstract class AbstractFilterParams implements FilterParams {
      *            Schema name
      * @param collectionName
      *            Collection name
+     * @param supportsOffset
+     *            Whether <i>offset</i> is supported or not
      * @param isRelational
      *            Are relational columns identifiers allowed?
      */
-    public AbstractFilterParams(String schemaName, String collectionName, boolean isRelational) {
+    public AbstractFilterParams(String schemaName, String collectionName, boolean supportsOffset, boolean isRelational) {
         this.collection = ExprUtil.buildCollection(schemaName, collectionName);
+        this.supportsOffset = supportsOffset;
         this.isRelational = isRelational;
     }
 
@@ -110,6 +114,10 @@ public abstract class AbstractFilterParams implements FilterParams {
 
     public void setOffset(Long offset) {
         this.offset = offset;
+    }
+
+    public boolean supportsOffset() {
+        return this.supportsOffset;
     }
 
     public Object getCriteria() {

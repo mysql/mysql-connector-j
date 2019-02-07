@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -166,6 +166,17 @@ public interface FilterParams {
      *            maximum rows to skip
      */
     void setOffset(Long offset);
+
+    /**
+     * Whether <i>offset</i> clause is supported in the statement or not.
+     * <p>
+     * Note that setting offset values is always possible, even if they are not supported.
+     * </p>
+     * 
+     * @return
+     *         <code>true</code> if <i>offset</i> clause is supported
+     */
+    boolean supportsOffset();
 
     /**
      * Get the search criteria.

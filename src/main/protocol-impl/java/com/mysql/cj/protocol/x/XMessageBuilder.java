@@ -30,11 +30,11 @@
 package com.mysql.cj.protocol.x;
 
 import java.security.DigestException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -64,6 +64,7 @@ import com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Insert;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Insert.TypedRow;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Limit;
+import com.mysql.cj.x.protobuf.MysqlxCrud.LimitExpr;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Order;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Update;
@@ -77,6 +78,10 @@ import com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.x.protobuf.MysqlxExpect;
 import com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
+import com.mysql.cj.x.protobuf.MysqlxPrepare.Deallocate;
+import com.mysql.cj.x.protobuf.MysqlxPrepare.Execute;
+import com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare;
+import com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage;
 import com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateContinue;
 import com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateStart;
 import com.mysql.cj.x.protobuf.MysqlxSession.Close;
@@ -91,7 +96,6 @@ import com.mysql.cj.xdevapi.UpdateParams;
 import com.mysql.cj.xdevapi.UpdateSpec;
 
 public class XMessageBuilder implements MessageBuilder<XMessage> {
-
     private static final String XPLUGIN_NAMESPACE = "mysqlx";
 
     public XMessage buildCapabilitiesGet() {
@@ -118,6 +122,20 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
         return new XMessage(CapabilitiesSet.newBuilder().setCapabilities(capsB).build());
     }
 
+    /**
+     * Build an {@link XMessage} for a non-prepared doc insert operation.
+     * 
+     * @param schemaName
+     *            the schema name
+     * @param collectionName
+     *            the collection name
+     * @param json
+     *            the documents to insert
+     * @param upsert
+     *            Whether this is an upsert operation or not
+     * @return
+     *         an {@link XMessage} instance
+     */
     public XMessage buildDocInsert(String schemaName, String collectionName, List<String> json, boolean upsert) {
         Insert.Builder builder = Insert.newBuilder().setCollection(ExprUtil.buildCollection(schemaName, collectionName));
         if (upsert != builder.getUpsert()) {
@@ -127,17 +145,57 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
         return new XMessage(builder.build());
     }
 
+    /**
+     * Initialize a {@link Insert.Builder} for table data model with common data for prepared and non-prepared executions.
+     * 
+     * @param schemaName
+     *            the schema name
+     * @param tableName
+     *            the table name
+     * @param insertParams
+     *            the parameters to insert
+     * @return
+     *         an initialized {@link Insert.Builder} instance
+     */
     @SuppressWarnings("unchecked")
-    public XMessage buildRowInsert(String schemaName, String tableName, InsertParams insertParams) {
+    private Insert.Builder commonRowInsertBuilder(String schemaName, String tableName, InsertParams insertParams) {
         Insert.Builder builder = Insert.newBuilder().setDataModel(DataModel.TABLE).setCollection(ExprUtil.buildCollection(schemaName, tableName));
         if (insertParams.getProjection() != null) {
             builder.addAllProjection((List<Column>) insertParams.getProjection());
         }
+        return builder;
+    }
+
+    /**
+     * Build an {@link XMessage} for a non-prepared row insert operation.
+     * 
+     * @param schemaName
+     *            the schema name
+     * @param tableName
+     *            the table name
+     * @param insertParams
+     *            the parameters to insert
+     * @return
+     *         an {@link XMessage} instance
+     */
+    @SuppressWarnings("unchecked")
+    public XMessage buildRowInsert(String schemaName, String tableName, InsertParams insertParams) {
+        Insert.Builder builder = commonRowInsertBuilder(schemaName, tableName, insertParams);
         builder.addAllRow((List<TypedRow>) insertParams.getRows());
         return new XMessage(builder.build());
     }
 
-    public XMessage buildDocUpdate(FilterParams filterParams, List<UpdateSpec> updates) {
+    /**
+     * Initialize an {@link Update.Builder} for collection data model with common data for prepared and non-prepared executions.
+     * 
+     * @param filterParams
+     *            the filter parameters
+     * @param updates
+     *            the updates specifications to perform
+     * @return
+     *         an initialized {@link Update.Builder} instance
+     */
+    private Update.Builder commonDocUpdateBuilder(FilterParams filterParams, List<UpdateSpec> updates) {
         Update.Builder builder = Update.newBuilder().setCollection((Collection) filterParams.getCollection());
         updates.forEach(u -> {
             UpdateOperation.Builder opBuilder = UpdateOperation.newBuilder();
@@ -148,23 +206,112 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
             }
             builder.addOperation(opBuilder.build());
         });
+        return builder;
+    }
+
+    /**
+     * Build an {@link XMessage} for a non-prepared doc update operation.
+     * 
+     * @param filterParams
+     *            the filter parameters
+     * @param updates
+     *            the updates specifications to perform
+     * @return
+     *         an {@link XMessage} instance
+     */
+    public XMessage buildDocUpdate(FilterParams filterParams, List<UpdateSpec> updates) {
+        Update.Builder builder = commonDocUpdateBuilder(filterParams, updates);
         applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         return new XMessage(builder.build());
     }
 
-    // TODO: low-level tests of this method
+    /**
+     * Build an {@link XMessage} for a prepared doc update operation.
+     * 
+     * @param preparedStatementId
+     *            the prepared statement id
+     * @param filterParams
+     *            the filter parameters
+     * @param updates
+     *            the updates specifications to perform
+     * @return
+     *         an {@link XMessage} instance
+     */
+    public XMessage buildPrepareDocUpdate(int preparedStatementId, FilterParams filterParams, List<UpdateSpec> updates) {
+        Update.Builder updateBuilder = commonDocUpdateBuilder(filterParams, updates);
+        applyFilterParams(filterParams, updateBuilder::addAllOrder, updateBuilder::setLimitExpr, updateBuilder::setCriteria);
+
+        Prepare.Builder builder = Prepare.newBuilder().setStmtId(preparedStatementId);
+        builder.setStmt(OneOfMessage.newBuilder().setType(OneOfMessage.Type.UPDATE).setUpdate(updateBuilder.build()).build());
+        return new XMessage(builder.build());
+    }
+
+    /**
+     * Initialize an {@link Update.Builder} for table data model with common data for prepared and non-prepared executions.
+     * 
+     * @param filterParams
+     *            the filter parameters
+     * @param updateParams
+     *            the update parameters
+     * @return
+     *         an initialized {@link Update.Builder} instance
+     */
     @SuppressWarnings("unchecked")
-    public XMessage buildRowUpdate(FilterParams filterParams, UpdateParams updateParams) {
+    private Update.Builder commonRowUpdateBuilder(FilterParams filterParams, UpdateParams updateParams) {
         Update.Builder builder = Update.newBuilder().setDataModel(DataModel.TABLE).setCollection((Collection) filterParams.getCollection());
         ((Map<ColumnIdentifier, Expr>) updateParams.getUpdates()).entrySet().stream()
                 .map(e -> UpdateOperation.newBuilder().setOperation(UpdateType.SET).setSource(e.getKey()).setValue(e.getValue()).build())
                 .forEach(builder::addOperation);
+        return builder;
+    }
+
+    /**
+     * Build an {@link XMessage} for a non-prepared row update operation.
+     * 
+     * @param filterParams
+     *            the filter parameters
+     * @param updateParams
+     *            the update parameters
+     * @return
+     *         an {@link XMessage} instance
+     */
+    public XMessage buildRowUpdate(FilterParams filterParams, UpdateParams updateParams) {
+        Update.Builder builder = commonRowUpdateBuilder(filterParams, updateParams);
         applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         return new XMessage(builder.build());
     }
 
+    /**
+     * Build an {@link XMessage} for a prepared row update operation.
+     * 
+     * @param preparedStatementId
+     *            the prepared statement id
+     * @param filterParams
+     *            the filter parameters
+     * @param updateParams
+     *            the update parameters
+     * @return
+     *         an {@link XMessage} instance
+     */
+    public XMessage buildPrepareRowUpdate(int preparedStatementId, FilterParams filterParams, UpdateParams updateParams) {
+        Update.Builder updateBuilder = commonRowUpdateBuilder(filterParams, updateParams);
+        applyFilterParams(filterParams, updateBuilder::addAllOrder, updateBuilder::setLimitExpr, updateBuilder::setCriteria);
+
+        Prepare.Builder builder = Prepare.newBuilder().setStmtId(preparedStatementId);
+        builder.setStmt(OneOfMessage.newBuilder().setType(OneOfMessage.Type.UPDATE).setUpdate(updateBuilder.build()).build());
+        return new XMessage(builder.build());
+    }
+
+    /**
+     * Initialize a {@link Find.Builder} for collection data model with common data for prepared and non-prepared executions.
+     * 
+     * @param filterParams
+     *            the filter parameters
+     * @return
+     *         an initialized {@link Find.Builder} instance
+     */
     @SuppressWarnings("unchecked")
-    public XMessage buildFind(FilterParams filterParams) {
+    private Find.Builder commonFindBuilder(FilterParams filterParams) {
         Find.Builder builder = Find.newBuilder().setCollection((Collection) filterParams.getCollection());
         builder.setDataModel(filterParams.isRelational() ? DataModel.TABLE : DataModel.DOCUMENT);
         if (filterParams.getFields() != null) {
@@ -182,18 +329,257 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
         if (filterParams.getLockOption() != null) {
             builder.setLockingOptions(RowLockOptions.forNumber(filterParams.getLockOption().asNumber()));
         }
+        return builder;
+    }
+
+    /**
+     * Build an {@link XMessage} for a non-prepared find operation.
+     * 
+     * @param filterParams
+     *            the filter parameters
+     * @return
+     *         an {@link XMessage} instance
+     */
+    public XMessage buildFind(FilterParams filterParams) {
+        Find.Builder builder = commonFindBuilder(filterParams);
         applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         return new XMessage(builder.build());
     }
 
-    public XMessage buildDelete(FilterParams filterParams) {
+    /**
+     * Build an {@link XMessage} for a prepared find operation.
+     * 
+     * @param preparedStatementId
+     *            the prepared statement id
+     * @param filterParams
+     *            the filter parameters
+     * @return
+     *         an {@link XMessage} instance
+     */
+    public XMessage buildPrepareFind(int preparedStatementId, FilterParams filterParams) {
+        Find.Builder findBuilder = commonFindBuilder(filterParams);
+        applyFilterParams(filterParams, findBuilder::addAllOrder, findBuilder::setLimitExpr, findBuilder::setCriteria);
+
+        Prepare.Builder builder = Prepare.newBuilder().setStmtId(preparedStatementId);
+        builder.setStmt(OneOfMessage.newBuilder().setType(OneOfMessage.Type.FIND).setFind(findBuilder.build()).build());
+        return new XMessage(builder.build());
+    }
+
+    /**
+     * Initialize a {@link Delete.Builder} with common data for prepared and non-prepared executions.
+     * 
+     * @param filterParams
+     *            the filter parameters
+     * @return
+     *         an initialized {@link Delete.Builder} instance
+     */
+    private Delete.Builder commonDeleteBuilder(FilterParams filterParams) {
         Delete.Builder builder = Delete.newBuilder().setCollection((Collection) filterParams.getCollection());
+        return builder;
+    }
+
+    /**
+     * Build an {@link XMessage} for a non-prepared delete operation.
+     * 
+     * @param filterParams
+     *            the filter parameters
+     * @return
+     *         an {@link XMessage} instance
+     */
+    public XMessage buildDelete(FilterParams filterParams) {
+        Delete.Builder builder = commonDeleteBuilder(filterParams);
         applyFilterParams(filterParams, builder::addAllOrder, builder::setLimit, builder::setCriteria, builder::addAllArgs);
         return new XMessage(builder.build());
     }
 
-    public XMessage buildClose() {
-        return new XMessage(Close.getDefaultInstance());
+    /**
+     * Build an {@link XMessage} for a prepared delete operation.
+     * 
+     * @param preparedStatementId
+     *            the prepared statement id
+     * @param filterParams
+     *            the filter parameters
+     * @return
+     *         an {@link XMessage} instance
+     */
+    public XMessage buildPrepareDelete(int preparedStatementId, FilterParams filterParams) {
+        Delete.Builder deleteBuilder = commonDeleteBuilder(filterParams);
+        applyFilterParams(filterParams, deleteBuilder::addAllOrder, deleteBuilder::setLimitExpr, deleteBuilder::setCriteria);
+
+        Prepare.Builder builder = Prepare.newBuilder().setStmtId(preparedStatementId);
+        builder.setStmt(OneOfMessage.newBuilder().setType(OneOfMessage.Type.DELETE).setDelete(deleteBuilder.build()).build());
+        return new XMessage(builder.build());
+    }
+
+    /**
+     * Initialize a {@link StmtExecute.Builder} with common data for prepared and non-prepared executions.
+     * 
+     * @param statement
+     *            the SQL statement
+     * @return
+     *         an initialized {@link StmtExecute.Builder} instance
+     */
+    private StmtExecute.Builder commonSqlStatementBuilder(String statement) {
+        StmtExecute.Builder builder = StmtExecute.newBuilder();
+        // TODO: encoding (character_set_client?)
+        builder.setStmt(ByteString.copyFromUtf8(statement));
+        return builder;
+    }
+
+    /**
+     * Build a <i>StmtExecute</i> message for a SQL statement.
+     * 
+     * @param statement
+     *            SQL statement string
+     * @return {@link XMessage} wrapping {@link StmtExecute}
+     */
+    public XMessage buildSqlStatement(String statement) {
+        return buildSqlStatement(statement, null);
+    }
+
+    /**
+     * Build a <i>StmtExecute</i> message for a SQL statement.
+     * 
+     * @param statement
+     *            SQL statement string
+     * @param args
+     *            list of {@link Object} arguments
+     * @return {@link XMessage} wrapping {@link StmtExecute}
+     */
+    public XMessage buildSqlStatement(String statement, List<Object> args) {
+        StmtExecute.Builder builder = commonSqlStatementBuilder(statement);
+        if (args != null) {
+            builder.addAllArgs(args.stream().map(ExprUtil::argObjectToScalarAny).collect(Collectors.toList()));
+        }
+        return new XMessage(builder.build());
+    }
+
+    /**
+     * Build a <i>Prepare</i> message for a SQL statement.
+     * 
+     * @param preparedStatementId
+     *            the prepared statement id
+     * @param statement
+     *            SQL statement string
+     * @return {@link XMessage} wrapping {@link StmtExecute}
+     */
+    public XMessage buildPrepareSqlStatement(int preparedStatementId, String statement) {
+        StmtExecute.Builder stmtExecBuilder = commonSqlStatementBuilder(statement);
+
+        Prepare.Builder builder = Prepare.newBuilder().setStmtId(preparedStatementId);
+        builder.setStmt(OneOfMessage.newBuilder().setType(OneOfMessage.Type.STMT).setStmtExecute(stmtExecBuilder.build()).build());
+        return new XMessage(builder.build());
+    }
+
+    /**
+     * Apply the given filter params to the builder object (represented by the setter methods).
+     * 
+     * Abstract the process of setting the filter params on the operation message builder.
+     *
+     * @param filterParams
+     *            the filter params to apply
+     * @param setOrder
+     *            the "builder.addAllOrder()" method reference
+     * @param setLimit
+     *            the "builder.setLimit()" method reference
+     * @param setCriteria
+     *            the "builder.setCriteria()" method reference
+     * @param setArgs
+     *            the "builder.addAllArgs()" method reference
+     */
+    @SuppressWarnings("unchecked")
+    private static void applyFilterParams(FilterParams filterParams, Consumer<List<Order>> setOrder, Consumer<Limit> setLimit, Consumer<Expr> setCriteria,
+            Consumer<List<Scalar>> setArgs) {
+        filterParams.verifyAllArgsBound();
+        if (filterParams.getOrder() != null) {
+            setOrder.accept((List<Order>) filterParams.getOrder());
+        }
+        if (filterParams.getLimit() != null) {
+            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
+            if (filterParams.getOffset() != null) {
+                lb.setOffset(filterParams.getOffset());
+            }
+            setLimit.accept(lb.build());
+        }
+        if (filterParams.getCriteria() != null) {
+            setCriteria.accept((Expr) filterParams.getCriteria());
+        }
+        if (filterParams.getArgs() != null) {
+            setArgs.accept((List<Scalar>) filterParams.getArgs());
+        }
+    }
+
+    /**
+     * Apply the given filter params to the builder object (represented by the setter methods) using the variant that takes a <code>LimitExpr</code> and no
+     * <code>Args</code>. This variant is suitable for building prepared statements prepare messages.
+     * 
+     * Abstract the process of setting the filter params on the operation message builder.
+     *
+     * @param filterParams
+     *            the filter params to apply
+     * @param setOrder
+     *            the "builder.addAllOrder()" method reference
+     * @param setLimit
+     *            the "builder.setLimitExp()" method reference
+     * @param setCriteria
+     *            the "builder.setCriteria()" method reference
+     */
+    @SuppressWarnings("unchecked")
+    private static void applyFilterParams(FilterParams filterParams, Consumer<List<Order>> setOrder, Consumer<LimitExpr> setLimit, Consumer<Expr> setCriteria) {
+        if (filterParams.getOrder() != null) {
+            setOrder.accept((List<Order>) filterParams.getOrder());
+        }
+        Object argsList = filterParams.getArgs();
+        int numberOfArgs = argsList == null ? 0 : ((List<Scalar>) argsList).size();
+        if (filterParams.getLimit() != null) {
+            LimitExpr.Builder lb = LimitExpr.newBuilder().setRowCount(ExprUtil.buildPlaceholderExpr(numberOfArgs));
+            if (filterParams.supportsOffset()) {
+                lb.setOffset(ExprUtil.buildPlaceholderExpr(numberOfArgs + 1));
+            }
+            setLimit.accept(lb.build());
+        }
+        if (filterParams.getCriteria() != null) {
+            setCriteria.accept((Expr) filterParams.getCriteria());
+        }
+    }
+
+    /**
+     * Build an {@link XMessage} for executing a prepared statement with the given filters.
+     * 
+     * @param preparedStatementId
+     *            the prepared statement id
+     * @param filterParams
+     *            the filter parameter values
+     * @return
+     *         an {@link XMessage} instance
+     */
+    @SuppressWarnings("unchecked")
+    public XMessage buildPrepareExecute(int preparedStatementId, FilterParams filterParams) {
+        Execute.Builder builder = Execute.newBuilder().setStmtId(preparedStatementId);
+        if (filterParams.getArgs() != null) {
+            builder.addAllArgs(((List<Scalar>) filterParams.getArgs()).stream().map(s -> Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build())
+                    .collect(Collectors.toList()));
+        }
+        if (filterParams.getLimit() != null) {
+            builder.addArgs(ExprUtil.anyOf(ExprUtil.scalarOf(filterParams.getLimit())));
+            if (filterParams.supportsOffset()) {
+                builder.addArgs(ExprUtil.anyOf(ExprUtil.scalarOf(filterParams.getOffset() != null ? filterParams.getOffset() : 0)));
+            }
+        }
+        return new XMessage(builder.build());
+    }
+
+    /**
+     * Build an {@link XMessage} for deallocating a prepared statement.
+     * 
+     * @param preparedStatementId
+     *            the prepared statement id
+     * @return
+     *         an {@link XMessage} instance
+     */
+    public XMessage buildPrepareDeallocate(int preparedStatementId) {
+        Deallocate.Builder builder = Deallocate.newBuilder().setStmtId(preparedStatementId);
+        return new XMessage(builder.build());
     }
 
     public XMessage buildCreateCollection(String schemaName, String collectionName) {
@@ -225,6 +611,10 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
                                 .addFld(ObjectField.newBuilder().setKey("name").setValue(ExprUtil.buildAny(collectionName)))
                                 .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName))))
                         .build()));
+    }
+
+    public XMessage buildClose() {
+        return new XMessage(Close.getDefaultInstance());
     }
 
     /**
@@ -364,75 +754,6 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
         Arrays.stream(args).forEach(a -> builder.addArgs(a));
 
         return builder.build();
-    }
-
-    /**
-     * Build a <i>StmtExecute</i> message for a SQL statement.
-     * 
-     * @param statement
-     *            SQL statement string
-     * @return {@link XMessage} wrapping {@link StmtExecute}
-     */
-    public XMessage buildSqlStatement(String statement) {
-        return buildSqlStatement(statement, null);
-    }
-
-    /**
-     * Build a <i>StmtExecute</i> message for a SQL statement.
-     * 
-     * @param statement
-     *            SQL statement string
-     * @param args
-     *            list of {@link Object} arguments
-     * @return {@link XMessage} wrapping {@link StmtExecute}
-     */
-    public XMessage buildSqlStatement(String statement, List<Object> args) {
-        StmtExecute.Builder builder = StmtExecute.newBuilder();
-        if (args != null) {
-            List<Any> anyArgs = new ArrayList<>();
-            args.stream().map(ExprUtil::argObjectToScalarAny).forEach(a -> anyArgs.add(a));
-            builder.addAllArgs(anyArgs);
-        }
-        // TODO: encoding (character_set_client?)
-        builder.setStmt(ByteString.copyFromUtf8(statement));
-        return new XMessage(builder.build());
-    }
-
-    /**
-     * Apply the given filter params to the builder object (represented by the method args). Abstract the process of setting the filter params on the operation
-     * message builder.
-     *
-     * @param filterParams
-     *            the filter params to apply
-     * @param setOrder
-     *            the "builder.addAllOrder()" method reference
-     * @param setLimit
-     *            the "builder.setLimit()" method reference
-     * @param setCriteria
-     *            the "builder.setCriteria()" method reference
-     * @param setArgs
-     *            the "builder.addAllArgs()" method reference
-     */
-    @SuppressWarnings("unchecked")
-    private static void applyFilterParams(FilterParams filterParams, Consumer<List<Order>> setOrder, Consumer<Limit> setLimit, Consumer<Expr> setCriteria,
-            Consumer<List<Scalar>> setArgs) {
-        filterParams.verifyAllArgsBound();
-        if (filterParams.getOrder() != null) {
-            setOrder.accept((List<Order>) filterParams.getOrder());
-        }
-        if (filterParams.getLimit() != null) {
-            Limit.Builder lb = Limit.newBuilder().setRowCount(filterParams.getLimit());
-            if (filterParams.getOffset() != null) {
-                lb.setOffset(filterParams.getOffset());
-            }
-            setLimit.accept(lb.build());
-        }
-        if (filterParams.getCriteria() != null) {
-            setCriteria.accept((Expr) filterParams.getCriteria());
-        }
-        if (filterParams.getArgs() != null) {
-            setArgs.accept((List<Scalar>) filterParams.getArgs());
-        }
     }
 
     public XMessage buildSha256MemoryAuthStart() {

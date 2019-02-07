@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,7 +49,21 @@ public class DocFilterParams extends AbstractFilterParams {
      *            Collection name
      */
     public DocFilterParams(String schemaName, String collectionName) {
-        super(schemaName, collectionName, false);
+        this(schemaName, collectionName, true);
+    }
+
+    /**
+     * Constructor.
+     * 
+     * @param schemaName
+     *            Schema name
+     * @param collectionName
+     *            Collection name
+     * @param supportsOffset
+     *            Whether OFFSET is supported or not
+     */
+    public DocFilterParams(String schemaName, String collectionName, boolean supportsOffset) {
+        super(schemaName, collectionName, supportsOffset, false);
     }
 
     /**

@@ -37,7 +37,7 @@ package com.mysql.cj.xdevapi;
  * @param <RES_T>
  *            result interface
  */
-public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<STMT_T, RES_T> {
+public abstract class FilterableStatement<STMT_T, RES_T> extends PreparableStatement<RES_T> implements Statement<STMT_T, RES_T> {
     protected FilterParams filterParams;
 
     /**
@@ -63,6 +63,7 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
      */
     @SuppressWarnings("unchecked")
     public STMT_T where(String searchCondition) {
+        resetPrepareState();
         this.filterParams.setCriteria(searchCondition);
         return (STMT_T) this;
     }
@@ -97,6 +98,7 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
      */
     @SuppressWarnings({ "unchecked", "deprecation" }) // Suppress deprecation warning is required until RemoveStatement.orderBy is removed.
     public STMT_T orderBy(String... sortFields) {
+        resetPrepareState();
         this.filterParams.setOrder(sortFields);
         return (STMT_T) this;
     }
@@ -118,6 +120,9 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
      */
     @SuppressWarnings("unchecked")
     public STMT_T limit(long numberOfRows) {
+        if (this.filterParams.getLimit() == null) {
+            setReprepareState();
+        }
         this.filterParams.setLimit(numberOfRows);
         return (STMT_T) this;
     }
@@ -139,6 +144,7 @@ public abstract class FilterableStatement<STMT_T, RES_T> implements Statement<ST
      */
     @SuppressWarnings("unchecked")
     public STMT_T offset(long limitOffset) {
+        // Offset depends on Limit. There is no need to re-prepare the statement even if OFFSET was never set before.
         this.filterParams.setOffset(limitOffset);
         return (STMT_T) this;
     }

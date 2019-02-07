@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,28 +34,35 @@ import java.util.concurrent.CompletableFuture;
 import com.mysql.cj.MysqlxSession;
 import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.XMessage;
-import com.mysql.cj.protocol.x.XMessageBuilder;
 
 /**
  * {@link DeleteStatement} implementation.
  */
 public class DeleteStatementImpl extends FilterableStatement<DeleteStatement, Result> implements DeleteStatement {
-    private MysqlxSession mysqlxSession;
-
     /* package private */ DeleteStatementImpl(MysqlxSession mysqlxSession, String schema, String table) {
-        super(new TableFilterParams(schema, table));
+        super(new TableFilterParams(schema, table, false));
         this.mysqlxSession = mysqlxSession;
     }
 
-    public Result execute() {
-        StatementExecuteOk ok = this.mysqlxSession
-                .sendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder()).buildDelete(this.filterParams));
+    @Override
+    protected Result executeStatement() {
+        StatementExecuteOk ok = this.mysqlxSession.sendMessage(getMessageBuilder().buildDelete(this.filterParams));
+        return new UpdateResult(ok);
+    }
+
+    @Override
+    protected XMessage getPrepareStatementXMessage() {
+        return getMessageBuilder().buildPrepareDelete(this.preparedStatementId, this.filterParams);
+    }
+
+    @Override
+    protected Result executePreparedStatement() {
+        StatementExecuteOk ok = this.mysqlxSession.sendMessage(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams));
         return new UpdateResult(ok);
     }
 
     public CompletableFuture<Result> executeAsync() {
-        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession
-                .asyncSendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder()).buildDelete(this.filterParams));
+        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncSendMessage(getMessageBuilder().buildDelete(this.filterParams));
         return okF.thenApply(ok -> new UpdateResult(ok));
     }
 }

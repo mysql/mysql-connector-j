@@ -946,4 +946,224 @@ public class TableSelectTest extends BaseTableTestCase {
             sqlUpdate("drop procedure if exists testBug22038729p");
         }
     }
+
+    @Test
+    public void testPreparedStatements() {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+            return;
+        }
+
+        try {
+            // Prepare test data.
+            sqlUpdate("DROP TABLE IF EXISTS testPrepareSelect");
+            sqlUpdate("CREATE TABLE testPrepareSelect (id INT PRIMARY KEY, ord INT)");
+            sqlUpdate("INSERT INTO testPrepareSelect VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8)");
+
+            SessionFactory sf = new SessionFactory();
+            /*
+             * Test common usage.
+             */
+            Session testSession = sf.getSession(this.testProperties);
+
+            int sessionThreadId = getThreadId(testSession);
+            assertPreparedStatementsCount(sessionThreadId, 0, 1);
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            Table testTbl = testSession.getDefaultSchema().getTable("testPrepareSelect");
+
+            // Initialize several SelectStatement objects.
+            SelectStatement testSelect1 = testTbl.select("ord"); // Select all.
+            SelectStatement testSelect2 = testTbl.select("ord").where("ord >= :n"); // Criteria with one placeholder.
+            SelectStatement testSelect3 = testTbl.select("ord").where("ord >= :n AND ord <= :n + 3"); // Criteria with same placeholder repeated.
+            SelectStatement testSelect4 = testTbl.select("ord").where("ord >= :n AND ord <= :m"); // Criteria with multiple placeholders.
+
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect1, 0, -1);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect2, 0, -1);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect3, 0, -1);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect4, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            // A. Set binds: 1st execute -> non-prepared.
+            assertTestPreparedStatementsResult(testSelect1.execute(), 1, 8);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect1, 0, -1);
+            assertTestPreparedStatementsResult(testSelect2.bind("n", 2).execute(), 2, 8);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect2, 0, -1);
+            assertTestPreparedStatementsResult(testSelect3.bind("n", 2).execute(), 2, 5);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect3, 0, -1);
+            assertTestPreparedStatementsResult(testSelect4.bind("n", 2).bind("m", 5).execute(), 2, 5);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect4, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            // B. Set orderBy resets execution count: 1st execute -> non-prepared.
+            assertTestPreparedStatementsResult(testSelect1.orderBy("id").execute(), 1, 8);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect1, 0, -1);
+            assertTestPreparedStatementsResult(testSelect2.orderBy("id").execute(), 2, 8);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect2, 0, -1);
+            assertTestPreparedStatementsResult(testSelect3.orderBy("id").execute(), 2, 5);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect3, 0, -1);
+            assertTestPreparedStatementsResult(testSelect4.orderBy("id").execute(), 2, 5);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect4, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            // C. Set binds reuse statement: 2nd execute -> prepare + execute.
+            assertTestPreparedStatementsResult(testSelect1.execute(), 1, 8);
+            assertPreparedStatementsCountsAndId(testSession, 1, testSelect1, 1, 1);
+            assertTestPreparedStatementsResult(testSelect2.bind("n", 3).execute(), 3, 8);
+            assertPreparedStatementsCountsAndId(testSession, 2, testSelect2, 2, 1);
+            assertTestPreparedStatementsResult(testSelect3.bind("n", 3).execute(), 3, 6);
+            assertPreparedStatementsCountsAndId(testSession, 3, testSelect3, 3, 1);
+            assertTestPreparedStatementsResult(testSelect4.bind("m", 6).execute(), 2, 6);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect4, 4, 1);
+
+            assertPreparedStatementsStatusCounts(testSession, 4, 4, 0);
+
+            // D. Set binds reuse statement: 3rd execute -> execute.
+            assertTestPreparedStatementsResult(testSelect1.execute(), 1, 8);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect1, 1, 2);
+            assertTestPreparedStatementsResult(testSelect2.bind("n", 4).execute(), 4, 8);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect2, 2, 2);
+            assertTestPreparedStatementsResult(testSelect3.bind("n", 4).execute(), 4, 7);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect3, 3, 2);
+            assertTestPreparedStatementsResult(testSelect4.bind("n", 3).bind("m", 7).execute(), 3, 7);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect4, 4, 2);
+
+            assertPreparedStatementsStatusCounts(testSession, 4, 8, 0);
+
+            // E. Set where deallocates and resets execution count: 1st execute -> deallocate + non-prepared.
+            assertTestPreparedStatementsResult(testSelect1.where("true").execute(), 1, 8);
+            assertPreparedStatementsCountsAndId(testSession, 3, testSelect1, 0, -1);
+            assertTestPreparedStatementsResult(testSelect2.where("true AND ord >= :n").bind("n", 4).execute(), 4, 8);
+            assertPreparedStatementsCountsAndId(testSession, 2, testSelect2, 0, -1);
+            assertTestPreparedStatementsResult(testSelect3.where("true AND ord >= :n AND ord <= :n + 3").bind("n", 4).execute(), 4, 7);
+            assertPreparedStatementsCountsAndId(testSession, 1, testSelect3, 0, -1);
+            assertTestPreparedStatementsResult(testSelect4.where("true AND ord >= :n AND ord <= :m").bind("n", 3).bind("m", 7).execute(), 3, 7);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect4, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 4, 8, 4);
+
+            // F. No Changes: 2nd execute -> prepare + execute.
+            assertTestPreparedStatementsResult(testSelect1.execute(), 1, 8);
+            assertPreparedStatementsCountsAndId(testSession, 1, testSelect1, 1, 1);
+            assertTestPreparedStatementsResult(testSelect2.bind("n", 4).execute(), 4, 8);
+            assertPreparedStatementsCountsAndId(testSession, 2, testSelect2, 2, 1);
+            assertTestPreparedStatementsResult(testSelect3.bind("n", 4).execute(), 4, 7);
+            assertPreparedStatementsCountsAndId(testSession, 3, testSelect3, 3, 1);
+            assertTestPreparedStatementsResult(testSelect4.bind("n", 3).bind("m", 7).execute(), 3, 7);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect4, 4, 1);
+
+            assertPreparedStatementsStatusCounts(testSession, 8, 12, 4);
+
+            // G. Set limit for the first time deallocates and re-prepares: 1st execute -> re-prepare + execute.
+            assertTestPreparedStatementsResult(testSelect1.limit(2).execute(), 1, 2);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect1, 1, 1);
+            assertTestPreparedStatementsResult(testSelect2.limit(2).execute(), 4, 5);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect2, 2, 1);
+            assertTestPreparedStatementsResult(testSelect3.limit(2).execute(), 4, 5);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect3, 3, 1);
+            assertTestPreparedStatementsResult(testSelect4.limit(2).execute(), 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect4, 4, 1);
+
+            assertPreparedStatementsStatusCounts(testSession, 12, 16, 8);
+
+            // H. Set limit and offset reuse prepared statement: 2nd execute -> execute.
+            assertTestPreparedStatementsResult(testSelect1.limit(1).offset(1).execute(), 2, 2);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect1, 1, 2);
+            assertTestPreparedStatementsResult(testSelect2.limit(1).offset(1).execute(), 5, 5);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect2, 2, 2);
+            assertTestPreparedStatementsResult(testSelect3.limit(1).offset(1).execute(), 5, 5);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect3, 3, 2);
+            assertTestPreparedStatementsResult(testSelect4.limit(1).offset(1).execute(), 4, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect4, 4, 2);
+
+            assertPreparedStatementsStatusCounts(testSession, 12, 20, 8);
+
+            // I. Set orderBy deallocates and resets execution count, set limit and bind has no effect: 1st execute -> deallocate + non-prepared.
+            assertTestPreparedStatementsResult(testSelect1.orderBy("id").limit(2).execute(), 2, 3);
+            assertPreparedStatementsCountsAndId(testSession, 3, testSelect1, 0, -1);
+            assertTestPreparedStatementsResult(testSelect2.orderBy("id").limit(2).bind("n", 4).execute(), 5, 6);
+            assertPreparedStatementsCountsAndId(testSession, 2, testSelect2, 0, -1);
+            assertTestPreparedStatementsResult(testSelect3.orderBy("id").limit(2).bind("n", 4).execute(), 5, 6);
+            assertPreparedStatementsCountsAndId(testSession, 1, testSelect3, 0, -1);
+            assertTestPreparedStatementsResult(testSelect4.orderBy("id").limit(2).bind("m", 7).execute(), 4, 5);
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect4, 0, -1);
+
+            assertPreparedStatementsStatusCounts(testSession, 12, 20, 12);
+
+            // J. Set offset reuse statement: 2nd execute -> prepare + execute.
+            assertTestPreparedStatementsResult(testSelect1.offset(0).execute(), 1, 2);
+            assertPreparedStatementsCountsAndId(testSession, 1, testSelect1, 1, 1);
+            assertTestPreparedStatementsResult(testSelect2.offset(0).execute(), 4, 5);
+            assertPreparedStatementsCountsAndId(testSession, 2, testSelect2, 2, 1);
+            assertTestPreparedStatementsResult(testSelect3.offset(0).execute(), 4, 5);
+            assertPreparedStatementsCountsAndId(testSession, 3, testSelect3, 3, 1);
+            assertTestPreparedStatementsResult(testSelect4.offset(0).execute(), 3, 4);
+            assertPreparedStatementsCountsAndId(testSession, 4, testSelect4, 4, 1);
+
+            assertPreparedStatementsStatusCounts(testSession, 16, 24, 12);
+
+            testSession.close();
+            assertPreparedStatementsCount(sessionThreadId, 0, 10); // Prepared statements won't live past the closing of the session.
+
+            /*
+             * Test falling back onto non-prepared statements.
+             */
+            testSession = sf.getSession(this.testProperties);
+            int origMaxPrepStmtCount = this.session.sql("SELECT @@max_prepared_stmt_count").execute().fetchOne().getInt(0);
+
+            try {
+                // Allow preparing only one more statement.
+                this.session.sql("SET GLOBAL max_prepared_stmt_count = ?").bind(getPreparedStatementsCount() + 1).execute();
+
+                sessionThreadId = getThreadId(testSession);
+                assertPreparedStatementsCount(sessionThreadId, 0, 1);
+                assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+                testTbl = testSession.getDefaultSchema().getTable("testPrepareSelect");
+
+                testSelect1 = testTbl.select("ord");
+                testSelect2 = testTbl.select("ord");
+
+                // 1st execute -> don't prepare.
+                assertTestPreparedStatementsResult(testSelect1.execute(), 1, 8);
+                assertPreparedStatementsCountsAndId(testSession, 0, testSelect1, 0, -1);
+                assertTestPreparedStatementsResult(testSelect2.execute(), 1, 8);
+                assertPreparedStatementsCountsAndId(testSession, 0, testSelect2, 0, -1);
+
+                assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+                // 2nd execute -> prepare + execute.
+                assertTestPreparedStatementsResult(testSelect1.execute(), 1, 8);
+                assertPreparedStatementsCountsAndId(testSession, 1, testSelect1, 1, 1);
+                assertTestPreparedStatementsResult(testSelect2.execute(), 1, 8); // Fails preparing, execute as non-prepared.
+                assertPreparedStatementsCountsAndId(testSession, 1, testSelect2, 0, -1);
+
+                assertPreparedStatementsStatusCounts(testSession, 2, 1, 0); // Failed prepare also counts.
+
+                // 3rd execute -> execute.
+                assertTestPreparedStatementsResult(testSelect1.execute(), 1, 8);
+                assertPreparedStatementsCountsAndId(testSession, 1, testSelect1, 1, 2);
+                assertTestPreparedStatementsResult(testSelect2.execute(), 1, 8); // Execute as non-prepared.
+                assertPreparedStatementsCountsAndId(testSession, 1, testSelect2, 0, -1);
+
+                assertPreparedStatementsStatusCounts(testSession, 2, 2, 0);
+
+                testSession.close();
+                assertPreparedStatementsCount(sessionThreadId, 0, 10); // Prepared statements won't live past the closing of the session.
+            } finally {
+                this.session.sql("SET GLOBAL max_prepared_stmt_count = ?").bind(origMaxPrepStmtCount).execute();
+            }
+        } finally {
+            sqlUpdate("DROP TABLE IF EXISTS testPrepareSelect");
+        }
+    }
+
+    private void assertTestPreparedStatementsResult(RowResult res, int expectedMin, int expectedMax) {
+        for (Row r : res.fetchAll()) {
+            assertEquals(expectedMin++, r.getInt("ord"));
+        }
+        assertEquals(expectedMax, expectedMin - 1);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,69 +45,88 @@ import com.mysql.cj.protocol.x.XMessageBuilder;
  * {@link ModifyStatement} implementation.
  */
 public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Result> implements ModifyStatement {
-    private MysqlxSession mysqlxSession;
     private List<UpdateSpec> updates = new ArrayList<>();
 
     /* package private */ ModifyStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
-        super(new DocFilterParams(schema, collection));
+        super(new DocFilterParams(schema, collection, false));
+        this.mysqlxSession = mysqlxSession;
         if (criteria == null || criteria.trim().length() == 0) {
             throw new XDevAPIError(Messages.getString("ModifyStatement.0", new String[] { "criteria" }));
         }
         this.filterParams.setCriteria(criteria);
-        this.mysqlxSession = mysqlxSession;
+        if (!this.mysqlxSession.supportsPreparedStatements()) {
+            this.preparedState = PreparedState.UNSUPPORTED;
+        }
     }
 
     @Override
-    public Result execute() {
-        StatementExecuteOk ok = this.mysqlxSession
-                .sendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder()).buildDocUpdate(this.filterParams, this.updates));
+    protected Result executeStatement() {
+        StatementExecuteOk ok = this.mysqlxSession.sendMessage(getMessageBuilder().buildDocUpdate(this.filterParams, this.updates));
+        return new UpdateResult(ok);
+    }
+
+    @Override
+    protected XMessage getPrepareStatementXMessage() {
+        return getMessageBuilder().buildPrepareDocUpdate(this.preparedStatementId, this.filterParams, this.updates);
+    }
+
+    @Override
+    protected Result executePreparedStatement() {
+        StatementExecuteOk ok = this.mysqlxSession.sendMessage(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams));
         return new UpdateResult(ok);
     }
 
     @Override
     public CompletableFuture<Result> executeAsync() {
         CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession
-                .asyncSendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder()).buildDocUpdate(this.filterParams, this.updates));
+                .asyncSendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildDocUpdate(this.filterParams, this.updates));
         return okF.thenApply(ok -> new UpdateResult(ok));
     }
 
     @Override
     public ModifyStatement set(String docPath, Object value) {
+        resetPrepareState();
         this.updates.add(new UpdateSpec(UpdateType.ITEM_SET, docPath).setValue(value));
         return this;
     }
 
     @Override
     public ModifyStatement change(String docPath, Object value) {
+        resetPrepareState();
         this.updates.add(new UpdateSpec(UpdateType.ITEM_REPLACE, docPath).setValue(value));
         return this;
     }
 
     @Override
     public ModifyStatement unset(String... fields) {
+        resetPrepareState();
         this.updates.addAll(Arrays.stream(fields).map(docPath -> new UpdateSpec(UpdateType.ITEM_REMOVE, docPath)).collect(Collectors.toList()));
         return this;
     }
 
     @Override
     public ModifyStatement patch(DbDoc document) {
+        resetPrepareState();
         return patch(document.toString());
     }
 
     @Override
     public ModifyStatement patch(String document) {
+        resetPrepareState();
         this.updates.add(new UpdateSpec(UpdateType.MERGE_PATCH, "").setValue(Expression.expr(document)));
         return this;
     }
 
     @Override
     public ModifyStatement arrayInsert(String field, Object value) {
+        resetPrepareState();
         this.updates.add(new UpdateSpec(UpdateType.ARRAY_INSERT, field).setValue(value));
         return this;
     }
 
     @Override
     public ModifyStatement arrayAppend(String docPath, Object value) {
+        resetPrepareState();
         this.updates.add(new UpdateSpec(UpdateType.ARRAY_APPEND, docPath).setValue(value));
         return this;
     }

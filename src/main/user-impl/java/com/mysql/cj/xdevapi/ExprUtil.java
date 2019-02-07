@@ -133,6 +133,17 @@ public class ExprUtil {
     }
 
     /**
+     * Creates a placeholder expression for the given position in the <code>args</code> array
+     * 
+     * @param pos
+     *            the position of the placeholder in the <code>args</code> array
+     * @return {@link Expr}
+     */
+    public static Expr buildPlaceholderExpr(int pos) {
+        return Expr.newBuilder().setType(Expr.Type.PLACEHOLDER).setPosition(pos).build();
+    }
+
+    /**
      * Protocol buffers helper to build a Scalar NULL type.
      * 
      * @return {@link Scalar}
@@ -199,6 +210,17 @@ public class ExprUtil {
     }
 
     /**
+     * Protocol buffers helper to build an Any Scalar type.
+     * 
+     * @param s
+     *            value
+     * @return {@link Any}
+     */
+    public static Any anyOf(Scalar s) {
+        return Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
+    }
+
+    /**
      * Build a Protocol buffers Any with a string value.
      * 
      * @param str
@@ -209,8 +231,7 @@ public class ExprUtil {
         // same as Expr
         Scalar.String sstr = Scalar.String.newBuilder().setValue(ByteString.copyFromUtf8(str)).build();
         Scalar s = Scalar.newBuilder().setType(Scalar.Type.V_STRING).setVString(sstr).build();
-        Any a = Any.newBuilder().setType(Any.Type.SCALAR).setScalar(s).build();
-        return a;
+        return anyOf(s);
     }
 
     /**

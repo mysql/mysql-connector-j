@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,8 @@
 
 package testsuite.x.devapi;
 
+import static org.junit.Assert.assertEquals;
+
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 
@@ -36,10 +38,12 @@ import com.mysql.cj.MysqlxSession;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.PreparableStatement;
 import com.mysql.cj.xdevapi.Schema;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionImpl;
 import com.mysql.cj.xdevapi.SqlResult;
+import com.mysql.cj.xdevapi.Statement;
 
 import testsuite.x.internal.InternalXBaseTestCase;
 
@@ -119,5 +123,83 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
     protected boolean isServerRunningOnWindows() throws SQLException {
         SqlResult res = this.session.sql("SHOW VARIABLES LIKE 'datadir'").execute();
         return res.fetchOne().getString(1).indexOf('\\') != -1;
+    }
+
+    protected int getThreadId(Session sess) {
+        return sess.sql("SELECT thread_id FROM performance_schema.threads WHERE processlist_id = connection_id()").execute().fetchOne().getInt(0);
+    }
+
+    int getPrepPrepareCount(Session sess) {
+        return Integer.parseInt(sess.sql("SHOW SESSION STATUS LIKE 'mysqlx_prep_prepare'").execute().fetchOne().getString(1));
+    }
+
+    int getPrepExecuteCount(Session sess) {
+        return Integer.parseInt(sess.sql("SHOW SESSION STATUS LIKE 'mysqlx_prep_execute'").execute().fetchOne().getString(1));
+    }
+
+    int getPrepDeallocateCount(Session sess) {
+        return Integer.parseInt(sess.sql("SHOW SESSION STATUS LIKE 'mysqlx_prep_deallocate'").execute().fetchOne().getString(1));
+    }
+
+    int getPreparedStatementsCount() {
+        return this.session.sql("SELECT COUNT(*) FROM performance_schema.prepared_statements_instances").execute().fetchOne().getInt(0);
+    }
+
+    int getPreparedStatementsCount(int threadId) {
+        return this.session.sql("SELECT COUNT(*) FROM performance_schema.prepared_statements_instances  WHERE owner_thread_id = " + threadId).execute()
+                .fetchOne().getInt(0);
+    }
+
+    int getPreparedStatementsCount(Session sess) {
+        return sess.sql("SELECT COUNT(*) FROM performance_schema.prepared_statements_instances psi INNER JOIN performance_schema.threads t "
+                + "ON psi.owner_thread_id = t.thread_id WHERE t.processlist_id = connection_id()").execute().fetchOne().getInt(0);
+    }
+
+    int getPreparedStatementExecutionsCount(Session sess, int prepStmtId) {
+        SqlResult res = sess.sql("SELECT psi.count_execute FROM performance_schema.prepared_statements_instances psi INNER JOIN performance_schema.threads t "
+                + "ON psi.owner_thread_id = t.thread_id WHERE t.processlist_id = connection_id() AND psi.statement_id = mysqlx_get_prepared_statement_id(?)")
+                .bind(prepStmtId).execute();
+        if (res.hasNext()) {
+            return res.next().getInt(0);
+        }
+        return -1;
+    }
+
+    int getPreparedStatementId(PreparableStatement<?> stmt) {
+        try {
+            Field prepStmtId = PreparableStatement.class.getDeclaredField("preparedStatementId");
+            prepStmtId.setAccessible(true);
+            return prepStmtId.getInt(stmt);
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    protected void assertPreparedStatementsCountsAndId(Session sess, int expectedPrepStmtsCount, Statement<?, ?> stmt, int expectedId, int expectedExec) {
+        assertEquals(expectedPrepStmtsCount, getPreparedStatementsCount(sess));
+        assertEquals(expectedId, getPreparedStatementId((PreparableStatement<?>) stmt));
+        assertEquals(expectedExec, getPreparedStatementExecutionsCount(sess, expectedId));
+    }
+
+    protected void assertPreparedStatementsStatusCounts(Session sess, int expectedPrep, int expectedExec, int expectedDealloc) {
+        assertEquals(expectedPrep, getPrepPrepareCount(sess));
+        assertEquals(expectedExec, getPrepExecuteCount(sess));
+        assertEquals(expectedDealloc, getPrepDeallocateCount(sess));
+    }
+
+    protected void assertPreparedStatementsCount(int threadId, int expectedCount, int countdown) {
+        /*
+         * System table <code>performance_schema.prepared_statements_instances</code> may have some delay in updating its values after a session containing
+         * prepared statements is closed.
+         */
+        int psCount;
+        do {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+            psCount = getPreparedStatementsCount(threadId);
+        } while (psCount != 0 && --countdown > 0);
+        assertEquals(expectedCount, psCount);
     }
 }

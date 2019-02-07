@@ -57,6 +57,9 @@ import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
 import com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged;
 import com.mysql.cj.x.protobuf.MysqlxNotice.SessionVariableChanged;
 import com.mysql.cj.x.protobuf.MysqlxNotice.Warning;
+import com.mysql.cj.x.protobuf.MysqlxPrepare.Deallocate;
+import com.mysql.cj.x.protobuf.MysqlxPrepare.Execute;
+import com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare;
 import com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData;
 import com.mysql.cj.x.protobuf.MysqlxResultset.FetchDone;
 import com.mysql.cj.x.protobuf.MysqlxResultset.FetchDoneMoreResultsets;
@@ -155,6 +158,9 @@ public class MessageConstants {
         messageClassToClientMessageType.put(ModifyView.class, ClientMessages.Type.CRUD_MODIFY_VIEW_VALUE);
         messageClassToClientMessageType.put(DropView.class, ClientMessages.Type.CRUD_DROP_VIEW_VALUE);
         messageClassToClientMessageType.put(Open.class, ClientMessages.Type.EXPECT_OPEN_VALUE);
+        messageClassToClientMessageType.put(Prepare.class, ClientMessages.Type.PREPARE_PREPARE_VALUE);
+        messageClassToClientMessageType.put(Execute.class, ClientMessages.Type.PREPARE_EXECUTE_VALUE);
+        messageClassToClientMessageType.put(Deallocate.class, ClientMessages.Type.PREPARE_DEALLOCATE_VALUE);
         MESSAGE_CLASS_TO_CLIENT_MESSAGE_TYPE = Collections.unmodifiableMap(messageClassToClientMessageType);
     }
 

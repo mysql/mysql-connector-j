@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,7 @@ import java.util.Spliterators;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -155,8 +156,12 @@ public abstract class CoreSession implements Session {
     }
 
     public <QR extends QueryResult> QR sendMessage(Message message) {
+        return sendMessage(message, this.protocol::readQueryResult);
+    }
+
+    public <R> R sendMessage(Message message, Supplier<R> readResult) {
         this.protocol.send(message, 0);
-        return this.protocol.readQueryResult();
+        return readResult.get();
     }
 
     public <QR extends QueryResult> CompletableFuture<QR> asyncSendMessage(Message message) {

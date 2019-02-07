@@ -3,6 +3,8 @@
 
 Version 8.0.16
 
+  - WL#12246, DevAPI: Prepared statement support.
+
   - WL#10839, Adjust c/J tests to the new "ON" default for explicit_defaults_for_timestamp.
 
   - Fix for Bug#29329326, PLEASE AVOID SHOW PROCESSLIST IF POSSIBLE.
