@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -2896,6 +2896,18 @@ public class MetaDataRegressionTest extends BaseTestCase {
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
         assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+        assertEquals(19, this.rs.getInt("COLUMN_SIZE"));
+
+        if (versionMeetsMinimum(5, 6, 4)) {
+            // fractional seconds are not supported in previous versions
+            st.execute("DROP  TABLE IF EXISTS testBug63800");
+            st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3))");
+            dmd = con.getMetaData();
+            this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
+            assertTrue("1 column must be found", this.rs.next());
+            assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+            assertEquals(23, this.rs.getInt("COLUMN_SIZE"));
+        }
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP)");
@@ -2957,6 +2969,18 @@ public class MetaDataRegressionTest extends BaseTestCase {
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         assertTrue("1 column must be found", this.rs.next());
         assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+        assertEquals(19, this.rs.getInt("COLUMN_SIZE"));
+
+        if (versionMeetsMinimum(5, 6, 4)) {
+            // fractional seconds are not supported in previous versions
+            st.execute("DROP  TABLE IF EXISTS testBug63800");
+            st.execute("CREATE TABLE testBug63800(f1 DATETIME(4) DEFAULT CURRENT_TIMESTAMP(4) ON UPDATE CURRENT_TIMESTAMP(4))");
+            dmd = con.getMetaData();
+            this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
+            assertTrue("1 column must be found", this.rs.next());
+            assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+            assertEquals(24, this.rs.getInt("COLUMN_SIZE"));
+        }
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 DATETIME)");
@@ -3093,11 +3117,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#65871 - DatabaseMetaData.getColumns() thows an MySQLSyntaxErrorException.
+     * Tests fix for BUG#65871 - DatabaseMetaData.getColumns() throws an MySQLSyntaxErrorException.
      * Delimited names of databases and tables are handled correctly now. The edge case is ANSI quoted
      * identifiers with leading and trailing "`" symbols, for example CREATE DATABASE "`dbname`". Methods
      * like DatabaseMetaData.getColumns() allow parameters passed both in unquoted and quoted form,
-     * quoted form is not JDBC-compliant but used by third party tools. So when you pass the indentifier
+     * quoted form is not JDBC-compliant but used by third party tools. So when you pass the identifier
      * "`dbname`" in unquoted form (`dbname`) driver handles it as quoted by "`" symbol. To handle such
      * identifiers correctly a new behavior was added to pedantic mode (connection property pedantic=true),
      * now if it set to true methods like DatabaseMetaData.getColumns() treat all parameters as unquoted.
@@ -4660,4 +4684,154 @@ public class MetaDataRegressionTest extends BaseTestCase {
         assertTrue(resNames.size() == 0);
 
     }
+
+    /**
+     * Tests fix for BUG#29186870, CONNECTOR/J REGRESSION: NOT RETURNING PRECISION GETPROCEDURECOLUMNS.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug29186870() throws Exception {
+
+        Connection con = null;
+        ResultSet rst = null;
+        DatabaseMetaData dmd = null;
+
+        Map<String, String> fieldToType = new HashMap<>();
+        fieldToType.put("I", "INTEGER");
+        fieldToType.put("D", "DATE");
+        fieldToType.put("T", "TIME");
+        fieldToType.put("DT", "DATETIME");
+        fieldToType.put("TS", "TIMESTAMP");
+
+        Map<String, Integer> fieldToExpectedLength = new HashMap<>();
+        fieldToExpectedLength.put("I", 10);
+        fieldToExpectedLength.put("D", 10);
+        fieldToExpectedLength.put("T", 8);
+        fieldToExpectedLength.put("DT", 19);
+        fieldToExpectedLength.put("TS", 19);
+
+        Map<String, Integer> fieldToExpectedPrecision = new HashMap<>();
+        fieldToExpectedPrecision.put("I", 10);
+        fieldToExpectedPrecision.put("D", 0);
+        fieldToExpectedPrecision.put("T", 0);
+        fieldToExpectedPrecision.put("DT", 0);
+        fieldToExpectedPrecision.put("TS", 0);
+
+        if (versionMeetsMinimum(5, 6, 4)) {
+            // fractional seconds are not supported in previous versions
+            fieldToType.put("T0", "TIME(0)");
+            fieldToType.put("T3", "TIME(3)");
+            fieldToType.put("T6", "TIME(6)");
+            fieldToType.put("DT3", "DATETIME(3)");
+            fieldToType.put("TS0", "TIMESTAMP(0)");
+            fieldToType.put("TS6", "TIMESTAMP(6)");
+
+            fieldToExpectedLength.put("T0", 8);
+            fieldToExpectedLength.put("T3", 12);
+            fieldToExpectedLength.put("T6", 15);
+            fieldToExpectedLength.put("DT3", 23);
+            fieldToExpectedLength.put("TS0", 19);
+            fieldToExpectedLength.put("TS6", 26);
+
+            fieldToExpectedPrecision.put("T0", 0);
+            fieldToExpectedPrecision.put("T3", 3);
+            fieldToExpectedPrecision.put("T6", 6);
+            fieldToExpectedPrecision.put("DT3", 3);
+            fieldToExpectedPrecision.put("TS0", 0);
+            fieldToExpectedPrecision.put("TS6", 6);
+        }
+
+        String tname = "testBug29186870tab";
+        String pname = "testBug29186870proc";
+        String fname = "testBug29186870func";
+
+        Properties props = new Properties();
+
+        try {
+            for (String useIS : new String[] { "false", "true" }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), useIS);
+
+                con = getConnectionWithProps(props);
+
+                // 1. Test COLUMN_SIZE in getColumns()
+                dmd = con.getMetaData();
+
+                String str = "";
+                for (String k : fieldToType.keySet()) {
+                    if (str.length() > 0) {
+                        str += ",";
+                    }
+                    str += k + " " + fieldToType.get(k);
+                    if (fieldToType.get(k).startsWith("TIMESTAMP")) {
+                        str += " NULL";
+                    }
+
+                }
+                createTable(tname, "(" + str + ")");
+
+                rst = dmd.getColumns(null, null, tname, null);
+
+                assertNotNull("No records fetched", rst);
+                int cnt = 0;
+                while (rst.next()) {
+                    assertEquals(fieldToExpectedLength.get(rst.getString("COLUMN_NAME")), (Integer) rst.getInt("COLUMN_SIZE"));
+                    cnt++;
+                }
+                assertEquals(fieldToType.size(), cnt);
+
+                // 2. Test PRECISION and LENGTH in getProcedureColumns()
+                str = "";
+                for (String k : fieldToType.keySet()) {
+                    if (str.length() > 0) {
+                        str += ",";
+                    }
+                    str += "IN " + k + " " + fieldToType.get(k);
+                }
+                createProcedure(pname, "(" + str + ")" + "\n BEGIN\n SELECT I, DT, TS FROM TDT WHERE PDT = DT;" + "\n END");
+
+                rst = dmd.getProcedureColumns(null, null, pname, null);
+
+                assertNotNull("No records fetched", rst);
+                cnt = 0;
+                while (rst.next()) {
+                    String paramName = rst.getString("COLUMN_NAME");
+                    assertEquals(paramName, fieldToExpectedPrecision.get(paramName), (Integer) rst.getInt("PRECISION"));
+                    assertEquals(paramName, fieldToExpectedLength.get(paramName), (Integer) rst.getInt("LENGTH"));
+                    cnt++;
+                }
+                assertEquals(fieldToType.size(), cnt);
+
+                // 3. Test PRECISION and LENGTH in getFunctionColumns()
+                str = "";
+                for (String k : fieldToType.keySet()) {
+                    if (str.length() > 0) {
+                        str += ",";
+                    }
+                    str += k + " " + fieldToType.get(k);
+                }
+                createFunction(fname, "(" + str + ") RETURNS CHAR(1) DETERMINISTIC RETURN 'a'");
+
+                rst = dmd.getFunctionColumns(null, null, fname, null);
+
+                assertNotNull("No records fetched", rst);
+                cnt = 0;
+                while (rst.next()) {
+                    String paramName = rst.getString("COLUMN_NAME");
+                    if (!StringUtils.isNullOrEmpty(paramName)) { // ignore the out parameter
+                        assertEquals(fieldToExpectedPrecision.get(paramName), (Integer) rst.getInt("PRECISION"));
+                        assertEquals(fieldToExpectedLength.get(paramName), (Integer) rst.getInt("LENGTH"));
+                        cnt++;
+                    }
+                }
+                assertEquals(fieldToType.size(), cnt);
+            }
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+
+    }
+
 }

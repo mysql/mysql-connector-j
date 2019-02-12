@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -164,9 +164,19 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         sqlBuf.append("UPPER(CASE");
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DATE' THEN 10"); // supported range is '1000-01-01' to '9999-12-31'
-        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TIME' THEN 16"); // supported range is '-838:59:59.000000' to '838:59:59.000000'
-        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DATETIME' THEN 26"); // supported range is '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
-        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TIMESTAMP' THEN 26"); // supported range is '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC
+        if (this.conn.getServerVersion().meetsMinimum(ServerVersion.parseVersion("5.6.4"))) {
+            sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TIME'"); // supported range is '-838:59:59.000000' to '838:59:59.000000'
+            sqlBuf.append("  THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)");
+            sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DATETIME' OR"); // supported range is '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
+            sqlBuf.append("  UPPER(DATA_TYPE)='TIMESTAMP'"); // supported range is '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC
+            sqlBuf.append("  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)");
+        } else {
+            sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TIME' THEN 8"); // supported range is '-838:59:59.000000' to '838:59:59.000000'
+            sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DATETIME' OR"); // supported range is '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
+            sqlBuf.append("  UPPER(DATA_TYPE)='TIMESTAMP'"); // supported range is '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC
+            sqlBuf.append("  THEN 19");
+        }
+
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='YEAR' THEN 4");
         if (this.tinyInt1isBit) {
             sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TINYINT' AND LOCATE('(1)', COLUMN_TYPE) != 0 THEN 1");
@@ -237,7 +247,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         if (catalog != null) {
             conditionBuf.append(
                     "information_schema".equalsIgnoreCase(catalog) || "performance_schema".equalsIgnoreCase(catalog) || !StringUtils.hasWildcards(catalog)
-                            ? " TABLE_SCHEMA = ?" : " TABLE_SCHEMA LIKE ?");
+                            ? " TABLE_SCHEMA = ?"
+                            : " TABLE_SCHEMA LIKE ?");
         }
         if (tableName != null) {
             if (conditionBuf.length() > 0) {
@@ -659,6 +670,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
+        boolean supportsFractSeconds = this.conn.getServerVersion().meetsMinimum(ServerVersion.parseVersion("5.6.4"));
 
         // Here's what we get from MySQL ...
         // SPECIFIC_CATALOG                             NULL 
@@ -700,11 +712,26 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" THEN CONCAT(DATA_TYPE, ' UNSIGNED') ELSE DATA_TYPE END) AS `TYPE_NAME`,");
 
         // PRECISION</B> int => precision
-        sqlBuf.append(" NUMERIC_PRECISION AS `PRECISION`,");
+        sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 0");
+        if (supportsFractSeconds) {
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN DATETIME_PRECISION");
+        } else {
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 0");
+        }
+        sqlBuf.append(" ELSE NUMERIC_PRECISION END AS `PRECISION`,");
 
         // LENGTH</B> int => length in bytes of data
-        sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19");
-        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION");
+        sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10");
+        if (supportsFractSeconds) {
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)");
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp'");
+            sqlBuf.append("  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)");
+        } else {
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8");
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 19");
+        }
+
+        sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION");
         sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH > ");
         sqlBuf.append(Integer.MAX_VALUE);
         sqlBuf.append(" THEN ");
@@ -808,7 +835,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         if (catalog != null) {
             sqlBuf.append("information_schema".equalsIgnoreCase(catalog) || "performance_schema".equalsIgnoreCase(catalog) || !StringUtils.hasWildcards(catalog)
-                    ? " TABLE_SCHEMA = ?" : " TABLE_SCHEMA LIKE ?");
+                    ? " TABLE_SCHEMA = ?"
+                    : " TABLE_SCHEMA LIKE ?");
         }
 
         if (tableNamePattern != null) {
@@ -873,8 +901,16 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         StringBuilder sqlBuf = new StringBuilder("SELECT NULL AS SCOPE, COLUMN_NAME, ");
         appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "COLUMN_TYPE");
         sqlBuf.append(" AS DATA_TYPE, UPPER(COLUMN_TYPE) AS TYPE_NAME,");
-        sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8");
-        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19");
+        sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10");
+        if (this.conn.getServerVersion().meetsMinimum(ServerVersion.parseVersion("5.6.4"))) {
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time'");
+            sqlBuf.append("  THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)");
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp'");
+            sqlBuf.append("  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)");
+        } else {
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8");
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 19");
+        }
         sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > ");
         sqlBuf.append(Integer.MAX_VALUE);
         sqlBuf.append(" THEN ");
@@ -927,6 +963,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         catalog = this.pedantic ? catalog : StringUtils.unQuoteIdentifier(catalog, this.quotedId);
+        boolean supportsFractSeconds = this.conn.getServerVersion().meetsMinimum(ServerVersion.parseVersion("5.6.4"));
 
         // FUNCTION_CAT
         // FUNCTION_SCHEM
@@ -957,11 +994,27 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                         + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
 
         // PRECISION int => precision
-        sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
+        sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 0");
+        if (supportsFractSeconds) {
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN DATETIME_PRECISION");
+        } else {
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 0");
+        }
+        sqlBuf.append(" ELSE NUMERIC_PRECISION END AS `PRECISION`,");
+
         // LENGTH int => length in bytes of data
-        sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN "
-                + "LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > "
-                + Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ");
+        sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10");
+        if (supportsFractSeconds) {
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)");
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp'");
+            sqlBuf.append("  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)");
+        } else {
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8");
+            sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 19");
+        }
+        sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION");
+        sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH > " + Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE);
+        sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ");
 
         // SCALE short => scale
         sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ");

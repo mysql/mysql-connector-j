@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -183,6 +183,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         int charOctetLength;
 
+        Integer datetimePrecision = null;
         Integer columnSize = null;
 
         Integer decimalDigits = null;
@@ -209,6 +210,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String temp;
             java.util.StringTokenizer tokenizer;
             int maxLength = 0;
+            int fract;
 
             switch (this.mysqlType) {
                 case ENUM:
@@ -322,6 +324,34 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         }
                     } else {
                         this.columnSize = Integer.valueOf(3);
+                    }
+                    break;
+
+                case DATE:
+                    this.datetimePrecision = 0;
+                    this.columnSize = 10;
+                    break;
+
+                case TIME:
+                    this.datetimePrecision = 0;
+                    this.columnSize = 8;
+                    if (typeInfo.indexOf("(") != -1
+                            && (fract = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(")"))).trim())) > 0) {
+                        // with fractional seconds
+                        this.datetimePrecision = fract;
+                        this.columnSize += fract + 1;
+                    }
+                    break;
+
+                case DATETIME:
+                case TIMESTAMP:
+                    this.datetimePrecision = 0;
+                    this.columnSize = 19;
+                    if (typeInfo.indexOf("(") != -1
+                            && (fract = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(")"))).trim())) > 0) {
+                        // with fractional seconds
+                        this.datetimePrecision = fract;
+                        this.columnSize += fract + 1;
                     }
                     break;
 
@@ -875,10 +905,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         row[2] = procNameAsBytes;                                                                                   // PROCEDURE/NAME
         row[3] = s2b(paramName);                                                                                    // COLUMN_NAME
         row[4] = s2b(String.valueOf(getColumnType(isOutParam, isInParam, isReturnParam, forGetFunctionColumns)));   // COLUMN_TYPE
-        row[5] = s2b(Short.toString((short) typeDesc.mysqlType.getJdbcType()));                                                            // DATA_TYPE
-        row[6] = s2b(typeDesc.mysqlType.getName());                                                                            // TYPE_NAME
-        row[7] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString());                          // PRECISION
-        row[8] = row[7];                                                                                            // LENGTH
+        row[5] = s2b(Short.toString((short) typeDesc.mysqlType.getJdbcType()));                                     // DATA_TYPE
+        row[6] = s2b(typeDesc.mysqlType.getName());                                                                 // TYPE_NAME
+        row[7] = typeDesc.datetimePrecision == null ? s2b(typeDesc.columnSize.toString()) : s2b(typeDesc.datetimePrecision.toString());            // PRECISION
+        row[8] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString());                          // LENGTH
         row[9] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString());                    // SCALE
         row[10] = s2b(Integer.toString(typeDesc.numPrecRadix));                                                     // RADIX
         // Map 'column****' to 'procedure****'
