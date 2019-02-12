@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -238,9 +238,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         this.serverSession.setCapabilities(readServerCapabilities());
 
         // Override common SSL properties with xdevapi ones to provide unified logic in ExportControlled via common SSL properties
-        RuntimeProperty<XdevapiSslMode> xdevapiSslMode = this.propertySet.<XdevapiSslMode> getEnumProperty(PropertyKey.xdevapiSSLMode);
+        RuntimeProperty<XdevapiSslMode> xdevapiSslMode = this.propertySet.<XdevapiSslMode>getEnumProperty(PropertyKey.xdevapiSSLMode);
         if (xdevapiSslMode.isExplicitlySet()) {
-            this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).setValue(SslMode.valueOf(xdevapiSslMode.getValue().toString()));
+            this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.valueOf(xdevapiSslMode.getValue().toString()));
         }
         RuntimeProperty<String> sslTrustStoreUrl = this.propertySet.getStringProperty(PropertyKey.xdevapiSSLTrustStoreUrl);
         if (sslTrustStoreUrl.isExplicitlySet()) {
@@ -257,7 +257,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
         // TODO WL#9925 will redefine other SSL connection properties for X Protocol
 
-        RuntimeProperty<SslMode> sslMode = this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode);
+        RuntimeProperty<SslMode> sslMode = this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode);
 
         if (sslMode.getValue() == SslMode.PREFERRED) { // PREFERRED mode is not applicable to X Protocol
             sslMode.setValue(SslMode.REQUIRED);
@@ -409,6 +409,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
     }
 
+    /**
+     * Used only in tests
+     */
     public boolean hasResults() {
         try {
             return this.reader.readHeader().getMessageType() == ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE;
@@ -417,13 +420,20 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
     }
 
+    /**
+     * Used only in tests
+     */
     public void drainRows() {
         try {
             XMessageHeader header;
             while ((header = this.reader.readHeader()).getMessageType() == ServerMessages.Type.RESULTSET_ROW_VALUE) {
                 this.reader.readMessage(null, header);
             }
+        } catch (XProtocolError e) {
+            this.currentResultStreamer = null;
+            throw e;
         } catch (IOException e) {
+            this.currentResultStreamer = null;
             throw new XProtocolError(e.getMessage(), e);
         }
     }
@@ -461,7 +471,11 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
                 return new XProtocolRow(metadata, r);
             }
             return null;
+        } catch (XProtocolError e) {
+            this.currentResultStreamer = null;
+            throw e;
         } catch (IOException e) {
+            this.currentResultStreamer = null;
             throw new XProtocolError(e.getMessage(), e);
         }
     }

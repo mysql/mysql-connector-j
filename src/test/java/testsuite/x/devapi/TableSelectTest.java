@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -50,8 +51,10 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
+import com.mysql.cj.CoreSession;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.DataConversionException;
+import com.mysql.cj.protocol.x.XProtocol;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.Column;
 import com.mysql.cj.xdevapi.Row;
@@ -59,6 +62,8 @@ import com.mysql.cj.xdevapi.RowResult;
 import com.mysql.cj.xdevapi.SelectStatement;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
+import com.mysql.cj.xdevapi.SessionImpl;
+import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.Statement;
 import com.mysql.cj.xdevapi.Table;
 import com.mysql.cj.xdevapi.Type;
@@ -865,6 +870,76 @@ public class TableSelectTest extends BaseTableTestCase {
                 session2.close();
             }
             sqlUpdate("DROP TABLE IF EXISTS testTableRowLockOptions");
+        }
+    }
+
+    /**
+     * Tests fix for Bug#22038729, X DEVAPI: ANY API CALL AFTER A FAILED CALL PROC() RESULTS IN HANG
+     * and for duplicate Bug#25575010, X DEVAPI: ANY API CALL AFTER A FAILED SELECT RESULTS IN HANG
+     */
+    @Test
+    public void testBug22038729() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        final Field pf = CoreSession.class.getDeclaredField("protocol");
+        pf.setAccessible(true);
+
+        try {
+            sqlUpdate("drop table if exists testBug22038729");
+            sqlUpdate("create table testBug22038729 (c1 int, c2 int unsigned, id bigint)");
+            sqlUpdate("insert into testBug22038729 values(10, 100, -9223372036854775808)");
+            sqlUpdate("insert into testBug22038729 values(11, 11, 9223372036854775806)");
+
+            sqlUpdate("drop procedure if exists testBug22038729p");
+            sqlUpdate("create procedure testBug22038729p (in p1 int,IN p2 char(20)) begin select -10;select id+1000 from testBug22038729; end;");
+
+            // XProtocol.readRowOrNull()
+            Session sess = new SessionFactory().getSession(this.testProperties);
+            Table t1 = sess.getDefaultSchema().getTable("testBug22038729");
+            RowResult rows = t1.select("c1-c2").orderBy("c1 DESC").execute();
+            assertTrue(rows.hasNext());
+            Row r = rows.next();
+            assertEquals(0, r.getInt(0));
+            assertThrows(XProtocolError.class, "ERROR 1690 \\(22003\\) BIGINT UNSIGNED value is out of range .*", () -> rows.hasNext());
+            sess.close(); // It was hanging
+
+            // XProtocol.readRowOrNull()
+            sess = new SessionFactory().getSession(this.testProperties);
+            SqlResult rs1 = sess.sql("select c1-c2 from testBug22038729 order by c1 desc").execute();
+            assertEquals(0, rs1.fetchOne().getInt(0));
+            assertThrows(XProtocolError.class, "ERROR 1690 \\(22003\\) BIGINT UNSIGNED value is out of range .*", () -> rs1.fetchOne());
+            sess.close(); // It was hanging
+
+            // XProtocol.drainRows()
+            sess = new SessionFactory().getSession(this.testProperties);
+            sess.sql("select c1-c2 from testBug22038729 order by c1 desc").execute();
+            XProtocol xp = (XProtocol) pf.get(((SessionImpl) sess).getSession());
+            assertThrows(XProtocolError.class, "ERROR 1690 \\(22003\\) BIGINT UNSIGNED value is out of range .*", () -> {
+                xp.drainRows();
+                return xp;
+            });
+            sess.close(); // It was hanging
+
+            sess = new SessionFactory().getSession(this.testProperties);
+            SqlResult rs2 = sess.sql("call testBug22038729p(?, ?)").bind(10).bind("X").execute();
+            assertTrue(rs2.hasData());
+            assertTrue(rs2.hasNext());
+            r = rs2.next();
+            assertEquals(-10, r.getInt(0));
+            assertFalse(rs2.hasNext());
+            assertTrue(rs2.nextResult());
+            assertTrue(rs2.hasData());
+            assertTrue(rs2.hasNext());
+            r = rs2.next();
+            assertEquals(-9223372036854774808L, r.getLong(0));
+            assertThrows(XProtocolError.class, "ERROR 1690 \\(22003\\) BIGINT value is out of range .*", () -> rs2.hasNext());
+            sess.close(); // It was hanging
+
+        } finally {
+            sqlUpdate("drop table if exists testBug22038729");
+            sqlUpdate("drop procedure if exists testBug22038729p");
         }
     }
 }
