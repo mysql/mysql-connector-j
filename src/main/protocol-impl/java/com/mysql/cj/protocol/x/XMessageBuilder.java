@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -69,6 +69,7 @@ import com.mysql.cj.x.protobuf.MysqlxCrud.Projection;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Update;
 import com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation;
 import com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation.UpdateType;
+import com.mysql.cj.x.protobuf.MysqlxDatatypes;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.Builder;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.ObjectField;
@@ -96,11 +97,24 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
         return new XMessage(CapabilitiesGet.getDefaultInstance());
     }
 
-    public XMessage buildCapabilitiesSet(String name, Object value) {
-        Any v = ExprUtil.argObjectToScalarAny(value);
-        Capability cap = Capability.newBuilder().setName(name).setValue(v).build();
-        Capabilities caps = Capabilities.newBuilder().addCapabilities(cap).build();
-        return new XMessage(CapabilitiesSet.newBuilder().setCapabilities(caps).build());
+    @SuppressWarnings("unchecked")
+    public XMessage buildCapabilitiesSet(Map<String, Object> keyValuePair) {
+        Capabilities.Builder capsB = Capabilities.newBuilder();
+        keyValuePair.forEach((k, v) -> {
+            Any val;
+            if (XServerCapabilities.KEY_SESSION_CONNECT_ATTRS.equals(k)) {
+                MysqlxDatatypes.Object.Builder attrB = MysqlxDatatypes.Object.newBuilder();
+                ((Map<String, String>) v)
+                        .forEach((name, value) -> attrB.addFld(ObjectField.newBuilder().setKey(name).setValue(ExprUtil.buildAny(value)).build()));
+                val = Any.newBuilder().setType(Any.Type.OBJECT).setObj(attrB).build();
+
+            } else {
+                val = ExprUtil.argObjectToScalarAny(v);
+            }
+            Capability cap = Capability.newBuilder().setName(k).setValue(val).build();
+            capsB.addCapabilities(cap);
+        });
+        return new XMessage(CapabilitiesSet.newBuilder().setCapabilities(capsB).build());
     }
 
     public XMessage buildDocInsert(String schemaName, String collectionName, List<String> json, boolean upsert) {

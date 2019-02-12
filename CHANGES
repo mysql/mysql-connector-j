@@ -3,6 +3,8 @@
 
 Version 8.0.16
 
+  - WL#12459, DevAPI: Support connection-attributes.
+
   - Fix for Bug#25650385, GETBYTE() RETURNS ERROR FOR BINARY() FLD.
 
   - Fix for Bug#27784363, MYSQL 8.0 JDBC DRIVER THROWS NUMBERFORMATEXCEPTION FOR TEXT DATA

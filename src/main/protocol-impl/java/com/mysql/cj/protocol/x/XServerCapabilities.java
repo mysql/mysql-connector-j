@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,12 +42,21 @@ public class XServerCapabilities implements ServerCapabilities {
 
     private Map<String, Any> capabilities;
 
+    static String KEY_SESSION_CONNECT_ATTRS = "session_connect_attrs";
+    static String KEY_TLS = "tls";
+    static String KEY_NODE_TYPE = "node_type";
+    static String KEY_CLIENT_PWD_EXPIRE_OK = "client.pwd_expire_ok";
+    static String KEY_AUTHENTICATION_MECHANISMS = "authentication.mechanisms";
+    static String KEY_DOC_FORMATS = "doc.formats";
+
     public XServerCapabilities(Map<String, Any> capabilities) {
         this.capabilities = capabilities;
     }
 
     public void setCapability(String name, Object value) {
-        this.capabilities.put(name, ExprUtil.argObjectToScalarAny(value));
+        if (!KEY_SESSION_CONNECT_ATTRS.equals(name)) {
+            this.capabilities.put(name, ExprUtil.argObjectToScalarAny(value));
+        }
     }
 
     public boolean hasCapability(String name) {
@@ -55,24 +64,24 @@ public class XServerCapabilities implements ServerCapabilities {
     }
 
     public String getNodeType() {
-        return this.capabilities.get("node_type").getScalar().getVString().getValue().toStringUtf8();
+        return this.capabilities.get(KEY_NODE_TYPE).getScalar().getVString().getValue().toStringUtf8();
     }
 
     public boolean getTls() {
-        return hasCapability("tls") ? this.capabilities.get("tls").getScalar().getVBool() : false;
+        return hasCapability(KEY_TLS) ? this.capabilities.get(KEY_TLS).getScalar().getVBool() : false;
     }
 
     public boolean getClientPwdExpireOk() {
-        return this.capabilities.get("client.pwd_expire_ok").getScalar().getVBool();
+        return this.capabilities.get(KEY_CLIENT_PWD_EXPIRE_OK).getScalar().getVBool();
     }
 
     public List<String> getAuthenticationMechanisms() {
-        return this.capabilities.get("authentication.mechanisms").getArray().getValueList().stream()
+        return this.capabilities.get(KEY_AUTHENTICATION_MECHANISMS).getArray().getValueList().stream()
                 .map(v -> v.getScalar().getVString().getValue().toStringUtf8()).collect(Collectors.toList());
     }
 
     public String getDocFormats() {
-        return this.capabilities.get("doc.formats").getScalar().getVString().getValue().toStringUtf8();
+        return this.capabilities.get(KEY_DOC_FORMATS).getScalar().getVString().getValue().toStringUtf8();
     }
 
     @Override

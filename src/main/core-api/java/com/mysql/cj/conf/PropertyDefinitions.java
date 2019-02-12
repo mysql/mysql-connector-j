@@ -708,8 +708,6 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.readOnlyPropagatesToServer, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.readOnlyPropagatesToServer"), "5.1.35", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
-                // TODO improve X DevAPI properties descriptions
-
                 new BooleanPropertyDefinition(PropertyKey.xdevapiUseAsyncProtocol, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useAsyncProtocol"), "6.0.0", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new EnumPropertyDefinition<>(PropertyKey.xdevapiSSLMode, XdevapiSslMode.REQUIRED, RUNTIME_MODIFIABLE,
@@ -726,6 +724,8 @@ public class PropertyDefinitions {
                         "8.0.8", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new IntegerPropertyDefinition(PropertyKey.xdevapiConnectTimeout, 10000, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.xdevapiConnectTimeout"), "8.0.13", CATEGORY_XDEVAPI, Integer.MIN_VALUE, 0, Integer.MAX_VALUE),
+                new StringPropertyDefinition(PropertyKey.xdevapiConnectionAttributes, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.xdevapiConnectionAttributes"), "8.0.16", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.enableEscapeProcessing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),

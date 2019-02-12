@@ -36,12 +36,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.Constants;
+import com.mysql.cj.Messages;
 import com.mysql.cj.QueryResult;
 import com.mysql.cj.Session;
 import com.mysql.cj.TransactionEventHandler;
@@ -61,6 +64,7 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.SSLParamsException;
+import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.AbstractProtocol;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ExportControlled;
@@ -109,6 +113,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     XServerSession serverSession = null;
 
     public String defaultSchemaName;
+
+    private Map<String, Object> clientCapabilities = new HashMap<>();
 
     public XProtocol(String host, int port, String defaultSchema, PropertySet propertySet) {
 
@@ -168,16 +174,14 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     }
 
     /**
-     * Set a capability of current session. Must be done before authentication ({@link #changeUser(String, String, String)}).
+     * Set client capabilities of current session. Must be done before authentication ({@link #changeUser(String, String, String)}).
      * 
-     * @param name
-     *            capability name
-     * @param value
-     *            capability value
+     * @param keyValuePair
+     *            capabilities name/value map
      */
-    public void setCapability(String name, Object value) {
-        ((XServerCapabilities) getServerSession().getCapabilities()).setCapability(name, value);
-        this.sender.send(((XMessageBuilder) this.messageBuilder).buildCapabilitiesSet(name, value));
+    public void sendCapabilities(Map<String, Object> keyValuePair) {
+        keyValuePair.forEach((k, v) -> ((XServerCapabilities) getServerSession().getCapabilities()).setCapability(k, v));
+        this.sender.send(((XMessageBuilder) this.messageBuilder).buildCapabilitiesSet(keyValuePair));
         readOk();
     }
 
@@ -187,13 +191,29 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             throw new CJConnectionFeatureNotAvailableException();
         }
 
-        if (!((XServerCapabilities) this.serverSession.getCapabilities()).hasCapability("tls")) {
+        if (!((XServerCapabilities) this.serverSession.getCapabilities()).hasCapability(XServerCapabilities.KEY_TLS)) {
             throw new CJCommunicationsException("A secure connection is required but the server is not configured with SSL.");
         }
 
         // the message reader is async and is always "reading". we need to stop it to use the socket for the TLS handshake
         this.reader.stopAfterNextMessage();
-        setCapability("tls", true);
+
+        this.clientCapabilities.put(XServerCapabilities.KEY_TLS, true);
+
+        try {
+            sendCapabilities(this.clientCapabilities);
+        } catch (XProtocolError e) {
+            // XProtocolError: ERROR 5002 (HY000) Capability 'session_connect_attrs' doesn't exist
+            // happens when connecting to xplugin which doesn't support this feature.
+            // Just ignore this error and retry with reduced clientCapabilities
+            if (e.getErrorCode() != 5002 && !e.getMessage().contains(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS)) {
+                throw e;
+            }
+            this.clientCapabilities.remove(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS);
+            this.reader.start();
+            this.reader.stopAfterNextMessage();
+            sendCapabilities(this.clientCapabilities);
+        }
 
         try {
             this.socketConnection.performTlsHandshake(null); //(this.serverSession);
@@ -237,6 +257,13 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
         this.serverSession.setCapabilities(readServerCapabilities());
 
+        // connection attributes
+        String attributes = this.propertySet.getStringProperty(PropertyKey.xdevapiConnectionAttributes).getValue();
+        if (attributes == null || !attributes.equalsIgnoreCase("false")) {
+            Map<String, String> attMap = getConnectionAttributesMap("true".equalsIgnoreCase(attributes) ? "" : attributes);
+            this.clientCapabilities.put(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS, attMap);
+        }
+
         // Override common SSL properties with xdevapi ones to provide unified logic in ExportControlled via common SSL properties
         RuntimeProperty<XdevapiSslMode> xdevapiSslMode = this.propertySet.<XdevapiSslMode>getEnumProperty(PropertyKey.xdevapiSSLMode);
         if (xdevapiSslMode.isExplicitlySet()) {
@@ -277,7 +304,51 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
         if (xdevapiSslMode.getValue() != XdevapiSslMode.DISABLED) {
             negotiateSSLConnection(0);
+        } else if (this.clientCapabilities.size() > 0) {
+            try {
+                sendCapabilities(this.clientCapabilities);
+            } catch (XProtocolError e) {
+                // XProtocolError: ERROR 5002 (HY000) Capability 'session_connect_attrs' doesn't exist
+                // happens when connecting to xplugin which doesn't support this feature. Just ignore this error.
+                if (e.getErrorCode() != 5002 && !e.getMessage().contains(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS)) {
+                    throw e;
+                }
+                this.clientCapabilities.remove(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS);
+            }
         }
+    }
+
+    private Map<String, String> getConnectionAttributesMap(String attStr) {
+        Map<String, String> attMap = new HashMap<>();
+
+        if (attStr != null) {
+            if (attStr.startsWith("[") && attStr.endsWith("]")) {
+                attStr = attStr.substring(1, attStr.length() - 1);
+            }
+            if (!StringUtils.isNullOrEmpty(attStr)) {
+                String[] pairs = attStr.split(",");
+                for (String pair : pairs) {
+                    String[] kv = pair.split("=");
+                    String key = kv[0].trim();
+                    String value = kv.length > 1 ? kv[1].trim() : "";
+                    if (key.startsWith("_")) {
+                        throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.WrongAttributeName"));
+                    } else if (attMap.put(key, value) != null) {
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("Protocol.DuplicateAttribute", new Object[] { key }));
+                    }
+                }
+            }
+        }
+
+        attMap.put("_platform", Constants.OS_ARCH);
+        attMap.put("_os", Constants.OS_NAME + "-" + Constants.OS_VERSION);
+        attMap.put("_client_name", Constants.CJ_NAME);
+        attMap.put("_client_version", Constants.CJ_VERSION);
+        attMap.put("_client_license", Constants.CJ_LICENSE);
+        attMap.put("_runtime_version", Constants.JVM_VERSION);
+        attMap.put("_runtime_vendor", Constants.JVM_VENDOR);
+        return attMap;
     }
 
     private String currUser = null, currPassword = null, currDatabase = null; // TODO remove these variables after implementing mysql_reset_connection() in reset() method
@@ -616,7 +687,14 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         send(((XMessageBuilder) this.messageBuilder).buildSessionReset(), 0);
         readOk();
 
-        // TODO changeUser() call should be removed after proper implementation of session reset in xplugin 
+        // TODO should be removed after proper implementation of session reset in xplugin
+        if (this.clientCapabilities.containsKey(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS)) {
+            Map<String, Object> reducedClientCapabilities = new HashMap<>();
+            reducedClientCapabilities.put(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS,
+                    this.clientCapabilities.get(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS));
+            sendCapabilities(reducedClientCapabilities);
+        }
+        // TODO should be removed after proper implementation of session reset in xplugin
         this.authProvider.changeUser(null, this.currUser, this.currPassword, this.currDatabase);
     }
 

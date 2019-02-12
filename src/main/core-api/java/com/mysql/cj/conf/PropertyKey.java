@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -239,6 +239,7 @@ public enum PropertyKey {
     xdevapiAsyncResponseTimeout("xdevapi.asyncResponseTimeout", "xdevapiAsyncResponseTimeout", true), //
     xdevapiAuth("xdevapi.auth", "xdevapiAuth", true), //
     xdevapiConnectTimeout("xdevapi.connect-timeout", "xdevapiConnectTimeout", true), //
+    xdevapiConnectionAttributes("xdevapi.connection-attributes", "xdevapiConnectionAttributes", true), //
     xdevapiSSLMode("xdevapi.ssl-mode", "xdevapiSSLMode", true), //
     xdevapiSSLTrustStoreUrl("xdevapi.ssl-truststore", "xdevapiSSLTruststore", true), //
     xdevapiSSLTrustStoreType("xdevapi.ssl-truststore-type", "xdevapiSSLTruststoreType", true), //

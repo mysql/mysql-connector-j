@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,7 +41,9 @@ import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
@@ -52,6 +54,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.CoreSession;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyKey;
@@ -59,6 +62,7 @@ import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.Client;
 import com.mysql.cj.xdevapi.Client.ClientProperty;
@@ -1128,5 +1132,234 @@ public class SessionTest extends DevApiBaseTestCase {
 
         }
 
+    }
+
+    @Test
+    public void testSessionAttributes() throws Exception {
+        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.16"))) {
+            return;
+        }
+        ClientFactory cf = new ClientFactory();
+        Map<String, String> userAttributes = new HashMap<>();
+
+        // TSFR1/TSFR2/TSFR3 Create a Session with xdevapi.connection-attributes in the connection string, verify that
+        // the session is successfully established. Create a Session using a connection string containing the properties
+        // as listed below, verify that the session is successfully established and the server contains the defined session attributes.
+        //    xdevapi.connection-attributes=[key1=value1]
+        //    xdevapi.connection-attributes=[key1=value1,key2=value2]
+        //    xdevapi.connection-attributes=key1=value1
+        //    xdevapi.connection-attributes=key1=value1,key2=value2
+        userAttributes.clear();
+        userAttributes.put("key1", "value1");
+
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1=value1"), userAttributes);
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1=value1]"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1=value1"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1=value1]"), userAttributes);
+
+        userAttributes.put("key2", "value2");
+
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1=value1,key2=value2"), userAttributes);
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1=value1,key2=value2]"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1=value1,key2=value2"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1=value1,key2=value2]"), userAttributes);
+
+        // TSFR4/TSFR5/TSFR6 Create a Session without xdevapi.connection-attributes in the connection string, verify that all predefined attributes
+        // exist and contain the correct values. Verify that only connection attributes starting with "_" were set for current session.
+        userAttributes.clear();
+        testSessionAttributes_checkSession(this.baseUrl, userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl, userAttributes);
+
+        // TSFR7 Create a Session using a connection string containing the properties as listed below, verify that a WrongArgumentException exception is thrown
+        // with the message Key names in "xdevapi.connection-attributes" cannot start with "_".
+        //    xdevapi.connection-attributes=[_key1=value1]
+        //    xdevapi.connection-attributes=[key1=value1,_key2=value2]
+        //    xdevapi.connection-attributes=_key1=value1
+        //    xdevapi.connection-attributes=key1=value1,_key2=value2
+        assertThrows(WrongArgumentException.class, "Key names in \"xdevapi.connection-attributes\" cannot start with \"_\".", () -> {
+            this.fact.getSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[_key1=value1]"));
+            return null;
+        });
+        assertThrows(WrongArgumentException.class, "Key names in \"xdevapi.connection-attributes\" cannot start with \"_\".", () -> {
+            Client cli1 = cf.getClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[_key1=value1]"), new Properties());
+            cli1.getSession();
+            return null;
+        });
+
+        assertThrows(WrongArgumentException.class, "Key names in \"xdevapi.connection-attributes\" cannot start with \"_\".", () -> {
+            this.fact.getSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1=value1,_key2=value2]"));
+            return null;
+        });
+        assertThrows(WrongArgumentException.class, "Key names in \"xdevapi.connection-attributes\" cannot start with \"_\".", () -> {
+            Client cli1 = cf.getClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1=value1,_key2=value2]"), new Properties());
+            cli1.getSession();
+            return null;
+        });
+
+        assertThrows(WrongArgumentException.class, "Key names in \"xdevapi.connection-attributes\" cannot start with \"_\".", () -> {
+            this.fact.getSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "_key1=value1"));
+            return null;
+        });
+        assertThrows(WrongArgumentException.class, "Key names in \"xdevapi.connection-attributes\" cannot start with \"_\".", () -> {
+            Client cli1 = cf.getClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "_key1=value1"), new Properties());
+            cli1.getSession();
+            return null;
+        });
+
+        assertThrows(WrongArgumentException.class, "Key names in \"xdevapi.connection-attributes\" cannot start with \"_\".", () -> {
+            this.fact.getSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1=value1,_key2=value2"));
+            return null;
+        });
+        assertThrows(WrongArgumentException.class, "Key names in \"xdevapi.connection-attributes\" cannot start with \"_\".", () -> {
+            Client cli1 = cf.getClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1=value1,_key2=value2"), new Properties());
+            cli1.getSession();
+            return null;
+        });
+
+        // TSFR9 Create a Session using a connection string containing the properties as listed below, verify
+        // that the user-defined connection attribute key1 has an empty value.
+        //    xdevapi.connection-attributes=[key1]
+        //    xdevapi.connection-attributes=[key1,key2=value2]
+        //    xdevapi.connection-attributes=[key1=]
+        //    xdevapi.connection-attributes=[key1=,key2=value2]
+        //    xdevapi.connection-attributes=key1
+        //    xdevapi.connection-attributes=key1,key2=value2
+        //    xdevapi.connection-attributes=key1=
+        //    xdevapi.connection-attributes=key1=,key2=value2
+        userAttributes.clear();
+        userAttributes.put("key1", "");
+
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1]"), userAttributes);
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1=]"), userAttributes);
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1"), userAttributes);
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1="), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1]"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1=]"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1="), userAttributes);
+
+        userAttributes.put("key2", "value2");
+
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1,key2=value2]"), userAttributes);
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1=,key2=value2]"), userAttributes);
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1,key2=value2"), userAttributes);
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1=,key2=value2"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1,key2=value2]"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[key1=,key2=value2]"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1,key2=value2"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1=,key2=value2"), userAttributes);
+
+        // TSFR10 Create a Session with xdevapi.connection-attributes=false in the connection string, verify
+        // that no connection attribute was set for current session.
+        Session s10 = this.fact.getSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "false"));
+        SqlResult res = s10.sql("SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()").execute();
+        assertFalse("Expected no connection attributes.", res.hasNext());
+        s10.close();
+
+        Client c10 = cf.getClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "false"), new Properties());
+        s10 = c10.getSession();
+        res = s10.sql("SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()").execute();
+        assertFalse("Expected no connection attributes.", res.hasNext());
+        s10.close();
+        c10.close();
+
+        // TSFR11 Create a Session using a connection string containing the properties as listed below, verify
+        // that only the client-defined connection attributes were set for the current session.
+        //    xdevapi.connection-attributes
+        //    xdevapi.connection-attributes=
+        //    xdevapi.connection-attributes=true
+        //    xdevapi.connection-attributes=[]
+        userAttributes.clear();
+
+        testSessionAttributes_checkSession(this.baseUrl + "&" + PropertyKey.xdevapiConnectionAttributes.getKeyName(), userAttributes);
+        testSessionAttributes_checkSession(this.baseUrl + "&" + PropertyKey.xdevapiConnectionAttributes.getKeyName() + "=", userAttributes);
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "true"), userAttributes);
+        testSessionAttributes_checkSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[]"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + "&" + PropertyKey.xdevapiConnectionAttributes.getKeyName(), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + "&" + PropertyKey.xdevapiConnectionAttributes.getKeyName() + "=", userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "true"), userAttributes);
+        testSessionAttributes_checkClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "[]"), userAttributes);
+
+        // TSFR13 Create a Session with xdevapi.connection-attributes=[key1=value1,key1=value2] in the connection string, verify that
+        // a WrongArgumentException exception is thrown with the message Duplicate key "key1" used in "xdevapi.connection-attributes".
+        assertThrows(WrongArgumentException.class, "Duplicate key \"key1\" used in \"xdevapi.connection-attributes\".", () -> {
+            this.fact.getSession(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1=value1,key1=value2"));
+            return null;
+        });
+        assertThrows(WrongArgumentException.class, "Duplicate key \"key1\" used in \"xdevapi.connection-attributes\".", () -> {
+            Client cli1 = cf.getClient(this.baseUrl + makeParam(PropertyKey.xdevapiConnectionAttributes, "key1=value1,key1=value2"), new Properties());
+            cli1.getSession();
+            return null;
+        });
+    }
+
+    private void testSessionAttributes_checkSession(String url, Map<String, String> userAttributes) {
+        Session s = this.fact.getSession(url);
+        try {
+            testSessionAttributes_checkSession(s, userAttributes);
+        } finally {
+            s.close();
+        }
+    }
+
+    private void testSessionAttributes_checkSession(Session s, Map<String, String> userAttributes) {
+        Map<String, Integer> matchedCounts = new HashMap<>();
+        Map<String, String> matchValues = new HashMap<>();
+        matchValues.put("_platform", Constants.OS_ARCH);
+        matchValues.put("_os", Constants.OS_NAME + "-" + Constants.OS_VERSION);
+        matchValues.put("_client_name", Constants.CJ_NAME);
+        matchValues.put("_client_version", Constants.CJ_VERSION);
+        matchValues.put("_client_license", Constants.CJ_LICENSE);
+        matchValues.put("_runtime_version", Constants.JVM_VERSION);
+        matchValues.put("_runtime_vendor", Constants.JVM_VENDOR);
+        matchValues.putAll(userAttributes);
+
+        SqlResult res = s.sql("SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()").execute();
+        while (res.hasNext()) {
+            Row r = res.next();
+            String key = r.getString(1);
+            String val = r.getString(2);
+            if (!matchValues.containsKey(key)) {
+                fail("Unexpected connection attribute key:  " + key);
+            }
+            Integer cnt = matchedCounts.get(key);
+            matchedCounts.put(key, cnt == null ? 1 : cnt++);
+
+            // when client sends an empty string as an attribute value the NULL value is stored to performance_schema.session_connect_attrs
+            String expected = matchValues.get(key);
+            if (expected.equals("")) {
+                expected = null;
+            }
+            assertEquals(expected, val);
+        }
+        for (String key : matchValues.keySet()) {
+            if (!matchedCounts.containsKey(key)) {
+                fail("Incorrect number of entries for key \"" + key + "\": 0");
+            } else if (matchedCounts.get(key) != 1) {
+                fail("Incorrect number of entries for key \"" + key + "\": " + matchedCounts.get(key));
+            }
+        }
+    }
+
+    private void testSessionAttributes_checkClient(String url, Map<String, String> userAttributes) throws Exception {
+        ClientFactory cf = new ClientFactory();
+        Client c = cf.getClient(url, new Properties());
+
+        try {
+            Session s0 = c.getSession();
+            testSessionAttributes_checkSession(s0, userAttributes);
+            s0.close(); // return to pool
+
+            // check that pooled session set the same attributes
+            Session s1 = c.getSession(); // get it from pool
+            s1.sql("SELECT 1").execute();
+            assertNotEquals(s0, s1);
+            Field fProtocol = CoreSession.class.getDeclaredField("protocol");
+            fProtocol.setAccessible(true);
+            assertEquals(fProtocol.get(((SessionImpl) s0).getSession()), fProtocol.get(((SessionImpl) s1).getSession()));
+            testSessionAttributes_checkSession(s1, userAttributes);
+        } finally {
+            c.close();
+        }
     }
 }
