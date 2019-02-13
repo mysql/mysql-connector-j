@@ -4112,8 +4112,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                     this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
                 }
-                this.sha256Stmt.executeUpdate(((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'" : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
+                this.sha256Stmt.executeUpdate(
+                        ((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
+                                : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 final Properties propsNoRetrieval = new Properties();
@@ -5817,7 +5818,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
                 }
                 this.sha256Stmt.executeUpdate(((MysqlConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY '" + pwd + "'" : "set password for 'wl6134user'@'%' = PASSWORD('" + pwd + "')");
+                        ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY '" + pwd + "'"
+                        : "set password for 'wl6134user'@'%' = PASSWORD('" + pwd + "')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 props.setProperty(PropertyKey.USER.getKeyName(), "wl6134user");
@@ -6391,8 +6393,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'bug18869381user2'@'%'");
                 createUser(this.sha256Stmt, "'bug18869381user3'@'%'", "identified WITH mysql_native_password");
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'bug18869381user3'@'%'");
-                this.sha256Stmt.executeUpdate(((MysqlConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'" : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
+                this.sha256Stmt.executeUpdate(
+                        ((MysqlConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
+                                : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
                 if (!((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(8, 0, 5)) {
                     this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                     this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
@@ -6400,8 +6403,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.sha256Stmt.executeUpdate(((MysqlConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
                         ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'LongLongLongLongLongLongLongLongLongLongLongLongPwd1'"
                         : "set password for 'bug18869381user1'@'%' = PASSWORD('LongLongLongLongLongLongLongLongLongLongLongLongPwd1')");
-                this.sha256Stmt.executeUpdate(((MysqlConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'" : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
+                this.sha256Stmt.executeUpdate(
+                        ((MysqlConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'"
+                                : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 Properties props = new Properties();
@@ -9450,7 +9454,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             props.put(PropertyKey.serverTimezone.getKeyName(), serverTimezone);
         }
 
-        ConnectionUrl replConnectionUrl = new ReplicationConnectionUrl(Collections.<HostInfo> emptyList(), Collections.<HostInfo> emptyList(), props);
+        ConnectionUrl replConnectionUrl = new ReplicationConnectionUrl(Collections.<HostInfo>emptyList(), Collections.<HostInfo>emptyList(), props);
 
         String replConnGroup = "";
         final List<HostInfo> emptyHostsList = Collections.emptyList();
@@ -9680,7 +9684,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         // Use the UnreliableSocketFactory to control when the host must be downed.
         props.remove(PropertyKey.replicationConnectionGroup.getKeyName());
         props.put(PropertyKey.socketFactory.getKeyName(), "testsuite.UnreliableSocketFactory");
-        replConnectionUrl = new ReplicationConnectionUrl(Collections.<HostInfo> emptyList(), Collections.<HostInfo> emptyList(), props);
+        replConnectionUrl = new ReplicationConnectionUrl(Collections.<HostInfo>emptyList(), Collections.<HostInfo>emptyList(), props);
 
         final String newHost = "bug22678872";
         final String newHostPortPair = newHost + ":" + port;
@@ -10162,8 +10166,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                     this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
                 }
-                this.sha256Stmt.executeUpdate(((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'wl11060user'@'%' IDENTIFIED BY 'pwd'" : "set password for 'wl11060user'@'%' = PASSWORD('pwd')");
+                this.sha256Stmt.executeUpdate(
+                        ((JdbcConnection) this.sha256Conn).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl11060user'@'%' IDENTIFIED BY 'pwd'"
+                                : "set password for 'wl11060user'@'%' = PASSWORD('pwd')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 final Properties propsNoRetrieval = new Properties();
@@ -10776,22 +10781,22 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         props.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "exception"); // legacy EXCEPTION alias
         JdbcConnection con = (JdbcConnection) getConnectionWithProps(props);
-        assertEquals(ZeroDatetimeBehavior.EXCEPTION, con.getPropertySet().<ZeroDatetimeBehavior> getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
+        assertEquals(ZeroDatetimeBehavior.EXCEPTION, con.getPropertySet().<ZeroDatetimeBehavior>getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
 
         props.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "round"); // legacy ROUND alias
         con = (JdbcConnection) getConnectionWithProps(props);
-        assertEquals(ZeroDatetimeBehavior.ROUND, con.getPropertySet().<ZeroDatetimeBehavior> getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
+        assertEquals(ZeroDatetimeBehavior.ROUND, con.getPropertySet().<ZeroDatetimeBehavior>getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
 
         props.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "convertToNull"); // legacy CONVERT_TO_NULL alias
         con = (JdbcConnection) getConnectionWithProps(props);
         assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL,
-                con.getPropertySet().<ZeroDatetimeBehavior> getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
+                con.getPropertySet().<ZeroDatetimeBehavior>getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
 
         con = (JdbcConnection) getConnectionWithProps("jdbc:mysql://(port=" + getPortFromTestsuiteUrl() + ",user=" + mainConnectionUrl.getDefaultUser()
                 + ",password=" + mainConnectionUrl.getDefaultPassword() + ",zeroDateTimeBehavior=convertToNull)/" + this.dbName,
                 appendRequiredProperties(null));
         assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL,
-                con.getPropertySet().<ZeroDatetimeBehavior> getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
+                con.getPropertySet().<ZeroDatetimeBehavior>getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
     }
 
     /**
@@ -11259,5 +11264,62 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals(TimeTrackingPacketReader.class, reader.undecorate().undecorate().getClass());
         assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().undecorate().getClass());
         assertEquals(SimplePacketReader.class, reader.undecorate().undecorate().undecorate().undecorate().getClass());
+    }
+
+    /**
+     * Tests fix for BUG#93007 (28860051), LoadBalancedConnectionProxy.getGlobalBlacklist bug.
+     * 
+     * @throws Exception
+     */
+    public void testBug93007() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.ha_loadBalanceStrategy.getKeyName(), ForcedLoadBalanceStrategy.class.getName());
+        props.setProperty(PropertyKey.loadBalanceBlacklistTimeout.getKeyName(), "5000");
+        props.setProperty(PropertyKey.loadBalancePingTimeout.getKeyName(), "100");
+        props.setProperty(PropertyKey.loadBalanceValidateConnectionOnSwapServer.getKeyName(), "true");
+
+        String portNumber = getPropertiesFromTestsuiteUrl().getProperty(PropertyKey.PORT.getKeyName());
+
+        if (portNumber == null) {
+            portNumber = "3306";
+        }
+
+        ForcedLoadBalanceStrategy.forceFutureServer("first:" + portNumber, -1);
+        Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[] { "first", "second" }, props);
+        conn2.setAutoCommit(false);
+        conn2.createStatement().execute("SELECT 1");
+
+        LoadBalancedConnectionProxy h = (LoadBalancedConnectionProxy) Proxy.getInvocationHandler(conn2);
+
+        Map<String, Long> blackList = h.getGlobalBlacklist();
+        assertTrue(blackList.size() == 0);
+
+        // make sure second is added to active connections cache:
+        ForcedLoadBalanceStrategy.forceFutureServer("second:" + portNumber, -1);
+        conn2.commit();
+
+        // switch back to first:
+        ForcedLoadBalanceStrategy.forceFutureServer("first:" + portNumber, -1);
+        conn2.commit();
+
+        // kill second while still in cache:
+        UnreliableSocketFactory.downHost("second");
+
+        // force second host to be selected next time:
+        ForcedLoadBalanceStrategy.forceFutureServer("second:" + portNumber, 1);
+
+        try {
+            conn2.commit(); // will be on second after this
+            assertTrue("Connection should not be closed", !conn2.isClosed());
+
+            blackList = h.getGlobalBlacklist();
+            assertTrue(blackList.size() > 0);
+            assertNotNull(blackList.get("second:" + portNumber));
+
+        } catch (SQLException e) {
+            fail("Should not error because failure to select another server.");
+        }
+        conn2.close();
+
     }
 }
