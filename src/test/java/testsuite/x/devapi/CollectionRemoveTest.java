@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -105,7 +105,7 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
         }
 
         assertEquals(3, this.collection.count());
-        this.collection.remove("$.x = 22").orderBy("x", "x").execute();
+        this.collection.remove("$.x = 22").sort("x", "x").execute();
         assertEquals(2, this.collection.count());
     }
 

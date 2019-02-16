@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,7 +40,17 @@ public interface RemoveStatement extends Statement<RemoveStatement, Result> {
      *            sort expression
      * @return {@link RemoveStatement}
      */
+    @Deprecated // Delete the deprecation warning suppression from FilterableStatement after deleting this method.
     RemoveStatement orderBy(String... sortFields);
+
+    /**
+     * Add/replace the order specification for the removal.
+     * 
+     * @param sortFields
+     *            sort expression
+     * @return {@link RemoveStatement}
+     */
+    RemoveStatement sort(String... sortFields);
 
     /**
      * Add/replace the document limit for the removal.
