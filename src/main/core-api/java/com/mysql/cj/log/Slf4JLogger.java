@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,78 +29,86 @@
 
 package com.mysql.cj.log;
 
-/**
- * A logger that does nothing. Used before the log is configured via the URL or properties.
- */
-public class NullLogger implements Log {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    /**
-     * Creates a new NullLogger with the given name
-     * 
-     * @param instanceName
-     *            (ignored)
-     */
-    public NullLogger(String instanceName) {
+public class Slf4JLogger implements Log {
+    private Logger log;
+
+    public Slf4JLogger(String name) {
+        this.log = LoggerFactory.getLogger(name);
     }
 
     public boolean isDebugEnabled() {
-        return false;
+        return this.log.isDebugEnabled();
     }
 
     public boolean isErrorEnabled() {
-        return false;
+        return this.log.isErrorEnabled();
     }
 
     public boolean isFatalEnabled() {
-        return false;
+        return this.log.isErrorEnabled();
     }
 
     public boolean isInfoEnabled() {
-        return false;
+        return this.log.isInfoEnabled();
     }
 
     public boolean isTraceEnabled() {
-        return false;
+        return this.log.isTraceEnabled();
     }
 
     public boolean isWarnEnabled() {
-        return false;
+        return this.log.isWarnEnabled();
     }
 
     public void logDebug(Object msg) {
+        this.log.debug(msg.toString());
     }
 
     public void logDebug(Object msg, Throwable thrown) {
+        this.log.debug(msg.toString(), thrown);
     }
 
     public void logError(Object msg) {
+        this.log.error(msg.toString());
     }
 
     public void logError(Object msg, Throwable thrown) {
+        this.log.error(msg.toString(), thrown);
     }
 
     public void logFatal(Object msg) {
+        this.log.error(msg.toString());
     }
 
     public void logFatal(Object msg, Throwable thrown) {
+        this.log.error(msg.toString(), thrown);
     }
 
     public void logInfo(Object msg) {
+        this.log.info(msg.toString());
     }
 
     public void logInfo(Object msg, Throwable thrown) {
+        this.log.info(msg.toString(), thrown);
     }
 
     public void logTrace(Object msg) {
+        this.log.trace(msg.toString());
     }
 
     public void logTrace(Object msg, Throwable thrown) {
+        this.log.trace(msg.toString(), thrown);
     }
 
     public void logWarn(Object msg) {
+        this.log.warn(msg.toString());
     }
 
     public void logWarn(Object msg, Throwable thrown) {
+        this.log.warn(msg.toString(), thrown);
     }
 
 }

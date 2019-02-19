@@ -280,10 +280,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <exclude name="**/protobuf-java-2.6.0.jar" />
         </fileset>
 
-        <fileset dir="${com.mysql.cj.build.dir.driver}/lib">
-            <include name="**/*.jar" />
-        </fileset>
-
         <pathelement location="${com.mysql.cj.build.dir.driver}" />
     </path>
 
@@ -593,10 +589,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
             <filterset refid="versionFilterset" />
             <filterset refid="licenseFilterset" />
-        </copy>
-
-        <copy todir="${com.mysql.cj.build.dir.driver}/lib">
-            <fileset dir="lib" />
         </copy>
     </target>
 
@@ -1306,9 +1298,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                     <fileset dir="${com.mysql.cj.extra.libs}">
                         <include name="**/*.jar" />
                         <exclude name="**/protobuf-java-2.6.0.jar" />
-                    </fileset>
-                    <fileset dir="${com.mysql.cj.build.dir.driver}/lib">
-                        <include name="**/*.jar" />
                     </fileset>
                     <pathelement location="${com.mysql.cj.build.dir.driver}" />
                     <pathelement location="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}" />

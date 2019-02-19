@@ -1,6 +1,7 @@
 Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
 
-This is a release of MySQL Connector/J, a JDBC Type 4 driver for MySQL.
+This is a release of MySQL Connector/J, a JDBC Type 4 driver for MySQL that
+also supports the new X DevAPI.
 
 License information can be found in the LICENSE file.
 
@@ -15,3 +16,13 @@ For additional downloads and the source of MySQL Connector/J, visit
   http://dev.mysql.com/downloads
 
 MySQL Connector/J is brought to you by the MySQL team at Oracle.
+
+Notice:
+- In order to use the logging capabilities provided by the default
+  implementation com.mysql.cj.log.Slf4JLogger, it is required to add one or
+  more jars for Simple Logging Facade for Java (SLF4J) to your CLASSPATH.
+- To use the X DevAPI features in Connector/J, you also need the external
+  library protobuf-java, which you can download manually from the official
+  Maven repository and add it to the CLASSPATH, or use Maven's automatic
+  dependency resolution features by adding a dependency to "GroupId: mysql"
+  and "ArtifactId: mysql-connector-java" to your project's pom.xml file.
