@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,6 +36,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.protobuf.GeneratedMessageV3;
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -67,11 +68,12 @@ public class SqlResultMessageListener implements MessageListener<XMessage> {
     private ResultMessageListener resultListener;
     private ResultCreatingResultListener<SqlResult> resultCreator;
 
-    public SqlResultMessageListener(CompletableFuture<SqlResult> resultF, ProtocolEntityFactory<Field, XMessage> colToField, TimeZone defaultTimeZone) {
+    public SqlResultMessageListener(CompletableFuture<SqlResult> resultF, ProtocolEntityFactory<Field, XMessage> colToField, TimeZone defaultTimeZone,
+            PropertySet pset) {
         // compose with non-data future
         this.resultF = resultF;
         Function<ColumnDefinition, BiFunction<RowList, Supplier<StatementExecuteOk>, SqlResult>> resultCtor = metadata -> (rows,
-                task) -> new SqlDataResult(metadata, defaultTimeZone, rows, task);
+                task) -> new SqlDataResult(metadata, defaultTimeZone, rows, task, pset);
         this.resultCreator = new ResultCreatingResultListener<>(resultCtor, resultF);
         this.resultListener = new ResultMessageListener(colToField, this.resultCreator);
         // Propagate the ok packet (or exception) to the result promise

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -84,7 +84,7 @@ public class SessionImpl implements Session {
     }
 
     public List<Schema> getSchemas() {
-        Function<Row, String> rowToName = r -> r.getValue(0, new StringValueFactory());
+        Function<Row, String> rowToName = r -> r.getValue(0, new StringValueFactory(this.session.getPropertySet()));
         Function<Row, Schema> rowToSchema = rowToName.andThen(n -> new SchemaImpl(this.session, this, n));
         return this.session.query(this.xbuilder.buildSqlStatement("select schema_name from information_schema.schemata"), null, rowToSchema,
                 Collectors.toList());

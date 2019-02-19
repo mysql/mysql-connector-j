@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,7 @@
 
 package com.mysql.cj.xdevapi;
 
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.x.XMessage;
@@ -38,9 +39,15 @@ import com.mysql.cj.protocol.x.XMessage;
  */
 public class DbDocFactory implements ProtocolEntityFactory<DbDoc, XMessage> {
 
+    private PropertySet pset;
+
+    public DbDocFactory(PropertySet pset) {
+        this.pset = pset;
+    }
+
     @Override
     public DbDoc createFromProtocolEntity(ProtocolEntity internalRow) {
-        return ((com.mysql.cj.result.Row) internalRow).getValue(0, new DbDocValueFactory());
+        return ((com.mysql.cj.result.Row) internalRow).getValue(0, new DbDocValueFactory(this.pset));
     }
 
 }

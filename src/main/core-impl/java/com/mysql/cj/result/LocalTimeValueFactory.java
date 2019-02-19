@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,37 +33,53 @@ import java.time.LocalTime;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.WarningListener;
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.DataReadException;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
 
 /**
  * A value factory to create {@link LocalTime} instances.
  */
-public class LocalTimeValueFactory extends DefaultValueFactory<LocalTime> {
+public class LocalTimeValueFactory extends AbstractDateTimeValueFactory<LocalTime> {
     private WarningListener warningListener;
 
-    public LocalTimeValueFactory() {
+    public LocalTimeValueFactory(PropertySet pset) {
+        super(pset);
     }
 
-    public LocalTimeValueFactory(WarningListener warningListener) {
-        this();
+    public LocalTimeValueFactory(PropertySet pset, WarningListener warningListener) {
+        this(pset);
         this.warningListener = warningListener;
     }
 
     @Override
-    public LocalTime createFromTime(int hours, int minutes, int seconds, int nanos) {
-        if (hours < 0 || hours >= 24) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + hours + ":" + minutes + ":" + seconds }));
-        }
-        return LocalTime.of(hours, minutes, seconds, nanos);
+    LocalTime localCreateFromDate(InternalDate idate) {
+        return unsupported("DATE");
     }
 
     @Override
-    public LocalTime createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
+    public LocalTime localCreateFromTime(InternalTime it) {
+        if (it.getHours() < 0 || it.getHours() >= 24) {
+            throw new DataReadException(
+                    Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + it.getHours() + ":" + it.getMinutes() + ":" + it.getSeconds() }));
+        }
+        return LocalTime.of(it.getHours(), it.getMinutes(), it.getSeconds(), it.getNanos());
+    }
+
+    @Override
+    public LocalTime localCreateFromTimestamp(InternalTimestamp its) {
         if (this.warningListener != null) {
             this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { getTargetTypeName() }));
         }
         // truncate date information
-        return createFromTime(hours, minutes, seconds, nanos);
+        return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos()));
+    }
+
+    @Override
+    public LocalTime createFromYear(long year) {
+        return unsupported("YEAR");
     }
 
     public String getTargetTypeName() {

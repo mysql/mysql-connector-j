@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -151,7 +151,7 @@ public class TableImpl implements Table {
     public boolean isView() {
         // if this.isView isn't set (was unknown on the table construction time) then query database
         if (this.isView == null) {
-            ValueFactory<String> svf = new StringValueFactory();
+            ValueFactory<String> svf = new StringValueFactory(this.mysqlxSession.getPropertySet());
             Function<Row, DatabaseObjectDescription> rowToDatabaseObjectDescription = r -> new DatabaseObjectDescription(r.getValue(0, svf),
                     r.getValue(1, svf));
             List<DatabaseObjectDescription> objects = this.mysqlxSession.query(this.xbuilder.buildListObjects(this.schema.getName(), this.name), null,

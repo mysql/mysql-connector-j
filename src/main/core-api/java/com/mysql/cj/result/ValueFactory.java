@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,6 +32,12 @@ package com.mysql.cj.result;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.log.ProfilerEventHandler;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
+
 /**
  * A class implements the <code>ValueFactory&lt;T&gt;</code> interface to create value instances from intermediate forms.
  * <p>
@@ -44,11 +50,14 @@ import java.math.BigInteger;
  * @since 6.0
  */
 public interface ValueFactory<T> {
-    T createFromDate(int year, int month, int day);
 
-    T createFromTime(int hours, int minutes, int seconds, int nanos);
+    void setPropertySet(PropertySet pset);
 
-    T createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos);
+    T createFromDate(InternalDate idate);
+
+    T createFromTime(InternalTime it);
+
+    T createFromTimestamp(InternalTimestamp its);
 
     T createFromLong(long l);
 
@@ -58,9 +67,11 @@ public interface ValueFactory<T> {
 
     T createFromBigDecimal(BigDecimal d);
 
-    T createFromBytes(byte[] bytes, int offset, int length);
+    T createFromBytes(byte[] bytes, int offset, int length, Field f);
 
     T createFromBit(byte[] bytes, int offset, int length);
+
+    T createFromYear(long l);
 
     /**
      * Create result value from intermediate null value.
@@ -75,4 +86,6 @@ public interface ValueFactory<T> {
      * @return class name
      */
     String getTargetTypeName();
+
+    ValueFactory<T> setEventSink(ProfilerEventHandler eventSink);
 }

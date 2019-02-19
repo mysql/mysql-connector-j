@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.TimeZone;
 
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.DataReadException;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.result.BigDecimalValueFactory;
@@ -59,6 +60,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
      * Default time zone used to create date/time result values.
      */
     private TimeZone defaultTimeZone;
+    private PropertySet pset;
 
     /**
      * Constructor.
@@ -70,10 +72,11 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
      * @param defaultTimeZone
      *            {@link TimeZone} object representing the default time zone
      */
-    public RowImpl(Row row, ColumnDefinition metadata, TimeZone defaultTimeZone) {
+    public RowImpl(Row row, ColumnDefinition metadata, TimeZone defaultTimeZone, PropertySet pset) {
         this.row = row;
         this.metadata = metadata;
         this.defaultTimeZone = defaultTimeZone;
+        this.pset = pset;
     }
 
     /**
@@ -98,7 +101,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public BigDecimal getBigDecimal(int pos) {
-        return this.row.getValue(pos, new BigDecimalValueFactory());
+        return this.row.getValue(pos, new BigDecimalValueFactory(this.pset));
     }
 
     public boolean getBoolean(String fieldName) {
@@ -106,7 +109,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public boolean getBoolean(int pos) {
-        return this.row.getValue(pos, new BooleanValueFactory());
+        return this.row.getValue(pos, new BooleanValueFactory(this.pset));
     }
 
     public byte getByte(String fieldName) {
@@ -114,7 +117,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public byte getByte(int pos) {
-        return this.row.getValue(pos, new ByteValueFactory());
+        return this.row.getValue(pos, new ByteValueFactory(this.pset));
     }
 
     public Date getDate(String fieldName) {
@@ -122,7 +125,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public Date getDate(int pos) {
-        return this.row.getValue(pos, new SqlDateValueFactory(null, this.defaultTimeZone));
+        return this.row.getValue(pos, new SqlDateValueFactory(this.pset, null, this.defaultTimeZone));
     }
 
     public DbDoc getDbDoc(String fieldName) {
@@ -130,7 +133,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public DbDoc getDbDoc(int pos) {
-        return this.row.getValue(pos, new DbDocValueFactory());
+        return this.row.getValue(pos, new DbDocValueFactory(this.pset));
     }
 
     public double getDouble(String fieldName) {
@@ -138,7 +141,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public double getDouble(int pos) {
-        return this.row.getValue(pos, new DoubleValueFactory());
+        return this.row.getValue(pos, new DoubleValueFactory(this.pset));
     }
 
     public int getInt(String fieldName) {
@@ -146,7 +149,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public int getInt(int pos) {
-        return this.row.getValue(pos, new IntegerValueFactory());
+        return this.row.getValue(pos, new IntegerValueFactory(this.pset));
     }
 
     public long getLong(String fieldName) {
@@ -154,7 +157,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public long getLong(int pos) {
-        return this.row.getValue(pos, new LongValueFactory());
+        return this.row.getValue(pos, new LongValueFactory(this.pset));
     }
 
     public String getString(String fieldName) {
@@ -163,7 +166,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
 
     public String getString(int pos) {
         // TODO: charset
-        return this.row.getValue(pos, new StringValueFactory());
+        return this.row.getValue(pos, new StringValueFactory(this.pset));
     }
 
     public Time getTime(String fieldName) {
@@ -171,7 +174,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public Time getTime(int pos) {
-        return this.row.getValue(pos, new SqlTimeValueFactory(null, this.defaultTimeZone));
+        return this.row.getValue(pos, new SqlTimeValueFactory(this.pset, null, this.defaultTimeZone));
     }
 
     public Timestamp getTimestamp(String fieldName) {
@@ -179,6 +182,6 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public Timestamp getTimestamp(int pos) {
-        return this.row.getValue(pos, new SqlTimestampValueFactory(null, this.defaultTimeZone));
+        return this.row.getValue(pos, new SqlTimestampValueFactory(this.pset, null, this.defaultTimeZone));
     }
 }

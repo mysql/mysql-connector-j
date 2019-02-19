@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,37 +33,47 @@ import java.time.LocalDate;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.WarningListener;
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.DataReadException;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
 
 /**
  * A value factory for creating {@link LocalDate} values.
  */
-public class LocalDateValueFactory extends DefaultValueFactory<LocalDate> {
+public class LocalDateValueFactory extends AbstractDateTimeValueFactory<LocalDate> {
     private WarningListener warningListener;
 
-    public LocalDateValueFactory() {
+    public LocalDateValueFactory(PropertySet pset) {
+        super(pset);
     }
 
-    public LocalDateValueFactory(WarningListener warningListener) {
-        this();
+    public LocalDateValueFactory(PropertySet pset, WarningListener warningListener) {
+        this(pset);
         this.warningListener = warningListener;
     }
 
     @Override
-    public LocalDate createFromDate(int year, int month, int day) {
-        if (year == 0 && month == 0 && day == 0) {
+    public LocalDate localCreateFromDate(InternalDate idate) {
+        if (idate.getYear() == 0 && idate.getMonth() == 0 && idate.getDay() == 0) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
         }
-        return LocalDate.of(year, month, day);
+        return LocalDate.of(idate.getYear(), idate.getMonth(), idate.getDay());
     }
 
     @Override
-    public LocalDate createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
+    public LocalDate localCreateFromTimestamp(InternalTimestamp its) {
         if (this.warningListener != null) {
             this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { getTargetTypeName() }));
         }
         // truncate any time information
-        return createFromDate(year, month, day);
+        return createFromDate(its);
+    }
+
+    @Override
+    LocalDate localCreateFromTime(InternalTime it) {
+        return unsupported("TIME");
     }
 
     public String getTargetTypeName() {

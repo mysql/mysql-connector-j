@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,7 @@
 
 package com.mysql.cj.protocol;
 
+import com.mysql.cj.result.Field;
 import com.mysql.cj.result.ValueFactory;
 
 /**
@@ -66,9 +67,11 @@ public interface ValueDecoder {
 
     <T> T decodeDecimal(byte[] bytes, int offset, int length, ValueFactory<T> vf);
 
-    <T> T decodeByteArray(byte[] bytes, int offset, int length, ValueFactory<T> vf);
+    <T> T decodeByteArray(byte[] bytes, int offset, int length, Field f, ValueFactory<T> vf);
 
     <T> T decodeBit(byte[] bytes, int offset, int length, ValueFactory<T> vf);
 
-    <T> T decodeSet(byte[] bytes, int offset, int length, ValueFactory<T> vf);
+    <T> T decodeSet(byte[] bytes, int offset, int length, Field f, ValueFactory<T> vf);
+
+    <T> T decodeYear(byte[] bytes, int offset, int length, ValueFactory<T> vf);
 }

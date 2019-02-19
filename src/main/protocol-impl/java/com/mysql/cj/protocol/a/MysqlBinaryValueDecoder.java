@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,7 +34,11 @@ import java.math.BigInteger;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.DataReadException;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
 import com.mysql.cj.protocol.ValueDecoder;
+import com.mysql.cj.result.Field;
 import com.mysql.cj.result.ValueFactory;
 import com.mysql.cj.util.StringUtils;
 
@@ -45,7 +49,7 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
 
     public <T> T decodeTimestamp(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length == 0) {
-            return vf.createFromTimestamp(0, 0, 0, 0, 0, 0, 0);
+            return vf.createFromTimestamp(new InternalTimestamp());
         } else if (length != NativeConstants.BIN_LEN_DATE && length != NativeConstants.BIN_LEN_TIMESTAMP && length != NativeConstants.BIN_LEN_TIMESTAMP_NO_US) {
             // the value can be any of these lengths (check protocol docs)
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIMESTAMP" }));
@@ -77,12 +81,12 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
                     | ((bytes[offset + 10] & 0xff) << 24));
         }
 
-        return vf.createFromTimestamp(year, month, day, hours, minutes, seconds, nanos);
+        return vf.createFromTimestamp(new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos));
     }
 
     public <T> T decodeTime(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length == 0) {
-            return vf.createFromTime(0, 0, 0, 0);
+            return vf.createFromTime(new InternalTime());
         } else if (length != NativeConstants.BIN_LEN_TIME && length != NativeConstants.BIN_LEN_TIME_NO_US) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIME" }));
         }
@@ -110,19 +114,19 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
                     | ((bytes[offset + 4] & 0xff) << 24);
         }
 
-        return vf.createFromTime(days * 24 + hours, minutes, seconds, nanos);
+        return vf.createFromTime(new InternalTime(days * 24 + hours, minutes, seconds, nanos));
     }
 
     public <T> T decodeDate(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length == 0) {
-            return vf.createFromDate(0, 0, 0);
+            return vf.createFromDate(new InternalDate());
         } else if (length != NativeConstants.BIN_LEN_DATE) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "DATE" }));
         }
         int year = (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
         int month = bytes[offset + 2];
         int day = bytes[offset + 3];
-        return vf.createFromDate(year, month, day);
+        return vf.createFromDate(new InternalDate(year, month, day));
     }
 
     public <T> T decodeUInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
@@ -222,8 +226,8 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
         return vf.createFromBigDecimal(d);
     }
 
-    public <T> T decodeByteArray(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromBytes(bytes, offset, length);
+    public <T> T decodeByteArray(byte[] bytes, int offset, int length, Field f, ValueFactory<T> vf) {
+        return vf.createFromBytes(bytes, offset, length, f);
     }
 
     public <T> T decodeBit(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
@@ -231,7 +235,16 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
     }
 
     @Override
-    public <T> T decodeSet(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return decodeByteArray(bytes, offset, length, vf);
+    public <T> T decodeSet(byte[] bytes, int offset, int length, Field f, ValueFactory<T> vf) {
+        return decodeByteArray(bytes, offset, length, f, vf);
+    }
+
+    @Override
+    public <T> T decodeYear(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        if (length != NativeConstants.BIN_LEN_INT2) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "YEAR" }));
+        }
+        short asShort = (short) ((bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8));
+        return vf.createFromYear(asShort);
     }
 }

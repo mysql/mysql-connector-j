@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -27,87 +27,50 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package com.mysql.cj.protocol;
+package com.mysql.cj.result;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
-import com.mysql.cj.exceptions.DataConversionException;
+import com.mysql.cj.conf.DefaultPropertySet;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.ZeroDatetimeBehavior;
+import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.DataReadException;
-import com.mysql.cj.result.LocalDateTimeValueFactory;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
 
-public class LocalDateTimeValueFactoryTest extends CommonAsserts {
+public class ZeroDateTimeToNullValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testBasics() {
-        LocalDateTimeValueFactory vf = new LocalDateTimeValueFactory();
+        PropertySet pset = new DefaultPropertySet();
+        pset.<PropertyDefinitions.ZeroDatetimeBehavior> getEnumProperty(PropertyKey.zeroDateTimeBehavior).setValue(ZeroDatetimeBehavior.CONVERT_TO_NULL);
 
-        assertThrows(DataConversionException.class, "Unsupported conversion from DECIMAL to java.time.LocalDateTime", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                vf.createFromBigDecimal(new BigDecimal("2018"));
-                return null;
-            }
-        });
+        LocalDateTimeValueFactory vf = new LocalDateTimeValueFactory(pset);
 
-        assertThrows(DataConversionException.class, "Unsupported conversion from BIGINT to java.time.LocalDateTime", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                vf.createFromBigInteger(new BigInteger("2018"));
-                return null;
-            }
-        });
+        assertNull(vf.createFromDate(new InternalDate()));
+        assertEquals(LocalDateTime.of(2018, 1, 1, 0, 0, 0, 0), vf.createFromDate(new InternalDate(2018, 1, 1)));
 
-        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.time.LocalDateTime", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                vf.createFromBit(new byte[] { 1 }, 0, 2);
-                return null;
-            }
-        });
-
-        assertThrows(DataConversionException.class, "Unsupported conversion from VARCHAR/TEXT/BLOB to java.time.LocalDateTime", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                vf.createFromBytes(new byte[] { 1 }, 0, 2);
-                return null;
-            }
-        });
-
-        assertEquals(LocalDateTime.of(2018, 1, 1, 0, 0, 0, 0), vf.createFromDate(2018, 1, 1));
-
-        assertThrows(DataConversionException.class, "Unsupported conversion from DOUBLE to java.time.LocalDateTime", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                vf.createFromDouble(new Double(2018));
-                return null;
-            }
-        });
-
-        assertThrows(DataConversionException.class, "Unsupported conversion from LONG to java.time.LocalDateTime", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                vf.createFromLong(22L);
-                return null;
-            }
-        });
-
-        assertNull(vf.createFromNull());
+        assertNotNull(vf.createFromTime(new InternalTime()));
+        assertEquals(LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC), vf.createFromTime(new InternalTime()));
 
         assertThrows(DataReadException.class,
                 "The value '-1:0:0' is an invalid TIME value. JDBC Time objects represent a wall-clock time and not a duration as MySQL treats them. If you are treating this type as a duration, consider retrieving this value as a string and dealing with it according to your requirements.",
                 new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        vf.createFromTime(-1, 0, 0, 0);
+                        vf.createFromTime(new InternalTime(-1, 0, 0, 0));
                         return null;
                     }
                 });
@@ -117,59 +80,61 @@ public class LocalDateTimeValueFactoryTest extends CommonAsserts {
                 new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        vf.createFromTime(44, 0, 0, 0);
+                        vf.createFromTime(new InternalTime(44, 0, 0, 0));
                         return null;
                     }
                 });
 
-        assertEquals(LocalDateTime.of(1970, 1, 1, 1, 1, 1, 1), vf.createFromTime(1, 1, 1, 1));
+        assertEquals(LocalDateTime.of(1970, 1, 1, 1, 1, 1, 1), vf.createFromTime(new InternalTime(1, 1, 1, 1)));
+
+        assertNull(vf.createFromTimestamp(new InternalTimestamp(0, 0, 0, 0, 0, 0, 0)));
 
         assertThrows(DataReadException.class, "Zero date value prohibited", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                vf.createFromTimestamp(0, 0, 0, 1, 1, 1, 1);
+                vf.createFromTimestamp(new InternalTimestamp(0, 0, 0, 1, 1, 1, 1));
                 return null;
             }
         });
         assertThrows(DateTimeException.class, "Invalid value for MonthOfYear \\(valid values 1 - 12\\): 0", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                assertEquals(LocalDateTime.of(0, 0, 1, 1, 1, 1, 1), vf.createFromTimestamp(0, 0, 1, 1, 1, 1, 1));
+                assertEquals(LocalDateTime.of(0, 0, 1, 1, 1, 1, 1), vf.createFromTimestamp(new InternalTimestamp(0, 0, 1, 1, 1, 1, 1)));
                 return null;
             }
         });
         assertThrows(DateTimeException.class, "Invalid value for DayOfMonth \\(valid values 1 - 28/31\\): 0", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                assertEquals(LocalDateTime.of(0, 1, 0, 1, 1, 1, 1), vf.createFromTimestamp(0, 1, 0, 1, 1, 1, 1));
+                assertEquals(LocalDateTime.of(0, 1, 0, 1, 1, 1, 1), vf.createFromTimestamp(new InternalTimestamp(0, 1, 0, 1, 1, 1, 1)));
                 return null;
             }
         });
 
-        assertEquals(LocalDateTime.of(0, 1, 1, 1, 1, 1, 1), vf.createFromTimestamp(0, 1, 1, 1, 1, 1, 1));
+        assertEquals(LocalDateTime.of(0, 1, 1, 1, 1, 1, 1), vf.createFromTimestamp(new InternalTimestamp(0, 1, 1, 1, 1, 1, 1)));
 
         assertThrows(DateTimeException.class, "Invalid value for MonthOfYear \\(valid values 1 - 12\\): 0", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                assertEquals(LocalDateTime.of(2018, 0, 0, 1, 1, 1, 1), vf.createFromTimestamp(2018, 0, 0, 1, 1, 1, 1));
+                assertEquals(LocalDateTime.of(2018, 0, 0, 1, 1, 1, 1), vf.createFromTimestamp(new InternalTimestamp(2018, 0, 0, 1, 1, 1, 1)));
                 return null;
             }
         });
         assertThrows(DateTimeException.class, "Invalid value for MonthOfYear \\(valid values 1 - 12\\): 0", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                assertEquals(LocalDateTime.of(2018, 0, 1, 1, 1, 1, 1), vf.createFromTimestamp(2018, 0, 1, 1, 1, 1, 1));
+                assertEquals(LocalDateTime.of(2018, 0, 1, 1, 1, 1, 1), vf.createFromTimestamp(new InternalTimestamp(2018, 0, 1, 1, 1, 1, 1)));
                 return null;
             }
         });
         assertThrows(DateTimeException.class, "Invalid value for DayOfMonth \\(valid values 1 - 28/31\\): 0", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                assertEquals(LocalDateTime.of(2018, 1, 0, 1, 1, 1, 1), vf.createFromTimestamp(2018, 1, 0, 1, 1, 1, 1));
+                assertEquals(LocalDateTime.of(2018, 1, 0, 1, 1, 1, 1), vf.createFromTimestamp(new InternalTimestamp(2018, 1, 0, 1, 1, 1, 1)));
                 return null;
             }
         });
-        assertEquals(LocalDateTime.of(2018, 1, 1, 1, 1, 1, 1), vf.createFromTimestamp(2018, 1, 1, 1, 1, 1, 1));
+        assertEquals(LocalDateTime.of(2018, 1, 1, 1, 1, 1, 1), vf.createFromTimestamp(new InternalTimestamp(2018, 1, 1, 1, 1, 1, 1)));
 
         assertEquals("java.time.LocalDateTime", vf.getTargetTypeName());
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,20 +36,25 @@ import java.util.TimeZone;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.WarningListener;
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.DataReadException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
 
 /**
  * A value factory to create {@link java.sql.Time} instances. As with other date/time types, a time zone is necessary to interpret the
  * time values returned from the server.
  */
-public class SqlTimeValueFactory extends DefaultValueFactory<Time> {
+public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
     private WarningListener warningListener;
     // cached per instance to avoid re-creation on every create*() call
     private Calendar cal;
 
-    public SqlTimeValueFactory(Calendar calendar, TimeZone tz) {
+    public SqlTimeValueFactory(PropertySet pset, Calendar calendar, TimeZone tz) {
+        super(pset);
         if (calendar != null) {
             this.cal = (Calendar) calendar.clone();
         } else {
@@ -59,23 +64,29 @@ public class SqlTimeValueFactory extends DefaultValueFactory<Time> {
         }
     }
 
-    public SqlTimeValueFactory(Calendar calendar, TimeZone tz, WarningListener warningListener) {
-        this(calendar, tz);
+    public SqlTimeValueFactory(PropertySet pset, Calendar calendar, TimeZone tz, WarningListener warningListener) {
+        this(pset, calendar, tz);
         this.warningListener = warningListener;
     }
 
     @Override
-    public Time createFromTime(int hours, int minutes, int seconds, int nanos) {
-        if (hours < 0 || hours >= 24) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + hours + ":" + minutes + ":" + seconds }));
+    Time localCreateFromDate(InternalDate idate) {
+        return unsupported("DATE");
+    }
+
+    @Override
+    public Time localCreateFromTime(InternalTime it) {
+        if (it.getHours() < 0 || it.getHours() >= 24) {
+            throw new DataReadException(
+                    Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + it.getHours() + ":" + it.getMinutes() + ":" + it.getSeconds() }));
         }
 
         synchronized (this.cal) {
             try {
                 // c.f. java.sql.Time "The date components should be set to the "zero epoch" value of January 1, 1970 and should not be accessed."
-                this.cal.set(1970, 0, 1, hours, minutes, seconds);
+                this.cal.set(1970, 0, 1, it.getHours(), it.getMinutes(), it.getSeconds());
                 this.cal.set(Calendar.MILLISECOND, 0);
-                long ms = (nanos / 1000000) + this.cal.getTimeInMillis();
+                long ms = (it.getNanos() / 1000000) + this.cal.getTimeInMillis();
                 return new Time(ms);
             } catch (IllegalArgumentException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
@@ -84,14 +95,19 @@ public class SqlTimeValueFactory extends DefaultValueFactory<Time> {
     }
 
     @Override
-    public Time createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
+    public Time localCreateFromTimestamp(InternalTimestamp its) {
         if (this.warningListener != null) {
             // TODO: need column context
             this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { "java.sql.Time" }));
         }
 
         // truncate date information
-        return createFromTime(hours, minutes, seconds, nanos);
+        return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos()));
+    }
+
+    @Override
+    public Time createFromYear(long year) {
+        return unsupported("YEAR");
     }
 
     public String getTargetTypeName() {

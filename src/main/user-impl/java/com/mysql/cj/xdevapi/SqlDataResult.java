@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,6 +32,7 @@ package com.mysql.cj.xdevapi;
 import java.util.TimeZone;
 import java.util.function.Supplier;
 
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.x.StatementExecuteOk;
@@ -53,8 +54,8 @@ public class SqlDataResult extends RowResultImpl implements SqlResult {
      * @param completer
      *            supplier for completion task
      */
-    public SqlDataResult(ColumnDefinition metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(metadata, defaultTimeZone, rows, completer);
+    public SqlDataResult(ColumnDefinition metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer, PropertySet pset) {
+        super(metadata, defaultTimeZone, rows, completer, pset);
     }
 
     @Override

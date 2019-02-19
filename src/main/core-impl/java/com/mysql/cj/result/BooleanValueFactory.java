@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,12 +32,23 @@ package com.mysql.cj.result;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.exceptions.DataConversionException;
+import com.mysql.cj.protocol.a.MysqlTextValueDecoder;
 import com.mysql.cj.util.DataTypeUtil;
+import com.mysql.cj.util.StringUtils;
 
 /**
  * A value factory for creating {@link java.lang.Boolean} values.
  */
 public class BooleanValueFactory extends DefaultValueFactory<Boolean> {
+
+    public BooleanValueFactory(PropertySet pset) {
+        super(pset);
+    }
+
     @Override
     public Boolean createFromLong(long l) {
         // Goes back to ODBC driver compatibility, and VB/Automation Languages/COM, where in Windows "-1" can mean true as well.
@@ -68,11 +79,46 @@ public class BooleanValueFactory extends DefaultValueFactory<Boolean> {
     }
 
     @Override
+    public Boolean createFromYear(long l) {
+        return createFromLong(l);
+    }
+
+    @Override
     public Boolean createFromNull() {
         return false;
     }
 
     public String getTargetTypeName() {
         return Boolean.class.getName();
+    }
+
+    @Override
+    public Boolean createFromBytes(byte[] bytes, int offset, int length, Field f) {
+        if (length == 0 && this.pset.getBooleanProperty(PropertyKey.emptyStringsConvertToZero).getValue()) {
+            return createFromLong(0);
+        }
+
+        // TODO: Too expensive to convert from other charset to ASCII here? UTF-8 (e.g.) doesn't need any conversion before being sent to the decoder
+        String s = StringUtils.toString(bytes, offset, length, f.getEncoding());
+        byte[] newBytes = s.getBytes();
+
+        issueConversionViaParsingWarning();
+
+        if (s.equalsIgnoreCase("Y") || s.equalsIgnoreCase("true")) {
+            return createFromLong(1);
+        } else if (s.equalsIgnoreCase("N") || s.equalsIgnoreCase("false")) {
+            return createFromLong(0);
+        } else if (s.contains("e") || s.contains("E") || s.matches("-?(\\d+)?\\.\\d+")) {
+            // floating point
+            return createFromDouble(MysqlTextValueDecoder.getDouble(newBytes, 0, newBytes.length));
+        } else if (s.matches("-?\\d+")) {
+            // integer
+            if (s.charAt(0) == '-' // TODO shouldn't we check the length as well?
+                    || length <= (MysqlTextValueDecoder.MAX_SIGNED_LONG_LEN - 1) && newBytes[0] >= '0' && newBytes[0] <= '8') {
+                return createFromLong(MysqlTextValueDecoder.getLong(newBytes, 0, newBytes.length));
+            }
+            return createFromBigInteger(MysqlTextValueDecoder.getBigInteger(newBytes, 0, newBytes.length));
+        }
+        throw new DataConversionException(Messages.getString("ResultSet.UnableToInterpretString", new Object[] { s }));
     }
 }

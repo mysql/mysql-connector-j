@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -126,7 +126,8 @@ public class MysqlxSession extends CoreSession {
                 return null;
             } else if (((XProtocol) this.protocol).isSqlResultPending()) {
                 ColumnDefinition metadata = this.protocol.readMetadata();
-                return new SqlDataResult(metadata, this.protocol.getServerSession().getDefaultTimeZone(), this.protocol.getRowInputStream(metadata), okReader);
+                return new SqlDataResult(metadata, this.protocol.getServerSession().getDefaultTimeZone(), this.protocol.getRowInputStream(metadata), okReader,
+                        this.propertySet);
             } else {
                 readLastResult[0] = true;
                 return new SqlUpdateResult(this.protocol.readQueryResult());

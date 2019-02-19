@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -834,7 +834,7 @@ public class NativeSession extends CoreSession implements Serializable {
                         new ResultsetFactory(Type.FORWARD_ONLY, null));
                 Field[] f = rs.getColumnDefinition().getFields();
                 if (f.length > 0) {
-                    ValueFactory<String> vf = new StringValueFactory(f[0].getEncoding());
+                    ValueFactory<String> vf = new StringValueFactory(this.propertySet);
                     Row r;
                     if ((r = rs.getRows().next()) != null) {
                         for (int i = 0; i < f.length; i++) {
@@ -847,7 +847,7 @@ public class NativeSession extends CoreSession implements Serializable {
                 NativePacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(null, versionComment + "SHOW VARIABLES"), false, 0);
                 Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null,
                         new ResultsetFactory(Type.FORWARD_ONLY, null));
-                ValueFactory<String> vf = new StringValueFactory(rs.getColumnDefinition().getFields()[0].getEncoding());
+                ValueFactory<String> vf = new StringValueFactory(this.propertySet);
                 Row r;
                 while ((r = rs.getRows().next()) != null) {
                     this.protocol.getServerSession().getServerVariables().put(r.getValue(0, vf), r.getValue(1, vf));
@@ -915,13 +915,13 @@ public class NativeSession extends CoreSession implements Serializable {
             customCharset = new HashMap<>();
             customMblen = new HashMap<>();
 
-            ValueFactory<Integer> ivf = new IntegerValueFactory();
+            ValueFactory<Integer> ivf = new IntegerValueFactory(getPropertySet());
 
             try {
                 NativePacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(null, "SHOW COLLATION"), false, 0);
                 Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null,
                         new ResultsetFactory(Type.FORWARD_ONLY, null));
-                ValueFactory<String> svf = new StringValueFactory(rs.getColumnDefinition().getFields()[1].getEncoding());
+                ValueFactory<String> svf = new StringValueFactory(this.propertySet);
                 Row r;
                 while ((r = rs.getRows().next()) != null) {
                     int collationIndex = ((Number) r.getValue(2, ivf)).intValue();
@@ -955,7 +955,7 @@ public class NativeSession extends CoreSession implements Serializable {
                     int charsetColumn = rs.getColumnDefinition().getColumnNameToIndex().get("Charset");
                     int maxlenColumn = rs.getColumnDefinition().getColumnNameToIndex().get("Maxlen");
 
-                    ValueFactory<String> svf = new StringValueFactory(rs.getColumnDefinition().getFields()[1].getEncoding());
+                    ValueFactory<String> svf = new StringValueFactory(this.propertySet);
                     Row r;
                     while ((r = rs.getRows().next()) != null) {
                         String charsetName = r.getValue(charsetColumn, svf);
@@ -1021,7 +1021,7 @@ public class NativeSession extends CoreSession implements Serializable {
                 Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null,
                         new ResultsetFactory(Type.FORWARD_ONLY, null));
 
-                ValueFactory<Long> lvf = new LongValueFactory();
+                ValueFactory<Long> lvf = new LongValueFactory(getPropertySet());
                 Row r;
                 if ((r = rs.getRows().next()) != null) {
                     threadId = r.getValue(0, lvf);
@@ -1048,8 +1048,8 @@ public class NativeSession extends CoreSession implements Serializable {
             NativePacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(null, "SHOW PROCESSLIST"), false, 0);
             Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
-            ValueFactory<Long> lvf = new LongValueFactory();
-            ValueFactory<String> svf = new StringValueFactory(rs.getColumnDefinition().getFields()[2].getEncoding());
+            ValueFactory<Long> lvf = new LongValueFactory(getPropertySet());
+            ValueFactory<String> svf = new StringValueFactory(this.propertySet);
             Row r;
             while ((r = rs.getRows().next()) != null) {
                 long id = r.getValue(0, lvf);
@@ -1079,7 +1079,7 @@ public class NativeSession extends CoreSession implements Serializable {
             NativePacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(null, "SELECT " + varName), false, 0);
             Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
-            ValueFactory<String> svf = new StringValueFactory(rs.getColumnDefinition().getFields()[0].getEncoding());
+            ValueFactory<String> svf = new StringValueFactory(this.propertySet);
             Row r;
             if ((r = rs.getRows().next()) != null) {
                 String s = r.getValue(0, svf);

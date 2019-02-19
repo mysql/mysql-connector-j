@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,6 +31,7 @@ package com.mysql.cj.xdevapi;
 
 import java.util.function.Supplier;
 
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.result.RowList;
 
@@ -47,7 +48,7 @@ public class DocResultImpl extends AbstractDataResult<DbDoc> implements DocResul
      * @param completer
      *            Supplier of X Protocol StatementExecuteOk object.
      */
-    public DocResultImpl(RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(rows, completer, new DbDocFactory());
+    public DocResultImpl(RowList rows, Supplier<StatementExecuteOk> completer, PropertySet pset) {
+        super(rows, completer, new DbDocFactory(pset));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -97,7 +97,7 @@ public class FieldFactory implements ProtocolEntityFactory<Field, XMessage> {
                 collationIndex = (int) col.getCollation();
             }
 
-            String encoding = CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[collationIndex];
+            String encoding = CharsetMapping.getJavaEncodingForCollationIndex(collationIndex);
 
             MysqlType mysqlType = findMysqlType(col.getType(), col.getContentType(), col.getFlags(), collationIndex);
             int mysqlTypeId = xProtocolTypeToMysqlType(col.getType(), col.getContentType());

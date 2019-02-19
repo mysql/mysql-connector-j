@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,27 +33,50 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
+import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.exceptions.NumberOutOfRange;
+
 /**
  * A value factory for creating double values.
  */
-public class DoubleValueFactory extends DefaultValueFactory<Double> {
+public class DoubleValueFactory extends AbstractNumericValueFactory<Double> {
+
+    public DoubleValueFactory(PropertySet pset) {
+        super(pset);
+    }
+
     @Override
     public Double createFromBigInteger(BigInteger i) {
+        if (this.jdbcCompliantTruncationForReads && (new BigDecimal(i).compareTo(BigDecimal.valueOf(-Double.MAX_VALUE)) < 0
+                || new BigDecimal(i).compareTo(BigDecimal.valueOf(Double.MAX_VALUE)) > 0)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { i, getTargetTypeName() }));
+        }
         return i.doubleValue();
     }
 
     @Override
     public Double createFromLong(long l) {
+        if (this.jdbcCompliantTruncationForReads && (l < -Double.MAX_VALUE || l > Double.MAX_VALUE)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { l, getTargetTypeName() }));
+        }
         return (double) l;
     }
 
     @Override
     public Double createFromBigDecimal(BigDecimal d) {
+        if (this.jdbcCompliantTruncationForReads
+                && (d.compareTo(BigDecimal.valueOf(-Double.MAX_VALUE)) < 0 || d.compareTo(BigDecimal.valueOf(Double.MAX_VALUE)) > 0)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, getTargetTypeName() }));
+        }
         return d.doubleValue();
     }
 
     @Override
     public Double createFromDouble(double d) {
+        if (this.jdbcCompliantTruncationForReads && (d < -Double.MAX_VALUE || d > Double.MAX_VALUE)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, getTargetTypeName() }));
+        }
         return d;
     }
 

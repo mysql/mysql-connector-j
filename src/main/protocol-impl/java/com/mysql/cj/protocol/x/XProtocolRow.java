@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -78,7 +78,7 @@ public class XProtocolRow implements com.mysql.cj.result.Row {
 
             case MysqlType.FIELD_TYPE_ENUM:
                 this.wasNull = false;
-                return XProtocolDecoder.instance.decodeByteArray(byteString.toByteArray(), 0, byteString.size(), vf);
+                return XProtocolDecoder.instance.decodeByteArray(byteString.toByteArray(), 0, byteString.size(), f, vf);
 
             case MysqlType.FIELD_TYPE_FLOAT:
                 this.wasNull = false;
@@ -91,7 +91,7 @@ public class XProtocolRow implements com.mysql.cj.result.Row {
             case MysqlType.FIELD_TYPE_JSON:
                 this.wasNull = false;
                 // TODO: do we need to really do anything special with JSON? just return correct stuff with getObject() I guess
-                return XProtocolDecoder.instance.decodeByteArray(byteString.toByteArray(), 0, byteString.size(), vf);
+                return XProtocolDecoder.instance.decodeByteArray(byteString.toByteArray(), 0, byteString.size(), f, vf);
 
             case MysqlType.FIELD_TYPE_LONGLONG:
                 // X Protocol uses 64-bit ints for everything
@@ -107,7 +107,7 @@ public class XProtocolRow implements com.mysql.cj.result.Row {
 
             case MysqlType.FIELD_TYPE_SET:
                 this.wasNull = false;
-                return XProtocolDecoder.instance.decodeSet(byteString.toByteArray(), 0, byteString.size(), vf);
+                return XProtocolDecoder.instance.decodeSet(byteString.toByteArray(), 0, byteString.size(), f, vf);
             //return XProtocolDecoder.instance.decodeByteArray(byteString.toByteArray(), 0, byteString.size(), vf);
 
             case MysqlType.FIELD_TYPE_TIME:
@@ -116,11 +116,11 @@ public class XProtocolRow implements com.mysql.cj.result.Row {
 
             case MysqlType.FIELD_TYPE_VARCHAR:
                 this.wasNull = false;
-                return XProtocolDecoder.instance.decodeByteArray(byteString.toByteArray(), 0, byteString.size(), vf);
+                return XProtocolDecoder.instance.decodeByteArray(byteString.toByteArray(), 0, byteString.size(), f, vf);
 
             case MysqlType.FIELD_TYPE_VAR_STRING:
                 this.wasNull = false;
-                return XProtocolDecoder.instance.decodeByteArray(byteString.toByteArray(), 0, byteString.size(), vf);
+                return XProtocolDecoder.instance.decodeByteArray(byteString.toByteArray(), 0, byteString.size(), f, vf);
 
             default:
                 throw new DataReadException("Unknown MySQL type constant: " + f.getMysqlTypeId());

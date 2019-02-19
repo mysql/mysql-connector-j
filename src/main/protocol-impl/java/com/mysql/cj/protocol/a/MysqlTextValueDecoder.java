@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,7 +34,12 @@ import java.math.BigInteger;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.DataReadException;
+import com.mysql.cj.exceptions.NumberOutOfRange;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
 import com.mysql.cj.protocol.ValueDecoder;
+import com.mysql.cj.result.Field;
 import com.mysql.cj.result.ValueFactory;
 import com.mysql.cj.util.StringUtils;
 
@@ -60,19 +65,203 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     public static final int TIMESTAMP_STR_LEN_WITH_NANOS = TIMESTAMP_NOFRAC_STR_LEN + 10;
 
     /** Max string length of a signed long = 9223372036854775807 (19+1 for minus sign) */
-    private static final int MAX_SIGNED_LONG_LEN = 20;
+    public static final int MAX_SIGNED_LONG_LEN = 20;
 
     public <T> T decodeDate(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        if (length != DATE_BUF_LEN) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "DATE" }));
-        }
-        int year = StringUtils.getInt(bytes, offset, offset + 4);
-        int month = StringUtils.getInt(bytes, offset + 5, offset + 7);
-        int day = StringUtils.getInt(bytes, offset + 8, offset + 10);
-        return vf.createFromDate(year, month, day);
+        return vf.createFromDate(getDate(bytes, offset, length));
     }
 
     public <T> T decodeTime(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromTime(getTime(bytes, offset, length));
+    }
+
+    public <T> T decodeTimestamp(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromTimestamp(getTimestamp(bytes, offset, length));
+    }
+
+    public <T> T decodeUInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromLong(getInt(bytes, offset, offset + length));
+    }
+
+    public <T> T decodeInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromLong(getInt(bytes, offset, offset + length));
+    }
+
+    public <T> T decodeUInt2(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromLong(getInt(bytes, offset, offset + length));
+    }
+
+    public <T> T decodeInt2(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromLong(getInt(bytes, offset, offset + length));
+    }
+
+    public <T> T decodeUInt4(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromLong(getLong(bytes, offset, offset + length));
+    }
+
+    public <T> T decodeInt4(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromLong(getInt(bytes, offset, offset + length));
+    }
+
+    public <T> T decodeUInt8(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        // treat as a signed long if possible to avoid BigInteger overhead
+        if (length <= (MAX_SIGNED_LONG_LEN - 1) && bytes[offset] >= '0' && bytes[offset] <= '8') {
+            return decodeInt8(bytes, offset, length, vf);
+        }
+        return vf.createFromBigInteger(getBigInteger(bytes, offset, length));
+    }
+
+    public <T> T decodeInt8(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromLong(getLong(bytes, offset, offset + length));
+    }
+
+    public <T> T decodeFloat(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return decodeDouble(bytes, offset, length, vf);
+    }
+
+    public <T> T decodeDouble(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromDouble(getDouble(bytes, offset, length));
+    }
+
+    public <T> T decodeDecimal(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        BigDecimal d = new BigDecimal(StringUtils.toAsciiString(bytes, offset, length));
+        return vf.createFromBigDecimal(d);
+    }
+
+    public <T> T decodeByteArray(byte[] bytes, int offset, int length, Field f, ValueFactory<T> vf) {
+        return vf.createFromBytes(bytes, offset, length, f);
+    }
+
+    public <T> T decodeBit(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromBit(bytes, offset, length);
+    }
+
+    @Override
+    public <T> T decodeSet(byte[] bytes, int offset, int length, Field f, ValueFactory<T> vf) {
+        return decodeByteArray(bytes, offset, length, f, vf);
+    }
+
+    @Override
+    public <T> T decodeYear(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        return vf.createFromYear(getLong(bytes, offset, offset + length));
+    }
+
+    public static int getInt(byte[] buf, int offset, int endpos) throws NumberFormatException {
+        long l = getLong(buf, offset, endpos);
+        if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
+            throw new NumberOutOfRange(Messages.getString("StringUtils.badIntFormat", new Object[] { StringUtils.toString(buf, offset, endpos - offset) }));
+        }
+        return (int) l;
+    }
+
+    public static long getLong(byte[] buf, int offset, int endpos) throws NumberFormatException {
+        int base = 10;
+
+        int s = offset;
+
+        /* Skip white space. */
+        while (s < endpos && Character.isWhitespace((char) buf[s])) {
+            ++s;
+        }
+
+        if (s == endpos) {
+            throw new NumberFormatException(StringUtils.toString(buf));
+        }
+
+        /* Check for a sign. */
+        boolean negative = false;
+
+        if ((char) buf[s] == '-') {
+            negative = true;
+            ++s;
+        } else if ((char) buf[s] == '+') {
+            ++s;
+        }
+
+        /* Save the pointer so we can check later if anything happened. */
+        int save = s;
+
+        long cutoff = Long.MAX_VALUE / base;
+        long cutlim = (int) (Long.MAX_VALUE % base);
+
+        if (negative) {
+            cutlim++;
+        }
+
+        boolean overflow = false;
+        long i = 0;
+
+        for (; s < endpos; s++) {
+            char c = (char) buf[s];
+
+            if (c >= '0' && c <= '9') {
+                c -= '0';
+            } else if (Character.isLetter(c)) {
+                c = (char) (Character.toUpperCase(c) - 'A' + 10);
+            } else {
+                break;
+            }
+
+            if (c >= base) {
+                break;
+            }
+
+            /* Check for overflow. */
+            if ((i > cutoff) || ((i == cutoff) && (c > cutlim))) {
+                overflow = true;
+            } else {
+                i *= base;
+                i += c;
+            }
+        }
+
+        // no digits were parsed after a possible +/-
+        if (s == save) {
+            throw new NumberFormatException(
+                    Messages.getString("StringUtils.badIntFormat", new Object[] { StringUtils.toString(buf, offset, endpos - offset) }));
+        }
+
+        if (overflow) {
+            throw new NumberOutOfRange(Messages.getString("StringUtils.badIntFormat", new Object[] { StringUtils.toString(buf, offset, endpos - offset) }));
+        }
+
+        /* Return the result of the appropriate sign. */
+        return (negative ? (-i) : i);
+    }
+
+    public static BigInteger getBigInteger(byte[] buf, int offset, int length) throws NumberFormatException {
+        BigInteger i = new BigInteger(StringUtils.toAsciiString(buf, offset, length));
+        return i;
+    }
+
+    public static Double getDouble(byte[] bytes, int offset, int length) {
+        return Double.parseDouble(StringUtils.toAsciiString(bytes, offset, length));
+    }
+
+    public static boolean isDate(String s) {
+        return s.length() == DATE_BUF_LEN && s.charAt(4) == '-' && s.charAt(7) == '-';
+    }
+
+    public static boolean isTime(String s) {
+        return s.length() >= TIME_STR_LEN_MIN && s.length() <= TIME_STR_LEN_MAX && s.charAt(2) == ':' && s.charAt(5) == ':';
+    }
+
+    public static boolean isTimestamp(String s) {
+        return s.length() >= TIMESTAMP_NOFRAC_STR_LEN && (s.length() <= TIMESTAMP_STR_LEN_MAX || s.length() == TIMESTAMP_STR_LEN_WITH_NANOS)
+                && s.charAt(4) == '-' && s.charAt(7) == '-' && s.charAt(10) == ' ' && s.charAt(13) == ':' && s.charAt(16) == ':';
+    }
+
+    public static InternalDate getDate(byte[] bytes, int offset, int length) {
+        if (length != DATE_BUF_LEN) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "DATE" }));
+        }
+        int year = getInt(bytes, offset, offset + 4);
+        int month = getInt(bytes, offset + 5, offset + 7);
+        int day = getInt(bytes, offset + 8, offset + 10);
+        return new InternalDate(year, month, day);
+    }
+
+    public static InternalTime getTime(byte[] bytes, int offset, int length) {
         int pos = 0;
         // used to track the length of the current time segment during parsing
         int segmentLen;
@@ -96,7 +285,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
             throw new DataReadException(
                     Messages.getString("ResultSet.InvalidFormatForType", new Object[] { "TIME", StringUtils.toString(bytes, offset, length) }));
         }
-        int hours = StringUtils.getInt(bytes, offset + pos, offset + pos + segmentLen);
+        int hours = getInt(bytes, offset + pos, offset + pos + segmentLen);
         if (negative) {
             hours *= -1;
         }
@@ -110,7 +299,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
             throw new DataReadException(
                     Messages.getString("ResultSet.InvalidFormatForType", new Object[] { "TIME", StringUtils.toString(bytes, offset, length) }));
         }
-        int minutes = StringUtils.getInt(bytes, offset + pos, offset + pos + segmentLen);
+        int minutes = getInt(bytes, offset + pos, offset + pos + segmentLen);
         pos += segmentLen + 1;
 
         // parse seconds field
@@ -121,7 +310,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
             throw new DataReadException(
                     Messages.getString("ResultSet.InvalidFormatForType", new Object[] { StringUtils.toString(bytes, offset, length), "TIME" }));
         }
-        int seconds = StringUtils.getInt(bytes, offset + pos, offset + pos + segmentLen);
+        int seconds = getInt(bytes, offset + pos, offset + pos + segmentLen);
         pos += segmentLen;
 
         // parse optional microsecond fractional value
@@ -136,16 +325,16 @@ public class MysqlTextValueDecoder implements ValueDecoder {
                 throw new DataReadException(
                         Messages.getString("ResultSet.InvalidFormatForType", new Object[] { StringUtils.toString(bytes, offset, length), "TIME" }));
             }
-            nanos = StringUtils.getInt(bytes, offset + pos, offset + pos + segmentLen);
+            nanos = getInt(bytes, offset + pos, offset + pos + segmentLen);
             // scale out nanos appropriately. mysql supports up to 6 digits of fractional seconds, each additional digit increasing the range by a factor of
             // 10. one digit is tenths, two is hundreths, etc
             nanos = nanos * (int) Math.pow(10, 9 - segmentLen);
         }
 
-        return vf.createFromTime(hours, minutes, seconds, nanos);
+        return new InternalTime(hours, minutes, seconds, nanos);
     }
 
-    public <T> T decodeTimestamp(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+    public static InternalTimestamp getTimestamp(byte[] bytes, int offset, int length) {
         if (length < TIMESTAMP_NOFRAC_STR_LEN || (length > TIMESTAMP_STR_LEN_MAX && length != TIMESTAMP_STR_LEN_WITH_NANOS)) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIMESTAMP" }));
         } else if (length != TIMESTAMP_NOFRAC_STR_LEN) {
@@ -163,87 +352,23 @@ public class MysqlTextValueDecoder implements ValueDecoder {
                     Messages.getString("ResultSet.InvalidFormatForType", new Object[] { StringUtils.toString(bytes, offset, length), "TIMESTAMP" }));
         }
 
-        int year = StringUtils.getInt(bytes, offset, offset + 4);
-        int month = StringUtils.getInt(bytes, offset + 5, offset + 7);
-        int day = StringUtils.getInt(bytes, offset + 8, offset + 10);
-        int hours = StringUtils.getInt(bytes, offset + 11, offset + 13);
-        int minutes = StringUtils.getInt(bytes, offset + 14, offset + 16);
-        int seconds = StringUtils.getInt(bytes, offset + 17, offset + 19);
+        int year = getInt(bytes, offset, offset + 4);
+        int month = getInt(bytes, offset + 5, offset + 7);
+        int day = getInt(bytes, offset + 8, offset + 10);
+        int hours = getInt(bytes, offset + 11, offset + 13);
+        int minutes = getInt(bytes, offset + 14, offset + 16);
+        int seconds = getInt(bytes, offset + 17, offset + 19);
         // nanos from MySQL fractional
         int nanos;
         if (length == TIMESTAMP_STR_LEN_WITH_NANOS) {
-            nanos = StringUtils.getInt(bytes, offset + 20, offset + length);
+            nanos = getInt(bytes, offset + 20, offset + length);
         } else {
-            nanos = (length == TIMESTAMP_NOFRAC_STR_LEN) ? 0 : StringUtils.getInt(bytes, offset + 20, offset + length);
+            nanos = (length == TIMESTAMP_NOFRAC_STR_LEN) ? 0 : getInt(bytes, offset + 20, offset + length);
             // scale out nanos appropriately. mysql supports up to 6 digits of fractional seconds, each additional digit increasing the range by a factor of
             // 10. one digit is tenths, two is hundreths, etc
             nanos = nanos * (int) Math.pow(10, 9 - (length - TIMESTAMP_NOFRAC_STR_LEN - 1));
         }
 
-        return vf.createFromTimestamp(year, month, day, hours, minutes, seconds, nanos);
-    }
-
-    public <T> T decodeUInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromLong(StringUtils.getInt(bytes, offset, offset + length));
-    }
-
-    public <T> T decodeInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromLong(StringUtils.getInt(bytes, offset, offset + length));
-    }
-
-    public <T> T decodeUInt2(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromLong(StringUtils.getInt(bytes, offset, offset + length));
-    }
-
-    public <T> T decodeInt2(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromLong(StringUtils.getInt(bytes, offset, offset + length));
-    }
-
-    public <T> T decodeUInt4(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromLong(StringUtils.getLong(bytes, offset, offset + length));
-    }
-
-    public <T> T decodeInt4(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromLong(StringUtils.getInt(bytes, offset, offset + length));
-    }
-
-    public <T> T decodeUInt8(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        // treat as a signed long if possible to avoid BigInteger overhead
-        if (length <= (MAX_SIGNED_LONG_LEN - 1) && bytes[0] >= '0' && bytes[0] <= '8') {
-            return decodeInt8(bytes, offset, length, vf);
-        }
-        BigInteger i = new BigInteger(StringUtils.toAsciiString(bytes, offset, length));
-        return vf.createFromBigInteger(i);
-    }
-
-    public <T> T decodeInt8(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromLong(StringUtils.getLong(bytes, offset, offset + length));
-    }
-
-    public <T> T decodeFloat(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return decodeDouble(bytes, offset, length, vf);
-    }
-
-    public <T> T decodeDouble(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        double d = Double.parseDouble(StringUtils.toAsciiString(bytes, offset, length));
-        return vf.createFromDouble(d);
-    }
-
-    public <T> T decodeDecimal(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        BigDecimal d = new BigDecimal(StringUtils.toAsciiString(bytes, offset, length));
-        return vf.createFromBigDecimal(d);
-    }
-
-    public <T> T decodeByteArray(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromBytes(bytes, offset, length);
-    }
-
-    public <T> T decodeBit(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromBit(bytes, offset, length);
-    }
-
-    @Override
-    public <T> T decodeSet(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return decodeByteArray(bytes, offset, length, vf);
+        return new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos);
     }
 }

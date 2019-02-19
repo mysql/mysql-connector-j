@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,19 +36,24 @@ import java.util.TimeZone;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.WarningListener;
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.DataReadException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
 
 /**
  * A value factory for creating {@link java.sql.Date} values.
  */
-public class SqlDateValueFactory extends DefaultValueFactory<Date> {
+public class SqlDateValueFactory extends AbstractDateTimeValueFactory<Date> {
     private WarningListener warningListener;
     // cached per instance to avoid re-creation on every create*() call
     private Calendar cal;
 
-    public SqlDateValueFactory(Calendar calendar, TimeZone tz) {
+    public SqlDateValueFactory(PropertySet pset, Calendar calendar, TimeZone tz) {
+        super(pset);
         if (calendar != null) {
             this.cal = (Calendar) calendar.clone();
         } else {
@@ -59,21 +64,21 @@ public class SqlDateValueFactory extends DefaultValueFactory<Date> {
         }
     }
 
-    public SqlDateValueFactory(Calendar calendar, TimeZone tz, WarningListener warningListener) {
-        this(calendar, tz);
+    public SqlDateValueFactory(PropertySet pset, Calendar calendar, TimeZone tz, WarningListener warningListener) {
+        this(pset, calendar, tz);
         this.warningListener = warningListener;
     }
 
     @Override
-    public Date createFromDate(int year, int month, int day) {
+    public Date localCreateFromDate(InternalDate idate) {
         synchronized (this.cal) {
             try {
-                if (year == 0 && month == 0 && day == 0) {
+                if (idate.isZero()) {
                     throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
                 }
 
                 this.cal.clear();
-                this.cal.set(year, month - 1, day);
+                this.cal.set(idate.getYear(), idate.getMonth() - 1, idate.getDay());
                 long ms = this.cal.getTimeInMillis();
                 return new Date(ms);
             } catch (IllegalArgumentException e) {
@@ -83,7 +88,7 @@ public class SqlDateValueFactory extends DefaultValueFactory<Date> {
     }
 
     @Override
-    public Date createFromTime(int hours, int minutes, int seconds, int nanos) {
+    public Date localCreateFromTime(InternalTime it) {
         if (this.warningListener != null) {
             // TODO: need column context
             this.warningListener.warningEncountered(Messages.getString("ResultSet.ImplicitDatePartWarning", new Object[] { "java.sql.Date" }));
@@ -94,9 +99,9 @@ public class SqlDateValueFactory extends DefaultValueFactory<Date> {
                 // c.f. java.sql.Time "The date components should be set to the "zero epoch" value of January 1, 1970 GMT and should not be accessed."
                 // A new Calendar instance is used to don't spoil the date part of the default one.
                 Calendar c1 = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.US);
-                c1.set(1970, 0, 1, hours, minutes, seconds);
+                c1.set(1970, 0, 1, it.getHours(), it.getMinutes(), it.getSeconds());
                 c1.set(Calendar.MILLISECOND, 0);
-                long ms = (nanos / 1000000) + c1.getTimeInMillis();
+                long ms = (it.getNanos() / 1000000) + c1.getTimeInMillis();
                 return new Date(ms);
             } catch (IllegalArgumentException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
@@ -105,14 +110,14 @@ public class SqlDateValueFactory extends DefaultValueFactory<Date> {
     }
 
     @Override
-    public Date createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
+    public Date localCreateFromTimestamp(InternalTimestamp its) {
         if (this.warningListener != null) {
             // TODO: need column context
             this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { "java.sql.Date" }));
         }
 
         // truncate any time information
-        return createFromDate(year, month, day);
+        return createFromDate(its);
     }
 
     public String getTargetTypeName() {

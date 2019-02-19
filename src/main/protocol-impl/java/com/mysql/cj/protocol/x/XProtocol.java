@@ -317,7 +317,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         send(this.messageBuilder.buildSqlStatement("select @@mysqlx_max_allowed_packet"), 0);
         // TODO: can use a simple default for this as we don't need metadata. need to prevent against exceptions though
         ColumnDefinition metadata = readMetadata();
-        long count = getRowInputStream(metadata).next().getValue(0, new LongValueFactory());
+        long count = getRowInputStream(metadata).next().getValue(0, new LongValueFactory(this.propertySet));
         readQueryResult();
         setMaxAllowedPacket((int) count);
     }
@@ -506,7 +506,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public CompletableFuture<SqlResult> asyncExecuteSql(String sql, List<Object> args) {
         newCommand();
         CompletableFuture<SqlResult> f = new CompletableFuture<>();
-        com.mysql.cj.protocol.MessageListener<XMessage> l = new SqlResultMessageListener(f, this.fieldFactory, this.serverSession.getDefaultTimeZone());
+        com.mysql.cj.protocol.MessageListener<XMessage> l = new SqlResultMessageListener(f, this.fieldFactory, this.serverSession.getDefaultTimeZone(),
+                this.propertySet);
         CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f, () -> this.reader.pushMessageListener(l));
         this.sender.send(this.messageBuilder.buildSqlStatement(sql, args), resultHandler);
         return f;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -70,8 +70,8 @@ import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeSession;
 import com.mysql.cj.Session;
 import com.mysql.cj.WarningListener;
-import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -104,8 +104,6 @@ import com.mysql.cj.result.ByteValueFactory;
 import com.mysql.cj.result.DoubleValueFactory;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.FloatValueFactory;
-import com.mysql.cj.result.FloatingPointBoundsEnforcer;
-import com.mysql.cj.result.IntegerBoundsEnforcer;
 import com.mysql.cj.result.IntegerValueFactory;
 import com.mysql.cj.result.LocalDateTimeValueFactory;
 import com.mysql.cj.result.LocalDateValueFactory;
@@ -115,12 +113,8 @@ import com.mysql.cj.result.ShortValueFactory;
 import com.mysql.cj.result.SqlDateValueFactory;
 import com.mysql.cj.result.SqlTimeValueFactory;
 import com.mysql.cj.result.SqlTimestampValueFactory;
-import com.mysql.cj.result.StringConverter;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.ValueFactory;
-import com.mysql.cj.result.YearToDateValueFactory;
-import com.mysql.cj.result.ZeroDateTimeToDefaultValueFactory;
-import com.mysql.cj.result.ZeroDateTimeToNullValueFactory;
 import com.mysql.cj.util.LogUtils;
 import com.mysql.cj.util.StringUtils;
 
@@ -215,10 +209,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     private ValueFactory<LocalDateTime> defaultLocalDateTimeValueFactory;
     private ValueFactory<LocalTime> defaultLocalTimeValueFactory;
 
-    protected RuntimeProperty<Boolean> emptyStringsConvertToZero;
     protected RuntimeProperty<Boolean> emulateLocators;
     protected boolean yearIsDateType = true;
-    protected PropertyDefinitions.ZeroDatetimeBehavior zeroDateTimeBehavior;
 
     /**
      * Create a result set for an executeUpdate statement.
@@ -264,49 +256,37 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         this.catalog = creatorStmt != null ? creatorStmt.getCurrentCatalog() : conn.getCatalog();
         this.owningStatement = creatorStmt;
 
+        PropertySet pset = this.connection.getPropertySet();
+
         if (this.connection != null) {
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
             this.connectionId = this.session.getThreadId();
-            this.profileSQL = this.connection.getPropertySet().getBooleanProperty(PropertyKey.profileSQL).getValue();
-            this.emptyStringsConvertToZero = this.connection.getPropertySet().getProperty(PropertyKey.emptyStringsConvertToZero);
-            this.emulateLocators = this.connection.getPropertySet().getBooleanProperty(PropertyKey.emulateLocators);
-            this.padCharsWithSpace = this.connection.getPropertySet().getBooleanProperty(PropertyKey.padCharsWithSpace).getValue();
-            this.yearIsDateType = this.connection.getPropertySet().getBooleanProperty(PropertyKey.yearIsDateType).getValue();
+            this.profileSQL = pset.getBooleanProperty(PropertyKey.profileSQL).getValue();
+            this.emulateLocators = pset.getBooleanProperty(PropertyKey.emulateLocators);
+            this.padCharsWithSpace = pset.getBooleanProperty(PropertyKey.padCharsWithSpace).getValue();
+            this.yearIsDateType = pset.getBooleanProperty(PropertyKey.yearIsDateType).getValue();
         }
 
-        this.booleanValueFactory = new BooleanValueFactory();
-        this.byteValueFactory = new ByteValueFactory();
-        this.shortValueFactory = new ShortValueFactory();
-        this.integerValueFactory = new IntegerValueFactory();
-        this.longValueFactory = new LongValueFactory();
-        this.floatValueFactory = new FloatValueFactory();
-        this.doubleValueFactory = new DoubleValueFactory();
-        this.bigDecimalValueFactory = new BigDecimalValueFactory();
-        this.binaryStreamValueFactory = new BinaryStreamValueFactory();
+        this.booleanValueFactory = new BooleanValueFactory(pset).setEventSink(this.eventSink);
+        this.byteValueFactory = new ByteValueFactory(pset).setEventSink(this.eventSink);
+        this.shortValueFactory = new ShortValueFactory(pset).setEventSink(this.eventSink);
+        this.integerValueFactory = new IntegerValueFactory(pset).setEventSink(this.eventSink);
+        this.longValueFactory = new LongValueFactory(pset).setEventSink(this.eventSink);
+        this.floatValueFactory = new FloatValueFactory(pset).setEventSink(this.eventSink);
+        this.doubleValueFactory = new DoubleValueFactory(pset).setEventSink(this.eventSink);
+        this.bigDecimalValueFactory = new BigDecimalValueFactory(pset).setEventSink(this.eventSink);
+        this.binaryStreamValueFactory = new BinaryStreamValueFactory(pset).setEventSink(this.eventSink);
 
-        this.zeroDateTimeBehavior = this.connection
-                .getPropertySet().<PropertyDefinitions.ZeroDatetimeBehavior> getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue();
-        this.defaultDateValueFactory = decorateDateTimeValueFactory(new SqlDateValueFactory(null, this.session.getServerSession().getDefaultTimeZone(), this),
-                this.zeroDateTimeBehavior);
-        this.defaultTimeValueFactory = decorateDateTimeValueFactory(new SqlTimeValueFactory(null, this.session.getServerSession().getDefaultTimeZone(), this),
-                this.zeroDateTimeBehavior);
-        this.defaultTimestampValueFactory = decorateDateTimeValueFactory(
-                new SqlTimestampValueFactory(null, this.session.getServerSession().getDefaultTimeZone()), this.zeroDateTimeBehavior);
+        this.defaultDateValueFactory = new SqlDateValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(), this)
+                .setEventSink(this.eventSink);
+        this.defaultTimeValueFactory = new SqlTimeValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(), this)
+                .setEventSink(this.eventSink);
+        this.defaultTimestampValueFactory = new SqlTimestampValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone())
+                .setEventSink(this.eventSink);
 
-        this.defaultLocalDateValueFactory = decorateDateTimeValueFactory(new LocalDateValueFactory(this), this.zeroDateTimeBehavior);
-        this.defaultLocalTimeValueFactory = decorateDateTimeValueFactory(new LocalTimeValueFactory(this), this.zeroDateTimeBehavior);
-        this.defaultLocalDateTimeValueFactory = decorateDateTimeValueFactory(new LocalDateTimeValueFactory(), this.zeroDateTimeBehavior);
-
-        // TODO we always check initial value here (was cached in jdbcCompliantTruncationForReads variable), whatever the setupServerForTruncationChecks() does for writes. It also means that runtime changes of this variable have no effect on reads.
-        if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.jdbcCompliantTruncation).getInitialValue()) {
-            this.byteValueFactory = new IntegerBoundsEnforcer<>(this.byteValueFactory, Byte.MIN_VALUE, Byte.MAX_VALUE);
-            this.shortValueFactory = new IntegerBoundsEnforcer<>(this.shortValueFactory, Short.MIN_VALUE, Short.MAX_VALUE);
-            this.integerValueFactory = new IntegerBoundsEnforcer<>(this.integerValueFactory, Integer.MIN_VALUE, Integer.MAX_VALUE);
-            this.longValueFactory = new IntegerBoundsEnforcer<>(this.longValueFactory, Long.MIN_VALUE, Long.MAX_VALUE);
-
-            this.floatValueFactory = new FloatingPointBoundsEnforcer<>(this.floatValueFactory, -Float.MAX_VALUE, Float.MAX_VALUE);
-            this.doubleValueFactory = new FloatingPointBoundsEnforcer<>(this.doubleValueFactory, -Double.MAX_VALUE, Double.MAX_VALUE);
-        }
+        this.defaultLocalDateValueFactory = new LocalDateValueFactory(pset, this).setEventSink(this.eventSink);
+        this.defaultLocalTimeValueFactory = new LocalTimeValueFactory(pset, this).setEventSink(this.eventSink);
+        this.defaultLocalDateTimeValueFactory = new LocalDateTimeValueFactory(pset).setEventSink(this.eventSink);
 
         this.columnDefinition = tuples.getMetadata();
         this.rowData = tuples;
@@ -330,7 +310,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             initializeWithMetadata();
         } // else called by Connection.initializeResultsMetadataFromCache() when cached
 
-        this.useColumnNamesInFindColumn = this.connection.getPropertySet().getBooleanProperty(PropertyKey.useColumnNamesInFindColumn).getValue();
+        this.useColumnNamesInFindColumn = pset.getBooleanProperty(PropertyKey.useColumnNamesInFindColumn).getValue();
 
         setRowPositionValidity();
     }
@@ -606,79 +586,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         }
     }
 
-    /**
-     * Decorate a date/time value factory to implement zeroDateTimeBehavior.
-     * 
-     * @param vf
-     *            value factory
-     * @param zeroDateTimeBehavior
-     *            CONVERT_TO_NULL, EXCEPTION or ROUND
-     * @param <T>
-     *            value type
-     * @return value
-     */
-    private static <T> ValueFactory<T> decorateDateTimeValueFactory(ValueFactory<T> vf, PropertyDefinitions.ZeroDatetimeBehavior zeroDateTimeBehavior) {
-        // enforce zero date/time behavior
-        switch (zeroDateTimeBehavior) {
-            case CONVERT_TO_NULL:
-                return new ZeroDateTimeToNullValueFactory<>(vf);
-            case ROUND:
-                return new ZeroDateTimeToDefaultValueFactory<>(vf);
-            case EXCEPTION:
-            default:
-                return vf;
-        }
-    }
-
-    /**
-     * Get a non-string value from a row. All requests to obtain non-string values should use this method. This method implements the "indirect" conversion of
-     * values that are returned as strings from the server. This is an expensive conversion which first requires interpreting the value as a string in it's
-     * given character set and converting it to an ASCII string which can then be parsed as a numeric/date value.
-     * 
-     * @param columnIndex
-     *            column index
-     * @param vf
-     *            value factory
-     * @param <T>
-     *            value type
-     * @return value
-     * @throws SQLException
-     *             if an error occurs
-     */
-    private <T> T getNonStringValueFromRow(int columnIndex, ValueFactory<T> vf) throws SQLException {
-        Field f = this.columnDefinition.getFields()[columnIndex - 1];
-
-        // interpret the string as necessary to create the a value of the requested type
-        String encoding = f.getEncoding();
-        StringConverter<T> stringConverter = new StringConverter<>(encoding, vf);
-        stringConverter.setEventSink(this.eventSink);
-        stringConverter.setEmptyStringsConvertToZero(this.emptyStringsConvertToZero.getValue());
-        return this.thisRow.getValue(columnIndex - 1, stringConverter);
-    }
-
-    /**
-     * Get a Date of Timestamp value from a row. This implements the "yearIsDateType=true" behavior.
-     * 
-     * @param columnIndex
-     *            column index
-     * @param vf
-     *            value factory
-     * @param <T>
-     *            value type
-     * @return value
-     * @throws SQLException
-     *             if an error occurs
-     */
-    private <T> T getDateOrTimestampValueFromRow(int columnIndex, ValueFactory<T> vf) throws SQLException {
-        Field f = this.columnDefinition.getFields()[columnIndex - 1];
-
-        // return YEAR values as Dates if necessary
-        if (f.getMysqlTypeId() == MysqlType.FIELD_TYPE_YEAR && this.yearIsDateType) {
-            return getNonStringValueFromRow(columnIndex, new YearToDateValueFactory<>(vf));
-        }
-        return getNonStringValueFromRow(columnIndex, new YearToDateValueFactory<>(vf));
-    }
-
     @Override
     public Array getArray(int columnIndex) throws SQLException {
         checkRowPos();
@@ -707,7 +614,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getNonStringValueFromRow(columnIndex, this.bigDecimalValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.bigDecimalValueFactory);
     }
 
     @Deprecated
@@ -715,8 +622,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        ValueFactory<BigDecimal> vf = new BigDecimalValueFactory(scale);
-        return getNonStringValueFromRow(columnIndex, vf);
+        ValueFactory<BigDecimal> vf = new BigDecimalValueFactory(this.session.getPropertySet(), scale);
+        vf.setPropertySet(this.connection.getPropertySet());
+        return this.thisRow.getValue(columnIndex - 1, vf);
     }
 
     @Override
@@ -767,7 +675,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public boolean getBoolean(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getNonStringValueFromRow(columnIndex, this.booleanValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.booleanValueFactory);
     }
 
     @Override
@@ -779,7 +687,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public byte getByte(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getNonStringValueFromRow(columnIndex, this.byteValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.byteValueFactory);
     }
 
     @Override
@@ -844,15 +752,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public Date getDate(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getDateOrTimestampValueFromRow(columnIndex, this.defaultDateValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.defaultDateValueFactory);
     }
 
     @Override
     public Date getDate(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        ValueFactory<Date> vf = new SqlDateValueFactory(cal, cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone(), this);
-        return getDateOrTimestampValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.zeroDateTimeBehavior));
+        ValueFactory<Date> vf = new SqlDateValueFactory(this.session.getPropertySet(), cal,
+                cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone(), this);
+        return this.thisRow.getValue(columnIndex - 1, vf);
     }
 
     @Override
@@ -869,7 +778,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public double getDouble(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getNonStringValueFromRow(columnIndex, this.doubleValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.doubleValueFactory);
     }
 
     @Override
@@ -881,7 +790,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public float getFloat(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getNonStringValueFromRow(columnIndex, this.floatValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.floatValueFactory);
     }
 
     @Override
@@ -893,7 +802,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public int getInt(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getNonStringValueFromRow(columnIndex, this.integerValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.integerValueFactory);
     }
 
     @Override
@@ -920,7 +829,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public long getLong(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getNonStringValueFromRow(columnIndex, this.longValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.longValueFactory);
     }
 
     @Override
@@ -932,7 +841,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public short getShort(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getNonStringValueFromRow(columnIndex, this.shortValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.shortValueFactory);
     }
 
     @Override
@@ -946,11 +855,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkColumnBounds(columnIndex);
 
         Field f = this.columnDefinition.getFields()[columnIndex - 1];
-        ValueFactory<String> vf = new StringValueFactory(f.getEncoding());
-        // return YEAR values as Dates if necessary
-        if (f.getMysqlTypeId() == MysqlType.FIELD_TYPE_YEAR && this.yearIsDateType) {
-            vf = new YearToDateValueFactory<>(vf);
-        }
+        ValueFactory<String> vf = new StringValueFactory(this.session.getPropertySet());
         String stringVal = this.thisRow.getValue(columnIndex - 1, vf);
 
         if (this.padCharsWithSpace && stringVal != null && f.getMysqlTypeId() == MysqlType.FIELD_TYPE_STRING) {
@@ -975,9 +880,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         if (forcedEncoding == null) {
             asString = getString(columnIndex);
         } else {
-            byte[] asBytes = null;
-
-            asBytes = getBytes(columnIndex);
+            byte[] asBytes = getBytes(columnIndex);
 
             if (asBytes != null) {
                 asString = StringUtils.toString(asBytes, forcedEncoding);
@@ -991,15 +894,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public Time getTime(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getNonStringValueFromRow(columnIndex, this.defaultTimeValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.defaultTimeValueFactory);
     }
 
     @Override
     public Time getTime(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        ValueFactory<Time> vf = new SqlTimeValueFactory(cal, cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone());
-        return getNonStringValueFromRow(columnIndex, decorateDateTimeValueFactory(vf, this.zeroDateTimeBehavior));
+        ValueFactory<Time> vf = new SqlTimeValueFactory(this.session.getPropertySet(), cal,
+                cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone());
+        return this.thisRow.getValue(columnIndex - 1, vf);
     }
 
     @Override
@@ -1016,25 +920,25 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public Timestamp getTimestamp(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getDateOrTimestampValueFromRow(columnIndex, this.defaultTimestampValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.defaultTimestampValueFactory);
     }
 
     public LocalDate getLocalDate(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getDateOrTimestampValueFromRow(columnIndex, this.defaultLocalDateValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.defaultLocalDateValueFactory);
     }
 
     public LocalDateTime getLocalDateTime(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getDateOrTimestampValueFromRow(columnIndex, this.defaultLocalDateTimeValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.defaultLocalDateTimeValueFactory);
     }
 
     public LocalTime getLocalTime(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return getNonStringValueFromRow(columnIndex, this.defaultLocalTimeValueFactory);
+        return this.thisRow.getValue(columnIndex - 1, this.defaultLocalTimeValueFactory);
     }
 
     /*
@@ -1051,12 +955,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
         TimeZone tz = cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone();
         if (this.customTsVf != null && tz == this.lastTsCustomTz) {
-            return getDateOrTimestampValueFromRow(columnIndex, this.customTsVf);
+            return this.thisRow.getValue(columnIndex - 1, this.customTsVf);
         }
-        ValueFactory<Timestamp> vf = decorateDateTimeValueFactory(new SqlTimestampValueFactory(cal, tz), this.zeroDateTimeBehavior);
+        ValueFactory<Timestamp> vf = new SqlTimestampValueFactory(this.session.getPropertySet(), cal, tz);
         this.lastTsCustomTz = tz;
         this.customTsVf = vf;
-        return getDateOrTimestampValueFromRow(columnIndex, vf);
+        return this.thisRow.getValue(columnIndex - 1, vf);
     }
 
     @Override

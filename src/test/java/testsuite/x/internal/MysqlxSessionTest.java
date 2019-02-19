@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,6 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.mysql.cj.MysqlxSession;
+import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
@@ -114,7 +115,7 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
             return;
         }
         XMessageBuilder builder = (XMessageBuilder) this.session.<XMessage> getMessageBuilder();
-        ValueFactory<String> svf = new StringValueFactory();
+        ValueFactory<String> svf = new StringValueFactory(new DefaultPropertySet());
         String collName = "test_get_objects";
         try {
             this.session.sendMessage(builder.buildDropCollection(getTestDatabase(), collName));
@@ -168,11 +169,11 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
         FilterParams filterParams = new DocFilterParams(getTestDatabase(), collName);
         filterParams.setOrder("$._id");
 
-        DocResultImpl docs1 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs2 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs3 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs4 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
-        DocResultImpl docs5 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task));
+        DocResultImpl docs1 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task, this.session.getPropertySet()));
+        DocResultImpl docs2 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task, this.session.getPropertySet()));
+        DocResultImpl docs3 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task, this.session.getPropertySet()));
+        DocResultImpl docs4 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task, this.session.getPropertySet()));
+        DocResultImpl docs5 = this.session.find(filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task, this.session.getPropertySet()));
         assertTrue(docs5.hasNext());
         assertTrue(docs4.hasNext());
         assertTrue(docs3.hasNext());
@@ -199,8 +200,8 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
             return;
         }
         XMessageBuilder builder = (XMessageBuilder) this.session.<XMessage> getMessageBuilder();
-        List<Integer> ints = this.session.query(builder.buildSqlStatement("select 2 union select 1"), null, r -> r.getValue(0, new IntegerValueFactory()),
-                Collectors.toList());
+        List<Integer> ints = this.session.query(builder.buildSqlStatement("select 2 union select 1"), null,
+                r -> r.getValue(0, new IntegerValueFactory(new DefaultPropertySet())), Collectors.toList());
         assertEquals(2, ints.size());
         assertEquals(new Integer(2), ints.get(0));
         assertEquals(new Integer(1), ints.get(1));

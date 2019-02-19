@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,6 +37,7 @@ import java.nio.ByteOrder;
 
 import org.junit.Test;
 
+import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.ValueFactory;
 
@@ -48,7 +49,7 @@ public class MysqlBinaryValueDecoderTest {
 
     @Test
     public void testSampleValues() {
-        ValueFactory<String> vf = new StringValueFactory();
+        ValueFactory<String> vf = new StringValueFactory(new DefaultPropertySet());
         String decoded;
 
         byte[] intTrivial = new byte[] { 1, 0, 0, 0 };
@@ -62,7 +63,7 @@ public class MysqlBinaryValueDecoderTest {
 
     @Test
     public void testInt4Limits() {
-        ValueFactory<String> vf = new StringValueFactory();
+        ValueFactory<String> vf = new StringValueFactory(new DefaultPropertySet());
         String decoded;
 
         byte[] signedInt4Min = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(Integer.MIN_VALUE).array();
@@ -80,7 +81,7 @@ public class MysqlBinaryValueDecoderTest {
 
     @Test
     public void testInt8Limits() {
-        ValueFactory<String> vf = new StringValueFactory();
+        ValueFactory<String> vf = new StringValueFactory(new DefaultPropertySet());
         String decoded;
 
         byte[] signedInt8Min = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(Long.MIN_VALUE).array();

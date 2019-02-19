@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,17 +33,21 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
+import com.mysql.cj.conf.PropertySet;
+
 /**
  * A value factory for creating {@link java.math.BigDecimal} values.
  */
-public class BigDecimalValueFactory extends DefaultValueFactory<BigDecimal> {
+public class BigDecimalValueFactory extends AbstractNumericValueFactory<BigDecimal> {
     int scale;
     boolean hasScale;
 
-    public BigDecimalValueFactory() {
+    public BigDecimalValueFactory(PropertySet pset) {
+        super(pset);
     }
 
-    public BigDecimalValueFactory(int scale) {
+    public BigDecimalValueFactory(PropertySet pset, int scale) {
+        super(pset);
         this.scale = scale;
         this.hasScale = true;
     }

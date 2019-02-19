@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -27,32 +27,61 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package com.mysql.cj.result;
+package com.mysql.cj.protocol;
 
-/**
- * A decorating value factory which translates zero date/time values into NULL.
- * 
- * @param <T>
- *            value type
- */
-public class ZeroDateTimeToNullValueFactory<T> extends BaseDecoratingValueFactory<T> {
-    public ZeroDateTimeToNullValueFactory(ValueFactory<T> targetVf) {
-        super(targetVf);
+public class InternalTime {
+
+    private int hours = 0;
+    private int minutes = 0;
+    private int seconds = 0;
+    private int nanos = 0;
+
+    /**
+     * Constructs a zero time
+     */
+    public InternalTime() {
     }
 
-    @Override
-    public T createFromDate(int year, int month, int day) {
-        if (year + month + day == 0) {
-            return null;
-        }
-        return this.targetVf.createFromDate(year, month, day);
+    public InternalTime(int hours, int minutes, int seconds, int nanos) {
+        this.hours = hours;
+        this.minutes = minutes;
+        this.seconds = seconds;
+        this.nanos = nanos;
     }
 
-    @Override
-    public T createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
-        if (year + month + day + hours + minutes + seconds + nanos == 0) {
-            return null;
-        }
-        return this.targetVf.createFromTimestamp(year, month, day, hours, minutes, seconds, nanos);
+    public int getHours() {
+        return this.hours;
+    }
+
+    public void setHours(int hours) {
+        this.hours = hours;
+    }
+
+    public int getMinutes() {
+        return this.minutes;
+    }
+
+    public void setMinutes(int minutes) {
+        this.minutes = minutes;
+    }
+
+    public int getSeconds() {
+        return this.seconds;
+    }
+
+    public void setSeconds(int seconds) {
+        this.seconds = seconds;
+    }
+
+    public int getNanos() {
+        return this.nanos;
+    }
+
+    public void setNanos(int nanos) {
+        this.nanos = nanos;
+    }
+
+    public boolean isZero() {
+        return this.hours == 0 && this.minutes == 0 && this.seconds == 0 && this.nanos == 0;
     }
 }

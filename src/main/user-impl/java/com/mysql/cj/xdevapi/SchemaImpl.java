@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -53,13 +53,14 @@ public class SchemaImpl implements Schema {
     private XMessageBuilder xbuilder;
     private Session session;
     private String name;
-    private ValueFactory<String> svf = new StringValueFactory();
+    private ValueFactory<String> svf;
 
     /* package private */ SchemaImpl(MysqlxSession mysqlxSession, Session session, String name) {
         this.mysqlxSession = mysqlxSession;
         this.session = session;
         this.name = name;
         this.xbuilder = (XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder();
+        this.svf = new StringValueFactory(this.mysqlxSession.getPropertySet());
     }
 
     public Session getSession() {

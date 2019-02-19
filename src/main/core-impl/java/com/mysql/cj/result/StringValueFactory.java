@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,21 +31,29 @@ package com.mysql.cj.result;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 
+import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.log.ProfilerEventHandler;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
+import com.mysql.cj.util.DataTypeUtil;
 import com.mysql.cj.util.StringUtils;
 
 /**
  * A {@link com.mysql.cj.result.ValueFactory} implementation to create strings.
  */
 public class StringValueFactory implements ValueFactory<String> {
-    private String encoding;
+    protected PropertySet pset = null;
 
-    public StringValueFactory() {
+    public StringValueFactory(PropertySet pset) {
+        this.pset = pset;
     }
 
-    public StringValueFactory(String encoding) {
-        this.encoding = encoding;
+    @Override
+    public void setPropertySet(PropertySet pset) {
+        this.pset = pset;
     }
 
     /**
@@ -59,9 +67,9 @@ public class StringValueFactory implements ValueFactory<String> {
      *            day
      * @return string
      */
-    public String createFromDate(int year, int month, int day) {
+    public String createFromDate(InternalDate idate) {
         // essentially the same string we received from the server, no TZ interpretation
-        return String.format("%04d-%02d-%02d", year, month, day);
+        return String.format("%04d-%02d-%02d", idate.getYear(), idate.getMonth(), idate.getDay());
     }
 
     /**
@@ -77,11 +85,11 @@ public class StringValueFactory implements ValueFactory<String> {
      *            nanoseconds
      * @return string
      */
-    public String createFromTime(int hours, int minutes, int seconds, int nanos) {
-        if (nanos > 0) {
-            return String.format("%02d:%02d:%02d.%09d", hours, minutes, seconds, nanos);
+    public String createFromTime(InternalTime it) {
+        if (it.getNanos() > 0) {
+            return String.format("%02d:%02d:%02d.%09d", it.getHours(), it.getMinutes(), it.getSeconds(), it.getNanos());
         }
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        return String.format("%02d:%02d:%02d", it.getHours(), it.getMinutes(), it.getSeconds());
     }
 
     /**
@@ -104,8 +112,9 @@ public class StringValueFactory implements ValueFactory<String> {
      *            nanoseconds
      * @return string
      */
-    public String createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
-        return String.format("%s %s", createFromDate(year, month, day), createFromTime(hours, minutes, seconds, nanos));
+    public String createFromTimestamp(InternalTimestamp its) {
+        return String.format("%s %s", createFromDate(its),
+                createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos())));
     }
 
     public String createFromLong(long l) {
@@ -136,14 +145,27 @@ public class StringValueFactory implements ValueFactory<String> {
      *            data length in bytes
      * @return string
      */
-    public String createFromBytes(byte[] bytes, int offset, int length) {
-        return StringUtils.toString(bytes, offset, length, this.encoding);
+    public String createFromBytes(byte[] bytes, int offset, int length, Field f) {
+        return StringUtils.toString(bytes, offset, length, f.getEncoding());
     }
 
     @Override
     public String createFromBit(byte[] bytes, int offset, int length) {
-        // BIT values are interpreted as numbers, not as character codes
-        return new BigInteger(ByteBuffer.allocate(length + 1).put((byte) 0).put(bytes, offset, length).array()).toString();
+        return createFromLong(DataTypeUtil.bitToLong(bytes, offset, length));
+    }
+
+    @Override
+    public String createFromYear(long l) {
+        if (this.pset.getBooleanProperty(PropertyKey.yearIsDateType).getValue()) {
+            if (l < 100) {
+                if (l <= 69) {
+                    l += 100;
+                }
+                l += 1900;
+            }
+            return createFromDate(new InternalDate((int) l, 1, 1));
+        }
+        return createFromLong(l);
     }
 
     public String createFromNull() {
@@ -152,5 +174,11 @@ public class StringValueFactory implements ValueFactory<String> {
 
     public String getTargetTypeName() {
         return String.class.getName();
+    }
+
+    @Override
+    public ValueFactory<String> setEventSink(ProfilerEventHandler eventSink) {
+        // TODO Auto-generated method stub
+        return this;
     }
 }

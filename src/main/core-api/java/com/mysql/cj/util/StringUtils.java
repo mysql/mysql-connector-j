@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -50,7 +50,6 @@ import java.util.stream.Stream;
 import com.mysql.cj.Messages;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.ExceptionFactory;
-import com.mysql.cj.exceptions.NumberOutOfRange;
 import com.mysql.cj.exceptions.WrongArgumentException;
 
 /**
@@ -323,97 +322,6 @@ public class StringUtils {
         }
 
         return b;
-    }
-
-    public static int getInt(byte[] buf) throws NumberFormatException {
-        return getInt(buf, 0, buf.length);
-    }
-
-    public static int getInt(byte[] buf, int offset, int endpos) throws NumberFormatException {
-        long l = getLong(buf, offset, endpos);
-        if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
-            throw new NumberOutOfRange(Messages.getString("StringUtils.badIntFormat", new Object[] { StringUtils.toString(buf, offset, endpos - offset) }));
-        }
-        return (int) l;
-    }
-
-    public static long getLong(byte[] buf) throws NumberFormatException {
-        return getLong(buf, 0, buf.length);
-    }
-
-    public static long getLong(byte[] buf, int offset, int endpos) throws NumberFormatException {
-        int base = 10;
-
-        int s = offset;
-
-        /* Skip white space. */
-        while (s < endpos && Character.isWhitespace((char) buf[s])) {
-            ++s;
-        }
-
-        if (s == endpos) {
-            throw new NumberFormatException(StringUtils.toString(buf));
-        }
-
-        /* Check for a sign. */
-        boolean negative = false;
-
-        if ((char) buf[s] == '-') {
-            negative = true;
-            ++s;
-        } else if ((char) buf[s] == '+') {
-            ++s;
-        }
-
-        /* Save the pointer so we can check later if anything happened. */
-        int save = s;
-
-        long cutoff = Long.MAX_VALUE / base;
-        long cutlim = (int) (Long.MAX_VALUE % base);
-
-        if (negative) {
-            cutlim++;
-        }
-
-        boolean overflow = false;
-        long i = 0;
-
-        for (; s < endpos; s++) {
-            char c = (char) buf[s];
-
-            if (c >= '0' && c <= '9') {
-                c -= '0';
-            } else if (Character.isLetter(c)) {
-                c = (char) (Character.toUpperCase(c) - 'A' + 10);
-            } else {
-                break;
-            }
-
-            if (c >= base) {
-                break;
-            }
-
-            /* Check for overflow. */
-            if ((i > cutoff) || ((i == cutoff) && (c > cutlim))) {
-                overflow = true;
-            } else {
-                i *= base;
-                i += c;
-            }
-        }
-
-        // no digits were parsed after a possible +/-
-        if (s == save) {
-            throw new NumberFormatException(
-                    Messages.getString("StringUtils.badIntFormat", new Object[] { StringUtils.toString(buf, offset, endpos - offset) }));
-        }
-
-        if (overflow) {
-            throw new NumberOutOfRange(Messages.getString("StringUtils.badIntFormat", new Object[] { StringUtils.toString(buf, offset, endpos - offset) }));
-        }
-
-        /* Return the result of the appropriate sign. */
-        return (negative ? (-i) : i);
     }
 
     /**

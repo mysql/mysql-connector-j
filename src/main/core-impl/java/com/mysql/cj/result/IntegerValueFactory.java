@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,36 +32,61 @@ package com.mysql.cj.result;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.exceptions.NumberOutOfRange;
 import com.mysql.cj.util.DataTypeUtil;
 
 /**
  * A value factory for creating int values.
  */
-public class IntegerValueFactory extends DefaultValueFactory<Integer> {
+public class IntegerValueFactory extends AbstractNumericValueFactory<Integer> {
+
+    public IntegerValueFactory(PropertySet pset) {
+        super(pset);
+    }
+
     @Override
     public Integer createFromBigInteger(BigInteger i) {
+        if (this.jdbcCompliantTruncationForReads
+                && (i.compareTo(BigInteger.valueOf(Integer.MIN_VALUE)) < 0 || i.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { i, getTargetTypeName() }));
+        }
         return i.intValue();
     }
 
     @Override
     public Integer createFromLong(long l) {
+        if (this.jdbcCompliantTruncationForReads && (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { Long.valueOf(l).toString(), getTargetTypeName() }));
+        }
         return (int) l;
     }
 
     @Override
     public Integer createFromBigDecimal(BigDecimal d) {
+        if (this.jdbcCompliantTruncationForReads
+                && (d.compareTo(BigDecimal.valueOf(Integer.MIN_VALUE)) < 0 || d.compareTo(BigDecimal.valueOf(Integer.MAX_VALUE)) > 0)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, getTargetTypeName() }));
+        }
         return (int) d.longValue();
     }
 
     @Override
     public Integer createFromDouble(double d) {
+        if (this.jdbcCompliantTruncationForReads && (d < Integer.MIN_VALUE || d > Integer.MAX_VALUE)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, getTargetTypeName() }));
+        }
         return (int) d;
     }
 
     @Override
     public Integer createFromBit(byte[] bytes, int offset, int length) {
-        // TODO check for truncation? see IntegerBoundsEnforcer
-        return (int) DataTypeUtil.bitToLong(bytes, offset, length);
+        long l = DataTypeUtil.bitToLong(bytes, offset, length);
+        if (this.jdbcCompliantTruncationForReads && l >> 32 != 0) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { Long.valueOf(l).toString(), getTargetTypeName() }));
+        }
+        return (int) l;
     }
 
     @Override

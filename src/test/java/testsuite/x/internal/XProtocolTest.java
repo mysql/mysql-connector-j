@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -137,7 +137,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
         assertEquals(MysqlType.FIELD_TYPE_VARCHAR, f.getMysqlTypeId());
         Iterator<Row> rowInputStream = this.protocol.getRowInputStream(metadata);
         Row r = rowInputStream.next();
-        String value = r.getValue(0, new StringValueFactory());
+        String value = r.getValue(0, new StringValueFactory(this.protocol.getPropertySet()));
         assertEquals("x", value);
         this.protocol.readQueryResult();
     }
@@ -162,21 +162,21 @@ public class XProtocolTest extends InternalXBaseTestCase {
 
         // first row
         Row r = rowInputStream.next();
-        String value = r.getValue(0, new StringValueFactory());
+        String value = r.getValue(0, new StringValueFactory(this.protocol.getPropertySet()));
         assertEquals("x", value);
-        value = r.getValue(1, new StringValueFactory());
+        value = r.getValue(1, new StringValueFactory(this.protocol.getPropertySet()));
         assertEquals("42", value);
-        value = r.getValue(2, new StringValueFactory());
+        value = r.getValue(2, new StringValueFactory(this.protocol.getPropertySet()));
         assertEquals("7.6000", value); // TODO: zeroes ok here??? scale is adjusted to 4 due to ".1111" value in RS? not happening in decimal test down below
 
         // second row
         assertTrue(rowInputStream.hasNext());
         r = rowInputStream.next();
-        value = r.getValue(0, new StringValueFactory());
+        value = r.getValue(0, new StringValueFactory(this.protocol.getPropertySet()));
         assertEquals("y", value);
-        value = r.getValue(1, new StringValueFactory());
+        value = r.getValue(1, new StringValueFactory(this.protocol.getPropertySet()));
         assertEquals("11", value);
-        value = r.getValue(2, new StringValueFactory());
+        value = r.getValue(2, new StringValueFactory(this.protocol.getPropertySet()));
         assertEquals("0.1111", value);
 
         assertFalse(rowInputStream.hasNext());
@@ -210,75 +210,75 @@ public class XProtocolTest extends InternalXBaseTestCase {
         tests.put("'some string' as a_string", (metadata, row) -> {
             assertEquals("a_string", metadata.getFields()[0].getColumnLabel());
             assertEquals(MysqlType.FIELD_TYPE_VARCHAR, metadata.getFields()[0].getMysqlTypeId());
-            assertEquals("some string", row.getValue(0, new StringValueFactory()));
+            assertEquals("some string", row.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         });
         tests.put("date('2015-03-22') as a_date", (metadata, row) -> {
             assertEquals("a_date", metadata.getFields()[0].getColumnLabel());
             assertEquals(MysqlType.FIELD_TYPE_DATETIME, metadata.getFields()[0].getMysqlTypeId());
-            assertEquals("2015-03-22", row.getValue(0, new StringValueFactory()));
+            assertEquals("2015-03-22", row.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         });
         tests.put("curtime() as curtime, cast(curtime() as char(8)) as curtime_string", (metadata, row) -> {
             assertEquals("curtime", metadata.getFields()[0].getColumnLabel());
             assertEquals("curtime_string", metadata.getFields()[1].getColumnLabel());
             assertEquals(MysqlType.FIELD_TYPE_TIME, metadata.getFields()[0].getMysqlTypeId());
-            String curtimeString = row.getValue(1, new StringValueFactory());
-            assertEquals(curtimeString, row.getValue(0, new StringValueFactory()));
+            String curtimeString = row.getValue(1, new StringValueFactory(this.protocol.getPropertySet()));
+            assertEquals(curtimeString, row.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         });
         tests.put("timestamp('2015-05-01 12:01:32') as a_datetime", (metadata, row) -> {
             assertEquals("a_datetime", metadata.getFields()[0].getColumnLabel());
             assertEquals(MysqlType.FIELD_TYPE_DATETIME, metadata.getFields()[0].getMysqlTypeId());
-            assertEquals("2015-05-01 12:01:32", row.getValue(0, new StringValueFactory()));
+            assertEquals("2015-05-01 12:01:32", row.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         });
         tests.put("cos(1) as a_double", (metadata, row) -> {
             assertEquals("a_double", metadata.getFields()[0].getColumnLabel());
             assertEquals(MysqlType.FIELD_TYPE_DOUBLE, metadata.getFields()[0].getMysqlTypeId());
             // value is 0.5403023058681398. Test most of it
-            assertTrue(row.getValue(0, new StringValueFactory()).startsWith("0.540302305868139"));
+            assertTrue(row.getValue(0, new StringValueFactory(this.protocol.getPropertySet())).startsWith("0.540302305868139"));
         });
         tests.put("2142 as an_int", (metadata, row) -> {
             assertEquals("an_int", metadata.getFields()[0].getColumnLabel());
             assertEquals(MysqlType.FIELD_TYPE_LONGLONG, metadata.getFields()[0].getMysqlTypeId());
-            assertEquals("2142", row.getValue(0, new StringValueFactory()));
+            assertEquals("2142", row.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         });
         tests.put("21.424 as decimal1, -1.0 as decimal2, -0.1 as decimal3, 1000.0 as decimal4", (metadata, row) -> {
             assertEquals("decimal1", metadata.getFields()[0].getColumnLabel());
             assertEquals(MysqlType.FIELD_TYPE_NEWDECIMAL, metadata.getFields()[0].getMysqlTypeId());
-            assertEquals("21.424", row.getValue(0, new StringValueFactory()));
+            assertEquals("21.424", row.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
 
             assertEquals("decimal2", metadata.getFields()[1].getColumnLabel());
             assertEquals(MysqlType.FIELD_TYPE_NEWDECIMAL, metadata.getFields()[1].getMysqlTypeId());
-            assertEquals("-1.0", row.getValue(1, new StringValueFactory()));
+            assertEquals("-1.0", row.getValue(1, new StringValueFactory(this.protocol.getPropertySet())));
 
             assertEquals("decimal3", metadata.getFields()[2].getColumnLabel());
             assertEquals(MysqlType.FIELD_TYPE_NEWDECIMAL, metadata.getFields()[2].getMysqlTypeId());
-            assertEquals("-0.1", row.getValue(2, new StringValueFactory()));
+            assertEquals("-0.1", row.getValue(2, new StringValueFactory(this.protocol.getPropertySet())));
 
             assertEquals("decimal4", metadata.getFields()[3].getColumnLabel());
             assertEquals(MysqlType.FIELD_TYPE_NEWDECIMAL, metadata.getFields()[3].getMysqlTypeId());
-            assertEquals("1000.0", row.getValue(3, new StringValueFactory()));
+            assertEquals("1000.0", row.getValue(3, new StringValueFactory(this.protocol.getPropertySet())));
         });
         tests.put("9223372036854775807 as a_large_integer", (metadata, row) -> {
             // max signed 64bit integer
             assertEquals("a_large_integer", metadata.getFields()[0].getColumnLabel());
             assertEquals(MysqlType.FIELD_TYPE_LONGLONG, metadata.getFields()[0].getMysqlTypeId());
-            assertEquals("9223372036854775807", row.getValue(0, new StringValueFactory()));
+            assertEquals("9223372036854775807", row.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         });
         tests.put("a_float, a_set, an_enum from xprotocol_types_test", (metadata, row) -> {
             assertEquals("a_float", metadata.getFields()[0].getColumnLabel());
             assertEquals("xprotocol_types_test", metadata.getFields()[0].getTableName());
-            assertEquals("2.4200000762939453", row.getValue(0, new StringValueFactory()));
+            assertEquals("2.4200000762939453", row.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
 
             assertEquals("a_set", metadata.getFields()[1].getColumnLabel());
             assertEquals("xprotocol_types_test", metadata.getFields()[1].getTableName());
-            assertEquals("def,xyz", row.getValue(1, new StringValueFactory()));
+            assertEquals("def,xyz", row.getValue(1, new StringValueFactory(this.protocol.getPropertySet())));
 
             assertEquals("an_enum", metadata.getFields()[2].getColumnLabel());
             assertEquals("xprotocol_types_test", metadata.getFields()[2].getTableName());
-            assertEquals("enum value a", row.getValue(2, new StringValueFactory()));
+            assertEquals("enum value a", row.getValue(2, new StringValueFactory(this.protocol.getPropertySet())));
         });
         tests.put("an_unsigned_int from xprotocol_types_test", (metadata, row) -> {
             assertEquals("an_unsigned_int", metadata.getFields()[0].getColumnLabel());
-            assertEquals("9223372036854775808", row.getValue(0, new StringValueFactory()));
+            assertEquals("9223372036854775808", row.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         });
 
         // runner for above tests
@@ -340,7 +340,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
         ColumnDefinition metadata = this.protocol.readMetadata();
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         Row r = ris.next();
-        assertEquals(json, r.getValue(0, new StringValueFactory()));
+        assertEquals(json, r.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         this.protocol.readQueryResult();
     }
 
@@ -366,11 +366,11 @@ public class XProtocolTest extends InternalXBaseTestCase {
         ColumnDefinition metadata = this.protocol.readMetadata();
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         Row r = ris.next();
-        assertEquals(stringDocs.get(0), r.getValue(0, new StringValueFactory()));
+        assertEquals(stringDocs.get(0), r.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         r = ris.next();
-        assertEquals(stringDocs.get(1), r.getValue(0, new StringValueFactory()));
+        assertEquals(stringDocs.get(1), r.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         r = ris.next();
-        assertEquals(stringDocs.get(2), r.getValue(0, new StringValueFactory()));
+        assertEquals(stringDocs.get(2), r.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         this.protocol.readQueryResult();
     }
 
@@ -396,7 +396,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
         ColumnDefinition metadata = this.protocol.readMetadata();
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         Row r = ris.next();
-        assertEquals("{\"a\": \"lemon\", \"_id\": \"85983efc2a9a11e5b345feff819cdc9f\", \"testVal\": \"1\"}", r.getValue(0, new StringValueFactory()));
+        assertEquals("{\"a\": \"lemon\", \"_id\": \"85983efc2a9a11e5b345feff819cdc9f\", \"testVal\": \"1\"}",
+                r.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
         this.protocol.readQueryResult();
     }
 
@@ -425,13 +426,13 @@ public class XProtocolTest extends InternalXBaseTestCase {
         ColumnDefinition metadata = this.protocol.readMetadata();
         Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
         Row r = ris.next();
-        assertEquals("10.30", r.getValue(0, new StringValueFactory()));
-        assertEquals("another string value", r.getValue(1, new StringValueFactory()));
-        assertEquals("50", r.getValue(2, new StringValueFactory()));
+        assertEquals("10.30", r.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
+        assertEquals("another string value", r.getValue(1, new StringValueFactory(this.protocol.getPropertySet())));
+        assertEquals("50", r.getValue(2, new StringValueFactory(this.protocol.getPropertySet())));
         r = ris.next();
-        assertEquals("10.20", r.getValue(0, new StringValueFactory()));
-        assertEquals("some string value", r.getValue(1, new StringValueFactory()));
-        assertEquals("40", r.getValue(2, new StringValueFactory()));
+        assertEquals("10.20", r.getValue(0, new StringValueFactory(this.protocol.getPropertySet())));
+        assertEquals("some string value", r.getValue(1, new StringValueFactory(this.protocol.getPropertySet())));
+        assertEquals("40", r.getValue(2, new StringValueFactory(this.protocol.getPropertySet())));
         this.protocol.readQueryResult();
 
         this.protocol.send(this.messageBuilder.buildSqlStatement("drop table tableInsert"), 0);
@@ -505,7 +506,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
         ris.forEachRemaining(r -> {
             System.err.println("***************** row ****************");
             for (int i = 0; i < metadata.getFields().length; ++i) {
-                System.err.println(metadata.getFields()[i].getColumnLabel() + ": " + r.getValue(i, new StringValueFactory()));
+                System.err.println(metadata.getFields()[i].getColumnLabel() + ": " + r.getValue(i, new StringValueFactory(this.protocol.getPropertySet())));
             }
         });
 

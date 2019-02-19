@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,7 @@ import java.util.TimeZone;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.result.Field;
@@ -58,8 +59,8 @@ public class RowResultImpl extends AbstractDataResult<Row> implements RowResult 
      * @param completer
      *            supplier for completion task
      */
-    public RowResultImpl(ColumnDefinition metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer) {
-        super(rows, completer, new RowFactory(metadata, defaultTimeZone));
+    public RowResultImpl(ColumnDefinition metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer, PropertySet pset) {
+        super(rows, completer, new RowFactory(metadata, defaultTimeZone, pset));
         this.metadata = metadata;
     }
 

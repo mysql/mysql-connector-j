@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,8 +32,18 @@ package com.mysql.cj.result;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.DataConversionException;
+import com.mysql.cj.log.ProfilerEvent;
+import com.mysql.cj.log.ProfilerEventHandler;
+import com.mysql.cj.log.ProfilerEventImpl;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
+import com.mysql.cj.util.LogUtils;
 
 /**
  * The default value factory provides a base class that can be used for value factories that do not support creation from every type. The default value factory
@@ -43,19 +53,39 @@ import com.mysql.cj.exceptions.DataConversionException;
  *            value type
  */
 public abstract class DefaultValueFactory<T> implements ValueFactory<T> {
-    private T unsupported(String sourceType) {
+
+    private ProfilerEventHandler eventSink;
+
+    protected boolean jdbcCompliantTruncationForReads = true;
+
+    public DefaultValueFactory(PropertySet pset) {
+        this.pset = pset;
+
+        // TODO we always check initial value here, whatever the setupServerForTruncationChecks() does for writes.
+        // It also means that runtime changes of this variable have no effect on reads.
+        this.jdbcCompliantTruncationForReads = this.pset.getBooleanProperty(PropertyKey.jdbcCompliantTruncation).getInitialValue();
+    }
+
+    protected PropertySet pset = null;
+
+    @Override
+    public void setPropertySet(PropertySet pset) {
+        this.pset = pset;
+    }
+
+    protected T unsupported(String sourceType) {
         throw new DataConversionException(Messages.getString("ResultSet.UnsupportedConversion", new Object[] { sourceType, getTargetTypeName() }));
     }
 
-    public T createFromDate(int year, int month, int day) {
+    public T createFromDate(InternalDate idate) {
         return unsupported("DATE");
     }
 
-    public T createFromTime(int hours, int minutes, int seconds, int nanos) {
+    public T createFromTime(InternalTime it) {
         return unsupported("TIME");
     }
 
-    public T createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
+    public T createFromTimestamp(InternalTimestamp its) {
         return unsupported("TIMESTAMP");
     }
 
@@ -75,15 +105,35 @@ public abstract class DefaultValueFactory<T> implements ValueFactory<T> {
         return unsupported("DECIMAL");
     }
 
-    public T createFromBytes(byte[] bytes, int offset, int length) {
-        return unsupported("VARCHAR/TEXT/BLOB");
-    }
-
     public T createFromBit(byte[] bytes, int offset, int length) {
         return unsupported("BIT");
     }
 
+    @Override
+    public T createFromYear(long l) {
+        return unsupported("YEAR");
+    }
+
     public T createFromNull() {
         return null;
+    }
+
+    public ValueFactory<T> setEventSink(ProfilerEventHandler eventSink) {
+        this.eventSink = eventSink;
+        return this;
+    }
+
+    protected void issueConversionViaParsingWarning() {
+        // TODO context information for the profiler event is unavailable here.
+        // Context information should be provided at higher levels. this includes catalog, query, rs metadata, etc
+        if (this.eventSink == null) {
+            return;
+        }
+
+        String message = Messages.getString("ResultSet.CostlyConversion",
+                new Object[] { getTargetTypeName(), -1, "<unknown>", "<unknown>", "<unknown>", "<unknown>", "<unknown>", "<unknown>" });
+
+        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", "<unknown>", -1, -1, -1, System.currentTimeMillis(), 0,
+                Constants.MILLIS_I18N, null, LogUtils.findCallingClassAndMethod(new Throwable()), message));
     }
 }

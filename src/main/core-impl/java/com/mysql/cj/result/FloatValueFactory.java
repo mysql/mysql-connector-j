@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,27 +33,50 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
+import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.exceptions.NumberOutOfRange;
+
 /**
  * A value factory for creating float values.
  */
-public class FloatValueFactory extends DefaultValueFactory<Float> {
+public class FloatValueFactory extends AbstractNumericValueFactory<Float> {
+
+    public FloatValueFactory(PropertySet pset) {
+        super(pset);
+    }
+
     @Override
     public Float createFromBigInteger(BigInteger i) {
+        if (this.jdbcCompliantTruncationForReads && (new BigDecimal(i).compareTo(BigDecimal.valueOf(-Float.MAX_VALUE)) < 0
+                || new BigDecimal(i).compareTo(BigDecimal.valueOf(Float.MAX_VALUE)) > 0)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { i, getTargetTypeName() }));
+        }
         return (float) i.doubleValue();
     }
 
     @Override
     public Float createFromLong(long l) {
+        if (this.jdbcCompliantTruncationForReads && (l < -Float.MAX_VALUE || l > Float.MAX_VALUE)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { l, getTargetTypeName() }));
+        }
         return (float) l;
     }
 
     @Override
     public Float createFromBigDecimal(BigDecimal d) {
+        if (this.jdbcCompliantTruncationForReads
+                && (d.compareTo(BigDecimal.valueOf(-Float.MAX_VALUE)) < 0 || d.compareTo(BigDecimal.valueOf(Float.MAX_VALUE)) > 0)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, getTargetTypeName() }));
+        }
         return (float) d.doubleValue();
     }
 
     @Override
     public Float createFromDouble(double d) {
+        if (this.jdbcCompliantTruncationForReads && (d < -Float.MAX_VALUE || d > Float.MAX_VALUE)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, getTargetTypeName() }));
+        }
         return (float) d;
     }
 

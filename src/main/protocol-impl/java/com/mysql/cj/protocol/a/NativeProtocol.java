@@ -2024,7 +2024,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                     }
                 }
 
-                ValueFactory<String> vf = new StringValueFactory(f.getEncoding());
+                ValueFactory<String> vf = new StringValueFactory(this.propertySet);
 
                 Row r;
                 if ((r = rs.getRows().next()) != null) {
@@ -2112,7 +2112,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                     appendTo.append(" ");
                 }
                 appendTo.append(fields[i].getColumnLabel()).append(": ");
-                String stringVal = r.getValue(i, new StringValueFactory(fields[i].getEncoding()));
+                String stringVal = r.getValue(i, new StringValueFactory(this.propertySet));
                 appendTo.append(stringVal != null ? stringVal : "NULL").append("\n");
             }
             appendTo.append("\n");
@@ -2152,10 +2152,9 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             int codeFieldIndex = warnRs.getColumnDefinition().findColumn("Code", false, 1) - 1;
             int messageFieldIndex = warnRs.getColumnDefinition().findColumn("Message", false, 1) - 1;
-            String enc = warnRs.getColumnDefinition().getFields()[messageFieldIndex].getEncoding();
 
-            ValueFactory<String> svf = new StringValueFactory(enc);
-            ValueFactory<Integer> ivf = new IntegerValueFactory();
+            ValueFactory<String> svf = new StringValueFactory(this.propertySet);
+            ValueFactory<Integer> ivf = new IntegerValueFactory(this.propertySet);
 
             rows = warnRs.getRows();
             Row r;

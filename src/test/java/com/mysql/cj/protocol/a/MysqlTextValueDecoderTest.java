@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,8 +36,12 @@ import java.math.BigInteger;
 
 import org.junit.Test;
 
+import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.exceptions.NumberOutOfRange;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
 import com.mysql.cj.result.DefaultValueFactory;
+import com.mysql.cj.result.Field;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.ValueFactory;
 
@@ -50,19 +54,25 @@ public class MysqlTextValueDecoderTest {
     @Test
     public void testNanosecondParsing() {
         // test value factory to extract the parsed nano-seconds
-        ValueFactory<Integer> vf = new DefaultValueFactory<Integer>() {
+        ValueFactory<Integer> vf = new DefaultValueFactory<Integer>(new DefaultPropertySet()) {
+
             @Override
-            public Integer createFromTime(int hours, int minutes, int seconds, int nanos) {
-                return nanos;
+            public Integer createFromTime(InternalTime it) {
+                return it.getNanos();
             }
 
             @Override
-            public Integer createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
-                return nanos;
+            public Integer createFromTimestamp(InternalTimestamp its) {
+                return its.getNanos();
             }
 
             public String getTargetTypeName() {
                 return Integer.class.getName();
+            }
+
+            @Override
+            public Integer createFromBytes(byte[] bytes, int offset, int length, Field f) {
+                return null;
             }
         };
 
@@ -78,7 +88,7 @@ public class MysqlTextValueDecoderTest {
 
     @Test
     public void testIntValues() {
-        ValueFactory<String> vf = new StringValueFactory();
+        ValueFactory<String> vf = new StringValueFactory(new DefaultPropertySet());
         assertEquals(String.valueOf(Integer.MIN_VALUE), this.valueDecoder.decodeInt4(String.valueOf(Integer.MIN_VALUE).getBytes(), 0, 11, vf));
         assertEquals(String.valueOf(Integer.MAX_VALUE), this.valueDecoder.decodeInt4(String.valueOf(Integer.MAX_VALUE).getBytes(), 0, 10, vf));
 
@@ -93,13 +103,18 @@ public class MysqlTextValueDecoderTest {
         }
 
         byte[] uint8LessThanMaxLong = "8223372036854775807".getBytes();
-        ValueFactory<String> fromLongOnly = new DefaultValueFactory<String>() {
+        ValueFactory<String> fromLongOnly = new DefaultValueFactory<String>(new DefaultPropertySet()) {
             @Override
             public String createFromLong(long l) {
                 return Long.valueOf(l).toString();
             }
 
             public String getTargetTypeName() {
+                return null;
+            }
+
+            @Override
+            public String createFromBytes(byte[] bytes, int offset, int length, Field f) {
                 return null;
             }
         };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -27,28 +27,66 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package com.mysql.cj.result;
+package com.mysql.cj.protocol;
 
-/**
- * A value factory which converts MySQL YEAR values to Dates.
- * 
- * @param <T>
- *            value type
- */
-public class YearToDateValueFactory<T> extends BaseDecoratingValueFactory<T> {
-    public YearToDateValueFactory(ValueFactory<T> targetVf) {
-        super(targetVf);
+public class InternalTimestamp extends InternalDate {
+
+    private int hours = 0;
+    private int minutes = 0;
+    private int seconds = 0;
+    private int nanos = 0;
+
+    /**
+     * Constructs a zero datetime
+     */
+    public InternalTimestamp() {
+        super();
+    }
+
+    public InternalTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
+        this.year = year;
+        this.month = month;
+        this.day = day;
+        this.hours = hours;
+        this.minutes = minutes;
+        this.seconds = seconds;
+        this.nanos = nanos;
+    }
+
+    public int getHours() {
+        return this.hours;
+    }
+
+    public void setHours(int hours) {
+        this.hours = hours;
+    }
+
+    public int getMinutes() {
+        return this.minutes;
+    }
+
+    public void setMinutes(int minutes) {
+        this.minutes = minutes;
+    }
+
+    public int getSeconds() {
+        return this.seconds;
+    }
+
+    public void setSeconds(int seconds) {
+        this.seconds = seconds;
+    }
+
+    public int getNanos() {
+        return this.nanos;
+    }
+
+    public void setNanos(int nanos) {
+        this.nanos = nanos;
     }
 
     @Override
-    public T createFromLong(long year) {
-        if (year < 100) {
-            if (year <= 69) {
-                year += 100;
-            }
-            year += 1900;
-        }
-
-        return this.targetVf.createFromDate((int) year, 1, 1);
+    public boolean isZero() {
+        return super.isZero() && this.hours == 0 && this.minutes == 0 && this.seconds == 0 && this.nanos == 0;
     }
 }

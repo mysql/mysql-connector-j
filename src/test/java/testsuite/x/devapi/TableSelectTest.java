@@ -53,6 +53,7 @@ import org.junit.Test;
 
 import com.mysql.cj.CoreSession;
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.DataConversionException;
 import com.mysql.cj.protocol.x.XProtocol;
 import com.mysql.cj.protocol.x.XProtocolError;
@@ -210,6 +211,9 @@ public class TableSelectTest extends BaseTableTestCase {
                 .values("a", "ba", "cba", "dcba", "edcba", "fedcba", "gfedcba", "hgfedcba", 0x01, -1).execute();
         table.insert("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "cb1", "cb2")
                 .values(0xcc, 0xcccc, 0xcccccc, 0xccccccccL, 0xccccccccccL, 0xccccccccccccL, 0xccccccccccccccL, 0xccccccccccccccccL, 0x00, -2).execute();
+
+        Session s1 = this.fact.getSession(this.baseUrl + makeParam(PropertyKey.jdbcCompliantTruncation, "false"));
+        table = s1.getDefaultSchema().getTable("testBug22931433");
 
         RowResult rows = table.select("c1, c2, c3, c4, c5, c6, c7, c8, cb1, cb2").execute();
 

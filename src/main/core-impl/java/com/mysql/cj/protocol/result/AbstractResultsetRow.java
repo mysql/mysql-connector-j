@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -93,32 +93,22 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
                 return this.valueDecoder.decodeTime(bytes, offset, length, vf);
 
             case MysqlType.FIELD_TYPE_TINY:
-                if (f.isUnsigned()) {
-                    return this.valueDecoder.decodeUInt1(bytes, offset, length, vf);
-                }
-                return this.valueDecoder.decodeInt1(bytes, offset, length, vf);
+                return f.isUnsigned() ? this.valueDecoder.decodeUInt1(bytes, offset, length, vf) : this.valueDecoder.decodeInt1(bytes, offset, length, vf);
 
             case MysqlType.FIELD_TYPE_YEAR:
+                return this.valueDecoder.decodeYear(bytes, offset, length, vf);
+
             case MysqlType.FIELD_TYPE_SHORT:
-                if (f.isUnsigned()) {
-                    return this.valueDecoder.decodeUInt2(bytes, offset, length, vf);
-                }
-                return this.valueDecoder.decodeInt2(bytes, offset, length, vf);
+                return f.isUnsigned() ? this.valueDecoder.decodeUInt2(bytes, offset, length, vf) : this.valueDecoder.decodeInt2(bytes, offset, length, vf);
 
             case MysqlType.FIELD_TYPE_LONG:
-                if (f.isUnsigned()) {
-                    return this.valueDecoder.decodeUInt4(bytes, offset, length, vf);
-                }
-                return this.valueDecoder.decodeInt4(bytes, offset, length, vf);
+                return f.isUnsigned() ? this.valueDecoder.decodeUInt4(bytes, offset, length, vf) : this.valueDecoder.decodeInt4(bytes, offset, length, vf);
 
             case MysqlType.FIELD_TYPE_INT24:
                 return this.valueDecoder.decodeInt4(bytes, offset, length, vf);
 
             case MysqlType.FIELD_TYPE_LONGLONG:
-                if (f.isUnsigned()) {
-                    return this.valueDecoder.decodeUInt8(bytes, offset, length, vf);
-                }
-                return this.valueDecoder.decodeInt8(bytes, offset, length, vf);
+                return f.isUnsigned() ? this.valueDecoder.decodeUInt8(bytes, offset, length, vf) : this.valueDecoder.decodeInt8(bytes, offset, length, vf);
 
             case MysqlType.FIELD_TYPE_FLOAT:
                 return this.valueDecoder.decodeFloat(bytes, offset, length, vf);
@@ -140,10 +130,10 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
             case MysqlType.FIELD_TYPE_ENUM:
             case MysqlType.FIELD_TYPE_GEOMETRY:
             case MysqlType.FIELD_TYPE_JSON:
-                return this.valueDecoder.decodeByteArray(bytes, offset, length, vf);
+                return this.valueDecoder.decodeByteArray(bytes, offset, length, f, vf);
 
             case MysqlType.FIELD_TYPE_SET:
-                return this.valueDecoder.decodeSet(bytes, offset, length, vf);
+                return this.valueDecoder.decodeSet(bytes, offset, length, f, vf);
 
             case MysqlType.FIELD_TYPE_BIT:
                 return this.valueDecoder.decodeBit(bytes, offset, length, vf);
@@ -160,8 +150,9 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
             case TINYINT_UNSIGNED:
                 return this.valueDecoder.decodeUInt1(bytes, offset, length, vf);
             case SMALLINT:
-            case YEAR:
                 return this.valueDecoder.decodeInt2(bytes, offset, length, vf);
+            case YEAR:
+                return this.valueDecoder.decodeYear(bytes, offset, length, vf);
             case SMALLINT_UNSIGNED:
                 return this.valueDecoder.decodeUInt2(bytes, offset, length, vf);
             case INT:
@@ -202,7 +193,7 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
             case SET:
             case GEOMETRY:
             case UNKNOWN:
-                return this.valueDecoder.decodeByteArray(bytes, offset, length, vf);
+                return this.valueDecoder.decodeByteArray(bytes, offset, length, f, vf);
 
             case BIT:
                 return this.valueDecoder.decodeBit(bytes, offset, length, vf);

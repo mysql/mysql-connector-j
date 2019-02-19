@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,12 +32,19 @@ package com.mysql.cj.result;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+import com.mysql.cj.conf.PropertySet;
+
 /**
  * A value factory for a raw stream of bytes from the value.
  */
 public class BinaryStreamValueFactory extends DefaultValueFactory<InputStream> {
+
+    public BinaryStreamValueFactory(PropertySet pset) {
+        super(pset);
+    }
+
     @Override
-    public InputStream createFromBytes(byte[] bytes, int offset, int length) {
+    public InputStream createFromBytes(byte[] bytes, int offset, int length, Field f) {
         return new ByteArrayInputStream(bytes, offset, length);
     }
 

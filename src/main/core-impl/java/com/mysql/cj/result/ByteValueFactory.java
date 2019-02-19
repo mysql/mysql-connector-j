@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,33 +32,68 @@ package com.mysql.cj.result;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.exceptions.NumberOutOfRange;
+import com.mysql.cj.util.DataTypeUtil;
+import com.mysql.cj.util.StringUtils;
+
 /**
  * A value factory for creating byte values.
  */
 public class ByteValueFactory extends DefaultValueFactory<Byte> {
+
+    public ByteValueFactory(PropertySet pset) {
+        super(pset);
+    }
+
     @Override
     public Byte createFromBigInteger(BigInteger i) {
+        if (this.jdbcCompliantTruncationForReads
+                && (i.compareTo(BigInteger.valueOf(Byte.MIN_VALUE)) < 0 || i.compareTo(BigInteger.valueOf(Byte.MAX_VALUE)) > 0)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { i, getTargetTypeName() }));
+        }
         return (byte) i.intValue();
     }
 
     @Override
     public Byte createFromLong(long l) {
+        if (this.jdbcCompliantTruncationForReads && (l < Byte.MIN_VALUE || l > Byte.MAX_VALUE)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { Long.valueOf(l).toString(), getTargetTypeName() }));
+        }
         return (byte) l;
     }
 
     @Override
     public Byte createFromBigDecimal(BigDecimal d) {
+        if (this.jdbcCompliantTruncationForReads
+                && (d.compareTo(BigDecimal.valueOf(Byte.MIN_VALUE)) < 0 || d.compareTo(BigDecimal.valueOf(Byte.MAX_VALUE)) > 0)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, getTargetTypeName() }));
+        }
         return (byte) d.longValue();
     }
 
     @Override
     public Byte createFromDouble(double d) {
+        if (this.jdbcCompliantTruncationForReads && (d < Byte.MIN_VALUE || d > Byte.MAX_VALUE)) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, getTargetTypeName() }));
+        }
         return (byte) d;
     }
 
     @Override
     public Byte createFromBit(byte[] bytes, int offset, int length) {
-        return bytes[offset + length - 1];
+        long l = DataTypeUtil.bitToLong(bytes, offset, length);
+        if (this.jdbcCompliantTruncationForReads && l >> 8 != 0) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { Long.valueOf(l).toString(), getTargetTypeName() }));
+        }
+        return (byte) l;
+    }
+
+    @Override
+    public Byte createFromYear(long l) {
+        return createFromLong(l);
     }
 
     @Override
@@ -68,5 +103,20 @@ public class ByteValueFactory extends DefaultValueFactory<Byte> {
 
     public String getTargetTypeName() {
         return Byte.class.getName();
+    }
+
+    @Override
+    public Byte createFromBytes(byte[] bytes, int offset, int length, Field f) {
+        if (length == 0 && this.pset.getBooleanProperty(PropertyKey.emptyStringsConvertToZero).getValue()) {
+            return (byte) 0;
+        }
+        // TODO: Too expensive to convert from other charset to ASCII here? UTF-8 (e.g.) doesn't need any conversion before being sent to the decoder
+        String s = StringUtils.toString(bytes, offset, length, f.getEncoding());
+        byte[] newBytes = s.getBytes();
+
+        if (this.jdbcCompliantTruncationForReads && newBytes.length != 1) {
+            throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { s, getTargetTypeName() }));
+        }
+        return newBytes[0];
     }
 }

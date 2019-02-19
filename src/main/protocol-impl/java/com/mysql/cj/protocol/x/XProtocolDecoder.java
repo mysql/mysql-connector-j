@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,7 +38,11 @@ import java.nio.CharBuffer;
 import com.google.protobuf.CodedInputStream;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.exceptions.DataReadException;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
 import com.mysql.cj.protocol.ValueDecoder;
+import com.mysql.cj.result.Field;
 import com.mysql.cj.result.ValueFactory;
 
 public class XProtocolDecoder implements ValueDecoder {
@@ -74,7 +78,7 @@ public class XProtocolDecoder implements ValueDecoder {
                 }
             }
 
-            return vf.createFromTime(negative ? -1 * hours : hours, minutes, seconds, nanos);
+            return vf.createFromTime(new InternalTime(negative ? -1 * hours : hours, minutes, seconds, nanos));
         } catch (IOException e) {
             throw new DataReadException(e);
         }
@@ -109,9 +113,9 @@ public class XProtocolDecoder implements ValueDecoder {
                     }
                 }
 
-                return vf.createFromTimestamp(year, month, day, hours, minutes, seconds, nanos);
+                return vf.createFromTimestamp(new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos));
             }
-            return vf.createFromDate(year, month, day);
+            return vf.createFromDate(new InternalDate(year, month, day));
         } catch (IOException e) {
             throw new DataReadException(e);
         }
@@ -245,13 +249,13 @@ public class XProtocolDecoder implements ValueDecoder {
     }
 
     @Override
-    public <T> T decodeByteArray(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+    public <T> T decodeByteArray(byte[] bytes, int offset, int length, Field f, ValueFactory<T> vf) {
         try {
             CodedInputStream inputStream = CodedInputStream.newInstance(bytes, offset, length);
             // c.f. Streaming_command_delegate::get_string()
             int size = inputStream.getBytesUntilLimit();
             size--; // for null terminator
-            return vf.createFromBytes(inputStream.readRawBytes(size), 0, size);
+            return vf.createFromBytes(inputStream.readRawBytes(size), 0, size, f);
         } catch (IOException e) {
             throw new DataReadException(e);
         }
@@ -270,7 +274,7 @@ public class XProtocolDecoder implements ValueDecoder {
     }
 
     @Override
-    public <T> T decodeSet(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+    public <T> T decodeSet(byte[] bytes, int offset, int length, Field f, ValueFactory<T> vf) {
         try {
             CodedInputStream inputStream = CodedInputStream.newInstance(bytes, offset, length);
             StringBuilder vals = new StringBuilder();
@@ -284,9 +288,15 @@ public class XProtocolDecoder implements ValueDecoder {
             }
             // TODO: charset mess here
             byte[] buf = vals.toString().getBytes();
-            return vf.createFromBytes(buf, 0, buf.length);
+            return vf.createFromBytes(buf, 0, buf.length, f);
         } catch (IOException e) {
             throw new DataReadException(e);
         }
+    }
+
+    @Override
+    public <T> T decodeYear(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

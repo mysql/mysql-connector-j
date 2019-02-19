@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,6 +30,7 @@
 package testsuite.regression;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.lang.management.ManagementFactory;
@@ -50,6 +51,7 @@ import java.sql.JDBCType;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
@@ -82,6 +84,7 @@ import javax.sql.rowset.CachedRowSet;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
+import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -98,6 +101,7 @@ import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.log.StandardLogger;
+import com.mysql.cj.protocol.InternalDate;
 import com.mysql.cj.protocol.a.result.NativeResultset;
 import com.mysql.cj.protocol.a.result.ResultsetRowsCursor;
 import com.mysql.cj.result.SqlDateValueFactory;
@@ -2019,6 +2023,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
         props.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "ROUND");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         Connection conn2 = getConnectionWithProps(props);
         Statement stmt2 = conn2.createStatement();
 
@@ -2192,7 +2198,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
                         assertTrue(!rsToTest.wasNull());
                         assertEquals(0, rsToTest.getLong(i + 1));
                         assertTrue(!rsToTest.wasNull());
-                        assertEquals(0, rsToTest.getByte(i + 1));
+
+                        if (typeName.contains("TEXT") || typeName.contains("CHAR")) {
+                            assertEquals('0', rsToTest.getByte(i + 1));
+                        } else {
+                            assertEquals(0, rsToTest.getByte(i + 1));
+                        }
+
                         assertTrue(!rsToTest.wasNull());
                         assertEquals(0, rsToTest.getShort(i + 1));
                         assertTrue(!rsToTest.wasNull());
@@ -2364,7 +2376,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(0, this.rs.getByte(1));
             fail("Should've thrown an exception!");
         } catch (SQLException sqlEx) {
-            assertEquals(MysqlErrorNumbers.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE, sqlEx.getSQLState());
         }
         try {
             assertEquals(0, this.rs.getShort(1));
@@ -3121,8 +3133,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         truncConn = getConnectionWithProps(props);
         this.rs = truncConn.createStatement().executeQuery("SELECT " + Long.MAX_VALUE);
         this.rs.next();
-        this.rs.getInt(1);
-
+        int i = this.rs.getInt(1);
+        System.out.println(i);
     }
 
     public void testUsageAdvisorOnZeroRowResultSet() throws Exception {
@@ -4373,13 +4385,10 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 return null;
             }
         });
-        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
-            public Void call() throws Exception {
-                testRS.getByte(1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
+
+        assertEquals(' ', testRS.getByte(1));
+
+        assertThrows(SQLException.class, "Cannot convert string ' ' to java.sql.Date value", new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getDate(1);
                 return null;
@@ -4415,13 +4424,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 return null;
             }
         });
-        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
+        assertThrows(SQLException.class, "Cannot convert string ' ' to java.sql.Time value", new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getTime(1);
                 return null;
             }
         });
-        assertThrows(SQLException.class, errorMessage, new Callable<Void>() {
+        assertThrows(SQLException.class, "Cannot convert string ' ' to java.sql.Timestamp value", new Callable<Void>() {
             public Void call() throws Exception {
                 testRS.getTimestamp(1);
                 return null;
@@ -4818,7 +4827,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
                         + " b'1100110011001100110011001100110011001100', b'110011001100110011001100110011001100110011001100', b'11001100110011001100110011001100110011001100110011001100',"
                         + " b'1100110011001100110011001100110011001100110011001100110011001100', 0x00, -2)");
 
-        ResultSet rs1 = this.stmt.executeQuery("SELECT * FROM testBug22931433");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
+        Connection testConn = getConnectionWithProps(props);
+        Statement testStmt = testConn.createStatement();
+
+        ResultSet rs1 = testStmt.executeQuery("SELECT * FROM testBug22931433");
         rs1.next();
 
         assertEquals('a', rs1.getByte("c1"));
@@ -5770,7 +5784,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         sdf.setLenient(false);
 
         java.util.Date expected = sdf.parse("1994-03-27");
-        Date fromFactory = new SqlDateValueFactory(null, TimeZone.getTimeZone("Europe/Bucharest")).createFromDate(1994, 3, 27);
+        Date fromFactory = new SqlDateValueFactory(new DefaultPropertySet(), null, TimeZone.getTimeZone("Europe/Bucharest"))
+                .createFromDate(new InternalDate(1994, 3, 27));
 
         assertEquals(expected.getTime(), fromFactory.getTime());
     }
@@ -6748,5 +6763,187 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(1, this.rs.getInt(1));
             assertEquals("100", this.rs.getString(2));
         }
+    }
+
+    /**
+     * Tests fix for BUG#25650385, GETBYTE() RETURNS ERROR FOR BINARY() FLD.
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug25650385() throws Exception {
+
+        /*
+         * getByte (recommended for TINYINT):
+         * TINYINT, SMALLINT, INTEGER, BIGINT, REAL, FLOAT, DOUBLE, DECIMAL, NUMERIC, BIT, BOOLEAN, CHAR , VARCHAR , LONGVARCHAR, ROWID
+         */
+
+        createTable("testBug25650385", "(b1 blob(12), c1 char(12), c2 binary(12), i1 int, c3 char(12) CHARACTER SET binary)");
+        this.stmt.execute("INSERT INTO testBug25650385 values (10, 'a', 48, 10, 23)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        for (boolean useSSPS : new boolean[] { false, true }) {
+            for (boolean jdbcCompliantTruncation : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+                props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "" + jdbcCompliantTruncation);
+                Connection c1 = getConnectionWithProps(props);
+                this.pstmt = c1.prepareStatement("select * from testBug25650385");
+                if (useSSPS) {
+                    assertTrue(this.pstmt instanceof ServerPreparedStatement);
+                }
+                ResultSet rs1 = this.pstmt.executeQuery();
+                assertTrue(rs1.next());
+
+                // from blob(12)
+                assertEquals('1', rs1.getBytes(1)[0]);
+                if (jdbcCompliantTruncation) {
+                    assertThrows(SQLDataException.class, "Value '10' is outside of valid range for type java.lang.Byte", new Callable<Void>() {
+                        public Void call() throws Exception {
+                            rs1.getByte(1);
+                            return null;
+                        }
+                    });
+                } else {
+                    assertEquals('1', rs1.getByte(1));
+                }
+                assertEquals(10, rs1.getInt(1));
+                assertEquals(10L, rs1.getLong(1));
+                assertEquals(10, rs1.getShort(1));
+                assertEquals("10", rs1.getString(1));
+
+                // from c1 char(12)
+                assertEquals('a', rs1.getBytes(2)[0]);
+                assertEquals('a', rs1.getByte(2));
+                assertThrows(SQLDataException.class, "Cannot determine value type from string 'a'", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getInt(2);
+                        return null;
+                    }
+                });
+                assertThrows(SQLDataException.class, "Cannot determine value type from string 'a'", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getLong(2);
+                        return null;
+                    }
+                });
+                assertThrows(SQLDataException.class, "Cannot determine value type from string 'a'", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getShort(2);
+                        return null;
+                    }
+                });
+                assertEquals("a", rs1.getString(2));
+
+                // from c2 binary(12)
+                assertEquals('4', rs1.getBytes(3)[0]);
+                if (jdbcCompliantTruncation) {
+                    assertThrows(SQLDataException.class, "Value '48.+ is outside of valid range for type java.lang.Byte", new Callable<Void>() {
+                        public Void call() throws Exception {
+                            rs1.getByte(3);
+                            return null;
+                        }
+                    });
+                } else {
+                    assertEquals('4', rs1.getByte(3));
+                }
+                assertThrows(SQLDataException.class, "Cannot determine value type from string '48.+", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getInt(3);
+                        return null;
+                    }
+                });
+                assertThrows(SQLDataException.class, "Cannot determine value type from string '48.+", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getLong(3);
+                        return null;
+                    }
+                });
+                assertThrows(SQLDataException.class, "Cannot determine value type from string '48.+", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getShort(3);
+                        return null;
+                    }
+                });
+                assertTrue(rs1.getString(3).startsWith("48"));
+
+                // from i1 int
+                if (useSSPS) {
+                    assertEquals(10, rs1.getBytes(4)[0]);
+                } else {
+                    assertEquals('1', rs1.getBytes(4)[0]);
+                }
+                assertEquals(10, rs1.getByte(4));
+                assertEquals(10, rs1.getInt(4));
+                assertEquals(10, rs1.getLong(4));
+                assertEquals(10, rs1.getShort(4));
+                assertEquals("10", rs1.getString(4));
+
+                // from c3 char(12) CHARACTER SET binary
+                assertEquals('2', rs1.getBytes(5)[0]);
+                if (jdbcCompliantTruncation) {
+                    assertThrows(SQLDataException.class, "Value '23.+ is outside of valid range for type java.lang.Byte", new Callable<Void>() {
+                        public Void call() throws Exception {
+                            rs1.getByte(5);
+                            return null;
+                        }
+                    });
+                } else {
+                    assertEquals('2', rs1.getByte(5));
+                }
+                assertThrows(SQLDataException.class, "Cannot determine value type from string '23.+", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getInt(5);
+                        return null;
+                    }
+                });
+                assertThrows(SQLDataException.class, "Cannot determine value type from string '23.+", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getLong(5);
+                        return null;
+                    }
+                });
+                assertThrows(SQLDataException.class, "Cannot determine value type from string '23.+", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getShort(5);
+                        return null;
+                    }
+                });
+                assertTrue(rs1.getString(5).startsWith("23"));
+            }
+        }
+    }
+
+    /**
+     * Tests fix for BUG#27784363, MYSQL 8.0 JDBC DRIVER THROWS NUMBERFORMATEXCEPTION FOR TEXT DATA
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug27784363() throws Exception {
+        createTable("testBug27784363", "(col0 TEXT)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
+        Connection c1 = getConnectionWithProps(props);
+        InputStream in1 = null;
+        try {
+            in1 = new ByteArrayInputStream(("gergeetbtebertbgergeetbtebertbgergeetbtebertbgergeetbtebertbgergeetbtebertbgergeetbtebertbge"
+                    + "rgeetbtebertbgergeetbtebertbgergeetbtebertbgergeetbtebertbrgeetbtebertbgergeetbtebertbgergeetbtebertbgergeetbtebertb").getBytes());
+            this.pstmt = c1.prepareStatement("insert into testBug27784363 values (?)");
+            this.pstmt.setAsciiStream(1, in1, in1.available());
+            this.pstmt.execute();
+            System.out.println("inserted.");
+            this.rs = c1.createStatement().executeQuery("select * from testBug27784363");
+            this.rs.next();
+            assertEquals('g', this.rs.getByte("col0"));
+        } finally {
+            in1.close();
+            c1.close();
+        }
+
     }
 }

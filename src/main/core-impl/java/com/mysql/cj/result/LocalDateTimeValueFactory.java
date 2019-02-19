@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,14 +32,19 @@ package com.mysql.cj.result;
 import java.time.LocalDateTime;
 
 import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.DataReadException;
+import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.InternalTime;
+import com.mysql.cj.protocol.InternalTimestamp;
 
 /**
  * Value factory to create {@link LocalDateTime} instances.
  */
-public class LocalDateTimeValueFactory extends DefaultValueFactory<LocalDateTime> {
+public class LocalDateTimeValueFactory extends AbstractDateTimeValueFactory<LocalDateTime> {
 
-    public LocalDateTimeValueFactory() {
+    public LocalDateTimeValueFactory(PropertySet pset) {
+        super(pset);
     }
 
     /**
@@ -48,8 +53,8 @@ public class LocalDateTimeValueFactory extends DefaultValueFactory<LocalDateTime
      * @return a LocalDateTime at midnight on the day given by the DATE value
      */
     @Override
-    public LocalDateTime createFromDate(int year, int month, int day) {
-        return createFromTimestamp(year, month, day, 0, 0, 0, 0);
+    public LocalDateTime localCreateFromDate(InternalDate idate) {
+        return createFromTimestamp(new InternalTimestamp(idate.getYear(), idate.getMonth(), idate.getDay(), 0, 0, 0, 0));
     }
 
     /**
@@ -58,19 +63,20 @@ public class LocalDateTimeValueFactory extends DefaultValueFactory<LocalDateTime
      * @return a LocalDateTime at the given time on 1970 Jan 1.
      */
     @Override
-    public LocalDateTime createFromTime(int hours, int minutes, int seconds, int nanos) {
-        if (hours < 0 || hours >= 24) {
-            throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + hours + ":" + minutes + ":" + seconds }));
+    public LocalDateTime localCreateFromTime(InternalTime it) {
+        if (it.getHours() < 0 || it.getHours() >= 24) {
+            throw new DataReadException(
+                    Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + it.getHours() + ":" + it.getMinutes() + ":" + it.getSeconds() }));
         }
-        return createFromTimestamp(1970, 1, 1, hours, minutes, seconds, nanos);
+        return createFromTimestamp(new InternalTimestamp(1970, 1, 1, it.getHours(), it.getMinutes(), it.getSeconds(), it.getNanos()));
     }
 
     @Override
-    public LocalDateTime createFromTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
-        if (year == 0 && month == 0 && day == 0) {
+    public LocalDateTime localCreateFromTimestamp(InternalTimestamp its) {
+        if (its.getYear() == 0 && its.getMonth() == 0 && its.getDay() == 0) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
         }
-        return LocalDateTime.of(year, month, day, hours, minutes, seconds, nanos);
+        return LocalDateTime.of(its.getYear(), its.getMonth(), its.getDay(), its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos());
     }
 
     public String getTargetTypeName() {

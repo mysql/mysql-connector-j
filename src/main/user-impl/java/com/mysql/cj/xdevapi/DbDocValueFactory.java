@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,8 +32,10 @@ package com.mysql.cj.xdevapi;
 import java.io.IOException;
 import java.io.StringReader;
 
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.result.DefaultValueFactory;
+import com.mysql.cj.result.Field;
 import com.mysql.cj.result.ValueFactory;
 import com.mysql.cj.util.StringUtils;
 
@@ -41,22 +43,11 @@ import com.mysql.cj.util.StringUtils;
  * A {@link ValueFactory} implementation to create {@link DbDoc}s.
  */
 public class DbDocValueFactory extends DefaultValueFactory<DbDoc> {
-    private String encoding;
-
     /**
      * Constructor.
      */
-    public DbDocValueFactory() {
-    }
-
-    /**
-     * Constructor.
-     * 
-     * @param encoding
-     *            Java encoding name
-     */
-    public DbDocValueFactory(String encoding) {
-        this.encoding = encoding;
+    public DbDocValueFactory(PropertySet pset) {
+        super(pset);
     }
 
     /**
@@ -64,9 +55,9 @@ public class DbDocValueFactory extends DefaultValueFactory<DbDoc> {
      * byte array using the platform encoding.
      */
     @Override
-    public DbDoc createFromBytes(byte[] bytes, int offset, int length) {
+    public DbDoc createFromBytes(byte[] bytes, int offset, int length, Field f) {
         try {
-            return JsonParser.parseDoc(new StringReader(StringUtils.toString(bytes, offset, length, this.encoding)));
+            return JsonParser.parseDoc(new StringReader(StringUtils.toString(bytes, offset, length, f.getEncoding())));
         } catch (IOException ex) {
             throw AssertionFailedException.shouldNotHappen(ex);
         }
