@@ -111,6 +111,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     private ResultStreamer currentResultStreamer;
 
     XServerSession serverSession = null;
+    Boolean useSessionResetKeepOpen = null;
 
     public String defaultSchemaName;
 
@@ -167,6 +168,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
         this.metadataCharacterSet = "latin1"; // TODO configure from server session
         this.fieldFactory = new FieldFactory(this.metadataCharacterSet);
+        this.useSessionResetKeepOpen = null;
     }
 
     public ServerSession getServerSession() {
@@ -684,18 +686,36 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         newCommand();
         this.propertySet.reset();
 
-        send(((XMessageBuilder) this.messageBuilder).buildSessionReset(), 0);
-        readOk();
-
-        // TODO should be removed after proper implementation of session reset in xplugin
-        if (this.clientCapabilities.containsKey(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS)) {
-            Map<String, Object> reducedClientCapabilities = new HashMap<>();
-            reducedClientCapabilities.put(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS,
-                    this.clientCapabilities.get(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS));
-            sendCapabilities(reducedClientCapabilities);
+        if (this.useSessionResetKeepOpen == null) {
+            try {
+                send(((XMessageBuilder) this.messageBuilder).buildExpectOpen(), 0);
+                readOk();
+                this.useSessionResetKeepOpen = true;
+            } catch (XProtocolError e) {
+                if (e.getErrorCode() != 5168 && /* for MySQL 5.7 */ e.getErrorCode() != 5160) {
+                    throw e;
+                }
+                this.useSessionResetKeepOpen = false;
+            }
         }
-        // TODO should be removed after proper implementation of session reset in xplugin
-        this.authProvider.changeUser(null, this.currUser, this.currPassword, this.currDatabase);
+        if (this.useSessionResetKeepOpen) {
+            send(((XMessageBuilder) this.messageBuilder).buildSessionResetKeepOpen(), 0);
+            readOk();
+        } else {
+            send(((XMessageBuilder) this.messageBuilder).buildSessionResetAndClose(), 0);
+            readOk();
+
+            if (this.clientCapabilities.containsKey(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS)) {
+                // this code may never work because xplugin connection attributes were introduced later than new session reset
+                Map<String, Object> reducedClientCapabilities = new HashMap<>();
+                reducedClientCapabilities.put(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS,
+                        this.clientCapabilities.get(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS));
+                sendCapabilities(reducedClientCapabilities);
+            }
+
+            this.authProvider.changeUser(null, this.currUser, this.currPassword, this.currDatabase);
+        }
+
     }
 
     @Override

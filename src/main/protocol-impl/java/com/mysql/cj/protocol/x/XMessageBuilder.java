@@ -74,6 +74,7 @@ import com.mysql.cj.x.protobuf.MysqlxDatatypes.Any;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.Builder;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.ObjectField;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar;
+import com.mysql.cj.x.protobuf.MysqlxExpect;
 import com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
 import com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateContinue;
@@ -584,7 +585,17 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
         }
     }
 
-    public XMessage buildSessionReset() {
+    public XMessage buildSessionResetAndClose() {
         return new XMessage(Reset.newBuilder().build());
     }
+
+    public XMessage buildSessionResetKeepOpen() {
+        return new XMessage(Reset.newBuilder().setKeepOpen(true).build());
+    }
+
+    public XMessage buildExpectOpen() {
+        return new XMessage(MysqlxExpect.Open.newBuilder().addCond(MysqlxExpect.Open.Condition.newBuilder()
+                .setConditionKey(MysqlxExpect.Open.Condition.Key.EXPECT_FIELD_EXIST_VALUE).setConditionValue(ByteString.copyFromUtf8("6.1"))).build());
+    }
+
 }

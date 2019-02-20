@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -296,6 +296,10 @@ public final class MysqlxNotice {
        * <code>GROUP_REPLICATION_STATE_CHANGED = 4;</code>
        */
       GROUP_REPLICATION_STATE_CHANGED(4),
+      /**
+       * <code>SERVER_HELLO = 5;</code>
+       */
+      SERVER_HELLO(5),
       ;
 
       /**
@@ -314,6 +318,10 @@ public final class MysqlxNotice {
        * <code>GROUP_REPLICATION_STATE_CHANGED = 4;</code>
        */
       public static final int GROUP_REPLICATION_STATE_CHANGED_VALUE = 4;
+      /**
+       * <code>SERVER_HELLO = 5;</code>
+       */
+      public static final int SERVER_HELLO_VALUE = 5;
 
 
       public final int getNumber() {
@@ -334,6 +342,7 @@ public final class MysqlxNotice {
           case 2: return SESSION_VARIABLE_CHANGED;
           case 3: return SESSION_STATE_CHANGED;
           case 4: return GROUP_REPLICATION_STATE_CHANGED;
+          case 5: return SERVER_HELLO;
           default: return null;
         }
       }
@@ -4646,6 +4655,438 @@ public final class MysqlxNotice {
 
   }
 
+  public interface ServerHelloOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Notice.ServerHello)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * <pre>
+   * Notify clients about connection to X Protocol server
+   * ========================================== ==========
+   * :protobuf:msg:`Mysqlx.Notice::Frame` field value
+   * ========================================== ==========
+   * ``.type``                                  5
+   * ``.scope``                                 ``global``
+   * ========================================== ==========
+   * </pre>
+   *
+   * Protobuf type {@code Mysqlx.Notice.ServerHello}
+   */
+  public  static final class ServerHello extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:Mysqlx.Notice.ServerHello)
+      ServerHelloOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ServerHello.newBuilder() to construct.
+    private ServerHello(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ServerHello() {
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ServerHello(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.mysql.cj.x.protobuf.MysqlxNotice.internal_static_Mysqlx_Notice_ServerHello_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.mysql.cj.x.protobuf.MysqlxNotice.internal_static_Mysqlx_Notice_ServerHello_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello.class, com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello)) {
+        return super.equals(obj);
+      }
+      com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello other = (com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello) obj;
+
+      boolean result = true;
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * <pre>
+     * Notify clients about connection to X Protocol server
+     * ========================================== ==========
+     * :protobuf:msg:`Mysqlx.Notice::Frame` field value
+     * ========================================== ==========
+     * ``.type``                                  5
+     * ``.scope``                                 ``global``
+     * ========================================== ==========
+     * </pre>
+     *
+     * Protobuf type {@code Mysqlx.Notice.ServerHello}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Notice.ServerHello)
+        com.mysql.cj.x.protobuf.MysqlxNotice.ServerHelloOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.mysql.cj.x.protobuf.MysqlxNotice.internal_static_Mysqlx_Notice_ServerHello_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.mysql.cj.x.protobuf.MysqlxNotice.internal_static_Mysqlx_Notice_ServerHello_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello.class, com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello.Builder.class);
+      }
+
+      // Construct using com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.mysql.cj.x.protobuf.MysqlxNotice.internal_static_Mysqlx_Notice_ServerHello_descriptor;
+      }
+
+      @java.lang.Override
+      public com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello getDefaultInstanceForType() {
+        return com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello build() {
+        com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello buildPartial() {
+        com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello result = new com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello) {
+          return mergeFrom((com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello other) {
+        if (other == com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Notice.ServerHello)
+    }
+
+    // @@protoc_insertion_point(class_scope:Mysqlx.Notice.ServerHello)
+    private static final com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello();
+    }
+
+    public static com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<ServerHello>
+        PARSER = new com.google.protobuf.AbstractParser<ServerHello>() {
+      @java.lang.Override
+      public ServerHello parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ServerHello(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ServerHello> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ServerHello> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.mysql.cj.x.protobuf.MysqlxNotice.ServerHello getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Mysqlx_Notice_Frame_descriptor;
   private static final 
@@ -4671,6 +5112,11 @@ public final class MysqlxNotice {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_Mysqlx_Notice_GroupReplicationStateChanged_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Mysqlx_Notice_ServerHello_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_Mysqlx_Notice_ServerHello_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -4681,33 +5127,34 @@ public final class MysqlxNotice {
   static {
     java.lang.String[] descriptorData = {
       "\n\023mysqlx_notice.proto\022\rMysqlx.Notice\032\014my" +
-      "sqlx.proto\032\026mysqlx_datatypes.proto\"\362\001\n\005F" +
+      "sqlx.proto\032\026mysqlx_datatypes.proto\"\205\002\n\005F" +
       "rame\022\014\n\004type\030\001 \002(\r\0221\n\005scope\030\002 \001(\0162\032.Mysq" +
       "lx.Notice.Frame.Scope:\006GLOBAL\022\017\n\007payload" +
-      "\030\003 \001(\014\"\036\n\005Scope\022\n\n\006GLOBAL\020\001\022\t\n\005LOCAL\020\002\"q" +
-      "\n\004Type\022\013\n\007WARNING\020\001\022\034\n\030SESSION_VARIABLE_" +
-      "CHANGED\020\002\022\031\n\025SESSION_STATE_CHANGED\020\003\022#\n\037" +
-      "GROUP_REPLICATION_STATE_CHANGED\020\004:\004\220\3520\013\"" +
-      "\205\001\n\007Warning\0224\n\005level\030\001 \001(\0162\034.Mysqlx.Noti" +
-      "ce.Warning.Level:\007WARNING\022\014\n\004code\030\002 \002(\r\022" +
-      "\013\n\003msg\030\003 \002(\t\")\n\005Level\022\010\n\004NOTE\020\001\022\013\n\007WARNI" +
-      "NG\020\002\022\t\n\005ERROR\020\003\"P\n\026SessionVariableChange" +
-      "d\022\r\n\005param\030\001 \002(\t\022\'\n\005value\030\002 \001(\0132\030.Mysqlx" +
-      ".Datatypes.Scalar\"\361\002\n\023SessionStateChange" +
-      "d\022;\n\005param\030\001 \002(\0162,.Mysqlx.Notice.Session" +
-      "StateChanged.Parameter\022\'\n\005value\030\002 \003(\0132\030." +
-      "Mysqlx.Datatypes.Scalar\"\363\001\n\tParameter\022\022\n" +
-      "\016CURRENT_SCHEMA\020\001\022\023\n\017ACCOUNT_EXPIRED\020\002\022\027" +
-      "\n\023GENERATED_INSERT_ID\020\003\022\021\n\rROWS_AFFECTED" +
-      "\020\004\022\016\n\nROWS_FOUND\020\005\022\020\n\014ROWS_MATCHED\020\006\022\021\n\r" +
-      "TRX_COMMITTED\020\007\022\022\n\016TRX_ROLLEDBACK\020\t\022\024\n\020P" +
-      "RODUCED_MESSAGE\020\n\022\026\n\022CLIENT_ID_ASSIGNED\020" +
-      "\013\022\032\n\026GENERATED_DOCUMENT_IDS\020\014\"\256\001\n\034GroupR" +
-      "eplicationStateChanged\022\014\n\004type\030\001 \002(\r\022\017\n\007" +
-      "view_id\030\002 \001(\t\"o\n\004Type\022\032\n\026MEMBERSHIP_QUOR" +
-      "UM_LOSS\020\001\022\032\n\026MEMBERSHIP_VIEW_CHANGE\020\002\022\026\n" +
-      "\022MEMBER_ROLE_CHANGE\020\003\022\027\n\023MEMBER_STATE_CH" +
-      "ANGE\020\004B\031\n\027com.mysql.cj.x.protobuf"
+      "\030\003 \001(\014\"\036\n\005Scope\022\n\n\006GLOBAL\020\001\022\t\n\005LOCAL\020\002\"\203" +
+      "\001\n\004Type\022\013\n\007WARNING\020\001\022\034\n\030SESSION_VARIABLE" +
+      "_CHANGED\020\002\022\031\n\025SESSION_STATE_CHANGED\020\003\022#\n" +
+      "\037GROUP_REPLICATION_STATE_CHANGED\020\004\022\020\n\014SE" +
+      "RVER_HELLO\020\005:\004\220\3520\013\"\205\001\n\007Warning\0224\n\005level\030" +
+      "\001 \001(\0162\034.Mysqlx.Notice.Warning.Level:\007WAR" +
+      "NING\022\014\n\004code\030\002 \002(\r\022\013\n\003msg\030\003 \002(\t\")\n\005Level" +
+      "\022\010\n\004NOTE\020\001\022\013\n\007WARNING\020\002\022\t\n\005ERROR\020\003\"P\n\026Se" +
+      "ssionVariableChanged\022\r\n\005param\030\001 \002(\t\022\'\n\005v" +
+      "alue\030\002 \001(\0132\030.Mysqlx.Datatypes.Scalar\"\361\002\n" +
+      "\023SessionStateChanged\022;\n\005param\030\001 \002(\0162,.My" +
+      "sqlx.Notice.SessionStateChanged.Paramete" +
+      "r\022\'\n\005value\030\002 \003(\0132\030.Mysqlx.Datatypes.Scal" +
+      "ar\"\363\001\n\tParameter\022\022\n\016CURRENT_SCHEMA\020\001\022\023\n\017" +
+      "ACCOUNT_EXPIRED\020\002\022\027\n\023GENERATED_INSERT_ID" +
+      "\020\003\022\021\n\rROWS_AFFECTED\020\004\022\016\n\nROWS_FOUND\020\005\022\020\n" +
+      "\014ROWS_MATCHED\020\006\022\021\n\rTRX_COMMITTED\020\007\022\022\n\016TR" +
+      "X_ROLLEDBACK\020\t\022\024\n\020PRODUCED_MESSAGE\020\n\022\026\n\022" +
+      "CLIENT_ID_ASSIGNED\020\013\022\032\n\026GENERATED_DOCUME" +
+      "NT_IDS\020\014\"\256\001\n\034GroupReplicationStateChange" +
+      "d\022\014\n\004type\030\001 \002(\r\022\017\n\007view_id\030\002 \001(\t\"o\n\004Type" +
+      "\022\032\n\026MEMBERSHIP_QUORUM_LOSS\020\001\022\032\n\026MEMBERSH" +
+      "IP_VIEW_CHANGE\020\002\022\026\n\022MEMBER_ROLE_CHANGE\020\003" +
+      "\022\027\n\023MEMBER_STATE_CHANGE\020\004\"\r\n\013ServerHello" +
+      "B\031\n\027com.mysql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -4753,6 +5200,12 @@ public final class MysqlxNotice {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Mysqlx_Notice_GroupReplicationStateChanged_descriptor,
         new java.lang.String[] { "Type", "ViewId", });
+    internal_static_Mysqlx_Notice_ServerHello_descriptor =
+      getDescriptor().getMessageTypes().get(5);
+    internal_static_Mysqlx_Notice_ServerHello_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_Mysqlx_Notice_ServerHello_descriptor,
+        new java.lang.String[] { });
     com.google.protobuf.ExtensionRegistry registry =
         com.google.protobuf.ExtensionRegistry.newInstance();
     registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1515,6 +1515,426 @@ public final class MysqlxResultset {
 
     @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxResultset.FetchDone getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface FetchSuspendedOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Mysqlx.Resultset.FetchSuspended)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * <pre>
+   * cursor is opened still the execution of PrepFetch or PrepExecute ended
+   * </pre>
+   *
+   * Protobuf type {@code Mysqlx.Resultset.FetchSuspended}
+   */
+  public  static final class FetchSuspended extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:Mysqlx.Resultset.FetchSuspended)
+      FetchSuspendedOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use FetchSuspended.newBuilder() to construct.
+    private FetchSuspended(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private FetchSuspended() {
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private FetchSuspended(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.mysql.cj.x.protobuf.MysqlxResultset.internal_static_Mysqlx_Resultset_FetchSuspended_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.mysql.cj.x.protobuf.MysqlxResultset.internal_static_Mysqlx_Resultset_FetchSuspended_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended.class, com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended)) {
+        return super.equals(obj);
+      }
+      com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended other = (com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended) obj;
+
+      boolean result = true;
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * <pre>
+     * cursor is opened still the execution of PrepFetch or PrepExecute ended
+     * </pre>
+     *
+     * Protobuf type {@code Mysqlx.Resultset.FetchSuspended}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Mysqlx.Resultset.FetchSuspended)
+        com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspendedOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.mysql.cj.x.protobuf.MysqlxResultset.internal_static_Mysqlx_Resultset_FetchSuspended_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.mysql.cj.x.protobuf.MysqlxResultset.internal_static_Mysqlx_Resultset_FetchSuspended_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended.class, com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended.Builder.class);
+      }
+
+      // Construct using com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.mysql.cj.x.protobuf.MysqlxResultset.internal_static_Mysqlx_Resultset_FetchSuspended_descriptor;
+      }
+
+      @java.lang.Override
+      public com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended getDefaultInstanceForType() {
+        return com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended build() {
+        com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended buildPartial() {
+        com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended result = new com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended) {
+          return mergeFrom((com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended other) {
+        if (other == com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:Mysqlx.Resultset.FetchSuspended)
+    }
+
+    // @@protoc_insertion_point(class_scope:Mysqlx.Resultset.FetchSuspended)
+    private static final com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended();
+    }
+
+    public static com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<FetchSuspended>
+        PARSER = new com.google.protobuf.AbstractParser<FetchSuspended>() {
+      @java.lang.Override
+      public FetchSuspended parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new FetchSuspended(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<FetchSuspended> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<FetchSuspended> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.mysql.cj.x.protobuf.MysqlxResultset.FetchSuspended getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -4299,6 +4719,11 @@ public final class MysqlxResultset {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_Mysqlx_Resultset_FetchDone_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Mysqlx_Resultset_FetchSuspended_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_Mysqlx_Resultset_FetchSuspended_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Mysqlx_Resultset_ColumnMetaData_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -4320,22 +4745,22 @@ public final class MysqlxResultset {
       "\n\026mysqlx_resultset.proto\022\020Mysqlx.Results" +
       "et\032\014mysqlx.proto\"\036\n\026FetchDoneMoreOutPara" +
       "ms:\004\220\3520\022\"\037\n\027FetchDoneMoreResultsets:\004\220\3520" +
-      "\020\"\021\n\tFetchDone:\004\220\3520\016\"\245\003\n\016ColumnMetaData\022" +
-      "8\n\004type\030\001 \002(\0162*.Mysqlx.Resultset.ColumnM" +
-      "etaData.FieldType\022\014\n\004name\030\002 \001(\014\022\025\n\rorigi" +
-      "nal_name\030\003 \001(\014\022\r\n\005table\030\004 \001(\014\022\026\n\016origina" +
-      "l_table\030\005 \001(\014\022\016\n\006schema\030\006 \001(\014\022\017\n\007catalog" +
-      "\030\007 \001(\014\022\021\n\tcollation\030\010 \001(\004\022\031\n\021fractional_" +
-      "digits\030\t \001(\r\022\016\n\006length\030\n \001(\r\022\r\n\005flags\030\013 " +
-      "\001(\r\022\024\n\014content_type\030\014 \001(\r\"\202\001\n\tFieldType\022" +
-      "\010\n\004SINT\020\001\022\010\n\004UINT\020\002\022\n\n\006DOUBLE\020\005\022\t\n\005FLOAT" +
-      "\020\006\022\t\n\005BYTES\020\007\022\010\n\004TIME\020\n\022\014\n\010DATETIME\020\014\022\007\n" +
-      "\003SET\020\017\022\010\n\004ENUM\020\020\022\007\n\003BIT\020\021\022\013\n\007DECIMAL\020\022:\004" +
-      "\220\3520\014\"\032\n\003Row\022\r\n\005field\030\001 \003(\014:\004\220\3520\r*4\n\021Cont" +
-      "entType_BYTES\022\014\n\010GEOMETRY\020\001\022\010\n\004JSON\020\002\022\007\n" +
-      "\003XML\020\003*.\n\024ContentType_DATETIME\022\010\n\004DATE\020\001" +
-      "\022\014\n\010DATETIME\020\002B\031\n\027com.mysql.cj.x.protobu" +
-      "f"
+      "\020\"\021\n\tFetchDone:\004\220\3520\016\"\026\n\016FetchSuspended:\004" +
+      "\220\3520\017\"\245\003\n\016ColumnMetaData\0228\n\004type\030\001 \002(\0162*." +
+      "Mysqlx.Resultset.ColumnMetaData.FieldTyp" +
+      "e\022\014\n\004name\030\002 \001(\014\022\025\n\roriginal_name\030\003 \001(\014\022\r" +
+      "\n\005table\030\004 \001(\014\022\026\n\016original_table\030\005 \001(\014\022\016\n" +
+      "\006schema\030\006 \001(\014\022\017\n\007catalog\030\007 \001(\014\022\021\n\tcollat" +
+      "ion\030\010 \001(\004\022\031\n\021fractional_digits\030\t \001(\r\022\016\n\006" +
+      "length\030\n \001(\r\022\r\n\005flags\030\013 \001(\r\022\024\n\014content_t" +
+      "ype\030\014 \001(\r\"\202\001\n\tFieldType\022\010\n\004SINT\020\001\022\010\n\004UIN" +
+      "T\020\002\022\n\n\006DOUBLE\020\005\022\t\n\005FLOAT\020\006\022\t\n\005BYTES\020\007\022\010\n" +
+      "\004TIME\020\n\022\014\n\010DATETIME\020\014\022\007\n\003SET\020\017\022\010\n\004ENUM\020\020" +
+      "\022\007\n\003BIT\020\021\022\013\n\007DECIMAL\020\022:\004\220\3520\014\"\032\n\003Row\022\r\n\005f" +
+      "ield\030\001 \003(\014:\004\220\3520\r*4\n\021ContentType_BYTES\022\014\n" +
+      "\010GEOMETRY\020\001\022\010\n\004JSON\020\002\022\007\n\003XML\020\003*.\n\024Conten" +
+      "tType_DATETIME\022\010\n\004DATE\020\001\022\014\n\010DATETIME\020\002B\031" +
+      "\n\027com.mysql.cj.x.protobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -4368,14 +4793,20 @@ public final class MysqlxResultset {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Mysqlx_Resultset_FetchDone_descriptor,
         new java.lang.String[] { });
-    internal_static_Mysqlx_Resultset_ColumnMetaData_descriptor =
+    internal_static_Mysqlx_Resultset_FetchSuspended_descriptor =
       getDescriptor().getMessageTypes().get(3);
+    internal_static_Mysqlx_Resultset_FetchSuspended_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_Mysqlx_Resultset_FetchSuspended_descriptor,
+        new java.lang.String[] { });
+    internal_static_Mysqlx_Resultset_ColumnMetaData_descriptor =
+      getDescriptor().getMessageTypes().get(4);
     internal_static_Mysqlx_Resultset_ColumnMetaData_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Mysqlx_Resultset_ColumnMetaData_descriptor,
         new java.lang.String[] { "Type", "Name", "OriginalName", "Table", "OriginalTable", "Schema", "Catalog", "Collation", "FractionalDigits", "Length", "Flags", "ContentType", });
     internal_static_Mysqlx_Resultset_Row_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_Mysqlx_Resultset_Row_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Mysqlx_Resultset_Row_descriptor,

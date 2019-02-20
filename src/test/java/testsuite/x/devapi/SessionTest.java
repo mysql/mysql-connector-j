@@ -982,13 +982,17 @@ public class SessionTest extends DevApiBaseTestCase {
                 ((SessionImpl) s1).getSession().getPropertySet().getStringProperty(PropertyKey.connectionAttributes).getValue());
 
         /*
-         * TODO: Add when xplugin is ready
-         * UT10/1: Get the max sessions allowed in the pool, create the same variables and temp tables in all the sessions. Then close all the sessions and get
-         * a new one: the variables and the temp tables must not exist.
+         * UT10/1: Get the max sessions allowed in the pool, create the same variables and temp tables in all the sessions,
+         * save ((SessionImpl) sN).getSession().getServerSession().getThreadId() values.
+         * Then close all the sessions and get a new one: the variables and the temp tables must not exist,
+         * ((SessionImpl) sN).getSession().getServerSession().getThreadId() must return values equal to saved ones.
          */
+
         cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true, \"maxSize\" : 2}}");
         s0 = cli0.getSession();
         s1 = cli0.getSession();
+        long id0 = ((SessionImpl) s0).getSession().getServerSession().getThreadId();
+        long id1 = ((SessionImpl) s1).getSession().getServerSession().getThreadId();
 
         s0.sql("SET @a='s0'").execute();
         s0.sql("CREATE TEMPORARY TABLE testpooledsessionstmps0(x int)").execute();
@@ -1015,6 +1019,9 @@ public class SessionTest extends DevApiBaseTestCase {
 
         Session s0_new = cli0.getSession();
         Session s1_new = cli0.getSession();
+
+        assertEquals(id0, ((SessionImpl) s0_new).getSession().getServerSession().getThreadId());
+        assertEquals(id1, ((SessionImpl) s1_new).getSession().getServerSession().getThreadId());
 
         res = s0_new.sql("SELECT @a as a").execute();
         assertTrue(res.hasNext());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1882,10 +1882,21 @@ public final class MysqlxSession {
   public interface ResetOrBuilder extends
       // @@protoc_insertion_point(interface_extends:Mysqlx.Session.Reset)
       com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>optional bool keep_open = 1 [default = false];</code>
+     */
+    boolean hasKeepOpen();
+    /**
+     * <code>optional bool keep_open = 1 [default = false];</code>
+     */
+    boolean getKeepOpen();
   }
   /**
    * <pre>
    * reset the current session
+   * param keep_open: if is true the session will be reset, but stays authenticated.
+   *       otherwise, the session will be closed and needs to be authenticated again.
    * :Returns: :protobuf:msg:`Mysqlx::Ok`
    * </pre>
    *
@@ -1901,6 +1912,7 @@ public final class MysqlxSession {
       super(builder);
     }
     private Reset() {
+      keepOpen_ = false;
     }
 
     @java.lang.Override
@@ -1916,6 +1928,7 @@ public final class MysqlxSession {
       if (extensionRegistry == null) {
         throw new java.lang.NullPointerException();
       }
+      int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
@@ -1926,6 +1939,11 @@ public final class MysqlxSession {
             case 0:
               done = true;
               break;
+            case 8: {
+              bitField0_ |= 0x00000001;
+              keepOpen_ = input.readBool();
+              break;
+            }
             default: {
               if (!parseUnknownField(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -1958,6 +1976,22 @@ public final class MysqlxSession {
               com.mysql.cj.x.protobuf.MysqlxSession.Reset.class, com.mysql.cj.x.protobuf.MysqlxSession.Reset.Builder.class);
     }
 
+    private int bitField0_;
+    public static final int KEEP_OPEN_FIELD_NUMBER = 1;
+    private boolean keepOpen_;
+    /**
+     * <code>optional bool keep_open = 1 [default = false];</code>
+     */
+    public boolean hasKeepOpen() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional bool keep_open = 1 [default = false];</code>
+     */
+    public boolean getKeepOpen() {
+      return keepOpen_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -1972,6 +2006,9 @@ public final class MysqlxSession {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBool(1, keepOpen_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -1981,6 +2018,10 @@ public final class MysqlxSession {
       if (size != -1) return size;
 
       size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, keepOpen_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -1997,6 +2038,11 @@ public final class MysqlxSession {
       com.mysql.cj.x.protobuf.MysqlxSession.Reset other = (com.mysql.cj.x.protobuf.MysqlxSession.Reset) obj;
 
       boolean result = true;
+      result = result && (hasKeepOpen() == other.hasKeepOpen());
+      if (hasKeepOpen()) {
+        result = result && (getKeepOpen()
+            == other.getKeepOpen());
+      }
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -2008,6 +2054,11 @@ public final class MysqlxSession {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasKeepOpen()) {
+        hash = (37 * hash) + KEEP_OPEN_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getKeepOpen());
+      }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -2106,6 +2157,8 @@ public final class MysqlxSession {
     /**
      * <pre>
      * reset the current session
+     * param keep_open: if is true the session will be reset, but stays authenticated.
+     *       otherwise, the session will be closed and needs to be authenticated again.
      * :Returns: :protobuf:msg:`Mysqlx::Ok`
      * </pre>
      *
@@ -2146,6 +2199,8 @@ public final class MysqlxSession {
       @java.lang.Override
       public Builder clear() {
         super.clear();
+        keepOpen_ = false;
+        bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
 
@@ -2172,6 +2227,13 @@ public final class MysqlxSession {
       @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxSession.Reset buildPartial() {
         com.mysql.cj.x.protobuf.MysqlxSession.Reset result = new com.mysql.cj.x.protobuf.MysqlxSession.Reset(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.keepOpen_ = keepOpen_;
+        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -2220,6 +2282,9 @@ public final class MysqlxSession {
 
       public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxSession.Reset other) {
         if (other == com.mysql.cj.x.protobuf.MysqlxSession.Reset.getDefaultInstance()) return this;
+        if (other.hasKeepOpen()) {
+          setKeepOpen(other.getKeepOpen());
+        }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
@@ -2246,6 +2311,39 @@ public final class MysqlxSession {
             mergeFrom(parsedMessage);
           }
         }
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean keepOpen_ ;
+      /**
+       * <code>optional bool keep_open = 1 [default = false];</code>
+       */
+      public boolean hasKeepOpen() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>optional bool keep_open = 1 [default = false];</code>
+       */
+      public boolean getKeepOpen() {
+        return keepOpen_;
+      }
+      /**
+       * <code>optional bool keep_open = 1 [default = false];</code>
+       */
+      public Builder setKeepOpen(boolean value) {
+        bitField0_ |= 0x00000001;
+        keepOpen_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool keep_open = 1 [default = false];</code>
+       */
+      public Builder clearKeepOpen() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        keepOpen_ = false;
+        onChanged();
         return this;
       }
       @java.lang.Override
@@ -2763,8 +2861,9 @@ public final class MysqlxSession {
       "al_response\030\003 \001(\014:\004\210\3520\004\"3\n\024AuthenticateC" +
       "ontinue\022\021\n\tauth_data\030\001 \002(\014:\010\220\3520\003\210\3520\005\")\n\016" +
       "AuthenticateOk\022\021\n\tauth_data\030\001 \001(\014:\004\220\3520\004\"" +
-      "\r\n\005Reset:\004\210\3520\006\"\r\n\005Close:\004\210\3520\007B\031\n\027com.mys" +
-      "ql.cj.x.protobuf"
+      "\'\n\005Reset\022\030\n\tkeep_open\030\001 \001(\010:\005false:\004\210\3520\006" +
+      "\"\r\n\005Close:\004\210\3520\007B\031\n\027com.mysql.cj.x.protob" +
+      "uf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -2802,7 +2901,7 @@ public final class MysqlxSession {
     internal_static_Mysqlx_Session_Reset_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Mysqlx_Session_Reset_descriptor,
-        new java.lang.String[] { });
+        new java.lang.String[] { "KeepOpen", });
     internal_static_Mysqlx_Session_Close_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_Mysqlx_Session_Close_fieldAccessorTable = new

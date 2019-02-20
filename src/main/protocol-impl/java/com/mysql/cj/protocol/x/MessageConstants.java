@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,6 +52,7 @@ import com.mysql.cj.x.protobuf.MysqlxCrud.Find;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Insert;
 import com.mysql.cj.x.protobuf.MysqlxCrud.ModifyView;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Update;
+import com.mysql.cj.x.protobuf.MysqlxExpect.Open;
 import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
 import com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged;
 import com.mysql.cj.x.protobuf.MysqlxNotice.SessionVariableChanged;
@@ -153,6 +154,7 @@ public class MessageConstants {
         messageClassToClientMessageType.put(CreateView.class, ClientMessages.Type.CRUD_CREATE_VIEW_VALUE);
         messageClassToClientMessageType.put(ModifyView.class, ClientMessages.Type.CRUD_MODIFY_VIEW_VALUE);
         messageClassToClientMessageType.put(DropView.class, ClientMessages.Type.CRUD_DROP_VIEW_VALUE);
+        messageClassToClientMessageType.put(Open.class, ClientMessages.Type.EXPECT_OPEN_VALUE);
         MESSAGE_CLASS_TO_CLIENT_MESSAGE_TYPE = Collections.unmodifiableMap(messageClassToClientMessageType);
     }
 

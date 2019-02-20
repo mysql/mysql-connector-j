@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -201,6 +201,30 @@ public final class Mysqlx {
        * <code>CRUD_DROP_VIEW = 32;</code>
        */
       CRUD_DROP_VIEW(32),
+      /**
+       * <code>PREPARE_PREPARE = 40;</code>
+       */
+      PREPARE_PREPARE(40),
+      /**
+       * <code>PREPARE_EXECUTE = 41;</code>
+       */
+      PREPARE_EXECUTE(41),
+      /**
+       * <code>PREPARE_DEALLOCATE = 42;</code>
+       */
+      PREPARE_DEALLOCATE(42),
+      /**
+       * <code>CURSOR_OPEN = 43;</code>
+       */
+      CURSOR_OPEN(43),
+      /**
+       * <code>CURSOR_CLOSE = 44;</code>
+       */
+      CURSOR_CLOSE(44),
+      /**
+       * <code>CURSOR_FETCH = 45;</code>
+       */
+      CURSOR_FETCH(45),
       ;
 
       /**
@@ -271,6 +295,30 @@ public final class Mysqlx {
        * <code>CRUD_DROP_VIEW = 32;</code>
        */
       public static final int CRUD_DROP_VIEW_VALUE = 32;
+      /**
+       * <code>PREPARE_PREPARE = 40;</code>
+       */
+      public static final int PREPARE_PREPARE_VALUE = 40;
+      /**
+       * <code>PREPARE_EXECUTE = 41;</code>
+       */
+      public static final int PREPARE_EXECUTE_VALUE = 41;
+      /**
+       * <code>PREPARE_DEALLOCATE = 42;</code>
+       */
+      public static final int PREPARE_DEALLOCATE_VALUE = 42;
+      /**
+       * <code>CURSOR_OPEN = 43;</code>
+       */
+      public static final int CURSOR_OPEN_VALUE = 43;
+      /**
+       * <code>CURSOR_CLOSE = 44;</code>
+       */
+      public static final int CURSOR_CLOSE_VALUE = 44;
+      /**
+       * <code>CURSOR_FETCH = 45;</code>
+       */
+      public static final int CURSOR_FETCH_VALUE = 45;
 
 
       public final int getNumber() {
@@ -304,6 +352,12 @@ public final class Mysqlx {
           case 30: return CRUD_CREATE_VIEW;
           case 31: return CRUD_MODIFY_VIEW;
           case 32: return CRUD_DROP_VIEW;
+          case 40: return PREPARE_PREPARE;
+          case 41: return PREPARE_EXECUTE;
+          case 42: return PREPARE_DEALLOCATE;
+          case 43: return CURSOR_OPEN;
+          case 44: return CURSOR_CLOSE;
+          case 45: return CURSOR_FETCH;
           default: return null;
         }
       }
@@ -3039,7 +3093,7 @@ public final class Mysqlx {
   static {
     java.lang.String[] descriptorData = {
       "\n\014mysqlx.proto\022\006Mysqlx\032 google/protobuf/" +
-      "descriptor.proto\"\364\002\n\016ClientMessages\"\341\002\n\004" +
+      "descriptor.proto\"\353\003\n\016ClientMessages\"\330\003\n\004" +
       "Type\022\030\n\024CON_CAPABILITIES_GET\020\001\022\030\n\024CON_CA" +
       "PABILITIES_SET\020\002\022\r\n\tCON_CLOSE\020\003\022\033\n\027SESS_" +
       "AUTHENTICATE_START\020\004\022\036\n\032SESS_AUTHENTICAT" +
@@ -3048,26 +3102,29 @@ public final class Mysqlx {
       "\021\022\017\n\013CRUD_INSERT\020\022\022\017\n\013CRUD_UPDATE\020\023\022\017\n\013C" +
       "RUD_DELETE\020\024\022\017\n\013EXPECT_OPEN\020\030\022\020\n\014EXPECT_" +
       "CLOSE\020\031\022\024\n\020CRUD_CREATE_VIEW\020\036\022\024\n\020CRUD_MO" +
-      "DIFY_VIEW\020\037\022\022\n\016CRUD_DROP_VIEW\020 \"\342\002\n\016Serv" +
-      "erMessages\"\317\002\n\004Type\022\006\n\002OK\020\000\022\t\n\005ERROR\020\001\022\025" +
-      "\n\021CONN_CAPABILITIES\020\002\022\036\n\032SESS_AUTHENTICA" +
-      "TE_CONTINUE\020\003\022\030\n\024SESS_AUTHENTICATE_OK\020\004\022" +
-      "\n\n\006NOTICE\020\013\022\036\n\032RESULTSET_COLUMN_META_DAT" +
-      "A\020\014\022\021\n\rRESULTSET_ROW\020\r\022\030\n\024RESULTSET_FETC" +
-      "H_DONE\020\016\022\035\n\031RESULTSET_FETCH_SUSPENDED\020\017\022" +
-      "(\n$RESULTSET_FETCH_DONE_MORE_RESULTSETS\020" +
-      "\020\022\027\n\023SQL_STMT_EXECUTE_OK\020\021\022(\n$RESULTSET_" +
-      "FETCH_DONE_MORE_OUT_PARAMS\020\022\"\027\n\002Ok\022\013\n\003ms" +
-      "g\030\001 \001(\t:\004\220\3520\000\"\216\001\n\005Error\022/\n\010severity\030\001 \001(" +
-      "\0162\026.Mysqlx.Error.Severity:\005ERROR\022\014\n\004code" +
-      "\030\002 \002(\r\022\021\n\tsql_state\030\004 \002(\t\022\013\n\003msg\030\003 \002(\t\" " +
-      "\n\010Severity\022\t\n\005ERROR\020\000\022\t\n\005FATAL\020\001:\004\220\3520\001:Y" +
-      "\n\021client_message_id\022\037.google.protobuf.Me" +
-      "ssageOptions\030\241\215\006 \001(\0162\033.Mysqlx.ClientMess" +
-      "ages.Type:Y\n\021server_message_id\022\037.google." +
-      "protobuf.MessageOptions\030\242\215\006 \001(\0162\033.Mysqlx" +
-      ".ServerMessages.TypeB\031\n\027com.mysql.cj.x.p" +
-      "rotobuf"
+      "DIFY_VIEW\020\037\022\022\n\016CRUD_DROP_VIEW\020 \022\023\n\017PREPA" +
+      "RE_PREPARE\020(\022\023\n\017PREPARE_EXECUTE\020)\022\026\n\022PRE" +
+      "PARE_DEALLOCATE\020*\022\017\n\013CURSOR_OPEN\020+\022\020\n\014CU" +
+      "RSOR_CLOSE\020,\022\020\n\014CURSOR_FETCH\020-\"\342\002\n\016Serve" +
+      "rMessages\"\317\002\n\004Type\022\006\n\002OK\020\000\022\t\n\005ERROR\020\001\022\025\n" +
+      "\021CONN_CAPABILITIES\020\002\022\036\n\032SESS_AUTHENTICAT" +
+      "E_CONTINUE\020\003\022\030\n\024SESS_AUTHENTICATE_OK\020\004\022\n" +
+      "\n\006NOTICE\020\013\022\036\n\032RESULTSET_COLUMN_META_DATA" +
+      "\020\014\022\021\n\rRESULTSET_ROW\020\r\022\030\n\024RESULTSET_FETCH" +
+      "_DONE\020\016\022\035\n\031RESULTSET_FETCH_SUSPENDED\020\017\022(" +
+      "\n$RESULTSET_FETCH_DONE_MORE_RESULTSETS\020\020" +
+      "\022\027\n\023SQL_STMT_EXECUTE_OK\020\021\022(\n$RESULTSET_F" +
+      "ETCH_DONE_MORE_OUT_PARAMS\020\022\"\027\n\002Ok\022\013\n\003msg" +
+      "\030\001 \001(\t:\004\220\3520\000\"\216\001\n\005Error\022/\n\010severity\030\001 \001(\016" +
+      "2\026.Mysqlx.Error.Severity:\005ERROR\022\014\n\004code\030" +
+      "\002 \002(\r\022\021\n\tsql_state\030\004 \002(\t\022\013\n\003msg\030\003 \002(\t\" \n" +
+      "\010Severity\022\t\n\005ERROR\020\000\022\t\n\005FATAL\020\001:\004\220\3520\001:Y\n" +
+      "\021client_message_id\022\037.google.protobuf.Mes" +
+      "sageOptions\030\241\215\006 \001(\0162\033.Mysqlx.ClientMessa" +
+      "ges.Type:Y\n\021server_message_id\022\037.google.p" +
+      "rotobuf.MessageOptions\030\242\215\006 \001(\0162\033.Mysqlx." +
+      "ServerMessages.TypeB\031\n\027com.mysql.cj.x.pr" +
+      "otobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
