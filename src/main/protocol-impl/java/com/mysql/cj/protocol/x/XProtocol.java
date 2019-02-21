@@ -200,22 +200,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         // the message reader is async and is always "reading". we need to stop it to use the socket for the TLS handshake
         this.reader.stopAfterNextMessage();
 
-        this.clientCapabilities.put(XServerCapabilities.KEY_TLS, true);
-
-        try {
-            sendCapabilities(this.clientCapabilities);
-        } catch (XProtocolError e) {
-            // XProtocolError: ERROR 5002 (HY000) Capability 'session_connect_attrs' doesn't exist
-            // happens when connecting to xplugin which doesn't support this feature.
-            // Just ignore this error and retry with reduced clientCapabilities
-            if (e.getErrorCode() != 5002 && !e.getMessage().contains(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS)) {
-                throw e;
-            }
-            this.clientCapabilities.remove(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS);
-            this.reader.start();
-            this.reader.stopAfterNextMessage();
-            sendCapabilities(this.clientCapabilities);
-        }
+        Map<String, Object> tlsCapabilities = new HashMap<>();
+        tlsCapabilities.put(XServerCapabilities.KEY_TLS, true);
+        sendCapabilities(tlsCapabilities);
 
         try {
             this.socketConnection.performTlsHandshake(null); //(this.serverSession);
@@ -304,9 +291,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             throw new CJCommunicationsException(msg.toString());
         }
 
-        if (xdevapiSslMode.getValue() != XdevapiSslMode.DISABLED) {
-            negotiateSSLConnection(0);
-        } else if (this.clientCapabilities.size() > 0) {
+        if (this.clientCapabilities.size() > 0) {
             try {
                 sendCapabilities(this.clientCapabilities);
             } catch (XProtocolError e) {
@@ -317,6 +302,10 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
                 }
                 this.clientCapabilities.remove(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS);
             }
+        }
+
+        if (xdevapiSslMode.getValue() != XdevapiSslMode.DISABLED) {
+            negotiateSSLConnection(0);
         }
     }
 
@@ -710,7 +699,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
                 Map<String, Object> reducedClientCapabilities = new HashMap<>();
                 reducedClientCapabilities.put(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS,
                         this.clientCapabilities.get(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS));
-                sendCapabilities(reducedClientCapabilities);
+                if (reducedClientCapabilities.size() > 0) {
+                    sendCapabilities(reducedClientCapabilities);
+                }
             }
 
             this.authProvider.changeUser(null, this.currUser, this.currPassword, this.currDatabase);
