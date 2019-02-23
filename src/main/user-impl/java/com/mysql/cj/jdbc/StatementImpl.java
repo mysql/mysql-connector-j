@@ -1998,15 +1998,17 @@ public class StatementImpl implements JdbcStatement {
         }
     }
 
-    private boolean isPoolable = true;
+    private boolean isPoolable = false;
 
     @Override
     public boolean isPoolable() throws SQLException {
+        checkClosed();
         return this.isPoolable;
     }
 
     @Override
     public void setPoolable(boolean poolable) throws SQLException {
+        checkClosed();
         this.isPoolable = poolable;
     }
 

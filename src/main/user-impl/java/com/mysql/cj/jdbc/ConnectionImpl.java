@@ -1056,9 +1056,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                             ServerPreparedStatement ps = eldest.getValue();
                             ps.isCached = false;
                             ps.setClosed(false);
-
                             try {
-                                ps.close();
+                                ps.realClose(true, true);
                             } catch (SQLException sqlEx) {
                                 // punt
                             }
@@ -1616,7 +1615,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                                 pStmt = ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database, resultSetType,
                                         resultSetConcurrency);
                                 if (sql.length() < this.prepStmtCacheSqlLimit.getValue()) {
-                                    ((com.mysql.cj.jdbc.ServerPreparedStatement) pStmt).isCached = true;
+                                    ((com.mysql.cj.jdbc.ServerPreparedStatement) pStmt).isCacheable = true;
                                 }
 
                                 pStmt.setResultSetType(resultSetType);
@@ -1778,7 +1777,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public void decachePreparedStatement(JdbcPreparedStatement pstmt) throws SQLException {
         synchronized (getConnectionMutex()) {
-            if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
+            if (this.cachePrepStmts.getValue()) {
                 synchronized (this.serverSideStatementCache) {
                     this.serverSideStatementCache
                             .remove(new CompoundCacheKey(pstmt.getCurrentDatabase(), ((PreparedQuery<?>) pstmt.getQuery()).getOriginalSql()));

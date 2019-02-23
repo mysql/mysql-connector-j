@@ -78,6 +78,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
     /** If this statement has been marked invalid, what was the reason? */
     private CJException invalidationException;
 
+    protected boolean isCacheable = false;
     protected boolean isCached = false;
 
     /**
@@ -139,7 +140,6 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
         setResultSetType(resultSetType);
         setResultSetConcurrency(resultSetConcurrency);
-
     }
 
     @Override
@@ -267,13 +267,17 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
         }
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
+            if (this.isClosed) {
+                return; // already closed
+            }
 
-            if (this.isCached && isPoolable() && !this.isClosed) {
+            if (this.isCacheable && isPoolable()) {
                 clearParameters();
 
                 this.isClosed = true;
 
                 this.connection.recachePreparedStatement(this);
+                this.isCached = true;
                 return;
             }
 
@@ -525,7 +529,6 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                 if (calledExplicitly && !this.connection.isClosed()) {
                     synchronized (this.connection.getConnectionMutex()) {
                         try {
-
                             this.session.sendCommand(this.commandBuilder.buildComStmtClose(null, ((ServerPreparedQuery) this.query).getServerStatementId()),
                                     true, 0);
                         } catch (CJException sqlEx) {
@@ -816,10 +819,16 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     @Override
     public void setPoolable(boolean poolable) throws SQLException {
-        if (!poolable) {
-            this.connection.decachePreparedStatement(this);
-        }
         super.setPoolable(poolable);
-    }
 
+        if (!poolable && this.isCached) {
+            this.connection.decachePreparedStatement(this);
+            this.isCached = false;
+
+            if (this.isClosed) {
+                this.isClosed = false;
+                realClose(true, true);
+            }
+        }
+    }
 }

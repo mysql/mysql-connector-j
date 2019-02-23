@@ -3,6 +3,8 @@
 
 Version 8.0.17
 
+  - WL#11101, Remove de-cache and close of SSPSs on double call to close().
+
   - Fix for Bug#89133 (27356869)  CONTRIBUTION: UPDATE DATABASEMETADATA.JAVA.
     Thanks to Harald Aamot for his contribution.
 

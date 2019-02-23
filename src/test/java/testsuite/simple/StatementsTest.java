@@ -35,6 +35,7 @@ import java.io.CharArrayReader;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.BatchUpdateException;
 import java.sql.CallableStatement;
@@ -60,6 +61,8 @@ import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.MysqlConnection;
@@ -67,10 +70,14 @@ import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
+import com.mysql.cj.jdbc.ConnectionImpl;
+import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.ParameterBindings;
+import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor;
+import com.mysql.cj.util.LRUCache;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TimeUtil;
 
@@ -3704,5 +3711,291 @@ public class StatementsTest extends BaseTestCase {
                 return null;
             }
         });
+    }
+
+    /**
+     * WL#11101 - Remove de-cache and close of SSPSs on double call to close()
+     */
+    public void testServerPreparedStatementsCaching() throws Exception {
+        // Non prepared statements must be non-poolable by default.
+        assertFalse(this.stmt.isPoolable());
+
+        Field stmtsCacheField = ConnectionImpl.class.getDeclaredField("serverSideStatementCache");
+        stmtsCacheField.setAccessible(true);
+        ToIntFunction<Connection> getStmtsCacheSize = (c) -> {
+            try {
+                LRUCache<?, ?> stmtsCacheObj = (LRUCache<?, ?>) stmtsCacheField.get(c);
+                return stmtsCacheObj == null ? -1 : stmtsCacheObj.size();
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                fail("Fail getting the statemets cache size.");
+                return -1;
+            }
+        };
+        Function<Connection, ServerPreparedStatement> getStmtsCacheSingleElem = (c) -> {
+            try {
+                @SuppressWarnings("unchecked")
+                LRUCache<?, ServerPreparedStatement> stmtsCacheObj = (LRUCache<?, ServerPreparedStatement>) stmtsCacheField.get(c);
+                return stmtsCacheObj.get(stmtsCacheObj.keySet().iterator().next());
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                fail("Fail getting the statemets cache element.");
+                return null;
+            }
+        };
+
+        final String sql1 = "SELECT 1, ?";
+        final String sql2 = "SELECT 2, ?";
+
+        boolean useSPS = false;
+        boolean cachePS = false;
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), Boolean.toString(cachePS));
+            props.setProperty(PropertyKey.prepStmtCacheSize.getKeyName(), "5");
+
+            boolean cachedSPS = useSPS && cachePS;
+
+            /*
+             * Cache the prepared statement and de-cache it later.
+             * (*) if server prepared statement and caching is enabled.
+             */
+            {
+                JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(props);
+                PreparedStatement testPstmt = testConn.prepareStatement(sql1);
+                assertEquals(1, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                assertTrue(testPstmt.isPoolable());
+
+                testPstmt.close(); // Caches this PS (*).
+                assertEquals(cachedSPS ? 1 : 0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 1 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                testPstmt.close(); // No-op.
+                assertEquals(cachedSPS ? 1 : 0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 1 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                if (cachedSPS) {
+                    assertTrue(testPstmt.isPoolable());
+
+                    testPstmt.setPoolable(false); // De-caches this PS; it gets automatically closed (*).
+                    assertEquals(0, testConn.getActiveStatementCount());
+                    assertEquals(0, getStmtsCacheSize.applyAsInt(testConn));
+                }
+
+                testPstmt.close(); // No-op.
+                assertEquals(0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                assertThrows(SQLException.class, "No operations allowed after statement closed\\.", () -> {
+                    testPstmt.setPoolable(false);
+                    return null;
+                });
+                assertThrows(SQLException.class, "No operations allowed after statement closed\\.", () -> {
+                    testPstmt.isPoolable();
+                    return null;
+                });
+
+                testConn.close();
+                assertEquals(0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+            }
+
+            /*
+             * Set not to cache the prepared statement.
+             * (*) if server prepared statement and caching is enabled.
+             */
+            {
+                JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(props);
+                PreparedStatement testPstmt = testConn.prepareStatement(sql1);
+                assertEquals(1, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                assertTrue(testPstmt.isPoolable());
+                testPstmt.setPoolable(false); // Don't cache this PS (*).
+                assertFalse(testPstmt.isPoolable());
+
+                testPstmt.close(); // Doesn't cache this PS (*).
+                assertEquals(0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                testPstmt.close(); // No-op.
+                assertEquals(0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                assertThrows(SQLException.class, "No operations allowed after statement closed\\.", () -> {
+                    testPstmt.setPoolable(true);
+                    return null;
+                });
+                assertThrows(SQLException.class, "No operations allowed after statement closed\\.", () -> {
+                    testPstmt.isPoolable();
+                    return null;
+                });
+
+                testConn.close();
+                assertEquals(0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+            }
+
+            /*
+             * Set not to cache the prepared statement but change mind before closing it.
+             * Reuse the cached prepared statement and don't re-cache it.
+             * (*) if server prepared statement and caching is enabled.
+             */
+            {
+                JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(props);
+                PreparedStatement testPstmt = testConn.prepareStatement(sql1);
+                assertEquals(1, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                testPstmt.setPoolable(false); // Don't cache this PS (*).
+                assertFalse(testPstmt.isPoolable());
+                testPstmt.setPoolable(true);
+                assertTrue(testPstmt.isPoolable()); // Changed my mind, let it be cached (*).
+
+                testPstmt.close(); // Caches this PS (*).
+                assertEquals(cachedSPS ? 1 : 0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 1 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                testPstmt.close(); // No-op.
+                assertEquals(cachedSPS ? 1 : 0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 1 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                PreparedStatement testPstmtOld = testPstmt;
+                testPstmt = testConn.prepareStatement(sql1); // Takes the cached statement (*), or creates a fresh one.
+                if (cachedSPS) {
+                    assertSame(testPstmtOld, testPstmt);
+                } else {
+                    assertNotSame(testPstmtOld, testPstmt);
+                }
+                assertEquals(1, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                assertTrue(testPstmt.isPoolable());
+                testPstmt.setPoolable(false); // Don't cache this PS (*).
+                assertFalse(testPstmt.isPoolable());
+
+                testPstmt.close(); // Doesn't cache this PS (*).
+                assertEquals(0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                testPstmtOld = testPstmt;
+                testPstmt = testConn.prepareStatement(sql1); // Creates a fresh prepared statement.
+                assertNotSame(testPstmtOld, testPstmt);
+                assertEquals(1, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                assertTrue(testPstmt.isPoolable());
+
+                testConn.close();
+                assertEquals(0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+            }
+
+            /*
+             * Caching of multiple copies of same prepared statement.
+             * (*) if server prepared statement and caching is enabled.
+             */
+            {
+                int psCount = 5;
+                JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(props);
+                PreparedStatement[] testPstmts = new PreparedStatement[psCount];
+                for (int i = 0; i < psCount; i++) {
+                    testPstmts[i] = testConn.prepareStatement(sql1);
+                }
+                assertEquals(5, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                for (int i = 0; i < psCount; i++) {
+                    assertTrue(testPstmts[i].isPoolable());
+                    testPstmts[i].close(); // Caches this PS and replaces existing if same (*).
+                    assertEquals(cachedSPS ? psCount - i : psCount - i - 1, testConn.getActiveStatementCount());
+                    assertEquals(cachedSPS ? 1 : -1, getStmtsCacheSize.applyAsInt(testConn));
+                    if (cachedSPS) {
+                        assertSame(testPstmts[i], getStmtsCacheSingleElem.apply(testConn));
+                    }
+                }
+
+                PreparedStatement testPstmt = testConn.prepareStatement(sql1);
+                assertEquals(1, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+                for (int i = 0; i < psCount; i++) {
+                    if (cachedSPS && i == psCount - 1) {
+                        assertSame(testPstmts[i], testPstmt);
+                    } else {
+                        assertNotSame(testPstmts[i], testPstmt);
+                    }
+                }
+
+                testPstmt.setPoolable(false); // Don't cache this PS (*).
+                testPstmt.close(); // Doesn't cache this PS (*).
+                assertEquals(0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                testConn.close();
+                assertEquals(0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+            }
+
+            /*
+             * Combine caching different prepared statements.
+             * (*) if server prepared statement and caching is enabled.
+             */
+            {
+                int psCount = 5;
+                JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(props);
+                PreparedStatement[] testPstmts1 = new PreparedStatement[psCount];
+                for (int i = 0; i < psCount; i++) {
+                    testPstmts1[i] = testConn.prepareStatement(sql1);
+                }
+                PreparedStatement testPstmt = testConn.prepareStatement(sql2);
+                assertEquals(6, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                assertTrue(testPstmt.isPoolable());
+                testPstmt.close(); // Caches this PS (*).
+                assertEquals(cachedSPS ? 1 : -1, getStmtsCacheSize.applyAsInt(testConn));
+                for (int i = 0; i < psCount; i++) {
+                    assertTrue(testPstmts1[i].isPoolable());
+                    testPstmts1[i].close(); // Caches this PS and replaces existing if same (*).
+                    assertEquals(cachedSPS ? psCount - i + 1 : psCount - i - 1, testConn.getActiveStatementCount());
+                    assertEquals(cachedSPS ? 2 : -1, getStmtsCacheSize.applyAsInt(testConn));
+                }
+
+                PreparedStatement testPstmt1 = testConn.prepareStatement(sql1);
+                assertEquals(cachedSPS ? 2 : 1, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 1 : -1, getStmtsCacheSize.applyAsInt(testConn));
+                for (int i = 0; i < psCount; i++) {
+                    if (cachedSPS && i == psCount - 1) {
+                        assertSame(testPstmts1[i], testPstmt1);
+                    } else {
+                        assertNotSame(testPstmts1[i], testPstmt1);
+                    }
+                }
+
+                PreparedStatement testPstmt2 = testConn.prepareStatement(sql2);
+                assertEquals(2, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+                if (cachedSPS) {
+                    assertSame(testPstmt, testPstmt2);
+                } else {
+                    assertNotSame(testPstmt, testPstmt2);
+                }
+
+                testPstmt1.setPoolable(false); // Don't cache this PS (*).
+                testPstmt1.close(); // Doesn't cache this PS (*).
+                assertEquals(1, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                testPstmt2.setPoolable(false); // Don't cache this PS (*).
+                testPstmt2.close(); // Doesn't cache this PS (*).
+                assertEquals(0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+
+                testConn.close();
+                assertEquals(0, testConn.getActiveStatementCount());
+                assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
+            }
+        } while ((useSPS = !useSPS) || (cachePS = !cachePS));
     }
 }

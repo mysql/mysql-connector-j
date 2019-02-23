@@ -172,6 +172,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     protected ClientPreparedStatement(JdbcConnection conn, String db) throws SQLException {
         super(conn, db);
 
+        setPoolable(true);
         this.compensateForOnDuplicateKeyUpdate = this.session.getPropertySet().getBooleanProperty(PropertyKey.compensateOnDuplicateKeyUpdateCounts).getValue();
     }
 
@@ -221,7 +222,6 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         this.doPingInstead = sql.startsWith(PING_MARKER);
 
         initializeFromParseInfo();
-
     }
 
     @Override
