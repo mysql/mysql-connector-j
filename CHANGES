@@ -3,6 +3,8 @@
 
 Version 8.0.16
 
+  - Fix for Bug#29329326, PLEASE AVOID SHOW PROCESSLIST IF POSSIBLE.
+
   - WL#12460, DevAPI: Support new session reset functionality.
 
   - WL#12459, DevAPI: Support connection-attributes.

@@ -11322,4 +11322,45 @@ public class ConnectionRegressionTest extends BaseTestCase {
         conn2.close();
 
     }
+
+    /**
+     * Tests fix for Bug#29329326, PLEASE AVOID SHOW PROCESSLIST IF POSSIBLE.
+     * 
+     * @throws Exception
+     */
+    public void testBug29329326() throws Exception {
+        Properties p = new Properties();
+        p.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug29329326QueryInterceptor.class.getName());
+
+        JdbcConnection c = (JdbcConnection) getConnectionWithProps(p);
+        Bug29329326QueryInterceptor qi = (Bug29329326QueryInterceptor) c.getQueryInterceptorsInstances().get(0);
+        assertTrue("SHOW PROCESSLIST was issued during connection establishing", qi.cnt == 0);
+
+        ((com.mysql.cj.jdbc.ConnectionImpl) c).isServerLocal();
+
+        String ps = ((MysqlConnection) c).getSession().getServerSession().getServerVariable("performance_schema");
+        if (versionMeetsMinimum(5, 6, 0) // performance_schema.threads in MySQL 5.5 does not contain PROCESSLIST_HOST column
+                && ps != null && ("1".contentEquals(ps) || "ON".contentEquals(ps))) {
+            assertTrue("SHOW PROCESSLIST was issued by isServerLocal()", qi.cnt == 0);
+        } else {
+            assertTrue("SHOW PROCESSLIST wasn't issued by isServerLocal()", qi.cnt > 0);
+        }
+    }
+
+    /**
+     * Counts the number of issued "SHOW PROCESSLIST" statements.
+     */
+    public static class Bug29329326QueryInterceptor extends BaseQueryInterceptor {
+        int cnt = 0;
+
+        @Override
+        public <M extends Message> M preProcess(M queryPacket) {
+            String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
+            if (sql.contains("SHOW PROCESSLIST")) {
+                this.cnt++;
+            }
+            return null;
+        }
+    }
+
 }

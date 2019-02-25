@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -51,38 +51,36 @@ public interface SocketMetadata {
             int endIndex = processHost.lastIndexOf(":");
             if (endIndex != -1) {
                 processHost = processHost.substring(0, endIndex);
+            }
 
-                try {
+            try {
 
-                    InetAddress[] whereMysqlThinksIConnectedFrom = InetAddress.getAllByName(processHost);
+                InetAddress[] whereMysqlThinksIConnectedFrom = InetAddress.getAllByName(processHost);
 
-                    SocketAddress remoteSocketAddr = sess.getRemoteSocketAddress();
+                SocketAddress remoteSocketAddr = sess.getRemoteSocketAddress();
 
-                    if (remoteSocketAddr instanceof InetSocketAddress) {
-                        InetAddress whereIConnectedTo = ((InetSocketAddress) remoteSocketAddr).getAddress();
+                if (remoteSocketAddr instanceof InetSocketAddress) {
+                    InetAddress whereIConnectedTo = ((InetSocketAddress) remoteSocketAddr).getAddress();
 
-                        for (InetAddress hostAddr : whereMysqlThinksIConnectedFrom) {
-                            if (hostAddr.equals(whereIConnectedTo)) {
-                                sess.getLog().logDebug(Messages.getString("SocketMetadata.1", new Object[] { hostAddr, whereIConnectedTo }));
-                                return true;
-                            }
-                            sess.getLog().logDebug(Messages.getString("SocketMetadata.2", new Object[] { hostAddr, whereIConnectedTo }));
+                    for (InetAddress hostAddr : whereMysqlThinksIConnectedFrom) {
+                        if (hostAddr.equals(whereIConnectedTo)) {
+                            sess.getLog().logDebug(Messages.getString("SocketMetadata.1", new Object[] { hostAddr, whereIConnectedTo }));
+                            return true;
                         }
-
-                    } else {
-                        sess.getLog().logDebug(Messages.getString("SocketMetadata.3", new Object[] { remoteSocketAddr }));
+                        sess.getLog().logDebug(Messages.getString("SocketMetadata.2", new Object[] { hostAddr, whereIConnectedTo }));
                     }
 
-                    return false;
-                } catch (UnknownHostException e) {
-                    sess.getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { processHost }), e);
-
-                    return false;
+                } else {
+                    sess.getLog().logDebug(Messages.getString("SocketMetadata.3", new Object[] { remoteSocketAddr }));
                 }
 
+                return false;
+            } catch (UnknownHostException e) {
+                sess.getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { processHost }), e);
+
+                return false;
             }
-            sess.getLog().logWarn(Messages.getString("SocketMetadata.4", new Object[] { processHost }));
-            return false;
+
         }
 
         return false;

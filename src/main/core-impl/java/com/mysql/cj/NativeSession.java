@@ -530,8 +530,9 @@ public class NativeSession extends CoreSession implements Serializable {
 
                     this.characterEncoding.setValue(realJavaEncoding);
                 } /* not utf-8 */else {
-                    String mysqlCharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset : CharsetMapping
-                            .getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH), getServerSession().getServerVersion());
+                    String mysqlCharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset
+                            : CharsetMapping.getMysqlCharsetForJavaEncoding(realJavaEncoding.toUpperCase(Locale.ENGLISH),
+                                    getServerSession().getServerVersion());
 
                     if (mysqlCharsetName != null) {
 
@@ -815,6 +816,7 @@ public class NativeSession extends CoreSession implements Serializable {
                 queryBuf.append(", @@lower_case_table_names AS lower_case_table_names");
                 queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
                 queryBuf.append(", @@net_write_timeout AS net_write_timeout");
+                queryBuf.append(", @@performance_schema AS performance_schema");
                 if (!versionMeetsMinimum(8, 0, 3)) {
                     queryBuf.append(", @@query_cache_size AS query_cache_size");
                     queryBuf.append(", @@query_cache_type AS query_cache_type");
@@ -1045,7 +1047,16 @@ public class NativeSession extends CoreSession implements Serializable {
         try {
             String processHost = null;
 
-            NativePacketPayload resultPacket = sendCommand(this.commandBuilder.buildComQuery(null, "SHOW PROCESSLIST"), false, 0);
+            String ps = this.protocol.getServerSession().getServerVariable("performance_schema");
+
+            NativePacketPayload resultPacket = versionMeetsMinimum(5, 6, 0) // performance_schema.threads in MySQL 5.5 does not contain PROCESSLIST_HOST column
+                    && ps != null && ("1".contentEquals(ps) || "ON".contentEquals(ps))
+                            ? sendCommand(this.commandBuilder.buildComQuery(null,
+                                    "select PROCESSLIST_ID, PROCESSLIST_USER, PROCESSLIST_HOST from performance_schema.threads where PROCESSLIST_ID="
+                                            + threadId),
+                                    false, 0)
+                            : sendCommand(this.commandBuilder.buildComQuery(null, "SHOW PROCESSLIST"), false, 0);
+
             Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
             ValueFactory<Long> lvf = new LongValueFactory(getPropertySet());
