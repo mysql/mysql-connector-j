@@ -2882,14 +2882,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     private void testTimestamp(Connection con, Statement st, String dbname) throws SQLException {
-        boolean explicitDefaultsForTimestamp = false;
-        if (versionMeetsMinimum(8, 0, 2)) {
-            String v = getMysqlVariable("explicit_defaults_for_timestamp");
-            if ("ON".equals(v)) {
-                explicitDefaultsForTimestamp = true;
-            }
-        }
-
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
         DatabaseMetaData dmd = con.getMetaData();
@@ -2913,7 +2905,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        if (explicitDefaultsForTimestamp) {
+        if ("ON".equals(getMysqlVariable("explicit_defaults_for_timestamp"))) {
             assertFalse("0 column must be found", this.rs.next());
         } else {
             assertTrue("1 column must be found", this.rs.next());
@@ -3047,14 +3039,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
         assertEquals("2 column must be found", 2, cnt);
 
-        boolean explicitDefaultsForTimestamp = false;
-        if (versionMeetsMinimum(8, 0, 2)) {
-            String v = getMysqlVariable("explicit_defaults_for_timestamp");
-            if ("ON".equals(v)) {
-                explicitDefaultsForTimestamp = true;
-            }
-        }
-
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP, f2 DATETIME ON UPDATE CURRENT_TIMESTAMP, f3 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
@@ -3063,7 +3047,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         while (this.rs.next()) {
             cnt++;
         }
-        if (explicitDefaultsForTimestamp) {
+        if ("ON".equals(getMysqlVariable("explicit_defaults_for_timestamp"))) {
             assertEquals("2 column must be found", 2, cnt);
         } else {
             assertEquals("3 column must be found", 3, cnt);

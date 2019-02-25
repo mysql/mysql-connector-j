@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,6 +47,7 @@ import com.mysql.cj.xdevapi.JsonArray;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.Row;
+import com.mysql.cj.xdevapi.RowResult;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
@@ -202,8 +203,12 @@ public class CollectionTest extends BaseCollectionTestCase {
         this.collection.dropIndex("myIndex");
 
         // FR1_8 Create an index using a timestamp field.
+        RowResult res = this.session.sql("select @@explicit_defaults_for_timestamp").execute();
+        Row r = res.next();
+        boolean explicitDefaultsForTimestamp = r.getBoolean(0);
+
         this.collection.createIndex("myIndex", "{\"fields\": [{\"field\": \"$.myField\", \"type\": \"TIMESTAMP\"}]}");
-        validateIndex("myIndex", this.collectionName, "ds", false, false, false, 1, null);
+        validateIndex("myIndex", this.collectionName, "ds", false, explicitDefaultsForTimestamp ? false : true, false, 1, null);
         this.collection.dropIndex("myIndex");
 
         // FR1_9 Create an index using a time field.
