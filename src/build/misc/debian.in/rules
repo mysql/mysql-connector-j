@@ -72,3 +72,6 @@ override_dh_auto_build:
 
 override_dh_auto_clean:
 	$(ANT_CMD) $(ANT_COMMON_OPTIONS) clean
+
+override_dh_installchangelogs:
+	dh_installchangelogs -XCHANGES

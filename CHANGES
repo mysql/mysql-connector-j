@@ -3,6 +3,8 @@
 
 Version 8.0.16
 
+  - Fix for Bug#27786499, REDUNDANT FILES IN DEBIAN PACKAGE FOR DEBIAN9(COMMUNITY PACKAGE) FOR CJAVA.
+
   - WL#12246, DevAPI: Prepared statement support.
 
   - WL#10839, Adjust c/J tests to the new "ON" default for explicit_defaults_for_timestamp.
