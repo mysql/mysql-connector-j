@@ -3,6 +3,8 @@
 
 Version 8.0.16
 
+  - Fix for Bug#93590 (29054329), javax.net.ssl.SSLException: closing inbound before receiving peer's close_notify.
+
   - Fix for Bug#94414 (29384853), Connector/J RPM package have version number in path.
 
   - Fix for Bug#27786499, REDUNDANT FILES IN DEBIAN PACKAGE FOR DEBIAN9(COMMUNITY PACKAGE) FOR CJAVA.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -289,11 +289,12 @@ public class ExportControlled {
 
         PropertySet pset = socketConnection.getPropertySet();
 
-        SslMode sslMode = pset.<SslMode> getEnumProperty(PropertyKey.sslMode).getValue();
+        SslMode sslMode = pset.<SslMode>getEnumProperty(PropertyKey.sslMode).getValue();
         boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
 
-        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf() : getTrustStoreConf(pset, PropertyKey.trustCertificateKeyStoreUrl,
-                PropertyKey.trustCertificateKeyStorePassword, PropertyKey.trustCertificateKeyStoreType, verifyServerCert && serverVersion == null);
+        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf()
+                : getTrustStoreConf(pset, PropertyKey.trustCertificateKeyStoreUrl, PropertyKey.trustCertificateKeyStorePassword,
+                        PropertyKey.trustCertificateKeyStoreType, verifyServerCert && serverVersion == null);
 
         KeyStoreConf keyStore = getKeyStoreConf(pset, PropertyKey.clientCertificateKeyStoreUrl, PropertyKey.clientCertificateKeyStorePassword,
                 PropertyKey.clientCertificateKeyStoreType);
@@ -573,7 +574,7 @@ public class ExportControlled {
     }
 
     public static boolean isSSLEstablished(Socket socket) {
-        return SSLSocket.class.isAssignableFrom(socket.getClass());
+        return socket == null ? false : SSLSocket.class.isAssignableFrom(socket.getClass());
     }
 
     public static RSAPublicKey decodeRSAPublicKey(String key) throws RSAException {
@@ -616,11 +617,12 @@ public class ExportControlled {
 
         PropertySet propertySet = socketConnection.getPropertySet();
 
-        SslMode sslMode = propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).getValue();
+        SslMode sslMode = propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode).getValue();
 
         boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
-        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf() : getTrustStoreConf(propertySet, PropertyKey.trustCertificateKeyStoreUrl,
-                PropertyKey.trustCertificateKeyStorePassword, PropertyKey.trustCertificateKeyStoreType, true);
+        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf()
+                : getTrustStoreConf(propertySet, PropertyKey.trustCertificateKeyStoreUrl, PropertyKey.trustCertificateKeyStorePassword,
+                        PropertyKey.trustCertificateKeyStoreType, true);
 
         KeyStoreConf keyStore = getKeyStoreConf(propertySet, PropertyKey.clientCertificateKeyStoreUrl, PropertyKey.clientCertificateKeyStorePassword,
                 PropertyKey.clientCertificateKeyStoreType);

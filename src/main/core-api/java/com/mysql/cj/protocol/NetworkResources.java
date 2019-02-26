@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -50,47 +50,51 @@ public class NetworkResources {
      */
     public final void forceClose() {
         try {
-            try {
-                if (this.mysqlInput != null) {
-                    this.mysqlInput.close();
-                }
-            } finally {
-                if (this.mysqlConnection != null && !this.mysqlConnection.isClosed() && !this.mysqlConnection.isInputShutdown()) {
-                    try {
-                        this.mysqlConnection.shutdownInput();
-                    } catch (UnsupportedOperationException ex) {
-                        // ignore, some sockets do not support this method
+            if (!ExportControlled.isSSLEstablished(this.mysqlConnection)) { // Fix for Bug#56979 does not apply to secure sockets.
+                try {
+                    if (this.mysqlInput != null) {
+                        this.mysqlInput.close();
+                    }
+                } finally {
+                    if (this.mysqlConnection != null && !this.mysqlConnection.isClosed() && !this.mysqlConnection.isInputShutdown()) {
+                        try {
+                            this.mysqlConnection.shutdownInput();
+                        } catch (UnsupportedOperationException e) {
+                            // Ignore, some sockets do not support this method.
+                        }
                     }
                 }
             }
-        } catch (IOException ioEx) {
-            // we can't do anything constructive about this
+        } catch (IOException e) {
+            // Can't do anything constructive about this.
         }
 
         try {
-            try {
-                if (this.mysqlOutput != null) {
-                    this.mysqlOutput.close();
-                }
-            } finally {
-                if (this.mysqlConnection != null && !this.mysqlConnection.isClosed() && !this.mysqlConnection.isOutputShutdown()) {
-                    try {
-                        this.mysqlConnection.shutdownOutput();
-                    } catch (UnsupportedOperationException ex) {
-                        // ignore, some sockets do not support this method
+            if (!ExportControlled.isSSLEstablished(this.mysqlConnection)) { // Fix for Bug#56979 does not apply to secure sockets.
+                try {
+                    if (this.mysqlOutput != null) {
+                        this.mysqlOutput.close();
+                    }
+                } finally {
+                    if (this.mysqlConnection != null && !this.mysqlConnection.isClosed() && !this.mysqlConnection.isOutputShutdown()) {
+                        try {
+                            this.mysqlConnection.shutdownOutput();
+                        } catch (UnsupportedOperationException e) {
+                            // Ignore, some sockets do not support this method.
+                        }
                     }
                 }
             }
-        } catch (IOException ioEx) {
-            // we can't do anything constructive about this
+        } catch (IOException e) {
+            // Can't do anything constructive about this.
         }
 
         try {
             if (this.mysqlConnection != null) {
                 this.mysqlConnection.close();
             }
-        } catch (IOException ioEx) {
-            // we can't do anything constructive about this
+        } catch (IOException e) {
+            // Can't do anything constructive about this.
         }
     }
 }

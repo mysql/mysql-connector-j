@@ -1311,18 +1311,19 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      */
     public final void quit() {
         try {
-            // we're not going to read the response, fixes BUG#56979 Improper connection closing logic leads to TIME_WAIT sockets on server
-
             try {
-                if (!this.socketConnection.getMysqlSocket().isClosed()) {
-                    try {
-                        this.socketConnection.getMysqlSocket().shutdownInput();
-                    } catch (UnsupportedOperationException ex) {
-                        // ignore, some sockets do not support this method
+                if (!ExportControlled.isSSLEstablished(this.socketConnection.getMysqlSocket())) { // Fix for Bug#56979 does not apply to secure sockets.
+                    if (!this.socketConnection.getMysqlSocket().isClosed()) {
+                        try {
+                            // The response won't be read, this fixes BUG#56979 [Improper connection closing logic leads to TIME_WAIT sockets on server].
+                            this.socketConnection.getMysqlSocket().shutdownInput();
+                        } catch (UnsupportedOperationException e) {
+                            // Ignore, some sockets do not support this method.
+                        }
                     }
                 }
-            } catch (IOException ioEx) {
-                this.log.logWarn("Caught while disconnecting...", ioEx);
+            } catch (IOException e) {
+                // Can't do anything constructive about this.
             }
 
             this.packetSequence = -1;
