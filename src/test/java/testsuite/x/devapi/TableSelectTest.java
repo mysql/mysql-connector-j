@@ -212,7 +212,8 @@ public class TableSelectTest extends BaseTableTestCase {
         table.insert("c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "cb1", "cb2")
                 .values(0xcc, 0xcccc, 0xcccccc, 0xccccccccL, 0xccccccccccL, 0xccccccccccccL, 0xccccccccccccccL, 0xccccccccccccccccL, 0x00, -2).execute();
 
-        Session s1 = this.fact.getSession(this.baseUrl + makeParam(PropertyKey.jdbcCompliantTruncation, "false"));
+        String testUrl = this.baseUrl + (this.baseUrl.contains("?") ? "&" : "?") + makeParam(PropertyKey.jdbcCompliantTruncation, "false", true);
+        Session s1 = this.fact.getSession(testUrl);
         table = s1.getDefaultSchema().getTable("testBug22931433");
 
         RowResult rows = table.select("c1, c2, c3, c4, c5, c6, c7, c8, cb1, cb2").execute();
