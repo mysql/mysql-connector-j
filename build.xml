@@ -362,7 +362,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <not>
                     <and>
                         <equals arg1="${com.mysql.cj.build.jdk.exitStatus}" arg2="0" />
-                        <contains string="${com.mysql.cj.build.jdk.version}" substring="java version &quot;1.8" casesensitive="true" />
+                        <contains string="${com.mysql.cj.build.jdk.version}" substring="version &quot;1.8" casesensitive="true" />
                     </and>
                 </not>
             </condition>

@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License, version 2.0, as published by the
@@ -166,7 +166,7 @@ cp %{with_docs}/en/txt/connector-j.txt   package-content/docs/
 
 %install
 install -d -m 0755 %{buildroot}%{_javadir}
-install -p -m 0644 package-content/@MYSQL_CJ_FULL_PROD_NAME@.jar %{buildroot}%{_javadir}/@MYSQL_CJ_FULL_PROD_NAME@.jar
+install -p -m 0644 package-content/@MYSQL_CJ_FULL_PROD_NAME@.jar %{buildroot}%{_javadir}/%{name}.jar
 
 %clean
 rm -rf %{buildroot}
@@ -187,7 +187,7 @@ rm -rf %{buildroot}
 %doc package-content/docs/mvl.css
 %endif
 
-%{_javadir}/@MYSQL_CJ_FULL_PROD_NAME@.jar
+%{_javadir}/%{name}.jar
 
 %changelog
 * Mon Nov 27 2017 MySQL Release Engineering <mysql-build@oss.oracle.com> - 8.0.9-1
