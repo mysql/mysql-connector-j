@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.17
+
 Version 8.0.16
 
   - WL#12825, Remove third-party libraries from sources and bundles.
