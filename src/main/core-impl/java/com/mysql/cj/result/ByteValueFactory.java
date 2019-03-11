@@ -32,6 +32,7 @@ package com.mysql.cj.result;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
@@ -51,7 +52,7 @@ public class ByteValueFactory extends DefaultValueFactory<Byte> {
     @Override
     public Byte createFromBigInteger(BigInteger i) {
         if (this.jdbcCompliantTruncationForReads
-                && (i.compareTo(BigInteger.valueOf(Byte.MIN_VALUE)) < 0 || i.compareTo(BigInteger.valueOf(Byte.MAX_VALUE)) > 0)) {
+                && (i.compareTo(Constants.BIG_INTEGER_MIN_BYTE_VALUE) < 0 || i.compareTo(Constants.BIG_INTEGER_MAX_BYTE_VALUE) > 0)) {
             throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { i, getTargetTypeName() }));
         }
         return (byte) i.intValue();
@@ -68,7 +69,7 @@ public class ByteValueFactory extends DefaultValueFactory<Byte> {
     @Override
     public Byte createFromBigDecimal(BigDecimal d) {
         if (this.jdbcCompliantTruncationForReads
-                && (d.compareTo(BigDecimal.valueOf(Byte.MIN_VALUE)) < 0 || d.compareTo(BigDecimal.valueOf(Byte.MAX_VALUE)) > 0)) {
+                && (d.compareTo(Constants.BIG_DECIMAL_MIN_BYTE_VALUE) < 0 || d.compareTo(Constants.BIG_DECIMAL_MAX_BYTE_VALUE) > 0)) {
             throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, getTargetTypeName() }));
         }
         return (byte) d.longValue();

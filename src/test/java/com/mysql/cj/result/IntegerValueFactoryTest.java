@@ -37,6 +37,7 @@ import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyKey;
@@ -111,10 +112,10 @@ public class IntegerValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigInteger() {
-        assertEquals(Integer.valueOf(1), this.vf.createFromBigInteger(BigInteger.valueOf(1)));
-        assertEquals(Integer.valueOf(Integer.MAX_VALUE), this.vf.createFromBigInteger(BigInteger.valueOf(Integer.MAX_VALUE)));
-        assertEquals(Integer.valueOf(-1), this.vf.createFromBigInteger(BigInteger.valueOf(-1)));
-        assertEquals(Integer.valueOf(Integer.MIN_VALUE), this.vf.createFromBigInteger(BigInteger.valueOf(Integer.MIN_VALUE)));
+        assertEquals(Integer.valueOf(1), this.vf.createFromBigInteger(Constants.BIG_INTEGER_ONE));
+        assertEquals(Integer.valueOf(Integer.MAX_VALUE), this.vf.createFromBigInteger(Constants.BIG_INTEGER_MAX_INTEGER_VALUE));
+        assertEquals(Integer.valueOf(-1), this.vf.createFromBigInteger(Constants.BIG_INTEGER_NEGATIVE_ONE));
+        assertEquals(Integer.valueOf(Integer.MIN_VALUE), this.vf.createFromBigInteger(Constants.BIG_INTEGER_MIN_INTEGER_VALUE));
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Integer", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
@@ -155,10 +156,10 @@ public class IntegerValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigDecimal() {
-        assertEquals(Integer.valueOf(1), this.vf.createFromBigDecimal(BigDecimal.valueOf(1)));
-        assertEquals(Integer.valueOf(Integer.MAX_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(Integer.MAX_VALUE)));
-        assertEquals(Integer.valueOf(-1), this.vf.createFromBigDecimal(BigDecimal.valueOf(-1)));
-        assertEquals(Integer.valueOf(Integer.MIN_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(Integer.MIN_VALUE)));
+        assertEquals(Integer.valueOf(1), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_ONE));
+        assertEquals(Integer.valueOf(Integer.MAX_VALUE), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_INTEGER_VALUE));
+        assertEquals(Integer.valueOf(-1), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_NEGATIVE_ONE));
+        assertEquals(Integer.valueOf(Integer.MIN_VALUE), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MIN_INTEGER_VALUE));
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Integer", new Callable<Void>() {
             @Override
             public Void call() throws Exception {

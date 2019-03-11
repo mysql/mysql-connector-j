@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -28,6 +28,9 @@
  */
 
 package com.mysql.cj;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import com.mysql.cj.conf.PropertyDefinitions;
 
@@ -64,6 +67,34 @@ public class Constants {
     public static final String CJ_MAJOR_VERSION = "@MYSQL_CJ_MAJOR_VERSION@";
     public static final String CJ_MINOR_VERSION = "@MYSQL_CJ_MINOR_VERSION@";
     public static final String CJ_LICENSE = "@MYSQL_CJ_LICENSE_TYPE@";
+
+    public static final BigInteger BIG_INTEGER_ZERO = BigInteger.valueOf(0);
+    public static final BigInteger BIG_INTEGER_ONE = BigInteger.valueOf(1);
+    public static final BigInteger BIG_INTEGER_NEGATIVE_ONE = BigInteger.valueOf(-1);
+    public static final BigInteger BIG_INTEGER_MIN_BYTE_VALUE = BigInteger.valueOf(Byte.MIN_VALUE);
+    public static final BigInteger BIG_INTEGER_MAX_BYTE_VALUE = BigInteger.valueOf(Byte.MAX_VALUE);
+    public static final BigInteger BIG_INTEGER_MIN_SHORT_VALUE = BigInteger.valueOf(Short.MIN_VALUE);
+    public static final BigInteger BIG_INTEGER_MAX_SHORT_VALUE = BigInteger.valueOf(Short.MAX_VALUE);
+    public static final BigInteger BIG_INTEGER_MIN_INTEGER_VALUE = BigInteger.valueOf(Integer.MIN_VALUE);
+    public static final BigInteger BIG_INTEGER_MAX_INTEGER_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
+    public static final BigInteger BIG_INTEGER_MIN_LONG_VALUE = BigInteger.valueOf(Long.MIN_VALUE);
+    public static final BigInteger BIG_INTEGER_MAX_LONG_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
+
+    public static final BigDecimal BIG_DECIMAL_ZERO = BigDecimal.valueOf(0);
+    public static final BigDecimal BIG_DECIMAL_ONE = BigDecimal.valueOf(1);
+    public static final BigDecimal BIG_DECIMAL_NEGATIVE_ONE = BigDecimal.valueOf(-1);
+    public static final BigDecimal BIG_DECIMAL_MIN_BYTE_VALUE = BigDecimal.valueOf(Byte.MIN_VALUE);
+    public static final BigDecimal BIG_DECIMAL_MAX_BYTE_VALUE = BigDecimal.valueOf(Byte.MAX_VALUE);
+    public static final BigDecimal BIG_DECIMAL_MIN_SHORT_VALUE = BigDecimal.valueOf(Short.MIN_VALUE);
+    public static final BigDecimal BIG_DECIMAL_MAX_SHORT_VALUE = BigDecimal.valueOf(Short.MAX_VALUE);
+    public static final BigDecimal BIG_DECIMAL_MIN_INTEGER_VALUE = BigDecimal.valueOf(Integer.MIN_VALUE);
+    public static final BigDecimal BIG_DECIMAL_MAX_INTEGER_VALUE = BigDecimal.valueOf(Integer.MAX_VALUE);
+    public static final BigDecimal BIG_DECIMAL_MIN_LONG_VALUE = BigDecimal.valueOf(Long.MIN_VALUE);
+    public static final BigDecimal BIG_DECIMAL_MAX_LONG_VALUE = BigDecimal.valueOf(Long.MAX_VALUE);
+    public static final BigDecimal BIG_DECIMAL_MAX_DOUBLE_VALUE = BigDecimal.valueOf(Double.MAX_VALUE);
+    public static final BigDecimal BIG_DECIMAL_MAX_NEGATIVE_DOUBLE_VALUE = BigDecimal.valueOf(-Double.MAX_VALUE);
+    public static final BigDecimal BIG_DECIMAL_MAX_FLOAT_VALUE = BigDecimal.valueOf(Float.MAX_VALUE);
+    public static final BigDecimal BIG_DECIMAL_MAX_NEGATIVE_FLOAT_VALUE = BigDecimal.valueOf(-Float.MAX_VALUE);
 
     /**
      * Prevents instantiation

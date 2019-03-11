@@ -33,11 +33,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyKey;
@@ -91,36 +91,36 @@ public class BigDecimalValueFactoryTest extends CommonAsserts {
     public void testCreateFromLong() {
         assertEquals(BigDecimal.ONE, this.vf.createFromLong(1));
         assertEquals(BigDecimal.ZERO, this.vf.createFromLong(0));
-        assertEquals(BigDecimal.valueOf(Integer.MAX_VALUE), this.vf.createFromLong(Integer.MAX_VALUE));
-        assertEquals(BigDecimal.valueOf(-1), this.vf.createFromLong(-1));
-        assertEquals(BigDecimal.valueOf(Integer.MIN_VALUE), this.vf.createFromLong(Integer.MIN_VALUE));
+        assertEquals(Constants.BIG_DECIMAL_MAX_INTEGER_VALUE, this.vf.createFromLong(Integer.MAX_VALUE));
+        assertEquals(Constants.BIG_DECIMAL_NEGATIVE_ONE, this.vf.createFromLong(-1));
+        assertEquals(Constants.BIG_DECIMAL_MIN_INTEGER_VALUE, this.vf.createFromLong(Integer.MIN_VALUE));
     }
 
     @Test
     public void testCreateFromBigInteger() {
-        assertEquals(BigDecimal.ONE, this.vf.createFromBigInteger(BigInteger.valueOf(1)));
-        assertEquals(BigDecimal.ZERO, this.vf.createFromBigInteger(BigInteger.valueOf(0)));
-        assertEquals(BigDecimal.valueOf(Integer.MAX_VALUE), this.vf.createFromBigInteger(BigInteger.valueOf(Integer.MAX_VALUE)));
-        assertEquals(BigDecimal.valueOf(-1), this.vf.createFromBigInteger(BigInteger.valueOf(-1)));
-        assertEquals(BigDecimal.valueOf(Integer.MIN_VALUE), this.vf.createFromBigInteger(BigInteger.valueOf(Integer.MIN_VALUE)));
+        assertEquals(BigDecimal.ONE, this.vf.createFromBigInteger(Constants.BIG_INTEGER_ONE));
+        assertEquals(BigDecimal.ZERO, this.vf.createFromBigInteger(Constants.BIG_INTEGER_ZERO));
+        assertEquals(Constants.BIG_DECIMAL_MAX_INTEGER_VALUE, this.vf.createFromBigInteger(Constants.BIG_INTEGER_MAX_INTEGER_VALUE));
+        assertEquals(Constants.BIG_DECIMAL_NEGATIVE_ONE, this.vf.createFromBigInteger(Constants.BIG_INTEGER_NEGATIVE_ONE));
+        assertEquals(Constants.BIG_DECIMAL_MIN_INTEGER_VALUE, this.vf.createFromBigInteger(Constants.BIG_INTEGER_MIN_INTEGER_VALUE));
     }
 
     @Test
     public void testCreateFromDouble() {
         assertEquals(BigDecimal.valueOf(1.0), this.vf.createFromDouble(1));
         assertEquals(BigDecimal.valueOf(0.0), this.vf.createFromDouble(0));
-        assertEquals(BigDecimal.valueOf(Integer.MAX_VALUE), this.vf.createFromDouble(Integer.MAX_VALUE));
+        assertEquals(Constants.BIG_DECIMAL_MAX_INTEGER_VALUE, this.vf.createFromDouble(Integer.MAX_VALUE));
         assertEquals(BigDecimal.valueOf(-1.0), this.vf.createFromDouble(-1));
-        assertEquals(BigDecimal.valueOf(Integer.MIN_VALUE), this.vf.createFromDouble(Integer.MIN_VALUE));
+        assertEquals(Constants.BIG_DECIMAL_MIN_INTEGER_VALUE, this.vf.createFromDouble(Integer.MIN_VALUE));
     }
 
     @Test
     public void testCreateFromBigDecimal() {
-        assertEquals(BigDecimal.ONE, this.vf.createFromBigDecimal(BigDecimal.valueOf(1)));
-        assertEquals(BigDecimal.ZERO, this.vf.createFromBigDecimal(BigDecimal.valueOf(0)));
-        assertEquals(BigDecimal.valueOf(Integer.MAX_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(Integer.MAX_VALUE)));
-        assertEquals(BigDecimal.valueOf(-1), this.vf.createFromBigDecimal(BigDecimal.valueOf(-1)));
-        assertEquals(BigDecimal.valueOf(Integer.MIN_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(Integer.MIN_VALUE)));
+        assertEquals(BigDecimal.ONE, this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_ONE));
+        assertEquals(BigDecimal.ZERO, this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_ZERO));
+        assertEquals(Constants.BIG_DECIMAL_MAX_INTEGER_VALUE, this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_INTEGER_VALUE));
+        assertEquals(Constants.BIG_DECIMAL_NEGATIVE_ONE, this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_NEGATIVE_ONE));
+        assertEquals(Constants.BIG_DECIMAL_MIN_INTEGER_VALUE, this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MIN_INTEGER_VALUE));
     }
 
     @Test
@@ -147,12 +147,12 @@ public class BigDecimalValueFactoryTest extends CommonAsserts {
         assertEquals(BigDecimal.valueOf(0.0), this.vf.createFromBytes("0.0".getBytes(), 0, 3, f));
         assertEquals(BigDecimal.valueOf(-10.0), this.vf.createFromBytes("-1e1".getBytes(), 0, 4, f));
 
-        assertEquals(BigDecimal.valueOf(1), this.vf.createFromBytes("1".getBytes(), 0, 1, f));
+        assertEquals(Constants.BIG_DECIMAL_ONE, this.vf.createFromBytes("1".getBytes(), 0, 1, f));
         assertEquals(BigDecimal.valueOf(123), this.vf.createFromBytes("123".getBytes(), 0, 3, f));
         assertEquals(BigDecimal.valueOf(-1), this.vf.createFromBytes("-1".getBytes(), 0, 2, f));
         assertEquals(BigDecimal.valueOf(-123), this.vf.createFromBytes("-123".getBytes(), 0, 4, f));
-        assertEquals(BigDecimal.valueOf(0), this.vf.createFromBytes("0".getBytes(), 0, 1, f));
-        assertEquals(BigDecimal.valueOf(0), this.vf.createFromBytes("000".getBytes(), 0, 3, f));
+        assertEquals(Constants.BIG_DECIMAL_ZERO, this.vf.createFromBytes("0".getBytes(), 0, 1, f));
+        assertEquals(Constants.BIG_DECIMAL_ZERO, this.vf.createFromBytes("000".getBytes(), 0, 3, f));
 
         assertThrows(DataConversionException.class, "Cannot determine value type from string 'just a string'", new Callable<Void>() {
             @Override

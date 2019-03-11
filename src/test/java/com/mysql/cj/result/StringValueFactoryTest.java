@@ -31,11 +31,9 @@ package com.mysql.cj.result;
 
 import static org.junit.Assert.assertEquals;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 import org.junit.Test;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyKey;
@@ -90,10 +88,10 @@ public class StringValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigInteger() {
-        assertEquals("1", this.vf.createFromBigInteger(BigInteger.valueOf(1)));
-        assertEquals("2147483647", this.vf.createFromBigInteger(BigInteger.valueOf(Integer.MAX_VALUE)));
-        assertEquals("-1", this.vf.createFromBigInteger(BigInteger.valueOf(-1)));
-        assertEquals("-2147483648", this.vf.createFromBigInteger(BigInteger.valueOf(Integer.MIN_VALUE)));
+        assertEquals("1", this.vf.createFromBigInteger(Constants.BIG_INTEGER_ONE));
+        assertEquals("2147483647", this.vf.createFromBigInteger(Constants.BIG_INTEGER_MAX_INTEGER_VALUE));
+        assertEquals("-1", this.vf.createFromBigInteger(Constants.BIG_INTEGER_NEGATIVE_ONE));
+        assertEquals("-2147483648", this.vf.createFromBigInteger(Constants.BIG_INTEGER_MIN_INTEGER_VALUE));
     }
 
     @Test
@@ -106,10 +104,10 @@ public class StringValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigDecimal() {
-        assertEquals("1", this.vf.createFromBigDecimal(BigDecimal.valueOf(1)));
-        assertEquals("2147483647", this.vf.createFromBigDecimal(BigDecimal.valueOf(Integer.MAX_VALUE)));
-        assertEquals("-1", this.vf.createFromBigDecimal(BigDecimal.valueOf(-1)));
-        assertEquals("-2147483648", this.vf.createFromBigDecimal(BigDecimal.valueOf(Integer.MIN_VALUE)));
+        assertEquals("1", this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_ONE));
+        assertEquals("2147483647", this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_INTEGER_VALUE));
+        assertEquals("-1", this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_NEGATIVE_ONE));
+        assertEquals("-2147483648", this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MIN_INTEGER_VALUE));
     }
 
     @Test

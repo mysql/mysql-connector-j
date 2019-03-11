@@ -32,11 +32,11 @@ package com.mysql.cj.result;
 import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyKey;
@@ -97,21 +97,22 @@ public class FloatValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigInteger() {
-        assertEquals(Float.valueOf(1f), this.vf.createFromBigInteger(BigInteger.valueOf(1)));
-        assertEquals(Float.valueOf(Float.MAX_VALUE), this.vf.createFromBigInteger(BigDecimal.valueOf(Float.MAX_VALUE).toBigInteger()));
-        assertEquals(Float.valueOf(-1f), this.vf.createFromBigInteger(BigInteger.valueOf(-1)));
-        assertEquals(Float.valueOf(-Float.MAX_VALUE), this.vf.createFromBigInteger(BigDecimal.valueOf(-Float.MAX_VALUE).toBigInteger()));
+        assertEquals(Float.valueOf(1f), this.vf.createFromBigInteger(Constants.BIG_INTEGER_ONE));
+        assertEquals(Float.valueOf(Float.MAX_VALUE), this.vf.createFromBigInteger(Constants.BIG_DECIMAL_MAX_FLOAT_VALUE.toBigInteger()));
+        assertEquals(Float.valueOf(-1f), this.vf.createFromBigInteger(Constants.BIG_INTEGER_NEGATIVE_ONE));
+        assertEquals(Float.valueOf(-Float.MAX_VALUE), this.vf.createFromBigInteger(Constants.BIG_DECIMAL_MAX_NEGATIVE_FLOAT_VALUE.toBigInteger()));
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Float", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                FloatValueFactoryTest.this.vf.createFromBigInteger(BigDecimal.valueOf(Float.MAX_VALUE).toBigInteger().add(BigInteger.valueOf(1)));
+                FloatValueFactoryTest.this.vf.createFromBigInteger(Constants.BIG_DECIMAL_MAX_FLOAT_VALUE.toBigInteger().add(Constants.BIG_INTEGER_ONE));
                 return null;
             }
         });
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Float", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                FloatValueFactoryTest.this.vf.createFromBigInteger(BigDecimal.valueOf(-Float.MAX_VALUE).toBigInteger().subtract(BigInteger.valueOf(1)));
+                FloatValueFactoryTest.this.vf
+                        .createFromBigInteger(Constants.BIG_DECIMAL_MAX_NEGATIVE_FLOAT_VALUE.toBigInteger().subtract(Constants.BIG_INTEGER_ONE));
                 return null;
             }
         });
@@ -141,14 +142,14 @@ public class FloatValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigDecimal() {
-        assertEquals(Float.valueOf(1f), this.vf.createFromBigDecimal(BigDecimal.valueOf(1)));
-        assertEquals(Float.valueOf(Float.MAX_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(Float.MAX_VALUE)));
-        assertEquals(Float.valueOf(-1f), this.vf.createFromBigDecimal(BigDecimal.valueOf(-1)));
-        assertEquals(Float.valueOf(-Float.MAX_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(-Float.MAX_VALUE)));
+        assertEquals(Float.valueOf(1f), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_ONE));
+        assertEquals(Float.valueOf(Float.MAX_VALUE), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_FLOAT_VALUE));
+        assertEquals(Float.valueOf(-1f), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_NEGATIVE_ONE));
+        assertEquals(Float.valueOf(-Float.MAX_VALUE), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_NEGATIVE_FLOAT_VALUE));
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Float", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                FloatValueFactoryTest.this.vf.createFromBigDecimal(BigDecimal.valueOf(Float.MAX_VALUE).add(BigDecimal.valueOf(1)));
+                FloatValueFactoryTest.this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_FLOAT_VALUE.add(Constants.BIG_DECIMAL_ONE));
                 return null;
             }
         });

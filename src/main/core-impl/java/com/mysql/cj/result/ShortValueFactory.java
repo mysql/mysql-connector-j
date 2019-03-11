@@ -32,6 +32,7 @@ package com.mysql.cj.result;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.NumberOutOfRange;
@@ -49,7 +50,7 @@ public class ShortValueFactory extends AbstractNumericValueFactory<Short> {
     @Override
     public Short createFromBigInteger(BigInteger i) {
         if (this.jdbcCompliantTruncationForReads
-                && (i.compareTo(BigInteger.valueOf(Short.MIN_VALUE)) < 0 || i.compareTo(BigInteger.valueOf(Short.MAX_VALUE)) > 0)) {
+                && (i.compareTo(Constants.BIG_INTEGER_MIN_SHORT_VALUE) < 0 || i.compareTo(Constants.BIG_INTEGER_MAX_SHORT_VALUE) > 0)) {
             throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { i, getTargetTypeName() }));
         }
         return (short) i.intValue();
@@ -66,7 +67,7 @@ public class ShortValueFactory extends AbstractNumericValueFactory<Short> {
     @Override
     public Short createFromBigDecimal(BigDecimal d) {
         if (this.jdbcCompliantTruncationForReads
-                && (d.compareTo(BigDecimal.valueOf(Short.MIN_VALUE)) < 0 || d.compareTo(BigDecimal.valueOf(Short.MAX_VALUE)) > 0)) {
+                && (d.compareTo(Constants.BIG_DECIMAL_MIN_SHORT_VALUE) < 0 || d.compareTo(Constants.BIG_DECIMAL_MAX_SHORT_VALUE) > 0)) {
             throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, getTargetTypeName() }));
         }
         return (short) d.longValue();

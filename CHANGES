@@ -3,6 +3,8 @@
 
 Version 8.0.17
 
+  - Fix for Bug#94442 (29446059), RESULTSETIMPL.GETDOUBLE IS INEFFICIENT BECAUSE OF BIGDECIMAL (RE)CONSTRUCTIONS.
+
 Version 8.0.16
 
   - WL#12825, Remove third-party libraries from sources and bundles.

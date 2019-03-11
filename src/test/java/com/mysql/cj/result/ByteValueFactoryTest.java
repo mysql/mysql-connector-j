@@ -38,6 +38,7 @@ import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyKey;
@@ -112,10 +113,10 @@ public class ByteValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigInteger() {
-        assertEquals(Byte.valueOf((byte) 1), this.vf.createFromBigInteger(BigInteger.valueOf(1)));
-        assertEquals(Byte.valueOf(Byte.MAX_VALUE), this.vf.createFromBigInteger(BigInteger.valueOf(Byte.MAX_VALUE)));
-        assertEquals(Byte.valueOf((byte) -1), this.vf.createFromBigInteger(BigInteger.valueOf(-1)));
-        assertEquals(Byte.valueOf(Byte.MIN_VALUE), this.vf.createFromBigInteger(BigInteger.valueOf(Byte.MIN_VALUE)));
+        assertEquals(Byte.valueOf((byte) 1), this.vf.createFromBigInteger(Constants.BIG_INTEGER_ONE));
+        assertEquals(Byte.valueOf(Byte.MAX_VALUE), this.vf.createFromBigInteger(Constants.BIG_INTEGER_MAX_BYTE_VALUE));
+        assertEquals(Byte.valueOf((byte) -1), this.vf.createFromBigInteger(Constants.BIG_INTEGER_NEGATIVE_ONE));
+        assertEquals(Byte.valueOf(Byte.MIN_VALUE), this.vf.createFromBigInteger(Constants.BIG_INTEGER_MIN_BYTE_VALUE));
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Byte", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
@@ -156,10 +157,10 @@ public class ByteValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigDecimal() {
-        assertEquals(Byte.valueOf((byte) 1), this.vf.createFromBigDecimal(BigDecimal.valueOf(1)));
-        assertEquals(Byte.valueOf(Byte.MAX_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(Byte.MAX_VALUE)));
-        assertEquals(Byte.valueOf((byte) -1), this.vf.createFromBigDecimal(BigDecimal.valueOf(-1)));
-        assertEquals(Byte.valueOf(Byte.MIN_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(Byte.MIN_VALUE)));
+        assertEquals(Byte.valueOf((byte) 1), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_ONE));
+        assertEquals(Byte.valueOf(Byte.MAX_VALUE), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_BYTE_VALUE));
+        assertEquals(Byte.valueOf((byte) -1), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_NEGATIVE_ONE));
+        assertEquals(Byte.valueOf(Byte.MIN_VALUE), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MIN_BYTE_VALUE));
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Byte", new Callable<Void>() {
             @Override
             public Void call() throws Exception {

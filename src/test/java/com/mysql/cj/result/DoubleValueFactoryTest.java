@@ -31,12 +31,11 @@ package com.mysql.cj.result;
 
 import static org.junit.Assert.assertEquals;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyKey;
@@ -97,21 +96,22 @@ public class DoubleValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigInteger() {
-        assertEquals(Double.valueOf(1d), this.vf.createFromBigInteger(BigInteger.valueOf(1)));
-        assertEquals(Double.valueOf(Double.MAX_VALUE), this.vf.createFromBigInteger(BigDecimal.valueOf(Double.MAX_VALUE).toBigInteger()));
-        assertEquals(Double.valueOf(-1d), this.vf.createFromBigInteger(BigInteger.valueOf(-1)));
-        assertEquals(Double.valueOf(-Double.MAX_VALUE), this.vf.createFromBigInteger(BigDecimal.valueOf(-Double.MAX_VALUE).toBigInteger()));
+        assertEquals(Double.valueOf(1d), this.vf.createFromBigInteger(Constants.BIG_INTEGER_ONE));
+        assertEquals(Double.valueOf(Double.MAX_VALUE), this.vf.createFromBigInteger(Constants.BIG_DECIMAL_MAX_DOUBLE_VALUE.toBigInteger()));
+        assertEquals(Double.valueOf(-1d), this.vf.createFromBigInteger(Constants.BIG_INTEGER_NEGATIVE_ONE));
+        assertEquals(Double.valueOf(-Double.MAX_VALUE), this.vf.createFromBigInteger(Constants.BIG_DECIMAL_MAX_NEGATIVE_DOUBLE_VALUE.toBigInteger()));
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Double", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                DoubleValueFactoryTest.this.vf.createFromBigInteger(BigDecimal.valueOf(Double.MAX_VALUE).toBigInteger().add(BigInteger.valueOf(1)));
+                DoubleValueFactoryTest.this.vf.createFromBigInteger(Constants.BIG_DECIMAL_MAX_DOUBLE_VALUE.toBigInteger().add(Constants.BIG_INTEGER_ONE));
                 return null;
             }
         });
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Double", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                DoubleValueFactoryTest.this.vf.createFromBigInteger(BigDecimal.valueOf(-Double.MAX_VALUE).toBigInteger().subtract(BigInteger.valueOf(1)));
+                DoubleValueFactoryTest.this.vf
+                        .createFromBigInteger(Constants.BIG_DECIMAL_MAX_NEGATIVE_DOUBLE_VALUE.toBigInteger().subtract(Constants.BIG_INTEGER_ONE));
                 return null;
             }
         });
@@ -141,21 +141,22 @@ public class DoubleValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigDecimal() {
-        assertEquals(Double.valueOf(1), this.vf.createFromBigDecimal(BigDecimal.valueOf(1)));
-        assertEquals(Double.valueOf(Double.MAX_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(Double.MAX_VALUE)));
-        assertEquals(Double.valueOf(-1), this.vf.createFromBigDecimal(BigDecimal.valueOf(-1)));
-        assertEquals(Double.valueOf(-Double.MAX_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(-Double.MAX_VALUE)));
+        assertEquals(Double.valueOf(1), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_ONE));
+        assertEquals(Double.valueOf(Double.MAX_VALUE), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_DOUBLE_VALUE));
+        assertEquals(Double.valueOf(-1), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_NEGATIVE_ONE));
+        assertEquals(Double.valueOf(-Double.MAX_VALUE), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_NEGATIVE_DOUBLE_VALUE));
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Double", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                DoubleValueFactoryTest.this.vf.createFromBigDecimal(BigDecimal.valueOf(Double.MAX_VALUE).add(BigDecimal.valueOf(Double.MAX_VALUE)));
+                DoubleValueFactoryTest.this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_DOUBLE_VALUE.add(Constants.BIG_DECIMAL_MAX_DOUBLE_VALUE));
                 return null;
             }
         });
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Double", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                DoubleValueFactoryTest.this.vf.createFromBigDecimal(BigDecimal.valueOf(-Double.MAX_VALUE).subtract(BigDecimal.valueOf(Double.MAX_VALUE)));
+                DoubleValueFactoryTest.this.vf
+                        .createFromBigDecimal(Constants.BIG_DECIMAL_MAX_NEGATIVE_DOUBLE_VALUE.subtract(Constants.BIG_DECIMAL_MAX_DOUBLE_VALUE));
                 return null;
             }
         });

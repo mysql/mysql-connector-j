@@ -32,6 +32,7 @@ package com.mysql.cj.result;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
@@ -57,7 +58,7 @@ public class BooleanValueFactory extends DefaultValueFactory<Boolean> {
 
     @Override
     public Boolean createFromBigInteger(BigInteger i) {
-        return i.compareTo(BigInteger.valueOf(0)) > 0 || i.compareTo(BigInteger.valueOf(-1)) == 0;
+        return i.compareTo(Constants.BIG_INTEGER_ZERO) > 0 || i.compareTo(Constants.BIG_INTEGER_NEGATIVE_ONE) == 0;
     }
 
     @Override
@@ -70,7 +71,7 @@ public class BooleanValueFactory extends DefaultValueFactory<Boolean> {
     @Override
     public Boolean createFromBigDecimal(BigDecimal d) {
         // this means that 0.1 or -1 will be TRUE
-        return d.compareTo(BigDecimal.valueOf(0)) > 0 || d.compareTo(BigDecimal.valueOf(-1)) == 0;
+        return d.compareTo(Constants.BIG_DECIMAL_ZERO) > 0 || d.compareTo(Constants.BIG_DECIMAL_NEGATIVE_ONE) == 0;
     }
 
     @Override

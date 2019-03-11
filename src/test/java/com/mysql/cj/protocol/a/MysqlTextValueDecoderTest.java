@@ -32,10 +32,9 @@ package com.mysql.cj.protocol.a;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.math.BigInteger;
-
 import org.junit.Test;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.exceptions.NumberOutOfRange;
 import com.mysql.cj.protocol.InternalTime;
@@ -94,9 +93,9 @@ public class MysqlTextValueDecoderTest {
 
         assertEquals(String.valueOf(Integer.MAX_VALUE), this.valueDecoder.decodeUInt4(String.valueOf(Integer.MAX_VALUE).getBytes(), 0, 10, vf));
         assertEquals("2147483648",
-                this.valueDecoder.decodeUInt4(BigInteger.valueOf(Integer.MAX_VALUE).add(BigInteger.valueOf(1)).toString().getBytes(), 0, 10, vf));
+                this.valueDecoder.decodeUInt4(Constants.BIG_INTEGER_MAX_INTEGER_VALUE.add(Constants.BIG_INTEGER_ONE).toString().getBytes(), 0, 10, vf));
         try {
-            this.valueDecoder.decodeInt4(BigInteger.valueOf(Integer.MAX_VALUE).add(BigInteger.valueOf(1)).toString().getBytes(), 0, 10, vf);
+            this.valueDecoder.decodeInt4(Constants.BIG_INTEGER_MAX_INTEGER_VALUE.add(Constants.BIG_INTEGER_ONE).toString().getBytes(), 0, 10, vf);
             fail("Exception should be thrown for decodeInt4(Integer.MAX_VALUE + 1)");
         } catch (NumberOutOfRange ex) {
             // expected

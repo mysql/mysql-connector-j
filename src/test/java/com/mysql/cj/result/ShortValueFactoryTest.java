@@ -37,6 +37,7 @@ import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyKey;
@@ -111,10 +112,10 @@ public class ShortValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigInteger() {
-        assertEquals(Short.valueOf((short) 1), this.vf.createFromBigInteger(BigInteger.valueOf(1)));
-        assertEquals(Short.valueOf(Short.MAX_VALUE), this.vf.createFromBigInteger(BigInteger.valueOf(Short.MAX_VALUE)));
-        assertEquals(Short.valueOf((short) -1), this.vf.createFromBigInteger(BigInteger.valueOf(-1)));
-        assertEquals(Short.valueOf(Short.MIN_VALUE), this.vf.createFromBigInteger(BigInteger.valueOf(Short.MIN_VALUE)));
+        assertEquals(Short.valueOf((short) 1), this.vf.createFromBigInteger(Constants.BIG_INTEGER_ONE));
+        assertEquals(Short.valueOf(Short.MAX_VALUE), this.vf.createFromBigInteger(Constants.BIG_INTEGER_MAX_SHORT_VALUE));
+        assertEquals(Short.valueOf((short) -1), this.vf.createFromBigInteger(Constants.BIG_INTEGER_NEGATIVE_ONE));
+        assertEquals(Short.valueOf(Short.MIN_VALUE), this.vf.createFromBigInteger(Constants.BIG_INTEGER_MIN_SHORT_VALUE));
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Short", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
@@ -155,10 +156,10 @@ public class ShortValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigDecimal() {
-        assertEquals(Short.valueOf((short) 1), this.vf.createFromBigDecimal(BigDecimal.valueOf(1)));
-        assertEquals(Short.valueOf(Short.MAX_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(Short.MAX_VALUE)));
-        assertEquals(Short.valueOf((short) -1), this.vf.createFromBigDecimal(BigDecimal.valueOf(-1)));
-        assertEquals(Short.valueOf(Short.MIN_VALUE), this.vf.createFromBigDecimal(BigDecimal.valueOf(Short.MIN_VALUE)));
+        assertEquals(Short.valueOf((short) 1), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_ONE));
+        assertEquals(Short.valueOf(Short.MAX_VALUE), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_SHORT_VALUE));
+        assertEquals(Short.valueOf((short) -1), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_NEGATIVE_ONE));
+        assertEquals(Short.valueOf(Short.MIN_VALUE), this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MIN_SHORT_VALUE));
         assertThrows(NumberOutOfRange.class, "Value .+ is outside of valid range for type java.lang.Short", new Callable<Void>() {
             @Override
             public Void call() throws Exception {

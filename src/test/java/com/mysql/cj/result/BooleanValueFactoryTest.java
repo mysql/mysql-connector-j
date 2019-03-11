@@ -32,12 +32,11 @@ package com.mysql.cj.result;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyKey;
@@ -98,11 +97,11 @@ public class BooleanValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigInteger() {
-        assertTrue(this.vf.createFromBigInteger(BigInteger.valueOf(1)));
-        assertTrue(this.vf.createFromBigInteger(BigInteger.valueOf(Integer.MAX_VALUE)));
-        assertTrue(this.vf.createFromBigInteger(BigInteger.valueOf(-1)));
-        assertFalse(this.vf.createFromBigInteger(BigInteger.valueOf(Integer.MIN_VALUE)));
-        assertFalse(this.vf.createFromBigInteger(BigInteger.valueOf(0)));
+        assertTrue(this.vf.createFromBigInteger(Constants.BIG_INTEGER_ONE));
+        assertTrue(this.vf.createFromBigInteger(Constants.BIG_INTEGER_MAX_INTEGER_VALUE));
+        assertTrue(this.vf.createFromBigInteger(Constants.BIG_INTEGER_NEGATIVE_ONE));
+        assertFalse(this.vf.createFromBigInteger(Constants.BIG_INTEGER_MIN_INTEGER_VALUE));
+        assertFalse(this.vf.createFromBigInteger(Constants.BIG_INTEGER_ZERO));
     }
 
     @Test
@@ -116,11 +115,11 @@ public class BooleanValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromBigDecimal() {
-        assertTrue(this.vf.createFromBigDecimal(BigDecimal.valueOf(1)));
-        assertTrue(this.vf.createFromBigDecimal(BigDecimal.valueOf(Integer.MAX_VALUE)));
-        assertTrue(this.vf.createFromBigDecimal(BigDecimal.valueOf(-1)));
-        assertFalse(this.vf.createFromBigDecimal(BigDecimal.valueOf(Integer.MIN_VALUE)));
-        assertFalse(this.vf.createFromBigDecimal(BigDecimal.valueOf(0)));
+        assertTrue(this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_ONE));
+        assertTrue(this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MAX_INTEGER_VALUE));
+        assertTrue(this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_NEGATIVE_ONE));
+        assertFalse(this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_MIN_INTEGER_VALUE));
+        assertFalse(this.vf.createFromBigDecimal(Constants.BIG_DECIMAL_ZERO));
     }
 
     @Test

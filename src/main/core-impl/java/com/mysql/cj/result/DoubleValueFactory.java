@@ -33,6 +33,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
+import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.NumberOutOfRange;
@@ -48,8 +49,8 @@ public class DoubleValueFactory extends AbstractNumericValueFactory<Double> {
 
     @Override
     public Double createFromBigInteger(BigInteger i) {
-        if (this.jdbcCompliantTruncationForReads && (new BigDecimal(i).compareTo(BigDecimal.valueOf(-Double.MAX_VALUE)) < 0
-                || new BigDecimal(i).compareTo(BigDecimal.valueOf(Double.MAX_VALUE)) > 0)) {
+        if (this.jdbcCompliantTruncationForReads && (new BigDecimal(i).compareTo(Constants.BIG_DECIMAL_MAX_NEGATIVE_DOUBLE_VALUE) < 0
+                || new BigDecimal(i).compareTo(Constants.BIG_DECIMAL_MAX_DOUBLE_VALUE) > 0)) {
             throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { i, getTargetTypeName() }));
         }
         return i.doubleValue();
@@ -66,7 +67,7 @@ public class DoubleValueFactory extends AbstractNumericValueFactory<Double> {
     @Override
     public Double createFromBigDecimal(BigDecimal d) {
         if (this.jdbcCompliantTruncationForReads
-                && (d.compareTo(BigDecimal.valueOf(-Double.MAX_VALUE)) < 0 || d.compareTo(BigDecimal.valueOf(Double.MAX_VALUE)) > 0)) {
+                && (d.compareTo(Constants.BIG_DECIMAL_MAX_NEGATIVE_DOUBLE_VALUE) < 0 || d.compareTo(Constants.BIG_DECIMAL_MAX_DOUBLE_VALUE) > 0)) {
             throw new NumberOutOfRange(Messages.getString("ResultSet.NumberOutOfRange", new Object[] { d, getTargetTypeName() }));
         }
         return d.doubleValue();
