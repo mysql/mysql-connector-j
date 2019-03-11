@@ -30,6 +30,7 @@
 package com.mysql.cj.result;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.util.concurrent.Callable;
 
@@ -223,6 +224,6 @@ public class DoubleValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromNull() {
-        assertEquals(Double.valueOf(0), this.vf.createFromNull()); // TODO shouldn't it be a null?
+        assertNull(this.vf.createFromNull());
     }
 }

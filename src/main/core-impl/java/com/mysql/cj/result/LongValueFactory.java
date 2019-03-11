@@ -86,11 +86,6 @@ public class LongValueFactory extends AbstractNumericValueFactory<Long> {
         return DataTypeUtil.bitToLong(bytes, offset, length);
     }
 
-    @Override
-    public Long createFromNull() {
-        return (long) 0;
-    }
-
     public String getTargetTypeName() {
         return Long.class.getName();
     }

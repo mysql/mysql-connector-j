@@ -97,11 +97,6 @@ public class ByteValueFactory extends DefaultValueFactory<Byte> {
         return createFromLong(l);
     }
 
-    @Override
-    public Byte createFromNull() {
-        return 0;
-    }
-
     public String getTargetTypeName() {
         return Byte.class.getName();
     }

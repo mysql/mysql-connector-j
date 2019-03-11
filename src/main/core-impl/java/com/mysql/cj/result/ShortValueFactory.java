@@ -90,11 +90,6 @@ public class ShortValueFactory extends AbstractNumericValueFactory<Short> {
         return (short) l;
     }
 
-    @Override
-    public Short createFromNull() {
-        return (short) 0;
-    }
-
     public String getTargetTypeName() {
         return Short.class.getName();
     }

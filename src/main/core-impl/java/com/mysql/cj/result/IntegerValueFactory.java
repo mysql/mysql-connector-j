@@ -90,11 +90,6 @@ public class IntegerValueFactory extends AbstractNumericValueFactory<Integer> {
         return (int) l;
     }
 
-    @Override
-    public Integer createFromNull() {
-        return 0;
-    }
-
     public String getTargetTypeName() {
         return Integer.class.getName();
     }

@@ -673,9 +673,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public boolean getBoolean(int columnIndex) throws SQLException {
-        checkRowPos();
-        checkColumnBounds(columnIndex);
-        return this.thisRow.getValue(columnIndex - 1, this.booleanValueFactory);
+        Boolean res = getObject(columnIndex, Boolean.TYPE);
+        return res == null ? false : res;
     }
 
     @Override
@@ -685,9 +684,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public byte getByte(int columnIndex) throws SQLException {
-        checkRowPos();
-        checkColumnBounds(columnIndex);
-        return this.thisRow.getValue(columnIndex - 1, this.byteValueFactory);
+        Byte res = getObject(columnIndex, Byte.TYPE);
+        return res == null ? (byte) 0 : res;
     }
 
     @Override
@@ -776,9 +774,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public double getDouble(int columnIndex) throws SQLException {
-        checkRowPos();
-        checkColumnBounds(columnIndex);
-        return this.thisRow.getValue(columnIndex - 1, this.doubleValueFactory);
+        Double res = getObject(columnIndex, Double.TYPE);
+        return res == null ? (double) 0 : res;
     }
 
     @Override
@@ -788,9 +785,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public float getFloat(int columnIndex) throws SQLException {
-        checkRowPos();
-        checkColumnBounds(columnIndex);
-        return this.thisRow.getValue(columnIndex - 1, this.floatValueFactory);
+        Float res = getObject(columnIndex, Float.TYPE);
+        return res == null ? (float) 0 : res;
     }
 
     @Override
@@ -800,9 +796,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public int getInt(int columnIndex) throws SQLException {
-        checkRowPos();
-        checkColumnBounds(columnIndex);
-        return this.thisRow.getValue(columnIndex - 1, this.integerValueFactory);
+        Integer res = getObject(columnIndex, Integer.TYPE);
+        return res == null ? 0 : res;
     }
 
     @Override
@@ -827,9 +822,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public long getLong(int columnIndex) throws SQLException {
-        checkRowPos();
-        checkColumnBounds(columnIndex);
-        return this.thisRow.getValue(columnIndex - 1, this.longValueFactory);
+        Long res = getObject(columnIndex, Long.TYPE);
+        return res == null ? 0L : res;
     }
 
     @Override
@@ -839,9 +833,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public short getShort(int columnIndex) throws SQLException {
-        checkRowPos();
-        checkColumnBounds(columnIndex);
-        return this.thisRow.getValue(columnIndex - 1, this.shortValueFactory);
+        Short res = getObject(columnIndex, Short.TYPE);
+        return res == null ? (short) 0 : res;
     }
 
     @Override
@@ -1285,19 +1278,39 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 return (T) getBigInteger(columnIndex);
 
             } else if (type.equals(Boolean.class) || type.equals(Boolean.TYPE)) {
-                return (T) Boolean.valueOf(getBoolean(columnIndex));
+                checkRowPos();
+                checkColumnBounds(columnIndex);
+                return (T) this.thisRow.getValue(columnIndex - 1, this.booleanValueFactory);
+
+            } else if (type.equals(Byte.class) || type.equals(Byte.TYPE)) {
+                checkRowPos();
+                checkColumnBounds(columnIndex);
+                return (T) this.thisRow.getValue(columnIndex - 1, this.byteValueFactory);
+
+            } else if (type.equals(Short.class) || type.equals(Short.TYPE)) {
+                checkRowPos();
+                checkColumnBounds(columnIndex);
+                return (T) this.thisRow.getValue(columnIndex - 1, this.shortValueFactory);
 
             } else if (type.equals(Integer.class) || type.equals(Integer.TYPE)) {
-                return (T) Integer.valueOf(getInt(columnIndex));
+                checkRowPos();
+                checkColumnBounds(columnIndex);
+                return (T) this.thisRow.getValue(columnIndex - 1, this.integerValueFactory);
 
             } else if (type.equals(Long.class) || type.equals(Long.TYPE)) {
-                return (T) Long.valueOf(getLong(columnIndex));
+                checkRowPos();
+                checkColumnBounds(columnIndex);
+                return (T) this.thisRow.getValue(columnIndex - 1, this.longValueFactory);
 
             } else if (type.equals(Float.class) || type.equals(Float.TYPE)) {
-                return (T) Float.valueOf(getFloat(columnIndex));
+                checkRowPos();
+                checkColumnBounds(columnIndex);
+                return (T) this.thisRow.getValue(columnIndex - 1, this.floatValueFactory);
 
             } else if (type.equals(Double.class) || type.equals(Double.TYPE)) {
-                return (T) Double.valueOf(getDouble(columnIndex));
+                checkRowPos();
+                checkColumnBounds(columnIndex);
+                return (T) this.thisRow.getValue(columnIndex - 1, this.doubleValueFactory);
 
             } else if (type.equals(byte[].class)) {
                 return (T) getBytes(columnIndex);

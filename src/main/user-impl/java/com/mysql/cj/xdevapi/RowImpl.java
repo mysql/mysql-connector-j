@@ -109,7 +109,8 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public boolean getBoolean(int pos) {
-        return this.row.getValue(pos, new BooleanValueFactory(this.pset));
+        Boolean res = this.row.getValue(pos, new BooleanValueFactory(this.pset));
+        return res == null ? false : res;
     }
 
     public byte getByte(String fieldName) {
@@ -117,7 +118,8 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public byte getByte(int pos) {
-        return this.row.getValue(pos, new ByteValueFactory(this.pset));
+        Byte res = this.row.getValue(pos, new ByteValueFactory(this.pset));
+        return res == null ? (byte) 0 : res;
     }
 
     public Date getDate(String fieldName) {
@@ -141,7 +143,8 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public double getDouble(int pos) {
-        return this.row.getValue(pos, new DoubleValueFactory(this.pset));
+        Double res = this.row.getValue(pos, new DoubleValueFactory(this.pset));
+        return res == null ? 0.0d : res;
     }
 
     public int getInt(String fieldName) {
@@ -149,7 +152,8 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public int getInt(int pos) {
-        return this.row.getValue(pos, new IntegerValueFactory(this.pset));
+        Integer res = this.row.getValue(pos, new IntegerValueFactory(this.pset));
+        return res == null ? 0 : res;
     }
 
     public long getLong(String fieldName) {
@@ -157,7 +161,8 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public long getLong(int pos) {
-        return this.row.getValue(pos, new LongValueFactory(this.pset));
+        Long res = this.row.getValue(pos, new LongValueFactory(this.pset));
+        return res == null ? 0L : res;
     }
 
     public String getString(String fieldName) {

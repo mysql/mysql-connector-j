@@ -6946,4 +6946,51 @@ public class ResultSetRegressionTest extends BaseTestCase {
         }
 
     }
+
+    /**
+     * Tests fix for BUG#94533 (29446100), GETOBJECT FOR BOXED PRIMITIVE TYPES DOESN'T RETURN NULL FOR NULL COLUMNS.
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    public void testBug94533() throws Exception {
+        createTable("testBug94533", "(volume BIGINT)");
+        this.stmt.executeUpdate("INSERT INTO `testBug94533` VALUES (NULL)");
+
+        String sql = "SELECT volume FROM testBug94533 WHERE volume IS NULL LIMIT 1";
+        this.rs = this.stmt.executeQuery(sql);
+
+        // JDBC spec:
+        //        When the column value in the database is SQL NULL, it may be returned to the Java
+        //        application as null, 0, or false, depending on the type of the column value.
+        //        Column values that map to Java Object types are returned as a Java null; those
+        //        that map to numeric types are returned as 0; those that map to a Java boolean are
+        //        returned as false.
+
+        assertTrue(this.rs.next());
+        assertNull(this.rs.getString("volume"));
+        assertNull(this.rs.getObject("volume"));
+
+        assertFalse(this.rs.getBoolean("volume"));
+        assertNull(this.rs.getObject("volume", Boolean.class));
+
+        assertEquals(0, this.rs.getByte("volume"));
+        assertNull(this.rs.getObject("volume", Byte.class));
+
+        assertEquals(0.0d, this.rs.getDouble("volume"));
+        assertNull(this.rs.getObject("volume", Double.class));
+
+        assertEquals(0.0f, this.rs.getFloat("volume"));
+        assertNull(this.rs.getObject("volume", Float.class));
+
+        assertEquals(0L, this.rs.getShort("volume"));
+        assertNull(this.rs.getObject("volume", Short.class));
+
+        assertEquals(0L, this.rs.getInt("volume"));
+        assertNull(this.rs.getObject("volume", Integer.class));
+
+        assertEquals(0L, this.rs.getLong("volume"));
+        assertNull(this.rs.getObject("volume", Long.class));
+
+    }
 }

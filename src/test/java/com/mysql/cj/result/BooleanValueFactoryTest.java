@@ -30,6 +30,7 @@
 package com.mysql.cj.result;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.Callable;
@@ -177,7 +178,7 @@ public class BooleanValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromNull() {
-        assertFalse(this.vf.createFromNull());
+        assertNull(this.vf.createFromNull());
     }
 
 }

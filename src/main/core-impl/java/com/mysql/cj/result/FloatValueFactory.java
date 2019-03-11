@@ -86,11 +86,6 @@ public class FloatValueFactory extends AbstractNumericValueFactory<Float> {
         return new BigInteger(ByteBuffer.allocate(length + 1).put((byte) 0).put(bytes, offset, length).array()).floatValue();
     }
 
-    @Override
-    public Float createFromNull() {
-        return 0.0f;
-    }
-
     public String getTargetTypeName() {
         return Float.class.getName();
     }

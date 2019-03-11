@@ -30,6 +30,7 @@
 package com.mysql.cj.result;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -261,7 +262,7 @@ public class IntegerValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromNull() {
-        assertEquals(Integer.valueOf(0), this.vf.createFromNull()); // TODO shouldn't it be a null?
+        assertNull(this.vf.createFromNull());
     }
 
 }

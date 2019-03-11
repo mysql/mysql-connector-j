@@ -84,11 +84,6 @@ public class BooleanValueFactory extends DefaultValueFactory<Boolean> {
         return createFromLong(l);
     }
 
-    @Override
-    public Boolean createFromNull() {
-        return false;
-    }
-
     public String getTargetTypeName() {
         return Boolean.class.getName();
     }
