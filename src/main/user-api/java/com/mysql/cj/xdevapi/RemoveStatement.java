@@ -40,7 +40,7 @@ public interface RemoveStatement extends Statement<RemoveStatement, Result> {
      *            sort expression
      * @return {@link RemoveStatement}
      */
-    @Deprecated // Delete the deprecation warning suppression from FilterableStatement after deleting this method.
+    @Deprecated
     RemoveStatement orderBy(String... sortFields);
 
     /**

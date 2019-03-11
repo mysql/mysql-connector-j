@@ -51,6 +51,12 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatement, Re
     }
 
     @Override
+    @Deprecated
+    public RemoveStatement orderBy(String... sortFields) {
+        return super.orderBy(sortFields);
+    }
+
+    @Override
     public Result executeStatement() {
         StatementExecuteOk ok = this.mysqlxSession.sendMessage(getMessageBuilder().buildDelete(this.filterParams));
         return new UpdateResult(ok);

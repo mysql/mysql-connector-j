@@ -96,7 +96,7 @@ public abstract class FilterableStatement<STMT_T, RES_T> extends PreparableState
      *            sort expressions
      * @return this statement
      */
-    @SuppressWarnings({ "unchecked", "deprecation" }) // Suppress deprecation warning is required until RemoveStatement.orderBy is removed.
+    @SuppressWarnings({ "unchecked" })
     public STMT_T orderBy(String... sortFields) {
         resetPrepareState();
         this.filterParams.setOrder(sortFields);
