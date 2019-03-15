@@ -11015,8 +11015,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String expectedCollation = defaultCollations.get(charsetForJavaEnc);
 
             if ("UTF-8".equalsIgnoreCase(javaEnc)) {
-                // UTF-8 is the exception. This encoding is converted to MySQL charset 'utf8mb4' instead of 'utf8', and its corresponding collation.
-                expectedCollation = versionMeetsMinimum(8, 0, 1) ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci";
+                // UTF-8 is the exception. This encoding is converted to MySQL charset 'utf8mb4' instead of 'utf8', and its corresponding collation
+                // when server supports utf8mb4 (MySQL version >= 5.5.2).
+                expectedCollation = versionMeetsMinimum(8, 0, 1) ? "utf8mb4_0900_ai_ci"
+                        : (versionMeetsMinimum(5, 5, 2) ? "utf8mb4_general_ci" : "utf8_general_ci");
             }
 
             Connection testConn = getConnectionWithProps("characterEncoding=" + javaEnc);
