@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -4245,8 +4245,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                     this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
                 }
-                this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'" : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
+                this.sha256Stmt
+                        .executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl5602user'@'%' IDENTIFIED BY 'pwd'"
+                                : "set password for 'wl5602user'@'%' = PASSWORD('pwd')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 final Properties propsNoRetrieval = new Properties();
@@ -5957,8 +5958,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                     this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
                 }
-                this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY '" + pwd + "'" : "set password for 'wl6134user'@'%' = PASSWORD('" + pwd + "')");
+                this.sha256Stmt.executeUpdate(
+                        ((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl6134user'@'%' IDENTIFIED BY '" + pwd + "'"
+                                : "set password for 'wl6134user'@'%' = PASSWORD('" + pwd + "')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 props.setProperty("user", "wl6134user");
@@ -6550,8 +6552,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'bug18869381user2'@'%'");
                 createUser(this.sha256Stmt, "'bug18869381user3'@'%'", "identified WITH mysql_native_password");
                 this.sha256Stmt.executeUpdate("grant all on *.* to 'bug18869381user3'@'%'");
-                this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'" : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
+                this.sha256Stmt.executeUpdate(
+                        ((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
+                                : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
                 if (!((MySQLConnection) this.sha256Conn).versionMeetsMinimum(8, 0, 5)) {
                     this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                     this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
@@ -6559,8 +6562,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
                         ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'LongLongLongLongLongLongLongLongLongLongLongLongPwd1'"
                         : "set password for 'bug18869381user1'@'%' = PASSWORD('LongLongLongLongLongLongLongLongLongLongLongLongPwd1')");
-                this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'" : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
+                this.sha256Stmt.executeUpdate(
+                        ((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'"
+                                : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 Properties props = new Properties();
@@ -10458,8 +10462,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     this.sha256Stmt.executeUpdate("SET GLOBAL old_passwords= 2");
                     this.sha256Stmt.executeUpdate("SET SESSION old_passwords= 2");
                 }
-                this.sha256Stmt.executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'wl11200user'@'%' IDENTIFIED BY 'pwd'" : "set password for 'wl11200user'@'%' = PASSWORD('pwd')");
+                this.sha256Stmt
+                        .executeUpdate(((MySQLConnection) this.sha256Conn).versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'wl11200user'@'%' IDENTIFIED BY 'pwd'"
+                                : "set password for 'wl11200user'@'%' = PASSWORD('pwd')");
                 this.sha256Stmt.executeUpdate("flush privileges");
 
                 final Properties propsNoRetrieval = new Properties();
@@ -10965,5 +10970,62 @@ public class ConnectionRegressionTest extends BaseTestCase {
             assertEquals(testCase, idOffset + c, this.rs.getInt(1));
         }
         assertEquals(testCase, expectedCount, c);
+    }
+
+    /**
+     * Tests fix for Bug#91317 (28207422), Wrong defaults on collation mappings.
+     */
+    public void testBug91317() throws Exception {
+        Map<String, String> defaultCollations = new HashMap<String, String>();
+
+        // Compare server-side and client-side collation defaults.
+        this.rs = this.stmt.executeQuery("SELECT COLLATION_NAME, CHARACTER_SET_NAME, ID FROM INFORMATION_SCHEMA.COLLATIONS WHERE IS_DEFAULT = 'Yes'");
+        while (this.rs.next()) {
+            String collationName = this.rs.getString(1);
+            String charsetName = this.rs.getString(2);
+            int collationId = this.rs.getInt(3);
+            int mappedCollationId = CharsetMapping.CHARSET_NAME_TO_COLLATION_INDEX.get(charsetName);
+
+            defaultCollations.put(charsetName, collationName);
+
+            // Default collation for 'utf8mb4' is 'utf8mb4_0900_ai_ci' in MySQL 8.0.1 and above, 'utf8mb4_general_ci' in the others.
+            if ("utf8mb4".equalsIgnoreCase(charsetName) && !versionMeetsMinimum(8, 0, 1)) {
+                mappedCollationId = 45;
+            }
+
+            assertEquals(collationId, mappedCollationId);
+            assertEquals(collationName, CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[mappedCollationId]);
+        }
+
+        // Check `collation_connection` for each one of the known character sets.
+        this.rs = this.stmt.executeQuery("SELECT character_set_name FROM information_schema.character_sets");
+        int csCount = 0;
+        while (this.rs.next()) {
+            csCount++;
+            String cs = this.rs.getString(1);
+
+            // The following cannot be set as client_character_set
+            // (https://dev.mysql.com/doc/refman/8.0/en/charset-connection.html#charset-connection-impermissible-client-charset)
+            if (cs.equalsIgnoreCase("ucs2") || cs.equalsIgnoreCase("utf16") || cs.equalsIgnoreCase("utf16le") || cs.equalsIgnoreCase("utf32")) {
+                continue;
+            }
+
+            String javaEnc = CharsetMapping.getJavaEncodingForMysqlCharset(cs);
+            String charsetForJavaEnc = CharsetMapping.getMysqlCharsetForJavaEncoding(javaEnc, (MySQLConnection) this.conn);
+            String expectedCollation = defaultCollations.get(charsetForJavaEnc);
+
+            if ("UTF-8".equalsIgnoreCase(javaEnc)) {
+                // UTF-8 is the exception. This encoding is converted to MySQL charset 'utf8mb4' instead of 'utf8', and its corresponding collation.
+                expectedCollation = versionMeetsMinimum(8, 0, 1) ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci";
+            }
+
+            Connection testConn = getConnectionWithProps("characterEncoding=" + javaEnc);
+            ResultSet testRs = testConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'collation_connection'");
+            assertTrue(testRs.next());
+            assertEquals(expectedCollation, testRs.getString(2));
+            testConn.close();
+        }
+        // Assert that some charsets were tested.
+        assertTrue(csCount > 35); // There are 39 charsets in MySQL 5.5.61, 40 in MySQL 5.6.41 and 41 in MySQL 5.7.23 and above, but these numbers can vary.
     }
 }

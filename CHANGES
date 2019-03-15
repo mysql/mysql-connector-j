@@ -3,6 +3,8 @@
 
 Version 5.1.48
 
+  - Fix for Bug#91317 (28207422), Wrong defaults on collation mappings.
+
   - Fix for Bug#29244101, ADD MAPPING FOR UTF8MB4_ZH_0900_AS_CS COLLATION.
 
   - Fix for Bug#92508 (28747636), mysql-connector in bootclasspath causing memory leak.
