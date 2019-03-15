@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -85,57 +85,56 @@ public interface SocketMetadata {
             }
 
             if (processHost != null) {
-                conn.getLog().logDebug(String.format("Using 'host' value of '%s' to determine locality of connection", processHost));
+                conn.getLog().logDebug(Messages.getString("SocketMetadata.0", new Object[] { processHost }));
 
                 int endIndex = processHost.lastIndexOf(":");
                 if (endIndex != -1) {
                     processHost = processHost.substring(0, endIndex);
+                }
 
-                    try {
-                        boolean isLocal = false;
+                try {
 
-                        InetAddress[] allHostAddr = InetAddress.getAllByName(processHost);
+                    InetAddress[] allHostAddr = InetAddress.getAllByName(processHost);
 
-                        // mysqlConnection should be the raw socket
-                        SocketAddress remoteSocketAddr = conn.getIO().mysqlConnection.getRemoteSocketAddress();
+                    SocketAddress remoteSocketAddr = conn.getIO().mysqlConnection.getRemoteSocketAddress(); // mysqlConnection should be the raw socket
 
-                        if (remoteSocketAddr instanceof InetSocketAddress) {
-                            InetAddress whereIConnectedTo = ((InetSocketAddress) remoteSocketAddr).getAddress();
+                    if (remoteSocketAddr instanceof InetSocketAddress) {
+                        InetAddress whereIConnectedTo = ((InetSocketAddress) remoteSocketAddr).getAddress();
 
-                            for (InetAddress hostAddr : allHostAddr) {
-                                if (hostAddr.equals(whereIConnectedTo)) {
-                                    conn.getLog().logDebug(
-                                            String.format("Locally connected - HostAddress(%s).equals(whereIconnectedTo({%s})", hostAddr, whereIConnectedTo));
-                                    isLocal = true;
-                                    break;
-                                }
-                                conn.getLog()
-                                        .logDebug(String.format("Attempted locally connected check failed - ! HostAddress(%s).equals(whereIconnectedTo(%s)",
-                                                hostAddr, whereIConnectedTo));
+                        for (InetAddress hostAddr : allHostAddr) {
+                            if (hostAddr.equals(whereIConnectedTo)) {
+                                conn.getLog().logDebug(Messages.getString("SocketMetadata.1", new Object[] { hostAddr, whereIConnectedTo }));
+                                return true;
                             }
-                        } else {
-                            String msg = String.format("Remote socket address %s is not an inet socket address", remoteSocketAddr);
-                            conn.getLog().logDebug(msg);
+                            conn.getLog().logDebug(Messages.getString("SocketMetadata.2", new Object[] { hostAddr, whereIConnectedTo }));
                         }
 
-                        return isLocal;
-                    } catch (UnknownHostException e) {
-                        conn.getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { processHost }), e);
-                        return false;
+                    } else {
+                        conn.getLog().logDebug(Messages.getString("SocketMetadata.3", new Object[] { remoteSocketAddr }));
                     }
+
+                    return false;
+                } catch (UnknownHostException e) {
+                    conn.getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] { processHost }), e);
+
+                    return false;
                 }
-                conn.getLog().logWarn(String
-                        .format("No port number present in 'host' from SHOW PROCESSLIST '%s', unable to determine whether locally connected", processHost));
-                return false;
+
             }
-            conn.getLog().logWarn(String
-                    .format("Cannot find process listing for connection %d in SHOW PROCESSLIST output, unable to determine if locally connected", threadId));
+
             return false;
         }
 
         private static String findProcessHost(long threadId, java.sql.Statement processListStmt) throws SQLException {
             String processHost = null;
-            ResultSet rs = processListStmt.executeQuery("SHOW PROCESSLIST");
+            String ps = ((MySQLConnection) processListStmt.getConnection()).getServerVariable("performance_schema");
+
+            ResultSet rs = ((MySQLConnection) processListStmt.getConnection()).versionMeetsMinimum(5, 6, 0) // performance_schema.threads in MySQL 5.5 does not contain PROCESSLIST_HOST column
+                    && ps != null && ("1".contentEquals(ps) || "ON".contentEquals(ps))
+                            ? processListStmt.executeQuery(
+                                    "select PROCESSLIST_ID, PROCESSLIST_USER, PROCESSLIST_HOST from performance_schema.threads where PROCESSLIST_ID="
+                                            + threadId)
+                            : processListStmt.executeQuery("SHOW PROCESSLIST");
 
             while (rs.next()) {
                 long id = rs.getLong(1);

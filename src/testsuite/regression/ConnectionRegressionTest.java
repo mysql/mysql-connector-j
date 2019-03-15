@@ -11030,4 +11030,45 @@ public class ConnectionRegressionTest extends BaseTestCase {
         // Assert that some charsets were tested.
         assertTrue(csCount > 35); // There are 39 charsets in MySQL 5.5.61, 40 in MySQL 5.6.41 and 41 in MySQL 5.7.23 and above, but these numbers can vary.
     }
+
+    /**
+     * Tests fix for Bug#29329326, PLEASE AVOID SHOW PROCESSLIST IF POSSIBLE.
+     * 
+     * @throws Exception
+     */
+    public void testBug29329326() throws Exception {
+        Properties p = new Properties();
+        p.setProperty("statementInterceptors", Bug29329326QueryInterceptor.class.getName());
+
+        MySQLConnection c = (MySQLConnection) getConnectionWithProps(p);
+        Bug29329326QueryInterceptor qi = (Bug29329326QueryInterceptor) c.getStatementInterceptorsInstances().get(0);
+        assertTrue("SHOW PROCESSLIST was issued during connection establishing", qi.cnt == 0);
+
+        ((ConnectionImpl) c).isServerLocal();
+
+        String ps = c.getServerVariable("performance_schema");
+        if (versionMeetsMinimum(5, 6, 0) // performance_schema.threads in MySQL 5.5 does not contain PROCESSLIST_HOST column
+                && ps != null && ("1".contentEquals(ps) || "ON".contentEquals(ps))) {
+            assertTrue("SHOW PROCESSLIST was issued by isServerLocal()", qi.cnt == 0);
+        } else {
+            assertTrue("SHOW PROCESSLIST wasn't issued by isServerLocal()", qi.cnt > 0);
+        }
+    }
+
+    /**
+     * Counts the number of issued "SHOW PROCESSLIST" statements.
+     */
+    public static class Bug29329326QueryInterceptor extends BaseStatementInterceptor {
+        int cnt = 0;
+
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection connection)
+                throws SQLException {
+            System.out.println(sql);
+            if (sql.contains("SHOW PROCESSLIST")) {
+                this.cnt++;
+            }
+            return null;
+        }
+    }
 }

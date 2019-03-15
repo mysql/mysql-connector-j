@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -3006,7 +3006,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 try {
                     stmt = getMetadataSafeStatement(this.sessionMaxRows);
                     String query = versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))
-                            ? "SELECT @@session.transaction_isolation" : "SELECT @@session.tx_isolation";
+                            ? "SELECT @@session.transaction_isolation"
+                            : "SELECT @@session.tx_isolation";
                     rs = stmt.executeQuery(query);
 
                     if (rs.next()) {
@@ -3547,7 +3548,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     stmt = getMetadataSafeStatement(this.sessionMaxRows);
 
                     rs = stmt.executeQuery(versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))
-                            ? "select @@session.transaction_read_only" : "select @@session.tx_read_only");
+                            ? "select @@session.transaction_read_only"
+                            : "select @@session.tx_read_only");
                     if (rs.next()) {
                         return rs.getInt(1) != 0; // mysql has a habit of tri+ state booleans
                     }
@@ -3780,6 +3782,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
                     queryBuf.append(", @@net_buffer_length AS net_buffer_length");
                     queryBuf.append(", @@net_write_timeout AS net_write_timeout");
+                    if (versionMeetsMinimum(5, 5, 0)) {
+                        queryBuf.append(", @@performance_schema AS performance_schema");
+                    }
                     if (!versionMeetsMinimum(8, 0, 3)) {
                         queryBuf.append(", @@query_cache_size AS query_cache_size");
                         queryBuf.append(", @@query_cache_type AS query_cache_type");
