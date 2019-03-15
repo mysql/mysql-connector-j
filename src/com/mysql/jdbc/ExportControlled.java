@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -482,8 +482,8 @@ public class ExportControlled {
         }
     }
 
-    public static boolean isSSLEstablished(MysqlIO mysqlIO) {
-        return SSLSocket.class.isAssignableFrom(mysqlIO.mysqlConnection.getClass());
+    public static boolean isSSLEstablished(Socket socket) {
+        return socket == null ? false : SSLSocket.class.isAssignableFrom(socket.getClass());
     }
 
     public static RSAPublicKey decodeRSAPublicKey(String key, ExceptionInterceptor interceptor) throws SQLException {

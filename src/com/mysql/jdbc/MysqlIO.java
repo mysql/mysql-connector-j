@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2241,18 +2241,19 @@ public class MysqlIO {
      */
     final void quit() throws SQLException {
         try {
-            // we're not going to read the response, fixes BUG#56979 Improper connection closing logic leads to TIME_WAIT sockets on server
-
             try {
-                if (!this.mysqlConnection.isClosed()) {
-                    try {
-                        this.mysqlConnection.shutdownInput();
-                    } catch (UnsupportedOperationException ex) {
-                        // ignore, some sockets do not support this method
+                if (!ExportControlled.isSSLEstablished(this.mysqlConnection)) { // Fix for Bug#56979 does not apply to secure sockets.
+                    if (!this.mysqlConnection.isClosed()) {
+                        try {
+                            // The response won't be read, this fixes BUG#56979 [Improper connection closing logic leads to TIME_WAIT sockets on server].
+                            this.mysqlConnection.shutdownInput();
+                        } catch (UnsupportedOperationException e) {
+                            // Ignore, some sockets do not support this method.
+                        }
                     }
                 }
-            } catch (IOException ioEx) {
-                this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
+            } catch (IOException e) {
+                // Can't do anything constructive about this.
             }
 
             Buffer packet = new Buffer(6);
@@ -4915,7 +4916,7 @@ public class MysqlIO {
     }
 
     public boolean isSSLEstablished() {
-        return ExportControlled.enabled() && ExportControlled.isSSLEstablished(this);
+        return ExportControlled.enabled() && ExportControlled.isSSLEstablished(this.mysqlConnection);
     }
 
     protected int getServerStatus() {
