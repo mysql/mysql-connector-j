@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -55,7 +55,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
 
         Map<String, Long> blackList = proxy.getGlobalBlacklist();
 
-        for (int attempts = 0; attempts < numRetries;) {
+        for (int attempts = 0; attempts < numRetries; attempts++) {
             if (numHosts == 1) {
                 this.currentHostIndex = 0; // pathological case
             } else if (this.currentHostIndex == -1) {
