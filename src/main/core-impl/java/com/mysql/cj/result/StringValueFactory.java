@@ -57,14 +57,10 @@ public class StringValueFactory implements ValueFactory<String> {
     }
 
     /**
-     * Create a string from date fields. The fields are formatted in a YYYY-mm-dd format. A point-in-time is not calculated.
+     * Create a string from InternalDate. The fields are formatted in a YYYY-mm-dd format.
      * 
-     * @param year
-     *            year
-     * @param month
-     *            month
-     * @param day
-     *            day
+     * @param idate
+     *            {@link InternalDate}
      * @return string
      */
     public String createFromDate(InternalDate idate) {
@@ -73,16 +69,10 @@ public class StringValueFactory implements ValueFactory<String> {
     }
 
     /**
-     * Create a string from time fields. The fields are formatted in a HH:MM:SS[.nnnnnnnnn] format. A point-in-time is not calculated.
+     * Create a string from InternalTime. The fields are formatted in a HH:MM:SS[.nnnnnnnnn] format.
      * 
-     * @param hours
-     *            hours
-     * @param minutes
-     *            minutes
-     * @param seconds
-     *            seconds
-     * @param nanos
-     *            nanoseconds
+     * @param it
+     *            {@link InternalTime}
      * @return string
      */
     public String createFromTime(InternalTime it) {
@@ -93,23 +83,11 @@ public class StringValueFactory implements ValueFactory<String> {
     }
 
     /**
-     * Create a string from time fields. The fields are formatted by concatening the result of {@link #createFromDate(int,int,int)} and {@link
-     * #createFromTime(int,int,int,int)}. A point-in-time is not calculated.
+     * Create a string from time fields. The fields are formatted by concatenating the result of {@link #createFromDate(InternalDate)} and {@link
+     * #createFromTime(InternalTime)}.
      * 
-     * @param year
-     *            year
-     * @param month
-     *            month
-     * @param day
-     *            day
-     * @param hours
-     *            hours
-     * @param minutes
-     *            minutes
-     * @param seconds
-     *            seconds
-     * @param nanos
-     *            nanoseconds
+     * @param its
+     *            {@link InternalTimestamp}
      * @return string
      */
     public String createFromTimestamp(InternalTimestamp its) {

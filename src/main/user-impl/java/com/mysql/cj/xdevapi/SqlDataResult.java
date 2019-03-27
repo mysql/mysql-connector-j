@@ -53,6 +53,8 @@ public class SqlDataResult extends RowResultImpl implements SqlResult {
      *            {@link RowList} provided by c/J core
      * @param completer
      *            supplier for completion task
+     * @param pset
+     *            {@link PropertySet}
      */
     public SqlDataResult(ColumnDefinition metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer, PropertySet pset) {
         super(metadata, defaultTimeZone, rows, completer, pset);

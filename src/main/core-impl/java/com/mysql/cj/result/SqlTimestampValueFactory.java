@@ -52,6 +52,8 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
     private Calendar cal;
 
     /**
+     * @param pset
+     *            {@link PropertySet}
      * @param calendar
      *            Calendar used to interpret the fields.
      * @param tz

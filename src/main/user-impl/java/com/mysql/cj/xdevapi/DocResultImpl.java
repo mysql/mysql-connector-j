@@ -47,6 +47,8 @@ public class DocResultImpl extends AbstractDataResult<DbDoc> implements DocResul
      *            {@link RowList} object
      * @param completer
      *            Supplier of X Protocol StatementExecuteOk object.
+     * @param pset
+     *            {@link PropertySet}
      */
     public DocResultImpl(RowList rows, Supplier<StatementExecuteOk> completer, PropertySet pset) {
         super(rows, completer, new DbDocFactory(pset));

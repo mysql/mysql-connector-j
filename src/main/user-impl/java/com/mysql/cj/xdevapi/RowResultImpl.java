@@ -58,6 +58,8 @@ public class RowResultImpl extends AbstractDataResult<Row> implements RowResult 
      *            {@link RowList} provided by c/J core
      * @param completer
      *            supplier for completion task
+     * @param pset
+     *            {@link PropertySet}
      */
     public RowResultImpl(ColumnDefinition metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer, PropertySet pset) {
         super(rows, completer, new RowFactory(metadata, defaultTimeZone, pset));

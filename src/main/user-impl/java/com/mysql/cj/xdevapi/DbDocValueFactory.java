@@ -45,6 +45,9 @@ import com.mysql.cj.util.StringUtils;
 public class DbDocValueFactory extends DefaultValueFactory<DbDoc> {
     /**
      * Constructor.
+     * 
+     * @param pset
+     *            {@link PropertySet}
      */
     public DbDocValueFactory(PropertySet pset) {
         super(pset);

@@ -126,6 +126,8 @@ public class MysqlxSession extends CoreSession {
     /**
      * Return an id to be used as a client-managed prepared statement id.
      * 
+     * @param preparableStatement
+     *            {@link PreparableStatement}
      * @return a new identifier to be used as prepared statement id
      */
     public int getNewPreparedStatementId(PreparableStatement<?> preparableStatement) {
@@ -147,6 +149,8 @@ public class MysqlxSession extends CoreSession {
      * 
      * @param preparedStatementId
      *            the id of the prepared statement that failed to be prepared
+     * @param e
+     *            {@link XProtocolError}
      * @return
      *         {@code true} if the exception was properly handled
      */
@@ -172,6 +176,8 @@ public class MysqlxSession extends CoreSession {
      *            the {@link FilterableStatement} params that contain the arguments for the previously-defined placeholders
      * @param resultCtor
      *            a constructor that builds the results.
+     * @param <T>
+     *            result type
      * @return
      *         the result from the given constructor
      */

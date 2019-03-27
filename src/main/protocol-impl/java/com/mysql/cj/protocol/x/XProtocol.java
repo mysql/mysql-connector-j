@@ -488,6 +488,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     /**
      * Used only in tests
+     * 
+     * @return true if there are result rows
      */
     public boolean hasResults() {
         try {
@@ -589,6 +591,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
      * Returns an id to be used as a client-managed prepared statement id. The method {@link #freePreparedStatementId(int)} must be called when the prepared
      * statement is deallocated so that the same id can be re-used.
      * 
+     * @param preparableStatement
+     *            {@link PreparableStatement}
+     * 
      * @return a new identifier to be used as prepared statement id
      */
     public int getNewPreparedStatementId(PreparableStatement<?> preparableStatement) {
@@ -621,6 +626,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
      * 
      * @param preparedStatementId
      *            the id of the prepared statement that failed to prepare
+     * @param e
+     *            {@link XProtocolError}
      * @return
      *         {@code true} if the exception was properly handled
      */
