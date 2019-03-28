@@ -6993,4 +6993,26 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertNull(this.rs.getObject("volume", Long.class));
 
     }
+
+    /**
+     * Tests fix for BUG#94585 (29452669), GETTABLENAME() RETURNS NULL FOR A QUERY HAVING COUNT(*) WITH JDBC DRIVER V8.0.12
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug94585() throws Exception {
+        createTable("testBug94585", "(column_1 INT NOT NULL)");
+        Properties props = new Properties();
+        for (boolean useSSPS : new boolean[] { false, true }) {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+            Connection con = getConnectionWithProps(props);
+            this.pstmt = con.prepareStatement("select count(*) from testBug94585");
+            ResultSetMetaData rsMeta = this.pstmt.getMetaData();
+            if (rsMeta != null) {
+                for (int i = 1; i <= rsMeta.getColumnCount(); i++) {
+                    assertNotNull(rsMeta.getTableName(i));
+                }
+            }
+        }
+    }
 }

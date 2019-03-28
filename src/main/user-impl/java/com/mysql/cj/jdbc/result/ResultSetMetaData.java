@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -306,11 +306,8 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     @Override
     public String getTableName(int column) throws SQLException {
-        if (this.useOldAliasBehavior) {
-            return getField(column).getTableName();
-        }
-
-        return getField(column).getOriginalTableName();
+        String res = this.useOldAliasBehavior ? getField(column).getTableName() : getField(column).getOriginalTableName();
+        return res == null ? "" : res;
     }
 
     @Override
