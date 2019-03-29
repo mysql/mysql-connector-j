@@ -32,6 +32,7 @@ package com.mysql.cj.result;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.log.ProfilerEventHandler;
@@ -124,7 +125,9 @@ public class StringValueFactory implements ValueFactory<String> {
      * @return string
      */
     public String createFromBytes(byte[] bytes, int offset, int length, Field f) {
-        return StringUtils.toString(bytes, offset, length, f.getEncoding());
+        return StringUtils.toString(bytes, offset, length,
+                f.getCollationIndex() == CharsetMapping.MYSQL_COLLATION_INDEX_binary ? this.pset.getStringProperty(PropertyKey.characterEncoding).getValue()
+                        : f.getEncoding());
     }
 
     @Override

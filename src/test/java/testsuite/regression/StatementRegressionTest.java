@@ -10558,4 +10558,34 @@ public class StatementRegressionTest extends BaseTestCase {
         }
     }
 
+    /**
+     * Tests fix for Bug#27453692, CHARACTERS GET GARBLED IN CONCAT() IN PS WHEN USECURSORFETCH=TRUE.
+     */
+    public void testBug27453692() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf8");
+
+        String str = "\u30c6\u30b9\u30c8:";
+
+        boolean useSPS = false;
+        boolean useCursorFetch = false;
+        do {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.useCursorFetch.getKeyName(), Boolean.toString(useCursorFetch));
+            Connection con1 = getConnectionWithProps(props);
+
+            PreparedStatement ps1 = con1.prepareStatement("SELECT CONCAT('" + str + "', ?) AS res");
+            ps1.setInt(1, 123);
+            ResultSet rs1 = ps1.executeQuery();
+            assertTrue(rs1.next());
+            System.out.println(rs1.getString(1));
+            assertEquals(str + "123", rs1.getString(1));
+
+            con1.close();
+
+        } while ((useSPS = !useSPS) || (useCursorFetch = !useCursorFetch));
+    }
+
 }
