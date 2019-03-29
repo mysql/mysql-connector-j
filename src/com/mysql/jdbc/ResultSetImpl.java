@@ -5249,7 +5249,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
                 return String.valueOf(getNumericRepresentationOfSQLBitType(columnIndex));
             }
 
-            String encoding = metadata.getEncoding();
+            String encoding = metadata.getCollationIndex() == CharsetMapping.MYSQL_COLLATION_INDEX_binary ? this.connection.getEncoding()
+                    : metadata.getEncoding();
 
             stringVal = this.thisRow.getString(internalColumnIndex, encoding, this.connection);
 
