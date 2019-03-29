@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -8737,4 +8737,35 @@ public class StatementRegressionTest extends BaseTestCase {
         }
         this.stmt.execute("TRUNCATE TABLE testBug81063b");
     }
+
+    /**
+     * Tests fix for Bug#27453692, CHARACTERS GET GARBLED IN CONCAT() IN PS WHEN USECURSORFETCH=TRUE.
+     */
+    public void testBug27453692() throws Exception {
+        Properties props = new Properties();
+        props.setProperty("useSSL", "false");
+        props.setProperty("allowPublicKeyRetrieval", "true");
+        props.setProperty("characterEncoding", "utf8");
+
+        String str = "\u30c6\u30b9\u30c8:";
+
+        boolean useSPS = false;
+        boolean useCursorFetch = false;
+        do {
+            props.setProperty("useServerPrepStmts", Boolean.toString(useSPS));
+            props.setProperty("useCursorFetch", Boolean.toString(useCursorFetch));
+            Connection con1 = getConnectionWithProps(props);
+
+            PreparedStatement ps1 = con1.prepareStatement("SELECT CONCAT('" + str + "', ?) AS res");
+            ps1.setInt(1, 123);
+            ResultSet rs1 = ps1.executeQuery();
+            assertTrue(rs1.next());
+            System.out.println(rs1.getString(1));
+            assertEquals(str + "123", rs1.getString(1));
+
+            con1.close();
+
+        } while ((useSPS = !useSPS) || (useCursorFetch = !useCursorFetch));
+    }
+
 }

@@ -3,6 +3,8 @@
 
 Version 5.1.48
 
+  - Fix for Bug#27453692, CHARACTERS GET GARBLED IN CONCAT() IN PS WHEN USECURSORFETCH=TRUE.
+
   - Fix for Bug#93590 (29054329), javax.net.ssl.SSLException: closing inbound before receiving peer's close_notify.
 
   - Fix for Bug#29329326, PLEASE AVOID SHOW PROCESSLIST IF POSSIBLE.

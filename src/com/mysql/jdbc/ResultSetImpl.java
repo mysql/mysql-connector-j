@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -939,7 +939,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
         this.wasNullFlag = false;
 
-        String encoding = this.fields[columnIndexMinusOne].getEncoding();
+        String encoding = this.fields[columnIndexMinusOne].getCollationIndex() == CharsetMapping.MYSQL_COLLATION_INDEX_binary ? this.connection.getEncoding()
+                : this.fields[columnIndexMinusOne].getEncoding();
 
         return this.thisRow.getString(columnIndex - 1, encoding, this.connection);
     }
