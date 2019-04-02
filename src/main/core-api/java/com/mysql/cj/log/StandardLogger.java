@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -50,8 +50,6 @@ public class StandardLogger implements Log {
 
     private static final int TRACE = 5;
 
-    private static StringBuffer bufferedLog = null;
-
     private boolean logLocationInfo = true;
 
     /**
@@ -72,18 +70,6 @@ public class StandardLogger implements Log {
      */
     public StandardLogger(String name, boolean logLocationInfo) {
         this.logLocationInfo = logLocationInfo;
-    }
-
-    public static void startLoggingToBuffer() {
-        bufferedLog = new StringBuffer();
-    }
-
-    public static void dropBuffer() {
-        bufferedLog = null;
-    }
-
-    public static Appendable getBuffer() {
-        return bufferedLog;
     }
 
     public boolean isDebugEnabled() {
@@ -242,7 +228,7 @@ public class StandardLogger implements Log {
         logInternal(WARN, message, exception);
     }
 
-    protected void logInternal(int level, Object msg, Throwable exception) {
+    protected String logInternal(int level, Object msg, Throwable exception) {
         StringBuilder msgBuf = new StringBuilder();
         msgBuf.append(new Date().toString());
         msgBuf.append(" ");
@@ -280,7 +266,7 @@ public class StandardLogger implements Log {
         }
 
         if (msg instanceof ProfilerEvent) {
-            msgBuf.append(LogUtils.expandProfilerEventIfNecessary(msg));
+            msgBuf.append(msg.toString());
 
         } else {
             if (this.logLocationInfo && level != TRACE) {
@@ -307,8 +293,6 @@ public class StandardLogger implements Log {
 
         System.err.println(messageAsString);
 
-        if (bufferedLog != null) {
-            bufferedLog.append(messageAsString);
-        }
+        return messageAsString;
     }
 }

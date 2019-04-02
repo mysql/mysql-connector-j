@@ -32,8 +32,6 @@ package com.mysql.cj.log;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.mysql.cj.util.LogUtils;
-
 /**
  * Logging functionality for JDK1.4
  */
@@ -249,7 +247,7 @@ public class Jdk14Logger implements Log {
             //String fileName = "N/A";
 
             if (msg instanceof ProfilerEvent) {
-                messageAsString = LogUtils.expandProfilerEventIfNecessary(msg).toString();
+                messageAsString = msg.toString();
             } else {
                 Throwable locationException = new Throwable();
                 StackTraceElement[] locations = locationException.getStackTrace();

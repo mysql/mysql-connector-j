@@ -4727,11 +4727,6 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             @Override
-            public long getConnectionId() {
-                return 0;
-            }
-
-            @Override
             public String getPointOfOrigin() {
                 return null;
             }
@@ -4747,8 +4742,8 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             @Override
-            public int getOwningStatementId() {
-                return 0;
+            public Query getOwningQuery() {
+                return null;
             }
 
             @Override

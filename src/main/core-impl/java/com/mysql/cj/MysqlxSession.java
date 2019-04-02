@@ -60,7 +60,7 @@ import com.mysql.cj.xdevapi.SqlUpdateResult;
 public class MysqlxSession extends CoreSession {
 
     public MysqlxSession(HostInfo hostInfo, PropertySet propSet) {
-        super(null, propSet);
+        super(hostInfo, propSet);
 
         // create protocol instance
         this.protocol = new XProtocol(hostInfo, propSet);
@@ -85,12 +85,14 @@ public class MysqlxSession extends CoreSession {
         return this.protocol.getSocketConnection().getPort();
     }
 
+    @Override
     public void quit() {
         try {
             this.protocol.close();
         } catch (IOException ex) {
             throw new CJCommunicationsException(ex);
         }
+        super.quit();
     }
 
     /**

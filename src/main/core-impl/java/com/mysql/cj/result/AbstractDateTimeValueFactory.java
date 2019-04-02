@@ -55,7 +55,7 @@ public abstract class AbstractDateTimeValueFactory<T> extends DefaultValueFactor
     @Override
     public T createFromDate(InternalDate idate) {
         if (idate.isZero()) {
-            switch (this.pset.<PropertyDefinitions.ZeroDatetimeBehavior> getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue()) {
+            switch (this.pset.<PropertyDefinitions.ZeroDatetimeBehavior>getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue()) {
                 case CONVERT_TO_NULL:
                     return null;
                 case ROUND:
@@ -75,7 +75,7 @@ public abstract class AbstractDateTimeValueFactory<T> extends DefaultValueFactor
     @Override
     public T createFromTimestamp(InternalTimestamp its) {
         if (its.isZero()) {
-            switch (this.pset.<PropertyDefinitions.ZeroDatetimeBehavior> getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue()) {
+            switch (this.pset.<PropertyDefinitions.ZeroDatetimeBehavior>getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue()) {
                 case CONVERT_TO_NULL:
                     return null;
                 case ROUND:
@@ -110,8 +110,6 @@ public abstract class AbstractDateTimeValueFactory<T> extends DefaultValueFactor
         // TODO: Too expensive to convert from other charset to ASCII here? UTF-8 (e.g.) doesn't need any conversion before being sent to the decoder
         String s = StringUtils.toString(bytes, offset, length, f.getEncoding());
         byte[] newBytes = s.getBytes();
-
-        issueConversionViaParsingWarning();
 
         if (MysqlTextValueDecoder.isDate(s)) {
             return createFromDate(MysqlTextValueDecoder.getDate(newBytes, 0, newBytes.length));

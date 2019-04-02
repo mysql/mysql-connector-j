@@ -56,7 +56,6 @@ import com.mysql.cj.BindValue;
 import com.mysql.cj.CancelQueryTask;
 import com.mysql.cj.ClientPreparedQuery;
 import com.mysql.cj.ClientPreparedQueryBindings;
-import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeSession;
@@ -77,7 +76,6 @@ import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.log.ProfilerEvent;
-import com.mysql.cj.log.ProfilerEventImpl;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.a.NativePacketPayload;
@@ -1297,11 +1295,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
             if (this.useUsageAdvisor) {
                 if (((PreparedQuery<?>) this.query).getQueryBindings().getNumberOfExecutions() <= 1) {
-                    String message = Messages.getString("PreparedStatement.43");
-
-                    this.query.getEventSink()
-                            .consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCurrentCatalog(), this.session.getThreadId(), this.getId(),
-                                    -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                    this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_USAGE, this.session, this, null, 0, new Throwable(),
+                            Messages.getString("PreparedStatement.43"));
                 }
             }
 

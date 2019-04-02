@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,83 +31,22 @@ package com.mysql.cj.log;
 
 import java.util.Date;
 
+import com.mysql.cj.util.LogUtils;
 import com.mysql.cj.util.StringUtils;
 
 public class ProfilerEventImpl implements ProfilerEvent {
 
-    /**
-     * Type of event
-     */
     private byte eventType;
-
-    /**
-     * Associated connection (-1 for none)
-     */
-    protected long connectionId;
-
-    /**
-     * Associated statement (-1 for none)
-     */
-    protected int statementId;
-
-    /**
-     * Associated result set (-1 for none)
-     */
-    protected int resultSetId;
-
-    /**
-     * When was the event created?
-     */
-    protected long eventCreationTime;
-
-    /**
-     * How long did the event last?
-     */
-    protected long eventDuration;
-
-    /**
-     * What units was the duration measured in?
-     */
-    protected String durationUnits;
-
-    /**
-     * The hostname the event occurred on (as an index into a dictionary, used
-     * by 'remote' profilers for efficiency)?
-     */
-    protected int hostNameIndex;
-
-    /**
-     * The hostname the event occurred on
-     */
-    protected String hostName;
-
-    /**
-     * The catalog the event occurred on (as an index into a dictionary, used by
-     * 'remote' profilers for efficiency)?
-     */
-    protected int catalogIndex;
-
-    /**
-     * The catalog the event occurred on
-     */
-    protected String catalog;
-
-    /**
-     * Where was the event created (as an index into a dictionary, used by
-     * 'remote' profilers for efficiency)?
-     */
-    protected int eventCreationPointIndex;
-
-    /**
-     * Where was the event created (as a string description of the
-     * eventCreationPoint)?
-     */
-    protected String eventCreationPointDesc;
-
-    /**
-     * Optional event message
-     */
-    protected String message;
+    private String hostName;
+    private String catalog;
+    private long connectionId;
+    private int statementId;
+    private int resultSetId;
+    private long eventCreationTime;
+    private long eventDuration;
+    private String durationUnits;
+    private String eventCreationPointDesc;
+    private String message;
 
     /**
      * Creates a new profiler event
@@ -124,34 +63,90 @@ public class ProfilerEventImpl implements ProfilerEvent {
      *            the statement id (-1 if N/A)
      * @param resultSetId
      *            the result set id (-1 if N/A)
-     * @param eventCreationTime
-     *            when was the event created?
      * @param eventDuration
      *            how long did the event last?
      * @param durationUnits
      *            time units user for eventDuration
-     * @param eventCreationPointDesc
-     *            event creation point as a string
      * @param eventCreationPoint
      *            event creation point as a Throwable
      * @param message
      *            optional message
      */
-    public ProfilerEventImpl(byte eventType, String hostName, String catalog, long connectionId, int statementId, int resultSetId, long eventCreationTime,
-            long eventDuration, String durationUnits, String eventCreationPointDesc, String eventCreationPoint, String message) {
-        this.setEventType(eventType);
+    public ProfilerEventImpl(byte eventType, String hostName, String catalog, long connectionId, int statementId, int resultSetId, long eventDuration,
+            String durationUnits, Throwable eventCreationPoint, String message) {
+        this(eventType, hostName, catalog, connectionId, statementId, resultSetId, System.currentTimeMillis(), eventDuration, durationUnits,
+                LogUtils.findCallingClassAndMethod(eventCreationPoint), message);
+    }
+
+    private ProfilerEventImpl(byte eventType, String hostName, String catalog, long connectionId, int statementId, int resultSetId, long eventCreationTime,
+            long eventDuration, String durationUnits, String eventCreationPointDesc, String message) {
+        // null-strings are stored as empty strings to get consistent results with pack/unpack
+        this.eventType = eventType;
+        this.hostName = hostName == null ? "" : hostName;
+        this.catalog = catalog == null ? "" : catalog;
         this.connectionId = connectionId;
         this.statementId = statementId;
         this.resultSetId = resultSetId;
         this.eventCreationTime = eventCreationTime;
         this.eventDuration = eventDuration;
-        this.durationUnits = durationUnits;
-        this.eventCreationPointDesc = eventCreationPointDesc;
-        this.message = message;
+        this.durationUnits = durationUnits == null ? "" : durationUnits;
+        this.eventCreationPointDesc = eventCreationPointDesc == null ? "" : eventCreationPointDesc;
+        this.message = message == null ? "" : message;
     }
 
+    @Override
+    public byte getEventType() {
+        return this.eventType;
+    }
+
+    @Override
+    public String getHostName() {
+        return this.hostName;
+    }
+
+    @Override
+    public String getCatalog() {
+        return this.catalog;
+    }
+
+    @Override
+    public long getConnectionId() {
+        return this.connectionId;
+    }
+
+    @Override
+    public int getStatementId() {
+        return this.statementId;
+    }
+
+    @Override
+    public int getResultSetId() {
+        return this.resultSetId;
+    }
+
+    @Override
+    public long getEventCreationTime() {
+        return this.eventCreationTime;
+    }
+
+    @Override
+    public long getEventDuration() {
+        return this.eventDuration;
+    }
+
+    @Override
+    public String getDurationUnits() {
+        return this.durationUnits;
+    }
+
+    @Override
     public String getEventCreationPointAsString() {
         return this.eventCreationPointDesc;
+    }
+
+    @Override
+    public String getMessage() {
+        return this.message;
     }
 
     /**
@@ -162,30 +157,26 @@ public class ProfilerEventImpl implements ProfilerEvent {
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
+        buf.append("[");
 
         switch (this.getEventType()) {
             case TYPE_EXECUTE:
                 buf.append("EXECUTE");
                 break;
-
             case TYPE_FETCH:
                 buf.append("FETCH");
                 break;
-
             case TYPE_OBJECT_CREATION:
                 buf.append("CONSTRUCT");
                 break;
-
             case TYPE_PREPARE:
                 buf.append("PREPARE");
                 break;
-
             case TYPE_QUERY:
                 buf.append("QUERY");
                 break;
-
-            case TYPE_WARN:
-                buf.append("WARN");
+            case TYPE_USAGE:
+                buf.append("USAGE ADVISOR");
                 break;
             case TYPE_SLOW_QUERY:
                 buf.append("SLOW QUERY");
@@ -193,28 +184,23 @@ public class ProfilerEventImpl implements ProfilerEvent {
             default:
                 buf.append("UNKNOWN");
         }
+        buf.append("] ");
 
-        buf.append(" created: ");
+        buf.append(this.message);
+
+        buf.append(" [Created on: ");
         buf.append(new Date(this.eventCreationTime));
-        buf.append(" duration: ");
+        buf.append(", duration: ");
         buf.append(this.eventDuration);
-        buf.append(" connection: ");
+        buf.append(", connection-id: ");
         buf.append(this.connectionId);
-        buf.append(" statement: ");
+        buf.append(", statement-id: ");
         buf.append(this.statementId);
-        buf.append(" resultset: ");
+        buf.append(", resultset-id: ");
         buf.append(this.resultSetId);
-
-        if (this.message != null) {
-            buf.append(" message: ");
-            buf.append(this.message);
-
-        }
-
-        if (this.eventCreationPointDesc != null) {
-            buf.append("\n\nEvent Created at:\n");
-            buf.append(this.eventCreationPointDesc);
-        }
+        buf.append(",");
+        buf.append(this.eventCreationPointDesc);
+        buf.append("]");
 
         return buf.toString();
     }
@@ -230,7 +216,14 @@ public class ProfilerEventImpl implements ProfilerEvent {
         int pos = 0;
 
         byte eventType = buf[pos++];
-        long connectionId = readInt(buf, pos);
+
+        byte[] host = readBytes(buf, pos);
+        pos += 4 + host.length;
+
+        byte[] cat = readBytes(buf, pos);
+        pos += 4 + cat.length;
+
+        long connectionId = readLong(buf, pos);
         pos += 8;
         int statementId = readInt(buf, pos);
         pos += 4;
@@ -239,105 +232,59 @@ public class ProfilerEventImpl implements ProfilerEvent {
         long eventCreationTime = readLong(buf, pos);
         pos += 8;
         long eventDuration = readLong(buf, pos);
-        pos += 4;
+        pos += 8;
 
         byte[] eventDurationUnits = readBytes(buf, pos);
-        pos += 4;
+        pos += 4 + eventDurationUnits.length;
 
-        if (eventDurationUnits != null) {
-            pos += eventDurationUnits.length;
-        }
-
-        readInt(buf, pos);
-        pos += 4;
         byte[] eventCreationAsBytes = readBytes(buf, pos);
-        pos += 4;
-
-        if (eventCreationAsBytes != null) {
-            pos += eventCreationAsBytes.length;
-        }
+        pos += 4 + eventCreationAsBytes.length;
 
         byte[] message = readBytes(buf, pos);
-        pos += 4;
+        pos += 4 + message.length;
 
-        if (message != null) {
-            pos += message.length;
-        }
-
-        return new ProfilerEventImpl(eventType, "", "", connectionId, statementId, resultSetId, eventCreationTime, eventDuration,
-                StringUtils.toString(eventDurationUnits, "ISO8859_1"), StringUtils.toString(eventCreationAsBytes, "ISO8859_1"), null,
-                StringUtils.toString(message, "ISO8859_1"));
+        // TODO charset?
+        return new ProfilerEventImpl(eventType, StringUtils.toString(host, "ISO8859_1"), StringUtils.toString(cat, "ISO8859_1"), connectionId, statementId,
+                resultSetId, eventCreationTime, eventDuration, StringUtils.toString(eventDurationUnits, "ISO8859_1"),
+                StringUtils.toString(eventCreationAsBytes, "ISO8859_1"), StringUtils.toString(message, "ISO8859_1"));
     }
 
     public byte[] pack() {
 
-        int len = 1 + 4 + 4 + 4 + 8 + 4 + 4;
+        // TODO charset (Bug#41172 ?)
+        byte[] hostNameAsBytes = StringUtils.getBytes(this.hostName, "ISO8859_1");
+        byte[] catalogAsBytes = StringUtils.getBytes(this.catalog, "ISO8859_1");
+        byte[] durationUnitsAsBytes = StringUtils.getBytes(this.durationUnits, "ISO8859_1");
+        byte[] eventCreationAsBytes = StringUtils.getBytes(this.eventCreationPointDesc, "ISO8859_1");
+        byte[] messageAsBytes = StringUtils.getBytes(this.message, "ISO8859_1");
 
-        byte[] eventCreationAsBytes = null;
-
-        getEventCreationPointAsString();
-
-        if (this.eventCreationPointDesc != null) {
-            eventCreationAsBytes = StringUtils.getBytes(this.eventCreationPointDesc, "ISO8859_1");
-            len += (4 + eventCreationAsBytes.length);
-        } else {
-            len += 4;
-        }
-
-        byte[] messageAsBytes = null;
-
-        if (this.message != null) {
-            messageAsBytes = StringUtils.getBytes(this.message, "ISO8859_1");
-            len += (4 + messageAsBytes.length);
-        } else {
-            len += 4;
-        }
-
-        byte[] durationUnitsAsBytes = null;
-
-        if (this.durationUnits != null) {
-            durationUnitsAsBytes = StringUtils.getBytes(this.durationUnits, "ISO8859_1");
-            len += (4 + durationUnitsAsBytes.length);
-        } else {
-            len += 4;
-            durationUnitsAsBytes = StringUtils.getBytes("", "ISO8859_1");
-        }
+        int len = /* eventType */ 1 + /* hostName */ (4 + hostNameAsBytes.length) + + /* catalog */ (4 + catalogAsBytes.length) + /* connectionId */ 8
+                + /* statementId */ 4 + /* resultSetId */ 4 + /* eventCreationTime */ 8 + /* eventDuration */ 8
+                + /* durationUnits */ (4 + durationUnitsAsBytes.length) + /* eventCreationPointDesc */ (4 + eventCreationAsBytes.length)
+                + /* message */ (4 + messageAsBytes.length);
 
         byte[] buf = new byte[len];
-
         int pos = 0;
-
-        buf[pos++] = this.getEventType();
+        buf[pos++] = this.eventType;
+        pos = writeBytes(hostNameAsBytes, buf, pos);
+        pos = writeBytes(catalogAsBytes, buf, pos);
         pos = writeLong(this.connectionId, buf, pos);
         pos = writeInt(this.statementId, buf, pos);
         pos = writeInt(this.resultSetId, buf, pos);
         pos = writeLong(this.eventCreationTime, buf, pos);
         pos = writeLong(this.eventDuration, buf, pos);
         pos = writeBytes(durationUnitsAsBytes, buf, pos);
-        pos = writeInt(this.eventCreationPointIndex, buf, pos);
-
-        if (eventCreationAsBytes != null) {
-            pos = writeBytes(eventCreationAsBytes, buf, pos);
-        } else {
-            pos = writeInt(0, buf, pos);
-        }
-
-        if (messageAsBytes != null) {
-            pos = writeBytes(messageAsBytes, buf, pos);
-        } else {
-            pos = writeInt(0, buf, pos);
-        }
+        pos = writeBytes(eventCreationAsBytes, buf, pos);
+        pos = writeBytes(messageAsBytes, buf, pos);
 
         return buf;
     }
 
     private static int writeInt(int i, byte[] buf, int pos) {
-
         buf[pos++] = (byte) (i & 0xff);
         buf[pos++] = (byte) (i >>> 8);
         buf[pos++] = (byte) (i >>> 16);
         buf[pos++] = (byte) (i >>> 24);
-
         return pos;
     }
 
@@ -350,21 +297,17 @@ public class ProfilerEventImpl implements ProfilerEvent {
         buf[pos++] = (byte) (l >>> 40);
         buf[pos++] = (byte) (l >>> 48);
         buf[pos++] = (byte) (l >>> 56);
-
         return pos;
     }
 
     private static int writeBytes(byte[] msg, byte[] buf, int pos) {
         pos = writeInt(msg.length, buf, pos);
-
         System.arraycopy(msg, 0, buf, pos, msg.length);
-
         return pos + msg.length;
     }
 
     private static int readInt(byte[] buf, int pos) {
         return (buf[pos++] & 0xff) | ((buf[pos++] & 0xff) << 8) | ((buf[pos++] & 0xff) << 16) | ((buf[pos++] & 0xff) << 24);
-
     }
 
     private static long readLong(byte[] buf, int pos) {
@@ -375,53 +318,8 @@ public class ProfilerEventImpl implements ProfilerEvent {
 
     private static byte[] readBytes(byte[] buf, int pos) {
         int length = readInt(buf, pos);
-
-        pos += 4;
-
         byte[] msg = new byte[length];
-        System.arraycopy(buf, pos, msg, 0, length);
-
+        System.arraycopy(buf, pos + 4, msg, 0, length);
         return msg;
     }
-
-    public String getCatalog() {
-        return this.catalog;
-    }
-
-    public long getConnectionId() {
-        return this.connectionId;
-    }
-
-    public long getEventCreationTime() {
-        return this.eventCreationTime;
-    }
-
-    public long getEventDuration() {
-        return this.eventDuration;
-    }
-
-    public String getDurationUnits() {
-        return this.durationUnits;
-    }
-
-    public byte getEventType() {
-        return this.eventType;
-    }
-
-    public int getResultSetId() {
-        return this.resultSetId;
-    }
-
-    public int getStatementId() {
-        return this.statementId;
-    }
-
-    public String getMessage() {
-        return this.message;
-    }
-
-    public void setEventType(byte eventType) {
-        this.eventType = eventType;
-    }
-
 }

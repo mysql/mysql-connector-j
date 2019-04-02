@@ -173,9 +173,10 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         init(null, socketConn, propertySet, null);
     }
 
-    public void init(Session sess, SocketConnection socketConn, PropertySet propSet, TransactionEventHandler transactionManager) {
-        this.socketConnection = socketConn;
-        this.propertySet = propSet;
+    @Override
+    public void init(Session sess, SocketConnection socketConn, PropertySet propSet, TransactionEventHandler trManager) {
+        super.init(sess, socketConn, propSet, trManager);
+
         this.messageBuilder = new XMessageBuilder();
 
         this.authProvider = new XAuthenticationProvider();

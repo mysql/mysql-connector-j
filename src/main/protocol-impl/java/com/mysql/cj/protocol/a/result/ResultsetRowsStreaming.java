@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,6 @@
 
 package com.mysql.cj.protocol.a.result;
 
-import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
@@ -37,9 +36,6 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.StreamingNotifiable;
 import com.mysql.cj.log.ProfilerEvent;
-import com.mysql.cj.log.ProfilerEventHandler;
-import com.mysql.cj.log.ProfilerEventHandlerFactory;
-import com.mysql.cj.log.ProfilerEventImpl;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -141,14 +137,9 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
 
             if (this.protocol.getPropertySet().getBooleanProperty(PropertyKey.useUsageAdvisor).getValue()) {
                 if (hadMore) {
-
-                    ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.owner.getSession());
-
-                    eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.owner.getCurrentCatalog(), this.owner.getConnectionId(),
-                            this.owner.getOwningStatementId(), -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, null,
-                            Messages.getString("RowDataDynamic.2") + howMuchMore + Messages.getString("RowDataDynamic.3")
-                                    + Messages.getString("RowDataDynamic.4") + Messages.getString("RowDataDynamic.5") + Messages.getString("RowDataDynamic.6")
-                                    + this.owner.getPointOfOrigin()));
+                    this.owner.getSession().getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_USAGE, this.owner.getSession(),
+                            this.owner.getOwningQuery(), null, 0, new Throwable(),
+                            Messages.getString("RowDataDynamic.1", new String[] { String.valueOf(howMuchMore), this.owner.getPointOfOrigin() }));
                 }
             }
         }
@@ -244,14 +235,8 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
             // don't wrap SQLExceptions
             throw sqlEx;
         } catch (Exception ex) {
-            String exceptionType = ex.getClass().getName();
-            String exceptionMessage = ex.getMessage();
-
-            exceptionMessage += Messages.getString("RowDataDynamic.7");
-            exceptionMessage += Util.stackTraceToString(ex);
-
             CJException cjEx = ExceptionFactory.createException(
-                    Messages.getString("RowDataDynamic.8") + exceptionType + Messages.getString("RowDataDynamic.9") + exceptionMessage, ex,
+                    Messages.getString("RowDataDynamic.2", new String[] { ex.getClass().getName(), ex.getMessage(), Util.stackTraceToString(ex) }), ex,
                     this.exceptionInterceptor);
 
             throw cjEx;

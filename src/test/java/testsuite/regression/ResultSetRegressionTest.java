@@ -100,7 +100,6 @@ import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
 import com.mysql.cj.log.Log;
-import com.mysql.cj.log.StandardLogger;
 import com.mysql.cj.protocol.InternalDate;
 import com.mysql.cj.protocol.a.result.NativeResultset;
 import com.mysql.cj.protocol.a.result.ResultsetRowsCursor;
@@ -109,6 +108,7 @@ import com.mysql.cj.util.TimeUtil;
 import com.mysql.cj.util.Util;
 
 import testsuite.BaseTestCase;
+import testsuite.BufferingLogger;
 
 /**
  * Regression test cases for the ResultSet class.
@@ -3144,12 +3144,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             Properties props = new Properties();
             props.setProperty(PropertyKey.useUsageAdvisor.getKeyName(), "true");
+            props.setProperty(PropertyKey.logger.getKeyName(), BufferingLogger.class.getName());
 
             advisorConn = getConnectionWithProps(props);
 
             advisorStmt = advisorConn.createStatement();
 
-            StandardLogger.startLoggingToBuffer();
+            BufferingLogger.startLoggingToBuffer();
 
             this.rs = advisorStmt.executeQuery("SELECT 1, 2 LIMIT 0");
             this.rs.next();
@@ -3176,14 +3177,14 @@ public class ResultSetRegressionTest extends BaseTestCase {
             advisorStmt.setFetchSize(1);
 
             this.rs = advisorStmt.executeQuery("SELECT 1, 2 LIMIT 0");
-            StandardLogger.startLoggingToBuffer();
+            BufferingLogger.startLoggingToBuffer();
             this.rs.next();
             this.rs.close();
 
-            assertEquals(-1, StandardLogger.getBuffer().toString()
+            assertEquals(-1, BufferingLogger.getBuffer().toString()
                     .indexOf(Messages.getString("ResultSet.Possible_incomplete_traversal_of_result_set").substring(0, 10)));
         } finally {
-            StandardLogger.dropBuffer();
+            BufferingLogger.dropBuffer();
 
             if (advisorStmt != null) {
                 advisorStmt.close();

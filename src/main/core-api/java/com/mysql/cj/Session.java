@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,6 +34,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 
+import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.log.Log;
@@ -101,11 +102,23 @@ public interface Session {
 
     boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag);
 
+    /**
+     * Returns the log mechanism that should be used to log information from/for this Session.
+     * 
+     * @return the Log instance to use for logging messages.
+     */
     Log getLog();
 
+    /**
+     * Returns the current ProfilerEventHandler or initializes a new one if none exists.
+     * 
+     * @return the {@link ProfilerEventHandler} object.
+     */
     ProfilerEventHandler getProfilerEventHandler();
 
-    void setProfilerEventHandler(ProfilerEventHandler h);
+    HostInfo getHostInfo();
+
+    String getQueryTimingUnits();
 
     ServerSession getServerSession();
 

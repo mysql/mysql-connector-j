@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -352,13 +352,24 @@ public class BaseMetricsHolder {
         this.queryTimeMean = ((this.queryTimeMean * (this.queryTimeCount - 1)) + millisOrNanos) / this.queryTimeCount;
     }
 
-    public boolean isAbonormallyLongQuery(long millisOrNanos) {
-        if (this.queryTimeCount < 15) {
-            return false; // need a minimum amount for this to make sense
+    /**
+     * Update statistics that allows the driver to determine if a query is slow enough to be logged,
+     * and return the estimation result for millisOrNanos value.
+     * <p>
+     * Used in case autoSlowLog=true.
+     * 
+     * @param millisOrNanos
+     *            query execution time
+     * @return true if millisOrNanos is outside the 99th percentile?
+     */
+    public boolean checkAbonormallyLongQuery(long millisOrNanos) {
+        boolean res = false;
+        if (this.queryTimeCount > 14) { // need a minimum amount for this to make sense
+            double stddev = Math.sqrt((this.queryTimeSumSquares - ((this.queryTimeSum * this.queryTimeSum) / this.queryTimeCount)) / (this.queryTimeCount - 1));
+            res = millisOrNanos > (this.queryTimeMean + 5 * stddev);
         }
+        reportQueryTime(millisOrNanos);
+        return res;
 
-        double stddev = Math.sqrt((this.queryTimeSumSquares - ((this.queryTimeSum * this.queryTimeSum) / this.queryTimeCount)) / (this.queryTimeCount - 1));
-
-        return millisOrNanos > (this.queryTimeMean + 5 * stddev);
     }
 }

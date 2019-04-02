@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -263,13 +263,10 @@ public class ExceptionFactory {
 
         if (dueToTimeout == DUE_TO_TIMEOUT_TRUE || dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
 
-            if (lastPacketReceivedTimeMs != 0) {
-                Object[] timingInfo = { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) };
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", timingInfo));
-            } else {
-                exceptionMessageBuf.append(
-                        Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
-            }
+            exceptionMessageBuf.append(lastPacketReceivedTimeMs != 0
+                    ? Messages.getString("CommunicationsException.ServerPacketTimingInfo",
+                            new Object[] { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) })
+                    : Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
 
             if (timeoutMessageBuf != null) {
                 exceptionMessageBuf.append(timeoutMessageBuf);
@@ -285,12 +282,9 @@ public class ExceptionFactory {
             //
             if (underlyingException instanceof BindException) {
                 String localSocketAddress = propertySet.getStringProperty(PropertyKey.localSocketAddress).getValue();
-                if (localSocketAddress != null && !Util.interfaceExists(localSocketAddress)) {
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable"));
-                } else {
-                    // too many client connections???
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.TooManyClientConnections"));
-                }
+                exceptionMessageBuf.append(localSocketAddress != null && !Util.interfaceExists(localSocketAddress)
+                        ? Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable")
+                        : Messages.getString("CommunicationsException.TooManyClientConnections"));
             }
         }
 
@@ -300,13 +294,10 @@ public class ExceptionFactory {
 
             if (propertySet.getBooleanProperty(PropertyKey.maintainTimeStats).getValue() && !propertySet.getBooleanProperty(PropertyKey.paranoid).getValue()) {
                 exceptionMessageBuf.append("\n\n");
-                if (lastPacketReceivedTimeMs != 0) {
-                    Object[] timingInfo = { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) };
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", timingInfo));
-                } else {
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv",
-                            new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
-                }
+                exceptionMessageBuf.append(lastPacketReceivedTimeMs != 0
+                        ? Messages.getString("CommunicationsException.ServerPacketTimingInfo",
+                                new Object[] { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) })
+                        : Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
             }
         }
 

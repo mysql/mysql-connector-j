@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -58,7 +58,6 @@ import java.util.stream.Collectors;
 
 import com.mysql.cj.CacheAdapter;
 import com.mysql.cj.CacheAdapterFactory;
-import com.mysql.cj.Constants;
 import com.mysql.cj.LicenseConfiguration;
 import com.mysql.cj.Messages;
 import com.mysql.cj.NativeSession;
@@ -88,12 +87,9 @@ import com.mysql.cj.jdbc.result.ResultSetFactory;
 import com.mysql.cj.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
 import com.mysql.cj.log.ProfilerEvent;
-import com.mysql.cj.log.ProfilerEventHandlerFactory;
-import com.mysql.cj.log.ProfilerEventImpl;
 import com.mysql.cj.log.StandardLogger;
 import com.mysql.cj.protocol.SocksProxySocketFactory;
 import com.mysql.cj.util.LRUCache;
-import com.mysql.cj.util.LogUtils;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
 
@@ -302,9 +298,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     /** The password we used */
     private String password = null;
 
-    /** Point of origin where this Connection was created */
-    private String pointOfOrigin;
-
     /** Properties for this connection specified by user */
     protected Properties props = null;
 
@@ -441,8 +434,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 this.propertySet.getProperty(PropertyKey.socketFactory).setValue(SocksProxySocketFactory.class.getName());
             }
 
-            this.pointOfOrigin = this.useUsageAdvisor.getValue() ? LogUtils.findCallingClassAndMethod(new Throwable()) : "";
-
             this.dbmd = getMetaData(false, false);
 
             initializeSafeQueryInterceptors();
@@ -493,7 +484,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public void initializeSafeQueryInterceptors() throws SQLException {
         this.queryInterceptors = Util
-                .<QueryInterceptor> loadClasses(this.propertySet.getStringProperty(PropertyKey.queryInterceptors).getStringValue(),
+                .<QueryInterceptor>loadClasses(this.propertySet.getStringProperty(PropertyKey.queryInterceptors).getStringValue(),
                         "MysqlIo.BadQueryInterceptor", getExceptionInterceptor())
                 .stream().map(o -> new NoSubInterceptorWrapper(o.init(this, this.props, this.session.getLog()))).collect(Collectors.toList());
     }
@@ -1217,8 +1208,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
         synchronized (getConnectionMutex()) {
             if (!this.useLocalSessionState.getValue()) {
-                String s = this.session.queryServerVariable(versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))
-                        ? "@@session.transaction_isolation" : "@@session.tx_isolation");
+                String s = this.session.queryServerVariable(
+                        versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0)) ? "@@session.transaction_isolation"
+                                : "@@session.tx_isolation");
 
                 if (s != null) {
                     Integer intTI = mapTransIsolationNameToValue.get(s);
@@ -1293,7 +1285,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         if (connectionInterceptorClasses != null) {
             try {
                 this.connectionLifecycleInterceptors = Util
-                        .<ConnectionLifecycleInterceptor> loadClasses(
+                        .<ConnectionLifecycleInterceptor>loadClasses(
                                 this.propertySet.getStringProperty(PropertyKey.connectionLifecycleInterceptors).getStringValue(),
                                 "Connection.badLifecycleInterceptor", getExceptionInterceptor())
                         .stream().map(o -> o.init(this, this.props, this.session.getLog())).collect(Collectors.toList());
@@ -1413,8 +1405,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         if (useSessionStatus && !this.session.isClosed() && versionMeetsMinimum(5, 6, 5) && !this.useLocalSessionState.getValue()
                 && this.readOnlyPropagatesToServer.getValue()) {
             try {
-                String s = this.session.queryServerVariable(versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))
-                        ? "@@session.transaction_read_only" : "@@session.tx_read_only");
+                String s = this.session.queryServerVariable(
+                        versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0)) ? "@@session.transaction_read_only"
+                                : "@@session.tx_read_only");
                 if (s != null) {
                     return Integer.parseInt(s) != 0; // mysql has a habit of tri+ state booleans
                 }
@@ -1723,21 +1716,19 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     }
                 }
 
-                this.session.reportMetrics();
+                if (this.propertySet.getBooleanProperty(PropertyKey.gatherPerfMetrics).getValue()) {
+                    this.session.getProtocol().getMetricsHolder().reportMetrics(this.session.getLog());
+                }
 
                 if (this.useUsageAdvisor.getValue()) {
                     if (!calledExplicitly) {
-                        this.session.getProfilerEventHandler()
-                                .consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.session.getThreadId(), -1, -1,
-                                        System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("Connection.18")));
+                        this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_USAGE, this.session, null, null, 0, new Throwable(),
+                                Messages.getString("Connection.18"));
                     }
 
-                    long connectionLifeTime = System.currentTimeMillis() - this.session.getConnectionCreationTimeMillis();
-
-                    if (connectionLifeTime < 500) {
-                        this.session.getProfilerEventHandler()
-                                .consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.session.getThreadId(), -1, -1,
-                                        System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("Connection.19")));
+                    if (System.currentTimeMillis() - this.session.getConnectionCreationTimeMillis() < 500) {
+                        this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_USAGE, this.session, null, null, 0, new Throwable(),
+                                Messages.getString("Connection.19"));
                     }
                 }
 
@@ -1761,9 +1752,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (this.exceptionInterceptor != null) {
                 this.exceptionInterceptor.destroy();
             }
-        } finally {
-            ProfilerEventHandlerFactory.removeInstance(this.session);
 
+        } finally {
             this.openStatements.clear();
             this.queryInterceptors = null;
             this.exceptionInterceptor = null;

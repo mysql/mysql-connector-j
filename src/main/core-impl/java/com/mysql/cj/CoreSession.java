@@ -51,12 +51,12 @@ import com.mysql.cj.log.Log;
 import com.mysql.cj.log.LogFactory;
 import com.mysql.cj.log.NullLogger;
 import com.mysql.cj.log.ProfilerEventHandler;
-import com.mysql.cj.log.ProfilerEventHandlerFactory;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.result.Row;
+import com.mysql.cj.util.Util;
 
 public abstract class CoreSession implements Session {
 
@@ -104,22 +104,9 @@ public abstract class CoreSession implements Session {
         this.maintainTimeStats = getPropertySet().getBooleanProperty(PropertyKey.maintainTimeStats);
 
         this.log = LogFactory.getLogger(getPropertySet().getStringProperty(PropertyKey.logger).getStringValue(), Log.LOGGER_INSTANCE_NAME);
-        if (getPropertySet().getBooleanProperty(PropertyKey.profileSQL).getValue()
-                || getPropertySet().getBooleanProperty(PropertyKey.useUsageAdvisor).getValue()) {
-            ProfilerEventHandlerFactory.getInstance(this);
-        }
     }
 
-    /**
-     * Change user as given by parameters. This implementation only supports calling this during the initial handshake.
-     * 
-     * @param user
-     *            user name
-     * @param password
-     *            password
-     * @param database
-     *            database name
-     */
+    @Override
     public void changeUser(String user, String password, String database) {
         // reset maxRows to default value
         this.sessionMaxRows = -1;
@@ -132,21 +119,23 @@ public abstract class CoreSession implements Session {
         return this.propertySet;
     }
 
+    @Override
     public ExceptionInterceptor getExceptionInterceptor() {
         return this.exceptionInterceptor;
     }
 
+    @Override
     public void setExceptionInterceptor(ExceptionInterceptor exceptionInterceptor) {
         this.exceptionInterceptor = exceptionInterceptor;
     }
 
-    /**
-     * Returns the log mechanism that should be used to log information from/for this Session.
-     * 
-     * @return the Log instance to use for logging messages.
-     */
+    @Override
     public Log getLog() {
         return this.log;
+    }
+
+    public HostInfo getHostInfo() {
+        return this.hostInfo;
     }
 
     @SuppressWarnings("unchecked")
@@ -168,6 +157,7 @@ public abstract class CoreSession implements Session {
         return this.protocol.sendAsync(message);
     }
 
+    @Override
     public <M extends Message, RES_T, R> RES_T query(M message, Predicate<Row> filterRow, Function<Row, R> mapRow, Collector<R, ?, RES_T> collector) {
         this.protocol.send(message, 0);
         ColumnDefinition metadata = this.protocol.readMetadata();
@@ -196,9 +186,20 @@ public abstract class CoreSession implements Session {
         return this.protocol.getServerSession().getThreadId();
     }
 
+    @Override
+    public void quit() {
+        if (this.eventSink != null) {
+            this.eventSink.destroy();
+            this.eventSink = null;
+        }
+    }
+
+    @Override
     public void forceClose() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-        // TODO: REPLACE ME WITH close() unless there's different semantics here
+        if (this.eventSink != null) {
+            this.eventSink.destroy();
+            this.eventSink = null;
+        }
     }
 
     public boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag) {
@@ -207,12 +208,18 @@ public abstract class CoreSession implements Session {
 
     @Override
     public ProfilerEventHandler getProfilerEventHandler() {
-        return this.eventSink;
-    }
+        if (this.eventSink == null) {
+            synchronized (this) {
+                if (this.eventSink == null) { // check again to ensure that other thread didn't set it already
+                    this.eventSink = (ProfilerEventHandler) Util.getInstance(
+                            this.propertySet.getStringProperty(PropertyKey.profilerEventHandler).getStringValue(), new Class<?>[0], new Object[0],
+                            this.exceptionInterceptor);
 
-    @Override
-    public void setProfilerEventHandler(ProfilerEventHandler h) {
-        this.eventSink = h;
+                    this.eventSink.init(this.log);
+                }
+            }
+        }
+        return this.eventSink;
     }
 
     @Override
@@ -243,5 +250,10 @@ public abstract class CoreSession implements Session {
     @Override
     public DataStoreMetadata getDataStoreMetadata() {
         return new DataStoreMetadataImpl(this);
+    }
+
+    @Override
+    public String getQueryTimingUnits() {
+        return this.protocol.getQueryTimingUnits();
     }
 }

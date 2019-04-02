@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,10 +32,14 @@ package com.mysql.cj.protocol;
 import java.util.LinkedList;
 
 import com.mysql.cj.MessageBuilder;
+import com.mysql.cj.Messages;
 import com.mysql.cj.Session;
+import com.mysql.cj.TransactionEventHandler;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.log.Log;
+import com.mysql.cj.util.TimeUtil;
 
 public abstract class AbstractProtocol<M extends Message> implements Protocol<M> {
 
@@ -43,6 +47,8 @@ public abstract class AbstractProtocol<M extends Message> implements Protocol<M>
     protected SocketConnection socketConnection;
 
     protected PropertySet propertySet;
+
+    protected TransactionEventHandler transactionManager;
 
     /** The logger we're going to use */
     protected transient Log log;
@@ -60,6 +66,24 @@ public abstract class AbstractProtocol<M extends Message> implements Protocol<M>
     };
 
     protected LinkedList<StringBuilder> packetDebugRingBuffer = null;
+
+    protected boolean useNanosForElapsedTime;
+    protected String queryTimingUnits;
+
+    @Override
+    public void init(Session sess, SocketConnection phConnection, PropertySet propSet, TransactionEventHandler trManager) {
+        this.session = sess;
+        this.propertySet = propSet;
+
+        this.socketConnection = phConnection;
+        this.exceptionInterceptor = this.socketConnection.getExceptionInterceptor();
+
+        this.transactionManager = trManager;
+
+        this.useNanosForElapsedTime = this.propertySet.getBooleanProperty(PropertyKey.useNanosForElapsedTime).getValue() && TimeUtil.nanoTimeAvailable();
+        this.queryTimingUnits = this.useNanosForElapsedTime ? Messages.getString("Nanoseconds") : Messages.getString("Milliseconds");
+
+    }
 
     public SocketConnection getSocketConnection() {
         return this.socketConnection;
@@ -105,6 +129,11 @@ public abstract class AbstractProtocol<M extends Message> implements Protocol<M>
     @Override
     public void reset() {
         // no-op
+    }
+
+    @Override
+    public String getQueryTimingUnits() {
+        return this.queryTimingUnits;
     }
 
 }

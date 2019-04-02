@@ -52,8 +52,6 @@ public abstract class AbstractNumericValueFactory<T> extends DefaultValueFactory
         String s = StringUtils.toString(bytes, offset, length, f.getEncoding());
         byte[] newBytes = s.getBytes();
 
-        issueConversionViaParsingWarning();
-
         if (s.contains("e") || s.contains("E") || s.matches("-?(\\d+)?\\.\\d+")) {
             // floating point
             return createFromDouble(MysqlTextValueDecoder.getDouble(newBytes, 0, newBytes.length));

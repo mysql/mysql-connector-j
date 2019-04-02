@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,11 @@
 
 package com.mysql.cj.log;
 
+import com.mysql.cj.Constants;
+import com.mysql.cj.Query;
+import com.mysql.cj.Session;
+import com.mysql.cj.protocol.Resultset;
+
 /**
  * A profile event handler that just logs to the standard logging mechanism of the driver.
  */
@@ -39,10 +44,14 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
     }
 
     public void consumeEvent(ProfilerEvent evt) {
-        if (evt.getEventType() == ProfilerEvent.TYPE_WARN) {
-            this.logger.logWarn(evt);
-        } else {
-            this.logger.logInfo(evt);
+        switch (evt.getEventType()) {
+            case ProfilerEvent.TYPE_USAGE:
+                this.logger.logWarn(evt);
+                break;
+
+            default:
+                this.logger.logInfo(evt);
+                break;
         }
     }
 
@@ -54,4 +63,19 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
         this.logger = log;
     }
 
+    @Override
+    public void processEvent(byte eventType, Session session, Query query, Resultset resultSet, long eventDuration, Throwable eventCreationPoint,
+            String message) {
+
+        consumeEvent(new ProfilerEventImpl(eventType, //
+                session == null ? "" : session.getHostInfo().getHost(), //
+                session == null ? "" : session.getHostInfo().getDatabase(), //
+                session == null ? ProfilerEvent.NA : session.getThreadId(), //
+                query == null ? ProfilerEvent.NA : query.getId(), //
+                resultSet == null ? ProfilerEvent.NA : resultSet.getResultId(), //
+                eventDuration, //
+                session == null ? Constants.MILLIS_I18N : session.getQueryTimingUnits(), //
+                eventCreationPoint, message));
+
+    }
 }

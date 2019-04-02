@@ -40,8 +40,6 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.log.ProfilerEvent;
-import com.mysql.cj.log.ProfilerEventHandlerFactory;
-import com.mysql.cj.log.ProfilerEventImpl;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -55,7 +53,6 @@ import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.protocol.a.NativeMessageBuilder;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.result.Field;
-import com.mysql.cj.util.LogUtils;
 import com.mysql.cj.util.StringUtils;
 
 //TODO should not be protocol-specific
@@ -74,8 +71,13 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     /** Field-level metadata for result sets. From statement prepare. */
     private ColumnDefinition resultFields;
 
-    protected RuntimeProperty<Boolean> gatherPerfMetrics;
+    /** The "profileSQL" connection property value */
+    protected boolean profileSQL = false;
 
+    /** The "gatherPerfMetrics" connection property value */
+    protected boolean gatherPerfMetrics;
+
+    /** The "logSlowQueries" connection property value */
     protected boolean logSlowQueries = false;
 
     private boolean useAutoSlowLog;
@@ -98,7 +100,8 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
 
     protected ServerPreparedQuery(NativeSession sess) {
         super(sess);
-        this.gatherPerfMetrics = sess.getPropertySet().getBooleanProperty(PropertyKey.gatherPerfMetrics);
+        this.profileSQL = sess.getPropertySet().getBooleanProperty(PropertyKey.profileSQL).getValue();
+        this.gatherPerfMetrics = sess.getPropertySet().getBooleanProperty(PropertyKey.gatherPerfMetrics).getValue();
         this.logSlowQueries = sess.getPropertySet().getBooleanProperty(PropertyKey.logSlowQueries).getValue();
         this.useAutoSlowLog = sess.getPropertySet().getBooleanProperty(PropertyKey.autoSlowLog).getValue();
         this.slowQueryThresholdMillis = sess.getPropertySet().getIntegerProperty(PropertyKey.slowQueryThresholdMillis);
@@ -117,11 +120,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
         this.session.checkClosed();
 
         synchronized (this.session) {
-            long begin = 0;
-
-            if (this.profileSQL) {
-                begin = System.currentTimeMillis();
-            }
+            long begin = this.profileSQL ? System.currentTimeMillis() : 0;
 
             boolean loadDataQuery = StringUtils.startsWithIgnoreCaseAndWs(sql, "LOAD DATA");
 
@@ -145,12 +144,13 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
             this.queryBindings = new ServerPreparedQueryBindings(this.parameterCount, this.session);
             this.queryBindings.setLoadDataQuery(loadDataQuery);
 
-            this.session.incrementNumberOfPrepares();
+            if (this.gatherPerfMetrics) {
+                this.session.getProtocol().getMetricsHolder().incrementNumberOfPrepares();
+            }
 
             if (this.profileSQL) {
-                this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_PREPARE, "", this.getCurrentCatalog(), this.session.getThreadId(),
-                        this.statementId, -1, System.currentTimeMillis(), this.session.getCurrentTimeNanosOrMillis() - begin,
-                        this.session.getQueryTimingUnits(), null, LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
+                this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_PREPARE, this.session, this, null,
+                        this.session.getCurrentTimeNanosOrMillis() - begin, new Throwable(), truncateQueryToLog(sql));
             }
 
             boolean checkEOF = !this.session.getServerSession().isEOFDeprecated();
@@ -201,10 +201,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
                 return interceptedResults;
             }
         }
-        String queryAsString = "";
-        if (this.profileSQL || this.logSlowQueries || this.gatherPerfMetrics.getValue()) {
-            queryAsString = asSql(true);
-        }
+        String queryAsString = this.profileSQL || this.logSlowQueries || this.gatherPerfMetrics ? asSql(true) : "";
 
         NativePacketPayload packet = prepareExecutePacket();
         NativePacketPayload resPacket = sendExecutePacket(packet, queryAsString);
@@ -321,13 +318,9 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
 
     public NativePacketPayload sendExecutePacket(NativePacketPayload packet, String queryAsString) { // TODO queryAsString should be shared instead of passed
 
-        long begin = 0;
+        boolean countDuration = this.profileSQL || this.logSlowQueries || this.gatherPerfMetrics;
 
-        boolean gatherPerformanceMetrics = this.gatherPerfMetrics.getValue();
-
-        if (this.profileSQL || this.logSlowQueries || gatherPerformanceMetrics) {
-            begin = this.session.getCurrentTimeNanosOrMillis();
-        }
+        long begin = countDuration ? this.session.getCurrentTimeNanosOrMillis() : 0;
 
         resetCancelledState();
 
@@ -342,62 +335,35 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
 
             NativePacketPayload resultPacket = this.session.sendCommand(packet, false, 0);
 
-            long queryEndTime = 0L;
-
-            if (this.logSlowQueries || gatherPerformanceMetrics || this.profileSQL) {
-                queryEndTime = this.session.getCurrentTimeNanosOrMillis();
-            }
+            long queryEndTime = countDuration ? this.session.getCurrentTimeNanosOrMillis() : 0L;
 
             if (timeoutTask != null) {
                 stopQueryTimer(timeoutTask, true, true);
                 timeoutTask = null;
             }
 
-            if (this.logSlowQueries || gatherPerformanceMetrics) {
-                long elapsedTime = queryEndTime - begin;
+            long elapsedTime = countDuration ? queryEndTime - begin : 0L;
 
-                if (this.logSlowQueries) {
-                    if (this.useAutoSlowLog) {
-                        this.queryWasSlow = elapsedTime > this.slowQueryThresholdMillis.getValue();
-                    } else {
-                        this.queryWasSlow = this.session.getProtocol().getMetricsHolder().isAbonormallyLongQuery(elapsedTime);
-
-                        this.session.getProtocol().getMetricsHolder().reportQueryTime(elapsedTime);
-                    }
-                }
+            if (this.logSlowQueries) {
+                this.queryWasSlow = this.useAutoSlowLog ? //
+                        this.session.getProtocol().getMetricsHolder().checkAbonormallyLongQuery(elapsedTime)
+                        : elapsedTime > this.slowQueryThresholdMillis.getValue();
 
                 if (this.queryWasSlow) {
-
-                    StringBuilder mesgBuf = new StringBuilder(48 + this.originalSql.length());
-                    mesgBuf.append(Messages.getString("ServerPreparedStatement.15"));
-                    mesgBuf.append(this.session.getSlowQueryThreshold());
-                    mesgBuf.append(Messages.getString("ServerPreparedStatement.15a"));
-                    mesgBuf.append(elapsedTime);
-                    mesgBuf.append(Messages.getString("ServerPreparedStatement.16"));
-
-                    mesgBuf.append("as prepared: ");
-                    mesgBuf.append(this.originalSql);
-                    mesgBuf.append("\n\n with parameters bound:\n\n");
-                    mesgBuf.append(queryAsString);
-
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", getCurrentCatalog(), this.session.getThreadId(),
-                            getId(), 0, System.currentTimeMillis(), elapsedTime, this.session.getQueryTimingUnits(), null,
-                            LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
-                }
-
-                if (gatherPerformanceMetrics) {
-                    this.session.registerQueryExecutionTime(elapsedTime);
+                    this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_SLOW_QUERY, this.session, this, null, elapsedTime, new Throwable(),
+                            Messages.getString("ServerPreparedStatement.15", new String[] { String.valueOf(this.session.getSlowQueryThreshold()),
+                                    String.valueOf(elapsedTime), this.originalSql, queryAsString }));
                 }
             }
 
-            this.session.incrementNumberOfPreparedExecutes();
+            if (this.gatherPerfMetrics) {
+                this.session.getProtocol().getMetricsHolder().registerQueryExecutionTime(elapsedTime);
+                this.session.getProtocol().getMetricsHolder().incrementNumberOfPreparedExecutes();
+            }
 
             if (this.profileSQL) {
-                this.setEventSink(ProfilerEventHandlerFactory.getInstance(this.session));
-
-                this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_EXECUTE, "", getCurrentCatalog(), this.session.getThreadId(),
-                        this.statementId, -1, System.currentTimeMillis(), this.session.getCurrentTimeNanosOrMillis() - begin,
-                        this.session.getQueryTimingUnits(), null, LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(queryAsString)));
+                this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_EXECUTE, this.session, this, null, elapsedTime, new Throwable(),
+                        truncateQueryToLog(queryAsString));
             }
 
             return resultPacket;
@@ -419,11 +385,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     public <T extends Resultset> T readExecuteResult(NativePacketPayload resultPacket, int maxRowsToRetrieve, boolean createStreamingResultSet,
             ColumnDefinition metadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory, String queryAsString) { // TODO queryAsString should be shared instead of passed
         try {
-            long fetchStartTime = 0;
-
-            if (this.profileSQL || this.logSlowQueries || this.gatherPerfMetrics.getValue()) {
-                fetchStartTime = this.session.getCurrentTimeNanosOrMillis();
-            }
+            long fetchStartTime = this.profileSQL ? this.session.getCurrentTimeNanosOrMillis() : 0;
 
             T rs = this.session.getProtocol().readAllResults(maxRowsToRetrieve, createStreamingResultSet, resultPacket, true,
                     metadata != null ? metadata : this.resultFields, resultSetFactory);
@@ -439,11 +401,8 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
             }
 
             if (this.profileSQL) {
-                long fetchEndTime = this.session.getCurrentTimeNanosOrMillis();
-
-                this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", getCurrentCatalog(), this.session.getThreadId(), getId(),
-                        rs.getResultId(), System.currentTimeMillis(), (fetchEndTime - fetchStartTime), this.session.getQueryTimingUnits(), null,
-                        LogUtils.findCallingClassAndMethod(new Throwable()), null));
+                this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_FETCH, this.session, this, rs,
+                        this.session.getCurrentTimeNanosOrMillis() - fetchStartTime, new Throwable(), null);
             }
 
             if (this.queryWasSlow && this.explainSlowQueries.getValue()) {
@@ -451,7 +410,6 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
             }
 
             this.queryBindings.getSendTypesToServer().set(false);
-            //this.results = rs;
 
             if (this.session.hadWarnings()) {
                 this.session.getProtocol().scanForAndThrowDataTruncation();

@@ -89,7 +89,6 @@ import com.mysql.cj.log.BaseMetricsHolder;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.log.ProfilerEvent;
 import com.mysql.cj.log.ProfilerEventHandler;
-import com.mysql.cj.log.ProfilerEventImpl;
 import com.mysql.cj.protocol.AbstractProtocol;
 import com.mysql.cj.protocol.AuthenticationProvider;
 import com.mysql.cj.protocol.ColumnDefinition;
@@ -123,7 +122,6 @@ import com.mysql.cj.result.RowList;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.ValueFactory;
 import com.mysql.cj.util.LazyString;
-import com.mysql.cj.util.LogUtils;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TestUtils;
 import com.mysql.cj.util.TimeUtil;
@@ -172,9 +170,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     private boolean profileSQL = false;
 
-    private boolean useNanosForElapsedTime;
     private long slowQueryThreshold;
-    private String queryTimingUnits;
 
     private int commandCount = 0;
 
@@ -199,8 +195,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     private InputStream localInfileInputStream;
 
     private BaseMetricsHolder metricsHolder;
-
-    private TransactionEventHandler transactionManager;
 
     /**
      * The comment (if any) that we'll prepend to all queries
@@ -250,14 +244,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     @Override
     public void init(Session sess, SocketConnection phConnection, PropertySet propSet, TransactionEventHandler trManager) {
-
-        this.session = sess;
-        this.propertySet = propSet;
-
-        this.socketConnection = phConnection;
-        this.exceptionInterceptor = this.socketConnection.getExceptionInterceptor();
-
-        this.transactionManager = trManager;
+        super.init(sess, phConnection, propSet, trManager);
 
         this.maintainTimeStats = this.propertySet.getBooleanProperty(PropertyKey.maintainTimeStats);
         this.maxQuerySizeToLog = this.propertySet.getIntegerProperty(PropertyKey.maxQuerySizeToLog);
@@ -280,14 +267,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         }
 
         //this.needToGrabQueryFromPacket = (this.profileSQL || this.logSlowQueries || this.autoGenerateTestcaseScript);
-
-        if (this.propertySet.getBooleanProperty(PropertyKey.useNanosForElapsedTime).getValue() && TimeUtil.nanoTimeAvailable()) {
-            this.useNanosForElapsedTime = true;
-
-            this.queryTimingUnits = Messages.getString("Nanoseconds");
-        } else {
-            this.queryTimingUnits = Messages.getString("Milliseconds");
-        }
 
         if (this.propertySet.getBooleanProperty(PropertyKey.logSlowQueries).getValue()) {
             calculateSlowQueryThreshold();
@@ -867,8 +846,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      *            database name
      * @param cachedMetadata
      *            use this metadata instead of the one provided on wire
-     * @param getProfilerEventHandlerInstanceFunction
-     *            {@link com.mysql.cj.protocol.Protocol.GetProfilerEventHandlerInstanceFunction}
      * @param resultSetFactory
      *            {@link ProtocolEntityFactory}
      * @return T instance
@@ -876,8 +853,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      *             if an i/o error occurs
      */
     public final <T extends Resultset> T sendQueryString(Query callingQuery, String query, String characterEncoding, int maxRows, boolean streamResults,
-            String catalog, ColumnDefinition cachedMetadata, GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction,
-            ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
+            String catalog, ColumnDefinition cachedMetadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
         String statementComment = this.queryComment;
 
         if (this.propertySet.getBooleanProperty(PropertyKey.includeThreadNamesAsStatementComment).getValue()) {
@@ -918,8 +894,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query, characterEncoding));
         }
 
-        return sendQueryPacket(callingQuery, sendPacket, maxRows, streamResults, catalog, cachedMetadata, getProfilerEventHandlerInstanceFunction,
-                resultSetFactory);
+        return sendQueryPacket(callingQuery, sendPacket, maxRows, streamResults, catalog, cachedMetadata, resultSetFactory);
     }
 
     /**
@@ -939,8 +914,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      *            database name
      * @param cachedMetadata
      *            use this metadata instead of the one provided on wire
-     * @param getProfilerEventHandlerInstanceFunction
-     *            {@link com.mysql.cj.protocol.Protocol.GetProfilerEventHandlerInstanceFunction}
      * @param resultSetFactory
      *            {@link ProtocolEntityFactory}
      * @return T instance
@@ -948,19 +921,14 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      *             if an i/o error occurs
      */
     public final <T extends Resultset> T sendQueryPacket(Query callingQuery, NativePacketPayload queryPacket, int maxRows, boolean streamResults,
-            String catalog, ColumnDefinition cachedMetadata, GetProfilerEventHandlerInstanceFunction getProfilerEventHandlerInstanceFunction,
-            ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
+            String catalog, ColumnDefinition cachedMetadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
+
+        long queryStartTime = this.profileSQL || this.logSlowQueries ? getCurrentTimeNanosOrMillis() : 0;
+
         this.statementExecutionDepth++;
 
-        byte[] queryBuf = null;
-        int oldPacketPosition = 0;
-        long queryStartTime = 0;
-        long queryEndTime = 0;
-
-        queryBuf = queryPacket.getByteBuffer();
-        oldPacketPosition = queryPacket.getPosition(); // save the packet position
-
-        queryStartTime = getCurrentTimeNanosOrMillis();
+        byte[] queryBuf = queryPacket.getByteBuffer();
+        int oldPacketPosition = queryPacket.getPosition(); // save the packet position
 
         LazyString query = new LazyString(queryBuf, 1, (oldPacketPosition - 1));
 
@@ -968,7 +936,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             if (this.queryInterceptors != null) {
                 T interceptedResults = invokeQueryInterceptorsPre(query, callingQuery, false);
-
                 if (interceptedResults != null) {
                     return interceptedResults;
                 }
@@ -985,121 +952,64 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             // Send query command and sql query string
             NativePacketPayload resultPacket = sendCommand(queryPacket, false, 0);
 
-            long fetchBeginTime = 0;
-            long fetchEndTime = 0;
+            long queryEndTime = this.profileSQL || this.logSlowQueries ? getCurrentTimeNanosOrMillis() : 0L;
+            long queryDuration = this.profileSQL || this.logSlowQueries ? queryEndTime - queryStartTime : 0L;
 
-            String profileQueryToLog = null;
+            boolean queryWasSlow = this.logSlowQueries && (this.useAutoSlowLog ? this.metricsHolder.checkAbonormallyLongQuery(queryDuration)
+                    : queryDuration > this.propertySet.getIntegerProperty(PropertyKey.slowQueryThresholdMillis).getValue());
 
-            boolean queryWasSlow = false;
-
-            if (this.profileSQL || this.logSlowQueries) {
-                queryEndTime = getCurrentTimeNanosOrMillis();
-
-                boolean shouldExtractQuery = false;
-
-                if (this.profileSQL) {
-                    shouldExtractQuery = true;
-                } else if (this.logSlowQueries) {
-                    long queryTime = queryEndTime - queryStartTime;
-
-                    boolean logSlow = false;
-
-                    if (!this.useAutoSlowLog) {
-                        logSlow = queryTime > this.propertySet.getIntegerProperty(PropertyKey.slowQueryThresholdMillis).getValue();
-                    } else {
-                        logSlow = this.metricsHolder.isAbonormallyLongQuery(queryTime);
-                        this.metricsHolder.reportQueryTime(queryTime);
-                    }
-
-                    if (logSlow) {
-                        shouldExtractQuery = true;
-                        queryWasSlow = true;
-                    }
-                }
-
-                if (shouldExtractQuery) {
-                    // Extract the actual query from the network packet
-                    boolean truncated = false;
-
-                    int extractPosition = oldPacketPosition;
-
-                    if (oldPacketPosition > this.maxQuerySizeToLog.getValue()) {
-                        extractPosition = this.maxQuerySizeToLog.getValue() + 1;
-                        truncated = true;
-                    }
-
-                    profileQueryToLog = StringUtils.toString(queryBuf, 1, (extractPosition - 1));
-
-                    if (truncated) {
-                        profileQueryToLog += Messages.getString("Protocol.2");
-                    }
-                }
-
-                fetchBeginTime = queryEndTime;
-            }
+            long fetchBeginTime = this.profileSQL ? getCurrentTimeNanosOrMillis() : 0L;
 
             T rs = readAllResults(maxRows, streamResults, resultPacket, false, cachedMetadata, resultSetFactory);
 
-            long threadId = getServerSession().getCapabilities().getThreadId();
-            int queryId = (callingQuery != null) ? callingQuery.getId() : 999;
-            int resultSetId = rs.getResultId();
-            long eventDuration = queryEndTime - queryStartTime;
+            if (this.profileSQL || queryWasSlow) {
+                long fetchEndTime = this.profileSQL ? getCurrentTimeNanosOrMillis() : 0L;
 
-            if (queryWasSlow && !this.serverSession.queryWasSlow() /* don't log slow queries twice */) {
-                StringBuilder mesgBuf = new StringBuilder(48 + profileQueryToLog.length());
-
-                mesgBuf.append(Messages.getString("Protocol.SlowQuery",
-                        new Object[] { String.valueOf(this.useAutoSlowLog ? " 95% of all queries " : this.slowQueryThreshold), this.queryTimingUnits,
-                                Long.valueOf(queryEndTime - queryStartTime) }));
-                mesgBuf.append(profileQueryToLog);
-
-                ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
-
-                eventSink.consumeEvent(
-                        new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
-                                eventDuration, this.queryTimingUnits, null, LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
-
-                if (this.propertySet.getBooleanProperty(PropertyKey.explainSlowQueries).getValue()) {
-                    if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
-                        queryPacket.setPosition(1); // skip first byte 
-                        explainSlowQuery(query.toString(), profileQueryToLog);
-                    } else {
-                        this.log.logWarn(Messages.getString("Protocol.3", new Object[] { MAX_QUERY_SIZE_TO_EXPLAIN }));
-                    }
+                // Extract the actual query from the network packet
+                boolean truncated = oldPacketPosition > this.maxQuerySizeToLog.getValue();
+                int extractPosition = truncated ? this.maxQuerySizeToLog.getValue() + 1 : oldPacketPosition;
+                String extractedQuery = StringUtils.toString(queryBuf, 1, (extractPosition - 1));
+                if (truncated) {
+                    extractedQuery += Messages.getString("Protocol.2");
                 }
-            }
 
-            if (this.profileSQL || this.logSlowQueries) {
-
-                ProfilerEventHandler eventSink = getProfilerEventHandlerInstanceFunction.apply();
-
-                String eventCreationPoint = LogUtils.findCallingClassAndMethod(new Throwable());
+                ProfilerEventHandler eventSink = this.session.getProfilerEventHandler();
 
                 if (this.logSlowQueries) {
+                    if (queryWasSlow) {
+                        eventSink.processEvent(ProfilerEvent.TYPE_SLOW_QUERY, this.session, callingQuery, rs, queryDuration, new Throwable(),
+                                Messages.getString("Protocol.SlowQuery",
+                                        new Object[] { this.useAutoSlowLog ? " 95% of all queries " : String.valueOf(this.slowQueryThreshold),
+                                                this.queryTimingUnits, Long.valueOf(queryDuration), extractedQuery }));
+
+                        if (this.propertySet.getBooleanProperty(PropertyKey.explainSlowQueries).getValue()) {
+                            if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
+                                queryPacket.setPosition(1); // skip first byte 
+                                explainSlowQuery(query.toString(), extractedQuery);
+                            } else {
+                                this.log.logWarn(Messages.getString("Protocol.3", new Object[] { MAX_QUERY_SIZE_TO_EXPLAIN }));
+                            }
+                        }
+                    }
+
                     if (this.serverSession.noGoodIndexUsed()) {
-                        eventSink.consumeEvent(
-                                new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
-                                        eventDuration, this.queryTimingUnits, null, eventCreationPoint, Messages.getString("Protocol.4") + profileQueryToLog));
+                        eventSink.processEvent(ProfilerEvent.TYPE_SLOW_QUERY, this.session, callingQuery, rs, queryDuration, new Throwable(),
+                                Messages.getString("Protocol.4") + extractedQuery);
                     }
                     if (this.serverSession.noIndexUsed()) {
-                        eventSink.consumeEvent(
-                                new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
-                                        eventDuration, this.queryTimingUnits, null, eventCreationPoint, Messages.getString("Protocol.5") + profileQueryToLog));
+                        eventSink.processEvent(ProfilerEvent.TYPE_SLOW_QUERY, this.session, callingQuery, rs, queryDuration, new Throwable(),
+                                Messages.getString("Protocol.5") + extractedQuery);
                     }
                     if (this.serverSession.queryWasSlow()) {
-                        eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, threadId, queryId, resultSetId,
-                                System.currentTimeMillis(), eventDuration, this.queryTimingUnits, null, eventCreationPoint,
-                                Messages.getString("Protocol.ServerSlowQuery") + profileQueryToLog));
+                        eventSink.processEvent(ProfilerEvent.TYPE_SLOW_QUERY, this.session, callingQuery, rs, queryDuration, new Throwable(),
+                                Messages.getString("Protocol.ServerSlowQuery") + extractedQuery);
                     }
                 }
 
-                fetchEndTime = getCurrentTimeNanosOrMillis();
-
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_QUERY, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
-                        eventDuration, this.queryTimingUnits, null, eventCreationPoint, profileQueryToLog));
-
-                eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_FETCH, "", catalog, threadId, queryId, resultSetId, System.currentTimeMillis(),
-                        (fetchEndTime - fetchBeginTime), this.queryTimingUnits, null, eventCreationPoint, null));
+                if (this.profileSQL) {
+                    eventSink.processEvent(ProfilerEvent.TYPE_QUERY, this.session, callingQuery, rs, queryDuration, new Throwable(), extractedQuery);
+                    eventSink.processEvent(ProfilerEvent.TYPE_FETCH, this.session, callingQuery, rs, (fetchEndTime - fetchBeginTime), new Throwable(), null);
+                }
             }
 
             if (this.hadWarnings) {
@@ -1107,16 +1017,14 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             }
 
             if (this.queryInterceptors != null) {
-                T interceptedResults = invokeQueryInterceptorsPost(query, callingQuery, rs, false);
-
-                if (interceptedResults != null) {
-                    rs = interceptedResults;
-                }
+                rs = invokeQueryInterceptorsPost(query, callingQuery, rs, false);
             }
 
             return rs;
+
         } catch (CJException sqlEx) {
             if (this.queryInterceptors != null) {
+                // TODO why doing this?
                 invokeQueryInterceptorsPost(query, callingQuery, null, false); // we don't do anything with the result set in this case
             }
 
@@ -1236,11 +1144,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     public long getCurrentTimeNanosOrMillis() {
-        if (this.useNanosForElapsedTime) {
-            return TimeUtil.getCurrentTimeNanosOrMillis();
-        }
-
-        return System.currentTimeMillis();
+        return this.useNanosForElapsedTime ? TimeUtil.getCurrentTimeNanosOrMillis() : System.currentTimeMillis();
     }
 
     public boolean hadWarnings() {
@@ -1409,10 +1313,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     public long getSlowQueryThreshold() {
         return this.slowQueryThreshold;
-    }
-
-    public String getQueryTimingUnits() {
-        return this.queryTimingUnits;
     }
 
     public int getCommandCount() {

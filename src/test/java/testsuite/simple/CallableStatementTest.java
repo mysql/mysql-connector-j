@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -62,9 +62,9 @@ import com.mysql.cj.jdbc.CallableStatementWrapper;
 import com.mysql.cj.jdbc.ConnectionWrapper;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.MysqlPooledConnection;
-import com.mysql.cj.log.StandardLogger;
 
 import testsuite.BaseTestCase;
+import testsuite.BufferingLogger;
 
 /**
  * Tests callable statement functionality.
@@ -107,14 +107,14 @@ public class CallableStatementTest extends BaseTestCase {
 
             executeBatchedStoredProc(this.conn);
 
-            batchedConn = getConnectionWithProps("logger=StandardLogger,rewriteBatchedStatements=true,profileSQL=true");
+            batchedConn = getConnectionWithProps("logger=" + BufferingLogger.class.getName() + ",rewriteBatchedStatements=true,profileSQL=true");
 
-            StandardLogger.startLoggingToBuffer();
+            BufferingLogger.startLoggingToBuffer();
             executeBatchedStoredProc(batchedConn);
-            String[] log = StandardLogger.getBuffer().toString().split(";");
+            String[] log = BufferingLogger.getBuffer().toString().split(";");
             assertTrue(log.length > 20);
         } finally {
-            StandardLogger.dropBuffer();
+            BufferingLogger.dropBuffer();
 
             if (batchedConn != null) {
                 batchedConn.close();

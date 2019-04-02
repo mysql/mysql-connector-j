@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.PropertyKey;
@@ -59,8 +58,6 @@ import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.log.ProfilerEvent;
-import com.mysql.cj.log.ProfilerEventHandlerFactory;
-import com.mysql.cj.log.ProfilerEventImpl;
 import com.mysql.cj.protocol.ResultsetRow;
 import com.mysql.cj.protocol.ResultsetRows;
 import com.mysql.cj.protocol.a.result.ByteArrayRow;
@@ -921,14 +918,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             if (this.useUsageAdvisor) {
                 if ((this.deleter == null) && (this.inserter == null) && (this.refresher == null) && (this.updater == null)) {
-                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
-
-                    String message = Messages.getString("UpdatableResultSet.34");
-
-                    this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                            (this.getOwningStatement() == null) ? "N/A" : this.getOwningStatement().getCurrentCatalog(), this.getConnectionId(),
-                            (this.getOwningStatement() == null) ? (-1) : this.getOwningStatement().getId(), this.resultId, System.currentTimeMillis(), 0,
-                            Constants.MILLIS_I18N, null, this.getPointOfOrigin(), message));
+                    this.eventSink.processEvent(ProfilerEvent.TYPE_USAGE, this.session, this.getOwningStatement(), this, 0, new Throwable(),
+                            Messages.getString("UpdatableResultSet.34"));
                 }
             }
 

@@ -32,18 +32,13 @@ package com.mysql.cj.result;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.DataConversionException;
-import com.mysql.cj.log.ProfilerEvent;
-import com.mysql.cj.log.ProfilerEventHandler;
-import com.mysql.cj.log.ProfilerEventImpl;
 import com.mysql.cj.protocol.InternalDate;
 import com.mysql.cj.protocol.InternalTime;
 import com.mysql.cj.protocol.InternalTimestamp;
-import com.mysql.cj.util.LogUtils;
 
 /**
  * The default value factory provides a base class that can be used for value factories that do not support creation from every type. The default value factory
@@ -53,8 +48,6 @@ import com.mysql.cj.util.LogUtils;
  *            value type
  */
 public abstract class DefaultValueFactory<T> implements ValueFactory<T> {
-
-    private ProfilerEventHandler eventSink;
 
     protected boolean jdbcCompliantTruncationForReads = true;
 
@@ -116,24 +109,5 @@ public abstract class DefaultValueFactory<T> implements ValueFactory<T> {
 
     public T createFromNull() {
         return null;
-    }
-
-    public ValueFactory<T> setEventSink(ProfilerEventHandler eventSink) {
-        this.eventSink = eventSink;
-        return this;
-    }
-
-    protected void issueConversionViaParsingWarning() {
-        // TODO context information for the profiler event is unavailable here.
-        // Context information should be provided at higher levels. this includes catalog, query, rs metadata, etc
-        if (this.eventSink == null) {
-            return;
-        }
-
-        String message = Messages.getString("ResultSet.CostlyConversion",
-                new Object[] { getTargetTypeName(), -1, "<unknown>", "<unknown>", "<unknown>", "<unknown>", "<unknown>", "<unknown>" });
-
-        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", "<unknown>", -1, -1, -1, System.currentTimeMillis(), 0,
-                Constants.MILLIS_I18N, null, LogUtils.findCallingClassAndMethod(new Throwable()), message));
     }
 }

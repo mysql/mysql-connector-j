@@ -33,7 +33,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.log.ProfilerEventHandler;
 import com.mysql.cj.protocol.InternalDate;
 import com.mysql.cj.protocol.InternalTime;
 import com.mysql.cj.protocol.InternalTimestamp;
@@ -86,6 +85,4 @@ public interface ValueFactory<T> {
      * @return class name
      */
     String getTargetTypeName();
-
-    ValueFactory<T> setEventSink(ProfilerEventHandler eventSink);
 }

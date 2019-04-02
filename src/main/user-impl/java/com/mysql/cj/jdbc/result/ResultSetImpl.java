@@ -64,10 +64,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TimeZone;
 
-import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeSession;
+import com.mysql.cj.Query;
 import com.mysql.cj.Session;
 import com.mysql.cj.WarningListener;
 import com.mysql.cj.conf.PropertyKey;
@@ -90,13 +90,10 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 import com.mysql.cj.log.ProfilerEvent;
 import com.mysql.cj.log.ProfilerEventHandler;
-import com.mysql.cj.log.ProfilerEventHandlerFactory;
-import com.mysql.cj.log.ProfilerEventImpl;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ResultsetRows;
 import com.mysql.cj.protocol.a.result.NativeResultset;
 import com.mysql.cj.protocol.a.result.OkPacket;
-import com.mysql.cj.protocol.a.result.ResultsetRowsStatic;
 import com.mysql.cj.result.BigDecimalValueFactory;
 import com.mysql.cj.result.BinaryStreamValueFactory;
 import com.mysql.cj.result.BooleanValueFactory;
@@ -134,8 +131,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     protected NativeSession session = null;
 
-    private long connectionId = 0;
-
     /** The current row #, -1 == before start of result set */
     protected int currentRow = -1; // Cursor to current row;
 
@@ -167,9 +162,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
      */
     private String pointOfOrigin;
 
-    /** Are we tracking items for profileSQL? */
-    protected boolean profileSQL = false;
-
     /** Are we read-only or updatable? */
     protected int resultSetConcurrency = 0;
 
@@ -179,6 +171,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     JdbcPreparedStatement statementUsedForFetchingRows;
 
     protected boolean useUsageAdvisor = false;
+    protected boolean gatherPerfMetrics = false;
 
     /** The warning chain */
     protected java.sql.SQLWarning warningChain = null;
@@ -231,7 +224,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         if (this.connection != null) {
             this.exceptionInterceptor = this.connection.getExceptionInterceptor();
 
-            this.connectionId = this.connection.getSession().getThreadId();
             this.padCharsWithSpace = this.connection.getPropertySet().getBooleanProperty(PropertyKey.padCharsWithSpace).getValue();
         }
     }
@@ -256,37 +248,32 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         this.catalog = creatorStmt != null ? creatorStmt.getCurrentCatalog() : conn.getCatalog();
         this.owningStatement = creatorStmt;
 
+        this.exceptionInterceptor = this.connection.getExceptionInterceptor();
+
         PropertySet pset = this.connection.getPropertySet();
+        this.emulateLocators = pset.getBooleanProperty(PropertyKey.emulateLocators);
+        this.padCharsWithSpace = pset.getBooleanProperty(PropertyKey.padCharsWithSpace).getValue();
+        this.yearIsDateType = pset.getBooleanProperty(PropertyKey.yearIsDateType).getValue();
+        this.useUsageAdvisor = pset.getBooleanProperty(PropertyKey.useUsageAdvisor).getValue();
+        this.gatherPerfMetrics = pset.getBooleanProperty(PropertyKey.gatherPerfMetrics).getValue();
 
-        if (this.connection != null) {
-            this.exceptionInterceptor = this.connection.getExceptionInterceptor();
-            this.connectionId = this.session.getThreadId();
-            this.profileSQL = pset.getBooleanProperty(PropertyKey.profileSQL).getValue();
-            this.emulateLocators = pset.getBooleanProperty(PropertyKey.emulateLocators);
-            this.padCharsWithSpace = pset.getBooleanProperty(PropertyKey.padCharsWithSpace).getValue();
-            this.yearIsDateType = pset.getBooleanProperty(PropertyKey.yearIsDateType).getValue();
-        }
+        this.booleanValueFactory = new BooleanValueFactory(pset);
+        this.byteValueFactory = new ByteValueFactory(pset);
+        this.shortValueFactory = new ShortValueFactory(pset);
+        this.integerValueFactory = new IntegerValueFactory(pset);
+        this.longValueFactory = new LongValueFactory(pset);
+        this.floatValueFactory = new FloatValueFactory(pset);
+        this.doubleValueFactory = new DoubleValueFactory(pset);
+        this.bigDecimalValueFactory = new BigDecimalValueFactory(pset);
+        this.binaryStreamValueFactory = new BinaryStreamValueFactory(pset);
 
-        this.booleanValueFactory = new BooleanValueFactory(pset).setEventSink(this.eventSink);
-        this.byteValueFactory = new ByteValueFactory(pset).setEventSink(this.eventSink);
-        this.shortValueFactory = new ShortValueFactory(pset).setEventSink(this.eventSink);
-        this.integerValueFactory = new IntegerValueFactory(pset).setEventSink(this.eventSink);
-        this.longValueFactory = new LongValueFactory(pset).setEventSink(this.eventSink);
-        this.floatValueFactory = new FloatValueFactory(pset).setEventSink(this.eventSink);
-        this.doubleValueFactory = new DoubleValueFactory(pset).setEventSink(this.eventSink);
-        this.bigDecimalValueFactory = new BigDecimalValueFactory(pset).setEventSink(this.eventSink);
-        this.binaryStreamValueFactory = new BinaryStreamValueFactory(pset).setEventSink(this.eventSink);
+        this.defaultDateValueFactory = new SqlDateValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(), this);
+        this.defaultTimeValueFactory = new SqlTimeValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(), this);
+        this.defaultTimestampValueFactory = new SqlTimestampValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone());
 
-        this.defaultDateValueFactory = new SqlDateValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(), this)
-                .setEventSink(this.eventSink);
-        this.defaultTimeValueFactory = new SqlTimeValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(), this)
-                .setEventSink(this.eventSink);
-        this.defaultTimestampValueFactory = new SqlTimestampValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone())
-                .setEventSink(this.eventSink);
-
-        this.defaultLocalDateValueFactory = new LocalDateValueFactory(pset, this).setEventSink(this.eventSink);
-        this.defaultLocalTimeValueFactory = new LocalTimeValueFactory(pset, this).setEventSink(this.eventSink);
-        this.defaultLocalDateTimeValueFactory = new LocalDateTimeValueFactory(pset).setEventSink(this.eventSink);
+        this.defaultLocalDateValueFactory = new LocalDateValueFactory(pset, this);
+        this.defaultLocalTimeValueFactory = new LocalTimeValueFactory(pset, this);
+        this.defaultLocalDateTimeValueFactory = new LocalDateTimeValueFactory(pset);
 
         this.columnDefinition = tuples.getMetadata();
         this.rowData = tuples;
@@ -320,16 +307,15 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         synchronized (checkClosed().getConnectionMutex()) {
             initRowsWithMetadata();
 
-            if (this.profileSQL || this.connection.getPropertySet().getBooleanProperty(PropertyKey.useUsageAdvisor).getValue()) {
+            if (this.useUsageAdvisor) {
                 this.columnUsed = new boolean[this.columnDefinition.getFields().length];
                 this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
                 this.resultId = resultCounter++;
-                this.useUsageAdvisor = this.connection.getPropertySet().getBooleanProperty(PropertyKey.useUsageAdvisor).getValue();
-                this.eventSink = ProfilerEventHandlerFactory.getInstance(this.session);
+                this.eventSink = this.session.getProfilerEventHandler();
             }
 
-            if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.gatherPerfMetrics).getValue()) {
-                this.session.incrementNumberOfResultSetsCreated();
+            if (this.gatherPerfMetrics) {
+                this.session.getProtocol().getMetricsHolder().incrementNumberOfResultSetsCreated();
 
                 Set<String> tableNamesSet = new HashSet<>();
 
@@ -344,15 +330,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
                     if (tableName != null) {
                         if (this.connection.lowerCaseTableNames()) {
-                            tableName = tableName.toLowerCase(); // on windows, table
-                            // names are not case-sens.
+                            // on windows, table names are not case-sensitive;
+                            // adjusting names to hit the same keys in tableNamesSet
+                            tableName = tableName.toLowerCase();
                         }
 
                         tableNamesSet.add(tableName);
                     }
                 }
 
-                this.session.reportNumberOfTablesAccessed(tableNamesSet.size());
+                this.session.getProtocol().getMetricsHolder().reportNumberOfTablesAccessed(tableNamesSet.size());
             }
         }
     }
@@ -477,7 +464,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
-            if (this.profileSQL || this.useUsageAdvisor) {
+            if (this.useUsageAdvisor) {
                 this.columnUsed[columnIndex - 1] = true;
             }
         }
@@ -1810,9 +1797,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         }
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
-
-            // additional check in case ResultSet was closed
-            // while current thread was waiting for lock
+            // additional check in case ResultSet was closed while current thread was waiting for lock
             if (this.isClosed) {
                 return;
             }
@@ -1820,66 +1805,38 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             try {
                 if (this.useUsageAdvisor) {
 
-                    // Report on result set closed by driver instead of application
-
                     if (!calledExplicitly) {
-                        this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                                (this.owningStatement == null) ? "N/A" : this.owningStatement.getCurrentCatalog(), this.connectionId,
-                                (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId, System.currentTimeMillis(), 0,
-                                Constants.MILLIS_I18N, null, this.pointOfOrigin, Messages.getString("ResultSet.ResultSet_implicitly_closed_by_driver")));
+                        this.eventSink.processEvent(ProfilerEvent.TYPE_USAGE, this.session, this.owningStatement, this, 0, new Throwable(),
+                                Messages.getString("ResultSet.ResultSet_implicitly_closed_by_driver"));
                     }
 
-                    if (this.rowData instanceof ResultsetRowsStatic) {
-
-                        // Report on possibly too-large result sets
-
-                        int resultSetSizeThreshold = locallyScopedConn.getPropertySet().getIntegerProperty(PropertyKey.resultSetSizeThreshold).getValue();
-                        if (this.rowData.size() > resultSetSizeThreshold) {
-                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                                    (this.owningStatement == null) ? Messages.getString("ResultSet.N/A_159") : this.owningStatement.getCurrentCatalog(),
-                                    this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId,
-                                    System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin,
-                                    Messages.getString("ResultSet.Too_Large_Result_Set",
-                                            new Object[] { Integer.valueOf(this.rowData.size()), Integer.valueOf(resultSetSizeThreshold) })));
-                        }
-
-                        if (!isLast() && !isAfterLast() && (this.rowData.size() != 0)) {
-
-                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                                    (this.owningStatement == null) ? Messages.getString("ResultSet.N/A_159") : this.owningStatement.getCurrentCatalog(),
-                                    this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId,
-                                    System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin,
-                                    Messages.getString("ResultSet.Possible_incomplete_traversal_of_result_set",
-                                            new Object[] { Integer.valueOf(getRow()), Integer.valueOf(this.rowData.size()) })));
-                        }
+                    int resultSetSizeThreshold = locallyScopedConn.getPropertySet().getIntegerProperty(PropertyKey.resultSetSizeThreshold).getValue();
+                    if (this.rowData.size() > resultSetSizeThreshold) {
+                        this.eventSink.processEvent(ProfilerEvent.TYPE_USAGE, this.session, this.owningStatement, this, 0, new Throwable(),
+                                Messages.getString("ResultSet.Too_Large_Result_Set",
+                                        new Object[] { Integer.valueOf(this.rowData.size()), Integer.valueOf(resultSetSizeThreshold) }));
                     }
 
-                    //
+                    if (!isLast() && !isAfterLast() && (this.rowData.size() != 0)) {
+                        this.eventSink.processEvent(ProfilerEvent.TYPE_USAGE, this.session, this.owningStatement, this, 0, new Throwable(),
+                                Messages.getString("ResultSet.Possible_incomplete_traversal_of_result_set",
+                                        new Object[] { Integer.valueOf(getRow()), Integer.valueOf(this.rowData.size()) }));
+                    }
+
                     // Report on any columns that were selected but not referenced
-                    //
-
                     if (this.columnUsed.length > 0 && !this.rowData.wasEmpty()) {
-                        StringBuilder buf = new StringBuilder(Messages.getString("ResultSet.The_following_columns_were_never_referenced"));
-
-                        boolean issueWarn = false;
-
+                        StringBuilder buf = new StringBuilder();
                         for (int i = 0; i < this.columnUsed.length; i++) {
                             if (!this.columnUsed[i]) {
-                                if (!issueWarn) {
-                                    issueWarn = true;
-                                } else {
+                                if (buf.length() > 0) {
                                     buf.append(", ");
                                 }
-
                                 buf.append(this.columnDefinition.getFields()[i].getFullName());
                             }
                         }
-
-                        if (issueWarn) {
-                            this.eventSink.consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "",
-                                    (this.owningStatement == null) ? "N/A" : this.owningStatement.getCurrentCatalog(), this.connectionId,
-                                    (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), 0, System.currentTimeMillis(), 0,
-                                    Constants.MILLIS_I18N, null, this.pointOfOrigin, buf.toString()));
+                        if (buf.length() > 0) {
+                            this.eventSink.processEvent(ProfilerEvent.TYPE_USAGE, this.session, this.owningStatement, this, 0, new Throwable(),
+                                    Messages.getString("ResultSet.The_following_columns_were_never_referenced", new String[] { buf.toString() }));
                         }
                     }
                 }
@@ -2630,11 +2587,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     }
 
     @Override
-    public long getConnectionId() {
-        return this.connectionId;
-    }
-
-    @Override
     public String getPointOfOrigin() {
         return this.pointOfOrigin;
     }
@@ -2654,8 +2606,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     }
 
     @Override
-    public int getOwningStatementId() {
-        return this.owningStatement == null ? -1 : this.owningStatement.getId();
+    public Query getOwningQuery() {
+        return this.owningStatement;
     }
 
     @Override

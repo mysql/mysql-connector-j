@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,7 +44,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mysql.cj.CancelQueryTask;
 import com.mysql.cj.CharsetMapping;
-import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeSession;
@@ -76,9 +75,6 @@ import com.mysql.cj.jdbc.result.ResultSetFactory;
 import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.log.ProfilerEvent;
-import com.mysql.cj.log.ProfilerEventHandler;
-import com.mysql.cj.log.ProfilerEventHandlerFactory;
-import com.mysql.cj.log.ProfilerEventImpl;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.Resultset;
@@ -90,7 +86,6 @@ import com.mysql.cj.protocol.a.result.ResultsetRowsStatic;
 import com.mysql.cj.result.DefaultColumnDefinition;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.Row;
-import com.mysql.cj.util.LogUtils;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
 
@@ -141,12 +136,6 @@ public class StatementImpl implements JdbcStatement {
 
     /** Are we in pedantic mode? */
     protected boolean pedantic = false;
-
-    /**
-     * Where this statement was created, only used if profileSQL or
-     * useUsageAdvisor set to true.
-     */
-    protected String pointOfOrigin;
 
     /** Should we profile? */
     protected boolean profileSQL = false;
@@ -223,7 +212,11 @@ public class StatementImpl implements JdbcStatement {
         this.session = (NativeSession) c.getSession();
         this.exceptionInterceptor = c.getExceptionInterceptor();
 
-        initQuery();
+        try {
+            initQuery();
+        } catch (CJException e) {
+            throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
+        }
 
         this.query.setCurrentCatalog(catalog);
 
@@ -252,17 +245,6 @@ public class StatementImpl implements JdbcStatement {
         int defaultFetchSize = pset.getIntegerProperty(PropertyKey.defaultFetchSize).getValue();
         if (defaultFetchSize != 0) {
             setFetchSize(defaultFetchSize);
-        }
-
-        boolean profiling = this.profileSQL || this.useUsageAdvisor || this.logSlowQueries;
-
-        if (profiling) {
-            this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
-            try {
-                this.query.setEventSink(ProfilerEventHandlerFactory.getInstance(this.session));
-            } catch (CJException e) {
-                throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
-            }
         }
 
         int maxRowsConn = pset.getIntegerProperty(PropertyKey.maxRows).getValue();
@@ -1254,7 +1236,7 @@ public class StatementImpl implements JdbcStatement {
 
     public void executeSimpleNonQuery(JdbcConnection c, String nonQuery) throws SQLException {
         synchronized (c.getConnectionMutex()) {
-            ((NativeSession) c.getSession()).<ResultSetImpl> execSQL(this, nonQuery, -1, null, false, getResultSetFactory(), getCurrentCatalog(), null, false)
+            ((NativeSession) c.getSession()).<ResultSetImpl>execSQL(this, nonQuery, -1, null, false, getResultSetFactory(), getCurrentCatalog(), null, false)
                     .close();
         }
     }
@@ -1787,10 +1769,8 @@ public class StatementImpl implements JdbcStatement {
 
         if (this.useUsageAdvisor) {
             if (!calledExplicitly) {
-                String message = Messages.getString("Statement.63") + Messages.getString("Statement.64");
-
-                this.query.getEventSink().consumeEvent(new ProfilerEventImpl(ProfilerEvent.TYPE_WARN, "", getCurrentCatalog(), this.session.getThreadId(),
-                        this.getId(), -1, System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_USAGE, this.session, this, null, 0, new Throwable(),
+                        Messages.getString("Statement.63"));
             }
         }
 
@@ -2255,16 +2235,6 @@ public class StatementImpl implements JdbcStatement {
     @Override
     public void setTimeoutInMillis(int timeoutInMillis) {
         this.query.setTimeoutInMillis(timeoutInMillis);
-    }
-
-    @Override
-    public ProfilerEventHandler getEventSink() {
-        return this.query.getEventSink();
-    }
-
-    @Override
-    public void setEventSink(ProfilerEventHandler eventSink) {
-        this.query.setEventSink(eventSink);
     }
 
     @Override

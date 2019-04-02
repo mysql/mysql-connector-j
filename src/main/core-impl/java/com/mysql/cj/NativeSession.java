@@ -70,8 +70,6 @@ import com.mysql.cj.exceptions.PasswordExpiredException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.interceptors.QueryInterceptor;
 import com.mysql.cj.log.Log;
-import com.mysql.cj.log.ProfilerEventHandler;
-import com.mysql.cj.log.ProfilerEventHandlerFactory;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.NetworkResources;
@@ -191,6 +189,7 @@ public class NativeSession extends CoreSession implements Serializable {
             }
         }
         this.isClosed = true;
+        super.quit();
     }
 
     // TODO: we should examine the call flow here, we shouldn't have to know about the socket connection but this should be address in a wider scope.
@@ -216,6 +215,7 @@ public class NativeSession extends CoreSession implements Serializable {
             }
         }
         this.isClosed = true;
+        super.forceClose();
     }
 
     public void enableMultiQueries() {
@@ -243,10 +243,6 @@ public class NativeSession extends CoreSession implements Serializable {
 
     public void setSessionMaxRows(int sessionMaxRows) {
         this.sessionMaxRows = sessionMaxRows;
-    }
-
-    public HostInfo getHostInfo() {
-        return this.hostInfo;
     }
 
     public void setQueryInterceptors(List<QueryInterceptor> queryInterceptors) {
@@ -325,10 +321,6 @@ public class NativeSession extends CoreSession implements Serializable {
         return ((NativeProtocol) this.protocol).getSlowQueryThreshold();
     }
 
-    public String getQueryTimingUnits() {
-        return ((NativeProtocol) this.protocol).getQueryTimingUnits();
-    }
-
     public boolean hadWarnings() {
         return ((NativeProtocol) this.protocol).hadWarnings();
     }
@@ -359,48 +351,12 @@ public class NativeSession extends CoreSession implements Serializable {
         }
     }
 
-    public ProfilerEventHandler getProfilerEventHandlerInstanceFunction() {
-        return ProfilerEventHandlerFactory.getInstance(this);
-    }
-
     public InputStream getLocalInfileInputStream() {
         return this.protocol.getLocalInfileInputStream();
     }
 
     public void setLocalInfileInputStream(InputStream stream) {
         this.protocol.setLocalInfileInputStream(stream);
-    }
-
-    public void registerQueryExecutionTime(long queryTimeMs) {
-        ((NativeProtocol) this.protocol).getMetricsHolder().registerQueryExecutionTime(queryTimeMs);
-    }
-
-    public void reportNumberOfTablesAccessed(int numTablesAccessed) {
-        ((NativeProtocol) this.protocol).getMetricsHolder().reportNumberOfTablesAccessed(numTablesAccessed);
-    }
-
-    public void incrementNumberOfPreparedExecutes() {
-        if (this.gatherPerfMetrics.getValue()) {
-            ((NativeProtocol) this.protocol).getMetricsHolder().incrementNumberOfPreparedExecutes();
-        }
-    }
-
-    public void incrementNumberOfPrepares() {
-        if (this.gatherPerfMetrics.getValue()) {
-            ((NativeProtocol) this.protocol).getMetricsHolder().incrementNumberOfPrepares();
-        }
-    }
-
-    public void incrementNumberOfResultSetsCreated() {
-        if (this.gatherPerfMetrics.getValue()) {
-            ((NativeProtocol) this.protocol).getMetricsHolder().incrementNumberOfResultSetsCreated();
-        }
-    }
-
-    public void reportMetrics() {
-        if (this.gatherPerfMetrics.getValue()) {
-
-        }
     }
 
     /**
@@ -1137,15 +1093,8 @@ public class NativeSession extends CoreSession implements Serializable {
     public <T extends Resultset> T execSQL(Query callingQuery, String query, int maxRows, NativePacketPayload packet, boolean streamResults,
             ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory, String catalog, ColumnDefinition cachedMetadata, boolean isBatch) {
 
-        long queryStartTime = 0;
-        int endOfQueryPacketPosition = 0;
-        if (packet != null) {
-            endOfQueryPacketPosition = packet.getPosition();
-        }
-
-        if (this.gatherPerfMetrics.getValue()) {
-            queryStartTime = System.currentTimeMillis();
-        }
+        long queryStartTime = this.gatherPerfMetrics.getValue() ? System.currentTimeMillis() : 0;
+        int endOfQueryPacketPosition = packet != null ? packet.getPosition() : 0;
 
         this.lastQueryFinishedTime = 0; // we're busy!
 
@@ -1160,13 +1109,10 @@ public class NativeSession extends CoreSession implements Serializable {
         }
 
         try {
-            if (packet == null) {
-                String encoding = this.characterEncoding.getValue();
-                return ((NativeProtocol) this.protocol).sendQueryString(callingQuery, query, encoding, maxRows, streamResults, catalog, cachedMetadata,
-                        this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
-            }
-            return ((NativeProtocol) this.protocol).sendQueryPacket(callingQuery, packet, maxRows, streamResults, catalog, cachedMetadata,
-                    this::getProfilerEventHandlerInstanceFunction, resultSetFactory);
+            return packet == null
+                    ? ((NativeProtocol) this.protocol).sendQueryString(callingQuery, query, this.characterEncoding.getValue(), maxRows, streamResults, catalog,
+                            cachedMetadata, resultSetFactory)
+                    : ((NativeProtocol) this.protocol).sendQueryPacket(callingQuery, packet, maxRows, streamResults, catalog, cachedMetadata, resultSetFactory);
 
         } catch (CJException sqlE) {
             if (getPropertySet().getBooleanProperty(PropertyKey.dumpQueriesOnException).getValue()) {
@@ -1208,23 +1154,14 @@ public class NativeSession extends CoreSession implements Serializable {
             }
 
             if (this.gatherPerfMetrics.getValue()) {
-                long queryTime = System.currentTimeMillis() - queryStartTime;
-
-                registerQueryExecutionTime(queryTime);
+                ((NativeProtocol) this.protocol).getMetricsHolder().registerQueryExecutionTime(System.currentTimeMillis() - queryStartTime);
             }
         }
 
     }
 
     public long getIdleFor() {
-        if (this.lastQueryFinishedTime == 0) {
-            return 0;
-        }
-
-        long now = System.currentTimeMillis();
-        long idleTime = now - this.lastQueryFinishedTime;
-
-        return idleTime;
+        return this.lastQueryFinishedTime == 0 ? 0 : System.currentTimeMillis() - this.lastQueryFinishedTime;
     }
 
     public boolean isNeedsPing() {

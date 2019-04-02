@@ -40,7 +40,6 @@ import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.CJTimeoutException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.OperationCancelledException;
-import com.mysql.cj.log.ProfilerEventHandler;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.Resultset;
@@ -56,9 +55,6 @@ public abstract class AbstractQuery implements Query {
 
     /** Used to identify this statement when profiling. */
     protected int statementId;
-
-    /** Should we profile? */
-    protected boolean profileSQL = false;
 
     protected RuntimeProperty<Integer> maxAllowedPacket;
 
@@ -82,9 +78,6 @@ public abstract class AbstractQuery implements Query {
     /** The number of rows to fetch at a time (currently ignored) */
     protected int fetchSize = 0;
 
-    /** If profiling, where should events go to? */
-    protected ProfilerEventHandler eventSink = null;
-
     /** Currently executing a statement? */
     protected final AtomicBoolean statementExecuting = new AtomicBoolean(false);
 
@@ -97,7 +90,6 @@ public abstract class AbstractQuery implements Query {
     public AbstractQuery(NativeSession sess) {
         statementCounter++;
         this.session = sess;
-        this.profileSQL = sess.getPropertySet().getBooleanProperty(PropertyKey.profileSQL).getValue();
         this.maxAllowedPacket = sess.getPropertySet().getIntegerProperty(PropertyKey.maxAllowedPacket);
         this.charEncoding = sess.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
     }
@@ -217,14 +209,6 @@ public abstract class AbstractQuery implements Query {
                 checkCancelTimeout();
             }
         }
-    }
-
-    public ProfilerEventHandler getEventSink() {
-        return this.eventSink;
-    }
-
-    public void setEventSink(ProfilerEventHandler eventSink) {
-        this.eventSink = eventSink;
     }
 
     public AtomicBoolean getStatementExecuting() {

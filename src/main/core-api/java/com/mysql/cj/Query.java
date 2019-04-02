@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,7 +32,6 @@ package com.mysql.cj;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.mysql.cj.log.ProfilerEventHandler;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.Resultset;
@@ -91,10 +90,6 @@ public interface Query {
     void setTimeoutInMillis(int timeoutInMillis);
 
     CancelQueryTask startQueryTimer(Query stmtToCancel, int timeout);
-
-    ProfilerEventHandler getEventSink();
-
-    void setEventSink(ProfilerEventHandler eventSink);
 
     AtomicBoolean getStatementExecuting();
 

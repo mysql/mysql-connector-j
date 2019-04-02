@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,9 +31,9 @@ package com.mysql.cj.log;
 
 public interface ProfilerEvent {
     /**
-     * A Profiler warning event
+     * Profiler event for usage advisor
      */
-    public static final byte TYPE_WARN = 0;
+    public static final byte TYPE_USAGE = 0;
 
     /**
      * Profiler creating object type event
@@ -66,13 +66,58 @@ public interface ProfilerEvent {
     public static final byte TYPE_SLOW_QUERY = 6;
 
     /**
-     * Returns the event type flag
+     * Not available value.
+     */
+    public static final byte NA = -1;
+
+    /**
+     * Returns the event type
      * 
-     * @return the event type flag
+     * @return the event type
      */
     byte getEventType();
 
-    void setEventType(byte eventType);
+    /**
+     * Returns the host name the event occurred on.
+     * 
+     * @return host name
+     */
+    String getHostName();
+
+    /**
+     * Returns the catalog in the event occurred on.
+     * 
+     * @return catalog name
+     */
+    String getCatalog();
+
+    /**
+     * Returns the id of the associated connection (-1 for none).
+     * 
+     * @return the connection in use
+     */
+    long getConnectionId();
+
+    /**
+     * Returns the id of the associated statement (-1 for none).
+     * 
+     * @return the statement in use
+     */
+    int getStatementId();
+
+    /**
+     * Returns the id of the associated result set (-1 for none).
+     * 
+     * @return the result set in use
+     */
+    int getResultSetId();
+
+    /**
+     * Returns the time (in System.currentTimeMillis() form) when this event was created.
+     * 
+     * @return the time this event was created
+     */
+    long getEventCreationTime();
 
     /**
      * Returns the duration of the event in milliseconds
@@ -89,25 +134,11 @@ public interface ProfilerEvent {
     String getDurationUnits();
 
     /**
-     * Returns the id of the connection in use when this event was created.
+     * Returns the description of where the event was created.
      * 
-     * @return the connection in use
+     * @return a description of where this event was created.
      */
-    long getConnectionId();
-
-    /**
-     * Returns the id of the result set in use when this event was created.
-     * 
-     * @return the result set in use
-     */
-    int getResultSetId();
-
-    /**
-     * Returns the id of the statement in use when this event was created.
-     * 
-     * @return the statement in use
-     */
-    int getStatementId();
+    String getEventCreationPointAsString();
 
     /**
      * Returns the optional message for this event
@@ -115,28 +146,6 @@ public interface ProfilerEvent {
      * @return the message stored in this event
      */
     String getMessage();
-
-    /**
-     * Returns the time (in System.currentTimeMillis() form) when this event was
-     * created
-     * 
-     * @return the time this event was created
-     */
-    long getEventCreationTime();
-
-    /**
-     * Returns the catalog in use
-     * 
-     * @return the catalog in use
-     */
-    String getCatalog();
-
-    /**
-     * Returns the description of when this event was created.
-     * 
-     * @return a description of when this event was created.
-     */
-    String getEventCreationPointAsString();
 
     /**
      * Creates a binary representation of this event.

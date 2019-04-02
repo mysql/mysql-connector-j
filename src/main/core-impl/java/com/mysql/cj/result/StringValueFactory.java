@@ -35,7 +35,6 @@ import java.math.BigInteger;
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.log.ProfilerEventHandler;
 import com.mysql.cj.protocol.InternalDate;
 import com.mysql.cj.protocol.InternalTime;
 import com.mysql.cj.protocol.InternalTimestamp;
@@ -155,11 +154,5 @@ public class StringValueFactory implements ValueFactory<String> {
 
     public String getTargetTypeName() {
         return String.class.getName();
-    }
-
-    @Override
-    public ValueFactory<String> setEventSink(ProfilerEventHandler eventSink) {
-        // TODO Auto-generated method stub
-        return this;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,7 +40,6 @@ import com.mysql.cj.TransactionEventHandler;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
-import com.mysql.cj.log.ProfilerEventHandler;
 import com.mysql.cj.result.RowList;
 
 /**
@@ -132,11 +131,6 @@ public interface Protocol<M extends Message> {
     String getPasswordCharacterEncoding();
 
     boolean versionMeetsMinimum(int major, int minor, int subminor);
-
-    @FunctionalInterface
-    public static interface GetProfilerEventHandlerInstanceFunction {
-        ProfilerEventHandler apply();
-    }
 
     /**
      * Read one message from the MySQL server into the reusable buffer if provided or into the new one.
@@ -284,4 +278,6 @@ public interface Protocol<M extends Message> {
      * Return Protocol to its initial state right after successful connect.
      */
     void reset();
+
+    String getQueryTimingUnits();
 }

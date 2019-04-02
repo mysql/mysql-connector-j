@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,10 @@
 
 package com.mysql.cj.log;
 
+import com.mysql.cj.Query;
+import com.mysql.cj.Session;
+import com.mysql.cj.protocol.Resultset;
+
 public interface ProfilerEventHandler {
 
     void init(Log log);
@@ -36,4 +40,6 @@ public interface ProfilerEventHandler {
     void destroy();
 
     void consumeEvent(ProfilerEvent evt);
+
+    void processEvent(byte eventType, Session session, Query query, Resultset resultSet, long eventDuration, Throwable eventCreationPoint, String message);
 }
