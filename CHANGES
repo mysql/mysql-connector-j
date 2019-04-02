@@ -3,6 +3,8 @@
 
 Version 8.0.17
 
+  - WL#12726, DevAPI: Add overlaps and not_overlaps as operator.
+
   - Fix for Bug#95503 (29821029), Operator IN not mapping consistently to the right X Plugin operation.
 
   - WL#12942, Update README.md and add new CONTRIBUTING.md.

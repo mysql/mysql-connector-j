@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar;
+import com.mysql.cj.x.protobuf.MysqlxExpr.Array;
 import com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
@@ -173,6 +174,18 @@ public class ExprUnparser {
         return s;
     }
 
+    static String arrayToString(Array e) {
+        String s = "[";
+
+        for (Expr v : e.getValueList()) {
+            s += exprToString(v) + ", ";
+        }
+        s = s.replaceAll(", $", "");
+        s += "]";
+
+        return s;
+    }
+
     /**
      * Create a string from a list of (already stringified) parameters. Surround by parens and separate by commas.
      * 
@@ -219,6 +232,9 @@ public class ExprUnparser {
                 s += " ESCAPE " + params.get(2);
             }
             return s;
+        } else if ("overlaps".equals(name) || "not_overlaps".equals(name)) {
+            name = name.replaceAll("not_overlaps", "not overlaps");
+            return String.format("%s %s %s", params.get(0), name, params.get(1));
         } else if ("regexp".equals(name) || "not_regexp".equals("name")) {
             name = name.replaceAll("not_regexp", "not regexp");
             return String.format("(%s %s %s)", params.get(0), name, params.get(1));
@@ -318,6 +334,8 @@ public class ExprUnparser {
                 return operatorToString(e.getOperator());
             case PLACEHOLDER:
                 return ":" + Integer.toUnsignedLong(e.getPosition());
+            case ARRAY:
+                return arrayToString(e.getArray());
             case OBJECT:
                 return objectToString(e.getObject());
             default:

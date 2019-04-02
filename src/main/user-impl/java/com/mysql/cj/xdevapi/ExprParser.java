@@ -129,7 +129,7 @@ public class ExprParser {
         LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, DOLLAR, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX, BIN,
         NEG, BANG, EROTEME, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND,
         HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH, DOUBLESTAR, MOD, COLON, ORDERBY_ASC,
-        ORDERBY_DESC, AS, LCURLY, RCURLY, DOTSTAR, CAST, DECIMAL, UNSIGNED, SIGNED, INTEGER, DATE, TIME, DATETIME, CHAR, BINARY, JSON, COLDOCPATH
+        ORDERBY_DESC, AS, LCURLY, RCURLY, DOTSTAR, CAST, DECIMAL, UNSIGNED, SIGNED, INTEGER, DATE, TIME, DATETIME, CHAR, BINARY, JSON, COLDOCPATH, OVERLAPS
     }
 
     /**
@@ -213,6 +213,7 @@ public class ExprParser {
         reservedWords.put("char", TokenType.CHAR);
         reservedWords.put("binary", TokenType.BINARY);
         reservedWords.put("json", TokenType.BINARY);
+        reservedWords.put("overlaps", TokenType.OVERLAPS);
     }
 
     /**
@@ -975,7 +976,7 @@ public class ExprParser {
     Expr ilriExpr() {
         Expr lhs = compExpr();
         List<TokenType> expected = Arrays
-                .asList(new TokenType[] { TokenType.IS, TokenType.IN, TokenType.LIKE, TokenType.BETWEEN, TokenType.REGEXP, TokenType.NOT });
+                .asList(new TokenType[] { TokenType.IS, TokenType.IN, TokenType.LIKE, TokenType.BETWEEN, TokenType.REGEXP, TokenType.NOT, TokenType.OVERLAPS });
         while (this.tokenPos < this.tokens.size() && expected.contains(this.tokens.get(this.tokenPos).type)) {
             boolean isNot = false;
             if (currentTokenTypeEquals(TokenType.NOT)) {
@@ -1022,6 +1023,10 @@ public class ExprParser {
                         break;
                     case REGEXP:
                         consumeToken(TokenType.REGEXP);
+                        params.add(compExpr());
+                        break;
+                    case OVERLAPS:
+                        consumeToken(TokenType.OVERLAPS);
                         params.add(compExpr());
                         break;
                     default:

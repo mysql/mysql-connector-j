@@ -55,12 +55,14 @@ import org.junit.Test;
 
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.FindStatement;
 import com.mysql.cj.xdevapi.FindStatementImpl;
+import com.mysql.cj.xdevapi.JsonLiteral;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.Row;
@@ -1221,4 +1223,99 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         assertEquals(2, testFind.execute().count());
         assertEquals(4, ((FindStatementImpl) testFind).where("$.ord > 4").execute().count());
     }
+
+    @Test
+    public void testOverlaps() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.17"))) {
+            // TSFR6
+            assertThrows(XProtocolError.class, "ERROR 5150 \\(HY000\\) Invalid operator overlaps",
+                    () -> this.collection.find("[1, 2, 3] OVERLAPS $.list").execute());
+            return;
+        }
+
+        this.collection.add("{\"_id\": \"01\", \"list\":[2,3], \"age\":21, \"overlaps\":true}").execute();
+        this.collection.add("{\"_id\": \"02\", \"list\":[3,4], \"age\":22, \"overlaps\":false}").execute();
+        this.collection.add("{\"_id\": \"03\", \"list\":[5,6], \"age\":23, \"overlaps\":false}").execute();
+
+        // TSFR1
+        DocResult res = this.collection.find("[1, 2, 3] OVERLAPS $.list").orderBy("_id").execute();
+        assertEquals(2, res.count());
+        DbDoc doc = res.fetchOne();
+        assertEquals("01", ((JsonString) doc.get("_id")).getString());
+        doc = res.fetchOne();
+        assertEquals("02", ((JsonString) doc.get("_id")).getString());
+
+        res = this.collection.find("$.list OVERLAPS [4]").orderBy("_id").execute();
+        assertEquals(1, res.count());
+        doc = res.fetchOne();
+        assertEquals("02", ((JsonString) doc.get("_id")).getString());
+
+        res = this.collection.find("[1, 2, 3] NOT OVERLAPS $.list").execute();
+        assertEquals(1, res.count());
+        doc = res.fetchOne();
+        assertEquals("03", ((JsonString) doc.get("_id")).getString());
+
+        res = this.collection.find("$.list NOT OVERLAPS [4]").orderBy("_id").execute();
+        doc = res.fetchOne();
+        assertEquals("01", ((JsonString) doc.get("_id")).getString());
+        doc = res.fetchOne();
+        assertEquals("03", ((JsonString) doc.get("_id")).getString());
+
+        // TSFR2
+        res = this.collection.find("$.list OverLaps [1, 2]").execute();
+        assertEquals(1, res.count());
+        doc = res.fetchOne();
+        assertEquals("01", ((JsonString) doc.get("_id")).getString());
+
+        res = this.collection.find("$.list noT overLAPS [1, 2]").orderBy("_id").execute();
+        assertEquals(2, res.count());
+        doc = res.fetchOne();
+        assertEquals("02", ((JsonString) doc.get("_id")).getString());
+        doc = res.fetchOne();
+        assertEquals("03", ((JsonString) doc.get("_id")).getString());
+
+        res = this.collection.find("[3] overlaps $.list").orderBy("_id").execute();
+        assertEquals(2, res.count());
+        doc = res.fetchOne();
+        assertEquals("01", ((JsonString) doc.get("_id")).getString());
+        doc = res.fetchOne();
+        assertEquals("02", ((JsonString) doc.get("_id")).getString());
+
+        res = this.collection.find("[3] Not Overlaps $.list").execute();
+        assertEquals(1, res.count());
+        doc = res.fetchOne();
+        assertEquals("03", ((JsonString) doc.get("_id")).getString());
+
+        // TSFR3
+        // C/J lexer mistakes if ident equals to reserved word, thus escaped idents are required in this case.
+        res = this.collection.find().fields("$.`overlaps` as `overlaps`").orderBy("_id").execute();
+        assertEquals(3, res.count());
+        doc = res.fetchOne();
+        assertTrue(((JsonLiteral) doc.get("overlaps")).equals(JsonLiteral.TRUE));
+        doc = res.fetchOne();
+        assertTrue(((JsonLiteral) doc.get("overlaps")).equals(JsonLiteral.FALSE));
+        doc = res.fetchOne();
+        assertTrue(((JsonLiteral) doc.get("overlaps")).equals(JsonLiteral.FALSE));
+
+        // TSFR4
+        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 0", () -> this.collection.find("overlaps $.list").execute());
+        assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token pos 4", () -> this.collection.find("$.list OVERLAPS").execute());
+        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 0", () -> this.collection.find("overlaps").execute());
+        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 1", () -> this.collection.find("NOT overlaps").execute());
+        assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token pos 5",
+                () -> this.collection.find("$.list NOT OVERLAPS").execute());
+        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 1", () -> this.collection.find("not overlaps").execute());
+
+        // TSFR5
+        res = this.collection.find("[1, 2, 3] OVERLAPS $.age").execute();
+        assertEquals(0, res.count());
+
+        res = this.collection.find("['21', '2', '3'] OVERLAPS $.age").execute();
+        assertEquals(0, res.count());
+    }
+
 }

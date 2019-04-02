@@ -570,4 +570,29 @@ public class ExprParserTest {
         assertEquals(Expr.Type.OPERATOR, expr.getType());
         assertEquals("cont_in", expr.getOperator().getName());
     }
+
+    @Test
+    public void testOverlaps() {
+        Expr expr = new ExprParser("[1, 2, 3] OVERLAPS $.list", false).parse();
+        assertEquals("[1, 2, 3] overlaps $.list", ExprUnparser.exprToString(expr));
+
+        expr = new ExprParser("$.list OVERLAPS [4]", false).parse();
+        assertEquals("$.list overlaps [4]", ExprUnparser.exprToString(expr));
+
+        expr = new ExprParser("[1, 2, 3] NOT OVERLAPS $.list", false).parse();
+        assertEquals("[1, 2, 3] not overlaps $.list", ExprUnparser.exprToString(expr));
+
+        expr = new ExprParser("$.list NOT OVERLAPS [4]", false).parse();
+        assertEquals("$.list not overlaps [4]", ExprUnparser.exprToString(expr));
+    }
+
+    @Test
+    public void testOverlapsInProjection() {
+        List<Projection> proj;
+
+        proj = new ExprParser("$.`overlaps` as `overlaps`").parseDocumentProjection();
+        assertEquals(1, proj.size());
+        assertTrue(proj.get(0).hasAlias());
+        assertEquals("overlaps", proj.get(0).getAlias());
+    }
 }
