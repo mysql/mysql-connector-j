@@ -67,6 +67,9 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     /** Max string length of a signed long = 9223372036854775807 (19+1 for minus sign) */
     public static final int MAX_SIGNED_LONG_LEN = 20;
 
+    /** Min supported year when parsing DATE, DATETIME and TIMESTAMP columns. This is more lenient than the ranges stated in the MySQL documentation. */
+    private static final int DATE_MIN_VALID_YEAR = 1;
+
     public <T> T decodeDate(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromDate(getDate(bytes, offset, length));
     }
@@ -256,6 +259,9 @@ public class MysqlTextValueDecoder implements ValueDecoder {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "DATE" }));
         }
         int year = getInt(bytes, offset, offset + 4);
+        if (year < DATE_MIN_VALID_YEAR) {
+            return new InternalDate();
+        }
         int month = getInt(bytes, offset + 5, offset + 7);
         int day = getInt(bytes, offset + 8, offset + 10);
         return new InternalDate(year, month, day);
@@ -353,6 +359,9 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         }
 
         int year = getInt(bytes, offset, offset + 4);
+        if (year < DATE_MIN_VALID_YEAR) {
+            return new InternalTimestamp();
+        }
         int month = getInt(bytes, offset + 5, offset + 7);
         int day = getInt(bytes, offset + 8, offset + 10);
         int hours = getInt(bytes, offset + 11, offset + 13);

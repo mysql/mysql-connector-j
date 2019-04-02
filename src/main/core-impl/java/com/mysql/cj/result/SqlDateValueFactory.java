@@ -76,6 +76,9 @@ public class SqlDateValueFactory extends AbstractDateTimeValueFactory<Date> {
                 if (idate.isZero()) {
                     throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
                 }
+                if (idate.getYear() <= 0) {
+                    throw new DataReadException(Messages.getString("ResultSet.InvalidYear", new Object[] { idate.getYear() }));
+                }
 
                 this.cal.clear();
                 this.cal.set(idate.getYear(), idate.getMonth() - 1, idate.getDay());

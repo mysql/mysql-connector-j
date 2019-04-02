@@ -174,6 +174,137 @@ public class DateTest extends BaseTestCase {
     }
 
     /**
+     * Tests the behaviour on columns with out of range year values.
+     *
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testInvalidYearBehaviour() throws Exception {
+        Connection testConn = this.conn;
+        Connection roundConn = null;
+        Connection nullConn = null;
+        Connection exceptionConn = null;
+        try {
+            if (versionMeetsMinimum(5, 7, 4)) {
+                Properties props = new Properties();
+                props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
+                if (versionMeetsMinimum(5, 7, 5)) {
+                    String sqlMode = getMysqlVariable("sql_mode");
+                    if (sqlMode.contains("STRICT_TRANS_TABLES")) {
+                        sqlMode = removeSqlMode("STRICT_TRANS_TABLES", sqlMode);
+                        props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode='" + sqlMode + "'");
+                    }
+                }
+                testConn = getConnectionWithProps(props);
+                this.stmt = testConn.createStatement();
+            }
+
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS testInvalidYearBehaviour");
+            this.stmt.executeUpdate("CREATE TABLE testInvalidYearBehaviour(fieldAsString VARCHAR(32), fieldAsDateTime DATETIME)");
+            this.stmt.executeUpdate("INSERT INTO testInvalidYearBehaviour VALUES ('0000-12-12 00:00:00', '0000-12-12 00:00:00')");
+
+            roundConn = getConnectionWithProps("zeroDateTimeBehavior=ROUND");
+            Statement roundStmt = roundConn.createStatement();
+            this.rs = roundStmt.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testInvalidYearBehaviour");
+            this.rs.next();
+
+            assertEquals("0001-01-01", this.rs.getDate(1).toString());
+            assertEquals("0001-01-01", this.rs.getDate(2).toString());
+
+            PreparedStatement roundPrepStmt = roundConn.prepareStatement("SELECT fieldAsString, fieldAsDateTime FROM testInvalidYearBehaviour");
+            this.rs = roundPrepStmt.executeQuery();
+            this.rs.next();
+
+            assertEquals("0001-01-01", this.rs.getDate(1).toString());
+            assertEquals("0001-01-01", this.rs.getDate(2).toString());
+
+            nullConn = getConnectionWithProps("zeroDateTimeBehavior=CONVERT_TO_NULL");
+            Statement nullStmt = nullConn.createStatement();
+            this.rs = nullStmt.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testInvalidYearBehaviour");
+
+            this.rs.next();
+
+            assertNull(this.rs.getDate(1));
+            assertNull(this.rs.getTimestamp(1));
+            assertNull(this.rs.getDate(2));
+            assertNull(this.rs.getTimestamp(2));
+
+            PreparedStatement nullPrepStmt = nullConn.prepareStatement("SELECT fieldAsString, fieldAsDateTime FROM testInvalidYearBehaviour");
+            this.rs = nullPrepStmt.executeQuery();
+
+            this.rs.next();
+
+            assertNull(this.rs.getDate(1));
+            assertNull(this.rs.getTimestamp(1));
+            assertNull(this.rs.getDate(2));
+            assertNull(this.rs.getTimestamp(2));
+
+            exceptionConn = getConnectionWithProps("zeroDateTimeBehavior=EXCEPTION");
+            Statement exceptionStmt = exceptionConn.createStatement();
+            this.rs = exceptionStmt.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testInvalidYearBehaviour");
+
+            this.rs.next();
+
+            try {
+                this.rs.getDate(1);
+                fail("Exception should have been thrown when trying to retrieve invalid date");
+            } catch (SQLException sqlEx) {
+                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+            }
+
+            try {
+                this.rs.getTimestamp(1);
+                fail("Exception should have been thrown when trying to retrieve invalid date");
+            } catch (SQLException sqlEx) {
+                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+            }
+
+            try {
+                this.rs.getDate(2);
+                fail("Exception should have been thrown when trying to retrieve invalid date");
+            } catch (SQLException sqlEx) {
+                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+            }
+
+            try {
+                this.rs.getTimestamp(2);
+                fail("Exception should have been thrown when trying to retrieve invalid date");
+            } catch (SQLException sqlEx) {
+                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+            }
+
+            PreparedStatement exceptionPrepStmt = exceptionConn.prepareStatement("SELECT fieldAsString, fieldAsDateTime FROM testInvalidYearBehaviour");
+
+            try {
+                this.rs = exceptionPrepStmt.executeQuery();
+                this.rs.next();
+                this.rs.getDate(2);
+                fail("Exception should have been thrown when trying to retrieve invalid date");
+            } catch (SQLException sqlEx) {
+                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+            }
+
+        } finally {
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS testInvalidYearBehaviour");
+            if (exceptionConn != null) {
+                exceptionConn.close();
+            }
+
+            if (nullConn != null) {
+                nullConn.close();
+            }
+
+            if (roundConn != null) {
+                roundConn.close();
+            }
+
+            if (testConn != this.conn) {
+                testConn.close();
+            }
+        }
+    }
+
+    /**
      * Tests the configurability of all-zero date/datetime/timestamp handling in the driver.
      * 
      * @throws Exception
