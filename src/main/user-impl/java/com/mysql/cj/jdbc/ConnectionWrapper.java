@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -133,6 +133,26 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
 
         return false; // we don't reach this code, compiler can't tell
+    }
+
+    @Override
+    public void setDatabase(String dbName) throws SQLException {
+        try {
+            this.mc.setDatabase(dbName);
+        } catch (SQLException sqlException) {
+            checkAndFireConnectionError(sqlException);
+        }
+    }
+
+    @Override
+    public String getDatabase() throws SQLException {
+        try {
+            return this.mc.getDatabase();
+        } catch (SQLException sqlException) {
+            checkAndFireConnectionError(sqlException);
+        }
+
+        return null; // we don't reach this code, compiler can't tell
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -124,11 +124,11 @@ public class CommonChecks {
         addClosedCheck(clazz.getDeclaredMethod("getCatalog", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("getClientInfo", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("getClientInfo", new CtClass[] { ctString }));
+        addClosedCheck(clazz.getDeclaredMethod("getDatabase", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("getHoldability", new CtClass[] {}));
         // addClosedCheck(clazz.getDeclaredMethod("getProcessHost", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("getMetaData", new CtClass[] {}));
         // addClosedCheck(clazz.getDeclaredMethod("getNetworkTimeout", new CtClass[] {}));
-        // addClosedCheck(clazz.getDeclaredMethod("getSchema", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("getTransactionIsolation", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("getTypeMap", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("getWarnings", new CtClass[] {}));
@@ -160,12 +160,13 @@ public class CommonChecks {
         addClosedCheck(clazz.getDeclaredMethod("setCatalog", new CtClass[] { ctString }));
         // addClosedCheck(clazz.getDeclaredMethod("setClientInfo", new CtClass[] { ctString, ctString }));
         // addClosedCheck(clazz.getDeclaredMethod("setClientInfo", new CtClass[] { ctProperties }));
+        addClosedCheck(clazz.getDeclaredMethod("setDatabase", new CtClass[] { ctString }));
         addClosedCheck(clazz.getDeclaredMethod("setHoldability", new CtClass[] { ctInt }));
         // addClosedCheck(clazz.getDeclaredMethod("setNetworkTimeout", new CtClass[] { ctExecutor, ctInt }));
         addClosedCheck(clazz.getDeclaredMethod("setReadOnly", new CtClass[] { ctBool }));
         addClosedCheck(clazz.getDeclaredMethod("setSavepoint", new CtClass[] {}));
         addClosedCheck(clazz.getDeclaredMethod("setSavepoint", new CtClass[] { ctString }));
-        // addClosedCheck(clazz.getDeclaredMethod("setSchema", new CtClass[] { ctString }));
+        addClosedCheck(clazz.getDeclaredMethod("setSchema", new CtClass[] { ctString }));
         addClosedCheck(clazz.getDeclaredMethod("setTransactionIsolation", new CtClass[] { ctInt }));
         addClosedCheck(clazz.getDeclaredMethod("setTypeMap", new CtClass[] { ctMap }));
         addClosedCheck(clazz.getDeclaredMethod("shutdownServer", new CtClass[] {}));

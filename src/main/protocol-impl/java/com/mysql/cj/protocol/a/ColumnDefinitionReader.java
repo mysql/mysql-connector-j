@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -94,7 +94,7 @@ public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefini
         int offset, length;
 
         length = (int) packet.readInteger(IntegerDataType.INT_LENENC);
-        packet.setPosition(packet.getPosition() + length); // skip catalog name
+        packet.setPosition(packet.getPosition() + length); // skip database name
 
         length = (int) packet.readInteger(IntegerDataType.INT_LENENC);
         offset = packet.getPosition();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -144,21 +144,21 @@ public interface ConnectionLifecycleInterceptor {
     boolean setAutoCommit(boolean flag) throws SQLException;
 
     /**
-     * Called when an application calls Connection.setCatalog(), before the
-     * driver processes its own internal logic for setCatalog().
+     * Called when an application calls Connection.setCatalog() or Connection.setSchema(),
+     * before the driver processes its own internal logic for these methods.
      * 
-     * Interceptors should return "true" if the driver should perform
-     * its own internal logic for setCatalog(), or "false" if not.
+     * Interceptors should return "true" if the driver should perform its own internal logic
+     * for setCatalog() or setSchema(), or "false" if not.
      * 
-     * @param catalog
-     *            catalog name
+     * @param db
+     *            database name
      * @return "true" if the driver should perform
-     *         its own internal logic for setCatalog(), or "false" if not.
+     *         its own internal logic for setCatalog() or setSchema(), or "false" if not.
      * 
      * @throws SQLException
      *             if an error occurs
      */
-    boolean setCatalog(String catalog) throws SQLException;
+    boolean setDatabase(String db) throws SQLException;
 
     /**
      * Called when the driver has been told by the server that a transaction

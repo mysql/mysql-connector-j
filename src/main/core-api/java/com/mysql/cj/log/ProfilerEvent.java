@@ -85,11 +85,11 @@ public interface ProfilerEvent {
     String getHostName();
 
     /**
-     * Returns the catalog in the event occurred on.
+     * Returns the database the event occurred on.
      * 
-     * @return catalog name
+     * @return the database in use
      */
-    String getCatalog();
+    String getDatabase();
 
     /**
      * Returns the id of the associated connection (-1 for none).

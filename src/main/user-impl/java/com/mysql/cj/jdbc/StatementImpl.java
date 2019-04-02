@@ -197,13 +197,13 @@ public class StatementImpl implements JdbcStatement {
      * 
      * @param c
      *            the Connection instance that creates us
-     * @param catalog
+     * @param db
      *            the database name in use when we were created
      * 
      * @throws SQLException
      *             if an error occurs.
      */
-    public StatementImpl(JdbcConnection c, String catalog) throws SQLException {
+    public StatementImpl(JdbcConnection c, String db) throws SQLException {
         if ((c == null) || c.isClosed()) {
             throw SQLError.createSQLException(Messages.getString("Statement.0"), MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN, null);
         }
@@ -218,7 +218,7 @@ public class StatementImpl implements JdbcStatement {
             throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
         }
 
-        this.query.setCurrentCatalog(catalog);
+        this.query.setCurrentDatabase(db);
 
         JdbcPropertySet pset = c.getPropertySet();
 
@@ -701,14 +701,14 @@ public class StatementImpl implements JdbcStatement {
                 } else {
                     CancelQueryTask timeoutTask = null;
 
-                    String oldCatalog = null;
+                    String oldDb = null;
 
                     try {
                         timeoutTask = startQueryTimer(this, getTimeoutInMillis());
 
-                        if (!locallyScopedConn.getCatalog().equals(getCurrentCatalog())) {
-                            oldCatalog = locallyScopedConn.getCatalog();
-                            locallyScopedConn.setCatalog(getCurrentCatalog());
+                        if (!locallyScopedConn.getDatabase().equals(getCurrentDatabase())) {
+                            oldDb = locallyScopedConn.getDatabase();
+                            locallyScopedConn.setDatabase(getCurrentDatabase());
                         }
 
                         // Check if we have cached metadata for this query...
@@ -722,7 +722,7 @@ public class StatementImpl implements JdbcStatement {
                         statementBegins();
 
                         rs = ((NativeSession) locallyScopedConn.getSession()).execSQL(this, sql, this.maxRows, null, createStreamingResultSet(),
-                                getResultSetFactory(), getCurrentCatalog(), cachedMetaData, false);
+                                getResultSetFactory(), cachedMetaData, false);
 
                         if (timeoutTask != null) {
                             stopQueryTimer(timeoutTask, true, true);
@@ -735,8 +735,8 @@ public class StatementImpl implements JdbcStatement {
                     } finally {
                         stopQueryTimer(timeoutTask, false, false);
 
-                        if (oldCatalog != null) {
-                            locallyScopedConn.setCatalog(oldCatalog);
+                        if (oldDb != null) {
+                            locallyScopedConn.setDatabase(oldDb);
                         }
                     }
                 }
@@ -1144,14 +1144,14 @@ public class StatementImpl implements JdbcStatement {
 
             CancelQueryTask timeoutTask = null;
 
-            String oldCatalog = null;
+            String oldDb = null;
 
             try {
                 timeoutTask = startQueryTimer(this, getTimeoutInMillis());
 
-                if (!locallyScopedConn.getCatalog().equals(getCurrentCatalog())) {
-                    oldCatalog = locallyScopedConn.getCatalog();
-                    locallyScopedConn.setCatalog(getCurrentCatalog());
+                if (!locallyScopedConn.getDatabase().equals(getCurrentDatabase())) {
+                    oldDb = locallyScopedConn.getDatabase();
+                    locallyScopedConn.setDatabase(getCurrentDatabase());
                 }
 
                 //
@@ -1166,7 +1166,7 @@ public class StatementImpl implements JdbcStatement {
                 statementBegins();
 
                 this.results = ((NativeSession) locallyScopedConn.getSession()).execSQL(this, sql, this.maxRows, null, createStreamingResultSet(),
-                        getResultSetFactory(), getCurrentCatalog(), cachedMetaData, false);
+                        getResultSetFactory(), cachedMetaData, false);
 
                 if (timeoutTask != null) {
                     stopQueryTimer(timeoutTask, true, true);
@@ -1181,8 +1181,8 @@ public class StatementImpl implements JdbcStatement {
 
                 stopQueryTimer(timeoutTask, false, false);
 
-                if (oldCatalog != null) {
-                    locallyScopedConn.setCatalog(oldCatalog);
+                if (oldDb != null) {
+                    locallyScopedConn.setDatabase(oldDb);
                 }
             }
 
@@ -1236,8 +1236,7 @@ public class StatementImpl implements JdbcStatement {
 
     public void executeSimpleNonQuery(JdbcConnection c, String nonQuery) throws SQLException {
         synchronized (c.getConnectionMutex()) {
-            ((NativeSession) c.getSession()).<ResultSetImpl>execSQL(this, nonQuery, -1, null, false, getResultSetFactory(), getCurrentCatalog(), null, false)
-                    .close();
+            ((NativeSession) c.getSession()).<ResultSetImpl>execSQL(this, nonQuery, -1, null, false, getResultSetFactory(), null, false).close();
         }
     }
 
@@ -1280,18 +1279,18 @@ public class StatementImpl implements JdbcStatement {
 
             implicitlyCloseAllOpenResults();
 
-            // The checking and changing of catalogs must happen in sequence, so synchronize on the same mutex that _conn is using
+            // The checking and changing of databases must happen in sequence, so synchronize on the same mutex that _conn is using
 
             CancelQueryTask timeoutTask = null;
 
-            String oldCatalog = null;
+            String oldDb = null;
 
             try {
                 timeoutTask = startQueryTimer(this, getTimeoutInMillis());
 
-                if (!locallyScopedConn.getCatalog().equals(getCurrentCatalog())) {
-                    oldCatalog = locallyScopedConn.getCatalog();
-                    locallyScopedConn.setCatalog(getCurrentCatalog());
+                if (!locallyScopedConn.getDatabase().equals(getCurrentDatabase())) {
+                    oldDb = locallyScopedConn.getDatabase();
+                    locallyScopedConn.setDatabase(getCurrentDatabase());
                 }
 
                 //
@@ -1301,9 +1300,8 @@ public class StatementImpl implements JdbcStatement {
 
                 statementBegins();
 
-                // null catalog: force read of field info on DML
-                rs = ((NativeSession) locallyScopedConn.getSession()).execSQL(this, sql, -1, null, false, getResultSetFactory(), getCurrentCatalog(), null,
-                        isBatch);
+                // null database: force read of field info on DML
+                rs = ((NativeSession) locallyScopedConn.getSession()).execSQL(this, sql, -1, null, false, getResultSetFactory(), null, isBatch);
 
                 if (timeoutTask != null) {
                     stopQueryTimer(timeoutTask, true, true);
@@ -1316,8 +1314,8 @@ public class StatementImpl implements JdbcStatement {
             } finally {
                 stopQueryTimer(timeoutTask, false, false);
 
-                if (oldCatalog != null) {
-                    locallyScopedConn.setCatalog(oldCatalog);
+                if (oldDb != null) {
+                    locallyScopedConn.setDatabase(oldDb);
                 }
 
                 if (!isBatch) {
@@ -2161,8 +2159,8 @@ public class StatementImpl implements JdbcStatement {
     }
 
     @Override
-    public String getCurrentCatalog() {
-        return this.query.getCurrentCatalog();
+    public String getCurrentDatabase() {
+        return this.query.getCurrentDatabase();
     }
 
     public long getServerStatementId() {
@@ -2243,8 +2241,8 @@ public class StatementImpl implements JdbcStatement {
     }
 
     @Override
-    public void setCurrentCatalog(String currentCatalog) {
-        this.query.setCurrentCatalog(currentCatalog);
+    public void setCurrentDatabase(String currentDb) {
+        this.query.setCurrentDatabase(currentDb);
     }
 
     @Override

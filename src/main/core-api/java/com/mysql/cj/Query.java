@@ -93,9 +93,9 @@ public interface Query {
 
     AtomicBoolean getStatementExecuting();
 
-    String getCurrentCatalog();
+    String getCurrentDatabase();
 
-    void setCurrentCatalog(String currentCatalog);
+    void setCurrentDatabase(String currentDb);
 
     boolean isClearWarningsCalled();
 

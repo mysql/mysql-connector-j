@@ -95,6 +95,7 @@ import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
 import com.mysql.cj.ServerPreparedQuery;
 import com.mysql.cj.Session;
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -4734,11 +4735,6 @@ public class StatementRegressionTest extends BaseTestCase {
             @Override
             public int getOwnerFetchSize() {
                 return 0;
-            }
-
-            @Override
-            public String getCurrentCatalog() {
-                return null;
             }
 
             @Override
@@ -9732,7 +9728,11 @@ public class StatementRegressionTest extends BaseTestCase {
 
             Connection testConn = getConnectionWithProps(props);
 
-            testConn.setCatalog("testBug66430DB1");
+            if (((JdbcConnection) testConn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA) {
+                testConn.setSchema("testBug66430DB1");
+            } else {
+                testConn.setCatalog("testBug66430DB1");
+            }
             PreparedStatement testPStmt = testConn.prepareStatement("SELECT * FROM testBug66430 WHERE id > ?");
             testPStmt.setInt(1, 0);
             this.rs = testPStmt.executeQuery();
@@ -9741,7 +9741,11 @@ public class StatementRegressionTest extends BaseTestCase {
             assertFalse(testCase, this.rs.next());
             testPStmt.close();
 
-            testConn.setCatalog("testBug66430DB2");
+            if (((JdbcConnection) testConn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA) {
+                testConn.setSchema("testBug66430DB2");
+            } else {
+                testConn.setCatalog("testBug66430DB2");
+            }
             testPStmt = testConn.prepareStatement("SELECT * FROM testBug66430 WHERE id > ?");
             testPStmt.setInt(1, 0);
             this.rs = testPStmt.executeQuery();
@@ -9751,7 +9755,11 @@ public class StatementRegressionTest extends BaseTestCase {
             testPStmt.close();
 
             // Do it again to make sure cached prepared statements behave correctly.
-            testConn.setCatalog("testBug66430DB1");
+            if (((JdbcConnection) testConn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA) {
+                testConn.setSchema("testBug66430DB1");
+            } else {
+                testConn.setCatalog("testBug66430DB1");
+            }
             testPStmt = testConn.prepareStatement("SELECT * FROM testBug66430 WHERE id > ?");
             testPStmt.setInt(1, 0);
             this.rs = testPStmt.executeQuery();
@@ -9760,7 +9768,11 @@ public class StatementRegressionTest extends BaseTestCase {
             assertFalse(testCase, this.rs.next());
             testPStmt.close();
 
-            testConn.setCatalog("testBug66430DB2");
+            if (((JdbcConnection) testConn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA) {
+                testConn.setSchema("testBug66430DB2");
+            } else {
+                testConn.setCatalog("testBug66430DB2");
+            }
             testPStmt = testConn.prepareStatement("SELECT * FROM testBug66430 WHERE id > ?");
             testPStmt.setInt(1, 0);
             this.rs = testPStmt.executeQuery();

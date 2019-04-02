@@ -73,6 +73,7 @@ import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.Query;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
@@ -134,9 +135,15 @@ public class ConnectionTest extends BaseTestCase {
      *             if an error occurs
      */
     public void testCatalog() throws Exception {
-        String currentCatalog = this.conn.getCatalog();
-        this.conn.setCatalog(currentCatalog);
-        assertTrue(currentCatalog.equals(this.conn.getCatalog()));
+        if (((JdbcConnection) this.conn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA) {
+            String currentSchema = this.conn.getSchema();
+            this.conn.setSchema(currentSchema);
+            assertTrue(currentSchema.equals(this.conn.getSchema()));
+        } else {
+            String currentCatalog = this.conn.getCatalog();
+            this.conn.setCatalog(currentCatalog);
+            assertTrue(currentCatalog.equals(this.conn.getCatalog()));
+        }
     }
 
     /**

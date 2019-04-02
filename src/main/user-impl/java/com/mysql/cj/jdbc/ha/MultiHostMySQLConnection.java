@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -488,6 +488,16 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     @Override
     public void setAutoCommit(boolean autoCommitFlag) throws SQLException {
         getActiveMySQLConnection().setAutoCommit(autoCommitFlag);
+    }
+
+    @Override
+    public void setDatabase(String dbName) throws SQLException {
+        getActiveMySQLConnection().setDatabase(dbName);
+    }
+
+    @Override
+    public String getDatabase() throws SQLException {
+        return getActiveMySQLConnection().getDatabase();
     }
 
     @Override

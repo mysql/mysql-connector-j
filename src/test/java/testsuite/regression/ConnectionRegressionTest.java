@@ -117,6 +117,7 @@ import com.mysql.cj.Session;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyDefinitions.ZeroDatetimeBehavior;
 import com.mysql.cj.conf.PropertyKey;
@@ -1352,6 +1353,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         try {
             replConn = getMasterSlaveReplicationConnection();
+            boolean dbMapsToSchema = ((JdbcConnection) replConn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
+                    .getValue() == DatabaseTerm.SCHEMA;
 
             int masterConnectionId = Integer.parseInt(getSingleIndexedValueWithQuery(replConn, 1, "SELECT CONNECTION_ID()").toString());
 
@@ -1359,10 +1362,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             assertEquals(masterConnectionId, Integer.parseInt(getSingleIndexedValueWithQuery(replConn, 1, "SELECT CONNECTION_ID()").toString()));
 
-            String currentCatalog = replConn.getCatalog();
+            String currentDb = dbMapsToSchema ? replConn.getSchema() : replConn.getCatalog();
 
-            replConn.setCatalog(currentCatalog);
-            assertEquals(currentCatalog, replConn.getCatalog());
+            if (dbMapsToSchema) {
+                replConn.setSchema(currentDb);
+                assertEquals(currentDb, replConn.getSchema());
+            } else {
+                replConn.setCatalog(currentDb);
+                assertEquals(currentDb, replConn.getCatalog());
+            }
 
             replConn.setReadOnly(true);
 
@@ -1372,15 +1380,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
             // As per Bug#21286268 fix a Replication connection first initializes the Slaves sub-connection, then the Masters.
             assertTrue("Master id " + masterConnectionId + " is not newer than slave id " + slaveConnectionId, masterConnectionId > slaveConnectionId);
 
-            assertEquals(currentCatalog, replConn.getCatalog());
+            assertEquals(currentDb, dbMapsToSchema ? replConn.getSchema() : replConn.getCatalog());
 
-            String newCatalog = "mysql";
+            String newDb = "mysql";
 
-            replConn.setCatalog(newCatalog);
-            assertEquals(newCatalog, replConn.getCatalog());
+            if (dbMapsToSchema) {
+                replConn.setSchema(newDb);
+                assertEquals(newDb, replConn.getSchema());
+            } else {
+                replConn.setCatalog(newDb);
+                assertEquals(newDb, replConn.getCatalog());
+            }
 
             replConn.setReadOnly(true);
-            assertEquals(newCatalog, replConn.getCatalog());
+            assertEquals(newDb, dbMapsToSchema ? replConn.getSchema() : replConn.getCatalog());
 
             replConn.setReadOnly(false);
             assertEquals(masterConnectionId, Integer.parseInt(getSingleIndexedValueWithQuery(replConn, 1, "SELECT CONNECTION_ID()").toString()));
@@ -4640,7 +4653,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
             if (sql.contains("lc_messages=ru_RU")) {
                 try {
-                    this.connection.createStatement().executeQuery("SELECT * FROM `" + this.connection.getCatalog() + "`.`\u307b\u3052\u307b\u3052`");
+                    this.connection.createStatement()
+                            .executeQuery("SELECT * FROM `"
+                                    + (this.connection.getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
+                                            .getValue() == DatabaseTerm.SCHEMA ? this.connection.getSchema() : this.connection.getCatalog())
+                                    + "`.`\u307b\u3052\u307b\u3052`");
                 } catch (Exception e) {
                     throw ExceptionFactory.createException(e.getMessage(), e);
                 }
@@ -11391,7 +11408,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         assertEquals(eventType, pe2.getEventType());
         assertEquals(host, pe2.getHostName());
-        assertEquals(db, pe2.getCatalog());
+        assertEquals(db, pe2.getDatabase());
         assertEquals(connId, pe2.getConnectionId());
         assertEquals(stId, pe2.getStatementId());
         assertEquals(rsId, pe2.getResultSetId());
@@ -11421,7 +11438,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         ProfilerEvent pe1 = new ProfilerEventImpl(eventType, host, db, connId, stId, rsId, duration, durationUnits, t, mess);
         assertEquals(eventType, pe1.getEventType());
         assertEquals(host, pe1.getHostName());
-        assertEquals(db, pe1.getCatalog());
+        assertEquals(db, pe1.getDatabase());
         assertEquals(connId, pe1.getConnectionId());
         assertEquals(stId, pe1.getStatementId());
         assertEquals(rsId, pe1.getResultSetId());
@@ -11432,7 +11449,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         ProfilerEvent pe2 = new ProfilerEventImpl(eventType, null, null, connId, stId, rsId, duration, null, null, null);
         assertEquals("", pe2.getHostName());
-        assertEquals("", pe2.getCatalog());
+        assertEquals("", pe2.getDatabase());
         assertEquals("", pe2.getDurationUnits());
         assertEquals(LogUtils.findCallingClassAndMethod(null), pe1.getEventCreationPointAsString());
         assertEquals("", pe2.getMessage());

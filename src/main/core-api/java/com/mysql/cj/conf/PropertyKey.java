@@ -97,6 +97,7 @@ public enum PropertyKey {
     connectTimeout("connectTimeout", true), //
     continueBatchOnError("continueBatchOnError", true), //
     createDatabaseIfNotExist("createDatabaseIfNotExist", true), //
+    databaseTerm("databaseTerm", true), //
     defaultAuthenticationPlugin("defaultAuthenticationPlugin", true), //
     defaultFetchSize("defaultFetchSize", true), //
     detectCustomCollations("detectCustomCollations", true), //
@@ -156,7 +157,7 @@ public enum PropertyKey {
     netTimeoutForStreamingResults("netTimeoutForStreamingResults", true), //
     noAccessToProcedureBodies("noAccessToProcedureBodies", true), //
     noDatetimeStringSync("noDatetimeStringSync", true), //
-    nullCatalogMeansCurrent("nullCatalogMeansCurrent", true), //
+    nullDatabaseMeansCurrent("nullDatabaseMeansCurrent", "nullCatalogMeansCurrent", true), //
     overrideSupportsIntegrityEnhancementFacility("overrideSupportsIntegrityEnhancementFacility", true), //
     packetDebugBufferSize("packetDebugBufferSize", true), //
     padCharsWithSpace("padCharsWithSpace", true), //

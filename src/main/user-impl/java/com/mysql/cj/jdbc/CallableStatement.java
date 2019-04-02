@@ -59,6 +59,7 @@ import java.util.Map;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.PreparedQuery;
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -124,7 +125,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     }
 
     public class CallableStatementParamInfo implements ParameterMetaData {
-        String catalogInUse;
+        String dbInUse;
 
         boolean isFunctionCall;
 
@@ -156,7 +157,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
          */
         CallableStatementParamInfo(CallableStatementParamInfo fullParamInfo) {
             this.nativeSql = ((PreparedQuery<?>) CallableStatement.this.query).getOriginalSql();
-            this.catalogInUse = CallableStatement.this.getCurrentCatalog();
+            this.dbInUse = CallableStatement.this.getCurrentDatabase();
             this.isFunctionCall = fullParamInfo.isFunctionCall;
             @SuppressWarnings("synthetic-access")
             int[] localParameterMap = CallableStatement.this.placeholderToParameterIndexMap;
@@ -191,7 +192,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             boolean hadRows = paramTypesRs.last();
 
             this.nativeSql = ((PreparedQuery<?>) CallableStatement.this.query).getOriginalSql();
-            this.catalogInUse = CallableStatement.this.getCurrentCatalog();
+            this.dbInUse = CallableStatement.this.getCurrentDatabase();
             this.isFunctionCall = CallableStatement.this.callingStoredFunction;
 
             if (hadRows) {
@@ -450,7 +451,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      *             if an error occurs
      */
     public CallableStatement(JdbcConnection conn, CallableStatementParamInfo paramInfo) throws SQLException {
-        super(conn, paramInfo.nativeSql, paramInfo.catalogInUse);
+        super(conn, paramInfo.nativeSql, paramInfo.dbInUse);
 
         this.paramInfo = paramInfo;
         this.callingStoredFunction = this.paramInfo.isFunctionCall;
@@ -471,8 +472,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      *            the connection creating this statement
      * @param sql
      *            the SQL to prepare
-     * @param catalog
-     *            the current catalog
+     * @param db
+     *            the current database
      * @param isFunctionCall
      *            is it a function call or a procedure call?
      * @return CallableStatement
@@ -480,8 +481,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      *             if an error occurs
      */
 
-    protected static CallableStatement getInstance(JdbcConnection conn, String sql, String catalog, boolean isFunctionCall) throws SQLException {
-        return new CallableStatement(conn, sql, catalog, isFunctionCall);
+    protected static CallableStatement getInstance(JdbcConnection conn, String sql, String db, boolean isFunctionCall) throws SQLException {
+        return new CallableStatement(conn, sql, db, isFunctionCall);
     }
 
     /**
@@ -564,16 +565,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      *            the connection creating this statement
      * @param sql
      *            the SQL to prepare
-     * @param catalog
-     *            the current catalog
+     * @param db
+     *            the current database
      * @param isFunctionCall
      *            is it a function call or a procedure call?
      * 
      * @throws SQLException
      *             if an error occurs
      */
-    public CallableStatement(JdbcConnection conn, String sql, String catalog, boolean isFunctionCall) throws SQLException {
-        super(conn, sql, catalog);
+    public CallableStatement(JdbcConnection conn, String sql, String db, boolean isFunctionCall) throws SQLException {
+        super(conn, sql, db);
 
         this.callingStoredFunction = isFunctionCall;
 
@@ -770,10 +771,10 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                 String quotedId = this.session.getIdentifierQuoteString();
 
                 List<?> parseList = StringUtils.splitDBdotName(procName, "", quotedId, this.session.getServerSession().isNoBackslashEscapesSet());
-                String tmpCatalog = "";
+                String tmpDb = "";
                 //There *should* be 2 rows, if any.
                 if (parseList.size() == 2) {
-                    tmpCatalog = (String) parseList.get(0);
+                    tmpDb = (String) parseList.get(0);
                     procName = (String) parseList.get(1);
                 } else {
                     //keep values as they are
@@ -781,13 +782,15 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
                 java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
 
-                boolean useCatalog = false;
+                boolean useDb = false;
 
-                if (tmpCatalog.length() <= 0) {
-                    useCatalog = true;
+                if (tmpDb.length() <= 0) {
+                    useDb = true;
                 }
 
-                paramTypesRs = dbmd.getProcedureColumns(useCatalog ? this.getCurrentCatalog() : tmpCatalog/* null */, null, procName, "%");
+                paramTypesRs = this.session.getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA
+                        ? dbmd.getProcedureColumns(null, useDb ? this.getCurrentDatabase() : tmpDb/* null */, procName, "%")
+                        : dbmd.getProcedureColumns(useDb ? this.getCurrentDatabase() : tmpDb/* null */, null, procName, "%");
 
                 boolean hasResults = false;
                 try {
@@ -2278,13 +2281,13 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             try {
                 String procName = extractProcedureName();
 
-                String catalog = this.getCurrentCatalog();
+                String db = this.getCurrentDatabase();
 
                 if (procName.indexOf(".") != -1) {
-                    catalog = procName.substring(0, procName.indexOf("."));
+                    db = procName.substring(0, procName.indexOf("."));
 
-                    if (StringUtils.startsWithIgnoreCaseAndWs(catalog, "`") && catalog.trim().endsWith("`")) {
-                        catalog = catalog.substring(1, catalog.length() - 1);
+                    if (StringUtils.startsWithIgnoreCaseAndWs(db, "`") && db.trim().endsWith("`")) {
+                        db = db.substring(1, db.length() - 1);
                     }
 
                     procName = procName.substring(procName.indexOf(".") + 1);
@@ -2294,7 +2297,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                 ps.setMaxRows(0);
                 ps.setFetchSize(0);
 
-                ps.setString(1, catalog);
+                ps.setString(1, db);
                 ps.setString(2, procName);
                 rs = ps.executeQuery();
                 if (rs.next()) {

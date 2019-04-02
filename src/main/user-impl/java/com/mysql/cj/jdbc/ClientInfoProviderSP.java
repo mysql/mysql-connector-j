@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,7 +41,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
     public static final String PNAME_clientInfoSetSPName = "clientInfoSetSPName";
     public static final String PNAME_clientInfoGetSPName = "clientInfoGetSPName";
     public static final String PNAME_clientInfoGetBulkSPName = "clientInfoGetBulkSPName";
-    public static final String PNAME_clientInfoCatalog = "clientInfoCatalog";
+    public static final String PNAME_clientInfoDatabase = "clientInfoDatabase";
 
     PreparedStatement setClientInfoSp;
 
@@ -51,22 +51,22 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
 
     @Override
     public synchronized void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException {
-        String identifierQuote = ((com.mysql.cj.jdbc.JdbcConnection) conn).getSession().getIdentifierQuoteString();
+        String identifierQuote = ((JdbcConnection) conn).getSession().getIdentifierQuoteString();
         String setClientInfoSpName = configurationProps.getProperty(PNAME_clientInfoSetSPName, "setClientInfo");
         String getClientInfoSpName = configurationProps.getProperty(PNAME_clientInfoGetSPName, "getClientInfo");
         String getClientInfoBulkSpName = configurationProps.getProperty(PNAME_clientInfoGetBulkSPName, "getClientInfoBulk");
-        String clientInfoCatalog = configurationProps.getProperty(PNAME_clientInfoCatalog, ""); // "" means use current from connection
+        String clientInfoDatabase = configurationProps.getProperty(PNAME_clientInfoDatabase, ""); // "" means use current from connection
 
-        String catalog = "".equals(clientInfoCatalog) ? conn.getCatalog() : clientInfoCatalog;
+        String db = "".equals(clientInfoDatabase) ? ((JdbcConnection) conn).getDatabase() : clientInfoDatabase;
 
-        this.setClientInfoSp = ((com.mysql.cj.jdbc.JdbcConnection) conn).clientPrepareStatement(
-                "CALL " + identifierQuote + catalog + identifierQuote + "." + identifierQuote + setClientInfoSpName + identifierQuote + "(?, ?)");
+        this.setClientInfoSp = ((JdbcConnection) conn).clientPrepareStatement(
+                "CALL " + identifierQuote + db + identifierQuote + "." + identifierQuote + setClientInfoSpName + identifierQuote + "(?, ?)");
 
-        this.getClientInfoSp = ((com.mysql.cj.jdbc.JdbcConnection) conn).clientPrepareStatement(
-                "CALL" + identifierQuote + catalog + identifierQuote + "." + identifierQuote + getClientInfoSpName + identifierQuote + "(?)");
+        this.getClientInfoSp = ((JdbcConnection) conn).clientPrepareStatement(
+                "CALL" + identifierQuote + db + identifierQuote + "." + identifierQuote + getClientInfoSpName + identifierQuote + "(?)");
 
-        this.getClientInfoBulkSp = ((com.mysql.cj.jdbc.JdbcConnection) conn).clientPrepareStatement(
-                "CALL " + identifierQuote + catalog + identifierQuote + "." + identifierQuote + getClientInfoBulkSpName + identifierQuote + "()");
+        this.getClientInfoBulkSp = ((JdbcConnection) conn).clientPrepareStatement(
+                "CALL " + identifierQuote + db + identifierQuote + "." + identifierQuote + getClientInfoBulkSpName + identifierQuote + "()");
     }
 
     @Override

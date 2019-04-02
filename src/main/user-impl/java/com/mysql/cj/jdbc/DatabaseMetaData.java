@@ -55,7 +55,9 @@ import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeSession;
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -106,44 +108,44 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         List<String> localColumnsList;
 
-        String referencedCatalog;
+        String referencedDatabase;
 
         List<String> referencedColumnsList;
 
         String referencedTable;
 
-        LocalAndReferencedColumns(List<String> localColumns, List<String> refColumns, String constName, String refCatalog, String refTable) {
+        LocalAndReferencedColumns(List<String> localColumns, List<String> refColumns, String constName, String refDatabase, String refTable) {
             this.localColumnsList = localColumns;
             this.referencedColumnsList = refColumns;
             this.constraintName = constName;
             this.referencedTable = refTable;
-            this.referencedCatalog = refCatalog;
+            this.referencedDatabase = refDatabase;
         }
     }
 
-    protected class ResultSetIterator extends IteratorWithCleanup<String> {
-        int colIndex;
+    protected class StringListIterator extends IteratorWithCleanup<String> {
+        int idx = -1;
 
-        ResultSet resultSet;
+        List<String> list;
 
-        ResultSetIterator(ResultSet rs, int index) {
-            this.resultSet = rs;
-            this.colIndex = index;
+        StringListIterator(List<String> list) {
+            this.list = list;
         }
 
         @Override
         void close() throws SQLException {
-            this.resultSet.close();
+            this.list = null;
         }
 
         @Override
         boolean hasNext() throws SQLException {
-            return this.resultSet.next();
+            return this.idx < this.list.size() - 1;
         }
 
         @Override
         String next() throws SQLException {
-            return this.resultSet.getObject(this.colIndex).toString();
+            this.idx++;
+            return this.list.get(this.idx);
         }
     }
 
@@ -159,7 +161,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         @Override
         void close() throws SQLException {
             // not needed
-
         }
 
         @Override
@@ -642,43 +643,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     protected static final int MAX_IDENTIFIER_LENGTH = 64;
 
-    private static final int DEFERRABILITY = 13;
-
-    private static final int DELETE_RULE = 10;
-
-    private static final int FK_NAME = 11;
-
-    private static final int FKCOLUMN_NAME = 7;
-
-    private static final int FKTABLE_CAT = 4;
-
-    private static final int FKTABLE_NAME = 6;
-
-    private static final int FKTABLE_SCHEM = 5;
-
-    private static final int KEY_SEQ = 8;
-
-    private static final int PK_NAME = 12;
-
-    private static final int PKCOLUMN_NAME = 3;
-
-    //
-    // Column indexes used by all DBMD foreign key ResultSets
-    //
-    private static final int PKTABLE_CAT = 0;
-
-    private static final int PKTABLE_NAME = 2;
-
-    private static final int PKTABLE_SCHEM = 1;
-
     /** The table type for generic tables that support foreign keys. */
     private static final String SUPPORTS_FK = "SUPPORTS_FK";
 
     protected static final byte[] TABLE_AS_BYTES = "TABLE".getBytes();
 
     protected static final byte[] SYSTEM_TABLE_AS_BYTES = "SYSTEM TABLE".getBytes();
-
-    private static final int UPDATE_RULE = 9;
 
     protected static final byte[] VIEW_AS_BYTES = "VIEW".getBytes();
 
@@ -743,11 +713,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /** What character to use when quoting identifiers */
     protected final String quotedId;
 
-    protected boolean nullCatalogMeansCurrent;
     protected boolean pedantic;
     protected boolean tinyInt1isBit;
     protected boolean transformedBitIsBoolean;
     protected boolean useHostsInPrivileges;
+
+    protected RuntimeProperty<DatabaseTerm> databaseTerm;
+    protected RuntimeProperty<Boolean> nullDatabaseMeansCurrent;
 
     protected ResultSetFactory resultSetFactory;
 
@@ -779,7 +751,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         this.database = databaseToSet;
         this.resultSetFactory = resultSetFactory;
         this.exceptionInterceptor = this.conn.getExceptionInterceptor();
-        this.nullCatalogMeansCurrent = this.conn.getPropertySet().getBooleanProperty(PropertyKey.nullCatalogMeansCurrent).getValue();
+        this.databaseTerm = this.conn.getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm);
+        this.nullDatabaseMeansCurrent = this.conn.getPropertySet().getBooleanProperty(PropertyKey.nullDatabaseMeansCurrent);
         this.pedantic = this.conn.getPropertySet().getBooleanProperty(PropertyKey.pedantic).getValue();
         this.tinyInt1isBit = this.conn.getPropertySet().getBooleanProperty(PropertyKey.tinyInt1isBit).getValue();
         this.transformedBitIsBoolean = this.conn.getPropertySet().getBooleanProperty(PropertyKey.transformedBitIsBoolean).getValue();
@@ -797,111 +770,71 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return false;
     }
 
-    protected void convertToJdbcFunctionList(String catalog, ResultSet proceduresRs, boolean needsClientFiltering, String db,
-            List<ComparableWrapper<String, Row>> procedureRows, int nameIndex, Field[] fields) throws SQLException {
+    protected void convertToJdbcFunctionList(ResultSet proceduresRs, List<ComparableWrapper<String, Row>> procedureRows, Field[] fields) throws SQLException {
         while (proceduresRs.next()) {
-            boolean shouldAdd = true;
+            String procDb = proceduresRs.getString("db");
+            String functionName = proceduresRs.getString("name");
 
-            if (needsClientFiltering) {
-                shouldAdd = false;
+            byte[][] rowData = null;
 
-                String procDb = proceduresRs.getString(1);
+            if (fields != null && fields.length == 9) {
 
-                if (db == null && procDb == null) {
-                    shouldAdd = true;
-                } else if (db != null && db.equals(procDb)) {
-                    shouldAdd = true;
-                }
+                rowData = new byte[9][];
+                rowData[0] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b("def") : s2b(procDb);   // PROCEDURE_CAT
+                rowData[1] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b(procDb) : null;         // PROCEDURE_SCHEM
+                rowData[2] = s2b(functionName);                             // PROCEDURE_NAME
+                rowData[3] = null;                                          // reserved1
+                rowData[4] = null;                                          // reserved2
+                rowData[5] = null;                                          // reserved3
+                rowData[6] = s2b(proceduresRs.getString("comment"));        // REMARKS
+                rowData[7] = s2b(Integer.toString(procedureReturnsResult)); // PROCEDURE_TYPE
+                rowData[8] = s2b(functionName);
+            } else {
+
+                rowData = new byte[6][];
+
+                rowData[0] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b("def") : s2b(procDb);   // PROCEDURE_CAT
+                rowData[1] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b(procDb) : null;         // PROCEDURE_SCHEM
+                rowData[2] = s2b(functionName);                      // FUNCTION_NAME
+                rowData[3] = s2b(proceduresRs.getString("comment")); // REMARKS
+                rowData[4] = s2b(Integer.toString(functionNoTable)); // FUNCTION_TYPE
+                rowData[5] = s2b(functionName);                      // SPECFIC NAME
             }
 
-            if (shouldAdd) {
-                String functionName = proceduresRs.getString(nameIndex);
-
-                byte[][] rowData = null;
-
-                if (fields != null && fields.length == 9) {
-
-                    rowData = new byte[9][];
-                    rowData[0] = catalog == null ? null : s2b(catalog);         // PROCEDURE_CAT
-                    rowData[1] = null;                                          // PROCEDURE_SCHEM
-                    rowData[2] = s2b(functionName);                             // PROCEDURE_NAME
-                    rowData[3] = null;                                          // reserved1
-                    rowData[4] = null;                                          // reserved2
-                    rowData[5] = null;                                          // reserved3
-                    rowData[6] = s2b(proceduresRs.getString("comment"));        // REMARKS
-                    rowData[7] = s2b(Integer.toString(procedureReturnsResult)); // PROCEDURE_TYPE
-                    rowData[8] = s2b(functionName);
-                } else {
-
-                    rowData = new byte[6][];
-
-                    rowData[0] = catalog == null ? null : s2b(catalog);  // FUNCTION_CAT
-                    rowData[1] = null;                                   // FUNCTION_SCHEM
-                    rowData[2] = s2b(functionName);                      // FUNCTION_NAME
-                    rowData[3] = s2b(proceduresRs.getString("comment")); // REMARKS
-                    rowData[4] = s2b(Integer.toString(getFunctionNoTableConstant())); // FUNCTION_TYPE
-                    rowData[5] = s2b(functionName);                      // SPECFIC NAME
-                }
-
-                procedureRows.add(new ComparableWrapper<String, Row>(StringUtils.getFullyQualifiedName(catalog, functionName, this.quotedId, this.pedantic),
-                        new ByteArrayRow(rowData, getExceptionInterceptor())));
-            }
+            procedureRows.add(new ComparableWrapper<String, Row>(StringUtils.getFullyQualifiedName(procDb, functionName, this.quotedId, this.pedantic),
+                    new ByteArrayRow(rowData, getExceptionInterceptor())));
         }
     }
 
-    /**
-     * Getter to DatabaseMetaData.functionNoTable constant.
-     * 
-     * @return java.sql.DatabaseMetaData#functionNoTable
-     */
-    protected int getFunctionNoTableConstant() {
-        return functionNoTable;
-    }
-
-    protected void convertToJdbcProcedureList(boolean fromSelect, String catalog, ResultSet proceduresRs, boolean needsClientFiltering, String db,
-            List<ComparableWrapper<String, Row>> procedureRows, int nameIndex) throws SQLException {
+    protected void convertToJdbcProcedureList(boolean fromSelect, ResultSet proceduresRs, List<ComparableWrapper<String, Row>> procedureRows)
+            throws SQLException {
         while (proceduresRs.next()) {
-            boolean shouldAdd = true;
+            String procDb = proceduresRs.getString("db");
+            String procedureName = proceduresRs.getString("name");
+            byte[][] rowData = new byte[9][];
+            rowData[0] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b("def") : s2b(procDb);
+            rowData[1] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b(procDb) : null;
+            rowData[2] = s2b(procedureName);
+            rowData[3] = null;
+            rowData[4] = null;
+            rowData[5] = null;
+            rowData[6] = s2b(proceduresRs.getString("comment"));
 
-            if (needsClientFiltering) {
-                shouldAdd = false;
+            boolean isFunction = fromSelect ? "FUNCTION".equalsIgnoreCase(proceduresRs.getString("type")) : false;
+            rowData[7] = s2b(isFunction ? Integer.toString(procedureReturnsResult) : Integer.toString(procedureNoResult));
 
-                String procDb = proceduresRs.getString(1);
+            rowData[8] = s2b(procedureName);
 
-                if (db == null && procDb == null) {
-                    shouldAdd = true;
-                } else if (db != null && db.equals(procDb)) {
-                    shouldAdd = true;
-                }
-            }
-
-            if (shouldAdd) {
-                String procedureName = proceduresRs.getString(nameIndex);
-                byte[][] rowData = new byte[9][];
-                rowData[0] = catalog == null ? null : s2b(catalog);
-                rowData[1] = null;
-                rowData[2] = s2b(procedureName);
-                rowData[3] = null;
-                rowData[4] = null;
-                rowData[5] = null;
-                rowData[6] = s2b(proceduresRs.getString("comment"));
-
-                boolean isFunction = fromSelect ? "FUNCTION".equalsIgnoreCase(proceduresRs.getString("type")) : false;
-                rowData[7] = s2b(isFunction ? Integer.toString(procedureReturnsResult) : Integer.toString(procedureNoResult));
-
-                rowData[8] = s2b(procedureName);
-
-                procedureRows.add(new ComparableWrapper<String, Row>(StringUtils.getFullyQualifiedName(catalog, procedureName, this.quotedId, this.pedantic),
-                        new ByteArrayRow(rowData, getExceptionInterceptor())));
-            }
+            procedureRows.add(new ComparableWrapper<String, Row>(StringUtils.getFullyQualifiedName(procDb, procedureName, this.quotedId, this.pedantic),
+                    new ByteArrayRow(rowData, getExceptionInterceptor())));
         }
     }
 
     private Row convertTypeDescriptorToProcedureRow(byte[] procNameAsBytes, byte[] procCatAsBytes, String paramName, boolean isOutParam, boolean isInParam,
             boolean isReturnParam, TypeDescriptor typeDesc, boolean forGetFunctionColumns, int ordinal) throws SQLException {
         byte[][] row = forGetFunctionColumns ? new byte[17][] : new byte[20][];
-        row[0] = procCatAsBytes;                                                                                    // PROCEDURE_CAT
-        row[1] = null;                                                                                              // PROCEDURE_SCHEM
+        row[0] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b("def") : procCatAsBytes;                                // PROCEDURE_CAT
+        row[1] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? procCatAsBytes : null;                                      // PROCEDURE_SCHEM
         row[2] = procNameAsBytes;                                                                                   // PROCEDURE/NAME
         row[3] = s2b(paramName);                                                                                    // COLUMN_NAME
         row[4] = s2b(String.valueOf(getColumnType(isOutParam, isInParam, isReturnParam, forGetFunctionColumns)));   // COLUMN_TYPE
@@ -942,6 +875,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             row[13] = null;                                                                                         // COLUMN_DEF
             row[14] = null;                                                                                         // SQL_DATA_TYPE (future use)
             row[15] = null;                                                                                         // SQL_DATETIME_SUB (future use)
+            // TODO CHAR_OCTET_LENGTH the maximum length of binary and character based columns. For any other datatype the returned value is a NULL
             row[16] = null;                                                                                         // CHAR_OCTET_LENGTH
             row[17] = s2b(String.valueOf(ordinal));                                                                 // ORDINAL_POSITION
             row[18] = s2b(typeDesc.isNullable);                                                                     // IS_NULLABLE
@@ -1032,13 +966,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *            the list of rows to add to
      * @param rs
      *            the result set from 'SHOW CREATE TABLE'
-     * @param catalog
+     * @param dbName
      *            the database name
      * @return the list of rows with new rows added
      * @throws SQLException
      *             if a database access error occurs
      */
-    public List<Row> extractForeignKeyForTable(ArrayList<Row> rows, java.sql.ResultSet rs, String catalog) throws SQLException {
+    public List<Row> extractForeignKeyForTable(ArrayList<Row> rows, java.sql.ResultSet rs, String dbName) throws SQLException {
         byte[][] row = new byte[3][];
         row[0] = rs.getBytes(1);
         row[1] = s2b(SUPPORTS_FK);
@@ -1086,7 +1020,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 int indexOfFK = line.indexOf("FOREIGN KEY");
 
                 String localColumnName = null;
-                String referencedCatalogName = StringUtils.quoteIdentifier(catalog, this.quotedId, this.pedantic);
+                String referencedDbName = StringUtils.quoteIdentifier(dbName, this.quotedId, this.pedantic);
                 String referencedTableName = null;
                 String referencedColumnName = null;
 
@@ -1122,12 +1056,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 referencedColumnName = line.substring(referencedColumnBegin + 1, referencedColumnEnd);
                             }
 
-                            int indexOfCatalogSep = StringUtils.indexOfIgnoreCase(0, referencedTableName, ".", this.quotedId, this.quotedId,
+                            int indexOfDbSep = StringUtils.indexOfIgnoreCase(0, referencedTableName, ".", this.quotedId, this.quotedId,
                                     StringUtils.SEARCH_MODE__ALL);
 
-                            if (indexOfCatalogSep != -1) {
-                                referencedCatalogName = referencedTableName.substring(0, indexOfCatalogSep);
-                                referencedTableName = referencedTableName.substring(indexOfCatalogSep + 1);
+                            if (indexOfDbSep != -1) {
+                                referencedDbName = referencedTableName.substring(0, indexOfDbSep);
+                                referencedTableName = referencedTableName.substring(indexOfDbSep + 1);
                             }
                         }
                     }
@@ -1148,7 +1082,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 commentBuf.append("(");
                 commentBuf.append(localColumnName);
                 commentBuf.append(") REFER ");
-                commentBuf.append(referencedCatalogName);
+                commentBuf.append(referencedDbName);
                 commentBuf.append("/");
                 commentBuf.append(referencedTableName);
                 commentBuf.append("(");
@@ -1175,7 +1109,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * Creates a result set similar enough to 'SHOW TABLE STATUS' to allow the
      * same code to work on extracting the foreign key data
      * 
-     * @param catalog
+     * @param dbName
      *            the database name to extract foreign key info for
      * @param tableName
      *            the table to extract foreign key info for
@@ -1183,7 +1117,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      *             if a database access error occurs.
      */
-    public ResultSet extractForeignKeyFromCreateTable(String catalog, String tableName) throws SQLException {
+    public ResultSet extractForeignKeyFromCreateTable(String dbName, String tableName) throws SQLException {
         ArrayList<String> tableList = new ArrayList<>();
         java.sql.ResultSet rs = null;
         java.sql.Statement stmt = null;
@@ -1192,7 +1126,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             tableList.add(tableName);
         } else {
             try {
-                rs = getTables(catalog, null, null, new String[] { "TABLE" });
+                rs = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? getTables(null, dbName, null, new String[] { "TABLE" })
+                        : getTables(dbName, null, null, new String[] { "TABLE" });
 
                 while (rs.next()) {
                     tableList.add(rs.getString("TABLE_NAME"));
@@ -1220,7 +1155,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 String tableToExtract = tableList.get(i);
 
                 String query = new StringBuilder("SHOW CREATE TABLE ")
-                        .append(StringUtils.getFullyQualifiedName(catalog, tableToExtract, this.quotedId, this.pedantic)).toString();
+                        .append(StringUtils.getFullyQualifiedName(dbName, tableToExtract, this.quotedId, this.pedantic)).toString();
 
                 try {
                     rs = stmt.executeQuery(query);
@@ -1228,15 +1163,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     // Table might've disappeared on us, not really an error
                     String sqlState = sqlEx.getSQLState();
 
-                    if (!"42S02".equals(sqlState) && sqlEx.getErrorCode() != MysqlErrorNumbers.ER_NO_SUCH_TABLE) {
+                    if (!"42S02".equals(sqlState) && sqlEx.getErrorCode() != MysqlErrorNumbers.ER_NO_SUCH_TABLE
+                            && sqlEx.getErrorCode() != MysqlErrorNumbers.ER_BAD_DB_ERROR) {
                         throw sqlEx;
                     }
 
                     continue;
                 }
 
-                while (rs.next()) {
-                    extractForeignKeyForTable(rows, rs, catalog);
+                while (rs != null && rs.next()) {
+                    extractForeignKeyForTable(rows, rs, dbName);
                 }
             }
         } finally {
@@ -1306,22 +1242,34 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         final ArrayList<Row> rows = new ArrayList<>();
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
+        String db = getDatabase(catalog, schema);
+
         try {
 
-            new IterateBlock<String>(getCatalogIterator(catalog)) {
+            new IterateBlock<String>(getDatabaseIterator(db)) {
                 @Override
-                void forEach(String catalogStr) throws SQLException {
+                void forEach(String dbStr) throws SQLException {
                     ResultSet results = null;
 
                     try {
                         StringBuilder queryBuf = new StringBuilder("SHOW COLUMNS FROM ");
                         queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                         queryBuf.append(" FROM ");
-                        queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
+                        queryBuf.append(StringUtils.quoteIdentifier(dbStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
 
-                        results = stmt.executeQuery(queryBuf.toString());
+                        try {
+                            results = stmt.executeQuery(queryBuf.toString());
+                        } catch (SQLException sqlEx) {
+                            String sqlState = sqlEx.getSQLState(); // If SQLState is 42S02, ignore this SQLException it means the table doesn't exist....
+                            int errorCode = sqlEx.getErrorCode(); // Sometimes SQLState is not mapped correctly for pre-4.1 so use error code instead.
 
-                        while (results.next()) {
+                            if (!"42S02".equals(sqlState) && errorCode != MysqlErrorNumbers.ER_NO_SUCH_TABLE
+                                    && errorCode != MysqlErrorNumbers.ER_BAD_DB_ERROR) {
+                                throw sqlEx;
+                            }
+                        }
+
+                        while (results != null && results.next()) {
                             String keyType = results.getString("Key");
 
                             if (keyType != null) {
@@ -1407,7 +1355,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * 
      * Internal use only.
      */
-    private void getCallStmtParameterTypes(String catalog, String quotedProcName, ProcedureType procType, String parameterNamePattern, List<Row> resultRows,
+    private void getCallStmtParameterTypes(String db, String quotedProcName, ProcedureType procType, String parameterNamePattern, List<Row> resultRows,
             boolean forGetFunctionColumns) throws SQLException {
         java.sql.Statement paramRetrievalStmt = null;
         java.sql.ResultSet paramRetrievalRs = null;
@@ -1423,23 +1371,22 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         try {
             paramRetrievalStmt = this.conn.getMetadataSafeStatement();
-
-            String oldCatalog = this.conn.getCatalog();
-            if (this.conn.lowerCaseTableNames() && catalog != null && catalog.length() != 0 && oldCatalog != null && oldCatalog.length() != 0) {
+            String oldDb = this.conn.getDatabase();
+            if (this.conn.lowerCaseTableNames() && db != null && db.length() != 0 && oldDb != null && oldDb.length() != 0) {
                 // Workaround for bug in server wrt. to  SHOW CREATE PROCEDURE not respecting lower-case table names
 
                 ResultSet rs = null;
 
                 try {
-                    this.conn.setCatalog(StringUtils.unQuoteIdentifier(catalog, this.quotedId));
+                    this.conn.setDatabase(StringUtils.unQuoteIdentifier(db, this.quotedId));
                     rs = paramRetrievalStmt.executeQuery("SELECT DATABASE()");
                     rs.next();
 
-                    catalog = rs.getString(1);
+                    db = rs.getString(1);
 
                 } finally {
 
-                    this.conn.setCatalog(oldCatalog);
+                    this.conn.setDatabase(oldDb);
 
                     if (rs != null) {
                         rs.close();
@@ -1451,14 +1398,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 paramRetrievalStmt.setMaxRows(0);
             }
 
-            int dotIndex = -1;
-
-            if (!" ".equals(this.quotedId)) {
-                dotIndex = StringUtils.indexOfIgnoreCase(0, quotedProcName, ".", this.quotedId, this.quotedId,
-                        this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
-            } else {
-                dotIndex = quotedProcName.indexOf(".");
-            }
+            int dotIndex = " ".equals(this.quotedId) ? quotedProcName.indexOf(".")
+                    : StringUtils.indexOfIgnoreCase(0, quotedProcName, ".", this.quotedId, this.quotedId,
+                            this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
 
             String dbName = null;
 
@@ -1466,7 +1408,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 dbName = quotedProcName.substring(0, dotIndex);
                 quotedProcName = quotedProcName.substring(dotIndex + 1);
             } else {
-                dbName = StringUtils.quoteIdentifier(catalog, this.quotedId, this.pedantic);
+                dbName = StringUtils.quoteIdentifier(db, this.quotedId, this.pedantic);
             }
 
             // Moved from above so that procName is *without* database as expected by the rest of code
@@ -1801,6 +1743,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * Parses the cascade option string and returns the DBMD constant that
      * represents it (for deletes)
      * 
+     * Please note that in MySQL, NO ACTION is the equivalent to RESTRICT.
+     * 
      * @param cascadeOptions
      *            the comment from 'SHOW TABLE STATUS'
      * @return the DBMD constant that represents the cascade option
@@ -1815,19 +1759,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 return java.sql.DatabaseMetaData.importedKeyCascade;
             } else if (deleteOptions.startsWith("ON DELETE SET NULL")) {
                 return java.sql.DatabaseMetaData.importedKeySetNull;
-            } else if (deleteOptions.startsWith("ON DELETE RESTRICT")) {
-                return java.sql.DatabaseMetaData.importedKeyRestrict;
-            } else if (deleteOptions.startsWith("ON DELETE NO ACTION")) {
-                return java.sql.DatabaseMetaData.importedKeyNoAction;
             }
         }
 
-        return java.sql.DatabaseMetaData.importedKeyNoAction;
+        return java.sql.DatabaseMetaData.importedKeyRestrict;
     }
 
     /**
      * Parses the cascade option string and returns the DBMD constant that
-     * represents it (for Updates)
+     * represents it (for Updates).
+     * 
+     * Please note that in MySQL, NO ACTION is the equivalent to RESTRICT.
      * 
      * @param cascadeOptions
      *            the comment from 'SHOW TABLE STATUS'
@@ -1843,63 +1785,77 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 return java.sql.DatabaseMetaData.importedKeyCascade;
             } else if (updateOptions.startsWith("ON UPDATE SET NULL")) {
                 return java.sql.DatabaseMetaData.importedKeySetNull;
-            } else if (updateOptions.startsWith("ON UPDATE RESTRICT")) {
-                return java.sql.DatabaseMetaData.importedKeyRestrict;
-            } else if (updateOptions.startsWith("ON UPDATE NO ACTION")) {
-                return java.sql.DatabaseMetaData.importedKeyNoAction;
             }
         }
 
-        return java.sql.DatabaseMetaData.importedKeyNoAction;
+        return java.sql.DatabaseMetaData.importedKeyRestrict;
     }
 
-    protected IteratorWithCleanup<String> getCatalogIterator(String catalogSpec) throws SQLException {
-        IteratorWithCleanup<String> allCatalogsIter;
-        if (catalogSpec != null) {
-            allCatalogsIter = new SingleStringIterator(this.pedantic ? catalogSpec : StringUtils.unQuoteIdentifier(catalogSpec, this.quotedId));
-        } else if (this.nullCatalogMeansCurrent) {
-            allCatalogsIter = new SingleStringIterator(this.database);
-        } else {
-            allCatalogsIter = new ResultSetIterator(getCatalogs(), 1);
+    protected IteratorWithCleanup<String> getDatabaseIterator(String dbSpec) throws SQLException {
+        if (dbSpec == null) {
+            return this.nullDatabaseMeansCurrent.getValue() ? new SingleStringIterator(this.database) : new StringListIterator(getDatabases());
         }
-
-        return allCatalogsIter;
+        return new SingleStringIterator(this.pedantic ? dbSpec : StringUtils.unQuoteIdentifier(dbSpec, this.quotedId));
     }
 
-    @Override
-    public java.sql.ResultSet getCatalogs() throws SQLException {
+    protected IteratorWithCleanup<String> getSchemaPatternIterator(String schemaPattern) throws SQLException {
+        if (schemaPattern == null) {
+            return this.nullDatabaseMeansCurrent.getValue() ? new SingleStringIterator(this.database) : new StringListIterator(getDatabases());
+        }
+        return new StringListIterator(getDatabases(schemaPattern)); //new SingleStringIterator(this.pedantic ? schemaPattern : StringUtils.unQuoteIdentifier(schemaPattern, this.quotedId));
+    }
+
+    /**
+     * Retrieves the database names available on this server. The results are ordered by database name.
+     * 
+     * @return list of database names
+     * @throws SQLException
+     *             if an error occurs
+     */
+    protected List<String> getDatabases() throws SQLException {
+        return getDatabases(null);
+    }
+
+    /**
+     * Retrieves the database names matching the dbPattern available on this server. The results are ordered by database name.
+     * 
+     * @param dbPattern
+     *            database name pattern
+     * @return list of database names
+     * @throws SQLException
+     *             if an error occurs
+     */
+    protected List<String> getDatabases(String dbPattern) throws SQLException {
+        PreparedStatement pStmt = null;
         java.sql.ResultSet results = null;
         java.sql.Statement stmt = null;
 
         try {
             stmt = this.conn.getMetadataSafeStatement();
-            results = stmt.executeQuery("SHOW DATABASES");
+            StringBuilder queryBuf = new StringBuilder("SHOW DATABASES");
+            if (dbPattern != null) {
+                queryBuf.append(" LIKE ?");
+            }
+            pStmt = prepareMetaDataSafeStatement(queryBuf.toString());
+            if (dbPattern != null) {
+                pStmt.setString(1, dbPattern);
+            }
+            results = pStmt.executeQuery();
 
-            int catalogsCount = 0;
+            int dbCount = 0;
             if (results.last()) {
-                catalogsCount = results.getRow();
+                dbCount = results.getRow();
                 results.beforeFirst();
             }
 
-            List<String> resultsAsList = new ArrayList<>(catalogsCount);
+            List<String> resultsAsList = new ArrayList<>(dbCount);
             while (results.next()) {
                 resultsAsList.add(results.getString(1));
             }
             Collections.sort(resultsAsList);
 
-            Field[] fields = new Field[1];
-            fields[0] = new Field("", "TABLE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR,
-                    results.getMetaData().getColumnDisplaySize(1));
+            return resultsAsList;
 
-            ArrayList<Row> tuples = new ArrayList<>(catalogsCount);
-            for (String cat : resultsAsList) {
-                byte[][] rowVal = new byte[1][];
-                rowVal[0] = s2b(cat);
-                tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
-            }
-
-            return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
-                    new ResultsetRowsStatic(tuples, new DefaultColumnDefinition(fields)));
         } finally {
             if (results != null) {
                 try {
@@ -1909,6 +1865,15 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 }
 
                 results = null;
+            }
+
+            if (pStmt != null) {
+                try {
+                    pStmt.close();
+                } catch (Exception ex) {
+                }
+
+                pStmt = null;
             }
 
             if (stmt != null) {
@@ -1924,17 +1889,41 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
+    public java.sql.ResultSet getCatalogs() throws SQLException {
+        List<String> resultsAsList = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? new ArrayList<>() : getDatabases();
+
+        Field[] fields = new Field[1];
+        fields[0] = new Field("", "TABLE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 0);
+
+        ArrayList<Row> tuples = new ArrayList<>(resultsAsList.size());
+        for (String cat : resultsAsList) {
+            byte[][] rowVal = new byte[1][];
+            rowVal[0] = s2b(cat);
+            tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
+        }
+
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+                new ResultsetRowsStatic(tuples, new DefaultColumnDefinition(fields)));
+    }
+
+    @Override
     public String getCatalogSeparator() throws SQLException {
         return ".";
     }
 
     @Override
     public String getCatalogTerm() throws SQLException {
-        return "database";
+        return this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? "CATALOG" : "database";
     }
 
-    @Override
-    public java.sql.ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException {
+    protected String getDatabase(String catalog, String schema) {
+        if (this.databaseTerm.getValue() == DatabaseTerm.SCHEMA) {
+            return schema == null && this.nullDatabaseMeansCurrent.getValue() ? this.database : schema;
+        }
+        return catalog == null && this.nullDatabaseMeansCurrent.getValue() ? this.database : catalog;
+    }
+
+    protected Field[] getColumnPrivilegesFields() {
         Field[] fields = new Field[8];
         fields[0] = new Field("", "TABLE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 64);
         fields[1] = new Field("", "TABLE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 1);
@@ -1944,12 +1933,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[5] = new Field("", "GRANTEE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 77);
         fields[6] = new Field("", "PRIVILEGE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 64);
         fields[7] = new Field("", "IS_GRANTABLE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 3);
+        return fields;
+    }
+
+    @Override
+    public java.sql.ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException {
+
+        String db = getDatabase(catalog, schema);
 
         StringBuilder grantQueryBuf = new StringBuilder("SELECT c.host, c.db, t.grantor, c.user, c.table_name, c.column_name, c.column_priv");
         grantQueryBuf.append(" FROM mysql.columns_priv c, mysql.tables_priv t");
         grantQueryBuf.append(" WHERE c.host = t.host AND c.db = t.db AND c.table_name = t.table_name");
-        if (catalog != null) {
-            grantQueryBuf.append(" AND c.db LIKE ?");
+        if (db != null) {
+            grantQueryBuf.append(" AND c.db = ?");
         }
         grantQueryBuf.append(" AND c.table_name = ?");
         if (columnNamePattern != null) {
@@ -1963,8 +1959,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         try {
             pStmt = prepareMetaDataSafeStatement(grantQueryBuf.toString());
             int nextId = 1;
-            if (catalog != null) {
-                pStmt.setString(nextId++, catalog);
+            if (db != null) {
+                pStmt.setString(nextId++, db);
             }
             pStmt.setString(nextId++, table);
             if (columnNamePattern != null) {
@@ -1975,7 +1971,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
             while (results.next()) {
                 String host = results.getString(1);
-                String db = results.getString(2);
+                db = results.getString(2);
                 String grantor = results.getString(3);
                 String user = results.getString(4);
 
@@ -2001,8 +1997,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     while (st.hasMoreTokens()) {
                         String privilege = st.nextToken().trim();
                         byte[][] tuple = new byte[8][];
-                        tuple[0] = s2b(db);
-                        tuple[1] = null;
+                        tuple[0] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b("def") : s2b(db);
+                        tuple[1] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b(db) : null;
                         tuple[2] = s2b(table);
                         tuple[3] = s2b(columnName);
                         tuple[4] = grantor != null ? s2b(grantor) : null;
@@ -2034,12 +2030,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
-                new ResultsetRowsStatic(grantRows, new DefaultColumnDefinition(fields)));
+                new ResultsetRowsStatic(grantRows, new DefaultColumnDefinition(getColumnPrivilegesFields())));
     }
 
     @Override
     public java.sql.ResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern, String columnNamePattern)
             throws SQLException {
+
+        String db = getDatabase(catalog, schemaPattern);
 
         final String colPattern = columnNamePattern;
 
@@ -2048,18 +2046,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         final ArrayList<Row> rows = new ArrayList<>();
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
+        final boolean dbMapsToSchema = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
+
         try {
 
-            new IterateBlock<String>(getCatalogIterator(catalog)) {
+            new IterateBlock<String>(dbMapsToSchema ? getSchemaPatternIterator(db) : getDatabaseIterator(db)) {
                 @Override
-                void forEach(String catalogStr) throws SQLException {
+                void forEach(String dbStr) throws SQLException {
 
                     ArrayList<String> tableNameList = new ArrayList<>();
 
                     java.sql.ResultSet tables = null;
 
                     try {
-                        tables = getTables(catalogStr, schemaPattern, tableNamePattern, new String[0]);
+                        tables = dbMapsToSchema ? getTables(null, dbStr, tableNamePattern, new String[0])
+                                : getTables(dbStr, schemaPattern, tableNamePattern, new String[0]);
 
                         while (tables.next()) {
                             String tableNameFromList = tables.getString("TABLE_NAME");
@@ -2085,7 +2086,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             StringBuilder queryBuf = new StringBuilder("SHOW FULL COLUMNS FROM ");
                             queryBuf.append(StringUtils.quoteIdentifier(tableName, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                             queryBuf.append(" FROM ");
-                            queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
+                            queryBuf.append(StringUtils.quoteIdentifier(dbStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                             if (colPattern != null) {
                                 queryBuf.append(" LIKE ");
                                 queryBuf.append(StringUtils.quoteIdentifier(colPattern, "'", true));
@@ -2104,8 +2105,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 fullColumnQueryBuf
                                         .append(StringUtils.quoteIdentifier(tableName, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                                 fullColumnQueryBuf.append(" FROM ");
-                                fullColumnQueryBuf
-                                        .append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
+                                fullColumnQueryBuf.append(StringUtils.quoteIdentifier(dbStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
 
                                 results = stmt.executeQuery(fullColumnQueryBuf.toString());
 
@@ -2129,8 +2129,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 TypeDescriptor typeDesc = new TypeDescriptor(results.getString("Type"), results.getString("Null"));
 
                                 byte[][] rowVal = new byte[24][];
-                                rowVal[0] = s2b(catalogStr);                    // TABLE_CAT
-                                rowVal[1] = null;                               // TABLE_SCHEM (No schemas in MySQL)
+                                rowVal[0] = DatabaseMetaData.this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b("def") : s2b(dbStr);    // TABLE_CAT
+                                rowVal[1] = DatabaseMetaData.this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b(dbStr) : null;          // TABLE_SCHEM
                                 rowVal[2] = s2b(tableName);                     // TABLE_NAME
                                 rowVal[3] = results.getBytes("Field");
                                 rowVal[4] = Short.toString((short) typeDesc.mysqlType.getJdbcType()).getBytes();// DATA_TYPE (jdbc)
@@ -2283,17 +2283,22 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     getExceptionInterceptor());
         }
 
+        // String primaryDb = getDatabase(primaryCatalog, primarySchema); // TODO not needed?
+        String foreignDb = getDatabase(foreignCatalog, foreignSchema);
+
         Field[] fields = createFkMetadataFields();
 
         final ArrayList<Row> tuples = new ArrayList<>();
 
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
+        final boolean dbMapsToSchema = DatabaseMetaData.this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
+
         try {
 
-            new IterateBlock<String>(getCatalogIterator(foreignCatalog)) {
+            new IterateBlock<String>(getDatabaseIterator(foreignDb)) {
                 @Override
-                void forEach(String catalogStr) throws SQLException {
+                void forEach(String dbStr) throws SQLException {
 
                     ResultSet fkresults = null;
 
@@ -2302,7 +2307,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         /*
                          * Get foreign key information for table
                          */
-                        fkresults = extractForeignKeyFromCreateTable(catalogStr, null);
+                        fkresults = extractForeignKeyFromCreateTable(dbStr, null);
 
                         String foreignTableWithCase = getTableNameWithCase(foreignTable);
                         String primaryTableWithCase = getTableNameWithCase(primaryTable);
@@ -2332,7 +2337,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                         String keys = commentTokens.nextToken();
                                         LocalAndReferencedColumns parsedInfo = parseTableStatusIntoLocalAndReferencedColumns(keys);
 
-                                        int keySeq = 0;
+                                        int keySeq = 1;
 
                                         Iterator<String> referencingColumns = parsedInfo.localColumnsList.iterator();
                                         Iterator<String> referencedColumns = parsedInfo.referencedColumnsList.iterator();
@@ -2340,38 +2345,35 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                         while (referencingColumns.hasNext()) {
                                             String referencingColumn = StringUtils.unQuoteIdentifier(referencingColumns.next(), DatabaseMetaData.this.quotedId);
 
-                                            // one tuple for each table between parenthesis
-                                            byte[][] tuple = new byte[14][];
-                                            tuple[4] = ((foreignCatalog == null) ? null : s2b(foreignCatalog));
-                                            tuple[5] = ((foreignSchema == null) ? null : s2b(foreignSchema));
-                                            dummy = fkresults.getString("Name"); // FKTABLE_NAME
-
+                                            dummy = fkresults.getString("Name");
                                             if (dummy.compareTo(foreignTableWithCase) != 0) {
                                                 continue;
                                             }
-
-                                            tuple[6] = s2b(dummy);
-
-                                            tuple[7] = s2b(referencingColumn); // FKCOLUMN_NAME
-                                            tuple[0] = ((primaryCatalog == null) ? null : s2b(primaryCatalog));
-                                            tuple[1] = ((primarySchema == null) ? null : s2b(primarySchema));
 
                                             // Skip foreign key if it doesn't refer to the right table
                                             if (parsedInfo.referencedTable.compareTo(primaryTableWithCase) != 0) {
                                                 continue;
                                             }
 
-                                            tuple[2] = s2b(parsedInfo.referencedTable); // PKTABLE_NAME
+                                            // one tuple for each table between parenthesis
+                                            byte[][] tuple = new byte[14][];
+                                            tuple[0] = dbMapsToSchema ? s2b("def") : s2b(parsedInfo.referencedDatabase);    // PKTABLE_CAT
+                                            tuple[1] = dbMapsToSchema ? s2b(parsedInfo.referencedDatabase) : null;          // PKTABLE_SCHEM
+                                            tuple[2] = s2b(parsedInfo.referencedTable);                                     // PKTABLE_NAME
                                             tuple[3] = s2b(StringUtils.unQuoteIdentifier(referencedColumns.next(), DatabaseMetaData.this.quotedId)); // PKCOLUMN_NAME
-                                            tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
+                                            tuple[4] = dbMapsToSchema ? s2b("def") : s2b(dbStr);    // FKTABLE_CAT
+                                            tuple[5] = dbMapsToSchema ? s2b(dbStr) : null;          // FKTABLE_SCHEM
+                                            tuple[6] = s2b(dummy);                                  // FKTABLE_NAME
+                                            tuple[7] = s2b(referencingColumn);                      // FKCOLUMN_NAME
+                                            tuple[8] = Integer.toString(keySeq).getBytes();         // KEY_SEQ
 
                                             int[] actions = getForeignKeyActions(keys);
+                                            tuple[9] = Integer.toString(actions[1]).getBytes();     // UPDATE_RULE
+                                            tuple[10] = Integer.toString(actions[0]).getBytes();    // DELETE_RULE
 
-                                            tuple[9] = Integer.toString(actions[1]).getBytes();
-                                            tuple[10] = Integer.toString(actions[0]).getBytes();
-                                            tuple[11] = null; // FK_NAME
+                                            tuple[11] = s2b(parsedInfo.constraintName); // FK_NAME
                                             tuple[12] = null; // PK_NAME
-                                            tuple[13] = Integer.toString(java.sql.DatabaseMetaData.importedKeyNotDeferrable).getBytes();
+                                            tuple[13] = Integer.toString(java.sql.DatabaseMetaData.importedKeyNotDeferrable).getBytes();    // DEFERRABILITY
                                             tuples.add(new ByteArrayRow(tuple, getExceptionInterceptor()));
                                             keySeq++;
                                         }
@@ -2482,11 +2484,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
+        String db = getDatabase(catalog, schema);
+
         try {
 
-            new IterateBlock<String>(getCatalogIterator(catalog)) {
+            new IterateBlock<String>(getDatabaseIterator(db)) {
                 @Override
-                void forEach(String catalogStr) throws SQLException {
+                void forEach(String dbStr) throws SQLException {
                     ResultSet fkresults = null;
 
                     try {
@@ -2495,7 +2499,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                          * Get foreign key information for table
                          */
                         // we can use 'SHOW CREATE TABLE'
-                        fkresults = extractForeignKeyFromCreateTable(catalogStr, null);
+                        fkresults = extractForeignKeyFromCreateTable(dbStr, null);
 
                         // lower-case table name might be turned on
                         String tableNameWithCase = getTableNameWithCase(table);
@@ -2514,13 +2518,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                     StringTokenizer commentTokens = new StringTokenizer(comment, ";", false);
 
                                     if (commentTokens.hasMoreTokens()) {
-                                        commentTokens.nextToken(); // Skip
-                                        // InnoDB
-                                        // comment
+                                        commentTokens.nextToken(); // Skip InnoDB comment
 
                                         while (commentTokens.hasMoreTokens()) {
-                                            String keys = commentTokens.nextToken();
-                                            getExportKeyResults(catalogStr, tableNameWithCase, keys, rows, fkresults.getString("Name"));
+                                            String keysComment = commentTokens.nextToken();
+                                            populateKeyResults(dbStr, tableNameWithCase, keysComment, rows, fkresults.getString("Name"), true);
                                         }
                                     }
                                 }
@@ -2552,28 +2554,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return results;
     }
 
-    /**
-     * Adds to the tuples list the exported keys of exportingTable based on the
-     * keysComment from the 'show table status' sql command. KeysComment is that
-     * part of the comment field that follows the "InnoDB free ...;" prefix.
-     * 
-     * @param catalog
-     *            the database to use
-     * @param exportingTable
-     *            the table keys are being exported from
-     * @param keysComment
-     *            the comment from 'show table status'
-     * @param tuples
-     *            the rows to add results to
-     * @param fkTableName
-     *            the foreign key table name
-     * @throws SQLException
-     *             if a database access error occurs
-     */
-    protected void getExportKeyResults(String catalog, String exportingTable, String keysComment, List<Row> tuples, String fkTableName) throws SQLException {
-        getResultsImpl(catalog, exportingTable, keysComment, tuples, fkTableName, true);
-    }
-
     @Override
     public String getExtraNameCharacters() throws SQLException {
         return "#@";
@@ -2589,7 +2569,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return int[] [0] = delete action, [1] = update action
      */
     protected int[] getForeignKeyActions(String commentString) {
-        int[] actions = new int[] { java.sql.DatabaseMetaData.importedKeyNoAction, java.sql.DatabaseMetaData.importedKeyNoAction };
+        int[] actions = new int[] { java.sql.DatabaseMetaData.importedKeyRestrict, java.sql.DatabaseMetaData.importedKeyRestrict };
 
         int lastParenIndex = commentString.lastIndexOf(")");
 
@@ -2622,11 +2602,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
+        String db = getDatabase(catalog, schema);
+
         try {
 
-            new IterateBlock<String>(getCatalogIterator(catalog)) {
+            new IterateBlock<String>(getDatabaseIterator(db)) {
                 @Override
-                void forEach(String catalogStr) throws SQLException {
+                void forEach(String dbStr) throws SQLException {
                     ResultSet fkresults = null;
 
                     try {
@@ -2635,7 +2617,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                          * Get foreign key information for table
                          */
                         // we can use 'SHOW CREATE TABLE'
-                        fkresults = extractForeignKeyFromCreateTable(catalogStr, table);
+                        fkresults = extractForeignKeyFromCreateTable(dbStr, table);
 
                         /*
                          * Parse imported foreign key information
@@ -2654,8 +2636,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                         commentTokens.nextToken(); // Skip InnoDB comment
 
                                         while (commentTokens.hasMoreTokens()) {
-                                            String keys = commentTokens.nextToken();
-                                            getImportKeyResults(catalogStr, table, keys, rows);
+                                            String keysComment = commentTokens.nextToken();
+                                            populateKeyResults(dbStr, table, keysComment, rows, null, false);
                                         }
                                     }
                                 }
@@ -2686,27 +2668,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return results;
     }
 
-    /**
-     * Populates the tuples list with the imported keys of importingTable based
-     * on the keysComment from the 'show table status' sql command. KeysComment
-     * is that part of the comment field that follows the "InnoDB free ...;"
-     * prefix.
-     * 
-     * @param catalog
-     *            the database to use
-     * @param importingTable
-     *            the table keys are being imported to
-     * @param keysComment
-     *            the comment from 'show table status'
-     * @param tuples
-     *            the rows to add results to
-     * @throws SQLException
-     *             if a database access error occurs
-     */
-    protected void getImportKeyResults(String catalog, String importingTable, String keysComment, List<Row> tuples) throws SQLException {
-        getResultsImpl(catalog, importingTable, keysComment, tuples, null, false);
-    }
-
     @Override
     public java.sql.ResultSet getIndexInfo(String catalog, String schema, final String table, final boolean unique, boolean approximate) throws SQLException {
         /*
@@ -2719,11 +2680,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         final ArrayList<Row> rows = new ArrayList<>();
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
+        String db = getDatabase(catalog, schema);
+        final boolean dbMapsToSchema = DatabaseMetaData.this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
+
         try {
 
-            new IterateBlock<String>(getCatalogIterator(catalog)) {
+            new IterateBlock<String>(getDatabaseIterator(db)) {
                 @Override
-                void forEach(String catalogStr) throws SQLException {
+                void forEach(String dbStr) throws SQLException {
 
                     ResultSet results = null;
 
@@ -2731,44 +2695,42 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         StringBuilder queryBuf = new StringBuilder("SHOW INDEX FROM ");
                         queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                         queryBuf.append(" FROM ");
-                        queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
+                        queryBuf.append(StringUtils.quoteIdentifier(dbStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
 
                         try {
                             results = stmt.executeQuery(queryBuf.toString());
                         } catch (SQLException sqlEx) {
-                            int errorCode = sqlEx.getErrorCode();
+                            String sqlState = sqlEx.getSQLState(); // If SQLState is 42S02, ignore this SQLException it means the table doesn't exist....
+                            int errorCode = sqlEx.getErrorCode(); // Sometimes SQLState is not mapped correctly for pre-4.1 so use error code instead.
 
-                            // If SQLState is 42S02, ignore this SQLException it means the table doesn't exist....
-                            if (!"42S02".equals(sqlEx.getSQLState())) {
-                                // Sometimes not mapped correctly for pre-4.1 so use error code instead.
-                                if (errorCode != MysqlErrorNumbers.ER_NO_SUCH_TABLE) {
-                                    throw sqlEx;
-                                }
+                            if (!"42S02".equals(sqlState) && errorCode != MysqlErrorNumbers.ER_NO_SUCH_TABLE
+                                    && errorCode != MysqlErrorNumbers.ER_BAD_DB_ERROR) {
+                                throw sqlEx;
                             }
                         }
 
                         while (results != null && results.next()) {
                             byte[][] row = new byte[14][];
-                            row[0] = ((catalogStr == null) ? new byte[0] : s2b(catalogStr));
-                            row[1] = null;
-                            row[2] = results.getBytes("Table");
+                            row[0] = dbMapsToSchema ? s2b("def") : s2b(dbStr);      // TABLE_CAT
+                            row[1] = dbMapsToSchema ? s2b(dbStr) : null;            // TABLE_SCHEM
+                            row[2] = results.getBytes("Table");                     // TABLE_NAME
 
                             boolean indexIsUnique = results.getInt("Non_unique") == 0;
 
-                            row[3] = (!indexIsUnique ? s2b("true") : s2b("false"));
-                            row[4] = new byte[0];
-                            row[5] = results.getBytes("Key_name");
+                            row[3] = !indexIsUnique ? s2b("true") : s2b("false");   // NON_UNIQUE
+                            row[4] = null;                                          // INDEX_QUALIFIER
+                            row[5] = results.getBytes("Key_name");                  // INDEX_NAME
                             short indexType = java.sql.DatabaseMetaData.tableIndexOther;
-                            row[6] = Integer.toString(indexType).getBytes();
-                            row[7] = results.getBytes("Seq_in_index");
-                            row[8] = results.getBytes("Column_name");
-                            row[9] = results.getBytes("Collation");
+                            row[6] = Integer.toString(indexType).getBytes();        // TYPE
+                            row[7] = results.getBytes("Seq_in_index");              // ORDINAL_POSITION
+                            row[8] = results.getBytes("Column_name");               // COLUMN_NAME
+                            row[9] = results.getBytes("Collation");                 // ASC_OR_DESC
 
                             long cardinality = results.getLong("Cardinality");
 
-                            row[10] = s2b(String.valueOf(cardinality));
-                            row[11] = s2b("0");
-                            row[12] = null;
+                            row[10] = s2b(String.valueOf(cardinality));             // CARDINALITY
+                            row[11] = s2b("0");                                     // PAGES
+                            row[12] = null;                                         // FILTER_CONDITION
 
                             IndexMetaDataKey indexInfoKey = new IndexMetaDataKey(!indexIsUnique, indexType, results.getString("Key_name").toLowerCase(),
                                     results.getShort("Seq_in_index"));
@@ -2945,8 +2907,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 + "POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE";
     }
 
-    @Override
-    public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, final String table) throws SQLException {
+    protected Field[] getPrimaryKeysFields() {
         Field[] fields = new Field[6];
         fields[0] = new Field("", "TABLE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 255);
         fields[1] = new Field("", "TABLE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 0);
@@ -2954,20 +2915,28 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[3] = new Field("", "COLUMN_NAME", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
         fields[4] = new Field("", "KEY_SEQ", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 5);
         fields[5] = new Field("", "PK_NAME", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
+        return fields;
+    }
+
+    @Override
+    public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, final String table) throws SQLException {
 
         if (table == null) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
 
+        String db = getDatabase(catalog, schema);
+        final boolean dbMapsToSchema = DatabaseMetaData.this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
+
         final ArrayList<Row> rows = new ArrayList<>();
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
         try {
 
-            new IterateBlock<String>(getCatalogIterator(catalog)) {
+            new IterateBlock<String>(getDatabaseIterator(db)) {
                 @Override
-                void forEach(String catalogStr) throws SQLException {
+                void forEach(String dbStr) throws SQLException {
                     ResultSet rs = null;
 
                     try {
@@ -2975,26 +2944,36 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         StringBuilder queryBuf = new StringBuilder("SHOW KEYS FROM ");
                         queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                         queryBuf.append(" FROM ");
-                        queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
+                        queryBuf.append(StringUtils.quoteIdentifier(dbStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
 
-                        rs = stmt.executeQuery(queryBuf.toString());
+                        try {
+                            rs = stmt.executeQuery(queryBuf.toString());
+                        } catch (SQLException sqlEx) {
+                            String sqlState = sqlEx.getSQLState(); // If SQLState is 42S02, ignore this SQLException it means the table doesn't exist....
+                            int errorCode = sqlEx.getErrorCode(); // Sometimes SQLState is not mapped correctly for pre-4.1 so use error code instead.
+
+                            if (!"42S02".equals(sqlState) && errorCode != MysqlErrorNumbers.ER_NO_SUCH_TABLE
+                                    && errorCode != MysqlErrorNumbers.ER_BAD_DB_ERROR) {
+                                throw sqlEx;
+                            }
+                        }
 
                         TreeMap<String, byte[][]> sortMap = new TreeMap<>();
 
-                        while (rs.next()) {
+                        while (rs != null && rs.next()) {
                             String keyType = rs.getString("Key_name");
 
                             if (keyType != null) {
                                 if (keyType.equalsIgnoreCase("PRIMARY") || keyType.equalsIgnoreCase("PRI")) {
                                     byte[][] tuple = new byte[6][];
-                                    tuple[0] = ((catalogStr == null) ? new byte[0] : s2b(catalogStr));
-                                    tuple[1] = null;
-                                    tuple[2] = s2b(table);
+                                    tuple[0] = dbMapsToSchema ? s2b("def") : s2b(dbStr);// TABLE_CAT
+                                    tuple[1] = dbMapsToSchema ? s2b(dbStr) : null;      // TABLE_SCHEM
+                                    tuple[2] = s2b(table);                              // TABLE_NAME
 
                                     String columnName = rs.getString("Column_name");
-                                    tuple[3] = s2b(columnName);
-                                    tuple[4] = s2b(rs.getString("Seq_in_index"));
-                                    tuple[5] = s2b(keyType);
+                                    tuple[3] = s2b(columnName);                         // COLUMN_NAME
+                                    tuple[4] = s2b(rs.getString("Seq_in_index"));       // KEY_SEQ
+                                    tuple[5] = s2b(keyType);                            // PK_NAME
                                     sortMap.put(columnName, tuple);
                                 }
                             }
@@ -3026,7 +3005,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         java.sql.ResultSet results = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
-                new ResultsetRowsStatic(rows, new DefaultColumnDefinition(fields)));
+                new ResultsetRowsStatic(rows, new DefaultColumnDefinition(getPrimaryKeysFields())));
 
         return results;
     }
@@ -3034,9 +3013,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     @Override
     public java.sql.ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern)
             throws SQLException {
-        Field[] fields = createProcedureColumnsFields();
-
-        return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern, true,
+        return getProcedureOrFunctionColumns(createProcedureColumnsFields(), catalog, schemaPattern, procedureNamePattern, columnNamePattern, true,
                 this.conn.getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
     }
 
@@ -3068,6 +3045,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     protected java.sql.ResultSet getProcedureOrFunctionColumns(Field[] fields, String catalog, String schemaPattern, String procedureOrFunctionNamePattern,
             String columnNamePattern, boolean returnProcedures, boolean returnFunctions) throws SQLException {
 
+        String db = getDatabase(catalog, schemaPattern);
+        final boolean dbMapsToSchema = DatabaseMetaData.this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
+
         List<ComparableWrapper<String, ProcedureType>> procsOrFuncsToExtractList = new ArrayList<>();
         //Main container to be passed to getProceduresAndOrFunctions
         ResultSet procsAndOrFuncsRs = null;
@@ -3086,13 +3066,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             } else {
                 //So we have a name to check meaning more actual processing
                 //Keep the Catalog parsed, maybe we'll need it at some point in the future...
-                String tmpCatalog = catalog;
-                List<String> parseList = StringUtils.splitDBdotName(tmpProcedureOrFunctionNamePattern, tmpCatalog, this.quotedId,
+                String tmpDb = db;
+                List<String> parseList = StringUtils.splitDBdotName(tmpProcedureOrFunctionNamePattern, tmpDb, this.quotedId,
                         this.session.getServerSession().isNoBackslashEscapesSet());
 
                 //There *should* be 2 rows, if any.
                 if (parseList.size() == 2) {
-                    tmpCatalog = parseList.get(0);
+                    tmpDb = parseList.get(0);
                     tmpProcedureOrFunctionNamePattern = parseList.get(1);
                 } else {
                     //keep values as they are
@@ -3105,7 +3085,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             boolean hasResults = false;
             while (procsAndOrFuncsRs.next()) {
                 procsOrFuncsToExtractList.add(new ComparableWrapper<>(
-                        StringUtils.getFullyQualifiedName(procsAndOrFuncsRs.getString(1), procsAndOrFuncsRs.getString(3), this.quotedId, this.pedantic),
+                        StringUtils.getFullyQualifiedName(dbMapsToSchema ? procsAndOrFuncsRs.getString(2) : procsAndOrFuncsRs.getString(1),
+                                procsAndOrFuncsRs.getString(3), this.quotedId, this.pedantic),
                         procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE : FUNCTION));
                 hasResults = true;
             }
@@ -3157,13 +3138,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             }
 
             if (idx > 0) {
-                catalog = StringUtils.unQuoteIdentifier(procName.substring(0, idx), this.quotedId);
+                db = StringUtils.unQuoteIdentifier(procName.substring(0, idx), this.quotedId);
                 procNameToCall = procName; // Leave as CAT.PROC, needed later
             } else {
                 //No catalog. Not sure how to handle right now...
                 procNameToCall = procName;
             }
-            getCallStmtParameterTypes(catalog, procNameToCall, procType, columnNamePattern, resultRows, fields.length == 17 /* for getFunctionColumns */);
+            getCallStmtParameterTypes(db, procNameToCall, procType, columnNamePattern, resultRows, fields.length == 17 /* for getFunctionColumns */);
         }
 
         return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -3172,9 +3153,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public java.sql.ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
-        Field[] fields = createFieldMetadataForGetProcedures();
-
-        return getProceduresAndOrFunctions(fields, catalog, schemaPattern, procedureNamePattern, true,
+        return getProceduresAndOrFunctions(createFieldMetadataForGetProcedures(), catalog, schemaPattern, procedureNamePattern, true,
                 this.conn.getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
     }
 
@@ -3210,34 +3189,33 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException
      *             if a database access error occurs
      */
-    protected java.sql.ResultSet getProceduresAndOrFunctions(final Field[] fields, String catalog, String schemaPattern, String procedureNamePattern,
+    protected java.sql.ResultSet getProceduresAndOrFunctions(final Field[] fields, String catalog, String schemaPattern, final String procedureNamePattern,
             final boolean returnProcedures, final boolean returnFunctions) throws SQLException {
         final ArrayList<Row> procedureRows = new ArrayList<>();
 
-        final String procNamePattern = procedureNamePattern;
+        String db = getDatabase(catalog, schemaPattern);
+        final boolean dbMapsToSchema = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
 
         final List<ComparableWrapper<String, Row>> procedureRowsToSort = new ArrayList<>();
 
-        new IterateBlock<String>(getCatalogIterator(catalog)) {
+        new IterateBlock<String>(dbMapsToSchema ? getSchemaPatternIterator(db) : getDatabaseIterator(db)) {
             @Override
-            void forEach(String catalogStr) throws SQLException {
-                String db = catalogStr;
+            void forEach(String dbPattern) throws SQLException {
 
                 ResultSet proceduresRs = null;
-                boolean needsClientFiltering = true;
 
                 StringBuilder selectFromMySQLProcSQL = new StringBuilder();
 
-                selectFromMySQLProcSQL.append("SELECT name, type, comment FROM mysql.proc WHERE");
+                selectFromMySQLProcSQL.append("SELECT db, name, type, comment FROM mysql.proc WHERE");
                 if (returnProcedures && !returnFunctions) {
                     selectFromMySQLProcSQL.append(" type = 'PROCEDURE' AND ");
                 } else if (!returnProcedures && returnFunctions) {
                     selectFromMySQLProcSQL.append(" type = 'FUNCTION' AND ");
                 }
 
-                selectFromMySQLProcSQL.append(" db <=> ?");
+                selectFromMySQLProcSQL.append(dbMapsToSchema ? " db LIKE ?" : " db = ?");
 
-                if (procNamePattern != null && procNamePattern.length() > 0) {
+                if (procedureNamePattern != null && procedureNamePattern.length() > 0) {
                     selectFromMySQLProcSQL.append(" AND name LIKE ?");
                 }
 
@@ -3246,66 +3224,66 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 java.sql.PreparedStatement proceduresStmt = prepareMetaDataSafeStatement(selectFromMySQLProcSQL.toString());
 
                 try {
-                    //
-                    // Try using system tables first, as this is a little bit more efficient....
-                    //
-                    if (db != null) {
-                        if (DatabaseMetaData.this.conn.lowerCaseTableNames()) {
-                            db = db.toLowerCase();
-                        }
-                        proceduresStmt.setString(1, db);
-                    } else {
-                        proceduresStmt.setNull(1, MysqlType.VARCHAR.getJdbcType());
+                    /* Try using system tables first, as this is a little bit more efficient.... */
+
+                    if (DatabaseMetaData.this.conn.lowerCaseTableNames()) {
+                        dbPattern = dbPattern.toLowerCase();
                     }
+                    proceduresStmt.setString(1, dbPattern);
 
-                    int nameIndex = 1;
-
-                    if (procNamePattern != null && procNamePattern.length() > 0) {
-                        proceduresStmt.setString(2, procNamePattern);
+                    if (procedureNamePattern != null && procedureNamePattern.length() > 0) {
+                        proceduresStmt.setString(2, procedureNamePattern);
                     }
 
                     try {
                         proceduresRs = proceduresStmt.executeQuery();
-                        needsClientFiltering = false;
 
                         if (returnProcedures) {
-                            convertToJdbcProcedureList(true, db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex);
+                            convertToJdbcProcedureList(true, proceduresRs, procedureRowsToSort);
                         }
 
                         if (returnFunctions) {
-                            convertToJdbcFunctionList(db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex, fields);
+                            convertToJdbcFunctionList(proceduresRs, procedureRowsToSort, fields);
                         }
 
                     } catch (SQLException sqlEx) {
-                        nameIndex = 2;
+                        // The mysql.proc table didn't exist in early MySQL versions and it's removed in MySQL 8.0, 
+                        // so use 'SHOW [FUNCTION|PROCEDURE] STATUS instead.
 
-                        // System tables aren't accessible, so use 'SHOW [FUNCTION|PROCEDURE] STATUS instead.
                         // Functions first:
                         if (returnFunctions) {
                             proceduresStmt.close();
 
-                            String sql = procNamePattern != null && procNamePattern.length() > 0 ? "SHOW FUNCTION STATUS LIKE ?" : "SHOW FUNCTION STATUS";
+                            String sql = "SHOW FUNCTION STATUS WHERE " + (dbMapsToSchema ? "Db LIKE ?" : "Db = ?");
+                            if (procedureNamePattern != null && procedureNamePattern.length() > 0) {
+                                sql += " AND Name LIKE ?";
+                            }
                             proceduresStmt = prepareMetaDataSafeStatement(sql);
-                            if (procNamePattern != null && procNamePattern.length() > 0) {
-                                proceduresStmt.setString(1, procNamePattern);
+                            proceduresStmt.setString(1, dbPattern);
+                            if (procedureNamePattern != null && procedureNamePattern.length() > 0) {
+                                proceduresStmt.setString(2, procedureNamePattern);
                             }
                             proceduresRs = proceduresStmt.executeQuery();
 
-                            convertToJdbcFunctionList(db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex, fields);
+                            convertToJdbcFunctionList(proceduresRs, procedureRowsToSort, fields);
                         }
 
                         // Procedures next:
                         if (returnProcedures) {
                             proceduresStmt.close();
 
-                            String sql = procNamePattern != null && procNamePattern.length() > 0 ? "SHOW PROCEDURE STATUS LIKE ?" : "SHOW PROCEDURE STATUS";
+                            String sql = "SHOW PROCEDURE STATUS WHERE " + (dbMapsToSchema ? "Db LIKE ?" : "Db = ?");
+                            if (procedureNamePattern != null && procedureNamePattern.length() > 0) {
+                                sql += " AND Name LIKE ?";
+                            }
                             proceduresStmt = prepareMetaDataSafeStatement(sql);
-                            if (procNamePattern != null && procNamePattern.length() > 0) {
-                                proceduresStmt.setString(1, procNamePattern);
+                            proceduresStmt.setString(1, dbPattern);
+                            if (procedureNamePattern != null && procedureNamePattern.length() > 0) {
+                                proceduresStmt.setString(2, procedureNamePattern);
                             }
                             proceduresRs = proceduresStmt.executeQuery();
 
-                            convertToJdbcProcedureList(false, db, proceduresRs, needsClientFiltering, db, procedureRowsToSort, nameIndex);
+                            convertToJdbcProcedureList(false, proceduresRs, procedureRowsToSort);
                         }
                     }
 
@@ -3354,7 +3332,27 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return ResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
 
-    private void getResultsImpl(String catalog, String table, String keysComment, List<Row> tuples, String fkTableName, boolean isExport) throws SQLException {
+    /**
+     * Populates the resultRows list with the imported or exported keys of given table
+     * based on the keysComment from the 'show table status' sql command.
+     * KeysComment is that part of the comment field that follows the "InnoDB free ...;" prefix.
+     * 
+     * @param db
+     *            the database to use
+     * @param table
+     *            the table keys are being exported from or imported to
+     * @param keysComment
+     *            the comment from 'show table status'
+     * @param resultRows
+     *            the rows to add results to
+     * @param fkTableName
+     *            the foreign key table name
+     * @param isExport
+     *            export or import keys
+     * @throws SQLException
+     *             if an error occurs
+     */
+    void populateKeyResults(String db, String table, String keysComment, List<Row> resultRows, String fkTableName, boolean isExport) throws SQLException {
 
         LocalAndReferencedColumns parsedInfo = parseTableStatusIntoLocalAndReferencedColumns(keysComment);
 
@@ -3371,47 +3369,62 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         int keySeqIndex = 1;
 
+        final boolean dbMapsToSchema = DatabaseMetaData.this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
+
         while (localColumnNames.hasNext()) {
             byte[][] tuple = new byte[14][];
             String lColumnName = StringUtils.unQuoteIdentifier(localColumnNames.next(), this.quotedId);
             String rColumnName = StringUtils.unQuoteIdentifier(referColumnNames.next(), this.quotedId);
-            tuple[FKTABLE_CAT] = ((catalog == null) ? new byte[0] : s2b(catalog));
-            tuple[FKTABLE_SCHEM] = null;
-            tuple[FKTABLE_NAME] = s2b((isExport) ? fkTableName : table);
-            tuple[FKCOLUMN_NAME] = s2b(lColumnName);
-            tuple[PKTABLE_CAT] = s2b(parsedInfo.referencedCatalog);
-            tuple[PKTABLE_SCHEM] = null;
-            tuple[PKTABLE_NAME] = s2b((isExport) ? table : parsedInfo.referencedTable);
-            tuple[PKCOLUMN_NAME] = s2b(rColumnName);
-            tuple[KEY_SEQ] = s2b(Integer.toString(keySeqIndex++));
+
+            tuple[0] = dbMapsToSchema ? s2b("def") : s2b(parsedInfo.referencedDatabase);    // PKTABLE_CAT
+            tuple[1] = dbMapsToSchema ? s2b(parsedInfo.referencedDatabase) : null;          // PKTABLE_SCHEM
+            tuple[2] = s2b((isExport) ? table : parsedInfo.referencedTable);                // PKTABLE_NAME
+            tuple[3] = s2b(rColumnName);                        // PKCOLUMN_NAME
+            tuple[4] = dbMapsToSchema ? s2b("def") : s2b(db);   // FKTABLE_CAT
+            tuple[5] = dbMapsToSchema ? s2b(db) : null;         // FKTABLE_SCHEM
+            tuple[6] = s2b((isExport) ? fkTableName : table);   // FKTABLE_NAME
+            tuple[7] = s2b(lColumnName);                        // FKCOLUMN_NAME
+            tuple[8] = s2b(Integer.toString(keySeqIndex++));    // KEY_SEQ
 
             int[] actions = getForeignKeyActions(keysComment);
+            tuple[9] = s2b(Integer.toString(actions[1]));       // UPDATE_RULE
+            tuple[10] = s2b(Integer.toString(actions[0]));      // DELETE_RULE
 
-            tuple[UPDATE_RULE] = s2b(Integer.toString(actions[1]));
-            tuple[DELETE_RULE] = s2b(Integer.toString(actions[0]));
-            tuple[FK_NAME] = s2b(parsedInfo.constraintName);
-            tuple[PK_NAME] = null; // not available from show table status
-            tuple[DEFERRABILITY] = s2b(Integer.toString(java.sql.DatabaseMetaData.importedKeyNotDeferrable));
-            tuples.add(new ByteArrayRow(tuple, getExceptionInterceptor()));
+            tuple[11] = s2b(parsedInfo.constraintName);         // FK_NAME
+            tuple[12] = null;                                   // PK_NAME, not available from show table status
+            tuple[13] = s2b(Integer.toString(java.sql.DatabaseMetaData.importedKeyNotDeferrable));  // DEFERRABILITY
+            resultRows.add(new ByteArrayRow(tuple, getExceptionInterceptor()));
         }
     }
 
     @Override
     public java.sql.ResultSet getSchemas() throws SQLException {
+        return getSchemas(null, null);
+    }
+
+    @Override
+    public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
+        List<String> dbList = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? getDatabases(schemaPattern) : new ArrayList<>();
+
         Field[] fields = new Field[2];
         fields[0] = new Field("", "TABLE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 0);
         fields[1] = new Field("", "TABLE_CATALOG", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 0);
 
-        ArrayList<Row> tuples = new ArrayList<>();
-        java.sql.ResultSet results = this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
-                new ResultsetRowsStatic(tuples, new DefaultColumnDefinition(fields)));
+        ArrayList<Row> tuples = new ArrayList<>(dbList.size());
+        for (String db : dbList) {
+            byte[][] rowVal = new byte[2][];
+            rowVal[0] = s2b(db);
+            rowVal[1] = s2b("def");
+            tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
+        }
 
-        return results;
+        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
+                new ResultsetRowsStatic(tuples, new DefaultColumnDefinition(fields)));
     }
 
     @Override
     public String getSchemaTerm() throws SQLException {
-        return "";
+        return this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? "SCHEMA" : "";
     }
 
     @Override
@@ -3505,7 +3518,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public java.sql.ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
-
         Field[] fields = new Field[7];
         fields[0] = new Field("", "TABLE_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 64);
         fields[1] = new Field("", "TABLE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 1);
@@ -3515,11 +3527,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[5] = new Field("", "PRIVILEGE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 64);
         fields[6] = new Field("", "IS_GRANTABLE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 3);
 
+        String dbPattern = getDatabase(catalog, schemaPattern);
+
         StringBuilder grantQueryBuf = new StringBuilder("SELECT host,db,table_name,grantor,user,table_priv FROM mysql.tables_priv");
 
         StringBuilder conditionBuf = new StringBuilder();
-        if (catalog != null) {
-            conditionBuf.append(" db LIKE ?");
+        if (dbPattern != null) {
+            conditionBuf.append(this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? " db LIKE ?" : " db = ?");
         }
         if (tableNamePattern != null) {
             if (conditionBuf.length() > 0) {
@@ -3539,8 +3553,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         try {
             pStmt = prepareMetaDataSafeStatement(grantQueryBuf.toString());
             int nextId = 1;
-            if (catalog != null) {
-                pStmt.setString(nextId++, catalog);
+            if (dbPattern != null) {
+                pStmt.setString(nextId++, dbPattern);
             }
             if (tableNamePattern != null) {
                 pStmt.setString(nextId, tableNamePattern);
@@ -3584,8 +3598,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                             while (columnResults.next()) {
                                 byte[][] tuple = new byte[8][];
-                                tuple[0] = s2b(db);
-                                tuple[1] = null;
+                                tuple[0] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b("def") : s2b(db);  // PKTABLE_CAT
+                                tuple[1] = this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? s2b(db) : null;        // PKTABLE_SCHEM
                                 tuple[2] = s2b(table);
                                 tuple[3] = grantor != null ? s2b(grantor) : null;
                                 tuple[4] = s2b(fullUser.toString());
@@ -3636,13 +3650,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
-        if (catalog == null && this.nullCatalogMeansCurrent) {
-            catalog = this.database;
-        }
+        String db = getDatabase(catalog, schemaPattern);
+
+        final boolean dbMapsToSchema = DatabaseMetaData.this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
 
         if (tableNamePattern != null) {
-            List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, catalog, this.quotedId,
-                    this.session.getServerSession().isNoBackslashEscapesSet());
+            List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, db, this.quotedId, this.session.getServerSession().isNoBackslashEscapesSet());
             //There *should* be 2 rows, if any.
             if (parseList.size() == 2) {
                 tableNamePattern = parseList.get(1);
@@ -3652,11 +3665,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         final String tableNamePat = tableNamePattern;
 
         try {
-            new IterateBlock<String>(getCatalogIterator(catalog)) {
+            new IterateBlock<String>(dbMapsToSchema ? getSchemaPatternIterator(db) : getDatabaseIterator(db)) {
                 @Override
-                void forEach(String catalogStr) throws SQLException {
-                    boolean operatingOnSystemDB = "information_schema".equalsIgnoreCase(catalogStr) || "mysql".equalsIgnoreCase(catalogStr)
-                            || "performance_schema".equalsIgnoreCase(catalogStr);
+                void forEach(String dbPattern) throws SQLException {
+                    boolean operatingOnSystemDB = "information_schema".equalsIgnoreCase(dbPattern) || "mysql".equalsIgnoreCase(dbPattern)
+                            || "performance_schema".equalsIgnoreCase(dbPattern);
 
                     ResultSet results = null;
 
@@ -3664,7 +3677,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         try {
                             StringBuilder sqlBuf = new StringBuilder("SHOW FULL TABLES FROM ");
-                            sqlBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
+                            sqlBuf.append(StringUtils.quoteIdentifier(dbPattern, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                             if (tableNamePat != null) {
                                 sqlBuf.append(" LIKE ");
                                 sqlBuf.append(StringUtils.quoteIdentifier(tableNamePat, "'", true));
@@ -3733,8 +3746,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                         while (results.next()) {
                             byte[][] row = new byte[10][];
-                            row[0] = (catalogStr == null) ? null : s2b(catalogStr);
-                            row[1] = null;
+                            row[0] = dbMapsToSchema ? s2b("def") : s2b(dbPattern);// TABLE_CAT
+                            row[1] = dbMapsToSchema ? s2b(dbPattern) : null;      // TABLE_SCHEM
                             row[2] = results.getBytes(1);
                             row[4] = new byte[0];
                             row[5] = null;
@@ -3753,12 +3766,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                                         if (operatingOnSystemDB && shouldReportSystemTables) {
                                             row[3] = TableType.SYSTEM_TABLE.asBytes();
-                                            tablesKey = new TableMetaDataKey(TableType.SYSTEM_TABLE.getName(), catalogStr, null, results.getString(1));
+                                            tablesKey = new TableMetaDataKey(TableType.SYSTEM_TABLE.getName(), dbPattern, null, results.getString(1));
                                             reportTable = true;
 
                                         } else if (!operatingOnSystemDB && shouldReportTables) {
                                             row[3] = TableType.TABLE.asBytes();
-                                            tablesKey = new TableMetaDataKey(TableType.TABLE.getName(), catalogStr, null, results.getString(1));
+                                            tablesKey = new TableMetaDataKey(TableType.TABLE.getName(), dbPattern, null, results.getString(1));
                                             reportTable = true;
                                         }
 
@@ -3770,7 +3783,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                     case VIEW:
                                         if (shouldReportViews) {
                                             row[3] = TableType.VIEW.asBytes();
-                                            sortedRows.put(new TableMetaDataKey(TableType.VIEW.getName(), catalogStr, null, results.getString(1)),
+                                            sortedRows.put(new TableMetaDataKey(TableType.VIEW.getName(), dbPattern, null, results.getString(1)),
                                                     new ByteArrayRow(row, getExceptionInterceptor()));
                                         }
                                         break;
@@ -3778,7 +3791,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                     case SYSTEM_TABLE:
                                         if (shouldReportSystemTables) {
                                             row[3] = TableType.SYSTEM_TABLE.asBytes();
-                                            sortedRows.put(new TableMetaDataKey(TableType.SYSTEM_TABLE.getName(), catalogStr, null, results.getString(1)),
+                                            sortedRows.put(new TableMetaDataKey(TableType.SYSTEM_TABLE.getName(), dbPattern, null, results.getString(1)),
                                                     new ByteArrayRow(row, getExceptionInterceptor()));
                                         }
                                         break;
@@ -3786,7 +3799,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                     case SYSTEM_VIEW:
                                         if (shouldReportSystemViews) {
                                             row[3] = TableType.SYSTEM_VIEW.asBytes();
-                                            sortedRows.put(new TableMetaDataKey(TableType.SYSTEM_VIEW.getName(), catalogStr, null, results.getString(1)),
+                                            sortedRows.put(new TableMetaDataKey(TableType.SYSTEM_VIEW.getName(), dbPattern, null, results.getString(1)),
                                                     new ByteArrayRow(row, getExceptionInterceptor()));
                                         }
                                         break;
@@ -3794,14 +3807,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                     case LOCAL_TEMPORARY:
                                         if (shouldReportLocalTemporaries) {
                                             row[3] = TableType.LOCAL_TEMPORARY.asBytes();
-                                            sortedRows.put(new TableMetaDataKey(TableType.LOCAL_TEMPORARY.getName(), catalogStr, null, results.getString(1)),
+                                            sortedRows.put(new TableMetaDataKey(TableType.LOCAL_TEMPORARY.getName(), dbPattern, null, results.getString(1)),
                                                     new ByteArrayRow(row, getExceptionInterceptor()));
                                         }
                                         break;
 
                                     default:
                                         row[3] = TableType.TABLE.asBytes();
-                                        sortedRows.put(new TableMetaDataKey(TableType.TABLE.getName(), catalogStr, null, results.getString(1)),
+                                        sortedRows.put(new TableMetaDataKey(TableType.TABLE.getName(), dbPattern, null, results.getString(1)),
                                                 new ByteArrayRow(row, getExceptionInterceptor()));
                                         break;
                                 }
@@ -3810,7 +3823,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 if (shouldReportTables) {
                                     // Pre-MySQL-5.0.1, tables only
                                     row[3] = TableType.TABLE.asBytes();
-                                    sortedRows.put(new TableMetaDataKey(TableType.TABLE.getName(), catalogStr, null, results.getString(1)),
+                                    sortedRows.put(new TableMetaDataKey(TableType.TABLE.getName(), dbPattern, null, results.getString(1)),
                                             new ByteArrayRow(row, getExceptionInterceptor()));
                                 }
                             }
@@ -4093,14 +4106,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return this.conn.getUser();
     }
 
-    @Override
-    public java.sql.ResultSet getVersionColumns(String catalog, String schema, final String table) throws SQLException {
-
-        if (table == null) {
-            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                    getExceptionInterceptor());
-        }
-
+    protected Field[] getVersionColumnsFields() {
         Field[] fields = new Field[8];
         fields[0] = new Field("", "SCOPE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 5);
         fields[1] = new Field("", "COLUMN_NAME", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 32);
@@ -4110,16 +4116,28 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[5] = new Field("", "BUFFER_LENGTH", this.metadataCollationIndex, this.metadataEncoding, MysqlType.INT, 16);
         fields[6] = new Field("", "DECIMAL_DIGITS", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 16);
         fields[7] = new Field("", "PSEUDO_COLUMN", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 5);
+        return fields;
+    }
+
+    @Override
+    public java.sql.ResultSet getVersionColumns(String catalog, String schema, final String table) throws SQLException {
+
+        if (table == null) {
+            throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
+        }
 
         final ArrayList<Row> rows = new ArrayList<>();
 
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
+        String db = getDatabase(catalog, schema);
+
         try {
 
-            new IterateBlock<String>(getCatalogIterator(catalog)) {
+            new IterateBlock<String>(getDatabaseIterator(db)) {
                 @Override
-                void forEach(String catalogStr) throws SQLException {
+                void forEach(String dbStr) throws SQLException {
 
                     ResultSet results = null;
 
@@ -4131,19 +4149,29 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             StringBuilder queryBuf = new StringBuilder("SHOW COLUMNS FROM ");
                             queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                             queryBuf.append(" FROM ");
-                            queryBuf.append(StringUtils.quoteIdentifier(catalogStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
+                            queryBuf.append(StringUtils.quoteIdentifier(dbStr, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                             queryBuf.append(" WHERE");
                             queryBuf.append(whereBuf.toString());
 
-                            results = stmt.executeQuery(queryBuf.toString());
+                            try {
+                                results = stmt.executeQuery(queryBuf.toString());
+                            } catch (SQLException sqlEx) {
+                                String sqlState = sqlEx.getSQLState(); // If SQLState is 42S02, ignore this SQLException it means the table doesn't exist....
+                                int errorCode = sqlEx.getErrorCode(); // Sometimes SQLState is not mapped correctly for pre-4.1 so use error code instead.
 
-                            while (results.next()) {
+                                if (!"42S02".equals(sqlState) && errorCode != MysqlErrorNumbers.ER_NO_SUCH_TABLE
+                                        && errorCode != MysqlErrorNumbers.ER_BAD_DB_ERROR) {
+                                    throw sqlEx;
+                                }
+                            }
+
+                            while (results != null && results.next()) {
                                 TypeDescriptor typeDesc = new TypeDescriptor(results.getString("Type"), results.getString("Null"));
                                 byte[][] rowVal = new byte[8][];
                                 rowVal[0] = null;                                                                           // SCOPE is not used
                                 rowVal[1] = results.getBytes("Field");                                                      // COLUMN_NAME
-                                rowVal[2] = Short.toString((short) typeDesc.mysqlType.getJdbcType()).getBytes();                                   // DATA_TYPE
-                                rowVal[3] = s2b(typeDesc.mysqlType.getName());                                                         // TYPE_NAME
+                                rowVal[2] = Short.toString((short) typeDesc.mysqlType.getJdbcType()).getBytes();            // DATA_TYPE
+                                rowVal[3] = s2b(typeDesc.mysqlType.getName());                                              // TYPE_NAME
                                 rowVal[4] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString());       // COLUMN_SIZE
                                 rowVal[5] = s2b(Integer.toString(typeDesc.bufferLength));                                   // BUFFER_LENGTH
                                 rowVal[6] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString()); // DECIMAL_DIGITS
@@ -4175,7 +4203,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
-                new ResultsetRowsStatic(rows, new DefaultColumnDefinition(fields)));
+                new ResultsetRowsStatic(rows, new DefaultColumnDefinition(getVersionColumnsFields())));
     }
 
     @Override
@@ -4185,7 +4213,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public boolean isCatalogAtStart() throws SQLException {
-        return true;
+        return true; // There is no similar method for SCHEMA
     }
 
     @Override
@@ -4301,16 +4329,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.17"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
-        String referCatalogTableString = keysCommentTrimmed.substring(indexOfRefer + "REFER ".length(), indexOfOpenParenReferCol);
+        String referDbTableString = keysCommentTrimmed.substring(indexOfRefer + "REFER ".length(), indexOfOpenParenReferCol);
 
-        int indexOfSlash = StringUtils.indexOfIgnoreCase(0, referCatalogTableString, "/", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__MRK_COM_WS);
+        int indexOfSlash = StringUtils.indexOfIgnoreCase(0, referDbTableString, "/", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__MRK_COM_WS);
 
         if (indexOfSlash == -1) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.18"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
-        String referCatalog = StringUtils.unQuoteIdentifier(referCatalogTableString.substring(0, indexOfSlash), this.quotedId);
-        String referTable = StringUtils.unQuoteIdentifier(referCatalogTableString.substring(indexOfSlash + 1).trim(), this.quotedId);
+        String referDb = StringUtils.unQuoteIdentifier(referDbTableString.substring(0, indexOfSlash), this.quotedId);
+        String referTable = StringUtils.unQuoteIdentifier(referDbTableString.substring(indexOfSlash + 1).trim(), this.quotedId);
 
         int indexOfCloseParenRefer = StringUtils.indexOfIgnoreCase(indexOfOpenParenReferCol, keysCommentTrimmed, ")", this.quotedId, this.quotedId,
                 StringUtils.SEARCH_MODE__ALL);
@@ -4324,7 +4352,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         List<String> referColumnsList = StringUtils.split(referColumnNamesString, columnsDelimitter, this.quotedId, this.quotedId, false);
         List<String> localColumnsList = StringUtils.split(localColumnNamesString, columnsDelimitter, this.quotedId, this.quotedId, false);
 
-        return new LocalAndReferencedColumns(localColumnsList, referColumnsList, constraintName, referCatalog, referTable);
+        return new LocalAndReferencedColumns(localColumnsList, referColumnsList, constraintName, referDb, referTable);
     }
 
     /**
@@ -4415,27 +4443,27 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public boolean supportsCatalogsInDataManipulation() throws SQLException {
-        return true;
+        return this.databaseTerm.getValue() == DatabaseTerm.CATALOG;
     }
 
     @Override
     public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
-        return true;
+        return this.databaseTerm.getValue() == DatabaseTerm.CATALOG;
     }
 
     @Override
     public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
-        return true;
+        return this.databaseTerm.getValue() == DatabaseTerm.CATALOG;
     }
 
     @Override
     public boolean supportsCatalogsInProcedureCalls() throws SQLException {
-        return true;
+        return this.databaseTerm.getValue() == DatabaseTerm.CATALOG;
     }
 
     @Override
     public boolean supportsCatalogsInTableDefinitions() throws SQLException {
-        return true;
+        return this.databaseTerm.getValue() == DatabaseTerm.CATALOG;
     }
 
     @Override
@@ -4653,7 +4681,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public boolean supportsResultSetType(int type) throws SQLException {
-        return (type == ResultSet.TYPE_SCROLL_INSENSITIVE);
+        return (type == ResultSet.TYPE_SCROLL_INSENSITIVE); // TODO other types?
     }
 
     @Override
@@ -4663,27 +4691,27 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public boolean supportsSchemasInDataManipulation() throws SQLException {
-        return false;
+        return this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
     }
 
     @Override
     public boolean supportsSchemasInIndexDefinitions() throws SQLException {
-        return false;
+        return this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
     }
 
     @Override
     public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
-        return false;
+        return this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
     }
 
     @Override
     public boolean supportsSchemasInProcedureCalls() throws SQLException {
-        return false;
+        return this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
     }
 
     @Override
     public boolean supportsSchemasInTableDefinitions() throws SQLException {
-        return false;
+        return this.databaseTerm.getValue() == DatabaseTerm.SCHEMA;
     }
 
     @Override
@@ -4793,9 +4821,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
-        Field[] fields = createFunctionColumnsFields();
-
-        return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, functionNamePattern, columnNamePattern, false, true);
+        return getProcedureOrFunctionColumns(createFunctionColumnsFields(), catalog, schemaPattern, functionNamePattern, columnNamePattern, false, true);
     }
 
     protected Field[] createFunctionColumnsFields() {
@@ -4819,8 +4845,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         return fields;
     }
 
-    @Override
-    public java.sql.ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
+    protected Field[] getFunctionsFields() {
         Field[] fields = new Field[6];
         fields[0] = new Field("", "FUNCTION_CAT", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 255);
         fields[1] = new Field("", "FUNCTION_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 255);
@@ -4828,21 +4853,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         fields[3] = new Field("", "REMARKS", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 255);
         fields[4] = new Field("", "FUNCTION_TYPE", this.metadataCollationIndex, this.metadataEncoding, MysqlType.SMALLINT, 6);
         fields[5] = new Field("", "SPECIFIC_NAME", this.metadataCollationIndex, this.metadataEncoding, MysqlType.CHAR, 255);
+        return fields;
+    }
 
-        return getProceduresAndOrFunctions(fields, catalog, schemaPattern, functionNamePattern, false, true);
+    @Override
+    public java.sql.ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
+        return getProceduresAndOrFunctions(getFunctionsFields(), catalog, schemaPattern, functionNamePattern, false, true);
     }
 
     public boolean providesQueryObjectGenerator() throws SQLException {
         return false;
-    }
-
-    @Override
-    public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
-        Field[] fields = { new Field("", "TABLE_SCHEM", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 255),
-                new Field("", "TABLE_CATALOG", this.metadataCollationIndex, this.metadataEncoding, MysqlType.VARCHAR, 255) };
-
-        return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
-                new ResultsetRowsStatic(new ArrayList<Row>(), new DefaultColumnDefinition(fields)));
     }
 
     @Override

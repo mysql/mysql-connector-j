@@ -47,6 +47,7 @@ import java.util.TreeMap;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
@@ -219,17 +220,17 @@ public class UpdatableResultSet extends ResultSetImpl {
             }
 
             String singleTableName = null;
-            String catalogName = null;
+            String dbName = null;
 
             int primaryKeyCount = 0;
 
             Field[] fields = this.getMetadata().getFields();
             // We can only do this if we know that there is a currently selected database, or if we're talking to a > 4.1 version of MySQL server (as it returns
             // database names in field info)
-            if ((this.catalog == null) || (this.catalog.length() == 0)) {
-                this.catalog = fields[0].getDatabaseName();
+            if ((this.db == null) || (this.db.length() == 0)) {
+                this.db = fields[0].getDatabaseName();
 
-                if ((this.catalog == null) || (this.catalog.length() == 0)) {
+                if ((this.db == null) || (this.db.length() == 0)) {
                     throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.43"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                             getExceptionInterceptor());
                 }
@@ -237,11 +238,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             if (fields.length > 0) {
                 singleTableName = fields[0].getOriginalTableName();
-                catalogName = fields[0].getDatabaseName();
+                dbName = fields[0].getDatabaseName();
 
                 if (singleTableName == null) {
                     singleTableName = fields[0].getTableName();
-                    catalogName = this.catalog;
+                    dbName = this.db;
                 }
 
                 if (singleTableName == null) {
@@ -260,11 +261,11 @@ public class UpdatableResultSet extends ResultSetImpl {
                 //
                 for (int i = 1; i < fields.length; i++) {
                     String otherTableName = fields[i].getOriginalTableName();
-                    String otherCatalogName = fields[i].getDatabaseName();
+                    String otherDbName = fields[i].getDatabaseName();
 
                     if (otherTableName == null) {
                         otherTableName = fields[i].getTableName();
-                        otherCatalogName = this.catalog;
+                        otherDbName = this.db;
                     }
 
                     if (otherTableName == null) {
@@ -282,7 +283,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                     }
 
                     // Can't reference more than one database
-                    if ((catalogName == null) || !otherCatalogName.equals(catalogName)) {
+                    if ((dbName == null) || !otherDbName.equals(dbName)) {
                         this.isUpdatable = false;
                         this.notUpdatableReason = Messages.getString("NotUpdatableReason.1");
 
@@ -307,7 +308,9 @@ public class UpdatableResultSet extends ResultSetImpl {
                 HashMap<String, String> primaryKeyNames = new HashMap<>();
 
                 try {
-                    rs = dbmd.getPrimaryKeys(catalogName, null, singleTableName);
+                    rs = this.session.getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA
+                            ? dbmd.getPrimaryKeys(null, dbName, singleTableName)
+                            : dbmd.getPrimaryKeys(dbName, null, singleTableName);
 
                     while (rs.next()) {
                         String keyName = rs.getString(4);
@@ -511,7 +514,9 @@ public class UpdatableResultSet extends ResultSetImpl {
                 Map<String, Integer> columnNamesToIndices = tableEntry.getValue();
 
                 try {
-                    columnsResultSet = dbmd.getColumns(this.catalog, null, tableName, "%");
+                    columnsResultSet = this.session.getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA
+                            ? dbmd.getColumns(null, this.db, tableName, "%")
+                            : dbmd.getColumns(this.db, null, tableName, "%");
 
                     while (columnsResultSet.next()) {
                         String columnName = columnsResultSet.getString("COLUMN_NAME");
@@ -626,7 +631,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
                     columnIndicesToTable.put(Integer.valueOf(i), fqTableName);
 
-                    updColumnNameToIndex = getColumnsToIndexMapForTableAndDB(this.catalog, tableOnlyName);
+                    updColumnNameToIndex = getColumnsToIndexMapForTableAndDB(this.db, tableOnlyName);
                 }
             }
 

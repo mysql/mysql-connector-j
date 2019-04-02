@@ -38,7 +38,7 @@ public class ProfilerEventImpl implements ProfilerEvent {
 
     private byte eventType;
     private String hostName;
-    private String catalog;
+    private String database;
     private long connectionId;
     private int statementId;
     private int resultSetId;
@@ -55,8 +55,8 @@ public class ProfilerEventImpl implements ProfilerEvent {
      *            the event type (from the constants TYPE_????)
      * @param hostName
      *            the hostname where the event occurs
-     * @param catalog
-     *            the catalog in use
+     * @param db
+     *            the database in use
      * @param connectionId
      *            the connection id (-1 if N/A)
      * @param statementId
@@ -72,18 +72,18 @@ public class ProfilerEventImpl implements ProfilerEvent {
      * @param message
      *            optional message
      */
-    public ProfilerEventImpl(byte eventType, String hostName, String catalog, long connectionId, int statementId, int resultSetId, long eventDuration,
+    public ProfilerEventImpl(byte eventType, String hostName, String db, long connectionId, int statementId, int resultSetId, long eventDuration,
             String durationUnits, Throwable eventCreationPoint, String message) {
-        this(eventType, hostName, catalog, connectionId, statementId, resultSetId, System.currentTimeMillis(), eventDuration, durationUnits,
+        this(eventType, hostName, db, connectionId, statementId, resultSetId, System.currentTimeMillis(), eventDuration, durationUnits,
                 LogUtils.findCallingClassAndMethod(eventCreationPoint), message);
     }
 
-    private ProfilerEventImpl(byte eventType, String hostName, String catalog, long connectionId, int statementId, int resultSetId, long eventCreationTime,
+    private ProfilerEventImpl(byte eventType, String hostName, String db, long connectionId, int statementId, int resultSetId, long eventCreationTime,
             long eventDuration, String durationUnits, String eventCreationPointDesc, String message) {
         // null-strings are stored as empty strings to get consistent results with pack/unpack
         this.eventType = eventType;
         this.hostName = hostName == null ? "" : hostName;
-        this.catalog = catalog == null ? "" : catalog;
+        this.database = db == null ? "" : db;
         this.connectionId = connectionId;
         this.statementId = statementId;
         this.resultSetId = resultSetId;
@@ -105,8 +105,8 @@ public class ProfilerEventImpl implements ProfilerEvent {
     }
 
     @Override
-    public String getCatalog() {
-        return this.catalog;
+    public String getDatabase() {
+        return this.database;
     }
 
     @Override
@@ -220,8 +220,8 @@ public class ProfilerEventImpl implements ProfilerEvent {
         byte[] host = readBytes(buf, pos);
         pos += 4 + host.length;
 
-        byte[] cat = readBytes(buf, pos);
-        pos += 4 + cat.length;
+        byte[] db = readBytes(buf, pos);
+        pos += 4 + db.length;
 
         long connectionId = readLong(buf, pos);
         pos += 8;
@@ -244,7 +244,7 @@ public class ProfilerEventImpl implements ProfilerEvent {
         pos += 4 + message.length;
 
         // TODO charset?
-        return new ProfilerEventImpl(eventType, StringUtils.toString(host, "ISO8859_1"), StringUtils.toString(cat, "ISO8859_1"), connectionId, statementId,
+        return new ProfilerEventImpl(eventType, StringUtils.toString(host, "ISO8859_1"), StringUtils.toString(db, "ISO8859_1"), connectionId, statementId,
                 resultSetId, eventCreationTime, eventDuration, StringUtils.toString(eventDurationUnits, "ISO8859_1"),
                 StringUtils.toString(eventCreationAsBytes, "ISO8859_1"), StringUtils.toString(message, "ISO8859_1"));
     }
@@ -253,12 +253,12 @@ public class ProfilerEventImpl implements ProfilerEvent {
 
         // TODO charset (Bug#41172 ?)
         byte[] hostNameAsBytes = StringUtils.getBytes(this.hostName, "ISO8859_1");
-        byte[] catalogAsBytes = StringUtils.getBytes(this.catalog, "ISO8859_1");
+        byte[] dbAsBytes = StringUtils.getBytes(this.database, "ISO8859_1");
         byte[] durationUnitsAsBytes = StringUtils.getBytes(this.durationUnits, "ISO8859_1");
         byte[] eventCreationAsBytes = StringUtils.getBytes(this.eventCreationPointDesc, "ISO8859_1");
         byte[] messageAsBytes = StringUtils.getBytes(this.message, "ISO8859_1");
 
-        int len = /* eventType */ 1 + /* hostName */ (4 + hostNameAsBytes.length) + + /* catalog */ (4 + catalogAsBytes.length) + /* connectionId */ 8
+        int len = /* eventType */ 1 + /* hostName */ (4 + hostNameAsBytes.length) + + /* db */ (4 + dbAsBytes.length) + /* connectionId */ 8
                 + /* statementId */ 4 + /* resultSetId */ 4 + /* eventCreationTime */ 8 + /* eventDuration */ 8
                 + /* durationUnits */ (4 + durationUnitsAsBytes.length) + /* eventCreationPointDesc */ (4 + eventCreationAsBytes.length)
                 + /* message */ (4 + messageAsBytes.length);
@@ -267,7 +267,7 @@ public class ProfilerEventImpl implements ProfilerEvent {
         int pos = 0;
         buf[pos++] = this.eventType;
         pos = writeBytes(hostNameAsBytes, buf, pos);
-        pos = writeBytes(catalogAsBytes, buf, pos);
+        pos = writeBytes(dbAsBytes, buf, pos);
         pos = writeLong(this.connectionId, buf, pos);
         pos = writeInt(this.statementId, buf, pos);
         pos = writeInt(this.resultSetId, buf, pos);

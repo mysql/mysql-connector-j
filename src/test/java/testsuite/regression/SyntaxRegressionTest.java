@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.JdbcConnection;
@@ -1370,12 +1371,16 @@ public class SyntaxRegressionTest extends BaseTestCase {
     }
 
     private void testSetMergeThresholdIndices(int defaultMergeThreshold, Map<String, Integer> keyMergeThresholds) throws Exception {
+        boolean dbMapsToSchema = ((JdbcConnection) this.conn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
+                .getValue() == DatabaseTerm.SCHEMA;
         if (versionMeetsMinimum(8, 0, 3)) {
             this.rs = this.stmt.executeQuery("SELECT name, merge_threshold FROM information_schema.innodb_indexes WHERE table_id = "
-                    + "(SELECT table_id FROM information_schema.innodb_tables WHERE name = '" + this.conn.getCatalog() + "/testSetMergeThreshold')");
+                    + "(SELECT table_id FROM information_schema.innodb_tables WHERE name = '"
+                    + (dbMapsToSchema ? this.conn.getSchema() : this.conn.getCatalog()) + "/testSetMergeThreshold')");
         } else {
             this.rs = this.stmt.executeQuery("SELECT name, merge_threshold FROM information_schema.innodb_sys_indexes WHERE table_id = "
-                    + "(SELECT table_id FROM information_schema.innodb_sys_tables WHERE name = '" + this.conn.getCatalog() + "/testSetMergeThreshold')");
+                    + "(SELECT table_id FROM information_schema.innodb_sys_tables WHERE name = '"
+                    + (dbMapsToSchema ? this.conn.getSchema() : this.conn.getCatalog()) + "/testSetMergeThreshold')");
         }
 
         while (this.rs.next()) {

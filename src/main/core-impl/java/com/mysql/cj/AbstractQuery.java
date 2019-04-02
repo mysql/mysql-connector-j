@@ -81,8 +81,8 @@ public abstract class AbstractQuery implements Query {
     /** Currently executing a statement? */
     protected final AtomicBoolean statementExecuting = new AtomicBoolean(false);
 
-    /** The catalog in use */
-    protected String currentCatalog = null;
+    /** The database in use */
+    protected String currentDb = null;
 
     /** Has clearWarnings() been called? */
     protected boolean clearWarningsCalled = false;
@@ -215,12 +215,12 @@ public abstract class AbstractQuery implements Query {
         return this.statementExecuting;
     }
 
-    public String getCurrentCatalog() {
-        return this.currentCatalog;
+    public String getCurrentDatabase() {
+        return this.currentDb;
     }
 
-    public void setCurrentCatalog(String currentCatalog) {
-        this.currentCatalog = currentCatalog;
+    public void setCurrentDatabase(String currentDb) {
+        this.currentDb = currentDb;
     }
 
     public boolean isClearWarningsCalled() {

@@ -50,6 +50,7 @@ import java.util.function.Supplier;
 import com.mysql.cj.Query;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema;
 import com.mysql.cj.jdbc.JdbcConnection;
@@ -86,62 +87,325 @@ public class MetadataTest extends BaseTestCase {
         super.setUp();
     }
 
+    public void testSupports() throws SQLException {
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                Connection conn1 = null;
+                try {
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData dbmd = conn1.getMetaData();
+
+                    assertEquals(dbMapsToSchema ? "CATALOG" : "database", dbmd.getCatalogTerm());
+                    assertEquals(dbMapsToSchema ? "SCHEMA" : "", dbmd.getSchemaTerm());
+
+                    assertEquals(!dbMapsToSchema, dbmd.supportsCatalogsInDataManipulation());
+                    assertEquals(!dbMapsToSchema, dbmd.supportsCatalogsInIndexDefinitions());
+                    assertEquals(!dbMapsToSchema, dbmd.supportsCatalogsInPrivilegeDefinitions());
+                    assertEquals(!dbMapsToSchema, dbmd.supportsCatalogsInProcedureCalls());
+                    assertEquals(!dbMapsToSchema, dbmd.supportsCatalogsInTableDefinitions());
+
+                    assertEquals(dbMapsToSchema, dbmd.supportsSchemasInDataManipulation());
+                    assertEquals(dbMapsToSchema, dbmd.supportsSchemasInIndexDefinitions());
+                    assertEquals(dbMapsToSchema, dbmd.supportsSchemasInPrivilegeDefinitions());
+                    assertEquals(dbMapsToSchema, dbmd.supportsSchemasInProcedureCalls());
+                    assertEquals(dbMapsToSchema, dbmd.supportsSchemasInTableDefinitions());
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
+            }
+        }
+    }
+
+    public void testGetCatalogVsGetSchemas() throws SQLException {
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                Connection conn1 = null;
+                ResultSet rs1 = null;
+                ResultSet rs2 = null;
+                ResultSet rs3 = null;
+
+                try {
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData dbmd = conn1.getMetaData();
+
+                    rs1 = dbmd.getSchemas();
+                    rs2 = dbmd.getSchemas(this.dbName, this.dbName.substring(0, 3) + "%");
+                    rs3 = dbmd.getCatalogs();
+
+                    if (dbMapsToSchema) {
+                        boolean found = false;
+                        while (rs1.next()) {
+                            assertEquals("def", rs1.getString("TABLE_CATALOG"));
+                            if (this.dbName.equals(rs1.getString("TABLE_SCHEM"))) {
+                                found = true;
+                            }
+                        }
+                        assertTrue(found);
+
+                        found = false;
+                        while (rs2.next()) {
+                            assertEquals("def", rs2.getString("TABLE_CATALOG"));
+                            if (this.dbName.equals(rs2.getString("TABLE_SCHEM"))) {
+                                found = true;
+                            }
+                        }
+                        assertTrue(found);
+
+                        assertFalse(rs3.next());
+                    } else {
+                        assertFalse(rs1.next());
+                        assertFalse(rs2.next());
+
+                        boolean found = false;
+                        while (rs3.next()) {
+                            if (this.dbName.equals(rs3.getString("TABLE_CAT"))) {
+                                found = true;
+                            }
+                        }
+                        assertTrue(found);
+                    }
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
+            }
+        }
+    }
+
     public void testForeignKeys() throws SQLException {
+        String refDb = "TestCrossReferenceDb";
         try {
-            createTestTable();
+            //Needed for previous runs that did not clean-up
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS parent");
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS multikey");
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_4");
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS " + refDb + ".cpd_foreign_3");
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_2");
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_1");
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS fktable2");
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS fktable1");
 
-            DatabaseMetaData dbmd = this.conn.getMetaData();
-            this.rs = dbmd.getImportedKeys(null, null, "child");
+            createTable("parent", "(parent_id INT NOT NULL, PRIMARY KEY (parent_id))", "INNODB");
+            createTable("child", "(child_id INT, parent_id_fk INT, INDEX par_ind (parent_id_fk), FOREIGN KEY (parent_id_fk) REFERENCES parent(parent_id)) ",
+                    "INNODB");
+            createDatabase(refDb);
 
-            while (this.rs.next()) {
-                String pkColumnName = this.rs.getString("PKCOLUMN_NAME");
-                String fkColumnName = this.rs.getString("FKCOLUMN_NAME");
-                assertTrue("Primary Key not returned correctly ('" + pkColumnName + "' != 'parent_id')", pkColumnName.equalsIgnoreCase("parent_id"));
-                assertTrue("Foreign Key not returned correctly ('" + fkColumnName + "' != 'parent_id_fk')", fkColumnName.equalsIgnoreCase("parent_id_fk"));
+            // Test compound foreign keys
+            try {
+                createTable("cpd_foreign_1", "(id int(8) not null auto_increment primary key,name varchar(255) not null unique,key (id))", "InnoDB");
+            } catch (SQLException sqlEx) {
+                if (sqlEx.getMessage().indexOf("max key length") != -1) {
+                    createTable("cpd_foreign_1", "(id int(8) not null auto_increment primary key,name varchar(180) not null unique,key (id))", "InnoDB");
+                }
             }
 
-            this.rs.close();
-            this.rs = dbmd.getExportedKeys(null, null, "parent");
+            createTable("cpd_foreign_2", "(id int(8) not null auto_increment primary key,key (id),name varchar(255)) ", "InnoDB");
+            createTable(refDb + ".cpd_foreign_3",
+                    "(cpd_foreign_1_id int(8) not null,cpd_foreign_2_id int(8) not null,key(cpd_foreign_1_id),"
+                            + "key(cpd_foreign_2_id),primary key (cpd_foreign_1_id, cpd_foreign_2_id)," + "foreign key (cpd_foreign_1_id) references "
+                            + this.dbName + ".cpd_foreign_1(id),foreign key (cpd_foreign_2_id) references " + this.dbName + ".cpd_foreign_2(id)) ",
+                    "InnoDB");
+            createTable("cpd_foreign_4",
+                    "(cpd_foreign_1_id int(8) not null,cpd_foreign_2_id int(8) not null,key(cpd_foreign_1_id),"
+                            + "key(cpd_foreign_2_id),primary key (cpd_foreign_1_id, cpd_foreign_2_id),foreign key (cpd_foreign_1_id, cpd_foreign_2_id) "
+                            + "references " + refDb + ".cpd_foreign_3(cpd_foreign_1_id, cpd_foreign_2_id) ON DELETE RESTRICT ON UPDATE CASCADE) ",
+                    "InnoDB");
 
-            while (this.rs.next()) {
-                String pkColumnName = this.rs.getString("PKCOLUMN_NAME");
-                String fkColumnName = this.rs.getString("FKCOLUMN_NAME");
-                String fkTableName = this.rs.getString("FKTABLE_NAME");
-                assertTrue("Primary Key not returned correctly ('" + pkColumnName + "' != 'parent_id')", pkColumnName.equalsIgnoreCase("parent_id"));
-                assertTrue("Foreign Key table not returned correctly for getExportedKeys ('" + fkTableName + "' != 'child')",
-                        fkTableName.equalsIgnoreCase("child"));
-                assertTrue("Foreign Key not returned correctly for getExportedKeys ('" + fkColumnName + "' != 'parent_id_fk')",
-                        fkColumnName.equalsIgnoreCase("parent_id_fk"));
+            createTable("fktable1", "(TYPE_ID int not null, TYPE_DESC varchar(32), primary key(TYPE_ID))", "InnoDB");
+            createTable("fktable2", "(KEY_ID int not null, COF_NAME varchar(32), PRICE float, TYPE_ID int, primary key(KEY_ID), "
+                    + "index(TYPE_ID), foreign key(TYPE_ID) references fktable1(TYPE_ID)) ", "InnoDB");
+
+            Properties props = new Properties();
+            Connection conn1 = null;
+
+            for (boolean useIS : new boolean[] { false, true }) {
+                for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                    props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                    props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                    System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                    try {
+                        conn1 = getConnectionWithProps(props);
+
+                        String dbNamePattern = this.dbName.substring(0, this.dbName.length() - 1) + "%";
+                        String refDbPattern = refDb.substring(0, refDb.length() - 1) + "%";
+
+                        DatabaseMetaData dbmd = conn1.getMetaData();
+
+                        if (dbMapsToSchema) {
+                            this.rs = dbmd.getImportedKeys(null, this.dbName, "child");
+                            assertTrue(this.rs.next());
+                            this.rs = dbmd.getImportedKeys(null, dbNamePattern, "child");
+                            assertFalse("Schema pattern " + dbNamePattern + " should not be recognized.", this.rs.next());
+                        } else {
+                            this.rs = dbmd.getImportedKeys(this.dbName, null, "child");
+                            assertTrue(this.rs.next());
+                            this.rs = dbmd.getImportedKeys(dbNamePattern, null, "child");
+                            assertFalse("Catalog pattern " + dbNamePattern + " should not be recognized.", this.rs.next());
+                        }
+
+                        this.rs = dbmd.getImportedKeys(null, null, "child");
+
+                        while (this.rs.next()) {
+                            if (dbMapsToSchema) {
+                                assertEquals("def", this.rs.getString("PKTABLE_CAT"));
+                                assertEquals(this.dbName, this.rs.getString("PKTABLE_SCHEM"));
+                                assertEquals("def", this.rs.getString("FKTABLE_CAT"));
+                                assertEquals(this.dbName, this.rs.getString("FKTABLE_SCHEM"));
+                            } else {
+                                assertEquals(this.dbName, this.rs.getString("PKTABLE_CAT"));
+                                assertNull(this.rs.getString("PKTABLE_SCHEM"));
+                                assertEquals(this.dbName, this.rs.getString("FKTABLE_CAT"));
+                                assertNull(this.rs.getString("FKTABLE_SCHEM"));
+                            }
+                            assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
+                            assertEquals("parent_id", this.rs.getString("PKCOLUMN_NAME"));
+                            assertEquals("child", this.rs.getString("FKTABLE_NAME"));
+                            assertEquals("parent_id_fk", this.rs.getString("FKCOLUMN_NAME"));
+                            assertEquals(1, this.rs.getShort("KEY_SEQ"));
+                            assertEquals(DatabaseMetaData.importedKeyRestrict, this.rs.getShort("UPDATE_RULE"));
+                            assertEquals(DatabaseMetaData.importedKeyRestrict, this.rs.getShort("DELETE_RULE"));
+                            assertEquals("child_ibfk_1", this.rs.getString("FK_NAME"));
+                            assertEquals(useIS ? "PRIMARY" : null, this.rs.getString("PK_NAME")); // PK_NAME is available only with I_S
+                            assertEquals(DatabaseMetaData.importedKeyNotDeferrable, this.rs.getShort("DEFERRABILITY"));
+                        }
+
+                        this.rs.close();
+
+                        if (dbMapsToSchema) {
+                            this.rs = dbmd.getExportedKeys(null, this.dbName, "parent");
+                            assertTrue(this.rs.next());
+                            this.rs = dbmd.getExportedKeys(null, dbNamePattern, "parent");
+                            assertFalse("Schema pattern " + dbNamePattern + " should not be recognized.", this.rs.next());
+                        } else {
+                            this.rs = dbmd.getExportedKeys(this.dbName, null, "parent");
+                            assertTrue(this.rs.next());
+                            this.rs = dbmd.getExportedKeys(dbNamePattern, null, "parent");
+                            assertFalse("Catalog pattern " + dbNamePattern + " should not be recognized.", this.rs.next());
+                        }
+
+                        this.rs = dbmd.getExportedKeys(null, null, "parent");
+
+                        while (this.rs.next()) {
+                            if (dbMapsToSchema) {
+                                assertEquals("def", this.rs.getString("PKTABLE_CAT"));
+                                assertEquals(this.dbName, this.rs.getString("PKTABLE_SCHEM"));
+                                assertEquals("def", this.rs.getString("FKTABLE_CAT"));
+                                assertEquals(this.dbName, this.rs.getString("FKTABLE_SCHEM"));
+                            } else {
+                                assertEquals(this.dbName, this.rs.getString("PKTABLE_CAT"));
+                                assertNull(this.rs.getString("PKTABLE_SCHEM"));
+                                assertEquals(this.dbName, this.rs.getString("FKTABLE_CAT"));
+                                assertNull(this.rs.getString("FKTABLE_SCHEM"));
+                            }
+                            assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
+                            assertEquals("parent_id", this.rs.getString("PKCOLUMN_NAME"));
+
+                            assertEquals("child", this.rs.getString("FKTABLE_NAME"));
+                            assertEquals("parent_id_fk", this.rs.getString("FKCOLUMN_NAME"));
+
+                            assertEquals(1, this.rs.getShort("KEY_SEQ"));
+                            assertEquals(DatabaseMetaData.importedKeyRestrict, this.rs.getShort("UPDATE_RULE"));
+                            assertEquals(DatabaseMetaData.importedKeyRestrict, this.rs.getShort("DELETE_RULE"));
+                            assertEquals("child_ibfk_1", this.rs.getString("FK_NAME"));
+                            assertEquals(useIS ? "PRIMARY" : null, this.rs.getString("PK_NAME")); // PK_NAME is available only with I_S
+                            assertEquals(DatabaseMetaData.importedKeyNotDeferrable, this.rs.getShort("DEFERRABILITY"));
+                        }
+
+                        this.rs.close();
+
+                        if (dbMapsToSchema) {
+                            this.rs = dbmd.getCrossReference(null, refDb, "cpd_foreign_3", null, this.dbName, "cpd_foreign_4");
+                            assertTrue(this.rs.next());
+                            this.rs = dbmd.getCrossReference(null, refDbPattern, "cpd_foreign_3", null, dbNamePattern, "cpd_foreign_4");
+                            assertFalse("Schema patterns " + refDbPattern + " and " + dbNamePattern + " should not be recognized.", this.rs.next());
+                        } else {
+                            this.rs = dbmd.getCrossReference(refDb, null, "cpd_foreign_3", this.dbName, null, "cpd_foreign_4");
+                            assertTrue(this.rs.next());
+                            this.rs = dbmd.getCrossReference(refDbPattern, null, "cpd_foreign_3", dbNamePattern, null, "cpd_foreign_4");
+                            assertFalse("Catalog patterns " + refDbPattern + " and " + dbNamePattern + " should not be recognized.", this.rs.next());
+                        }
+
+                        this.rs = dbmd.getCrossReference(null, null, "cpd_foreign_3", null, null, "cpd_foreign_4");
+
+                        assertTrue(this.rs.next());
+                        if (dbMapsToSchema) {
+                            assertEquals("def", this.rs.getString("PKTABLE_CAT"));
+                            assertEquals(refDb, this.rs.getString("PKTABLE_SCHEM"));
+                            assertEquals("def", this.rs.getString("FKTABLE_CAT"));
+                            assertEquals(this.dbName, this.rs.getString("FKTABLE_SCHEM"));
+                        } else {
+                            assertEquals(refDb, this.rs.getString("PKTABLE_CAT"));
+                            assertNull(this.rs.getString("PKTABLE_SCHEM"));
+                            assertEquals(this.dbName, this.rs.getString("FKTABLE_CAT"));
+                            assertNull(this.rs.getString("FKTABLE_SCHEM"));
+                        }
+                        assertEquals("cpd_foreign_3", this.rs.getString("PKTABLE_NAME"));
+                        assertEquals("cpd_foreign_1_id", this.rs.getString("PKCOLUMN_NAME"));
+                        assertEquals("cpd_foreign_4", this.rs.getString("FKTABLE_NAME"));
+                        assertEquals("cpd_foreign_1_id", this.rs.getString("FKCOLUMN_NAME"));
+                        assertEquals(1, this.rs.getInt("KEY_SEQ"));
+                        assertEquals(DatabaseMetaData.importedKeyCascade, this.rs.getInt("UPDATE_RULE"));
+                        assertEquals(DatabaseMetaData.importedKeyRestrict, this.rs.getInt("DELETE_RULE"));
+                        assertEquals("cpd_foreign_4_ibfk_1", this.rs.getString("FK_NAME"));
+                        assertEquals(useIS ? "PRIMARY" : null, this.rs.getString("PK_NAME")); // PK_NAME is available only with I_S
+                        assertEquals(DatabaseMetaData.importedKeyNotDeferrable, this.rs.getInt("DEFERRABILITY"));
+
+                        assertTrue(this.rs.next());
+                        if (dbMapsToSchema) {
+                            assertEquals("def", this.rs.getString("PKTABLE_CAT"));
+                            assertEquals(refDb, this.rs.getString("PKTABLE_SCHEM"));
+                            assertEquals("def", this.rs.getString("FKTABLE_CAT"));
+                            assertEquals(this.dbName, this.rs.getString("FKTABLE_SCHEM"));
+                        } else {
+                            assertEquals(refDb, this.rs.getString("PKTABLE_CAT"));
+                            assertNull(this.rs.getString("PKTABLE_SCHEM"));
+                            assertEquals(this.dbName, this.rs.getString("FKTABLE_CAT"));
+                            assertNull(this.rs.getString("FKTABLE_SCHEM"));
+                        }
+                        assertEquals("cpd_foreign_3", this.rs.getString("PKTABLE_NAME"));
+                        assertEquals("cpd_foreign_2_id", this.rs.getString("PKCOLUMN_NAME"));
+                        assertEquals("cpd_foreign_4", this.rs.getString("FKTABLE_NAME"));
+                        assertEquals("cpd_foreign_2_id", this.rs.getString("FKCOLUMN_NAME"));
+                        assertEquals(2, this.rs.getInt("KEY_SEQ"));
+                        assertEquals(DatabaseMetaData.importedKeyCascade, this.rs.getInt("UPDATE_RULE"));
+                        assertEquals(DatabaseMetaData.importedKeyRestrict, this.rs.getInt("DELETE_RULE"));
+                        assertEquals("cpd_foreign_4_ibfk_1", this.rs.getString("FK_NAME"));
+                        assertEquals(useIS ? "PRIMARY" : null, this.rs.getString("PK_NAME")); // PK_NAME is available only with I_S
+                        assertEquals(DatabaseMetaData.importedKeyNotDeferrable, this.rs.getInt("DEFERRABILITY"));
+
+                        assertFalse(this.rs.next());
+
+                        this.rs.close();
+                        this.rs = null;
+
+                    } finally {
+                        if (conn1 != null) {
+                            conn1.close();
+                        }
+                    }
+                }
             }
 
-            this.rs.close();
-
-            this.rs = dbmd.getCrossReference(null, null, "cpd_foreign_3", null, null, "cpd_foreign_4");
-
-            assertTrue(this.rs.next());
-
-            String pkColumnName = this.rs.getString("PKCOLUMN_NAME");
-            String pkTableName = this.rs.getString("PKTABLE_NAME");
-            String fkColumnName = this.rs.getString("FKCOLUMN_NAME");
-            String fkTableName = this.rs.getString("FKTABLE_NAME");
-            String deleteAction = cascadeOptionToString(this.rs.getInt("DELETE_RULE"));
-            String updateAction = cascadeOptionToString(this.rs.getInt("UPDATE_RULE"));
-
-            assertEquals(pkColumnName, "cpd_foreign_1_id");
-            assertEquals(pkTableName, "cpd_foreign_3");
-            assertEquals(fkColumnName, "cpd_foreign_1_id");
-            assertEquals(fkTableName, "cpd_foreign_4");
-            assertEquals(updateAction, "CASCADE");
-
-            // "SHOW CREATE TABLE" without using I_S missed the "ON DELETE" rule until MySQL 8.0.14. With I_S all worked fine. 
-            if (versionMeetsMinimum(8, 0, 14) || dbmd instanceof DatabaseMetaDataUsingInfoSchema) {
-                assertEquals(deleteAction, "RESTRICT");
-            } else {
-                assertEquals(deleteAction, "NO ACTION");
-            }
-
-            this.rs.close();
-            this.rs = null;
         } finally {
             if (this.rs != null) {
                 this.rs.close();
@@ -150,7 +414,7 @@ public class MetadataTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
             this.stmt.executeUpdate("DROP TABLE IF EXISTS parent");
             this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_4");
-            this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_3");
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS " + refDb + ".cpd_foreign_3");
             this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_2");
             this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_1");
             this.stmt.executeUpdate("DROP TABLE IF EXISTS fktable2");
@@ -160,96 +424,62 @@ public class MetadataTest extends BaseTestCase {
     }
 
     public void testGetPrimaryKeys() throws SQLException {
-        try {
-            createTable("multikey", "(d INT NOT NULL, b INT NOT NULL, a INT NOT NULL, c INT NOT NULL, PRIMARY KEY (d, b, a, c))");
-            DatabaseMetaData dbmd = this.conn.getMetaData();
-            this.rs = dbmd.getPrimaryKeys(this.conn.getCatalog(), "", "multikey");
+        createTable("multikey", "(d INT NOT NULL, b INT NOT NULL, a INT NOT NULL, c INT NOT NULL, PRIMARY KEY (d, b, a, c))");
 
-            short[] keySeqs = new short[4];
-            String[] columnNames = new String[4];
-            int i = 0;
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
 
-            while (this.rs.next()) {
-                this.rs.getString("TABLE_NAME");
-                columnNames[i] = this.rs.getString("COLUMN_NAME");
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
 
-                this.rs.getString("PK_NAME");
-                keySeqs[i] = this.rs.getShort("KEY_SEQ");
-                i++;
-            }
-
-            if ((keySeqs[0] != 3) && (keySeqs[1] != 2) && (keySeqs[2] != 4) && (keySeqs[3] != 1)) {
-                fail("Keys returned in wrong order");
-            }
-        } finally {
-            if (this.rs != null) {
+                Connection conn1 = null;
                 try {
-                    this.rs.close();
-                } catch (SQLException sqlEx) {
-                    /* ignore */
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData dbmd = conn1.getMetaData();
+
+                    if (dbMapsToSchema) {
+                        String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
+                        this.rs = dbmd.getPrimaryKeys("", dbPattern, "multikey"); //metaData.getIndexInfo(null, dbPattern, "t1", false, true);
+                        assertFalse("Schema pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    } else {
+                        String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
+                        this.rs = dbmd.getPrimaryKeys(dbPattern, null, "multikey"); //metaData.getIndexInfo(dbPattern, null, "t1", false, true);
+                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    }
+
+                    this.rs = dbMapsToSchema ? dbmd.getPrimaryKeys("", conn1.getSchema(), "multikey") : dbmd.getPrimaryKeys(conn1.getCatalog(), "", "multikey");
+
+                    short[] keySeqs = new short[4];
+                    String[] columnNames = new String[4];
+                    int i = 0;
+
+                    while (this.rs.next()) {
+                        if (dbMapsToSchema) {
+                            assertEquals("def", this.rs.getString("TABLE_CAT"));
+                            assertEquals(this.dbName, this.rs.getString("TABLE_SCHEM"));
+                        } else {
+                            assertEquals(this.dbName, this.rs.getString("TABLE_CAT"));
+                            assertNull(this.rs.getString("TABLE_SCHEM"));
+                        }
+                        this.rs.getString("TABLE_NAME");
+                        columnNames[i] = this.rs.getString("COLUMN_NAME");
+                        keySeqs[i++] = this.rs.getShort("KEY_SEQ");
+                        this.rs.getString("PK_NAME");
+                    }
+
+                    if ((keySeqs[0] != 3) && (keySeqs[1] != 2) && (keySeqs[2] != 4) && (keySeqs[3] != 1)) {
+                        fail("Keys returned in wrong order");
+                    }
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
                 }
             }
         }
-    }
-
-    private static String cascadeOptionToString(int option) {
-        switch (option) {
-            case DatabaseMetaData.importedKeyCascade:
-                return "CASCADE";
-
-            case DatabaseMetaData.importedKeySetNull:
-                return "SET NULL";
-
-            case DatabaseMetaData.importedKeyRestrict:
-                return "RESTRICT";
-
-            case DatabaseMetaData.importedKeyNoAction:
-                return "NO ACTION";
-        }
-
-        return "SET DEFAULT";
-    }
-
-    private void createTestTable() throws SQLException {
-        //Needed for previous runs that did not clean-up
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS parent");
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS multikey");
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_4");
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_3");
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_2");
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_1");
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS fktable2");
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS fktable1");
-
-        createTable("parent", "(parent_id INT NOT NULL, PRIMARY KEY (parent_id))", "INNODB");
-        createTable("child", "(child_id INT, parent_id_fk INT, INDEX par_ind (parent_id_fk), FOREIGN KEY (parent_id_fk) REFERENCES parent(parent_id)) ",
-                "INNODB");
-
-        // Test compound foreign keys
-        try {
-            createTable("cpd_foreign_1", "(id int(8) not null auto_increment primary key,name varchar(255) not null unique,key (id))", "InnoDB");
-        } catch (SQLException sqlEx) {
-            if (sqlEx.getMessage().indexOf("max key length") != -1) {
-                createTable("cpd_foreign_1", "(id int(8) not null auto_increment primary key,name varchar(180) not null unique,key (id))", "InnoDB");
-            }
-        }
-
-        createTable("cpd_foreign_2", "(id int(8) not null auto_increment primary key,key (id),name varchar(255)) ", "InnoDB");
-        createTable("cpd_foreign_3",
-                "(cpd_foreign_1_id int(8) not null,cpd_foreign_2_id int(8) not null,key(cpd_foreign_1_id),"
-                        + "key(cpd_foreign_2_id),primary key (cpd_foreign_1_id, cpd_foreign_2_id),"
-                        + "foreign key (cpd_foreign_1_id) references cpd_foreign_1(id),foreign key (cpd_foreign_2_id) references cpd_foreign_2(id)) ",
-                "InnoDB");
-        createTable("cpd_foreign_4",
-                "(cpd_foreign_1_id int(8) not null,cpd_foreign_2_id int(8) not null,key(cpd_foreign_1_id),"
-                        + "key(cpd_foreign_2_id),primary key (cpd_foreign_1_id, cpd_foreign_2_id),foreign key (cpd_foreign_1_id, cpd_foreign_2_id) "
-                        + "references cpd_foreign_3(cpd_foreign_1_id, cpd_foreign_2_id) ON DELETE RESTRICT ON UPDATE CASCADE) ",
-                "InnoDB");
-
-        createTable("fktable1", "(TYPE_ID int not null, TYPE_DESC varchar(32), primary key(TYPE_ID))", "InnoDB");
-        createTable("fktable2", "(KEY_ID int not null, COF_NAME varchar(32), PRICE float, TYPE_ID int, primary key(KEY_ID), "
-                + "index(TYPE_ID), foreign key(TYPE_ID) references fktable1(TYPE_ID)) ", "InnoDB");
     }
 
     /**
@@ -508,52 +738,112 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
-    /**
-     * Tests the implementation of Information Schema for index info.
-     */
-    public void testGetIndexInfoUsingInfoSchema() throws Exception {
+    public void testGetIndexInfo() throws Exception {
         createTable("t1", "(c1 int(1))");
         this.stmt.executeUpdate("CREATE INDEX index1 ON t1 (c1)");
 
-        Connection conn1 = null;
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
 
-        try {
-            conn1 = getConnectionWithProps("useInformationSchema=true");
-            DatabaseMetaData metaData = conn1.getMetaData();
-            this.rs = metaData.getIndexInfo(conn1.getCatalog(), null, "t1", false, true);
-            this.rs.next();
-            assertEquals("t1", this.rs.getString("TABLE_NAME"));
-            assertEquals("c1", this.rs.getString("COLUMN_NAME"));
-            assertEquals("1", this.rs.getString("NON_UNIQUE"));
-            assertEquals("index1", this.rs.getString("INDEX_NAME"));
-        } finally {
-            if (conn1 != null) {
-                conn1.close();
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                Connection conn1 = null;
+                try {
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData metaData = conn1.getMetaData();
+
+                    if (dbMapsToSchema) {
+                        String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
+                        this.rs = metaData.getIndexInfo(null, dbPattern, "t1", false, true);
+                        assertFalse("Schema pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    } else {
+                        String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
+                        this.rs = metaData.getIndexInfo(dbPattern, null, "t1", false, true);
+                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    }
+
+                    this.rs = dbMapsToSchema ? metaData.getIndexInfo(null, conn1.getCatalog(), "t1", false, true)
+                            : metaData.getIndexInfo(conn1.getCatalog(), null, "t1", false, true);
+                    this.rs.next();
+                    if (dbMapsToSchema) {
+                        assertEquals("def", this.rs.getString("TABLE_CAT"));
+                        assertEquals(this.dbName, this.rs.getString("TABLE_SCHEM"));
+                    } else {
+                        assertEquals(this.dbName, this.rs.getString("TABLE_CAT"));
+                        assertNull(this.rs.getString("TABLE_SCHEM"));
+                    }
+                    assertEquals("t1", this.rs.getString("TABLE_NAME"));
+                    assertTrue(this.rs.getBoolean("NON_UNIQUE"));
+                    assertNull(this.rs.getString("INDEX_QUALIFIER"));
+                    assertEquals("index1", this.rs.getString("INDEX_NAME"));
+                    assertEquals(DatabaseMetaData.tableIndexOther, this.rs.getShort("TYPE"));
+                    assertEquals(1, this.rs.getShort("ORDINAL_POSITION"));
+                    assertEquals("c1", this.rs.getString("COLUMN_NAME"));
+                    assertEquals("A", this.rs.getString("ASC_OR_DESC"));
+                    assertEquals(0, this.rs.getLong("CARDINALITY"));
+                    assertEquals(0, this.rs.getLong("PAGES"));
+                    assertNull(this.rs.getString("FILTER_CONDITION"));
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
             }
         }
+
     }
 
     /**
-     * Tests the implementation of Information Schema for columns.
+     * Tests the implementation of getColumns.
      */
-    public void testGetColumnsUsingInfoSchema() throws Exception {
+    public void testGetColumns() throws Exception {
         createTable("t1", "(c1 char(1))");
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
-        props.setProperty(PropertyKey.nullCatalogMeansCurrent.getKeyName(), "true");
-        Connection conn1 = null;
-        try {
-            conn1 = getConnectionWithProps(props);
-            DatabaseMetaData metaData = conn1.getMetaData();
-            this.rs = metaData.getColumns(null, null, "t1", null);
-            this.rs.next();
-            assertEquals("t1", this.rs.getString("TABLE_NAME"));
-            assertEquals("c1", this.rs.getString("COLUMN_NAME"));
-            assertEquals("CHAR", this.rs.getString("TYPE_NAME"));
-            assertEquals("1", this.rs.getString("COLUMN_SIZE"));
-        } finally {
-            if (conn1 != null) {
-                conn1.close();
+        props.setProperty(PropertyKey.nullDatabaseMeansCurrent.getKeyName(), "true");
+
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+                Connection conn1 = null;
+                try {
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData metaData = conn1.getMetaData();
+                    this.rs = metaData.getColumns(null, null, "t1", null);
+                    this.rs.next();
+
+                    if (dbMapsToSchema) {
+                        assertEquals("def", this.rs.getString("TABLE_CAT"));
+                        assertEquals(this.dbName, this.rs.getString("TABLE_SCHEM"));
+                    } else {
+                        assertEquals(this.dbName, this.rs.getString("TABLE_CAT"));
+                        assertNull(this.rs.getString("TABLE_SCHEM"));
+                    }
+
+                    assertEquals("t1", this.rs.getString("TABLE_NAME"));
+                    assertEquals("c1", this.rs.getString("COLUMN_NAME"));
+                    assertEquals("CHAR", this.rs.getString("TYPE_NAME"));
+                    assertEquals("1", this.rs.getString("COLUMN_SIZE"));
+
+                    if (dbMapsToSchema) {
+                        String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
+                        this.rs = metaData.getColumns(null, dbPattern, "t1", null);
+                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                    } else {
+                        String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
+                        this.rs = metaData.getColumns(dbPattern, null, "t1", null);
+                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    }
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
             }
         }
     }
@@ -587,94 +877,475 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
-    /**
-     * Tests the implementation of Information Schema for column privileges.
-     */
-    public void testGetColumnPrivilegesUsingInfoSchema() throws Exception {
+    public void testGetTables() throws Exception {
+        createTable("`t1-1`", "(c1 char(1)) COMMENT 'table1'");
+        createTable("`t1-2`", "(c1 char(1))");
+        createTable("`t2`", "(c1 char(1))");
 
-        if (!runTestIfSysPropDefined(PropertyDefinitions.SYSP_testsuite_cantGrant)) {
-            Properties props = new Properties();
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
 
-            props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
-            props.setProperty(PropertyKey.nullCatalogMeansCurrent.getKeyName(), "true");
-            Connection conn1 = null;
-            Statement stmt1 = null;
-            String userHostQuoted = null;
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
 
-            boolean grantFailed = true;
-
-            try {
-                conn1 = getConnectionWithProps(props);
-                stmt1 = conn1.createStatement();
-                createTable("t1", "(c1 int)");
-                this.rs = stmt1.executeQuery("SELECT CURRENT_USER()");
-                this.rs.next();
-                String user = this.rs.getString(1);
-                List<String> userHost = StringUtils.split(user, "@", false);
-                if (userHost.size() < 2) {
-                    fail("This test requires a JDBC URL with a user, and won't work with the anonymous user. "
-                            + "You can skip this test by setting the system property " + PropertyDefinitions.SYSP_testsuite_cantGrant);
-                }
-                userHostQuoted = "'" + userHost.get(0) + "'@'" + userHost.get(1) + "'";
-
+                Connection conn1 = null;
                 try {
-                    stmt1.executeUpdate("GRANT update (c1) on t1 to " + userHostQuoted);
 
-                    grantFailed = false;
-
-                } catch (SQLException sqlEx) {
-                    fail("This testcase needs to be run with a URL that allows the user to issue GRANTs "
-                            + " in the current database. You can skip this test by setting the system property \""
-                            + PropertyDefinitions.SYSP_testsuite_cantGrant + "\".");
-                }
-
-                if (!grantFailed) {
+                    conn1 = getConnectionWithProps(props);
                     DatabaseMetaData metaData = conn1.getMetaData();
-                    this.rs = metaData.getColumnPrivileges(null, null, "t1", null);
-                    this.rs.next();
-                    assertEquals("t1", this.rs.getString("TABLE_NAME"));
-                    assertEquals("c1", this.rs.getString("COLUMN_NAME"));
-                    assertEquals(userHostQuoted, this.rs.getString("GRANTEE"));
-                    assertEquals("UPDATE", this.rs.getString("PRIVILEGE"));
-                }
-            } finally {
-                if (stmt1 != null) {
 
-                    if (!grantFailed) {
-                        stmt1.executeUpdate("REVOKE UPDATE (c1) ON t1 FROM " + userHostQuoted);
+                    this.rs = metaData.getTables(null, null, "t1-_", null);
+                    testGetTables_checkResult(useIS, dbMapsToSchema);
+
+                    this.rs = metaData.getTables(null, this.dbName.substring(0, 3) + "%", "t1-_", null);
+                    testGetTables_checkResult(useIS, dbMapsToSchema);
+
+                    this.rs = metaData.getTables(this.dbName, null, "t1-_", null);
+                    testGetTables_checkResult(useIS, dbMapsToSchema);
+
+                    if (dbMapsToSchema) {
+                        String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
+                        this.rs = metaData.getTables(null, dbPattern, "t1-_", null);
+                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                    } else {
+                        String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
+                        this.rs = metaData.getTables(dbPattern, null, "t1-_", null);
+                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
                     }
 
-                    stmt1.close();
-                }
-
-                if (conn1 != null) {
-                    conn1.close();
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
                 }
             }
         }
     }
 
+    private void testGetTables_checkResult(boolean useIS, boolean dbMapsToSchema) throws Exception {
+        assertTrue(this.rs.next());
+        if (dbMapsToSchema) {
+            assertEquals("def", this.rs.getString("TABLE_CAT"));
+            assertEquals(this.dbName, this.rs.getString("TABLE_SCHEM"));
+        } else {
+            assertEquals(this.dbName, this.rs.getString("TABLE_CAT"));
+            assertNull(this.rs.getString("TABLE_SCHEM"));
+        }
+        assertEquals("t1-1", this.rs.getString("TABLE_NAME"));
+        assertEquals("TABLE", this.rs.getString("TABLE_TYPE"));
+        assertEquals(useIS ? "table1" : "", this.rs.getString("REMARKS")); // Table comment is available only with I_S
+        assertNull(this.rs.getString("TYPE_CAT"));
+        assertNull(this.rs.getString("TYPE_SCHEM"));
+        assertNull(this.rs.getString("TYPE_NAME"));
+        assertNull(this.rs.getString("SELF_REFERENCING_COL_NAME"));
+        assertNull(this.rs.getString("REF_GENERATION"));
+
+        assertTrue(this.rs.next());
+        if (dbMapsToSchema) {
+            assertEquals("def", this.rs.getString("TABLE_CAT"));
+            assertEquals(this.dbName, this.rs.getString("TABLE_SCHEM"));
+        } else {
+            assertEquals(this.dbName, this.rs.getString("TABLE_CAT"));
+            assertNull(this.rs.getString("TABLE_SCHEM"));
+        }
+        assertEquals("t1-2", this.rs.getString("TABLE_NAME"));
+        assertEquals("TABLE", this.rs.getString("TABLE_TYPE"));
+        assertEquals("", this.rs.getString("REMARKS"));
+        assertNull(this.rs.getString("TYPE_CAT"));
+        assertNull(this.rs.getString("TYPE_SCHEM"));
+        assertNull(this.rs.getString("TYPE_NAME"));
+        assertNull(this.rs.getString("SELF_REFERENCING_COL_NAME"));
+        assertNull(this.rs.getString("REF_GENERATION"));
+
+        assertFalse(this.rs.next());
+    }
+
     /**
-     * Tests the implementation of Information Schema for description
-     * of stored procedures available in a catalog.
+     * Tests the implementation of column privileges metadata.
      */
-    public void testGetProceduresUsingInfoSchema() throws Exception {
-        createProcedure("sp1", "()\n BEGIN\nSELECT 1;end\n");
-        Properties props = new Properties();
-        props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
-        Connection conn1 = null;
-        try {
-            conn1 = getConnectionWithProps(props);
-            DatabaseMetaData metaData = conn1.getMetaData();
-            this.rs = metaData.getProcedures(null, null, "sp1");
-            this.rs.next();
-            assertEquals("sp1", this.rs.getString("PROCEDURE_NAME"));
-            assertEquals("1", this.rs.getString("PROCEDURE_TYPE"));
-        } finally {
-            if (conn1 != null) {
-                conn1.close();
+    public void testGetColumnPrivileges() throws Exception {
+
+        if (!runTestIfSysPropDefined(PropertyDefinitions.SYSP_testsuite_cantGrant)) {
+            Properties props = new Properties();
+
+            props.setProperty(PropertyKey.nullDatabaseMeansCurrent.getKeyName(), "true");
+            Connection conn1 = null;
+            Statement stmt1 = null;
+            String userHostQuoted = null;
+
+            for (boolean useIS : new boolean[] { false, true }) {
+                for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                    props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                    props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                    boolean grantFailed = true;
+
+                    try {
+                        conn1 = getConnectionWithProps(props);
+                        stmt1 = conn1.createStatement();
+                        createTable("t1", "(c1 int)");
+                        this.rs = stmt1.executeQuery("SELECT CURRENT_USER()");
+                        this.rs.next();
+                        String user = this.rs.getString(1);
+                        List<String> userHost = StringUtils.split(user, "@", false);
+                        if (userHost.size() < 2) {
+                            fail("This test requires a JDBC URL with a user, and won't work with the anonymous user. "
+                                    + "You can skip this test by setting the system property " + PropertyDefinitions.SYSP_testsuite_cantGrant);
+                        }
+                        userHostQuoted = "'" + userHost.get(0) + "'@'" + userHost.get(1) + "'";
+
+                        try {
+                            stmt1.executeUpdate("GRANT update (c1) on t1 to " + userHostQuoted);
+
+                            grantFailed = false;
+
+                        } catch (SQLException sqlEx) {
+                            fail("This testcase needs to be run with a URL that allows the user to issue GRANTs "
+                                    + " in the current database. You can skip this test by setting the system property \""
+                                    + PropertyDefinitions.SYSP_testsuite_cantGrant + "\".");
+                        }
+
+                        if (!grantFailed) {
+                            DatabaseMetaData metaData = conn1.getMetaData();
+                            this.rs = metaData.getColumnPrivileges(null, null, "t1", null);
+                            this.rs.next();
+                            if (dbMapsToSchema) {
+                                assertEquals("def", this.rs.getString("TABLE_CAT"));
+                                assertEquals(this.dbName, this.rs.getString("TABLE_SCHEM"));
+                            } else {
+                                assertEquals(this.dbName, this.rs.getString("TABLE_CAT"));
+                                assertNull(this.rs.getString("TABLE_SCHEM"));
+                            }
+                            assertEquals("t1", this.rs.getString("TABLE_NAME"));
+                            assertEquals("c1", this.rs.getString("COLUMN_NAME"));
+                            assertEquals(useIS ? userHostQuoted : userHost.get(0) + "@" + userHost.get(1), this.rs.getString("GRANTEE"));
+                            assertEquals("UPDATE", this.rs.getString("PRIVILEGE"));
+
+                            if (dbMapsToSchema) {
+                                String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
+                                this.rs = metaData.getColumnPrivileges(null, dbPattern, "t1", null);
+                                assertFalse("Schema pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                            } else {
+                                String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
+                                this.rs = metaData.getColumnPrivileges(dbPattern, null, "t1", null);
+                                assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                            }
+
+                        }
+                    } finally {
+                        if (stmt1 != null) {
+
+                            if (!grantFailed) {
+                                stmt1.executeUpdate("REVOKE UPDATE (c1) ON t1 FROM " + userHostQuoted);
+                            }
+
+                            stmt1.close();
+                        }
+
+                        if (conn1 != null) {
+                            conn1.close();
+                        }
+                    }
+                }
             }
         }
+    }
+
+    public void testGetProcedures() throws Exception {
+        createProcedure("sp1", "() COMMENT 'testGetProcedures comment1' \n BEGIN\nSELECT 1;end\n");
+
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                Connection conn1 = null;
+                try {
+
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData metaData = conn1.getMetaData();
+
+                    if (dbMapsToSchema) {
+                        String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
+                        this.rs = metaData.getProcedures(null, dbPattern, "sp1");
+                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                    } else {
+                        String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
+                        this.rs = metaData.getProcedures(dbPattern, null, "sp1");
+                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    }
+
+                    this.rs = metaData.getProcedures(null, null, "sp1");
+                    testGetProcedures_checkResult(dbMapsToSchema);
+
+                    this.rs = metaData.getProcedures(null, this.dbName.substring(0, 3) + "%", "sp1");
+                    testGetProcedures_checkResult(dbMapsToSchema);
+
+                    this.rs = metaData.getProcedures(this.dbName, null, "sp1");
+                    testGetProcedures_checkResult(dbMapsToSchema);
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
+            }
+        }
+    }
+
+    private void testGetProcedures_checkResult(boolean dbMapsToSchema) throws Exception {
+        assertTrue(this.rs.next());
+        if (dbMapsToSchema) {
+            assertEquals("def", this.rs.getString("PROCEDURE_CAT"));
+            assertEquals(this.dbName, this.rs.getString("PROCEDURE_SCHEM"));
+        } else {
+            assertEquals(this.dbName, this.rs.getString("PROCEDURE_CAT"));
+            assertNull(this.rs.getString("PROCEDURE_SCHEM"));
+        }
+        assertEquals("sp1", this.rs.getString("PROCEDURE_NAME"));
+        assertNull(this.rs.getString(4));
+        assertNull(this.rs.getString(5));
+        assertNull(this.rs.getString(6));
+        assertEquals("testGetProcedures comment1", this.rs.getString("REMARKS"));
+        assertEquals("1", this.rs.getString("PROCEDURE_TYPE"));
+        assertEquals("sp1", this.rs.getString("SPECIFIC_NAME"));
+    }
+
+    public void testGetFunctions() throws Exception {
+        createFunction("testGetFunctionsF", "(d INT) RETURNS INT DETERMINISTIC COMMENT 'testGetFunctions comment1' BEGIN RETURN d; END");
+
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                Connection conn1 = null;
+                try {
+
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData metaData = conn1.getMetaData();
+
+                    this.rs = metaData.getFunctions(null, null, "testGetFunctionsF");
+                    testGetFunctions_checkResult(dbMapsToSchema);
+
+                    this.rs = metaData.getFunctions(null, this.dbName.substring(0, 3) + "%", "testGetFunctionsF");
+                    testGetFunctions_checkResult(dbMapsToSchema);
+
+                    this.rs = metaData.getFunctions(this.dbName, null, "testGetFunctionsF");
+                    testGetFunctions_checkResult(dbMapsToSchema);
+
+                    if (dbMapsToSchema) {
+                        String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
+                        this.rs = metaData.getFunctions(null, dbPattern, "testGetFunctionsF");
+                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                    } else {
+                        String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
+                        this.rs = metaData.getFunctions(dbPattern, null, "testGetFunctionsF");
+                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    }
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
+            }
+        }
+    }
+
+    private void testGetFunctions_checkResult(boolean dbMapsToSchema) throws Exception {
+        assertTrue(this.rs.next());
+        if (dbMapsToSchema) {
+            assertEquals("def", this.rs.getString("FUNCTION_CAT"));
+            assertEquals(this.dbName, this.rs.getString("FUNCTION_SCHEM"));
+        } else {
+            assertEquals(this.dbName, this.rs.getString("FUNCTION_CAT"));
+            assertNull(this.rs.getString("FUNCTION_SCHEM"));
+        }
+        assertEquals("testGetFunctionsF", this.rs.getString("FUNCTION_NAME"));
+        assertEquals("testGetFunctions comment1", this.rs.getString("REMARKS"));
+        assertEquals("1", this.rs.getString("FUNCTION_TYPE"));
+        assertEquals("testGetFunctionsF", this.rs.getString("SPECIFIC_NAME"));
+    }
+
+    public void testGetProcedureColumns() throws Exception {
+        createProcedure("testGetProcedureColumnsP", "(d INT) COMMENT 'testGetProcedureColumns comment1' \n BEGIN\nSELECT 1;end\n");
+
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                Connection conn1 = null;
+                try {
+
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData metaData = conn1.getMetaData();
+
+                    if (dbMapsToSchema) {
+                        String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
+                        this.rs = metaData.getProcedureColumns(null, dbPattern, "testGetProcedureColumnsP", "%");
+                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                    } else {
+                        String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
+                        this.rs = metaData.getProcedureColumns(dbPattern, null, "testGetProcedureColumnsP", "%");
+                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    }
+
+                    this.rs = metaData.getProcedureColumns(null, null, "testGetProcedureColumnsP", "%");
+                    testGetProcedureColumns_checkResult(dbMapsToSchema);
+
+                    this.rs = metaData.getProcedureColumns(null, this.dbName.substring(0, 3) + "%", "testGetProcedureColumnsP", "%");
+                    testGetProcedureColumns_checkResult(dbMapsToSchema);
+
+                    this.rs = metaData.getProcedureColumns(this.dbName, null, "testGetProcedureColumnsP", "%");
+                    testGetProcedureColumns_checkResult(dbMapsToSchema);
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
+            }
+        }
+    }
+
+    private void testGetProcedureColumns_checkResult(boolean dbMapsToSchema) throws Exception {
+        assertTrue(this.rs.next());
+        if (dbMapsToSchema) {
+            assertEquals("def", this.rs.getString("PROCEDURE_CAT"));
+            assertEquals(this.dbName, this.rs.getString("PROCEDURE_SCHEM"));
+        } else {
+            assertEquals(this.dbName, this.rs.getString("PROCEDURE_CAT"));
+            assertNull(this.rs.getString("PROCEDURE_SCHEM"));
+        }
+        assertEquals("testGetProcedureColumnsP", this.rs.getString("PROCEDURE_NAME"));
+        assertEquals("d", this.rs.getString("COLUMN_NAME"));
+        assertEquals(DatabaseMetaData.procedureColumnIn, this.rs.getShort("COLUMN_TYPE"));
+        assertEquals(Types.INTEGER, this.rs.getInt("DATA_TYPE"));
+        assertEquals("INT", this.rs.getString("TYPE_NAME"));
+        assertEquals(10, this.rs.getInt("PRECISION"));
+        assertEquals(10, this.rs.getInt("LENGTH"));
+        assertEquals(0, this.rs.getInt("SCALE"));
+        assertEquals(10, this.rs.getInt("RADIX"));
+        assertEquals(1, this.rs.getShort("NULLABLE"));
+        assertNull(this.rs.getString("REMARKS"));
+        assertNull(this.rs.getString("COLUMN_DEF"));
+        assertNull(this.rs.getString("SQL_DATA_TYPE"));
+        assertNull(this.rs.getString("SQL_DATETIME_SUB"));
+        assertNull(this.rs.getString("CHAR_OCTET_LENGTH"));
+        assertEquals(1, this.rs.getInt("ORDINAL_POSITION"));
+        assertEquals("YES", this.rs.getString("IS_NULLABLE"));
+        assertEquals("testGetProcedureColumnsP", this.rs.getString("SPECIFIC_NAME"));
+        assertFalse(this.rs.next());
+    }
+
+    public void testGetFunctionColumns() throws Exception {
+        createFunction("testGetFunctionColumnsF", "(d INT) RETURNS INT DETERMINISTIC COMMENT 'testGetFunctionColumnsF comment1' BEGIN RETURN d; END");
+
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                Connection conn1 = null;
+                try {
+
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData metaData = conn1.getMetaData();
+
+                    this.rs = metaData.getFunctionColumns(null, null, "testGetFunctionColumnsF", "%");
+                    testGetFunctionColumns_checkResult(dbMapsToSchema);
+
+                    this.rs = metaData.getFunctionColumns(null, this.dbName.substring(0, 3) + "%", "testGetFunctionColumnsF", "%");
+                    testGetFunctionColumns_checkResult(dbMapsToSchema);
+
+                    this.rs = metaData.getFunctionColumns(this.dbName, null, "testGetFunctionColumnsF", "%");
+                    testGetFunctionColumns_checkResult(dbMapsToSchema);
+
+                    if (dbMapsToSchema) {
+                        String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
+                        this.rs = metaData.getFunctionColumns(null, dbPattern, "testGetFunctionColumnsF", "%");
+                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                    } else {
+                        String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
+                        this.rs = metaData.getFunctionColumns(dbPattern, null, "testGetFunctionColumnsF", "%");
+                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    }
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
+            }
+        }
+    }
+
+    private void testGetFunctionColumns_checkResult(boolean dbMapsToSchema) throws Exception {
+        assertTrue(this.rs.next());
+        if (dbMapsToSchema) {
+            assertEquals("def", this.rs.getString("FUNCTION_CAT"));
+            assertEquals(this.dbName, this.rs.getString("FUNCTION_SCHEM"));
+        } else {
+            assertEquals(this.dbName, this.rs.getString("FUNCTION_CAT"));
+            assertNull(this.rs.getString("FUNCTION_SCHEM"));
+        }
+        assertEquals("testGetFunctionColumnsF", this.rs.getString("FUNCTION_NAME"));
+        assertEquals("", this.rs.getString("COLUMN_NAME"));
+        assertEquals(DatabaseMetaData.functionReturn, this.rs.getShort("COLUMN_TYPE"));
+        assertEquals(Types.INTEGER, this.rs.getInt("DATA_TYPE"));
+        assertEquals("INT", this.rs.getString("TYPE_NAME"));
+        assertEquals(10, this.rs.getInt("PRECISION"));
+        assertEquals(10, this.rs.getInt("LENGTH"));
+        assertEquals(0, this.rs.getInt("SCALE"));
+        assertEquals(10, this.rs.getInt("RADIX"));
+        assertEquals(1, this.rs.getShort("NULLABLE"));
+        assertNull(this.rs.getString("REMARKS"));
+        assertNull(this.rs.getString("CHAR_OCTET_LENGTH"));
+        assertEquals(0, this.rs.getInt("ORDINAL_POSITION"));
+        assertEquals("YES", this.rs.getString("IS_NULLABLE"));
+        assertEquals("testGetFunctionColumnsF", this.rs.getString("SPECIFIC_NAME"));
+
+        assertTrue(this.rs.next());
+        if (dbMapsToSchema) {
+            assertEquals("def", this.rs.getString("FUNCTION_CAT"));
+            assertEquals(this.dbName, this.rs.getString("FUNCTION_SCHEM"));
+        } else {
+            assertEquals(this.dbName, this.rs.getString("FUNCTION_CAT"));
+            assertNull(this.rs.getString("FUNCTION_SCHEM"));
+        }
+        assertEquals("testGetFunctionColumnsF", this.rs.getString("FUNCTION_NAME"));
+        assertEquals("d", this.rs.getString("COLUMN_NAME"));
+        assertEquals(DatabaseMetaData.functionColumnIn, this.rs.getShort("COLUMN_TYPE"));
+        assertEquals(Types.INTEGER, this.rs.getInt("DATA_TYPE"));
+        assertEquals("INT", this.rs.getString("TYPE_NAME"));
+        assertEquals(10, this.rs.getInt("PRECISION"));
+        assertEquals(10, this.rs.getInt("LENGTH"));
+        assertEquals(0, this.rs.getInt("SCALE"));
+        assertEquals(10, this.rs.getInt("RADIX"));
+        assertEquals(1, this.rs.getShort("NULLABLE"));
+        assertNull(this.rs.getString("REMARKS"));
+        assertNull(this.rs.getString("CHAR_OCTET_LENGTH"));
+        assertEquals(1, this.rs.getInt("ORDINAL_POSITION"));
+        assertEquals("YES", this.rs.getString("IS_NULLABLE"));
+        assertEquals("testGetFunctionColumnsF", this.rs.getString("SPECIFIC_NAME"));
+
+        assertFalse(this.rs.next());
     }
 
     /**
@@ -707,64 +1378,126 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
-    /**
-     * Tests the implementation of Information Schema for foreign key.
-     */
-    public void testGetExportedKeysUsingInfoSchema() throws Exception {
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
-        this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-        this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
-        this.stmt.executeUpdate(
-                "CREATE TABLE child(id INT, parent_id INT, " + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
+    public void testGetExportedKeys() throws Exception {
+        createTable("parent", "(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
+        createTable("child", "(id INT, parent_id INT, FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
+
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
-        Connection conn1 = null;
-        try {
-            conn1 = getConnectionWithProps(props);
-            DatabaseMetaData metaData = conn1.getMetaData();
-            this.rs = metaData.getExportedKeys(null, null, "parent");
-            this.rs.next();
-            assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
-            assertEquals("id", this.rs.getString("PKCOLUMN_NAME"));
-            assertEquals("child", this.rs.getString("FKTABLE_NAME"));
-            assertEquals("parent_id", this.rs.getString("FKCOLUMN_NAME"));
-        } finally {
-            this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
-            this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-            if (conn1 != null) {
-                conn1.close();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                Connection conn1 = null;
+                try {
+
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData metaData = conn1.getMetaData();
+
+                    this.rs = metaData.getExportedKeys(null, null, "parent");
+                    testGetExportedKeys_checkResult(useIS, dbMapsToSchema);
+
+                    this.rs = metaData.getExportedKeys(null, this.dbName, "parent");
+                    testGetExportedKeys_checkResult(useIS, dbMapsToSchema);
+
+                    this.rs = metaData.getExportedKeys(this.dbName, null, "parent");
+                    testGetExportedKeys_checkResult(useIS, dbMapsToSchema);
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
             }
         }
     }
 
-    /**
-     * Tests the implementation of Information Schema for foreign key.
-     */
-    public void testGetImportedKeysUsingInfoSchema() throws Exception {
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
-        this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-        this.stmt.executeUpdate("CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
-        this.stmt.executeUpdate(
-                "CREATE TABLE child(id INT, parent_id INT, " + "FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
+    private void testGetExportedKeys_checkResult(boolean useIS, boolean dbMapsToSchema) throws Exception {
+        assertTrue(this.rs.next());
+        if (dbMapsToSchema) {
+            assertEquals("def", this.rs.getString("PKTABLE_CAT"));
+            assertEquals(this.dbName, this.rs.getString("PKTABLE_SCHEM"));
+            assertEquals("def", this.rs.getString("FKTABLE_CAT"));
+            assertEquals(this.dbName, this.rs.getString("FKTABLE_SCHEM"));
+        } else {
+            assertEquals(this.dbName, this.rs.getString("PKTABLE_CAT"));
+            assertNull(this.rs.getString("PKTABLE_SCHEM"));
+            assertEquals(this.dbName, this.rs.getString("FKTABLE_CAT"));
+            assertNull(this.rs.getString("FKTABLE_SCHEM"));
+        }
+        assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
+        assertEquals("id", this.rs.getString("PKCOLUMN_NAME"));
+        assertEquals("child", this.rs.getString("FKTABLE_NAME"));
+        assertEquals("parent_id", this.rs.getString("FKCOLUMN_NAME"));
+        assertEquals(1, this.rs.getShort("KEY_SEQ"));
+        assertEquals(DatabaseMetaData.importedKeyRestrict, this.rs.getShort("UPDATE_RULE"));
+        assertEquals(DatabaseMetaData.importedKeySetNull, this.rs.getShort("DELETE_RULE"));
+        assertEquals("child_ibfk_1", this.rs.getString("FK_NAME"));
+        assertEquals(useIS ? "PRIMARY" : null, this.rs.getString("PK_NAME")); // PK_NAME is available only with I_S
+        assertEquals(DatabaseMetaData.importedKeyNotDeferrable, this.rs.getShort("DEFERRABILITY"));
+    }
+
+    public void testGetImportedKeys() throws Exception {
+        createTable("parent", "(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
+        createTable("child", "(id INT, parent_id INT, FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
+
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
-        Connection conn1 = null;
-        try {
-            conn1 = getConnectionWithProps(props);
-            DatabaseMetaData metaData = conn1.getMetaData();
-            this.rs = metaData.getImportedKeys(null, null, "child");
-            this.rs.next();
-            assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
-            assertEquals("id", this.rs.getString("PKCOLUMN_NAME"));
-            assertEquals("child", this.rs.getString("FKTABLE_NAME"));
-            assertEquals("parent_id", this.rs.getString("FKCOLUMN_NAME"));
-        } finally {
-            this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
-            this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-            if (conn1 != null) {
-                conn1.close();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                Connection conn1 = null;
+                try {
+
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData metaData = conn1.getMetaData();
+
+                    this.rs = metaData.getImportedKeys(null, null, "child");
+                    testGetImportedKeys_checkResult(useIS, dbMapsToSchema);
+
+                    this.rs = metaData.getImportedKeys(null, this.dbName, "child");
+                    testGetImportedKeys_checkResult(useIS, dbMapsToSchema);
+
+                    this.rs = metaData.getImportedKeys(this.dbName, null, "child");
+                    testGetImportedKeys_checkResult(useIS, dbMapsToSchema);
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
             }
         }
+    }
+
+    private void testGetImportedKeys_checkResult(boolean useIS, boolean dbMapsToSchema) throws Exception {
+        assertTrue(this.rs.next());
+        if (dbMapsToSchema) {
+            assertEquals("def", this.rs.getString("PKTABLE_CAT"));
+            assertEquals(this.dbName, this.rs.getString("PKTABLE_SCHEM"));
+            assertEquals("def", this.rs.getString("FKTABLE_CAT"));
+            assertEquals(this.dbName, this.rs.getString("FKTABLE_SCHEM"));
+        } else {
+            assertEquals(this.dbName, this.rs.getString("PKTABLE_CAT"));
+            assertNull(this.rs.getString("PKTABLE_SCHEM"));
+            assertEquals(this.dbName, this.rs.getString("FKTABLE_CAT"));
+            assertNull(this.rs.getString("FKTABLE_SCHEM"));
+        }
+        assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
+        assertEquals("id", this.rs.getString("PKCOLUMN_NAME"));
+        assertEquals("child", this.rs.getString("FKTABLE_NAME"));
+        assertEquals("parent_id", this.rs.getString("FKCOLUMN_NAME"));
+        assertEquals(1, this.rs.getShort("KEY_SEQ"));
+        assertEquals(DatabaseMetaData.importedKeyRestrict, this.rs.getShort("UPDATE_RULE"));
+        assertEquals(DatabaseMetaData.importedKeySetNull, this.rs.getShort("DELETE_RULE"));
+        assertEquals("child_ibfk_1", this.rs.getString("FK_NAME"));
+        assertEquals(useIS ? "PRIMARY" : null, this.rs.getString("PK_NAME")); // PK_NAME is available only with I_S
+        assertEquals(DatabaseMetaData.importedKeyNotDeferrable, this.rs.getShort("DEFERRABILITY"));
     }
 
     /**
@@ -801,7 +1534,7 @@ public class MetadataTest extends BaseTestCase {
         assertFalse(this.rs.next());
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.nullCatalogMeansCurrent.getKeyName(), "true");
+        props.setProperty(PropertyKey.nullDatabaseMeansCurrent.getKeyName(), "true");
 
         for (String useIS : new String[] { "false", "true" }) {
             Connection testConn = null;
@@ -975,4 +1708,128 @@ public class MetadataTest extends BaseTestCase {
             return super.preProcess(sql, interceptedQuery);
         }
     }
+
+    public void testGetTablePrivileges() throws Exception {
+        createTable("testGetTablePrivileges", "(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
+        createUser("'testGTPUser'@'%'", "IDENTIFIED BY 'aha'");
+        this.stmt.executeUpdate("grant SELECT on `" + this.dbName + "`.`testGetTablePrivileges` to 'testGTPUser'@'%'");
+
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                Connection conn1 = null;
+                try {
+
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData metaData = conn1.getMetaData();
+
+                    this.rs = metaData.getTablePrivileges(null, null, "testGetTablePriv%");
+                    testGetTablePrivileges_checkResult(dbMapsToSchema);
+
+                    this.rs = metaData.getTablePrivileges(null, this.dbName, "testGetTablePriv%");
+                    testGetTablePrivileges_checkResult(dbMapsToSchema);
+
+                    this.rs = metaData.getTablePrivileges(this.dbName, null, "testGetTablePriv%");
+                    testGetTablePrivileges_checkResult(dbMapsToSchema);
+
+                    if (dbMapsToSchema) {
+                        String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
+                        this.rs = metaData.getTablePrivileges(null, dbPattern, "testGetTablePriv%");
+                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                    } else {
+                        String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
+                        this.rs = metaData.getTablePrivileges(dbPattern, null, "testGetTablePriv%");
+                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    }
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
+            }
+        }
+    }
+
+    private void testGetTablePrivileges_checkResult(boolean dbMapsToSchema) throws Exception {
+        assertTrue(this.rs.next());
+        if (dbMapsToSchema) {
+            assertEquals("def", this.rs.getString("TABLE_CAT"));
+            assertEquals(this.dbName, this.rs.getString("TABLE_SCHEM"));
+        } else {
+            assertEquals(this.dbName, this.rs.getString("TABLE_CAT"));
+            assertNull(this.rs.getString("TABLE_SCHEM"));
+        }
+        assertEquals("testGetTablePrivileges", this.rs.getString("TABLE_NAME"));
+        assertTrue(this.rs.getString("GRANTOR").startsWith(mainConnectionUrl.getMainHost().getUser()));
+        assertEquals("testGTPUser@%", this.rs.getString("GRANTEE"));
+        assertEquals("SELECT", this.rs.getString("PRIVILEGE"));
+        assertNull(this.rs.getString("IS_GRANTABLE"));
+        assertFalse(this.rs.next());
+    }
+
+    public void testGetBestRowIdentifier() throws Exception {
+        String tableName = "testGetBestRowIdentifier";
+        createTable(tableName, "(field1 INT NOT NULL PRIMARY KEY)");
+
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean dbMapsToSchema : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), dbMapsToSchema ? DatabaseTerm.SCHEMA.name() : DatabaseTerm.CATALOG.name());
+
+                System.out.println("useIS=" + useIS + ", dbMapsToSchema=" + dbMapsToSchema);
+
+                Connection conn1 = null;
+                try {
+
+                    conn1 = getConnectionWithProps(props);
+                    DatabaseMetaData metaData = conn1.getMetaData();
+
+                    this.rs = metaData.getBestRowIdentifier(null, null, tableName, DatabaseMetaData.bestRowNotPseudo, true);
+                    testGetBestRowIdentifier_checkResult(this.rs);
+
+                    this.rs = metaData.getBestRowIdentifier(null, this.dbName, tableName, DatabaseMetaData.bestRowNotPseudo, true);
+                    testGetBestRowIdentifier_checkResult(this.rs);
+
+                    this.rs = metaData.getBestRowIdentifier(this.dbName, null, tableName, DatabaseMetaData.bestRowNotPseudo, true);
+                    testGetBestRowIdentifier_checkResult(this.rs);
+
+                    if (dbMapsToSchema) {
+                        String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
+                        this.rs = metaData.getBestRowIdentifier(null, dbPattern, tableName, DatabaseMetaData.bestRowNotPseudo, true);
+                        assertFalse("Schema pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    } else {
+                        String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
+                        this.rs = metaData.getBestRowIdentifier(dbPattern, null, tableName, DatabaseMetaData.bestRowNotPseudo, true);
+                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                    }
+
+                } finally {
+                    if (conn1 != null) {
+                        conn1.close();
+                    }
+                }
+            }
+        }
+    }
+
+    private void testGetBestRowIdentifier_checkResult(ResultSet rs1) throws Exception {
+        assertTrue(rs1.next());
+        assertEquals(DatabaseMetaData.bestRowSession, rs1.getShort("SCOPE"));
+        assertEquals("field1", rs1.getString("COLUMN_NAME"));
+        assertEquals(Types.INTEGER, rs1.getInt("DATA_TYPE"));
+        assertEquals("int", rs1.getString("TYPE_NAME"));
+        assertEquals(11, rs1.getInt("COLUMN_SIZE"));
+        assertEquals(11, rs1.getInt("BUFFER_LENGTH"));
+        assertEquals(0, rs1.getShort("DECIMAL_DIGITS"));
+        assertEquals(DatabaseMetaData.bestRowNotPseudo, rs1.getShort("PSEUDO_COLUMN"));
+        assertFalse(rs1.next());
+    }
+
 }

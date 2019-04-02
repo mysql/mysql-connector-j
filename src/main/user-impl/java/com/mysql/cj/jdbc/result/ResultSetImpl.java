@@ -120,8 +120,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     /** Counter used to generate IDs for profiling. */
     static int resultCounter = 1;
 
-    /** The catalog that was in use when we were created */
-    protected String catalog = null;
+    /** The database that was in use when we were created */
+    protected String db = null;
 
     /** Keep track of columns accessed */
     protected boolean[] columnUsed = null;
@@ -244,8 +244,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public ResultSetImpl(ResultsetRows tuples, JdbcConnection conn, StatementImpl creatorStmt) throws SQLException {
         this.connection = conn;
         this.session = (NativeSession) conn.getSession();
-        // TODO which catalog to use, from connection or from statement?
-        this.catalog = creatorStmt != null ? creatorStmt.getCurrentCatalog() : conn.getCatalog();
+        // TODO which database to use, from connection or from statement?
+        this.db = creatorStmt != null ? creatorStmt.getCurrentDatabase() : conn.getDatabase();
         this.owningStatement = creatorStmt;
 
         this.exceptionInterceptor = this.connection.getExceptionInterceptor();
@@ -1872,7 +1872,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 this.eventSink = null;
                 this.warningChain = null;
                 this.owningStatement = null;
-                this.catalog = null;
+                this.db = null;
                 this.serverInfo = null;
                 this.thisRow = null;
                 this.fastDefaultCal = null;
@@ -2598,11 +2598,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         } catch (SQLException e) {
             throw ExceptionFactory.createException(e.getMessage(), e);
         }
-    }
-
-    @Override
-    public String getCurrentCatalog() {
-        return this.owningStatement == null ? "N/A" : this.owningStatement.getCurrentCatalog();
     }
 
     @Override

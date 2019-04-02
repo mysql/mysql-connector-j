@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -61,6 +61,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     private static final String METHOD_IS_CLOSED = "isClosed";
     private static final String METHOD_GET_AUTO_COMMIT = "getAutoCommit";
     private static final String METHOD_GET_CATALOG = "getCatalog";
+    private static final String METHOD_GET_SCHEMA = "getSchema";
+    private static final String METHOD_GET_DATABASE = "getDatabase";
     private static final String METHOD_GET_TRANSACTION_ISOLATION = "getTransactionIsolation";
     private static final String METHOD_GET_SESSION_MAX_ROWS = "getSessionMaxRows";
 
@@ -383,7 +385,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         sourceUseLocalSessionState.setValue(true);
 
         target.setAutoCommit(source.getAutoCommit());
-        target.setCatalog(source.getCatalog());
+        target.setDatabase(source.getDatabase());
         target.setTransactionIsolation(source.getTransactionIsolation());
         target.setSessionMaxRows(source.getSessionMaxRows());
 
@@ -516,7 +518,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     protected boolean allowedOnClosedConnection(Method method) {
         String methodName = method.getName();
 
-        return methodName.equals(METHOD_GET_AUTO_COMMIT) || methodName.equals(METHOD_GET_CATALOG) || methodName.equals(METHOD_GET_TRANSACTION_ISOLATION)
+        return methodName.equals(METHOD_GET_AUTO_COMMIT) || methodName.equals(METHOD_GET_CATALOG) || methodName.equals(METHOD_GET_SCHEMA)
+                || methodName.equals(METHOD_GET_DATABASE) || methodName.equals(METHOD_GET_TRANSACTION_ISOLATION)
                 || methodName.equals(METHOD_GET_SESSION_MAX_ROWS);
     }
 }

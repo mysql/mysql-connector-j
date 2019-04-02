@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,7 +34,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.jdbc.JdbcConnection;
 
 import testsuite.BaseTestCase;
 
@@ -60,10 +62,13 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
             cstmt.execute();
             cstmt.execute();
 
-            cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc1()");
+            String db = ((JdbcConnection) replConn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
+                    .getValue() == DatabaseTerm.SCHEMA ? replConn.getSchema() : replConn.getCatalog();
+
+            cstmt = replConn.prepareCall("CALL `" + db + "`.testProc1()");
             cstmt.execute();
 
-            cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.1`()");
+            cstmt = replConn.prepareCall("CALL `" + db + "`.`testProc.1`()");
             cstmt.execute();
 
         } finally {
@@ -96,7 +101,10 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
                 assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
             }
 
-            cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc2()");
+            String db = ((JdbcConnection) replConn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
+                    .getValue() == DatabaseTerm.SCHEMA ? replConn.getSchema() : replConn.getCatalog();
+
+            cstmt = replConn.prepareCall("CALL `" + db + "`.testProc2()");
 
             try {
                 cstmt.execute();
@@ -105,7 +113,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
                 assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
             }
 
-            cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.2`()");
+            cstmt = replConn.prepareCall("CALL `" + db + "`.`testProc.2`()");
 
             try {
                 cstmt.execute();

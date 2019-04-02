@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,8 +46,10 @@ import java.sql.Types;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.jdbc.JdbcConnection;
 
 import testsuite.BaseTestCase;
 
@@ -130,7 +132,9 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             //
             // Should be found this time.
             //
-            this.rs = con.getMetaData().getProcedures(con.getCatalog(), null, "testBug7026");
+            this.rs = ((JdbcConnection) con).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA
+                    ? con.getMetaData().getProcedures(null, con.getCatalog(), "testBug7026")
+                    : con.getMetaData().getProcedures(con.getCatalog(), null, "testBug7026");
 
             assertTrue(this.rs.next());
             assertTrue("testBug7026".equals(this.rs.getString(3)));
@@ -140,7 +144,9 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             //
             // This time, shouldn't be found, because not associated with this (bogus) catalog
             //
-            this.rs = con.getMetaData().getProcedures("abfgerfg", null, "testBug7026");
+            this.rs = ((JdbcConnection) con).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA
+                    ? con.getMetaData().getProcedures(null, "abfgerfg", "testBug7026")
+                    : con.getMetaData().getProcedures("abfgerfg", null, "testBug7026");
             assertTrue(!this.rs.next());
 
             //
@@ -1358,7 +1364,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     public void testBug79561() throws Exception {
         createProcedure("testBug79561", "(OUT o VARCHAR(100)) BEGIN SELECT 'testBug79561 data' INTO o; END");
 
-        String dbName1 = this.conn.getCatalog();
+        String dbName1 = ((JdbcConnection) this.conn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
+                .getValue() == DatabaseTerm.SCHEMA ? this.conn.getSchema() : this.conn.getCatalog();
         String[] sql = new String[] { String.format("{CALL %s.testBug79561(?)}", dbName1), String.format("{CALL `%s`.testBug79561(?)}", dbName1),
                 String.format("{CALL %s.`testBug79561`(?)}", dbName1), String.format("{CALL `%s`.`testBug79561`(?)}", dbName1) };
 

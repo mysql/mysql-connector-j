@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -74,8 +74,15 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
     @Override
     public void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor) {
         String name = getPropertyDefinition().getName();
+        String alias = getPropertyDefinition().getCcAlias();
         if (extractFrom.containsKey(name)) {
             String extractedValue = (String) extractFrom.remove(name);
+            if (extractedValue != null) {
+                setValueInternal(extractedValue, exceptionInterceptor);
+                this.initialValue = this.value;
+            }
+        } else if (alias != null && extractFrom.containsKey(alias)) {
+            String extractedValue = (String) extractFrom.remove(alias);
             if (extractedValue != null) {
                 setValueInternal(extractedValue, exceptionInterceptor);
                 this.initialValue = this.value;

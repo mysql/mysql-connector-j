@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -87,8 +87,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
      *            the connection creating us.
      * @param sql
      *            the SQL containing the statement to prepare.
-     * @param catalog
-     *            the catalog in use when we were created.
+     * @param db
+     *            the database in use when we were created.
      * @param resultSetType
      *            ResultSet type
      * @param resultSetConcurrency
@@ -97,9 +97,9 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
      * @throws SQLException
      *             If an error occurs
      */
-    protected static ServerPreparedStatement getInstance(JdbcConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency)
+    protected static ServerPreparedStatement getInstance(JdbcConnection conn, String sql, String db, int resultSetType, int resultSetConcurrency)
             throws SQLException {
-        return new ServerPreparedStatement(conn, sql, catalog, resultSetType, resultSetConcurrency);
+        return new ServerPreparedStatement(conn, sql, db, resultSetType, resultSetConcurrency);
     }
 
     /**
@@ -109,8 +109,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
      *            the connection creating us.
      * @param sql
      *            the SQL containing the statement to prepare.
-     * @param catalog
-     *            the catalog in use when we were created.
+     * @param db
+     *            the database in use when we were created.
      * @param resultSetType
      *            ResultSet type
      * @param resultSetConcurrency
@@ -119,8 +119,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
      * @throws SQLException
      *             If an error occurs
      */
-    protected ServerPreparedStatement(JdbcConnection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency) throws SQLException {
-        super(conn, catalog);
+    protected ServerPreparedStatement(JdbcConnection conn, String sql, String db, int resultSetType, int resultSetConcurrency) throws SQLException {
+        super(conn, db);
 
         checkNullOrEmptyQuery(sql);
         String statementComment = this.session.getProtocol().getQueryComment();
@@ -180,7 +180,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
             ClientPreparedStatement pStmtForSub = null;
 
             try {
-                pStmtForSub = ClientPreparedStatement.getInstance(this.connection, ((PreparedQuery<?>) this.query).getOriginalSql(), this.getCurrentCatalog());
+                pStmtForSub = ClientPreparedStatement.getInstance(this.connection, ((PreparedQuery<?>) this.query).getOriginalSql(), this.getCurrentDatabase());
 
                 int numParameters = ((PreparedQuery<?>) pStmtForSub.query).getParameterCount();
                 int ourNumParameters = ((PreparedQuery<?>) this.query).getParameterCount();

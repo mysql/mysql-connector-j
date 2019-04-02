@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,6 +39,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.jdbc.JdbcConnection;
 
@@ -1175,8 +1176,11 @@ public class MultiHostConnectionTest extends BaseTestCase {
         Statement testStmt = null;
 
         int newTransactionIsolation = testConn.getTransactionIsolation();
-        String newCatalog = "fotests";
-        createDatabase(newCatalog);
+        String newDb = "fotests";
+        createDatabase(newDb);
+
+        boolean dbMapsToSchema = ((JdbcConnection) this.conn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
+                .getValue() == DatabaseTerm.SCHEMA;
 
         try {
             // connected to HOST_2 [\HOST_1 : /HOST_2 : \HOST_3]
@@ -1184,14 +1188,22 @@ public class MultiHostConnectionTest extends BaseTestCase {
 
             // assert expected default session values
             assertTrue(testConn.getAutoCommit());
-            assertEquals(this.conn.getCatalog(), testConn.getCatalog());
+            if (dbMapsToSchema) {
+                assertEquals(this.conn.getSchema(), testConn.getSchema());
+            } else {
+                assertEquals(this.conn.getCatalog(), testConn.getCatalog());
+            }
             assertEquals(newTransactionIsolation, testConn.getTransactionIsolation());
             assertFalse(testConn.isReadOnly());
             assertEquals(-1, testConn.getSessionMaxRows());
 
             // change session values
             testConn.setAutoCommit(false);
-            testConn.setCatalog(newCatalog);
+            if (dbMapsToSchema) {
+                testConn.setSchema(newDb);
+            } else {
+                testConn.setCatalog(newDb);
+            }
             newTransactionIsolation = newTransactionIsolation * 2 == 16 ? 1 : newTransactionIsolation * 2;
             testConn.setTransactionIsolation(newTransactionIsolation);
             testConn.setReadOnly(true);
@@ -1199,7 +1211,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
 
             // assert expected session values after explicit change
             assertFalse(testConn.getAutoCommit());
-            assertEquals(newCatalog, testConn.getCatalog());
+            assertEquals(newDb, dbMapsToSchema ? testConn.getSchema() : testConn.getCatalog());
             assertEquals(newTransactionIsolation, testConn.getTransactionIsolation());
             assertTrue(testConn.isReadOnly());
             assertEquals(1, testConn.getSessionMaxRows());
@@ -1225,7 +1237,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
 
             // assert expected session values after connection synchronization
             assertFalse(testConn.getAutoCommit());
-            assertEquals(newCatalog, testConn.getCatalog());
+            assertEquals(newDb, dbMapsToSchema ? testConn.getSchema() : testConn.getCatalog());
             assertEquals(newTransactionIsolation, testConn.getTransactionIsolation());
             assertTrue(testConn.isReadOnly());
             assertEquals(-1, testConn.getSessionMaxRows()); // this value is reset to default 'maxRows' when the new "internal" connection is created
@@ -1260,7 +1272,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
 
             // assert expected session values after connection synchronization
             assertTrue(testConn.getAutoCommit());
-            assertEquals(newCatalog, testConn.getCatalog());
+            assertEquals(newDb, dbMapsToSchema ? testConn.getSchema() : testConn.getCatalog());
             assertEquals(newTransactionIsolation, testConn.getTransactionIsolation());
             assertFalse(testConn.isReadOnly());
             assertEquals(-1, testConn.getSessionMaxRows()); // this value is reset to default 'maxRows' when the new "internal" connection is created

@@ -157,6 +157,10 @@ public class PropertyDefinitions {
         PLAIN, MYSQL41, SHA256_MEMORY, EXTERNAL;
     }
 
+    public enum DatabaseTerm {
+        CATALOG, SCHEMA;
+    }
+
     /**
      * Static unmodifiable {@link PropertyKey} -&gt; {@link PropertyDefinition} map.
      */
@@ -222,6 +226,9 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PropertyKey.detectCustomCollations, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.detectCustomCollations"), "5.1.29", CATEGORY_CONNECTION, Integer.MIN_VALUE),
+
+                new EnumPropertyDefinition<>(PropertyKey.databaseTerm, DatabaseTerm.CATALOG, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.databaseTerm"), "8.0.17", CATEGORY_CONNECTION, Integer.MIN_VALUE),
 
                 //
                 // CATEGORY_SESSION
@@ -426,7 +433,7 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.noAccessToProcedureBodies, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.noAccessToProcedureBodies"), "5.0.3", CATEGORY_METADATA, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PropertyKey.nullCatalogMeansCurrent, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                new BooleanPropertyDefinition(PropertyKey.nullDatabaseMeansCurrent, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.nullCatalogMeansCurrent"), "3.1.8", CATEGORY_METADATA, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.useHostsInPrivileges, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,

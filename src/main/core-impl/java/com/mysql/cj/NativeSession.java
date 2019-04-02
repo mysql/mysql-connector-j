@@ -1081,8 +1081,6 @@ public class NativeSession extends CoreSession implements Serializable {
      *            whether a stream result should be created
      * @param resultSetFactory
      *            {@link ProtocolEntityFactory}
-     * @param catalog
-     *            database name
      * @param cachedMetadata
      *            use this metadata instead of the one provided on wire
      * @param isBatch
@@ -1091,7 +1089,7 @@ public class NativeSession extends CoreSession implements Serializable {
      * @return a ResultSet holding the results
      */
     public <T extends Resultset> T execSQL(Query callingQuery, String query, int maxRows, NativePacketPayload packet, boolean streamResults,
-            ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory, String catalog, ColumnDefinition cachedMetadata, boolean isBatch) {
+            ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory, ColumnDefinition cachedMetadata, boolean isBatch) {
 
         long queryStartTime = this.gatherPerfMetrics.getValue() ? System.currentTimeMillis() : 0;
         int endOfQueryPacketPosition = packet != null ? packet.getPosition() : 0;
@@ -1110,9 +1108,9 @@ public class NativeSession extends CoreSession implements Serializable {
 
         try {
             return packet == null
-                    ? ((NativeProtocol) this.protocol).sendQueryString(callingQuery, query, this.characterEncoding.getValue(), maxRows, streamResults, catalog,
+                    ? ((NativeProtocol) this.protocol).sendQueryString(callingQuery, query, this.characterEncoding.getValue(), maxRows, streamResults,
                             cachedMetadata, resultSetFactory)
-                    : ((NativeProtocol) this.protocol).sendQueryPacket(callingQuery, packet, maxRows, streamResults, catalog, cachedMetadata, resultSetFactory);
+                    : ((NativeProtocol) this.protocol).sendQueryPacket(callingQuery, packet, maxRows, streamResults, cachedMetadata, resultSetFactory);
 
         } catch (CJException sqlE) {
             if (getPropertySet().getBooleanProperty(PropertyKey.dumpQueriesOnException).getValue()) {

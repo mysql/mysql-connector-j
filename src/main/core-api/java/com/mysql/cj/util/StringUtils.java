@@ -1409,20 +1409,20 @@ public class StringUtils {
 
     /**
      * Splits an entity identifier into its parts (database and entity name) and returns a list containing the two elements. If the identifier doesn't contain
-     * the database part then the argument <code>catalog</code> is used in its place and <code>source</code> corresponds to the full entity name.
+     * the database part then the argument <code>db</code> is used in its place and <code>source</code> corresponds to the full entity name.
      * If argument <code>source</code> is NULL or wildcard (%), returns an empty list.
      * 
      * @param source
      *            the source string
-     * @param catalog
-     *            Catalog, if available
+     * @param db
+     *            database, if available
      * @param quoteId
      *            quote character as defined on server
      * @param isNoBslashEscSet
      *            is our connection in no BackSlashEscape mode
      * @return the input string with all comment-delimited data removed
      */
-    public static List<String> splitDBdotName(String source, String catalog, String quoteId, boolean isNoBslashEscSet) {
+    public static List<String> splitDBdotName(String source, String db, String quoteId, boolean isNoBslashEscSet) {
         if ((source == null) || (source.equals("%"))) {
             return Collections.emptyList();
         }
@@ -1434,7 +1434,7 @@ public class StringUtils {
             dotIndex = indexOfIgnoreCase(0, source, ".", quoteId, quoteId, isNoBslashEscSet ? SEARCH_MODE__MRK_WS : SEARCH_MODE__BSESC_MRK_WS);
         }
 
-        String database = catalog;
+        String database = db;
         String entityName;
         if (dotIndex != -1) {
             database = unQuoteIdentifier(source.substring(0, dotIndex), quoteId);
@@ -1447,9 +1447,9 @@ public class StringUtils {
     }
 
     /**
-     * Builds and returns a fully qualified name, quoted if necessary, for the given catalog and database entity.
+     * Builds and returns a fully qualified name, quoted if necessary, for the given database entity.
      * 
-     * @param catalog
+     * @param db
      *            database name
      * @param entity
      *            identifier
@@ -1459,8 +1459,8 @@ public class StringUtils {
      *            are we in pedantic mode
      * @return fully qualified name
      */
-    public static String getFullyQualifiedName(String catalog, String entity, String quoteId, boolean isPedantic) {
-        StringBuilder fullyQualifiedName = new StringBuilder(StringUtils.quoteIdentifier(catalog == null ? "" : catalog, quoteId, isPedantic));
+    public static String getFullyQualifiedName(String db, String entity, String quoteId, boolean isPedantic) {
+        StringBuilder fullyQualifiedName = new StringBuilder(StringUtils.quoteIdentifier(db == null ? "" : db, quoteId, isPedantic));
         fullyQualifiedName.append('.');
         fullyQualifiedName.append(StringUtils.quoteIdentifier(entity, quoteId, isPedantic));
         return fullyQualifiedName.toString();

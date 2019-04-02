@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -455,9 +455,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      */
     void setSessionMaxRows(int max) throws SQLException;
 
-    // until we flip catalog/schema, this is a no-op
-    void setSchema(String schema) throws SQLException;
-
     // **************************
     // moved from MysqlJdbcConnection
     // **************************
@@ -584,4 +581,23 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      * Non standard methods:
      */
     ClientInfoProvider getClientInfoProviderImpl() throws SQLException;
+
+    /**
+     * Set current database for this connection.
+     * 
+     * @param dbName
+     *            the database for this connection to use
+     * @throws SQLException
+     *             if a database access error occurs
+     */
+    void setDatabase(String dbName) throws SQLException;
+
+    /**
+     * Retrieves this connection object's current database name.
+     * 
+     * @return current database name
+     * @throws SQLException
+     *             if an error occurs
+     */
+    String getDatabase() throws SQLException;
 }

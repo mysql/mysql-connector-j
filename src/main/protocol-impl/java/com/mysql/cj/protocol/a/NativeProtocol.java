@@ -842,8 +842,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      *            rows limit
      * @param streamResults
      *            whether a stream result should be created
-     * @param catalog
-     *            database name
      * @param cachedMetadata
      *            use this metadata instead of the one provided on wire
      * @param resultSetFactory
@@ -853,7 +851,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      *             if an i/o error occurs
      */
     public final <T extends Resultset> T sendQueryString(Query callingQuery, String query, String characterEncoding, int maxRows, boolean streamResults,
-            String catalog, ColumnDefinition cachedMetadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
+            ColumnDefinition cachedMetadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
         String statementComment = this.queryComment;
 
         if (this.propertySet.getBooleanProperty(PropertyKey.includeThreadNamesAsStatementComment).getValue()) {
@@ -894,7 +892,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query, characterEncoding));
         }
 
-        return sendQueryPacket(callingQuery, sendPacket, maxRows, streamResults, catalog, cachedMetadata, resultSetFactory);
+        return sendQueryPacket(callingQuery, sendPacket, maxRows, streamResults, cachedMetadata, resultSetFactory);
     }
 
     /**
@@ -910,8 +908,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      *            rows limit
      * @param streamResults
      *            whether a stream result should be created
-     * @param catalog
-     *            database name
      * @param cachedMetadata
      *            use this metadata instead of the one provided on wire
      * @param resultSetFactory
@@ -921,7 +917,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      *             if an i/o error occurs
      */
     public final <T extends Resultset> T sendQueryPacket(Query callingQuery, NativePacketPayload queryPacket, int maxRows, boolean streamResults,
-            String catalog, ColumnDefinition cachedMetadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
+            ColumnDefinition cachedMetadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
 
         long queryStartTime = this.profileSQL || this.logSlowQueries ? getCurrentTimeNanosOrMillis() : 0;
 

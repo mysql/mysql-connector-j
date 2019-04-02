@@ -36,6 +36,8 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeSession;
 import com.mysql.cj.Session;
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -89,10 +91,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     @Override
     public String getCatalogName(int column) throws SQLException {
-        Field f = getField(column);
-
-        String database = f.getDatabaseName();
-
+        if (this.session.getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA) {
+            return "";
+        }
+        String database = getField(column).getDatabaseName();
         return (database == null) ? "" : database;
     }
 
@@ -301,7 +303,11 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     @Override
     public String getSchemaName(int column) throws SQLException {
-        return "";
+        if (this.session.getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.CATALOG) {
+            return "";
+        }
+        String database = getField(column).getDatabaseName();
+        return (database == null) ? "" : database;
     }
 
     @Override

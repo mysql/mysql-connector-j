@@ -67,6 +67,7 @@ import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.Session.SessionEventListener;
 import com.mysql.cj.conf.HostInfo;
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJException;
@@ -151,8 +152,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     /**
      * Used as a key for caching callable statements which (may) depend on
-     * current catalog...In 5.0.x, they don't (currently), but stored procedure
-     * names soon will, so current catalog is a (hidden) component of the name.
+     * current database...In 5.0.x, they don't (currently), but stored procedure
+     * names soon will, so current database is a (hidden) component of the name.
      */
     static class CompoundCacheKey {
         final String componentOne;
@@ -270,7 +271,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     /** A cache of SQL to parsed prepared statement parameters. */
     private CacheAdapter<String, ParseInfo> cachedPreparedStatementParams;
 
-    /** The database we're currently using (called Catalog in JDBC terms). */
+    /** The database we're currently using. */
     private String database = null;
 
     /** Internal DBMD to use for various database-version specific features */
@@ -789,7 +790,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     }
                 }
 
-                this.session.execSQL(null, "commit", -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+                this.session.execSQL(null, "commit", -1, null, false, this.nullStatementResultSetFactory, null, false);
             } catch (SQLException sqlException) {
                 if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
                     throw SQLError.createSQLException(Messages.getString("Connection.4"), MysqlErrorNumbers.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
@@ -843,14 +844,14 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 boolean oldAutoCommit;
                 int oldIsolationLevel;
                 boolean oldReadOnly;
-                String oldCatalog;
+                String oldDb;
 
                 synchronized (getConnectionMutex()) {
                     // save state from old connection
                     oldAutoCommit = getAutoCommit();
                     oldIsolationLevel = this.isolationLevel;
                     oldReadOnly = isReadOnly(false);
-                    oldCatalog = getCatalog();
+                    oldDb = getDatabase();
 
                     this.session.setQueryInterceptors(this.queryInterceptors);
                 }
@@ -862,7 +863,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     // Restore state from old connection
                     setAutoCommit(oldAutoCommit);
                     setTransactionIsolation(oldIsolationLevel);
-                    setCatalog(oldCatalog);
+                    setDatabase(oldDb);
                     setReadOnly(oldReadOnly);
                 }
 
@@ -949,7 +950,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             boolean oldAutoCommit = getAutoCommit();
             int oldIsolationLevel = this.isolationLevel;
             boolean oldReadOnly = isReadOnly(false);
-            String oldCatalog = getCatalog();
+            String oldDb = getDatabase();
 
             this.session.setQueryInterceptors(this.queryInterceptors);
 
@@ -960,7 +961,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 // Restore state from old connection
                 setAutoCommit(oldAutoCommit);
                 setTransactionIsolation(oldIsolationLevel);
-                setCatalog(oldCatalog);
+                setDatabase(oldDb);
                 setReadOnly(oldReadOnly);
             }
             return;
@@ -1109,20 +1110,10 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * Return the connections current catalog name, or null if no catalog name is set.
-     * <p>
-     * <b>Note:</b> MySQL's notion of catalogs are individual databases.
-     * </p>
-     * 
-     * @return the current catalog name or null
-     * @exception SQLException
-     *                if a database access error occurs
-     */
     @Override
     public String getCatalog() throws SQLException {
         synchronized (getConnectionMutex()) {
-            return this.database;
+            return this.propertySet.<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA ? null : this.database;
         }
     }
 
@@ -1433,7 +1424,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             String otherHost = ((ConnectionImpl) otherConnection).origHostToConnectTo;
             String otherOrigDatabase = ((ConnectionImpl) otherConnection).origHostInfo.getDatabase();
-            String otherCurrentCatalog = ((ConnectionImpl) otherConnection).database;
+            String otherCurrentDb = ((ConnectionImpl) otherConnection).database;
 
             if (!nullSafeCompare(otherHost, this.origHostToConnectTo)) {
                 directCompare = false;
@@ -1443,7 +1434,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             if (directCompare) {
-                if (!nullSafeCompare(otherOrigDatabase, this.origHostInfo.getDatabase()) || !nullSafeCompare(otherCurrentCatalog, this.database)) {
+                if (!nullSafeCompare(otherOrigDatabase, this.origHostInfo.getDatabase()) || !nullSafeCompare(otherCurrentDb, this.database)) {
                     directCompare = false;
                 }
             }
@@ -1541,7 +1532,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             cStmt = parseCallableStatement(sql);
         } else {
             synchronized (this.parsedCallableStatementCache) {
-                CompoundCacheKey key = new CompoundCacheKey(getCatalog(), sql);
+                CompoundCacheKey key = new CompoundCacheKey(getDatabase(), sql);
 
                 CallableStatement.CallableStatementParamInfo cachedParamInfo = this.parsedCallableStatementCache.get(key);
 
@@ -1772,7 +1763,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
                     Object oldServerPrepStmt = this.serverSideStatementCache.put(
-                            new CompoundCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery<?>) pstmt.getQuery()).getOriginalSql()),
+                            new CompoundCacheKey(pstmt.getCurrentDatabase(), ((PreparedQuery<?>) pstmt.getQuery()).getOriginalSql()),
                             (ServerPreparedStatement) pstmt);
                     if (oldServerPrepStmt != null && oldServerPrepStmt != pstmt) {
                         ((ServerPreparedStatement) oldServerPrepStmt).isCached = false;
@@ -1790,7 +1781,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
                     this.serverSideStatementCache
-                            .remove(new CompoundCacheKey(pstmt.getCurrentCatalog(), ((PreparedQuery<?>) pstmt.getQuery()).getOriginalSql()));
+                            .remove(new CompoundCacheKey(pstmt.getCurrentDatabase(), ((PreparedQuery<?>) pstmt.getQuery()).getOriginalSql()));
                 }
             }
         }
@@ -1945,7 +1936,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 }
             }
 
-            this.session.execSQL(null, "rollback", -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+            this.session.execSQL(null, "rollback", -1, null, false, this.nullStatementResultSetFactory, null, false);
 
         }
     }
@@ -1954,7 +1945,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
         String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
-        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), DEFAULT_RESULT_SET_TYPE,
+        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getDatabase(), DEFAULT_RESULT_SET_TYPE,
                 DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
@@ -1962,7 +1953,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException {
         String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
-        ClientPreparedStatement pStmt = ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), DEFAULT_RESULT_SET_TYPE,
+        ClientPreparedStatement pStmt = ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getDatabase(), DEFAULT_RESULT_SET_TYPE,
                 DEFAULT_RESULT_SET_CONCURRENCY);
 
         pStmt.setRetrieveGeneratedKeys(autoGenKeyIndex == java.sql.Statement.RETURN_GENERATED_KEYS);
@@ -1974,7 +1965,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
-        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getCatalog(), resultSetType, resultSetConcurrency);
+        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getDatabase(), resultSetType, resultSetConcurrency);
     }
 
     @Override
@@ -2052,7 +2043,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
                 if (needsSetOnServer) {
                     this.session.execSQL(null, autoCommitFlag ? "SET autocommit=1" : "SET autocommit=0", -1, null, false, this.nullStatementResultSetFactory,
-                            this.database, null, false);
+                            null, false);
                 }
             } finally {
                 if (this.autoReconnectForPools.getValue()) {
@@ -2064,26 +2055,19 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * A sub-space of this Connection's database may be selected by setting a
-     * catalog name. If the driver does not support catalogs, it will silently
-     * ignore this request
-     * <p>
-     * <b>Note:</b> MySQL's notion of catalogs are individual databases.
-     * </p>
-     * 
-     * @param catalog
-     *            the database for this connection to use
-     * @throws SQLException
-     *             if a database access error occurs
-     */
     @Override
     public void setCatalog(final String catalog) throws SQLException {
+        if (this.propertySet.<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.CATALOG) {
+            setDatabase(catalog);
+        }
+    }
+
+    public void setDatabase(final String db) throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
 
-            if (catalog == null) {
-                throw SQLError.createSQLException("Catalog can not be null", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            if (db == null) {
+                throw SQLError.createSQLException("Database can not be null", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (this.connectionLifecycleInterceptors != null) {
@@ -2092,7 +2076,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
                     @Override
                     void forEach(ConnectionLifecycleInterceptor each) throws SQLException {
-                        if (!each.setCatalog(catalog)) {
+                        if (!each.setDatabase(db)) {
                             this.stopIterating = true;
                         }
                     }
@@ -2107,11 +2091,11 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             if (this.useLocalSessionState.getValue()) {
                 if (this.session.getServerSession().isLowerCaseTableNames()) {
-                    if (this.database.equalsIgnoreCase(catalog)) {
+                    if (this.database.equalsIgnoreCase(db)) {
                         return;
                     }
                 } else {
-                    if (this.database.equals(catalog)) {
+                    if (this.database.equals(db)) {
                         return;
                     }
                 }
@@ -2124,11 +2108,18 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             StringBuilder query = new StringBuilder("USE ");
-            query.append(StringUtils.quoteIdentifier(catalog, quotedId, this.pedantic.getValue()));
+            query.append(StringUtils.quoteIdentifier(db, quotedId, this.pedantic.getValue()));
 
-            this.session.execSQL(null, query.toString(), -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+            this.session.execSQL(null, query.toString(), -1, null, false, this.nullStatementResultSetFactory, null, false);
 
-            this.database = catalog;
+            this.database = db;
+        }
+    }
+
+    @Override
+    public String getDatabase() throws SQLException {
+        synchronized (getConnectionMutex()) {
+            return this.database;
         }
     }
 
@@ -2160,7 +2151,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (this.readOnlyPropagatesToServer.getValue() && versionMeetsMinimum(5, 6, 5)) {
                 if (!this.useLocalSessionState.getValue() || (readOnlyFlag != this.readOnly)) {
                     this.session.execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null, false,
-                            this.nullStatementResultSetFactory, this.database, null, false);
+                            this.nullStatementResultSetFactory, null, false);
                 }
             }
 
@@ -2261,7 +2252,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                                 MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
                 }
 
-                this.session.execSQL(null, sql, -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+                this.session.execSQL(null, sql, -1, null, false, this.nullStatementResultSetFactory, null, false);
 
                 this.isolationLevel = level;
             }
@@ -2293,7 +2284,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
                     commandBuf.append("STRICT_TRANS_TABLES'");
 
-                    this.session.execSQL(null, commandBuf.toString(), -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+                    this.session.execSQL(null, commandBuf.toString(), -1, null, false, this.nullStatementResultSetFactory, null, false);
 
                     jdbcCompliantTruncation.setValue(false); // server's handling this for us now
                 } else if (strictTransTablesIsSet) {
@@ -2432,15 +2423,16 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (this.session.getSessionMaxRows() != max) {
                 this.session.setSessionMaxRows(max);
                 this.session.execSQL(null, "SET SQL_SELECT_LIMIT=" + (this.session.getSessionMaxRows() == -1 ? "DEFAULT" : this.session.getSessionMaxRows()),
-                        -1, null, false, this.nullStatementResultSetFactory, this.database, null, false);
+                        -1, null, false, this.nullStatementResultSetFactory, null, false);
             }
         }
     }
 
     @Override
     public void setSchema(String schema) throws SQLException {
-        synchronized (getConnectionMutex()) {
-            checkClosed();
+        checkClosed();
+        if (this.propertySet.<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA) {
+            setDatabase(schema);
         }
     }
 
@@ -2448,8 +2440,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public String getSchema() throws SQLException {
         synchronized (getConnectionMutex()) {
             checkClosed();
-
-            return null;
+            return this.propertySet.<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA ? this.database : null;
         }
     }
 

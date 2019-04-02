@@ -85,6 +85,7 @@ import javax.sql.rowset.CachedRowSet;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.DefaultPropertySet;
+import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -4159,7 +4160,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.socketTimeout.getKeyName(), "30000");
 
         this.conn = getConnectionWithProps(props);
-        this.conn.setCatalog("information_schema");
+        if (((JdbcConnection) this.conn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA) {
+            this.conn.setSchema("information_schema");
+        } else {
+            this.conn.setCatalog("information_schema");
+        }
         this.conn.setAutoCommit(true);
 
         this.stmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -4178,7 +4183,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
             public Boolean call() throws Exception {
                 boolean res = false;
                 Connection con2 = getConnectionWithProps(props);
-                con2.setCatalog("information_schema");
+                if (((JdbcConnection) con2).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
+                        .getValue() == DatabaseTerm.SCHEMA) {
+                    con2.setSchema("information_schema");
+                } else {
+                    con2.setCatalog("information_schema");
+                }
                 con2.setAutoCommit(true);
 
                 Statement st2 = con2.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);

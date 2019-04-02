@@ -52,8 +52,6 @@ public interface ResultsetRowsOwner {
 
     int getOwnerFetchSize();
 
-    String getCurrentCatalog();
-
     Query getOwningQuery();
 
     int getOwningStatementMaxRows();

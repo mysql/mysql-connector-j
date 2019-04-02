@@ -124,14 +124,14 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      *            the connection creating this statement
      * @param sql
      *            the SQL for this statement
-     * @param catalog
-     *            the catalog/database this statement should be issued against
+     * @param db
+     *            the database this statement should be issued against
      * @return ClientPreparedStatement
      * @throws SQLException
      *             if a database access error occurs
      */
-    protected static ClientPreparedStatement getInstance(JdbcConnection conn, String sql, String catalog) throws SQLException {
-        return new ClientPreparedStatement(conn, sql, catalog);
+    protected static ClientPreparedStatement getInstance(JdbcConnection conn, String sql, String db) throws SQLException {
+        return new ClientPreparedStatement(conn, sql, db);
     }
 
     /**
@@ -141,16 +141,16 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      *            the connection creating this statement
      * @param sql
      *            the SQL for this statement
-     * @param catalog
-     *            the catalog/database this statement should be issued against
+     * @param db
+     *            the database this statement should be issued against
      * @param cachedParseInfo
      *            already created parseInfo or null.
      * @return ClientPreparedStatement instance
      * @throws SQLException
      *             if a database access error occurs
      */
-    protected static ClientPreparedStatement getInstance(JdbcConnection conn, String sql, String catalog, ParseInfo cachedParseInfo) throws SQLException {
-        return new ClientPreparedStatement(conn, sql, catalog, cachedParseInfo);
+    protected static ClientPreparedStatement getInstance(JdbcConnection conn, String sql, String db, ParseInfo cachedParseInfo) throws SQLException {
+        return new ClientPreparedStatement(conn, sql, db, cachedParseInfo);
     }
 
     @Override
@@ -163,14 +163,14 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      * 
      * @param conn
      *            the connection that created us
-     * @param catalog
-     *            the catalog in use when we were created
+     * @param db
+     *            the database in use when we were created
      * 
      * @throws SQLException
      *             if an error occurs
      */
-    protected ClientPreparedStatement(JdbcConnection conn, String catalog) throws SQLException {
-        super(conn, catalog);
+    protected ClientPreparedStatement(JdbcConnection conn, String db) throws SQLException {
+        super(conn, db);
 
         this.compensateForOnDuplicateKeyUpdate = this.session.getPropertySet().getBooleanProperty(PropertyKey.compensateOnDuplicateKeyUpdateCounts).getValue();
     }
@@ -182,14 +182,14 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      *            the connection creating this statement
      * @param sql
      *            the SQL for this statement
-     * @param catalog
-     *            the catalog/database this statement should be issued against
+     * @param db
+     *            the database this statement should be issued against
      * 
      * @throws SQLException
      *             if a database error occurs.
      */
-    public ClientPreparedStatement(JdbcConnection conn, String sql, String catalog) throws SQLException {
-        this(conn, sql, catalog, null);
+    public ClientPreparedStatement(JdbcConnection conn, String sql, String db) throws SQLException {
+        this(conn, sql, db, null);
     }
 
     /**
@@ -199,16 +199,16 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      *            the connection creating this statement
      * @param sql
      *            the SQL for this statement
-     * @param catalog
-     *            the catalog/database this statement should be issued against
+     * @param db
+     *            the database this statement should be issued against
      * @param cachedParseInfo
      *            already created parseInfo or null.
      * 
      * @throws SQLException
      *             if a database access error occurs
      */
-    public ClientPreparedStatement(JdbcConnection conn, String sql, String catalog, ParseInfo cachedParseInfo) throws SQLException {
-        this(conn, catalog);
+    public ClientPreparedStatement(JdbcConnection conn, String sql, String db, ParseInfo cachedParseInfo) throws SQLException {
+        this(conn, db);
 
         try {
             ((PreparedQuery<?>) this.query).checkNullOrEmptyQuery(sql);
@@ -345,11 +345,11 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
             Message sendPacket = ((PreparedQuery<?>) this.query).fillSendPacket();
 
-            String oldCatalog = null;
+            String oldDb = null;
 
-            if (!locallyScopedConn.getCatalog().equals(this.getCurrentCatalog())) {
-                oldCatalog = locallyScopedConn.getCatalog();
-                locallyScopedConn.setCatalog(this.getCurrentCatalog());
+            if (!locallyScopedConn.getDatabase().equals(this.getCurrentDatabase())) {
+                oldDb = locallyScopedConn.getDatabase();
+                locallyScopedConn.setDatabase(this.getCurrentDatabase());
             }
 
             //
@@ -382,8 +382,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 rs.setFirstCharOfQuery(((PreparedQuery<?>) this.query).getParseInfo().getFirstStmtChar());
             }
 
-            if (oldCatalog != null) {
-                locallyScopedConn.setCatalog(oldCatalog);
+            if (oldDb != null) {
+                locallyScopedConn.setDatabase(oldDb);
             }
 
             if (rs != null) {
@@ -928,7 +928,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                     }
 
                     rs = ((NativeSession) locallyScopedConnection.getSession()).execSQL(this, null, maxRowsToRetrieve, (NativePacketPayload) sendPacket,
-                            createStreamingResultSet, getResultSetFactory(), this.getCurrentCatalog(), metadata, isBatch);
+                            createStreamingResultSet, getResultSetFactory(), metadata, isBatch);
 
                     if (timeoutTask != null) {
                         stopQueryTimer(timeoutTask, true, true);
@@ -979,11 +979,11 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
             Message sendPacket = ((PreparedQuery<?>) this.query).fillSendPacket();
 
-            String oldCatalog = null;
+            String oldDb = null;
 
-            if (!locallyScopedConn.getCatalog().equals(this.getCurrentCatalog())) {
-                oldCatalog = locallyScopedConn.getCatalog();
-                locallyScopedConn.setCatalog(this.getCurrentCatalog());
+            if (!locallyScopedConn.getDatabase().equals(this.getCurrentDatabase())) {
+                oldDb = locallyScopedConn.getDatabase();
+                locallyScopedConn.setDatabase(this.getCurrentDatabase());
             }
 
             //
@@ -1002,8 +1002,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
             this.results = executeInternal(this.maxRows, sendPacket, createStreamingResultSet(), true, cachedMetadata, false);
 
-            if (oldCatalog != null) {
-                locallyScopedConn.setCatalog(oldCatalog);
+            if (oldDb != null) {
+                locallyScopedConn.setDatabase(oldDb);
             }
 
             if (cachedMetadata != null) {
@@ -1077,11 +1077,11 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
             Message sendPacket = ((PreparedQuery<?>) this.query).fillSendPacket(bindings);
 
-            String oldCatalog = null;
+            String oldDb = null;
 
-            if (!locallyScopedConn.getCatalog().equals(this.getCurrentCatalog())) {
-                oldCatalog = locallyScopedConn.getCatalog();
-                locallyScopedConn.setCatalog(this.getCurrentCatalog());
+            if (!locallyScopedConn.getDatabase().equals(this.getCurrentDatabase())) {
+                oldDb = locallyScopedConn.getDatabase();
+                locallyScopedConn.setDatabase(this.getCurrentDatabase());
             }
 
             //
@@ -1095,8 +1095,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 rs.setFirstCharOfQuery(((PreparedQuery<?>) this.query).getParseInfo().getFirstStmtChar());
             }
 
-            if (oldCatalog != null) {
-                locallyScopedConn.setCatalog(oldCatalog);
+            if (oldDb != null) {
+                locallyScopedConn.setDatabase(oldDb);
             }
 
             this.results = rs;
@@ -1133,7 +1133,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     protected ClientPreparedStatement prepareBatchedInsertSQL(JdbcConnection localConn, int numBatches) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             ClientPreparedStatement pstmt = new ClientPreparedStatement(localConn, "Rewritten batch of: " + ((PreparedQuery<?>) this.query).getOriginalSql(),
-                    this.getCurrentCatalog(), ((PreparedQuery<?>) this.query).getParseInfo().getParseInfoForBatch(numBatches));
+                    this.getCurrentDatabase(), ((PreparedQuery<?>) this.query).getParseInfo().getParseInfoForBatch(numBatches));
             pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
             pstmt.rewrittenBatchSize = numBatches;
 
@@ -1174,7 +1174,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
             if (this.pstmtResultMetaData == null) {
                 try {
-                    mdStmt = new ClientPreparedStatement(this.connection, ((PreparedQuery<?>) this.query).getOriginalSql(), this.getCurrentCatalog(),
+                    mdStmt = new ClientPreparedStatement(this.connection, ((PreparedQuery<?>) this.query).getOriginalSql(), this.getCurrentDatabase(),
                             ((PreparedQuery<?>) this.query).getParseInfo());
 
                     mdStmt.setMaxRows(1);
