@@ -190,7 +190,7 @@ public class MetadataTest extends BaseTestCase {
     }
 
     public void testForeignKeys() throws SQLException {
-        String refDb = "TestCrossReferenceDb";
+        String refDb = "test_cross_reference_db";
         try {
             //Needed for previous runs that did not clean-up
             this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
@@ -1412,6 +1412,8 @@ public class MetadataTest extends BaseTestCase {
                 }
             }
         }
+        this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
+        this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
     }
 
     private void testGetExportedKeys_checkResult(boolean useIS, boolean dbMapsToSchema) throws Exception {
@@ -1710,7 +1712,8 @@ public class MetadataTest extends BaseTestCase {
     }
 
     public void testGetTablePrivileges() throws Exception {
-        createTable("testGetTablePrivileges", "(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
+        String tableName = "testGetTablePrivileges";
+        createTable(tableName, "(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
         createUser("'testGTPUser'@'%'", "IDENTIFIED BY 'aha'");
         this.stmt.executeUpdate("grant SELECT on `" + this.dbName + "`.`testGetTablePrivileges` to 'testGTPUser'@'%'");
 
@@ -1728,22 +1731,28 @@ public class MetadataTest extends BaseTestCase {
                     conn1 = getConnectionWithProps(props);
                     DatabaseMetaData metaData = conn1.getMetaData();
 
-                    this.rs = metaData.getTablePrivileges(null, null, "testGetTablePriv%");
-                    testGetTablePrivileges_checkResult(dbMapsToSchema);
+                    String tablePattern = "testGetTablePriv%";
+                    if (!metaData.supportsMixedCaseIdentifiers()) {
+                        tableName = tableName.toLowerCase();
+                        tablePattern = tablePattern.toLowerCase();
+                    }
 
-                    this.rs = metaData.getTablePrivileges(null, this.dbName, "testGetTablePriv%");
-                    testGetTablePrivileges_checkResult(dbMapsToSchema);
+                    this.rs = metaData.getTablePrivileges(null, null, tablePattern);
+                    testGetTablePrivileges_checkResult(dbMapsToSchema, tableName);
 
-                    this.rs = metaData.getTablePrivileges(this.dbName, null, "testGetTablePriv%");
-                    testGetTablePrivileges_checkResult(dbMapsToSchema);
+                    this.rs = metaData.getTablePrivileges(null, this.dbName, tablePattern);
+                    testGetTablePrivileges_checkResult(dbMapsToSchema, tableName);
+
+                    this.rs = metaData.getTablePrivileges(this.dbName, null, tablePattern);
+                    testGetTablePrivileges_checkResult(dbMapsToSchema, tableName);
 
                     if (dbMapsToSchema) {
                         String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
-                        this.rs = metaData.getTablePrivileges(null, dbPattern, "testGetTablePriv%");
+                        this.rs = metaData.getTablePrivileges(null, dbPattern, tablePattern);
                         assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
                     } else {
                         String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
-                        this.rs = metaData.getTablePrivileges(dbPattern, null, "testGetTablePriv%");
+                        this.rs = metaData.getTablePrivileges(dbPattern, null, tablePattern);
                         assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
                     }
 
@@ -1756,7 +1765,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
-    private void testGetTablePrivileges_checkResult(boolean dbMapsToSchema) throws Exception {
+    private void testGetTablePrivileges_checkResult(boolean dbMapsToSchema, String tableName) throws Exception {
         assertTrue(this.rs.next());
         if (dbMapsToSchema) {
             assertEquals("def", this.rs.getString("TABLE_CAT"));
@@ -1765,7 +1774,7 @@ public class MetadataTest extends BaseTestCase {
             assertEquals(this.dbName, this.rs.getString("TABLE_CAT"));
             assertNull(this.rs.getString("TABLE_SCHEM"));
         }
-        assertEquals("testGetTablePrivileges", this.rs.getString("TABLE_NAME"));
+        assertEquals(tableName, this.rs.getString("TABLE_NAME"));
         assertTrue(this.rs.getString("GRANTOR").startsWith(mainConnectionUrl.getMainHost().getUser()));
         assertEquals("testGTPUser@%", this.rs.getString("GRANTEE"));
         assertEquals("SELECT", this.rs.getString("PRIVILEGE"));
