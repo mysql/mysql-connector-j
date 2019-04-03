@@ -1322,7 +1322,13 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                     }
                 }
             } catch (IOException ioEx) {
-                this.log.logWarn("Caught while disconnecting...", ioEx);
+                // See https://bugs.mysql.com/bug.php?id=93590
+                // Inspired by: https://github.com/netty/netty/issues/1340
+                // This is a java11 "bug", so don't log it
+                String msg = ioEx.getMessage();
+                if (msg == null || !msg.contains("closing inbound before receiving peer's close_notify")) {
+                    this.log.logWarn("Caught while disconnecting...", ioEx);
+                }
             }
 
             this.packetSequence = -1;
