@@ -1379,6 +1379,8 @@ public class MetadataTest extends BaseTestCase {
     }
 
     public void testGetExportedKeys() throws Exception {
+        this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
+        this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
         createTable("parent", "(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
         createTable("child", "(id INT, parent_id INT, FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
 
