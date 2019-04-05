@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2638,10 +2638,18 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
     private final char getSuccessor(char c, int n) {
         return ((c == 'y') && (n == 2)) ? 'X'
-                : (((c == 'y') && (n < 4)) ? 'y' : ((c == 'y') ? 'M' : (((c == 'M') && (n == 2)) ? 'Y'
-                        : (((c == 'M') && (n < 3)) ? 'M' : ((c == 'M') ? 'd' : (((c == 'd') && (n < 2)) ? 'd' : ((c == 'd') ? 'H' : (((c == 'H') && (n < 2))
-                                ? 'H'
-                                : ((c == 'H') ? 'm' : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
+                : (((c == 'y') && (n < 4)) ? 'y'
+                        : ((c == 'y') ? 'M'
+                                : (((c == 'M') && (n == 2)) ? 'Y'
+                                        : (((c == 'M') && (n < 3)) ? 'M'
+                                                : ((c == 'M') ? 'd'
+                                                        : (((c == 'd') && (n < 2)) ? 'd'
+                                                                : ((c == 'd') ? 'H'
+                                                                        : (((c == 'H') && (n < 2)) ? 'H'
+                                                                                : ((c == 'H') ? 'm'
+                                                                                        : (((c == 'm') && (n < 2)) ? 'm'
+                                                                                                : ((c == 'm') ? 's'
+                                                                                                        : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
     }
 
     /**
@@ -2749,10 +2757,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
             if (this.useUsageAdvisor) {
                 if (this.numberOfExecutions <= 1) {
-                    String message = Messages.getString("PreparedStatement.43");
-
-                    this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1,
-                            System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                    this.connection.getProfilerEventHandlerInstance().processEvent(ProfilerEvent.TYPE_USAGE, this.connection, this, null, 0, new Throwable(),
+                            Messages.getString("PreparedStatement.43"));
                 }
             }
 

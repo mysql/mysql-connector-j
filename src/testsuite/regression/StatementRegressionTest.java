@@ -4555,6 +4555,10 @@ public class StatementRegressionTest extends BaseTestCase {
             public int getBytesSize() throws SQLException {
                 return 0;
             }
+
+            public int getId() {
+                return 0;
+            }
         };
     }
 

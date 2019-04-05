@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1078,13 +1078,10 @@ public class SQLError {
 
         if (dueToTimeout == DUE_TO_TIMEOUT_TRUE || dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
 
-            if (lastPacketReceivedTimeMs != 0) {
-                Object[] timingInfo = { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) };
-                exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", timingInfo));
-            } else {
-                exceptionMessageBuf.append(
-                        Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
-            }
+            exceptionMessageBuf.append(lastPacketReceivedTimeMs != 0
+                    ? Messages.getString("CommunicationsException.ServerPacketTimingInfo",
+                            new Object[] { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) })
+                    : Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
 
             if (timeoutMessageBuf != null) {
                 exceptionMessageBuf.append(timeoutMessageBuf);
@@ -1100,12 +1097,9 @@ public class SQLError {
             //
 
             if (underlyingException instanceof BindException) {
-                if (conn.getLocalSocketAddress() != null && !Util.interfaceExists(conn.getLocalSocketAddress())) {
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable"));
-                } else {
-                    // too many client connections???
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.TooManyClientConnections"));
-                }
+                exceptionMessageBuf.append(conn.getLocalSocketAddress() != null && !Util.interfaceExists(conn.getLocalSocketAddress())
+                        ? Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable")
+                        : Messages.getString("CommunicationsException.TooManyClientConnections"));
             }
         }
 
@@ -1115,13 +1109,10 @@ public class SQLError {
 
             if (conn != null && conn.getMaintainTimeStats() && !conn.getParanoid()) {
                 exceptionMessageBuf.append("\n\n");
-                if (lastPacketReceivedTimeMs != 0) {
-                    Object[] timingInfo = { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) };
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfo", timingInfo));
-                } else {
-                    exceptionMessageBuf.append(Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv",
-                            new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
-                }
+                exceptionMessageBuf.append(lastPacketReceivedTimeMs != 0
+                        ? Messages.getString("CommunicationsException.ServerPacketTimingInfo",
+                                new Object[] { Long.valueOf(timeSinceLastPacketReceivedMs), Long.valueOf(timeSinceLastPacketSentMs) })
+                        : Messages.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", new Object[] { Long.valueOf(timeSinceLastPacketSentMs) }));
             }
         }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,24 +21,46 @@
 
  */
 
-package testsuite.simple;
+package testsuite;
 
 import com.mysql.jdbc.log.StandardLogger;
-import com.mysql.jdbc.profiler.ProfilerEvent;
 
-public class TestBug57662Logger extends StandardLogger {
+/**
+ * Provides logging facilities for those platforms that don't have built-in facilities. Simply logs messages to STDERR.
+ */
+public class BufferingLogger extends StandardLogger {
 
-    public boolean hasNegativeDurations = false;
+    private static StringBuffer bufferedLog = null;
 
-    public TestBug57662Logger(String name) {
-        super(name, false);
+    public BufferingLogger(String name) {
+        super(name);
+    }
+
+    public BufferingLogger(String name, boolean logLocationInfo) {
+        super(name, logLocationInfo);
+    }
+
+    public static void startLoggingToBuffer() {
+        bufferedLog = new StringBuffer();
+    }
+
+    public static void dropBuffer() {
+        bufferedLog = null;
+    }
+
+    public static Appendable getBuffer() {
+        return bufferedLog;
     }
 
     @Override
     protected String logInternal(int level, Object msg, Throwable exception) {
-        if (!this.hasNegativeDurations && msg instanceof ProfilerEvent) {
-            this.hasNegativeDurations = ((ProfilerEvent) msg).getEventDuration() < 0;
+
+        String messageAsString = super.logInternal(level, msg, exception);
+
+        if (bufferedLog != null) {
+            bufferedLog.append(messageAsString);
         }
-        return super.logInternal(level, msg, exception);
+
+        return messageAsString;
     }
 }

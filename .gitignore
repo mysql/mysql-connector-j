@@ -8,3 +8,5 @@
 *.lock
 *.swp
 *.DS_Store
+*.diff
+*.sh

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,8 +24,14 @@
 package com.mysql.jdbc.profiler;
 
 import com.mysql.jdbc.Extension;
+import com.mysql.jdbc.MySQLConnection;
+import com.mysql.jdbc.ResultSetInternalMethods;
+import com.mysql.jdbc.Statement;
 
 public interface ProfilerEventHandler extends Extension {
 
-    public void consumeEvent(ProfilerEvent evt);
+    void consumeEvent(ProfilerEvent evt);
+
+    void processEvent(byte eventType, MySQLConnection conn, Statement stmt, ResultSetInternalMethods resultSet, long eventDuration,
+            Throwable eventCreationPoint, String message);
 }

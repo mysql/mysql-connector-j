@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -65,10 +65,10 @@ import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.log.StandardLogger;
 
 import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
+import testsuite.BufferingLogger;
 
 /**
  * Tests java.sql.Connection functionality
@@ -815,7 +815,7 @@ public class ConnectionTest extends BaseTestCase {
 
         props.setProperty("cacheServerConfiguration", "true");
         props.setProperty("profileSQL", "true");
-        props.setProperty("logFactory", "com.mysql.jdbc.log.StandardLogger");
+        props.setProperty("logFactory", BufferingLogger.class.getName());
 
         Connection conn1 = null;
         Connection conn2 = null;
@@ -824,18 +824,18 @@ public class ConnectionTest extends BaseTestCase {
 
             try {
                 // eliminate side-effects when not run in isolation
-                StandardLogger.startLoggingToBuffer();
+                BufferingLogger.startLoggingToBuffer();
 
                 conn2 = getConnectionWithProps(props);
 
-                assertTrue("Configuration wasn't cached", StandardLogger.getBuffer().toString().indexOf("SHOW VARIABLES") == -1);
+                assertTrue("Configuration wasn't cached", BufferingLogger.getBuffer().toString().indexOf("SHOW VARIABLES") == -1);
 
                 if (versionMeetsMinimum(4, 1)) {
-                    assertTrue("Configuration wasn't cached", StandardLogger.getBuffer().toString().indexOf("SHOW COLLATION") == -1);
+                    assertTrue("Configuration wasn't cached", BufferingLogger.getBuffer().toString().indexOf("SHOW COLLATION") == -1);
 
                 }
             } finally {
-                StandardLogger.dropBuffer();
+                BufferingLogger.dropBuffer();
             }
         } finally {
             if (conn1 != null) {
@@ -860,19 +860,19 @@ public class ConnectionTest extends BaseTestCase {
 
         props.setProperty("useLocalSessionState", "true");
         props.setProperty("profileSQL", "true");
-        props.setProperty("logFactory", "com.mysql.jdbc.log.StandardLogger");
+        props.setProperty("logFactory", BufferingLogger.class.getName());
 
         Connection conn1 = getConnectionWithProps(props);
         conn1.setAutoCommit(true);
         conn1.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
 
-        StandardLogger.startLoggingToBuffer();
+        BufferingLogger.startLoggingToBuffer();
 
         conn1.setAutoCommit(true);
         conn1.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
         conn1.getTransactionIsolation();
 
-        String logAsString = StandardLogger.getBuffer().toString();
+        String logAsString = BufferingLogger.getBuffer().toString();
         String txIsolationName = versionMeetsMinimum(4, 0, 3) && !versionMeetsMinimum(8, 0, 3) ? "tx_isolation" : "transaction_isolation";
 
         assertTrue(logAsString.indexOf("SET SESSION") == -1 && logAsString.indexOf("SHOW VARIABLES LIKE '" + txIsolationName + "'") == -1
@@ -970,16 +970,16 @@ public class ConnectionTest extends BaseTestCase {
         props.setProperty("useOldUTF8Behavior", "true");
         props.setProperty("useUnicode", "true");
         props.setProperty("characterEncoding", "UTF-8");
-        props.setProperty("logFactory", "com.mysql.jdbc.log.StandardLogger");
+        props.setProperty("logFactory", BufferingLogger.class.getName());
         props.setProperty("profileSQL", "true");
-        StandardLogger.startLoggingToBuffer();
+        BufferingLogger.startLoggingToBuffer();
 
         try {
             getConnectionWithProps(props);
 
-            assertTrue(StringUtils.indexOfIgnoreCase(StandardLogger.getBuffer().toString(), "SET NAMES utf8") == -1);
+            assertTrue(StringUtils.indexOfIgnoreCase(BufferingLogger.getBuffer().toString(), "SET NAMES utf8") == -1);
         } finally {
-            StandardLogger.dropBuffer();
+            BufferingLogger.dropBuffer();
         }
     }
 
@@ -1379,22 +1379,22 @@ public class ConnectionTest extends BaseTestCase {
 
         PrintStream stderr = System.err;
 
-        StandardLogger.startLoggingToBuffer();
+        BufferingLogger.startLoggingToBuffer();
 
         try {
             Properties props = new Properties();
             props.setProperty("useUsageAdvisor", "true");
             props.setProperty("resultSetSizeThreshold", "4");
-            props.setProperty("logger", "StandardLogger");
+            props.setProperty("logger", BufferingLogger.class.getName());
 
             uaConn = getConnectionWithProps(props);
             this.rs = uaConn.createStatement().executeQuery("SHOW VARIABLES");
             this.rs.close();
 
             assertTrue("Result set threshold message not present",
-                    StandardLogger.getBuffer().toString().indexOf("larger than \"resultSetSizeThreshold\" of 4 rows") != -1);
+                    BufferingLogger.getBuffer().toString().indexOf("larger than \"resultSetSizeThreshold\" of 4 rows") != -1);
         } finally {
-            StandardLogger.dropBuffer();
+            BufferingLogger.dropBuffer();
             System.setErr(stderr);
 
             if (uaConn != null) {
@@ -1412,8 +1412,9 @@ public class ConnectionTest extends BaseTestCase {
         props.setProperty("useLocalSessionState", "true");
         props.setProperty("useLocalTransactionState", "true");
         props.setProperty("profileSQL", "true");
+        props.setProperty("logger", BufferingLogger.class.getName());
 
-        StandardLogger.startLoggingToBuffer();
+        BufferingLogger.startLoggingToBuffer();
 
         createTable("testUseLocalSessionState", "(field1 varchar(32))", "InnoDB");
 
@@ -1434,8 +1435,8 @@ public class ConnectionTest extends BaseTestCase {
             localStateConn.commit();
             localStateStmt.close();
         } finally {
-            searchIn = StandardLogger.getBuffer().toString();
-            StandardLogger.dropBuffer();
+            searchIn = BufferingLogger.getBuffer().toString();
+            BufferingLogger.dropBuffer();
 
             if (localStateStmt != null) {
                 localStateStmt.close();
@@ -1717,53 +1718,54 @@ public class ConnectionTest extends BaseTestCase {
     public void testReadOnly56() throws Exception {
         if (versionMeetsMinimum(5, 6, 5)) {
             try {
-                Connection notLocalState = getConnectionWithProps("profileSql=true");
+                Connection notLocalState = getConnectionWithProps("profileSql=true,logger=" + BufferingLogger.class.getName());
 
                 for (int i = 0; i < 2; i++) {
-                    StandardLogger.startLoggingToBuffer();
+                    BufferingLogger.startLoggingToBuffer();
                     notLocalState.setReadOnly(true);
-                    assertTrue(StandardLogger.getBuffer().toString().indexOf("set session transaction read only") != -1);
+                    assertTrue(BufferingLogger.getBuffer().toString().indexOf("set session transaction read only") != -1);
                     notLocalState.createStatement().execute("set session transaction read write");
                     assertFalse(notLocalState.isReadOnly());
                 }
 
                 for (int i = 0; i < 2; i++) {
-                    StandardLogger.startLoggingToBuffer();
+                    BufferingLogger.startLoggingToBuffer();
                     notLocalState.setReadOnly(false);
-                    assertTrue(StandardLogger.getBuffer().toString().indexOf("set session transaction read write") != -1);
+                    assertTrue(BufferingLogger.getBuffer().toString().indexOf("set session transaction read write") != -1);
                     notLocalState.createStatement().execute("set session transaction read only");
                     assertTrue(notLocalState.isReadOnly());
                 }
 
-                Connection localState = getConnectionWithProps("profileSql=true,useLocalSessionState=true");
+                Connection localState = getConnectionWithProps("profileSql=true,useLocalSessionState=true,logger=" + BufferingLogger.class.getName());
 
                 String txReadOnlyName = versionMeetsMinimum(8, 0, 3) ? "transaction_read_only" : "tx_read_only";
 
                 for (int i = 0; i < 2; i++) {
-                    StandardLogger.startLoggingToBuffer();
+                    BufferingLogger.startLoggingToBuffer();
                     localState.setReadOnly(true);
                     if (i == 0) {
-                        assertTrue(StandardLogger.getBuffer().toString().indexOf("set session transaction read only") != -1);
+                        assertTrue(BufferingLogger.getBuffer().toString().indexOf("set session transaction read only") != -1);
                     } else {
-                        assertTrue(StandardLogger.getBuffer().toString().indexOf("set session transaction read only") == -1);
+                        assertTrue(BufferingLogger.getBuffer().toString().indexOf("set session transaction read only") == -1);
                     }
-                    StandardLogger.startLoggingToBuffer();
+                    BufferingLogger.startLoggingToBuffer();
                     localState.isReadOnly();
-                    assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session." + txReadOnlyName) == -1);
+                    assertTrue(BufferingLogger.getBuffer().toString().indexOf("select @@session." + txReadOnlyName) == -1);
                 }
 
-                Connection noOptimization = getConnectionWithProps("profileSql=true,readOnlyPropagatesToServer=false");
+                Connection noOptimization = getConnectionWithProps(
+                        "profileSql=true,readOnlyPropagatesToServer=false,logger=" + BufferingLogger.class.getName());
 
                 for (int i = 0; i < 2; i++) {
-                    StandardLogger.startLoggingToBuffer();
+                    BufferingLogger.startLoggingToBuffer();
                     noOptimization.setReadOnly(true);
-                    assertTrue(StandardLogger.getBuffer().toString().indexOf("set session transaction read only") == -1);
-                    StandardLogger.startLoggingToBuffer();
+                    assertTrue(BufferingLogger.getBuffer().toString().indexOf("set session transaction read only") == -1);
+                    BufferingLogger.startLoggingToBuffer();
                     noOptimization.isReadOnly();
-                    assertTrue(StandardLogger.getBuffer().toString().indexOf("select @@session." + txReadOnlyName) == -1);
+                    assertTrue(BufferingLogger.getBuffer().toString().indexOf("select @@session." + txReadOnlyName) == -1);
                 }
             } finally {
-                StandardLogger.dropBuffer();
+                BufferingLogger.dropBuffer();
             }
         }
     }

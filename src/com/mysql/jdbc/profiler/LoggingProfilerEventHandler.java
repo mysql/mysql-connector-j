@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,6 +27,10 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.Constants;
+import com.mysql.jdbc.MySQLConnection;
+import com.mysql.jdbc.ResultSetInternalMethods;
+import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.log.Log;
 
 /**
@@ -39,10 +43,14 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
     }
 
     public void consumeEvent(ProfilerEvent evt) {
-        if (evt.eventType == ProfilerEvent.TYPE_WARN) {
-            this.log.logWarn(evt);
-        } else {
-            this.log.logInfo(evt);
+        switch (evt.getEventType()) {
+            case ProfilerEvent.TYPE_USAGE:
+                this.log.logWarn(evt);
+                break;
+
+            default:
+                this.log.logInfo(evt);
+                break;
         }
     }
 
@@ -52,6 +60,22 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
 
     public void init(Connection conn, Properties props) throws SQLException {
         this.log = conn.getLog();
+    }
+
+    public void processEvent(byte eventType, MySQLConnection conn, Statement stmt, ResultSetInternalMethods resultSet, long eventDuration,
+            Throwable eventCreationPoint, String message) {
+        String catalog = "";
+        try {
+            if (conn != null) {
+                catalog = conn.getCatalog();
+            }
+        } catch (SQLException e) {
+            // ignore, should not happen
+        }
+        consumeEvent(new ProfilerEvent(eventType, conn == null ? "" : conn.getHost(), catalog, conn == null ? ProfilerEvent.NA : conn.getId(),
+                stmt == null ? ProfilerEvent.NA : stmt.getId(), resultSet == null ? ProfilerEvent.NA : resultSet.getId(), eventDuration,
+                conn == null ? Constants.MILLIS_I18N : conn.getQueryTimingUnits(), eventCreationPoint, message));
+
     }
 
 }

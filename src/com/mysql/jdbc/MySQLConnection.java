@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -141,6 +141,16 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
     void initializeSafeStatementInterceptors() throws SQLException;
 
+    /**
+     * Update statistics that allows the driver to determine if a query is slow enough to be logged,
+     * and return the estimation result for millisOrNanos value.
+     * <p>
+     * Used in case autoSlowLog=true.
+     * 
+     * @param millisOrNanos
+     *            query execution time
+     * @return true if millisOrNanos is outside the 99th percentile?
+     */
     boolean isAbonormallyLongQuery(long millisOrNanos);
 
     boolean isClientTzUTC();
@@ -214,4 +224,6 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
     void setProfilerEventHandlerInstance(ProfilerEventHandler h);
 
     public boolean isServerTruncatesFracSecs();
+
+    String getQueryTimingUnits();
 }

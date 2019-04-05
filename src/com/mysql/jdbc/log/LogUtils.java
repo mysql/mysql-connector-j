@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,7 +24,6 @@
 package com.mysql.jdbc.log;
 
 import com.mysql.jdbc.Util;
-import com.mysql.jdbc.profiler.ProfilerEvent;
 
 public class LogUtils {
 
@@ -33,87 +32,6 @@ public class LogUtils {
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
     private static final int LINE_SEPARATOR_LENGTH = LINE_SEPARATOR.length();
-
-    public static Object expandProfilerEventIfNecessary(Object possibleProfilerEvent) {
-
-        if (possibleProfilerEvent instanceof ProfilerEvent) {
-            StringBuilder msgBuf = new StringBuilder();
-
-            ProfilerEvent evt = (ProfilerEvent) possibleProfilerEvent;
-
-            String locationInformation = evt.getEventCreationPointAsString();
-
-            if (locationInformation == null) {
-                locationInformation = Util.stackTraceToString(new Throwable());
-            }
-
-            msgBuf.append("Profiler Event: [");
-
-            switch (evt.getEventType()) {
-                case ProfilerEvent.TYPE_EXECUTE:
-                    msgBuf.append("EXECUTE");
-
-                    break;
-
-                case ProfilerEvent.TYPE_FETCH:
-                    msgBuf.append("FETCH");
-
-                    break;
-
-                case ProfilerEvent.TYPE_OBJECT_CREATION:
-                    msgBuf.append("CONSTRUCT");
-
-                    break;
-
-                case ProfilerEvent.TYPE_PREPARE:
-                    msgBuf.append("PREPARE");
-
-                    break;
-
-                case ProfilerEvent.TYPE_QUERY:
-                    msgBuf.append("QUERY");
-
-                    break;
-
-                case ProfilerEvent.TYPE_WARN:
-                    msgBuf.append("WARN");
-
-                    break;
-
-                case ProfilerEvent.TYPE_SLOW_QUERY:
-                    msgBuf.append("SLOW QUERY");
-
-                    break;
-
-                default:
-                    msgBuf.append("UNKNOWN");
-            }
-
-            msgBuf.append("] ");
-            msgBuf.append(locationInformation);
-            msgBuf.append(" duration: ");
-            msgBuf.append(evt.getEventDuration());
-            msgBuf.append(" ");
-            msgBuf.append(evt.getDurationUnits());
-            msgBuf.append(", connection-id: ");
-            msgBuf.append(evt.getConnectionId());
-            msgBuf.append(", statement-id: ");
-            msgBuf.append(evt.getStatementId());
-            msgBuf.append(", resultset-id: ");
-            msgBuf.append(evt.getResultSetId());
-
-            String evtMessage = evt.getMessage();
-
-            if (evtMessage != null) {
-                msgBuf.append(", message: ");
-                msgBuf.append(evtMessage);
-            }
-
-            return msgBuf;
-        }
-
-        return possibleProfilerEvent;
-    }
 
     public static String findCallingClassAndMethod(Throwable t) {
         String stackTraceAsString = Util.stackTraceToString(t);

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1166,14 +1166,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             if (this.useUsageAdvisor) {
                 if ((this.deleter == null) && (this.inserter == null) && (this.refresher == null) && (this.updater == null)) {
-                    this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
-
-                    String message = Messages.getString("UpdatableResultSet.34");
-
-                    this.eventSink.consumeEvent(
-                            new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", (this.owningStatement == null) ? "N/A" : this.owningStatement.currentCatalog,
-                                    this.connectionId, (this.owningStatement == null) ? (-1) : this.owningStatement.getId(), this.resultId,
-                                    System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                    this.connection.getProfilerEventHandlerInstance().processEvent(ProfilerEvent.TYPE_USAGE, this.connection, this.owningStatement, this, 0,
+                            new Throwable(), Messages.getString("UpdatableResultSet.34"));
                 }
             }
 

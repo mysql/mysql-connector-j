@@ -133,10 +133,12 @@ import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXid;
 import com.mysql.jdbc.jdbc2.optional.SuspendableXAConnection;
 import com.mysql.jdbc.jmx.ReplicationGroupManagerMBean;
-import com.mysql.jdbc.log.StandardLogger;
+import com.mysql.jdbc.log.LogUtils;
+import com.mysql.jdbc.profiler.ProfilerEvent;
 
 import testsuite.BaseStatementInterceptor;
 import testsuite.BaseTestCase;
+import testsuite.BufferingLogger;
 import testsuite.UnreliableSocketFactory;
 
 /**
@@ -1194,7 +1196,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Properties props = new Properties();
             props.setProperty("profileSQL", "true");
             props.setProperty("maxQuerySizeToLog", "2");
-            props.setProperty("logger", "com.mysql.jdbc.log.StandardLogger");
+            props.setProperty("logger", BufferingLogger.class.getName());
 
             profileConn = getConnectionWithProps(props);
 
@@ -1290,7 +1292,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         try {
             Properties props = new Properties();
             props.setProperty("useUsageAdvisor", "true");
-            props.setProperty("logger", "com.mysql.jdbc.log.StandardLogger");
+            props.setProperty("logger", BufferingLogger.class.getName());
 
             advisorConn = getConnectionWithProps(props);
             advisorStmt = advisorConn.createStatement();
@@ -1548,11 +1550,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.setProperty("elideSetAutoCommits", "true");
-        props.setProperty("logger", "StandardLogger");
+        props.setProperty("logger", BufferingLogger.class.getName());
         props.setProperty("profileSQL", "true");
         Connection c = null;
 
-        StandardLogger.startLoggingToBuffer();
+        BufferingLogger.startLoggingToBuffer();
 
         try {
             c = getConnectionWithProps(props);
@@ -1565,7 +1567,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             // We should only see _one_ "set autocommit=" sent to the server
 
-            String log = StandardLogger.getBuffer().toString();
+            String log = BufferingLogger.getBuffer().toString();
             int searchFrom = 0;
             int count = 0;
             int found = 0;
@@ -1578,7 +1580,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             // The SELECT doesn't actually start a transaction, so being pedantic the driver issues SET autocommit=0 again in this case.
             assertEquals(2, count);
         } finally {
-            StandardLogger.dropBuffer();
+            BufferingLogger.dropBuffer();
 
             if (c != null) {
                 c.close();
@@ -1800,8 +1802,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug27655() throws Exception {
         Properties props = new Properties();
         props.setProperty("profileSQL", "true");
-        props.setProperty("logger", "StandardLogger");
-        StandardLogger.startLoggingToBuffer();
+        props.setProperty("logger", BufferingLogger.class.getName());
+        BufferingLogger.startLoggingToBuffer();
 
         Connection loggedConn = null;
 
@@ -1810,12 +1812,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
             loggedConn.getTransactionIsolation();
 
             if (versionMeetsMinimum(8, 0, 3)) {
-                assertEquals(-1, StandardLogger.getBuffer().toString().indexOf("SHOW VARIABLES LIKE 'transaction_isolation'"));
+                assertEquals(-1, BufferingLogger.getBuffer().toString().indexOf("SHOW VARIABLES LIKE 'transaction_isolation'"));
             } else if (versionMeetsMinimum(4, 0, 3)) {
-                assertEquals(-1, StandardLogger.getBuffer().toString().indexOf("SHOW VARIABLES LIKE 'tx_isolation'"));
+                assertEquals(-1, BufferingLogger.getBuffer().toString().indexOf("SHOW VARIABLES LIKE 'tx_isolation'"));
             }
         } finally {
-            StandardLogger.dropBuffer();
+            BufferingLogger.dropBuffer();
             if (loggedConn != null) {
                 loggedConn.close();
             }
@@ -3197,7 +3199,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     public void testStatementComment() throws Exception {
-        Connection c = getConnectionWithProps("autoGenerateTestcaseScript=true,logger=StandardLogger");
+        Connection c = getConnectionWithProps("autoGenerateTestcaseScript=true,logger=" + BufferingLogger.class.getName());
         PrintStream oldErr = System.err;
 
         try {
@@ -8340,9 +8342,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug21947042() throws Exception {
         Connection sslConn = null;
         Properties props = new Properties();
-        props.setProperty("logger", "StandardLogger");
+        props.setProperty("logger", BufferingLogger.class.getName());
 
-        StandardLogger.startLoggingToBuffer();
+        BufferingLogger.startLoggingToBuffer();
 
         try {
             int searchFrom = 0;
@@ -8373,7 +8375,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             sslConn.close();
 
             // check for warning
-            String log = StandardLogger.getBuffer().toString();
+            String log = BufferingLogger.getBuffer().toString();
             found = log.indexOf(Messages.getString("MysqlIO.SSLWarning"), searchFrom);
             searchFrom = found + 1;
             if (versionMeetsMinimum(5, 7)) {
@@ -8400,7 +8402,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             sslConn.close();
 
             // check for warning
-            log = StandardLogger.getBuffer().toString();
+            log = BufferingLogger.getBuffer().toString();
             found = log.indexOf(Messages.getString("MysqlIO.SSLWarning"), searchFrom);
             if (found != -1) {
                 searchFrom = found + 1;
@@ -8430,7 +8432,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             sslConn.close();
 
             // check for warning
-            log = StandardLogger.getBuffer().toString();
+            log = BufferingLogger.getBuffer().toString();
             found = log.indexOf(Messages.getString("MysqlIO.SSLWarning"), searchFrom);
             if (found != -1) {
                 searchFrom = found + 1;
@@ -8438,7 +8440,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
         } finally {
-            StandardLogger.dropBuffer();
+            BufferingLogger.dropBuffer();
         }
     }
 
@@ -11069,6 +11071,112 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 this.cnt++;
             }
             return null;
+        }
+    }
+
+    /**
+     * Test fix for Bug#41172 (11750577), PROFILEREVENT.PACK() THROWS ARRAYINDEXOUTOFBOUNDSEXCEPTION.
+     * 
+     * @throws Exception
+     */
+    public void testBug41172() throws Exception {
+        byte eventType = ProfilerEvent.TYPE_FETCH;
+        String host = "host1";
+        String db = "db1";
+        long connId = Long.MAX_VALUE;
+        int stId = Integer.MAX_VALUE;
+        int rsId = Integer.MAX_VALUE;
+        long duration = Long.MAX_VALUE;
+        String durationUnits = "ms";
+        Throwable t = new Throwable();
+        String mess = "message1";
+
+        ProfilerEvent pe1 = new ProfilerEvent(eventType, host, db, connId, stId, rsId, duration, durationUnits, t, mess);
+        pe1.hostNameIndex = 1;
+        pe1.catalogIndex = 2;
+        pe1.eventCreationPointIndex = 3;
+
+        byte[] buf1 = pe1.pack();
+        ProfilerEvent pe2 = ProfilerEvent.unpack(buf1);
+
+        assertEquals(eventType, pe2.getEventType());
+        assertEquals(host, pe2.getHostName());
+        assertEquals(db, pe2.getCatalog());
+        assertEquals(connId, pe2.getConnectionId());
+        assertEquals(stId, pe2.getStatementId());
+        assertEquals(rsId, pe2.getResultSetId());
+        assertEquals(duration, pe2.getEventDuration());
+        assertEquals(durationUnits, pe2.getDurationUnits());
+        assertEquals(LogUtils.findCallingClassAndMethod(t), pe2.getEventCreationPointAsString());
+        assertEquals(mess, pe2.getMessage());
+        assertEquals(1, pe2.hostNameIndex);
+        assertEquals(2, pe2.catalogIndex);
+        assertEquals(3, pe2.eventCreationPointIndex);
+    }
+
+    /**
+     * Test fix for Bug#74690 (20010454), PROFILEREVENT HOSTNAME HAS NO GETTER().
+     * 
+     * @throws Exception
+     */
+    public void testBug74690() throws Exception {
+        byte eventType = ProfilerEvent.TYPE_FETCH;
+        String host = "host1";
+        String db = "db1";
+        long connId = Long.MAX_VALUE;
+        int stId = Integer.MAX_VALUE;
+        int rsId = Integer.MAX_VALUE;
+        long duration = Long.MAX_VALUE;
+        String durationUnits = "ms";
+        Throwable t = new Throwable();
+        String mess = "message1";
+
+        ProfilerEvent pe1 = new ProfilerEvent(eventType, host, db, connId, stId, rsId, duration, durationUnits, t, mess);
+        assertEquals(eventType, pe1.getEventType());
+        assertEquals(host, pe1.getHostName());
+        assertEquals(db, pe1.getCatalog());
+        assertEquals(connId, pe1.getConnectionId());
+        assertEquals(stId, pe1.getStatementId());
+        assertEquals(rsId, pe1.getResultSetId());
+        assertEquals(duration, pe1.getEventDuration());
+        assertEquals(durationUnits, pe1.getDurationUnits());
+        assertEquals(LogUtils.findCallingClassAndMethod(t), pe1.getEventCreationPointAsString());
+        assertEquals(mess, pe1.getMessage());
+
+        ProfilerEvent pe2 = new ProfilerEvent(eventType, null, null, connId, stId, rsId, duration, null, null, null);
+        assertEquals("", pe2.getHostName());
+        assertEquals("", pe2.getCatalog());
+        assertEquals("", pe2.getDurationUnits());
+        assertEquals(LogUtils.findCallingClassAndMethod(null), pe1.getEventCreationPointAsString());
+        assertEquals("", pe2.getMessage());
+
+    }
+
+    /**
+     * Test fix for Bug#70677 (17640628), CONNECTOR J WITH PROFILESQL - LOG CONTAINS LOTS OF STACKTRACE DATA.
+     * 
+     * @throws Exception
+     */
+    public void testBug70677() throws Exception {
+        Properties props = new Properties();
+        props.setProperty("profileSQL", "true");
+        props.setProperty("logger", BufferingLogger.class.getName());
+        BufferingLogger.startLoggingToBuffer();
+
+        Connection loggedConn = null;
+
+        try {
+            loggedConn = getConnectionWithProps(props);
+            Statement st = loggedConn.createStatement();
+            st.executeQuery("SELECT 70677");
+
+            assertTrue(BufferingLogger.getBuffer().toString().indexOf("SELECT 70677") > 0);
+            assertEquals(-1, BufferingLogger.getBuffer().toString().indexOf("** BEGIN NESTED EXCEPTION **"));
+        } finally {
+            BufferingLogger.dropBuffer();
+            if (loggedConn != null) {
+                loggedConn.close();
+            }
         }
     }
 }

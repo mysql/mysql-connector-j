@@ -63,7 +63,6 @@ import java.util.concurrent.Executor;
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.LogFactory;
-import com.mysql.jdbc.log.LogUtils;
 import com.mysql.jdbc.log.NullLogger;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
@@ -564,9 +563,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     private int[] perfMetricsHistCounts;
 
-    /** Point of origin where this Connection was created */
-    private String pointOfOrigin;
-
     /** The port number we're connected to (defaults to 3306) */
     private int port = 3306;
 
@@ -765,12 +761,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
         this.defaultTimeZone = TimeUtil.getDefaultTimeZone(getCacheDefaultTimezone());
 
         this.isClientTzUTC = !this.defaultTimeZone.useDaylightTime() && this.defaultTimeZone.getRawOffset() == 0;
-
-        if (getUseUsageAdvisor()) {
-            this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
-        } else {
-            this.pointOfOrigin = "";
-        }
 
         try {
             this.dbmd = getMetaData(false, false);
@@ -2456,17 +2446,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             // Fall-back if the master is back online if we've issued queriesBeforeRetryMaster queries since we failed over
             //
 
-            long queryStartTime = 0;
-
-            int endOfQueryPacketPosition = 0;
-
-            if (packet != null) {
-                endOfQueryPacketPosition = packet.getPosition();
-            }
-
-            if (getGatherPerformanceMetrics()) {
-                queryStartTime = System.currentTimeMillis();
-            }
+            long queryStartTime = getGatherPerformanceMetrics() ? System.currentTimeMillis() : 0;
+            int endOfQueryPacketPosition = packet != null ? packet.getPosition() : 0;
 
             this.lastQueryFinishedTime = 0; // we're busy!
 
@@ -2481,19 +2462,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             }
 
             try {
-                if (packet == null) {
-                    String encoding = null;
+                return packet == null
+                        ? this.io.sqlQueryDirect(callingStatement, sql, getUseUnicode() ? getEncoding() : null, null, maxRows, resultSetType,
+                                resultSetConcurrency, streamResults, catalog, cachedMetadata)
+                        : this.io.sqlQueryDirect(callingStatement, null, null, packet, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog,
+                                cachedMetadata);
 
-                    if (getUseUnicode()) {
-                        encoding = getEncoding();
-                    }
-
-                    return this.io.sqlQueryDirect(callingStatement, sql, encoding, null, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog,
-                            cachedMetadata);
-                }
-
-                return this.io.sqlQueryDirect(callingStatement, null, null, packet, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog,
-                        cachedMetadata);
             } catch (java.sql.SQLException sqlE) {
                 // don't clobber SQL exceptions
 
@@ -2540,9 +2514,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 }
 
                 if (getGatherPerformanceMetrics()) {
-                    long queryTime = System.currentTimeMillis() - queryStartTime;
-
-                    registerQueryExecutionTime(queryTime);
+                    registerQueryExecutionTime(System.currentTimeMillis() - queryStartTime);
                 }
             }
         }
@@ -2792,14 +2764,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
      */
     public long getIdleFor() {
         synchronized (getConnectionMutex()) {
-            if (this.lastQueryFinishedTime == 0) {
-                return 0;
-            }
-
-            long now = System.currentTimeMillis();
-            long idleTime = now - this.lastQueryFinishedTime;
-
-            return idleTime;
+            return this.lastQueryFinishedTime == 0 ? 0 : System.currentTimeMillis() - this.lastQueryFinishedTime;
         }
     }
 
@@ -3153,7 +3118,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
         this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
 
-        if (getProfileSql() || getUseUsageAdvisor()) {
+        if (getProfileSql() || getLogSlowQueries() || getUseUsageAdvisor()) {
             this.eventSink = ProfilerEventHandlerFactory.getInstance(getMultiHostSafeProxy());
         }
 
@@ -4206,23 +4171,21 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                     }
                 }
 
-                reportMetrics();
+                if (getGatherPerfMetrics()) {
+                    reportMetrics();
+                }
 
                 if (getUseUsageAdvisor()) {
                     if (!calledExplicitly) {
                         String message = "Connection implicitly closed by Driver. You should call Connection.close() from your code to free resources more efficiently and avoid resource leaks.";
 
-                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1,
-                                System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                        this.eventSink.processEvent(ProfilerEvent.TYPE_USAGE, this, null, null, 0, new Throwable(), message);
                     }
 
-                    long connectionLifeTime = System.currentTimeMillis() - this.connectionCreationTimeMillis;
-
-                    if (connectionLifeTime < 500) {
+                    if (System.currentTimeMillis() - this.connectionCreationTimeMillis < 500) {
                         String message = "Connection lifetime of < .5 seconds. You might be un-necessarily creating short-lived connections and should investigate connection pooling to be more efficient.";
 
-                        this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.getCatalog(), this.getId(), -1, -1,
-                                System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                        this.eventSink.processEvent(ProfilerEvent.TYPE_USAGE, this, null, null, 0, new Throwable(), message);
                     }
                 }
 
@@ -4261,6 +4224,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
             this.statementInterceptors = null;
             this.exceptionInterceptor = null;
             ProfilerEventHandlerFactory.removeInstance(this);
+            this.eventSink = null;
 
             synchronized (getConnectionMutex()) {
                 if (this.cancelTimer != null) {
@@ -5313,13 +5277,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
 
     public boolean isAbonormallyLongQuery(long millisOrNanos) {
         synchronized (getConnectionMutex()) {
-            if (this.queryTimeCount < 15) {
-                return false; // need a minimum amount for this to make sense
+            boolean res = false;
+            if (this.queryTimeCount > 14) { // need a minimum amount for this to make sense
+                double stddev = Math
+                        .sqrt((this.queryTimeSumSquares - ((this.queryTimeSum * this.queryTimeSum) / this.queryTimeCount)) / (this.queryTimeCount - 1));
+                res = millisOrNanos > (this.queryTimeMean + 5 * stddev);
             }
-
-            double stddev = Math.sqrt((this.queryTimeSumSquares - ((this.queryTimeSum * this.queryTimeSum) / this.queryTimeCount)) / (this.queryTimeCount - 1));
-
-            return millisOrNanos > (this.queryTimeMean + 5 * stddev);
+            reportQueryTime(millisOrNanos);
+            return res;
         }
     }
 
@@ -5548,5 +5513,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    public String getQueryTimingUnits() {
+        return this.io != null ? this.io.getQueryTimingUnits() : Constants.MILLIS_I18N;
     }
 }

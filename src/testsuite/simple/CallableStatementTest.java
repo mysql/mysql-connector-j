@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -33,9 +33,9 @@ import java.sql.Types;
 import java.util.Properties;
 
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.log.StandardLogger;
 
 import testsuite.BaseTestCase;
+import testsuite.BufferingLogger;
 
 /**
  * Tests callable statement functionality.
@@ -82,14 +82,14 @@ public class CallableStatementTest extends BaseTestCase {
 
                 executeBatchedStoredProc(this.conn);
 
-                batchedConn = getConnectionWithProps("logger=StandardLogger,rewriteBatchedStatements=true,profileSQL=true");
+                batchedConn = getConnectionWithProps("logger=" + BufferingLogger.class.getName() + ",rewriteBatchedStatements=true,profileSQL=true");
 
-                StandardLogger.startLoggingToBuffer();
+                BufferingLogger.startLoggingToBuffer();
                 executeBatchedStoredProc(batchedConn);
-                String[] log = StandardLogger.getBuffer().toString().split(";");
+                String[] log = BufferingLogger.getBuffer().toString().split(";");
                 assertTrue(log.length > 20);
             } finally {
-                StandardLogger.dropBuffer();
+                BufferingLogger.dropBuffer();
 
                 if (batchedConn != null) {
                     batchedConn.close();

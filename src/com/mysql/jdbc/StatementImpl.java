@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -47,9 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-import com.mysql.jdbc.log.LogUtils;
 import com.mysql.jdbc.profiler.ProfilerEvent;
-import com.mysql.jdbc.profiler.ProfilerEventHandler;
 
 /**
  * A Statement object is used for executing a static SQL statement and obtaining
@@ -200,16 +198,11 @@ public class StatementImpl implements Statement {
     /** The physical connection used to effectively execute the statement */
     protected Reference<MySQLConnection> physicalConnection = null;
 
-    protected long connectionId = 0;
-
     /** The catalog in use */
     protected String currentCatalog = null;
 
     /** Should we process escape codes? */
     protected boolean doEscapeProcessing = true;
-
-    /** If we're profiling, where should events go to? */
-    protected ProfilerEventHandler eventSink = null;
 
     /** The number of rows to fetch at a time (currently ignored) */
     private int fetchSize = 0;
@@ -234,12 +227,6 @@ public class StatementImpl implements Statement {
 
     /** Are we in pedantic mode? */
     protected boolean pedantic = false;
-
-    /**
-     * Where this statement was created, only used if profileSql or
-     * useUsageAdvisor set to true.
-     */
-    protected String pointOfOrigin;
 
     /** Should we profile? */
     protected boolean profileSQL = false;
@@ -319,7 +306,6 @@ public class StatementImpl implements Statement {
         }
 
         this.connection = c;
-        this.connectionId = this.connection.getId();
         this.exceptionInterceptor = this.connection.getExceptionInterceptor();
 
         this.currentCatalog = catalog;
@@ -350,10 +336,8 @@ public class StatementImpl implements Statement {
             this.statementId = statementCounter++;
         }
         if (profiling) {
-            this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
             this.profileSQL = this.connection.getProfileSql();
             this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
-            this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
         }
 
         int maxRowsConn = this.connection.getMaxRows();
@@ -1780,12 +1764,7 @@ public class StatementImpl implements Statement {
         }
     }
 
-    /**
-     * Returns the id used when profiling
-     * 
-     * @return the id used when profiling.
-     */
-    protected int getId() {
+    public int getId() {
         return this.statementId;
     }
 
@@ -2192,10 +2171,8 @@ public class StatementImpl implements Statement {
 
         if (this.useUsageAdvisor) {
             if (!calledExplicitly) {
-                String message = Messages.getString("Statement.63") + Messages.getString("Statement.64");
-
-                this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN, "", this.currentCatalog, this.connectionId, this.getId(), -1,
-                        System.currentTimeMillis(), 0, Constants.MILLIS_I18N, null, this.pointOfOrigin, message));
+                this.connection.getProfilerEventHandlerInstance().processEvent(ProfilerEvent.TYPE_USAGE, this.connection, this, null, 0, new Throwable(),
+                        Messages.getString("Statement.63"));
             }
         }
 
@@ -2573,8 +2550,9 @@ public class StatementImpl implements Statement {
 
     protected static int getOnDuplicateKeyLocation(String sql, boolean dontCheckOnDuplicateKeyUpdateInSQL, boolean rewriteBatchedStatements,
             boolean noBackslashEscapes) {
-        return dontCheckOnDuplicateKeyUpdateInSQL && !rewriteBatchedStatements ? -1 : StringUtils.indexOfIgnoreCase(0, sql, ON_DUPLICATE_KEY_UPDATE_CLAUSE,
-                "\"'`", "\"'`", noBackslashEscapes ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+        return dontCheckOnDuplicateKeyUpdateInSQL && !rewriteBatchedStatements ? -1
+                : StringUtils.indexOfIgnoreCase(0, sql, ON_DUPLICATE_KEY_UPDATE_CLAUSE, "\"'`", "\"'`",
+                        noBackslashEscapes ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
     }
 
     private boolean closeOnCompletion = false;

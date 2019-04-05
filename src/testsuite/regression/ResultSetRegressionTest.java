@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -71,9 +71,9 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.Util;
-import com.mysql.jdbc.log.StandardLogger;
 
 import testsuite.BaseTestCase;
+import testsuite.BufferingLogger;
 
 /**
  * Regression test cases for the ResultSet class.
@@ -3284,12 +3284,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             Properties props = new Properties();
             props.setProperty("useUsageAdvisor", "true");
+            props.setProperty("logger", BufferingLogger.class.getName());
 
             advisorConn = getConnectionWithProps(props);
 
             advisorStmt = advisorConn.createStatement();
 
-            StandardLogger.startLoggingToBuffer();
+            BufferingLogger.startLoggingToBuffer();
 
             this.rs = advisorStmt.executeQuery("SELECT 1, 2 LIMIT 0");
             this.rs.next();
@@ -3317,15 +3318,15 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 advisorStmt.setFetchSize(1);
 
                 this.rs = advisorStmt.executeQuery("SELECT 1, 2 LIMIT 0");
-                StandardLogger.startLoggingToBuffer();
+                BufferingLogger.startLoggingToBuffer();
                 this.rs.next();
                 this.rs.close();
             }
 
-            assertEquals(-1, StandardLogger.getBuffer().toString()
+            assertEquals(-1, BufferingLogger.getBuffer().toString()
                     .indexOf(Messages.getString("ResultSet.Possible_incomplete_traversal_of_result_set").substring(0, 10)));
         } finally {
-            StandardLogger.dropBuffer();
+            BufferingLogger.dropBuffer();
 
             if (advisorStmt != null) {
                 advisorStmt.close();
