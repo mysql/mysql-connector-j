@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,9 +41,13 @@ import com.mysql.cj.exceptions.AssertionFailedException;
  * Internally-used object passing index creation parameters to XMessageBuilder.
  */
 public class CreateIndexParams {
+    public static final String INDEX = "INDEX";
+    public static final String SPATIAL = "SPATIAL";
+    public static final String GEOJSON = "GEOJSON";
+
     private String indexName;
     /** One of INDEX or SPATIAL. Default is INDEX and may be omitted. **/
-    private String indexType = "INDEX";
+    private String indexType = null;
     private List<IndexField> fields = new ArrayList<>();
 
     /**
@@ -97,7 +101,7 @@ public class CreateIndexParams {
         if (val != null) {
             if (val instanceof JsonString) {
                 String type = ((JsonString) val).getString();
-                if ("INDEX".equalsIgnoreCase(type) || "SPATIAL".equalsIgnoreCase(type)) {
+                if (INDEX.equalsIgnoreCase(type) || SPATIAL.equalsIgnoreCase(type)) {
                     this.indexType = type;
                 } else {
                     throw new XDevAPIError("Wrong index type '" + type + "'. Must be 'INDEX' or 'SPATIAL'.");
@@ -157,6 +161,12 @@ public class CreateIndexParams {
      * Internally used object parsed from indexDefinition; see {@link Collection#createIndex(String, DbDoc)} description.
      */
     public static class IndexField {
+        private static final String FIELD = "field";
+        private static final String TYPE = "type";
+        private static final String REQUIRED = "required";
+        private static final String OPTIONS = "options";
+        private static final String SRID = "srid";
+        private static final String ARRAY = "array";
 
         /** The full document path to the document member or field to be indexed **/
         private String field;
@@ -169,13 +179,16 @@ public class CreateIndexParams {
         private String type;
 
         /** (optional) true if the field is required to exist in the document. defaults to false, except for GEOJSON where it defaults to true **/
-        private boolean required = false;
+        private Boolean required = Boolean.FALSE; // Must be sent to server until MySQL 8.0.17.
 
         /** (optional) special option flags for use when decoding GEOJSON data **/
         private Integer options = null;
 
         /** (optional) srid value for use when decoding GEOJSON data **/
         private Integer srid = null;
+
+        /** (optional) true if the field is an array **/
+        private Boolean array;
 
         /**
          * Constructor.
@@ -187,20 +200,20 @@ public class CreateIndexParams {
          *            <li>type: string, one of the supported SQL column types to map the field into. For numeric types, the optional UNSIGNED
          *            keyword may follow. For the TEXT type, the length to consider for indexing may be added. Type descriptions are case insensitive.</li>
          *            <li>required: bool, (optional) true if the field is required to exist in the document. Defaults to false, except for GEOJSON where it
-         *            defaults
-         *            to true</li>
+         *            defaults to true</li>
          *            <li>options: int, (optional) special option flags for use when decoding GEOJSON data</li>
          *            <li>srid: int, (optional) srid value for use when decoding GEOJSON data</li>
+         *            <li>array: bool, (optional) true if the field is an array</li>
          *            </ul>
          */
         public IndexField(DbDoc indexField) {
             for (String key : indexField.keySet()) {
-                if (!"type".equals(key) && !"field".equals(key) && !"required".equals(key) && !"options".equals(key) && !"srid".equals(key)) {
+                if (!TYPE.equals(key) && !FIELD.equals(key) && !REQUIRED.equals(key) && !OPTIONS.equals(key) && !SRID.equals(key) && !ARRAY.equals(key)) {
                     throw new XDevAPIError("The '" + key + "' field is not allowed in indexField.");
                 }
             }
 
-            JsonValue val = indexField.get("field");
+            JsonValue val = indexField.get(FIELD);
             if (val != null) {
                 if (val instanceof JsonString) {
                     this.field = ((JsonString) val).getString();
@@ -211,7 +224,7 @@ public class CreateIndexParams {
                 throw new XDevAPIError("Index field definition has no document path.");
             }
 
-            val = indexField.get("type");
+            val = indexField.get(TYPE);
             if (val != null) {
                 if (val instanceof JsonString) {
                     this.type = ((JsonString) val).getString();
@@ -226,20 +239,20 @@ public class CreateIndexParams {
                 throw new XDevAPIError("Index field definition has no field type.");
             }
 
-            val = indexField.get("required");
+            val = indexField.get(REQUIRED);
             if (val != null) {
                 if (val instanceof JsonLiteral && !JsonLiteral.NULL.equals(val)) {
                     this.required = Boolean.valueOf(((JsonLiteral) val).value);
                 } else {
                     throw new XDevAPIError("Index field 'required' member must be boolean.");
                 }
-            } else if (this.type.equalsIgnoreCase("GEOJSON")) {
-                this.required = true;
+            } else if (GEOJSON.equalsIgnoreCase(this.type)) {
+                this.required = Boolean.TRUE;
             }
 
-            val = indexField.get("options");
+            val = indexField.get(OPTIONS);
             if (val != null) {
-                if (this.type.equalsIgnoreCase("GEOJSON")) {
+                if (GEOJSON.equalsIgnoreCase(this.type)) {
                     if (val instanceof JsonNumber) {
                         this.options = ((JsonNumber) val).getInteger();
                     } else {
@@ -250,9 +263,9 @@ public class CreateIndexParams {
                 }
             }
 
-            val = indexField.get("srid");
+            val = indexField.get(SRID);
             if (val != null) {
-                if (this.type.equalsIgnoreCase("GEOJSON")) {
+                if (GEOJSON.equalsIgnoreCase(this.type)) {
                     if (val instanceof JsonNumber) {
                         this.srid = ((JsonNumber) val).getInteger();
                     } else {
@@ -260,6 +273,15 @@ public class CreateIndexParams {
                     }
                 } else {
                     throw new XDevAPIError("Index field 'srid' member should not be used for field types other than GEOJSON.");
+                }
+            }
+
+            val = indexField.get(ARRAY);
+            if (val != null) {
+                if (val instanceof JsonLiteral && !JsonLiteral.NULL.equals(val)) {
+                    this.array = Boolean.valueOf(((JsonLiteral) val).value);
+                } else {
+                    throw new XDevAPIError("Index field 'array' member must be boolean.");
                 }
             }
         }
@@ -287,7 +309,7 @@ public class CreateIndexParams {
          * 
          * @return true if required
          */
-        public boolean isRequired() {
+        public Boolean isRequired() {
             return this.required;
         }
 
@@ -307,6 +329,15 @@ public class CreateIndexParams {
          */
         public Integer getSrid() {
             return this.srid;
+        }
+
+        /**
+         * Is the field an array?
+         * 
+         * @return true if the field is an array
+         */
+        public Boolean isArray() {
+            return this.array;
         }
     }
 }

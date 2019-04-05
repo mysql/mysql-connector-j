@@ -701,26 +701,29 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
             builder.addFld(ObjectField.newBuilder().setKey("type").setValue(ExprUtil.buildAny(params.getIndexType())));
         }
 
-        com.mysql.cj.x.protobuf.MysqlxDatatypes.Array.Builder abuilder = com.mysql.cj.x.protobuf.MysqlxDatatypes.Array.newBuilder();
+        com.mysql.cj.x.protobuf.MysqlxDatatypes.Array.Builder aBuilder = com.mysql.cj.x.protobuf.MysqlxDatatypes.Array.newBuilder();
         for (IndexField indexField : params.getFields()) {
-            com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.Builder fld = com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
+            com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.Builder fBuilder = com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
                     .addFld(ObjectField.newBuilder().setKey("member").setValue(ExprUtil.buildAny(indexField.getField())))
-                    .addFld(ObjectField.newBuilder().setKey("type").setValue(ExprUtil.buildAny(indexField.getType())))
-                    .addFld(ObjectField.newBuilder().setKey("required").setValue(ExprUtil.buildAny(indexField.isRequired())));
-            if ("GEOJSON".equalsIgnoreCase(indexField.getType())) {
-                if (indexField.getOptions() != null) {
-                    fld.addFld(ObjectField.newBuilder().setKey("options").setValue(Any.newBuilder().setType(Any.Type.SCALAR)
-                            .setScalar(Scalar.newBuilder().setType(Scalar.Type.V_UINT).setVUnsignedInt(indexField.getOptions())).build()));
-                }
-                if (indexField.getSrid() != null) {
-                    fld.addFld(ObjectField.newBuilder().setKey("srid").setValue(Any.newBuilder().setType(Any.Type.SCALAR)
-                            .setScalar(Scalar.newBuilder().setType(Scalar.Type.V_UINT).setVUnsignedInt(indexField.getSrid())).build()));
-                }
+                    .addFld(ObjectField.newBuilder().setKey("type").setValue(ExprUtil.buildAny(indexField.getType())));
+            if (indexField.isRequired() != null) {
+                fBuilder.addFld(ObjectField.newBuilder().setKey("required").setValue(ExprUtil.buildAny(indexField.isRequired())));
             }
-            abuilder.addValue(Any.newBuilder().setType(Any.Type.OBJECT).setObj(fld));
+            if (indexField.getOptions() != null) {
+                fBuilder.addFld(ObjectField.newBuilder().setKey("options").setValue(Any.newBuilder().setType(Any.Type.SCALAR)
+                        .setScalar(Scalar.newBuilder().setType(Scalar.Type.V_UINT).setVUnsignedInt(indexField.getOptions())).build()));
+            }
+            if (indexField.getSrid() != null) {
+                fBuilder.addFld(ObjectField.newBuilder().setKey("srid").setValue(Any.newBuilder().setType(Any.Type.SCALAR)
+                        .setScalar(Scalar.newBuilder().setType(Scalar.Type.V_UINT).setVUnsignedInt(indexField.getSrid())).build()));
+            }
+            if (indexField.isArray() != null) {
+                fBuilder.addFld(ObjectField.newBuilder().setKey("array").setValue(ExprUtil.buildAny(indexField.isArray())));
+            }
+            aBuilder.addValue(Any.newBuilder().setType(Any.Type.OBJECT).setObj(fBuilder));
         }
 
-        builder.addFld(ObjectField.newBuilder().setKey("constraint").setValue(Any.newBuilder().setType(Any.Type.ARRAY).setArray(abuilder)));
+        builder.addFld(ObjectField.newBuilder().setKey("constraint").setValue(Any.newBuilder().setType(Any.Type.ARRAY).setArray(aBuilder)));
         return new XMessage(buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION_INDEX,
                 Any.newBuilder().setType(Any.Type.OBJECT).setObj(builder).build()));
     }
