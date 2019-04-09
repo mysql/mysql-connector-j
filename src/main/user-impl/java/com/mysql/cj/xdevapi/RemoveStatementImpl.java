@@ -78,4 +78,13 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatement, Re
                 .asyncSendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildDelete(this.filterParams));
         return okF.thenApply(ok -> new UpdateResult(ok));
     }
+
+    /**
+     * @deprecated Deprecated in c/J 8.0.17, please use filter criteria in the operation starting method.
+     */
+    @Deprecated
+    @Override
+    public RemoveStatement where(String searchCondition) {
+        return super.where(searchCondition);
+    }
 }

@@ -138,4 +138,13 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
         }
         return this;
     }
+
+    /**
+     * @deprecated Deprecated in c/J 8.0.17, please use filter criteria in the operation starting method.
+     */
+    @Deprecated
+    @Override
+    public FindStatement where(String searchCondition) {
+        return super.where(searchCondition);
+    }
 }

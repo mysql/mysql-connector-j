@@ -60,6 +60,7 @@ import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.FindStatement;
+import com.mysql.cj.xdevapi.FindStatementImpl;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.Row;
@@ -1201,5 +1202,23 @@ public class CollectionFindTest extends BaseCollectionTestCase {
             assertEquals(expectedMin++, ((JsonNumber) d.get("ord")).getInteger().intValue());
         }
         assertEquals(expectedMax, expectedMin - 1);
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testDeprecateWhere() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        this.collection.add("{\"_id\":\"1\", \"ord\": 1}", "{\"_id\":\"2\", \"ord\": 2}", "{\"_id\":\"3\", \"ord\": 3}", "{\"_id\":\"4\", \"ord\": 4}",
+                "{\"_id\":\"5\", \"ord\": 5}", "{\"_id\":\"6\", \"ord\": 6}", "{\"_id\":\"7\", \"ord\": 7}", "{\"_id\":\"8\", \"ord\": 8}").execute();
+
+        FindStatement testFind = this.collection.find("$.ord <= 2");
+
+        assertTrue(testFind.getClass().getMethod("where", String.class).isAnnotationPresent(Deprecated.class));
+
+        assertEquals(2, testFind.execute().count());
+        assertEquals(4, ((FindStatementImpl) testFind).where("$.ord > 4").execute().count());
     }
 }

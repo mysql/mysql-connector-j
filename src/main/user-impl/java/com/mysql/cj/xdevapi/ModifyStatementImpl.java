@@ -130,4 +130,13 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
         this.updates.add(new UpdateSpec(UpdateType.ARRAY_APPEND, docPath).setValue(value));
         return this;
     }
+
+    /**
+     * @deprecated Deprecated in c/J 8.0.17, please use filter criteria in the operation starting method.
+     */
+    @Deprecated
+    @Override
+    public ModifyStatement where(String searchCondition) {
+        return super.where(searchCondition);
+    }
 }

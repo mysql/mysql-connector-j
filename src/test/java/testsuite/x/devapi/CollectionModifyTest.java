@@ -52,6 +52,7 @@ import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonParser;
 import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.ModifyStatement;
+import com.mysql.cj.xdevapi.ModifyStatementImpl;
 import com.mysql.cj.xdevapi.Result;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
@@ -939,5 +940,23 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         for (int v : expectedValues) {
             assertEquals(v, ((JsonNumber) docRes.next().get("ord")).getInteger().intValue());
         }
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testDeprecateWhere() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        this.collection.add("{\"_id\":\"1\", \"ord\": 1}", "{\"_id\":\"2\", \"ord\": 2}", "{\"_id\":\"3\", \"ord\": 3}", "{\"_id\":\"4\", \"ord\": 4}",
+                "{\"_id\":\"5\", \"ord\": 5}", "{\"_id\":\"6\", \"ord\": 6}", "{\"_id\":\"7\", \"ord\": 7}", "{\"_id\":\"8\", \"ord\": 8}").execute();
+
+        ModifyStatement testModify = this.collection.modify("$.ord <= 2");
+
+        assertTrue(testModify.getClass().getMethod("where", String.class).isAnnotationPresent(Deprecated.class));
+
+        assertEquals(2, testModify.set("$.one", "1").execute().getAffectedItemsCount());
+        assertEquals(4, ((ModifyStatementImpl) testModify).where("$.ord > 4").set("$.two", "2").execute().getAffectedItemsCount());
     }
 }
