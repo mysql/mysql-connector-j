@@ -3,6 +3,8 @@
 
 Version 8.0.17
 
+  - WL#13124, Support new utf8mb4 bin collation.
+
   - WL#13009, DevAPI: Deprecate methods.
 
   - WL#11101, Remove de-cache and close of SSPSs on double call to close().

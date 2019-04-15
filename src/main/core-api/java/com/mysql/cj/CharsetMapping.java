@@ -494,6 +494,7 @@ public class CharsetMapping {
         collation[306] = new Collation(306, "utf8mb4_ru_0900_ai_ci", 0, MYSQL_CHARSET_NAME_utf8mb4);
         collation[307] = new Collation(307, "utf8mb4_ru_0900_as_cs", 0, MYSQL_CHARSET_NAME_utf8mb4);
         collation[308] = new Collation(308, "utf8mb4_zh_0900_as_cs", 0, MYSQL_CHARSET_NAME_utf8mb4);
+        collation[309] = new Collation(309, "utf8mb4_0900_bin", 0, MYSQL_CHARSET_NAME_utf8mb4);
 
         collation[326] = new Collation(326, "utf8mb4_test_ci", 0, MYSQL_CHARSET_NAME_utf8mb4);
         collation[327] = new Collation(327, "utf16_test_ci", 0, MYSQL_CHARSET_NAME_utf16);
