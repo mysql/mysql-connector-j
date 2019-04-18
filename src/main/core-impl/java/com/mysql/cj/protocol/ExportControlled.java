@@ -526,7 +526,7 @@ public class ExportControlled {
 
                 for (TrustManager tm : origTms) {
                     // wrap X509TrustManager or put original if non-X509 TrustManager
-                    tms.add(tm instanceof X509TrustManager ? new X509TrustManagerWrapper((X509TrustManager) tm, verifyServerCert, hostName) : tm);
+                    tms.add(verifyServerCert && (tm instanceof X509TrustManager) ? new X509TrustManagerWrapper((X509TrustManager) tm, verifyServerCert, hostName) : tm);
                 }
             }
 
