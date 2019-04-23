@@ -70,6 +70,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import com.mysql.jdbc.util.Base64Decoder;
+import com.sun.net.ssl.internal.ssl.Provider;
 
 /**
  * Holds functionality that falls under export-control regulations.
@@ -434,7 +435,7 @@ public class ExportControlled {
 
             for (TrustManager tm : origTms) {
                 // wrap X509TrustManager or put original if non-X509 TrustManager
-                tms.add(tm instanceof X509TrustManager ? new X509TrustManagerWrapper((X509TrustManager) tm, verifyServerCert) : tm);
+                tms.add(!Provider.isFIPS() && tm instanceof X509TrustManager ? new X509TrustManagerWrapper((X509TrustManager) tm, verifyServerCert) : tm);
             }
 
         } catch (MalformedURLException e) {
