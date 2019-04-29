@@ -10,7 +10,7 @@ Introduction
    third-party software which may be included in this distribution of
    MySQL Connector/J 8.0.
 
-   Last updated: January 2019.
+   Last updated: March 2019
 
 Licensing Information
 
@@ -535,13 +535,13 @@ Copyright (c) 2001-2003 Ant-Contrib project.  All rights reserved.
 
 c3p0 JDBC Library
 
-   You are receiving a copy of c3p0-0.9.1-pre6.jar in both source and
-   object code in the following /src/lib/c3p0-0.9.1-pre6.jar. The terms of
-   the Oracle license do NOT apply to c3p0-0.9.1-pre6.jar; it is licensed
-   under the following license, separately from the Oracle programs you
-   receive. If you do not wish to install this library, you may remove the
-   file /src/lib/c3p0-0.9.1-pre6.jar, but the Oracle program might not
-   operate properly or at all without the library.
+   This product may include a copy of c3p0-0.9.1-pre6.jar in both source
+   and object code in the following /src/lib/c3p0-0.9.1-pre6.jar. The
+   terms of the Oracle license do NOT apply to c3p0-0.9.1-pre6.jar; it is
+   licensed under the following license, separately from the Oracle
+   programs you receive. If you do not wish to install this library, you
+   may remove the file /src/lib/c3p0-0.9.1-pre6.jar, but the Oracle
+   program might not operate properly or at all without the library.
 
    This component is licensed under GNU Lesser General Public License
    Version 2.1, February 1999.
@@ -587,8 +587,8 @@ support library is itself covered by the above license.
 
 jboss-common-jdbc-wrapper.jar
 
-   You are receiving a copy of jboss-common-jdbc-wrapper.jar in both
-   source and object code in the following
+   This product may include a copy of jboss-common-jdbc-wrapper.jar in
+   both source and object code in the following
    /src/lib/jboss-common-jdbc-wrapper.jar. The terms of the Oracle license
    do NOT apply to jboss-common-jdbc-wrapper.jar; it is licensed under the
    following license, separately from the Oracle programs you receive. If
@@ -681,7 +681,7 @@ Simple Logging Facade for Java (SLF4J)
    The following software may be included in this product:
 Simple Logging Facade for Java (SLF4J)
 
-Copyright (c) 2004-2008 QOS.ch
+Copyright (c) 2004-2011 QOS.ch
 All rights reserved.
 
 Permission is hereby granted, free of charge,
