@@ -3,6 +3,8 @@
 
 Version 8.0.17
 
+  - WL#13125, Support fully qualified hostnames longer than 60 characters.
+
   - Fix for Bug#95210 (29807741), ClassCastException in BlobFromLocator when connecting as jdbc:mysql:replication.
 
   - Fix for Bug#29591275, THE JAR FILE NEEDS TO CONTAIN A README AND LICENSE FILE.

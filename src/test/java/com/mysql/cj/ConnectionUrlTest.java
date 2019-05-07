@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -82,12 +82,17 @@ public class ConnectionUrlTest {
 
         private static final String[] PROTOCOL = new String[] { "jdbc:mysql:", "mysqlx:" };
         private static final String[] USER = new String[] { "", "@", "johndoe@", "johndoe:@", "johndoe:secret@", ":secret@", ":@" };
-        private static final String[] STD_HOST = new String[] { "", "myhost", "192.168.0.1", "[1000:abcd::1]" };
+        private static final String[] STD_HOST = new String[] { "", "myhost", "192.168.0.1", "[1000:abcd::1]",
+                "verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789" };
         private static final String[] STD_PORT = new String[] { "", ":", ":1234" };
         private static final String[] KEY_VALUE_HOST = new String[] { "", "()", "(host=[::1],port=1234,prio=1)",
-                "(protocol=tcp,host=myhost,port=1234,key=value%28%29)", "(address=myhost:1234,prio=2)" };
+                "(protocol=tcp,host=myhost,port=1234,key=value%28%29)", "(address=myhost:1234,prio=2)",
+                "(protocol=tcp,host=verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789,port=1234,key=value%28%29)",
+                "(address=verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789:1234,prio=2)" };
         private static final String[] ADDRESS_EQUALS_HOST = new String[] { "address=", "address=()", "address=(flag)",
-                "address=(protocol=tcp)(host=myhost)(port=1234)", "address=(protocol=tcp)(host=myhost)(port=1234)(key=value%28%29)" };
+                "address=(protocol=tcp)(host=myhost)(port=1234)", "address=(protocol=tcp)(host=myhost)(port=1234)(key=value%28%29)",
+                "address=(protocol=tcp)(host=verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789)(port=1234)",
+                "address=(protocol=tcp)(host=verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789)(port=1234)(key=value%28%29)" };
         private static final String[] HOST; // Initialized below.
         private static final String[] DB = new String[] { "", "/", "/mysql" };
         private static final String[] PARAMS = new String[] { "", "?", "?key=value&flag", "?key=value%26&flag&26", "?file=%2Fpath%2Fto%2Ffile&flag&key=value",
@@ -514,11 +519,17 @@ public class ConnectionUrlTest {
         // Supported URLs:
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:"));
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql://somehost:1234/db?key=value"));
+        assertTrue(ConnectionUrl.acceptsUrl(
+                "jdbc:mysql://verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789:1234/db?key=value"));
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql://127.0.0.1:1234/db?key=value"));
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:loadbalance:"));
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:loadbalance://somehost:1234/db?key=value"));
+        assertTrue(ConnectionUrl.acceptsUrl(
+                "jdbc:mysql:loadbalance://verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789:1234/db?key=value"));
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:replication:"));
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:replication://somehost:1234/db?key=value"));
+        assertTrue(ConnectionUrl.acceptsUrl(
+                "jdbc:mysql:replication://verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789:1234/db?key=value"));
         assertTrue(ConnectionUrl.acceptsUrl("jdbc:mysql:"));
         assertTrue(ConnectionUrl.acceptsUrl("mysqlx://somehost:1234/db?key=value"));
         assertTrue(ConnectionUrl.acceptsUrl("mysqlx://127.0.0.1:1234/db?key=value"));
@@ -935,142 +946,155 @@ public class ConnectionUrlTest {
         ConnectionUrl connUrl;
         int hostIdx;
 
-        // Hosts sub list with "address" splitting (host3:3333) and priority value.
-        connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@[host1:1111,address=(host=host2)(port=2222)(priority=99),"
-                + "(address=host3:3333,priority=98)]/db?address=host4:4444&priority=100", null);
-        hostIdx = 1;
-        for (HostInfo hi : connUrl.getHostsList()) {
-            String testCase = "Host " + hostIdx + ":";
-            assertEquals(testCase, "johndoe", hi.getUser());
-            assertEquals(testCase, "secret", hi.getPassword());
-            assertEquals(testCase, "host" + hostIdx, hi.getHost());
-            assertEquals(testCase, 1111 * hostIdx, hi.getPort());
-            assertEquals(testCase, "db", hi.getDatabase());
-            assertTrue(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
-            assertEquals(testCase, Integer.toString(101 - hostIdx), hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()));
-            hostIdx++;
-        }
+        String[] hostNames = new String[] { "host",
+                "verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789" };
 
-        // Hosts sub list with "address" splitting (host3:3333) and without priority value.
-        connUrl = ConnectionUrl.getConnectionUrlInstance(
-                "mysqlx://johndoe:secret@[host1:1111,address=(host=host2)(port=2222)," + "(address=host3:3333)]/db?address=host4:4444", null);
-        hostIdx = 1;
-        for (HostInfo hi : connUrl.getHostsList()) {
-            String testCase = "Host " + hostIdx + ":";
-            assertEquals(testCase, "johndoe", hi.getUser());
-            assertEquals(testCase, "secret", hi.getPassword());
-            assertEquals(testCase, "host" + hostIdx, hi.getHost());
-            assertEquals(testCase, 1111 * hostIdx, hi.getPort());
-            assertEquals(testCase, "db", hi.getDatabase());
-            assertFalse(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
-            hostIdx++;
-        }
-
-        // Hosts list with "address" splitting (host3:3333) and priority value.
-        connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@host1:1111,johndoe:secret@address=(host=host2)(port=2222)(priority=99),"
-                + "johndoe:secret@(address=host3:3333,priority=98)/db?address=host4:4444&priority=100", null);
-        hostIdx = 1;
-        for (HostInfo hi : connUrl.getHostsList()) {
-            String testCase = "Host " + hostIdx + ":";
-            assertEquals(testCase, "johndoe", hi.getUser());
-            assertEquals(testCase, "secret", hi.getPassword());
-            assertEquals(testCase, "host" + hostIdx, hi.getHost());
-            assertEquals(testCase, 1111 * hostIdx, hi.getPort());
-            assertEquals(testCase, "db", hi.getDatabase());
-            assertTrue(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
-            assertEquals(testCase, Integer.toString(101 - hostIdx), hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()));
-            hostIdx++;
-        }
-
-        // Hosts list with "address" splitting (host3:3333) and without priority value.
-        connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@host1:1111,johndoe:secret@address=(host=host2)(port=2222),"
-                + "johndoe:secret@(address=host3:3333)/db?address=host4:4444", null);
-        hostIdx = 1;
-        for (HostInfo hi : connUrl.getHostsList()) {
-            String testCase = "Host " + hostIdx + ":";
-            assertEquals(testCase, "johndoe", hi.getUser());
-            assertEquals(testCase, "secret", hi.getPassword());
-            assertEquals(testCase, "host" + hostIdx, hi.getHost());
-            assertEquals(testCase, 1111 * hostIdx, hi.getPort());
-            assertEquals(testCase, "db", hi.getDatabase());
-            assertFalse(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
-            hostIdx++;
-        }
-
-        List<String> connStr;
-
-        // Error for distinct credentials.
-        connStr = new ArrayList<>();
-        connStr.add("mysqlx://johndoe:secret@host1:1111,janedoe:secret@host2:2222/db");
-        connStr.add("mysqlx://johndoe:secret@host1:1111,johndoe:public@host2:2222/db");
-        connStr.add("mysqlx://johndoe:secret@host1:1111,address=(host=host2)(port=2222)(user=janedoe)(password=secret)/db");
-        connStr.add("mysqlx://johndoe:secret@host1:1111,address=(host=host2)(port=2222)(user=johndoe)(password=public)/db");
-        connStr.add("mysqlx://johndoe:secret@host1:1111,(host=host2,port=2222,user=janedoe,password=secret)/db");
-        connStr.add("mysqlx://johndoe:secret@host1:1111,(host=host2,port=2222,user=johndoe,password=public)/db");
-        for (String cs : connStr) {
-            try {
-                connUrl = ConnectionUrl.getConnectionUrlInstance(cs, null);
-                System.out.println(connUrl);
-                fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
-            } catch (Exception e) {
-                assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(), WrongArgumentException.class.isAssignableFrom(e.getClass()));
-                assertEquals(cs, Messages.getString("ConnectionString.14", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }), e.getMessage());
+        for (String hostName : hostNames) {
+            // Hosts sub list with "address" splitting (host3:3333) and priority value.
+            connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@[" + hostName + "1:1111,address=(host=" + hostName
+                    + "2)(port=2222)(priority=99)," + "(address=" + hostName + "3:3333,priority=98)]/db?address=host4:4444&priority=100", null);
+            hostIdx = 1;
+            for (HostInfo hi : connUrl.getHostsList()) {
+                String testCase = "Host " + hostIdx + ":";
+                assertEquals(testCase, "johndoe", hi.getUser());
+                assertEquals(testCase, "secret", hi.getPassword());
+                assertEquals(testCase, hostName + hostIdx, hi.getHost());
+                assertEquals(testCase, 1111 * hostIdx, hi.getPort());
+                assertEquals(testCase, "db", hi.getDatabase());
+                assertTrue(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
+                assertEquals(testCase, Integer.toString(101 - hostIdx), hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()));
+                hostIdx++;
             }
-        }
 
-        // Error for missing priority value.
-        connStr = new ArrayList<>();
-        connStr.add("mysqlx://johndoe:secret@[(address=host1:1111,priority=1),host2:2222]/db");
-        connStr.add("mysqlx://johndoe:secret@[(address=host1:1111,priority=1),(address=host2:2222)]/db");
-        connStr.add("mysqlx://johndoe:secret@[(address=host1:1111,priority=1),address(host=host2)(port=2222)]/db");
-        connStr.add("mysqlx://johndoe:secret@[host1:1111,address=(host=host2)(port=2222)(priority=2)]/db");
-        connStr.add("mysqlx://johndoe:secret@[(address=host1:1111),address=(host=host2)(port=2222)(priority=2)]/db");
-        connStr.add("mysqlx://johndoe:secret@[address=(host=host1)(port=1111),address=(host=host2)(port=2222)(priority=2)]/db");
-        for (String cs : connStr) {
-            try {
-                connUrl = ConnectionUrl.getConnectionUrlInstance(cs, null);
-                System.out.println(connUrl);
-                fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
-            } catch (Exception e) {
-                assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(), WrongArgumentException.class.isAssignableFrom(e.getClass()));
-                assertEquals(cs, Messages.getString("ConnectionString.15", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }), e.getMessage());
+            // Hosts sub list with "address" splitting (host3:3333) and without priority value.
+            connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@[" + hostName + "1:1111,address=(host=" + hostName + "2)(port=2222),"
+                    + "(address=" + hostName + "3:3333)]/db?address=host4:4444", null);
+            hostIdx = 1;
+            for (HostInfo hi : connUrl.getHostsList()) {
+                String testCase = "Host " + hostIdx + ":";
+                assertEquals(testCase, "johndoe", hi.getUser());
+                assertEquals(testCase, "secret", hi.getPassword());
+                assertEquals(testCase, hostName + hostIdx, hi.getHost());
+                assertEquals(testCase, 1111 * hostIdx, hi.getPort());
+                assertEquals(testCase, "db", hi.getDatabase());
+                assertFalse(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
+                hostIdx++;
             }
-        }
 
-        // Error for wrong priority value.
-        connStr = new ArrayList<>();
-        connStr.add("mysqlx://(address=host1:1111,priority=-1)/db");
-        connStr.add("mysqlx://(address=host1:1111,priority=101)/db");
-        for (String cs : connStr) {
-            try {
-                connUrl = ConnectionUrl.getConnectionUrlInstance(cs, null);
-                System.out.println(connUrl);
-                fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
-            } catch (Exception e) {
-                assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(), WrongArgumentException.class.isAssignableFrom(e.getClass()));
-                assertEquals(cs, Messages.getString("ConnectionString.16", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }), e.getMessage());
+            // Hosts list with "address" splitting (host3:3333) and priority value.
+            connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@" + hostName + "1:1111,johndoe:secret@address=(host=" + hostName
+                    + "2)(port=2222)(priority=99)," + "johndoe:secret@(address=" + hostName + "3:3333,priority=98)/db?address=host4:4444&priority=100", null);
+            hostIdx = 1;
+            for (HostInfo hi : connUrl.getHostsList()) {
+                String testCase = "Host " + hostIdx + ":";
+                assertEquals(testCase, "johndoe", hi.getUser());
+                assertEquals(testCase, "secret", hi.getPassword());
+                assertEquals(testCase, hostName + hostIdx, hi.getHost());
+                assertEquals(testCase, 1111 * hostIdx, hi.getPort());
+                assertEquals(testCase, "db", hi.getDatabase());
+                assertTrue(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
+                assertEquals(testCase, Integer.toString(101 - hostIdx), hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()));
+                hostIdx++;
             }
+
+            // Hosts list with "address" splitting (host3:3333) and without priority value.
+            connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@" + hostName + "1:1111,johndoe:secret@address=(host=" + hostName
+                    + "2)(port=2222)," + "johndoe:secret@(address=" + hostName + "3:3333)/db?address=host4:4444", null);
+            hostIdx = 1;
+            for (HostInfo hi : connUrl.getHostsList()) {
+                String testCase = "Host " + hostIdx + ":";
+                assertEquals(testCase, "johndoe", hi.getUser());
+                assertEquals(testCase, "secret", hi.getPassword());
+                assertEquals(testCase, hostName + hostIdx, hi.getHost());
+                assertEquals(testCase, 1111 * hostIdx, hi.getPort());
+                assertEquals(testCase, "db", hi.getDatabase());
+                assertFalse(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
+                hostIdx++;
+            }
+
+            List<String> connStr;
+
+            // Error for distinct credentials.
+            connStr = new ArrayList<>();
+            connStr.add("mysqlx://johndoe:secret@" + hostName + "1:1111,janedoe:secret@" + hostName + "2:2222/db");
+            connStr.add("mysqlx://johndoe:secret@" + hostName + "1:1111,johndoe:public@" + hostName + "2:2222/db");
+            connStr.add("mysqlx://johndoe:secret@" + hostName + "1:1111,address=(host=" + hostName + "2)(port=2222)(user=janedoe)(password=secret)/db");
+            connStr.add("mysqlx://johndoe:secret@" + hostName + "1:1111,address=(host=" + hostName + "2)(port=2222)(user=johndoe)(password=public)/db");
+            connStr.add("mysqlx://johndoe:secret@" + hostName + "1:1111,(host=" + hostName + "2,port=2222,user=janedoe,password=secret)/db");
+            connStr.add("mysqlx://johndoe:secret@" + hostName + "1:1111,(host=" + hostName + "2,port=2222,user=johndoe,password=public)/db");
+            for (String cs : connStr) {
+                try {
+                    connUrl = ConnectionUrl.getConnectionUrlInstance(cs, null);
+                    System.out.println(connUrl);
+                    fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
+                } catch (Exception e) {
+                    assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(),
+                            WrongArgumentException.class.isAssignableFrom(e.getClass()));
+                    assertEquals(cs, Messages.getString("ConnectionString.14", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }),
+                            e.getMessage());
+                }
+            }
+
+            // Error for missing priority value.
+            connStr = new ArrayList<>();
+            connStr.add("mysqlx://johndoe:secret@[(address=" + hostName + "1:1111,priority=1)," + hostName + "2:2222]/db");
+            connStr.add("mysqlx://johndoe:secret@[(address=" + hostName + "1:1111,priority=1),(address=" + hostName + "2:2222)]/db");
+            connStr.add("mysqlx://johndoe:secret@[(address=" + hostName + "1:1111,priority=1),address(host=" + hostName + "2)(port=2222)]/db");
+            connStr.add("mysqlx://johndoe:secret@[" + hostName + "1:1111,address=(host=" + hostName + "2)(port=2222)(priority=2)]/db");
+            connStr.add("mysqlx://johndoe:secret@[(address=" + hostName + "1:1111),address=(host=" + hostName + "2)(port=2222)(priority=2)]/db");
+            connStr.add("mysqlx://johndoe:secret@[address=(host=" + hostName + "1)(port=1111),address=(host=" + hostName + "2)(port=2222)(priority=2)]/db");
+            for (String cs : connStr) {
+                try {
+                    connUrl = ConnectionUrl.getConnectionUrlInstance(cs, null);
+                    System.out.println(connUrl);
+                    fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
+                } catch (Exception e) {
+                    assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(),
+                            WrongArgumentException.class.isAssignableFrom(e.getClass()));
+                    assertEquals(cs, Messages.getString("ConnectionString.15", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }),
+                            e.getMessage());
+                }
+            }
+
+            // Error for wrong priority value.
+            connStr = new ArrayList<>();
+            connStr.add("mysqlx://(address=" + hostName + "1:1111,priority=-1)/db");
+            connStr.add("mysqlx://(address=" + hostName + "1:1111,priority=101)/db");
+            for (String cs : connStr) {
+                try {
+                    connUrl = ConnectionUrl.getConnectionUrlInstance(cs, null);
+                    System.out.println(connUrl);
+                    fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
+                } catch (Exception e) {
+                    assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(),
+                            WrongArgumentException.class.isAssignableFrom(e.getClass()));
+                    assertEquals(cs, Messages.getString("ConnectionString.16", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }),
+                            e.getMessage());
+                }
+            }
+
+            // Sorting hosts by default priority.
+            connUrl = ConnectionUrl.getConnectionUrlInstance(
+                    "mysqlx://johndoe:secret@[" + hostName + "2," + hostName + "3," + hostName + "1," + hostName + "5," + hostName + "4]/db", null);
+            assertEquals(hostName + "2", connUrl.getMainHost().getHost());
+            assertEquals(hostName + "2", connUrl.getHostsList().get(0).getHost());
+            assertEquals(hostName + "3", connUrl.getHostsList().get(1).getHost());
+            assertEquals(hostName + "1", connUrl.getHostsList().get(2).getHost());
+            assertEquals(hostName + "5", connUrl.getHostsList().get(3).getHost());
+            assertEquals(hostName + "4", connUrl.getHostsList().get(4).getHost());
+
+            // Sorting hosts by defined priority.
+            connUrl = ConnectionUrl.getConnectionUrlInstance(
+                    "mysqlx://johndoe:secret@[(address=" + hostName + "1,priority=50),(address=" + hostName + "2,priority=100),(address=" + hostName
+                            + "3,priority=75)," + "(address=" + hostName + "4,priority=0),(address=" + hostName + "5,priority=25)]/db",
+                    null);
+            assertEquals(hostName + "2", connUrl.getMainHost().getHost());
+            assertEquals(hostName + "2", connUrl.getHostsList().get(0).getHost());
+            assertEquals(hostName + "3", connUrl.getHostsList().get(1).getHost());
+            assertEquals(hostName + "1", connUrl.getHostsList().get(2).getHost());
+            assertEquals(hostName + "5", connUrl.getHostsList().get(3).getHost());
+            assertEquals(hostName + "4", connUrl.getHostsList().get(4).getHost());
         }
-
-        // Sorting hosts by default priority.
-        connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@[host2,host3,host1,host5,host4]/db", null);
-        assertEquals("host2", connUrl.getMainHost().getHost());
-        assertEquals("host2", connUrl.getHostsList().get(0).getHost());
-        assertEquals("host3", connUrl.getHostsList().get(1).getHost());
-        assertEquals("host1", connUrl.getHostsList().get(2).getHost());
-        assertEquals("host5", connUrl.getHostsList().get(3).getHost());
-        assertEquals("host4", connUrl.getHostsList().get(4).getHost());
-
-        // Sorting hosts by defined priority.
-        connUrl = ConnectionUrl
-                .getConnectionUrlInstance("mysqlx://johndoe:secret@[(address=host1,priority=50),(address=host2,priority=100),(address=host3,priority=75),"
-                        + "(address=host4,priority=0),(address=host5,priority=25)]/db", null);
-        assertEquals("host2", connUrl.getMainHost().getHost());
-        assertEquals("host2", connUrl.getHostsList().get(0).getHost());
-        assertEquals("host3", connUrl.getHostsList().get(1).getHost());
-        assertEquals("host1", connUrl.getHostsList().get(2).getHost());
-        assertEquals("host5", connUrl.getHostsList().get(3).getHost());
-        assertEquals("host4", connUrl.getHostsList().get(4).getHost());
     }
 
     @Test
@@ -1107,6 +1131,15 @@ public class ConnectionUrlTest {
                 "jdbc:mysql://address=(host=localhost)(port=3306)(connectionCollation=utf8mb4_unicode_ci)(sessionVariables=sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0)(user=user1)/db1");
         connStr.add(
                 "jdbc:mysql://(host=localhost,port=3306,connectionCollation=utf8mb4_unicode_ci,sessionVariables=sql_mode='IGNORE_SPACE%2CANSI'%2CFOREIGN_KEY_CHECKS=0,user=user1)/db1");
+
+        connStr.add(
+                "jdbc:mysql://verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789:3306/db1?connectionCollation=utf8mb4_unicode_ci&user=user1&sessionVariables=sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0");
+        connStr.add(
+                "jdbc:mysql://verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789:3306/db1?connectionCollation=utf8mb4_unicode_ci&sessionVariables=sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0&user=user1");
+        connStr.add(
+                "jdbc:mysql://address=(host=verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789)(port=3306)(connectionCollation=utf8mb4_unicode_ci)(sessionVariables=sql_mode='IGNORE_SPACE,ANSI',FOREIGN_KEY_CHECKS=0)(user=user1)/db1");
+        connStr.add(
+                "jdbc:mysql://(host=verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789,port=3306,connectionCollation=utf8mb4_unicode_ci,sessionVariables=sql_mode='IGNORE_SPACE%2CANSI'%2CFOREIGN_KEY_CHECKS=0,user=user1)/db1");
 
         for (String cs : connStr) {
             ConnectionUrl url = ConnectionUrl.getConnectionUrlInstance(cs, null);
