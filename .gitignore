@@ -2,6 +2,7 @@
 /build/
 /buildtest/
 /dist/
+/docs/
 /nbproject/
 /patches/
 /*.properties
