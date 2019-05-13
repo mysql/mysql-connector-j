@@ -38,6 +38,7 @@ import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Calendar;
 
 import com.mysql.cj.protocol.ColumnDefinition;
@@ -159,6 +160,8 @@ public interface QueryBindings<T extends BindValue> {
     void setInt(int parameterIndex, int x);
 
     // int getInt(int parameterIndex);
+
+    void setLocalDateTime(int parameterIndex, LocalDateTime x, MysqlType targetMysqlType);
 
     void setLong(int parameterIndex, long x);
 

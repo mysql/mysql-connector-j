@@ -147,26 +147,40 @@ public class TimeUtil {
      * @return A new Timestamp object cloned from original ones and then rounded or truncated according to required fsp value
      */
     public static Timestamp adjustTimestampNanosPrecision(Timestamp ts, int fsp, boolean serverRoundFracSecs) {
-        if (fsp < 0 || fsp > 6) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, "fsp value must be in 0 to 6 range.");
-        }
-
+        int nanos = roundOrTruncateNanos(ts.getNanos(), fsp, serverRoundFracSecs);
         Timestamp res = (Timestamp) ts.clone();
-        int nanos = res.getNanos();
-        double tail = Math.pow(10, 9 - fsp);
-
-        if (serverRoundFracSecs) {
-            nanos = (int) Math.round(nanos / tail) * (int) tail;
-            if (nanos > 999999999) {
-                nanos %= 1000000000; // get only last 9 digits
-                res.setTime(res.getTime() + 1000); // increment seconds
-            }
-        } else {
-            nanos = (int) (nanos / tail) * (int) tail;
+        if (nanos > 999999999) {
+            nanos %= 1000000000; // get only last 9 digits
+            res.setTime(res.getTime() + 1000); // increment seconds
         }
         res.setNanos(nanos);
 
         return res;
+    }
+
+    /**
+     * Round or truncate the nanoseconds value according to field precision and sql mode.
+     * 
+     * @param nanos
+     *            Value to round or truncate
+     * @param fsp
+     *            Value in the range from 0 to 6 specifying fractional seconds precision
+     * @param serverRoundFracSecs
+     *            Flag indicating whether rounding or truncation occurs on server when inserting a TIME, DATE, or TIMESTAMP value with a fractional seconds part
+     *            into a column having the same type but fewer fractional digits: true means rounding, false means truncation. The proper value should be
+     *            detected by analyzing sql_mode server variable for TIME_TRUNCATE_FRACTIONAL presence.
+     * @return Nanoseconds value rounded or truncated according to required fsp value, could be larger than 999999999 when serverRoundFracSecs is true
+     */
+    public static int roundOrTruncateNanos(int nanos, int fsp, boolean serverRoundFracSecs) {
+        if (fsp < 0 || fsp > 6) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, "fsp value must be in 0 to 6 range.");
+        }
+
+        double tail = Math.pow(10, 9 - fsp);
+        if (serverRoundFracSecs) {
+            return (int) Math.round(nanos / tail) * (int) tail;
+        }
+        return (int) (nanos / tail) * (int) tail;
     }
 
     /**

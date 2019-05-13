@@ -47,6 +47,7 @@ import java.sql.NClob;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.Calendar;
 
 import com.mysql.cj.conf.PropertyKey;
@@ -438,6 +439,27 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
     @Override
     public void setInt(int parameterIndex, int x) {
         setValue(parameterIndex, String.valueOf(x), MysqlType.INT);
+    }
+
+    @Override
+    public void setLocalDateTime(int parameterIndex, LocalDateTime x, MysqlType targetMysqlType) {
+        if (targetMysqlType == MysqlType.DATE) {
+            setValue(parameterIndex, "'" + x.toLocalDate() + "'", MysqlType.DATE);
+        } else {
+            x = adjustNanos(x, parameterIndex);
+
+            switch (targetMysqlType) {
+                case TIME:
+                    setValue(parameterIndex, "'" + x.toLocalTime() + "'", targetMysqlType);
+                    break;
+                case DATETIME:
+                case TIMESTAMP:
+                    setValue(parameterIndex, "'" + x.toLocalDate() + " " + x.toLocalTime() + "'", targetMysqlType);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     @Override

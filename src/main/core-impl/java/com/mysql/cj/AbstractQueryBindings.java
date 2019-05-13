@@ -36,7 +36,6 @@ import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.ParsePosition;
@@ -62,6 +61,9 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
 
     protected final static byte[] HEX_DIGITS = new byte[] { (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4', (byte) '5', (byte) '6', (byte) '7',
             (byte) '8', (byte) '9', (byte) 'A', (byte) 'B', (byte) 'C', (byte) 'D', (byte) 'E', (byte) 'F' };
+
+    protected final static LocalDate DEFAULT_DATE = LocalDate.of(1970, 1, 1);
+    protected final static LocalTime DEFAULT_TIME = LocalTime.of(0, 0);
 
     protected Session session;
 
@@ -244,13 +246,13 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                 setString(parameterIndex, parameterObj.toString());
 
             } else if (parameterObj instanceof LocalDate) {
-                setDate(parameterIndex, Date.valueOf((LocalDate) parameterObj));
+                setLocalDateTime(parameterIndex, LocalDateTime.of((LocalDate) parameterObj, DEFAULT_TIME), MysqlType.DATE);
 
             } else if (parameterObj instanceof LocalDateTime) {
-                setTimestamp(parameterIndex, Timestamp.valueOf((LocalDateTime) parameterObj));
+                setLocalDateTime(parameterIndex, (LocalDateTime) parameterObj, MysqlType.DATETIME);
 
             } else if (parameterObj instanceof LocalTime) {
-                setTime(parameterIndex, Time.valueOf((LocalTime) parameterObj));
+                setLocalDateTime(parameterIndex, LocalDateTime.of(DEFAULT_DATE, (LocalTime) parameterObj), MysqlType.TIME);
 
             } else {
                 setSerializableObject(parameterIndex, parameterObj);
@@ -284,14 +286,6 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
         if (parameterObj == null) {
             setNull(parameterIndex);
         } else {
-            if (parameterObj instanceof LocalDate) {
-                parameterObj = Date.valueOf((LocalDate) parameterObj);
-            } else if (parameterObj instanceof LocalDateTime) {
-                parameterObj = Timestamp.valueOf((LocalDateTime) parameterObj);
-            } else if (parameterObj instanceof LocalTime) {
-                parameterObj = Time.valueOf((LocalTime) parameterObj);
-            }
-
             try {
                 /*
                  * From Table-B5 in the JDBC Spec
@@ -375,7 +369,28 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                     case DATE:
                     case DATETIME:
                     case TIMESTAMP:
+                        if (parameterObj instanceof LocalDate) {
+                            setLocalDateTime(parameterIndex, LocalDateTime.of((LocalDate) parameterObj, DEFAULT_TIME), targetMysqlType);
+                            break;
+                        } else if (parameterObj instanceof LocalDateTime) {
+                            setLocalDateTime(parameterIndex, ((LocalDateTime) parameterObj), targetMysqlType);
+                            break;
+                        } else if (parameterObj instanceof LocalTime) {
+                            setLocalDateTime(parameterIndex, LocalDateTime.of(DEFAULT_DATE, (LocalTime) parameterObj), targetMysqlType);
+                            break;
+                        }
+
                     case YEAR:
+                        if (parameterObj instanceof LocalDate) {
+                            setNumericObject(parameterIndex, ((LocalDate) parameterObj).getYear(), targetMysqlType, scaleOrLength);
+                            break;
+                        } else if (parameterObj instanceof LocalDateTime) {
+                            setNumericObject(parameterIndex, ((LocalDateTime) parameterObj).getYear(), targetMysqlType, scaleOrLength);
+                            break;
+                        } else if (parameterObj instanceof LocalTime) {
+                            setNumericObject(parameterIndex, DEFAULT_DATE.getYear(), targetMysqlType, scaleOrLength);
+                            break;
+                        }
 
                         java.util.Date parameterAsDate;
 
@@ -428,6 +443,10 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                         } else if (parameterObj instanceof Timestamp) {
                             Timestamp xT = (Timestamp) parameterObj;
                             setTime(parameterIndex, new java.sql.Time(xT.getTime()));
+                        } else if (parameterObj instanceof LocalDateTime) {
+                            setLocalDateTime(parameterIndex, (LocalDateTime) parameterObj, MysqlType.TIME);
+                        } else if (parameterObj instanceof LocalTime) {
+                            setLocalDateTime(parameterIndex, LocalDateTime.of(DEFAULT_DATE, (LocalTime) parameterObj), MysqlType.TIME);
                         } else {
                             setTime(parameterIndex, (java.sql.Time) parameterObj);
                         }
@@ -671,5 +690,28 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                 in = null;
             }
         }
+    }
+
+    protected LocalDateTime adjustNanos(LocalDateTime x, int parameterIndex) {
+        if (!this.sendFractionalSeconds.getValue() || !this.session.getServerSession().getCapabilities().serverSupportsFracSecs()) {
+            // truncate nanoseconds
+            return x.withNano(0);
+        }
+
+        int fractLen = 6; // max supported length (i.e. microsecond)
+        if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0) {
+            // use the column definition if available
+            fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+        }
+        int originalNano = x.getNano();
+        int adjustedNano = TimeUtil.roundOrTruncateNanos(originalNano, fractLen, !this.session.getServerSession().isServerTruncatesFracSecs());
+        if (adjustedNano != originalNano) {
+            if (adjustedNano > 999999999) {
+                adjustedNano %= 1000000000;
+                x = x.plusSeconds(1);
+            }
+            x = x.withNano(adjustedNano);
+        }
+        return x;
     }
 }

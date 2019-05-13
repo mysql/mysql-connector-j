@@ -47,6 +47,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLType;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -59,6 +60,7 @@ import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.CharsetMapping;
@@ -3704,5 +3706,97 @@ public class StatementsTest extends BaseTestCase {
                 return null;
             }
         });
+    }
+
+    public void testSetObjectLocalDateInDifferentTimezone() throws Exception {
+        Properties props = new Properties();
+        for (int i = 0; i < 2; i++) {
+            setObjectInDifferentTimezone("DATE", LocalDate.of(2019, 12, 31), null, "2019-12-31", props);
+            setObjectInDifferentTimezone("DATE", LocalDate.of(2019, 12, 31), MysqlType.DATE, "2019-12-31", props);
+            setObjectInDifferentTimezone("DATETIME", LocalDate.of(2019, 12, 31), null, "2019-12-31T00:00:00", props);
+            setObjectInDifferentTimezone("DATETIME", LocalDate.of(2019, 12, 31), MysqlType.DATETIME, "2019-12-31T00:00:00", props);
+            setObjectInDifferentTimezone("TIMESTAMP", LocalDate.of(2019, 12, 31), null, "2019-12-31T00:00:00", props);
+            setObjectInDifferentTimezone("TIMESTAMP", LocalDate.of(2019, 12, 31), MysqlType.TIMESTAMP, "2019-12-31T00:00:00", props);
+            // setObjectInDifferentTimezone("YEAR", LocalDate.of(2019, 1, 1), null, "2019", props);
+            setObjectInDifferentTimezone("YEAR", LocalDate.of(2019, 1, 1), MysqlType.YEAR, "2019", props);
+            // setObjectInDifferentTimezone("TIME", LocalDate.of(2019, 12, 31), null, "00:00:00", props);
+            // setObjectInDifferentTimezone("TIME", LocalDate.of(2019, 12, 31), MysqlType.TIME, "00:00:00", props);
+
+            props.put(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        }
+    }
+
+    public void testSetObjectLocalDateTimeInDifferentTimezone() throws Exception {
+        // truncation/rounding is tested in StatementRegressionTest#testBug77449
+        Properties props = new Properties();
+        for (int i = 0; i < 2; i++) {
+            setObjectInDifferentTimezone("DATETIME(6)", LocalDateTime.of(2019, 12, 31, 11, 22, 33, 123456000), null, "2019-12-31T11:22:33.123456", props);
+            setObjectInDifferentTimezone("DATETIME(6)", LocalDateTime.of(2019, 12, 31, 11, 22, 33, 123456000), MysqlType.DATETIME, "2019-12-31T11:22:33.123456",
+                    props);
+            setObjectInDifferentTimezone("TIMESTAMP(6)", LocalDateTime.of(2019, 12, 31, 11, 22, 33, 123456000), null, "2019-12-31T11:22:33.123456", props);
+            setObjectInDifferentTimezone("TIMESTAMP(6)", LocalDateTime.of(2019, 12, 31, 11, 22, 33, 123456000), MysqlType.TIMESTAMP,
+                    "2019-12-31T11:22:33.123456", props);
+            setObjectInDifferentTimezone("DATE", LocalDateTime.of(2019, 12, 31, 11, 22, 33, 123456000), null, "2019-12-31", props);
+            setObjectInDifferentTimezone("DATE", LocalDateTime.of(2019, 12, 31, 11, 22, 33, 123456000), MysqlType.DATE, "2019-12-31", props);
+            // setObjectInDifferentTimezone("YEAR", LocalDateTime.of(2019, 1, 1, 11, 22, 33, 123456000), null, "2019", props);
+            setObjectInDifferentTimezone("YEAR", LocalDateTime.of(2019, 1, 1, 11, 22, 33, 123456000), MysqlType.YEAR, "2019", props);
+            setObjectInDifferentTimezone("TIME(6)", LocalDateTime.of(2019, 12, 31, 11, 22, 33, 123456000), null, "11:22:33.123456", props);
+            setObjectInDifferentTimezone("TIME(6)", LocalDateTime.of(2019, 12, 31, 11, 22, 33, 123456000), MysqlType.TIME, "11:22:33.123456", props);
+
+            props.put(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        }
+    }
+
+    public void testSetObjectLocalTimeInDifferentTimezone() throws Exception {
+        // truncation/rounding is tested in StatementRegressionTest#testBug77449
+        Properties props = new Properties();
+        for (int i = 0; i < 2; i++) {
+            setObjectInDifferentTimezone("TIME(6)", LocalTime.of(11, 22, 33, 123456000), null, "11:22:33.123456", props);
+            setObjectInDifferentTimezone("TIME(6)", LocalTime.of(11, 22, 33, 123456000), MysqlType.TIME, "11:22:33.123456", props);
+            // setObjectInDifferentTimezone("DATE", LocalTime.of(11, 22, 33, 123456000), null, "1970-01-01", props);
+            setObjectInDifferentTimezone("DATE", LocalTime.of(11, 22, 33, 123456000), MysqlType.DATE, "1970-01-01", props);
+            // setObjectInDifferentTimezone("DATETIME(6)", LocalTime.of(11, 22, 33, 123456000), null, "1970-01-01T11:22:33.123456", props);
+            setObjectInDifferentTimezone("DATETIME(6)", LocalTime.of(11, 22, 33, 123456000), MysqlType.TIMESTAMP, "1970-01-01T11:22:33.123456", props);
+            // setObjectInDifferentTimezone("TIMESTAMP(6)", LocalTime.of(11, 22, 33, 123456000), null, "1970-01-01T11:22:33.123456", props);
+            setObjectInDifferentTimezone("TIMESTAMP(6)", LocalTime.of(11, 22, 33, 123456000), MysqlType.TIMESTAMP, "1970-01-01T11:22:33.123456", props);
+            // setObjectInDifferentTimezone("YEAR", LocalTime.of(11, 22, 33, 123456000), null, "1970", props);
+            setObjectInDifferentTimezone("YEAR", LocalTime.of(11, 22, 33, 123456000), MysqlType.YEAR, "1970", props);
+
+            props.put(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        }
+    }
+
+    private void setObjectInDifferentTimezone(String columnType, Object parameter, SQLType targetSqlType, String expectedValue, Properties props)
+            throws SQLException {
+        if (props == null) {
+            props = new Properties();
+        }
+        final String tableName = "testSetObjectDateAndTime";
+        final TimeZone origTz = TimeZone.getDefault();
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("GMT+23:50"));
+            createTable(tableName, "(id INT, d " + columnType + ")");
+            try (Connection testConn = getConnectionWithProps(props)) {
+                try (PreparedStatement localPstmt = testConn.prepareStatement("INSERT INTO " + tableName + " VALUES (?, ?)")) {
+                    localPstmt.setInt(1, 1);
+                    if (targetSqlType == null) {
+                        localPstmt.setObject(2, parameter);
+                    } else {
+                        localPstmt.setObject(2, parameter, targetSqlType);
+                    }
+                    assertEquals(1, localPstmt.executeUpdate());
+                }
+                try (Statement localStmt = testConn.createStatement();
+                        ResultSet localRs = localStmt.executeQuery("SELECT COUNT(*) FROM " + tableName + " WHERE id = 1 AND d = '" + expectedValue + "'")) {
+                    assertTrue(localRs.next());
+                    assertEquals(
+                            String.format("column type: '%s', parameter: '%s', sqlType: '%s', properties: '%s'.", columnType, parameter, targetSqlType, props),
+                            1, localRs.getInt(1));
+                }
+            }
+            dropTable(tableName);
+        } finally {
+            TimeZone.setDefault(origTz);
+        }
     }
 }

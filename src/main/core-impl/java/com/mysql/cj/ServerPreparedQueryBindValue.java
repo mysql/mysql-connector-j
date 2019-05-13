@@ -29,6 +29,7 @@
 
 package com.mysql.cj;
 
+import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -257,6 +258,12 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
 
     private void storeTime(NativePacketPayload intoPacket) {
 
+        if (this.value instanceof LocalDateTime) {
+            LocalDateTime ldt = (LocalDateTime) this.value;
+            storeLocalDateTime(intoPacket, 0, 0, 0, ldt.getHour(), ldt.getMinute(), ldt.getSecond(), ldt.getNano(), true);
+            return;
+        }
+
         intoPacket.ensureCapacity(9);
         intoPacket.writeInteger(IntegerDataType.INT1, 8); // length
         intoPacket.writeInteger(IntegerDataType.INT1, 0); // neg flag
@@ -278,6 +285,13 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
      */
     private void storeDateTime(NativePacketPayload intoPacket) {
         synchronized (this) {
+            if (this.value instanceof LocalDateTime) {
+                LocalDateTime ldt = (LocalDateTime) this.value;
+                storeLocalDateTime(intoPacket, ldt.getYear(), ldt.getMonthValue(), ldt.getDayOfMonth(), ldt.getHour(), ldt.getMinute(), ldt.getSecond(),
+                        ldt.getNano(), false);
+                return;
+            }
+
             if (this.calendar == null) {
                 this.calendar = Calendar.getInstance(this.defaultTimeZone, Locale.US);
             }
@@ -296,7 +310,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
                 length = (byte) 11;
             }
 
-            intoPacket.ensureCapacity(length);
+            intoPacket.ensureCapacity(length + 1);
 
             intoPacket.writeInteger(IntegerDataType.INT1, length); // length
 
@@ -323,6 +337,27 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
                 intoPacket.writeInteger(IntegerDataType.INT4, ((java.sql.Timestamp) this.value).getNanos() / 1000);
             }
         }
+    }
+
+    private void storeLocalDateTime(NativePacketPayload intoPacket, int year, int month, int day, int hour, int minute, int second, int nano,
+            boolean prependNegFlag) {
+        byte length = (byte) (prependNegFlag ? 12 : 11);
+        intoPacket.ensureCapacity(length + 1);
+        intoPacket.writeInteger(IntegerDataType.INT1, length); // length
+
+        if (prependNegFlag) {
+            intoPacket.writeInteger(IntegerDataType.INT1, 0); // neg flag
+        }
+
+        intoPacket.writeInteger(IntegerDataType.INT2, year);
+        intoPacket.writeInteger(IntegerDataType.INT1, month);
+        intoPacket.writeInteger(IntegerDataType.INT1, day);
+
+        intoPacket.writeInteger(IntegerDataType.INT1, hour);
+        intoPacket.writeInteger(IntegerDataType.INT1, minute);
+        intoPacket.writeInteger(IntegerDataType.INT1, second);
+        //  microseconds
+        intoPacket.writeInteger(IntegerDataType.INT4, nano / 1000);
     }
 
     @Override

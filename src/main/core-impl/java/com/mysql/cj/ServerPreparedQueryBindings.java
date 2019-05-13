@@ -39,6 +39,7 @@ import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -364,6 +365,25 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
         this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_LONG, this.numberOfExecutions));
         binding.value = Long.valueOf(x);
         binding.parameterType = MysqlType.INT;
+    }
+
+    @Override
+    public void setLocalDateTime(int parameterIndex, LocalDateTime x, MysqlType targetMysqlType) {
+        ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
+        if (targetMysqlType == MysqlType.DATE) {
+            x = LocalDateTime.of(x.toLocalDate(), DEFAULT_TIME);
+            this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATE, this.numberOfExecutions));
+        } else {
+            x = adjustNanos(x, parameterIndex);
+            if (targetMysqlType == MysqlType.TIME) {
+                this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_TIME, this.numberOfExecutions));
+            } else {
+                // DATETIME or TIMESTAMP
+                this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATETIME, this.numberOfExecutions));
+            }
+        }
+        binding.parameterType = targetMysqlType;
+        binding.value = x;
     }
 
     @Override
