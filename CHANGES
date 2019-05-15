@@ -3,6 +3,8 @@
 
 Version 8.0.17
 
+  - Fix for Bug#29591275, THE JAR FILE NEEDS TO CONTAIN A README AND LICENSE FILE.
+
   - WL#13124, Support new utf8mb4 bin collation.
 
   - WL#13009, DevAPI: Deprecate methods.
