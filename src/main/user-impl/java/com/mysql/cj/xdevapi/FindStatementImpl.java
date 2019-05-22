@@ -140,7 +140,7 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
     }
 
     /**
-     * @deprecated Deprecated in c/J 8.0.17, please use filter criteria in the operation starting method.
+     * @deprecated Deprecated in Connector/J 8.0.17. Please use filter criteria in the operation starting method.
      */
     @Deprecated
     @Override
