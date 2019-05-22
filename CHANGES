@@ -3,6 +3,8 @@
 
 Version 8.0.17
 
+  - Fix for Bug#95210 (29807741), ClassCastException in BlobFromLocator when connecting as jdbc:mysql:replication.
+
   - Fix for Bug#29591275, THE JAR FILE NEEDS TO CONTAIN A README AND LICENSE FILE.
 
   - WL#13124, Support new utf8mb4 bin collation.

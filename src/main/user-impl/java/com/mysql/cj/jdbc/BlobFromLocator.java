@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -479,7 +479,7 @@ public class BlobFromLocator implements java.sql.Blob {
             blobRs = pStmt.executeQuery();
 
             if (blobRs.next()) {
-                return ((com.mysql.cj.jdbc.result.ResultSetImpl) blobRs).getBytes(1);
+                return blobRs.getBytes(1);
             }
 
             throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);

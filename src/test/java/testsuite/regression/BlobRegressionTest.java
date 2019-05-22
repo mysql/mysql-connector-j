@@ -44,6 +44,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.util.StringUtils;
 
 import testsuite.BaseTestCase;
 
@@ -440,5 +441,26 @@ public class BlobRegressionTest extends BaseTestCase {
             Thread.sleep(100);
         }
 
+    }
+
+    /**
+     * Tests BUG#95210, ClassCastException in BlobFromLocator when connecting as jdbc:mysql:replication.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug95210() throws Exception {
+        createTable("testBug95210", "(ID VARCHAR(10) PRIMARY KEY, DATA LONGBLOB)");
+        this.stmt.executeUpdate("INSERT INTO testBug95210 (ID, DATA) VALUES (1, '111')");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.emulateLocators.getKeyName(), "true");
+        Connection locatorConn = getMasterSlaveReplicationConnection(props);
+
+        this.rs = locatorConn.createStatement().executeQuery("SELECT ID, 'DATA' AS BLOB_DATA from testBug95210");
+        assertTrue(this.rs.next());
+        Blob b = this.rs.getBlob("BLOB_DATA");
+        byte[] result = b.getBytes(1, 3); // the error was here
+        assertEquals("111", StringUtils.toString(result));
     }
 }
