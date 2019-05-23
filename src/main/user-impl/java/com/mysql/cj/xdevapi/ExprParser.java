@@ -1000,9 +1000,7 @@ public class ExprParser {
                         if (currentTokenTypeEquals(TokenType.LPAREN)) {
                             params.addAll(parenExprList());
                         } else {
-                            if (!currentTokenTypeEquals(TokenType.LSQBRACKET)) {
-                                opName = "cont_in";
-                            }
+                            opName = "cont_in";
                             params.add(compExpr());
                         }
                         break;

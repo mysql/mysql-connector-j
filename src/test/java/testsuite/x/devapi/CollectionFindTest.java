@@ -389,7 +389,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
             // cont_in
 
-            docs = this.collection.find("JSON_UNQUOTE($.b) IN [100,101,102]").execute();
+            docs = this.collection.find("CAST(JSON_UNQUOTE($.b) AS JSON) IN [100,101,102]").execute();
             assertEquals(1, docs.count());
 
             docs = this.collection.find("$.b IN ['100','101','102']").execute();

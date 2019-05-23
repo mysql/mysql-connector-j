@@ -542,4 +542,32 @@ public class ExprParserTest {
         expr = new ExprParser("dd ** .X", false).parse();
         assertEquals("$.dd**.X", ExprUnparser.exprToString(expr));
     }
+
+    /**
+     * Fix for Bug#95503 (29821029), Operator IN not mapping consistently to the right X Plugin operation.
+     */
+    @Test
+    public void testBug95503() {
+        Expr expr;
+
+        expr = new ExprParser("field IN (1, 2, 3)").parse();
+        assertEquals(Expr.Type.OPERATOR, expr.getType());
+        assertEquals("in", expr.getOperator().getName());
+
+        expr = new ExprParser("field IN value").parse();
+        assertEquals(Expr.Type.OPERATOR, expr.getType());
+        assertEquals("cont_in", expr.getOperator().getName());
+
+        expr = new ExprParser("field IN 123 + 456").parse();
+        assertEquals(Expr.Type.OPERATOR, expr.getType());
+        assertEquals("cont_in", expr.getOperator().getName());
+
+        expr = new ExprParser("field IN [1, 2, 3]").parse();
+        assertEquals(Expr.Type.OPERATOR, expr.getType());
+        assertEquals("cont_in", expr.getOperator().getName());
+
+        expr = new ExprParser("field IN {\"foo\": \"bar\"}").parse();
+        assertEquals(Expr.Type.OPERATOR, expr.getType());
+        assertEquals("cont_in", expr.getOperator().getName());
+    }
 }
