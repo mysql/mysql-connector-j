@@ -87,6 +87,7 @@ public enum PropertyKey {
     clientCertificateKeyStorePassword("clientCertificateKeyStorePassword", true), //
     clientCertificateKeyStoreType("clientCertificateKeyStoreType", true), //
     clientCertificateKeyStoreUrl("clientCertificateKeyStoreUrl", true), //
+    clientAuthenticationRequired("clientAuthenticationRequired", true), //
     clientInfoProvider("clientInfoProvider", true), //
     clobberStreamingResults("clobberStreamingResults", true), //
     clobCharacterEncoding("clobCharacterEncoding", true), //

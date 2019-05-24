@@ -260,6 +260,10 @@ public class ExportControlled {
             }
         }
 
+        if (!propertySet.getBooleanProperty(PropertyKey.clientAuthenticationRequired).getValue()) {
+            return new KeyStoreConf(null, null, keyStoreType);
+        }
+
         return new KeyStoreConf(keyStoreUrl, keyStorePassword, keyStoreType);
     }
 

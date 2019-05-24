@@ -731,7 +731,10 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
                 new StringPropertyDefinition(PropertyKey.serverAffinityOrder, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.serverAffinityOrder"), "8.0.8", CATEGORY_HA, Integer.MIN_VALUE) };
+                        Messages.getString("ConnectionProperties.serverAffinityOrder"), "8.0.8", CATEGORY_HA, Integer.MIN_VALUE),
+
+                new BooleanPropertyDefinition(PropertyKey.clientAuthenticationRequired, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.clientAuthenticationRequired"), "8.0.8", CATEGORY_SECURITY, Integer.MIN_VALUE) };
 
         HashMap<PropertyKey, PropertyDefinition<?>> propertyKeyToPropertyDefinitionMap = new HashMap<>();
         for (PropertyDefinition<?> pdef : pdefs) {
