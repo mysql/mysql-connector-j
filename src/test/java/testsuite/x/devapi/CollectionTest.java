@@ -540,7 +540,7 @@ public class CollectionTest extends BaseCollectionTestCase {
             String unsupArrType = unsupArrTypes[i];
 
             String errMsg = i <= 2 ? "ERROR 3751 \\(01000\\) Data truncated for functional index 'myIndex' at row 1"
-                    : "ERROR 13445 \\(22018\\) Invalid JSON value for CAST for functional index 'myIndex'";
+                    : "ERROR 3903 \\(22018\\) Invalid JSON value for CAST for functional index 'myIndex'\\.";
             assertThrows(XProtocolError.class, errMsg,
                     () -> this.collection.createIndex("myIndex",
                             new DbDocImpl().add("fields", new JsonArray().addValue(new DbDocImpl().add("field", new JsonString().setValue("$.myField"))
@@ -574,7 +574,7 @@ public class CollectionTest extends BaseCollectionTestCase {
             String unsupArrType = unsupArrTypes[i];
 
             String errMsg = i <= 0 ? "ERROR 3751 \\(01000\\) Data truncated for functional index 'myIndex' at row 1"
-                    : "ERROR 13445 \\(22018\\) Invalid JSON value for CAST for functional index 'myIndex'";
+                    : "ERROR 3903 \\(22018\\) Invalid JSON value for CAST for functional index 'myIndex'\\.";
             assertThrows(XProtocolError.class, errMsg,
                     () -> this.collection.createIndex("myIndex",
                             new DbDocImpl().add("fields", new JsonArray().addValue(new DbDocImpl().add("field", new JsonString().setValue("$.myField"))
@@ -607,7 +607,7 @@ public class CollectionTest extends BaseCollectionTestCase {
             String unsupArrType = unsupArrTypes[i];
 
             String errMsg = i <= 1 ? "ERROR 3751 \\(01000\\) Data truncated for functional index 'myIndex' at row 1"
-                    : "ERROR 13445 \\(22018\\) Invalid JSON value for CAST for functional index 'myIndex'";
+                    : "ERROR 3903 \\(22018\\) Invalid JSON value for CAST for functional index 'myIndex'\\.";
             assertThrows(XProtocolError.class, errMsg,
                     () -> this.collection.createIndex("myIndex",
                             new DbDocImpl().add("fields", new JsonArray().addValue(new DbDocImpl().add("field", new JsonString().setValue("$.myField"))
