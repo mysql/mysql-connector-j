@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysql.cj.conf.ConnectionUrl;
@@ -213,6 +214,7 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
      * -Dcom.mysql.cj.testsuite.unavailable.host=unavailable_ip:port
      */
     @Test
+    @Ignore // This test doesn't execute deterministically on some systems. It can be run manually in local systems when needed.
     public void testConnectionTimeout() throws Exception {
         if (!this.isSetForXTests) {
             return;
@@ -240,12 +242,12 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
         testConnectionTimeout_assertFailureTimeout(buildConnectionString(fakeHost) + "?" + makeParam(PropertyKey.xdevapiConnectTimeout, "0", true), 12000,
                 600000);
 
-        // TS6_1 Create a session using the fail over functionality passing two different Server address.
+        // TS6_1 Create a session using the fail over functionality passing two different Server addresses.
         // The Server with the higher priority must be offline. The connection must succeed after connect-timeout milliseconds.
         testConnectionTimeout_assertSuccessTimeout(
                 buildConnectionString(fakeHost, this.testsHost) + "?" + makeParam(PropertyKey.xdevapiConnectTimeout, "1000", true), 1000, 2000);
 
-        // TS6_2 Create a session using the fail over functionality passing two different Server address.
+        // TS6_2 Create a session using the fail over functionality passing two different Server addresses.
         // Both Servers must be offline. The connection must time out after connect-timeout * 2 milliseconds.
         testConnectionTimeout_assertFailureTimeout(buildConnectionString(fakeHost, fakeHost) + "?" + makeParam(PropertyKey.xdevapiConnectTimeout, "500", true),
                 1000, 2000);
