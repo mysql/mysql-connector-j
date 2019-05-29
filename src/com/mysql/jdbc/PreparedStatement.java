@@ -4218,7 +4218,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             int fractLen = -1;
             if (!this.sendFractionalSeconds || !this.serverSupportsFracSecs) {
                 fractLen = 0;
-            } else if (this.parameterMetaData != null && parameterIndex <= this.parameterMetaData.metadata.fields.length && parameterIndex >= 0
+            } else if (this.parameterMetaData != null && this.parameterMetaData.metadata != null && this.parameterMetaData.metadata.fields != null
+                    && parameterIndex <= this.parameterMetaData.metadata.fields.length && parameterIndex >= 0
                     && this.parameterMetaData.metadata.getField(parameterIndex).getDecimals() > 0) {
                 fractLen = this.parameterMetaData.metadata.getField(parameterIndex).getDecimals();
             }
@@ -4244,7 +4245,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             int fractLen = -1;
             if (!this.sendFractionalSeconds || !this.serverSupportsFracSecs) {
                 fractLen = 0;
-            } else if (this.parameterMetaData != null && parameterIndex <= this.parameterMetaData.metadata.fields.length && parameterIndex >= 0) {
+            } else if (this.parameterMetaData != null && this.parameterMetaData.metadata != null && this.parameterMetaData.metadata.fields != null
+                    && parameterIndex <= this.parameterMetaData.metadata.fields.length && parameterIndex >= 0) {
                 fractLen = this.parameterMetaData.metadata.getField(parameterIndex).getDecimals();
             }
 

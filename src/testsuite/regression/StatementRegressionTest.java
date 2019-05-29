@@ -8772,4 +8772,46 @@ public class StatementRegressionTest extends BaseTestCase {
         } while ((useSPS = !useSPS) || (useCursorFetch = !useCursorFetch));
     }
 
+    /**
+     * Tests fix for Bug#92089 (28529781), PREPAREDSTATEMENT.SETTIMESTAMP NULLPOINTEREXCEPTION.
+     */
+    public void testBug92089() throws Exception {
+        if (versionMeetsMinimum(5, 6, 4)) {
+            createTable("testBug92089",
+                    "(`id` int(11) NOT NULL AUTO_INCREMENT, `groupId` varchar(40) NOT NULL, `messagingTime` datetime(6) DEFAULT NULL,"
+                            + " `eventTime` datetime(6) DEFAULT NULL, `createTime` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),"
+                            + " PRIMARY KEY (`id`) ) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+        } else {
+            createTable("testBug92089",
+                    "(`id` int(11) NOT NULL AUTO_INCREMENT, `groupId` varchar(40) NOT NULL, `messagingTime` datetime DEFAULT NULL,"
+                            + " `eventTime` datetime DEFAULT NULL, `createTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                            + " PRIMARY KEY (`id`) ) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+        }
+
+        Properties props = new Properties();
+        props.setProperty("useSSL", "false");
+        props.setProperty("allowPublicKeyRetrieval", "true");
+        props.setProperty("characterEncoding", "UTF-8");
+        Connection con1 = getConnectionWithProps(props);
+
+        Calendar testCal = Calendar.getInstance();
+        Timestamp currTs = new Timestamp(System.currentTimeMillis());
+        if (!versionMeetsMinimum(5, 6, 4)) {
+            currTs.setNanos(0);
+        }
+        this.pstmt = con1.prepareStatement("insert into testBug92089 (groupId, messagingTime, eventTime) values (?,?,?)");
+
+        assertNotNull(this.pstmt.getParameterMetaData());
+
+        this.pstmt.setString(1, "my group id");
+        this.pstmt.setTimestamp(2, currTs); // was throwing NPE
+        this.pstmt.setTimestamp(3, currTs, testCal); // was throwing NPE
+        this.pstmt.executeUpdate();
+
+        this.rs = con1.createStatement().executeQuery("SELECT groupId, messagingTime, eventTime from testBug92089");
+        assertTrue(this.rs.next());
+        assertEquals(currTs, this.rs.getTimestamp(2));
+        assertEquals(currTs, this.rs.getTimestamp(3));
+    }
+
 }
