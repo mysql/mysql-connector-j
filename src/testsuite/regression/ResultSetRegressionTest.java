@@ -5916,4 +5916,49 @@ public class ResultSetRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests fix for Bug#80441 (22850444), SYNTAX ERROR ON RESULTSET.UPDATEROW() WITH SQL_MODE NO_BACKSLASH_ESCAPES.
+     *
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug80441() throws Exception {
+        createTable("testBug80441", "( id varchar(50) NOT NULL, data longtext, start DATETIME, PRIMARY KEY (id) )");
+        Properties props = new Properties();
+        Connection con = null;
+        for (String sessVars : new String[] { null, "sql_mode='NO_BACKSLASH_ESCAPES'" }) {
+            for (boolean useSSPS : new boolean[] { false, true }) {
+                props.setProperty("useServerPrepStmts", "" + useSSPS);
+                if (sessVars != null) {
+                    props.setProperty("sessionVariables", sessVars);
+                }
+                String errMsg = "Using sessionVariables=" + sessVars + ", useSSPS=" + useSSPS + ":";
+                try {
+                    con = getConnectionWithProps(dbUrl, props);
+                    Statement st = con.createStatement();
+                    try {
+                        st.execute("INSERT INTO testBug80441(id,data,start) VALUES( 'key''s', 'my data', {ts '2005-01-05 13:59:20'})");
+                        this.pstmt = con.prepareStatement("SELECT * FROM testBug80441", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                        this.rs = this.pstmt.executeQuery();
+                        assertTrue(errMsg, this.rs.next());
+                        String text = "any\\other\ntext's\r\032\u0000\"";
+                        this.rs.updateString("data", text);
+                        this.rs.updateRow();
+                        assertEquals(errMsg, text, this.rs.getString("data"));
+                        this.rs.close();
+                        this.rs = this.pstmt.executeQuery();
+                        assertTrue(errMsg, this.rs.next());
+                        assertEquals(errMsg, text, this.rs.getString("data"));
+                    } finally {
+                        st.execute("TRUNCATE TABLE testBug80441");
+                    }
+                } finally {
+                    if (con != null) {
+                        con.close();
+                    }
+                }
+            }
+        }
+    }
 }
