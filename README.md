@@ -30,7 +30,7 @@ Alternatively, Connector/J can be obtained automatically via [Maven's dependency
 <dependency>
   <groupId>mysql</groupId>
   <artifactId>mysql-connector-java</artifactId>
-  <version>8.0.17</version>
+  <version>8.0.18</version>
 </dependency>
 ```
 

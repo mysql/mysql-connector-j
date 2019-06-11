@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.18
+
 Version 8.0.17
 
   - WL#13210, Generate Javadocs via ant.A
