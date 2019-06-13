@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -41,6 +41,7 @@ import java.util.concurrent.Callable;
 
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.Util;
 
 import testsuite.BaseTestCase;
 
@@ -1780,5 +1781,230 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 con.close();
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#73774 (19531305) - Can't execute a stored procedure if exists function with same name.
+     * 
+     * The behavior fixed in this patch requires JDBC 4 or above as it must be possible to retrieve procedures and functions only from the database metadata.
+     * 
+     * @throws Exception
+     *             if an error occurs.
+     */
+    public void testBug73774() throws Exception {
+        if (!Util.isJdbc4()) {
+            return;
+        }
+
+        createProcedure("testBug73774_1",
+                "(INOUT p1 VARCHAR(20), IN p2 VARCHAR(20), OUT p3 VARCHAR(20)) BEGIN SELECT CONCAT(p1, p2) INTO p1; SELECT CONCAT(p1, p2) INTO p3;  END");
+        createFunction("testBug73774_1", "(p1 VARCHAR(20), p2 VARCHAR(20)) RETURNS VARCHAR(40) DETERMINISTIC RETURN CONCAT(p1, p2)");
+
+        createProcedure("testBug73774_2",
+                "(INOUT p1 VARCHAR(20), IN p2 VARCHAR(20), IN pX INT, OUT p3 VARCHAR(20)) BEGIN SELECT CONCAT(p1, p2) INTO p1; SELECT CONCAT(p1, p2) INTO p3;  END");
+        createFunction("testBug73774_2", "(p1 VARCHAR(20), pX INT, p2 VARCHAR(20)) RETURNS VARCHAR(40) DETERMINISTIC RETURN CONCAT(p1, p2)");
+
+        boolean getPRF = false;
+        boolean useSPS = false;
+
+        do {
+            final String testCase = String.format("Case [getPRF: %s, useSPS: %s]", getPRF ? "Y" : "N", useSPS ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty("getProceduresReturnsFunctions", Boolean.toString(getPRF));
+            props.setProperty("useServerPrepStmts", Boolean.toString(useSPS));
+
+            Connection testConn = getConnectionWithProps(props);
+
+            // Execute procedure 1
+            final CallableStatement cstmtP1 = testConn.prepareCall("{CALL testBug73774_1 (?, ?, ?)}");
+            assertEquals(testCase, 3, cstmtP1.getParameterMetaData().getParameterCount());
+            cstmtP1.registerOutParameter(1, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtP1.registerOutParameter(2, Types.VARCHAR);
+                    return null;
+                }
+            });
+            cstmtP1.registerOutParameter(3, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtP1.registerOutParameter(4, Types.VARCHAR);
+                    return null;
+                }
+            });
+            cstmtP1.setString(1, "My");
+            cstmtP1.setString(2, "SQL");
+            cstmtP1.setString(3, "SQL"); // no-op
+            assertThrows(testCase, SQLException.class, "Parameter index out of range \\(4 > number of parameters, which is 3\\)\\.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtP1.setString(4, "SQL");
+                    return null;
+                }
+            });
+            assertFalse(testCase, cstmtP1.execute());
+            assertEquals(testCase, "MySQL", cstmtP1.getString(1));
+            assertThrows(testCase, SQLException.class, "Parameter 2 is not registered as an output parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtP1.getString(2);
+                    return null;
+                }
+            });
+            assertEquals(testCase, "MySQLSQL", cstmtP1.getString(3));
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtP1.getString(4);
+                    return null;
+                }
+            });
+            cstmtP1.close();
+
+            // Execute procedure 2
+            final CallableStatement cstmtP2 = testConn.prepareCall("{CALL testBug73774_2 (?, ?, 0, ?)}");
+            assertEquals(testCase, 3, cstmtP2.getParameterMetaData().getParameterCount());
+            cstmtP2.registerOutParameter(1, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtP2.registerOutParameter(2, Types.VARCHAR);
+                    return null;
+                }
+            });
+            cstmtP2.registerOutParameter(3, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtP2.registerOutParameter(4, Types.VARCHAR);
+                    return null;
+                }
+            });
+            cstmtP2.setString(1, "My");
+            cstmtP2.setString(2, "SQL");
+            cstmtP2.setString(3, "SQL"); // no-op
+            assertThrows(testCase, SQLException.class, "Parameter index out of range \\(4 > number of parameters, which is 3\\)\\.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtP2.setString(4, "SQL");
+                    return null;
+                }
+            });
+            assertFalse(testCase, cstmtP2.execute());
+            assertEquals(testCase, "MySQL", cstmtP2.getString(1));
+            assertThrows(testCase, SQLException.class, "Parameter 2 is not registered as an output parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtP2.getString(2);
+                    return null;
+                }
+            });
+            assertEquals(testCase, "MySQLSQL", cstmtP2.getString(3));
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtP2.getString(4);
+                    return null;
+                }
+            });
+            cstmtP2.close();
+
+            // Execute function 1.
+            final CallableStatement cstmtF1 = testConn.prepareCall("{? = CALL testBug73774_1 (?, ?)}");
+            cstmtF1.registerOutParameter(1, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF1.registerOutParameter(2, Types.VARCHAR);
+                    return null;
+                }
+            });
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF1.registerOutParameter(2, Types.VARCHAR);
+                    return null;
+                }
+            });
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF1.registerOutParameter(4, Types.VARCHAR);
+                    return null;
+                }
+            });
+            cstmtF1.setString(2, "My");
+            cstmtF1.setString(3, "SQL");
+            assertThrows(testCase, SQLException.class, "Parameter index out of range \\(4 > number of parameters, which is 2\\)\\.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF1.setString(4, "SQL");
+                    return null;
+                }
+            });
+            assertFalse(testCase, cstmtF1.execute());
+            assertEquals(testCase, "MySQL", cstmtF1.getString(1));
+            assertThrows(testCase, SQLException.class, "Parameter 2 is not registered as an output parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF1.getString(2);
+                    return null;
+                }
+            });
+            assertThrows(testCase, SQLException.class, "Parameter 3 is not registered as an output parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF1.getString(3);
+                    return null;
+                }
+            });
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF1.getString(4);
+                    return null;
+                }
+            });
+            cstmtF1.close();
+
+            // Execute function 2.
+            final CallableStatement cstmtF2 = testConn.prepareCall("{? = CALL testBug73774_2 (?, 0, ?)}");
+            cstmtF2.registerOutParameter(1, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF2.registerOutParameter(2, Types.VARCHAR);
+                    return null;
+                }
+            });
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF2.registerOutParameter(2, Types.VARCHAR);
+                    return null;
+                }
+            });
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF2.registerOutParameter(4, Types.VARCHAR);
+                    return null;
+                }
+            });
+            cstmtF2.setString(2, "My");
+            cstmtF2.setString(3, "SQL");
+            assertThrows(testCase, SQLException.class, "Parameter index out of range \\(4 > number of parameters, which is 2\\)\\.", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF2.setString(4, "SQL");
+                    return null;
+                }
+            });
+            assertFalse(testCase, cstmtF2.execute());
+            assertEquals(testCase, "MySQL", cstmtF2.getString(1));
+            assertThrows(testCase, SQLException.class, "Parameter 2 is not registered as an output parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF2.getString(2);
+                    return null;
+                }
+            });
+            assertThrows(testCase, SQLException.class, "Parameter 3 is not registered as an output parameter", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF2.getString(3);
+                    return null;
+                }
+            });
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", new Callable<Void>() {
+                public Void call() throws Exception {
+                    cstmtF2.getString(4);
+                    return null;
+                }
+            });
+            cstmtF2.close();
+
+            testConn.close();
+        } while ((useSPS = !useSPS) || (getPRF = !getPRF));
     }
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -27,10 +27,12 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.sql.Blob;
 import java.sql.Clob;
+import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.RowId;
 import java.sql.SQLXML;
 import java.sql.NClob;
+import java.sql.ResultSet;
 
 public class JDBC4CallableStatement extends CallableStatement {
 
@@ -42,6 +44,21 @@ public class JDBC4CallableStatement extends CallableStatement {
         super(conn, sql, catalog, isFunctionCall);
     }
 
+    @Override
+    protected ResultSet getParamTypes(String catalog, String routineName) throws SQLException {
+        DatabaseMetaData dbmd = this.connection.getMetaData();
+        if (this.callingStoredFunction) {
+            return dbmd.getFunctionColumns(catalog, null, routineName, "%");
+        }
+        boolean getProcRetFuncsCurrentValue = this.connection.getGetProceduresReturnsFunctions();
+        try {
+            this.connection.setGetProceduresReturnsFunctions(false);
+            return dbmd.getProcedureColumns(catalog, null, routineName, "%");
+        } finally {
+            this.connection.setGetProceduresReturnsFunctions(getProcRetFuncsCurrentValue);
+        }
+    }
+    
     public void setRowId(int parameterIndex, RowId x) throws SQLException {
         JDBC4PreparedStatementHelper.setRowId(this, parameterIndex, x);
     }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -169,20 +169,11 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             this.parameterList = new ArrayList<CallableStatementParam>(fullParamInfo.numParameters);
             this.parameterMap = new HashMap<String, CallableStatementParam>(fullParamInfo.numParameters);
 
-            if (this.isFunctionCall) {
-                // Take the return value
-                this.parameterList.add(fullParamInfo.parameterList.get(0));
-            }
-
-            int offset = this.isFunctionCall ? 1 : 0;
-
             for (int i = 0; i < parameterMapLength; i++) {
-                if (localParameterMap[i] != 0) {
-                    CallableStatementParam param = fullParamInfo.parameterList.get(localParameterMap[i] + offset);
+                CallableStatementParam param = fullParamInfo.parameterList.get(localParameterMap[i]);
 
-                    this.parameterList.add(param);
-                    this.parameterMap.put(param.paramName, param);
-                }
+                this.parameterList.add(param);
+                this.parameterMap.put(param.paramName, param);
             }
 
             this.numParameters = this.parameterList.size();
@@ -207,10 +198,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 addParametersFromDBMD(paramTypesRs);
             } else {
                 this.numParameters = 0;
-            }
-
-            if (this.isFunctionCall) {
-                this.numParameters += 1;
             }
         }
 
@@ -269,9 +256,11 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         protected void checkBounds(int paramIndex) throws SQLException {
             int localParamIndex = paramIndex - 1;
 
-            if ((paramIndex < 0) || (localParamIndex >= this.numParameters)) {
-                throw SQLError.createSQLException(Messages.getString("CallableStatement.11") + paramIndex + Messages.getString("CallableStatement.12")
-                        + this.numParameters + Messages.getString("CallableStatement.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            if ((paramIndex < 0) || (localParamIndex >= CallableStatement.this.parameterCount)) {
+                throw SQLError.createSQLException(
+                        Messages.getString("CallableStatement.11") + paramIndex + Messages.getString("CallableStatement.12")
+                                + CallableStatement.this.parameterCount + Messages.getString("CallableStatement.13"),
+                        SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -414,7 +403,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
         return paramNameBuf.toString();
     }
 
-    private boolean callingStoredFunction = false;
+    protected boolean callingStoredFunction = false;
 
     private ResultSetInternalMethods functionReturnValueResults;
 
@@ -500,14 +489,15 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             int parameterCountFromMetaData = this.paramInfo.getParameterCount();
 
-            // Ignore the first ? if this is a stored function, it doesn't count
-
-            if (this.callingStoredFunction) {
-                parameterCountFromMetaData--;
-            }
-
             if (this.paramInfo != null && this.parameterCount != parameterCountFromMetaData) {
                 this.placeholderToParameterIndexMap = new int[this.parameterCount];
+
+                int startIndex = 0;
+
+                if (this.callingStoredFunction) {
+                    this.placeholderToParameterIndexMap[0] = 0;
+                    startIndex = 1;
+                }
 
                 int startPos = this.callingStoredFunction ? StringUtils.indexOfIgnoreCase(this.originalSql, "SELECT")
                         : StringUtils.indexOfIgnoreCase(this.originalSql, "CALL");
@@ -523,17 +513,10 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
                             int numParsedParameters = parsedParameters.size();
 
-                            // sanity check
-
-                            if (numParsedParameters != this.parameterCount) {
-                                // bail?
-                            }
-
-                            int placeholderCount = 0;
-
+                            int placeholderCount = startIndex;
                             for (int i = 0; i < numParsedParameters; i++) {
                                 if (((String) parsedParameters.get(i)).equals("?")) {
-                                    this.placeholderToParameterIndexMap[placeholderCount++] = i;
+                                    this.placeholderToParameterIndexMap[placeholderCount++] = startIndex + i;
                                 }
                             }
                         }
@@ -572,9 +555,9 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             generateParameterMap();
         } else {
             determineParameterTypes();
-            generateParameterMap();
+            this.parameterCount++; // Function return counts too.
 
-            this.parameterCount += 1;
+            generateParameterMap();
         }
 
         this.retrieveGeneratedKeys = true; // not provided for in the JDBC spec
@@ -605,9 +588,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
                     return this.returnValueParam;
                 }
-
-                // Move to position in output result set
-                paramIndex--;
             }
 
             checkParameterIndexBounds(paramIndex);
@@ -767,17 +747,9 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                 } else {
                     //keep values as they are
                 }
+                boolean useCatalog = tmpCatalog.length() <= 0;
 
-                java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
-
-                boolean useCatalog = false;
-
-                if (tmpCatalog.length() <= 0) {
-                    useCatalog = true;
-                }
-
-                paramTypesRs = dbmd.getProcedureColumns(this.connection.versionMeetsMinimum(5, 0, 2) && useCatalog ? this.currentCatalog : tmpCatalog/* null */,
-                        null, procName, "%");
+                paramTypesRs = getParamTypes(this.connection.versionMeetsMinimum(5, 0, 2) && useCatalog ? this.currentCatalog : tmpCatalog, procName);
 
                 boolean hasResults = false;
                 try {
@@ -810,6 +782,16 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
                     throw sqlExRethrow;
                 }
             }
+        }
+    }
+
+    protected ResultSet getParamTypes(String catalog, String routineName) throws SQLException {
+        boolean getProcRetFuncsCurrentValue = this.connection.getGetProceduresReturnsFunctions();
+        try {
+            this.connection.setGetProceduresReturnsFunctions(this.callingStoredFunction);
+            return this.connection.getMetaData().getProcedureColumns(catalog, null, routineName, "%");
+        } finally {
+            this.connection.setGetProceduresReturnsFunctions(getProcRetFuncsCurrentValue);
         }
     }
 
@@ -936,13 +918,13 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
     protected String fixParameterName(String paramNameIn) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             //Fixed for 5.5+
-            if (((paramNameIn == null) || (paramNameIn.length() == 0)) && (!hasParametersView())) {
-                throw SQLError.createSQLException(((Messages.getString("CallableStatement.0") + paramNameIn) == null)
-                        ? Messages.getString("CallableStatement.15") : Messages.getString("CallableStatement.16"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+            if ((paramNameIn == null || paramNameIn.length() == 0) && !hasParametersView()) {
+                throw SQLError
+                        .createSQLException(((Messages.getString("CallableStatement.0") + paramNameIn) == null) ? Messages.getString("CallableStatement.15")
+                                : Messages.getString("CallableStatement.16"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
-            if ((paramNameIn == null) && (hasParametersView())) {
+            if (paramNameIn == null && hasParametersView()) {
                 paramNameIn = "nullpn";
             }
 
