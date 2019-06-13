@@ -2007,4 +2007,47 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             testConn.close();
         } while ((useSPS = !useSPS) || (getPRF = !getPRF));
     }
+
+    /**
+     * Tests fix for Bug#95796 (29907618) - Parameter metadata inferred incorrectly when procedure or function doesn't exist.
+     * 
+     * @throws Exception
+     *             if an error occurs.
+     */
+    public void testBug95796() throws Exception {
+        CallableStatement cstmt;
+        ParameterMetaData pmd;
+
+        cstmt = this.conn.prepareCall("{CALL testBug95796 (?, ?, ?)}");
+        pmd = cstmt.getParameterMetaData();
+        assertEquals(3, pmd.getParameterCount());
+        for (int i = 1; i <= pmd.getParameterCount(); i++) {
+            assertEquals(Types.VARCHAR, pmd.getParameterType(i));
+            assertEquals(ParameterMetaData.parameterModeIn, pmd.getParameterMode(i));
+        }
+
+        cstmt = this.conn.prepareCall("{CALL testBug95796 (?, 0, ?)}");
+        pmd = cstmt.getParameterMetaData();
+        assertEquals(2, pmd.getParameterCount());
+        for (int i = 1; i <= pmd.getParameterCount(); i++) {
+            assertEquals(Types.VARCHAR, pmd.getParameterType(i));
+            assertEquals(ParameterMetaData.parameterModeIn, pmd.getParameterMode(i));
+        }
+
+        cstmt = this.conn.prepareCall("{? = CALL testBug95796 (?, ?, ?)}");
+        pmd = cstmt.getParameterMetaData();
+        assertEquals(4, pmd.getParameterCount());
+        for (int i = 1; i <= pmd.getParameterCount(); i++) {
+            assertEquals(Types.VARCHAR, pmd.getParameterType(i));
+            assertEquals(i == 1 ? ParameterMetaData.parameterModeOut : ParameterMetaData.parameterModeIn, pmd.getParameterMode(i));
+        }
+
+        cstmt = this.conn.prepareCall("{? = CALL testBug95796 (?, 0, ?)}");
+        pmd = cstmt.getParameterMetaData();
+        assertEquals(3, pmd.getParameterCount());
+        for (int i = 1; i <= pmd.getParameterCount(); i++) {
+            assertEquals(Types.VARCHAR, pmd.getParameterType(i));
+            assertEquals(i == 1 ? ParameterMetaData.parameterModeOut : ParameterMetaData.parameterModeIn, pmd.getParameterMode(i));
+        }
+    }
 }

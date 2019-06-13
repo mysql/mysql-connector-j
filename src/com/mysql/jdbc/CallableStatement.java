@@ -693,14 +693,20 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
             ArrayList<ResultSetRow> resultRows = new ArrayList<ResultSetRow>();
 
-            for (int i = 0; i < this.parameterCount; i++) {
+            int numOfParameters = this.callingStoredFunction ? this.parameterCount + 1 : this.parameterCount;
+            for (int i = 0; i < numOfParameters; i++) {
                 byte[][] row = new byte[13][];
                 row[0] = null; // PROCEDURE_CAT
                 row[1] = null; // PROCEDURE_SCHEM
                 row[2] = procNameAsBytes; // PROCEDURE/NAME
                 row[3] = StringUtils.s2b(String.valueOf(i), this.connection); // COLUMN_NAME
 
-                row[4] = StringUtils.s2b(String.valueOf(java.sql.DatabaseMetaData.procedureColumnIn), this.connection);
+                if (this.callingStoredFunction && i == 0) {
+                    // First parameter is function return.
+                    row[4] = StringUtils.s2b(String.valueOf(java.sql.DatabaseMetaData.procedureColumnOut), this.connection);
+                } else {
+                    row[4] = StringUtils.s2b(String.valueOf(java.sql.DatabaseMetaData.procedureColumnIn), this.connection);
+                }
 
                 row[5] = StringUtils.s2b(String.valueOf(Types.VARCHAR), this.connection); // DATA_TYPE
                 row[6] = StringUtils.s2b("VARCHAR", this.connection); // TYPE_NAME

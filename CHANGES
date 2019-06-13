@@ -3,6 +3,8 @@
 
 Version 5.1.48
 
+  - Fix for Bug#95796 (29907618), Parameter metadata inferred incorrectly when procedure or function doesn't exist.
+
   - Fix for Bug#73774 (19531305), Can't execute a stored procedure if exists function with same name.
 
   - Fix for Bug#20913289, PSTMT.EXECUTEUPDATE() FAILS WHEN SQL MODE IS NO_BACKSLASH_ESCAPES.
