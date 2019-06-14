@@ -1127,8 +1127,17 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 bytesOut.write('\\');
                 bytesOut.write('0');
                 lastwritten = i + 1;
+            } else if (b == '\'') {
+                // write stuff not yet written
+                if (i > lastwritten) {
+                    bytesOut.write(buf, lastwritten, i - lastwritten);
+                }
+
+                // write escape
+                bytesOut.write(this.connection.isNoBackslashEscapesSet() ? '\'' : '\\');
+                lastwritten = i; // not i+1 as b wasn't written.
             } else {
-                if ((b == '\\') || (b == '\'') || (!this.usingAnsiMode && b == '"')) {
+                if ((b == '\\') || (!this.usingAnsiMode && b == '"')) {
                     // write stuff not yet written
                     if (i > lastwritten) {
                         bytesOut.write(buf, lastwritten, i - lastwritten);

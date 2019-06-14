@@ -31,6 +31,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
@@ -5958,6 +5959,64 @@ public class ResultSetRegressionTest extends BaseTestCase {
                         con.close();
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#20913289, PSTMT.EXECUTEUPDATE() FAILS WHEN SQL MODE IS NO_BACKSLASH_ESCAPES.
+     *
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug20913289() throws Exception {
+        createTable("testBug20913289", "(c1 int,c2 blob)");
+        Properties props = new Properties();
+        Connection con = null;
+        for (String sessVars : new String[] { null, "sql_mode='NO_BACKSLASH_ESCAPES'" }) {
+            for (boolean useSSPS : new boolean[] { false, true }) {
+                props.setProperty("useServerPrepStmts", "" + useSSPS);
+                if (sessVars != null) {
+                    props.setProperty("sessionVariables", sessVars);
+                }
+                String errMsg = "Using sessionVariables=" + sessVars + ", useSSPS=" + useSSPS + ":";
+
+                PreparedStatement ps = null;
+                String text = " ' This is first record ' ";
+                String escapedText = " '' This is first record '' ";
+
+                try {
+                    con = getConnectionWithProps(dbUrl, props);
+                    Statement st = con.createStatement();
+                    try {
+                        st.execute("insert into testBug20913289 values(100,'" + escapedText + "')");
+
+                        this.rs = st.executeQuery("select * from testBug20913289");
+                        this.rs.next();
+                        Blob bval1 = this.rs.getBlob(2);
+                        assertEquals(errMsg, "100", this.rs.getString(1));
+                        assertEquals(errMsg, text, this.rs.getString(2));
+                        this.rs.close();
+
+                        ps = con.prepareStatement("update testBug20913289 set c1=c1+?,c2=? ");
+                        ps.setObject(1, "100", java.sql.Types.INTEGER);
+                        ps.setBlob(2, bval1);
+                        ps.executeUpdate();
+
+                        this.rs = st.executeQuery("select * from testBug20913289");
+                        this.rs.next();
+                        assertEquals(errMsg, "200", this.rs.getString(1));
+                        assertEquals(errMsg, text, this.rs.getString(2));
+                        this.rs.close();
+                        ps.close();
+                    } catch (Exception ex) {
+                        System.out.println(errMsg);
+                        throw ex;
+                    }
+                } finally {
+                    this.stmt.execute("TRUNCATE TABLE testBug20913289");
+                }
+
             }
         }
     }
