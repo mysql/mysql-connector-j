@@ -3,6 +3,8 @@
 
 Version 5.1.48
 
+  - WL#12942, Update README.md and add new CONTRIBUTING.md.
+
   - Fix for Bug#91435 (28268619), Improve DatabaseMetaData.getSQLKeywords() to include new reserved words.
 
   - Fix for Bug#95796 (29907618), Parameter metadata inferred incorrectly when procedure or function doesn't exist.
