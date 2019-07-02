@@ -1282,12 +1282,10 @@ public class UpdatableResultSet extends ResultSetImpl {
                 }
             }
 
-            String connectionEncoding = this.connection.getEncoding();
             if (this.fields[index].getvalueNeedsQuoting()
                     // Next condition must coincide with the verification done in PreparedStatement.setBytes(int, byte[], bool, bool)
                     // to avoid quotation of values sent in a HEX literal form (see Bug#80441)
-                    && !this.connection.isNoBackslashEscapesSet()
-                    && !(this.connection.getUseUnicode() && connectionEncoding != null && CharsetMapping.isMultibyteCharset(connectionEncoding))) {
+                    && !this.connection.isNoBackslashEscapesSet()) {
                 this.refresher.setBytesNoEscape(1, dataFrom);
             } else {
                 this.refresher.setBytesNoEscapeNoQuotes(1, dataFrom);

@@ -3,6 +3,8 @@
 
 Version 5.1.48
 
+  - Fix for Bug#29998730, REGRESSION UNIT TESTS FAILS WHEN THE 8.0 SERVER'S CHARSET IS SET TO DEFAULT UTF8MB4.
+
   - WL#12942, Update README.md and add new CONTRIBUTING.md.
 
   - Fix for Bug#91435 (28268619), Improve DatabaseMetaData.getSQLKeywords() to include new reserved words.
