@@ -219,4 +219,6 @@ public interface QueryBindings<T extends BindValue> {
     // URL getURL(int parameterIndex);
 
     byte[] getBytesRepresentation(int parameterIndex);
+
+    byte[] getOrigBytes(int parameterIndex);
 }

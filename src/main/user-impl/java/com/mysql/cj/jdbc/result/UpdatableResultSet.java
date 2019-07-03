@@ -55,6 +55,7 @@ import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.MysqlSQLXML;
+import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -145,6 +146,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         super(tuples, conn, creatorStmt);
         checkUpdatability();
 
+        this.charEncoding = this.session.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
         this.populateInserterWithDefaultValues = this.getSession().getPropertySet().getBooleanProperty(PropertyKey.populateInsertRowWithDefaultValues)
                 .getValue();
         this.pedantic = this.getSession().getPropertySet().getBooleanProperty(PropertyKey.pedantic).getValue();
@@ -1024,8 +1026,22 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.setParamValue(this.refresher, i + 1, this.thisRow, index, this.getMetadata().getFields()[index]);
                 continue;
             }
-            dataFrom = stripBinaryPrefix(dataFrom);
-            this.refresher.setBytesNoEscape(i + 1, dataFrom);
+            dataFrom = StringUtils.stripEnclosure(dataFrom, "_binary'", "'");
+
+            byte[] origBytes = updateInsertStmt.getOrigBytes(i + 1);
+            if (origBytes != null) {
+                // It happens when updateInsertStmt parameter is set as a HEX literal.
+                // We need to avoid quotation in this case.
+                if (this.refresher instanceof ServerPreparedStatement) {
+                    // Server-side prepared statement does not recognize HEX literal sent as a parameter to execute command,
+                    // it's treated as a usual string and quoted on server side. Thus we send original bytes instead.
+                    this.refresher.setBytesNoEscapeNoQuotes(i + 1, origBytes);
+                } else {
+                    this.refresher.setBytesNoEscapeNoQuotes(i + 1, dataFrom);
+                }
+            } else {
+                this.refresher.setBytesNoEscape(i + 1, dataFrom);
+            }
         }
 
         java.sql.ResultSet rs = null;
@@ -1093,10 +1109,6 @@ public class UpdatableResultSet extends ResultSetImpl {
         // java.sql.SQLWarning warning = new java.sql.SQLWarning(
         // NotUpdatable.NOT_UPDATABLE_MESSAGE);
         // }
-    }
-
-    private byte[] stripBinaryPrefix(byte[] dataFrom) {
-        return StringUtils.stripEnclosure(dataFrom, "_binary'", "'");
     }
 
     /**

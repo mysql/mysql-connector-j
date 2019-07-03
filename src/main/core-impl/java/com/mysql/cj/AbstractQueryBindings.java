@@ -158,6 +158,15 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
         this.bindValues[paramIndex].setMysqlType(type);
     }
 
+    public synchronized final void setOrigValue(int paramIndex, byte[] val) {
+        this.bindValues[paramIndex].setOrigByteValue(val);
+    }
+
+    @Override
+    public synchronized byte[] getOrigBytes(int parameterIndex) {
+        return this.bindValues[parameterIndex].getOrigByteValue();
+    }
+
     public synchronized final void setValue(int paramIndex, String val, MysqlType type) {
         byte[] parameterAsBytes = StringUtils.getBytes(val, this.charEncoding);
         setValue(paramIndex, parameterAsBytes, type);
@@ -612,14 +621,7 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
             return null;
         }
 
-        if ((parameterVal[0] == '\'') && (parameterVal[parameterVal.length - 1] == '\'')) {
-            byte[] valNoQuotes = new byte[parameterVal.length - 2];
-            System.arraycopy(parameterVal, 1, valNoQuotes, 0, parameterVal.length - 2);
-
-            return valNoQuotes;
-        }
-
-        return parameterVal;
+        return StringUtils.unquoteBytes(parameterVal);
     }
 
     private byte[] streamConvertBuf = null;

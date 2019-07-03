@@ -1319,10 +1319,18 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         createTable("testBug9098", "(pkfield INT PRIMARY KEY NOT NULL AUTO_INCREMENT, \n"
                 + "tsfield TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, tsfield2 TIMESTAMP NOT NULL DEFAULT '2005-12-25 12:20:52', charfield VARCHAR(4) NOT NULL DEFAULT 'abcd')");
-        updatableStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-        this.rs = updatableStmt.executeQuery("SELECT pkfield, tsfield, tsfield2, charfield FROM testBug9098");
-        this.rs.moveToInsertRow();
-        this.rs.insertRow();
+
+        for (boolean populateWithDefaults : new boolean[] { false, true }) {
+            try {
+                ((JdbcConnection) this.conn).getPropertySet().getBooleanProperty(PropertyKey.populateInsertRowWithDefaultValues).setValue(populateWithDefaults);
+                updatableStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                this.rs = updatableStmt.executeQuery("SELECT pkfield, tsfield, tsfield2, charfield FROM testBug9098");
+                this.rs.moveToInsertRow();
+                this.rs.insertRow();
+            } finally {
+                this.stmt.execute("TRUNCATE TABLE testBug9098");
+            }
+        }
     }
 
     /**
@@ -4183,8 +4191,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             public Boolean call() throws Exception {
                 boolean res = false;
                 Connection con2 = getConnectionWithProps(props);
-                if (((JdbcConnection) con2).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
-                        .getValue() == DatabaseTerm.SCHEMA) {
+                if (((JdbcConnection) con2).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA) {
                     con2.setSchema("information_schema");
                 } else {
                     con2.setCatalog("information_schema");
@@ -7026,4 +7033,116 @@ public class ResultSetRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests fix for Bug#80441 (22850444), SYNTAX ERROR ON RESULTSET.UPDATEROW() WITH SQL_MODE NO_BACKSLASH_ESCAPES.
+     *
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug80441() throws Exception {
+        createTable("testBug80441", "( id varchar(50) NOT NULL, data longtext, start DATETIME, PRIMARY KEY (id) )");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        Connection con = null;
+        for (String sessVars : new String[] { null, "sql_mode='NO_BACKSLASH_ESCAPES'" }) {
+            for (boolean useSSPS : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+                if (sessVars != null) {
+                    props.setProperty(PropertyKey.sessionVariables.getKeyName(), sessVars);
+                }
+                String errMsg = "Using sessionVariables=" + sessVars + ", useSSPS=" + useSSPS + ":";
+                try {
+                    con = getConnectionWithProps(dbUrl, props);
+                    Statement st = con.createStatement();
+                    try {
+                        st.execute("INSERT INTO testBug80441(id,data,start) VALUES( 'key''''s', 'my data', {ts '2005-01-05 13:59:20'})");
+                        this.pstmt = con.prepareStatement("SELECT * FROM testBug80441", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                        this.rs = this.pstmt.executeQuery();
+                        assertTrue(errMsg, this.rs.next());
+                        assertEquals(errMsg, "key''s", this.rs.getString(1));
+                        String text = "any\\other\ntext's\r\032\u0000\"";
+                        this.rs.updateString("data", text);
+                        this.rs.updateRow();
+                        assertEquals(errMsg, text, this.rs.getString("data"));
+                        this.rs.close();
+                        this.rs = this.pstmt.executeQuery();
+                        assertTrue(errMsg, this.rs.next());
+                        assertEquals(errMsg, text, this.rs.getString("data"));
+                    } catch (Throwable e) {
+                        System.out.println(errMsg);
+                        throw e;
+                    } finally {
+                        st.execute("TRUNCATE TABLE testBug80441");
+                    }
+                } finally {
+                    if (con != null) {
+                        con.close();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#20913289, PSTMT.EXECUTEUPDATE() FAILS WHEN SQL MODE IS NO_BACKSLASH_ESCAPES.
+     *
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug20913289() throws Exception {
+        createTable("testBug20913289", "(c1 int,c2 blob)");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        Connection con = null;
+        for (String sessVars : new String[] { null, "sql_mode='NO_BACKSLASH_ESCAPES'" }) {
+            for (boolean useSSPS : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+                if (sessVars != null) {
+                    props.setProperty(PropertyKey.sessionVariables.getKeyName(), sessVars);
+                }
+                String errMsg = "Using sessionVariables=" + sessVars + ", useSSPS=" + useSSPS + ":";
+
+                PreparedStatement ps = null;
+                String text = " ' This is first record ' ";
+                String escapedText = " '' This is first record '' ";
+
+                try {
+                    con = getConnectionWithProps(dbUrl, props);
+                    Statement st = con.createStatement();
+                    try {
+                        st.execute("insert into testBug20913289 values(100,'" + escapedText + "')");
+
+                        this.rs = st.executeQuery("select * from testBug20913289");
+                        this.rs.next();
+                        Blob bval1 = this.rs.getBlob(2);
+                        assertEquals(errMsg, "100", this.rs.getString(1));
+                        assertEquals(errMsg, text, this.rs.getString(2));
+                        this.rs.close();
+
+                        ps = con.prepareStatement("update testBug20913289 set c1=c1+?,c2=? ");
+                        ps.setObject(1, "100", java.sql.Types.INTEGER);
+                        ps.setBlob(2, bval1);
+                        ps.executeUpdate();
+
+                        this.rs = st.executeQuery("select * from testBug20913289");
+                        this.rs.next();
+                        assertEquals(errMsg, "200", this.rs.getString(1));
+                        assertEquals(errMsg, text, this.rs.getString(2));
+                        this.rs.close();
+                        ps.close();
+                    } catch (Exception ex) {
+                        System.out.println(errMsg);
+                        throw ex;
+                    }
+                } finally {
+                    this.stmt.execute("TRUNCATE TABLE testBug20913289");
+                }
+
+            }
+        }
+    }
+
 }

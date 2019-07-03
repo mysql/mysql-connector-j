@@ -44,6 +44,8 @@ public interface JdbcPreparedStatement extends java.sql.PreparedStatement, JdbcS
 
     byte[] getBytesRepresentation(int parameterIndex) throws SQLException;
 
+    byte[] getOrigBytes(int parameterIndex) throws SQLException;
+
     ParseInfo getParseInfo();
 
     boolean isNull(int paramIndex) throws SQLException;

@@ -29,7 +29,6 @@
 
 package com.mysql.cj.util;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -1965,42 +1964,6 @@ public class StringUtils {
         return valuesString.toString();
     }
 
-    public static final void escapeblockFast(byte[] buf, ByteArrayOutputStream bytesOut, int size, boolean useAnsiMode) {
-        int lastwritten = 0;
-
-        for (int i = 0; i < size; i++) {
-            byte b = buf[i];
-
-            if (b == '\0') {
-                // write stuff not yet written
-                if (i > lastwritten) {
-                    bytesOut.write(buf, lastwritten, i - lastwritten);
-                }
-
-                // write escape
-                bytesOut.write('\\');
-                bytesOut.write('0');
-                lastwritten = i + 1;
-            } else {
-                if ((b == '\\') || (b == '\'') || (!useAnsiMode && b == '"')) {
-                    // write stuff not yet written
-                    if (i > lastwritten) {
-                        bytesOut.write(buf, lastwritten, i - lastwritten);
-                    }
-
-                    // write escape
-                    bytesOut.write('\\');
-                    lastwritten = i; // not i+1 as b wasn't written.
-                }
-            }
-        }
-
-        // write out remaining stuff from buffer
-        if (lastwritten < size) {
-            bytesOut.write(buf, lastwritten, size - lastwritten);
-        }
-    }
-
     /**
      * Does the string contain wildcard symbols ('%' or '_'). Used in DatabaseMetaData.
      * 
@@ -2042,4 +2005,51 @@ public class StringUtils {
         return elements.subList(0, elements.size() - 1).stream().map(Object::toString).collect(Collectors.joining(", ", "", ", and "))
                 + elements.get(elements.size() - 1).toString();
     }
+
+    public static byte[] unquoteBytes(byte[] bytes) {
+        if ((bytes[0] == '\'') && (bytes[bytes.length - 1] == '\'')) {
+
+            byte[] valNoQuotes = new byte[bytes.length - 2];
+            int j = 0;
+            int quoteCnt = 0;
+
+            for (int i = 1; i < bytes.length - 1; i++) {
+                if (bytes[i] == '\'') {
+                    quoteCnt++;
+                } else {
+                    quoteCnt = 0;
+                }
+
+                if (quoteCnt == 2) {
+                    quoteCnt = 0;
+                } else {
+                    valNoQuotes[j++] = bytes[i];
+                }
+            }
+
+            byte[] res = new byte[j];
+            System.arraycopy(valNoQuotes, 0, res, 0, j);
+
+            return res;
+        }
+        return bytes;
+    }
+
+    public static byte[] quoteBytes(byte[] bytes) {
+        byte[] withQuotes = new byte[bytes.length * 2 + 2];
+        int j = 0;
+        withQuotes[j++] = '\'';
+        for (int i = 0; i < bytes.length; i++) {
+            if (bytes[i] == '\'') {
+                withQuotes[j++] = '\'';
+            }
+            withQuotes[j++] = bytes[i];
+        }
+        withQuotes[j++] = '\'';
+
+        byte[] res = new byte[j];
+        System.arraycopy(withQuotes, 0, res, 0, j);
+        return res;
+    }
+
 }

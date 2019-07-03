@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1326,5 +1326,23 @@ public class StringUtilsTest extends BaseTestCase {
         assertEquals("A", StringUtils.joinWithSerialComma(Arrays.asList(new LazyString("A"))));
         assertEquals("A and B", StringUtils.joinWithSerialComma(Arrays.asList(new LazyString("A"), new LazyString("B"))));
         assertEquals("A, B, and C", StringUtils.joinWithSerialComma(Arrays.asList(new LazyString("A"), new LazyString("B"), new LazyString("C"))));
+    }
+
+    public void testQuoteUnquoteBytes() throws Exception {
+
+        byte[] origBytes = "ab'c\\''de".getBytes();
+        byte[] expectedBytes = "'ab''c\\''''de'".getBytes();
+        byte[] quotedBytes = StringUtils.quoteBytes(origBytes);
+
+        for (int i = 0; i < quotedBytes.length; i++) {
+            assertEquals(expectedBytes[i], quotedBytes[i]);
+        }
+
+        byte[] unquotedBytes = StringUtils.unquoteBytes(quotedBytes);
+
+        for (int i = 0; i < unquotedBytes.length; i++) {
+            assertEquals(origBytes[i], unquotedBytes[i]);
+        }
+
     }
 }

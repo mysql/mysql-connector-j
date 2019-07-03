@@ -17,3 +17,4 @@
 .project.el
 .attach_pid*
 hs_err_pid*.log
+*.sh

@@ -57,8 +57,6 @@ import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TimeUtil;
 import com.mysql.cj.util.Util;
 
-//TODO should not be protocol-specific
-
 public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPreparedQueryBindValue> {
 
     /** Charset encoder used to escape if needed, such as Yen sign in SJIS */
@@ -177,16 +175,9 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
             setNull(parameterIndex);
         } else {
             try {
-                ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-
-                bytesOut.write('\'');
-                StringUtils.escapeblockFast(x.getBytes(1, (int) x.length()), bytesOut, (int) x.length(),
-                        this.session.getServerSession().useAnsiQuotedIdentifiers());
-                bytesOut.write('\'');
-
-                setValue(parameterIndex, bytesOut.toByteArray(), MysqlType.BLOB);
+                setBinaryStream(parameterIndex, x.getBinaryStream());
             } catch (Throwable t) {
-                throw ExceptionFactory.createException(t.getMessage(), t);
+                throw ExceptionFactory.createException(t.getMessage(), t, this.session.getExceptionInterceptor());
             }
         }
     }
@@ -221,6 +212,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
                 bOut.write('x');
                 bOut.write('\'');
 
+                // TODO unify with AbstractQueryBindings.hexEscapeBlock()
                 for (int i = 0; i < x.length; i++) {
                     int lowBits = (x[i] & 0xff) / 16;
                     int highBits = (x[i] & 0xff) % 16;
@@ -232,6 +224,9 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
                 bOut.write('\'');
 
                 setValue(parameterIndex, bOut.toByteArray(), MysqlType.BINARY); // TODO VARBINARY ?
+
+                // save original value for re-usage by refresher SSPS in updatable result set
+                setOrigValue(parameterIndex, x);
 
                 return;
             }
@@ -303,10 +298,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
     @Override
     public void setBytesNoEscape(int parameterIndex, byte[] parameterAsBytes) {
-        byte[] parameterWithQuotes = new byte[parameterAsBytes.length + 2];
-        parameterWithQuotes[0] = '\'';
-        System.arraycopy(parameterAsBytes, 0, parameterWithQuotes, 1, parameterAsBytes.length);
-        parameterWithQuotes[parameterAsBytes.length + 1] = '\'';
+        byte[] parameterWithQuotes = StringUtils.quoteBytes(parameterAsBytes);
 
         setValue(parameterIndex, parameterWithQuotes, MysqlType.BINARY); // TODO VARBINARY ?
     }
@@ -660,7 +652,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
                             buf.append('\\');
                             break;
                         case '\'':
-                            buf.append('\\');
+                            buf.append('\'');
                             buf.append('\'');
                             break;
                         case '"': /* Better safe than sorry */

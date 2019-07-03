@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,8 +31,6 @@ package com.mysql.cj;
 
 import java.io.InputStream;
 
-//TODO should not be protocol-specific
-
 public class ClientPreparedQueryBindValue implements BindValue {
 
     /** NULL indicator */
@@ -44,6 +42,8 @@ public class ClientPreparedQueryBindValue implements BindValue {
 
     /** The value to store */
     public Object value;
+
+    public Object origValue;
 
     protected long streamLength;
 
@@ -77,6 +77,7 @@ public class ClientPreparedQueryBindValue implements BindValue {
         this.isStream = false;
         this.parameterType = MysqlType.NULL;
         this.value = null;
+        this.origValue = null;
         this.streamLength = 0;
         this.isSet = false;
     }
@@ -127,6 +128,16 @@ public class ClientPreparedQueryBindValue implements BindValue {
         this.isSet = true;
     }
 
+    @Override
+    public void setOrigByteValue(byte[] origParamValue) {
+        this.origValue = origParamValue;
+    }
+
+    @Override
+    public byte[] getOrigByteValue() {
+        return (byte[]) this.origValue;
+    }
+
     public InputStream getStreamValue() {
         if (this.value instanceof InputStream) {
             return (InputStream) this.value;
@@ -142,11 +153,6 @@ public class ClientPreparedQueryBindValue implements BindValue {
 
     public long getStreamLength() {
         return this.streamLength;
-    }
-
-    @Override
-    public void setStreamLength(long length) {
-        this.streamLength = length;
     }
 
     public boolean isSet() {

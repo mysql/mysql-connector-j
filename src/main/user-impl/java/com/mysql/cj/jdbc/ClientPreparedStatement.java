@@ -1155,6 +1155,13 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     }
 
     @Override
+    public byte[] getOrigBytes(int parameterIndex) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            return ((PreparedQuery<?>) this.query).getQueryBindings().getOrigBytes(getCoreParameterIndex(parameterIndex));
+        }
+    }
+
+    @Override
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
 
         synchronized (checkClosed().getConnectionMutex()) {
