@@ -205,14 +205,14 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         sqlBuf.append("10 AS NUM_PREC_RADIX,");
 
-        sqlBuf.append("UPPER(CASE");
+        sqlBuf.append("CASE");
         sqlBuf.append(" WHEN IS_NULLABLE='NO' THEN ");
         sqlBuf.append(columnNoNulls);
         sqlBuf.append(" ELSE CASE WHEN IS_NULLABLE='YES' THEN ");
         sqlBuf.append(columnNullable);
         sqlBuf.append(" ELSE ");
         sqlBuf.append(columnNullableUnknown);
-        sqlBuf.append(" END END) AS NULLABLE,");
+        sqlBuf.append(" END END AS NULLABLE,");
 
         sqlBuf.append("COLUMN_COMMENT AS REMARKS,");
         sqlBuf.append("COLUMN_DEFAULT AS COLUMN_DEF,");
@@ -297,9 +297,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         primaryDb = this.pedantic ? primaryDb : StringUtils.unQuoteIdentifier(primaryDb, this.quotedId);
         foreignDb = this.pedantic ? foreignDb : StringUtils.unQuoteIdentifier(foreignDb, this.quotedId);
 
-        StringBuilder sqlBuf = new StringBuilder(this.databaseTerm.getValue() == DatabaseTerm.SCHEMA
-                ? "SELECT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
-                : "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,");
+        StringBuilder sqlBuf = new StringBuilder(
+                this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? "SELECT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+                        : "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,");
         sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,");
         sqlBuf.append(this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
                 : " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,");
@@ -361,9 +361,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         db = this.pedantic ? db : StringUtils.unQuoteIdentifier(db, this.quotedId);
 
-        StringBuilder sqlBuf = new StringBuilder(this.databaseTerm.getValue() == DatabaseTerm.SCHEMA
-                ? "SELECT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
-                : "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,");
+        StringBuilder sqlBuf = new StringBuilder(
+                this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? "SELECT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+                        : "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,");
         sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,");
         sqlBuf.append(this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
                 : " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,");
@@ -439,9 +439,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         db = this.pedantic ? db : StringUtils.unQuoteIdentifier(db, this.quotedId);
 
-        StringBuilder sqlBuf = new StringBuilder(this.databaseTerm.getValue() == DatabaseTerm.SCHEMA
-                ? "SELECT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
-                : "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,");
+        StringBuilder sqlBuf = new StringBuilder(
+                this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? "SELECT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+                        : "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,");
         sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,");
         sqlBuf.append(this.databaseTerm.getValue() == DatabaseTerm.SCHEMA ? " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
                 : " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,");
