@@ -52,8 +52,8 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
     }
 
     @Override
-    protected DocResultImpl executeStatement() {
-        return this.mysqlxSession.find(this.filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task, this.mysqlxSession.getPropertySet()));
+    protected DocResult executeStatement() {
+        return this.mysqlxSession.query(getMessageBuilder().buildFind(this.filterParams), new StreamingDocResultBuilder(this.mysqlxSession));
     }
 
     @Override
@@ -62,13 +62,13 @@ public class FindStatementImpl extends FilterableStatement<FindStatement, DocRes
     }
 
     @Override
-    protected DocResultImpl executePreparedStatement() {
-        return this.mysqlxSession.executePreparedFind(this.preparedStatementId, this.filterParams,
-                metadata -> (rows, task) -> new DocResultImpl(rows, task, this.mysqlxSession.getPropertySet()));
+    protected DocResult executePreparedStatement() {
+        return this.mysqlxSession.query(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams),
+                new StreamingDocResultBuilder(this.mysqlxSession));
     }
 
     public CompletableFuture<DocResult> executeAsync() {
-        return this.mysqlxSession.asyncFind(this.filterParams, metadata -> (rows, task) -> new DocResultImpl(rows, task, this.mysqlxSession.getPropertySet()));
+        return this.mysqlxSession.queryAsync(getMessageBuilder().buildFind(this.filterParams), new DocResultBuilder(this.mysqlxSession));
     }
 
     @Override

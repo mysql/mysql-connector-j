@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,7 +30,7 @@
 package com.mysql.cj.protocol;
 
 import java.io.IOException;
-import java.nio.channels.CompletionHandler;
+import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -74,10 +74,13 @@ public interface MessageSender<M extends Message> {
      *
      * @param message
      *            message extending {@link Message}
+     * @param future
+     *            a Future returning operation result
      * @param callback
-     *            an optional callback to receive notification of when the message is completely written
+     *            a callback to receive notification of when the message is completely written
+     * @return result
      */
-    default void send(M message, CompletionHandler<Long, Void> callback) {
+    default CompletableFuture<?> send(M message, CompletableFuture<?> future, Runnable callback) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 

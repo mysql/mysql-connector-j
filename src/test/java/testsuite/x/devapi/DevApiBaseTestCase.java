@@ -44,6 +44,7 @@ import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionImpl;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.Statement;
+import com.mysql.cj.xdevapi.UpdateResultBuilder;
 
 import testsuite.x.internal.InternalXBaseTestCase;
 
@@ -89,7 +90,7 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
             Field f = SessionImpl.class.getDeclaredField("session");
             f.setAccessible(true);
             MysqlxSession mysqlxSession = (MysqlxSession) f.get(this.session);
-            mysqlxSession.sendMessage(mysqlxSession.getMessageBuilder().buildSqlStatement(sql));
+            mysqlxSession.query(mysqlxSession.getMessageBuilder().buildSqlStatement(sql), new UpdateResultBuilder<>());
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);

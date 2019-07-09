@@ -53,7 +53,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TimeZone;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import com.mysql.cj.CharsetMapping;
@@ -103,7 +102,7 @@ import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.ProtocolEntityReader;
-import com.mysql.cj.protocol.ResultStreamer;
+import com.mysql.cj.protocol.ResultBuilder;
 import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.protocol.Resultset.Concurrency;
 import com.mysql.cj.protocol.Resultset.Type;
@@ -118,7 +117,6 @@ import com.mysql.cj.protocol.a.result.OkPacket;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.IntegerValueFactory;
 import com.mysql.cj.result.Row;
-import com.mysql.cj.result.RowList;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.ValueFactory;
 import com.mysql.cj.util.LazyString;
@@ -572,12 +570,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             throw ExceptionFactory.createCommunicationsException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder(),
                     this.getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
         }
-    }
-
-    @Override
-    public <RES extends QueryResult> CompletableFuture<RES> sendAsync(Message message) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     @Override
@@ -1700,7 +1692,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     @Override
-    public <QR extends QueryResult> QR readQueryResult() {
+    public <T extends QueryResult> T readQueryResult(ResultBuilder<T> resultBuilder) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
@@ -2102,17 +2094,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     @Override
-    public RowList getRowInputStream(ColumnDefinition metadata) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
     public void close() throws IOException {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public void setCurrentResultStreamer(ResultStreamer currentResultStreamer) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 

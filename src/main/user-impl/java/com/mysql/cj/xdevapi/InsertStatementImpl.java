@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.MysqlxSession;
-import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 
@@ -59,15 +58,15 @@ public class InsertStatementImpl implements InsertStatement {
     }
 
     public InsertResult execute() {
-        StatementExecuteOk ok = this.mysqlxSession.sendMessage(
-                ((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder()).buildRowInsert(this.schemaName, this.tableName, this.insertParams));
-        return new InsertResultImpl(ok);
+        return this.mysqlxSession.query(
+                ((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildRowInsert(this.schemaName, this.tableName, this.insertParams),
+                new InsertResultBuilder());
     }
 
     public CompletableFuture<InsertResult> executeAsync() {
-        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncSendMessage(
-                ((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder()).buildRowInsert(this.schemaName, this.tableName, this.insertParams));
-        return okF.thenApply(ok -> new InsertResultImpl(ok));
+        return this.mysqlxSession.queryAsync(
+                ((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildRowInsert(this.schemaName, this.tableName, this.insertParams),
+                new InsertResultBuilder());
     }
 
     public InsertStatement values(List<Object> row) {

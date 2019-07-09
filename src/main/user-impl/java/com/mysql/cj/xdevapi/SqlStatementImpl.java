@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -59,11 +59,13 @@ public class SqlStatementImpl implements SqlStatement {
     }
 
     public SqlResult execute() {
-        return this.mysqlxSession.executeSql(this.sql, this.args);
+        return this.mysqlxSession.query(this.mysqlxSession.getMessageBuilder().buildSqlStatement(this.sql, this.args),
+                new StreamingSqlResultBuilder(this.mysqlxSession));
     }
 
     public CompletableFuture<SqlResult> executeAsync() {
-        return this.mysqlxSession.asyncExecuteSql(this.sql, this.args);
+        return this.mysqlxSession.queryAsync(this.mysqlxSession.getMessageBuilder().buildSqlStatement(this.sql, this.args),
+                new SqlResultBuilder(this.mysqlxSession));
     }
 
     public SqlStatement clearBindings() {

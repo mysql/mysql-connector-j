@@ -32,7 +32,7 @@ package com.mysql.cj.xdevapi;
 import java.util.function.Supplier;
 
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.protocol.x.StatementExecuteOk;
+import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.result.RowList;
 
 /**
@@ -50,7 +50,7 @@ public class DocResultImpl extends AbstractDataResult<DbDoc> implements DocResul
      * @param pset
      *            {@link PropertySet}
      */
-    public DocResultImpl(RowList rows, Supplier<StatementExecuteOk> completer, PropertySet pset) {
+    public DocResultImpl(RowList rows, Supplier<ProtocolEntity> completer, PropertySet pset) {
         super(rows, completer, new DbDocFactory(pset));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,21 +29,30 @@
 
 package com.mysql.cj.protocol.x;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import com.mysql.cj.QueryResult;
 import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.Warning;
+import com.mysql.cj.xdevapi.Result;
+import com.mysql.cj.xdevapi.WarningImpl;
 
 /**
- * The returned information from a successfully executed statement. All fields are optional and may be <i>null</i>.
+ * ProtocolEntity representing a {@link StatementExecuteOk} message.
  */
-public class StatementExecuteOk implements ProtocolEntity, QueryResult {
-    private long rowsAffected;
-    private Long lastInsertId;
+public class StatementExecuteOk implements ProtocolEntity, Result {
+    private long rowsAffected = 0;
+    private Long lastInsertId = null;
     private List<String> generatedIds;
     private List<Warning> warnings;
+
+    public StatementExecuteOk() {
+        this.generatedIds = Collections.emptyList();
+        this.warnings = new ArrayList<>();
+    }
 
     public StatementExecuteOk(long rowsAffected, Long lastInsertId, List<String> generatedIds, List<Warning> warnings) {
         this.rowsAffected = rowsAffected;
@@ -52,7 +61,7 @@ public class StatementExecuteOk implements ProtocolEntity, QueryResult {
         this.warnings = warnings; // should NOT be null
     }
 
-    public long getRowsAffected() {
+    public long getAffectedItemsCount() {
         return this.rowsAffected;
     }
 
@@ -64,7 +73,14 @@ public class StatementExecuteOk implements ProtocolEntity, QueryResult {
         return this.generatedIds;
     }
 
-    public List<Warning> getWarnings() {
-        return this.warnings;
+    @Override
+    public int getWarningsCount() {
+        return this.warnings.size();
     }
+
+    @Override
+    public Iterator<com.mysql.cj.xdevapi.Warning> getWarnings() {
+        return this.warnings.stream().map(w -> (com.mysql.cj.xdevapi.Warning) new WarningImpl(w)).collect(Collectors.toList()).iterator();
+    }
+
 }

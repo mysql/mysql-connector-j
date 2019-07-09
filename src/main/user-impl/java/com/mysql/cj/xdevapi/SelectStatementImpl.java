@@ -49,9 +49,8 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
     }
 
     @Override
-    protected RowResultImpl executeStatement() {
-        return this.mysqlxSession.find(this.filterParams, metadata -> (rows, task) -> new RowResultImpl(metadata,
-                this.mysqlxSession.getServerSession().getDefaultTimeZone(), rows, task, this.mysqlxSession.getPropertySet()));
+    protected RowResult executeStatement() {
+        return this.mysqlxSession.query(this.getMessageBuilder().buildFind(this.filterParams), new StreamingRowResultBuilder(this.mysqlxSession));
     }
 
     @Override
@@ -60,14 +59,13 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
     }
 
     @Override
-    protected RowResultImpl executePreparedStatement() {
-        return this.mysqlxSession.executePreparedFind(this.preparedStatementId, this.filterParams, metadata -> (rows, task) -> new RowResultImpl(metadata,
-                this.mysqlxSession.getServerSession().getDefaultTimeZone(), rows, task, this.mysqlxSession.getPropertySet()));
+    protected RowResult executePreparedStatement() {
+        return this.mysqlxSession.query(this.getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams),
+                new StreamingRowResultBuilder(this.mysqlxSession));
     }
 
     public CompletableFuture<RowResult> executeAsync() {
-        return this.mysqlxSession.asyncFind(this.filterParams, metadata -> (rows, task) -> new RowResultImpl(metadata,
-                this.mysqlxSession.getServerSession().getDefaultTimeZone(), rows, task, this.mysqlxSession.getPropertySet()));
+        return this.mysqlxSession.queryAsync(getMessageBuilder().buildFind(this.filterParams), new RowResultBuilder(this.mysqlxSession));
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -379,9 +379,8 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
             // pendingMsgClass = null                                |
             //
             synchronized (this.pendingMsgMonitor) {
-                // we repeatedly deliver messages to the current listener until he yields control and we move on to the next
-                boolean currentListenerDone = this.currentMessageListener.createFromMessage(new XMessage(message));
-                if (currentListenerDone) {
+                // we repeatedly deliver messages to the current listener until it yields control and we move on to the next
+                if (this.currentMessageListener.processMessage(new XMessage(message))) {
                     this.currentMessageListener = null;
                 }
                 // clear this after the message is delivered
@@ -503,7 +502,7 @@ public class AsyncMessageReader implements MessageReader<XMessageHeader, XMessag
 
         @SuppressWarnings("unchecked")
         @Override
-        public Boolean createFromMessage(XMessage msg) {
+        public boolean processMessage(XMessage msg) {
             Class<? extends GeneratedMessageV3> msgClass = (Class<? extends GeneratedMessageV3>) msg.getMessage().getClass();
             if (Error.class.equals(msgClass)) {
                 this.future.completeExceptionally(new XProtocolError(Error.class.cast(msg.getMessage())));

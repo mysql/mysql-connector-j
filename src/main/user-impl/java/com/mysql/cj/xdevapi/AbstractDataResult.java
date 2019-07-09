@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,9 +35,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.ResultStreamer;
 import com.mysql.cj.protocol.x.StatementExecuteOk;
@@ -52,12 +52,12 @@ import com.mysql.cj.result.RowList;
  * @param <T>
  *            Result entry type
  */
-public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<T> {
+public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<T>, Result {
 
     protected int position = -1;
     protected int count = -1;
     protected RowList rows;
-    protected Supplier<StatementExecuteOk> completer;
+    protected Supplier<ProtocolEntity> completer;
     protected StatementExecuteOk ok;
     protected ProtocolEntityFactory<T, XMessage> rowToData;
     /** List of all elements. <code>null</code> until requested via {@link #fetchAll()}. */
@@ -73,7 +73,7 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
      * @param rowToData
      *            {@link ProtocolEntityFactory}
      */
-    public AbstractDataResult(RowList rows, Supplier<StatementExecuteOk> completer, ProtocolEntityFactory<T, XMessage> rowToData) {
+    public AbstractDataResult(RowList rows, Supplier<ProtocolEntity> completer, ProtocolEntityFactory<T, XMessage> rowToData) {
         this.rows = rows;
         this.completer = completer;
         this.rowToData = rowToData;
@@ -134,34 +134,28 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
         return this.ok;
     }
 
-    /**
-     * Finish the result streaming. This happens if a new command is started or the warnings/etc are requested. This is safe to call multiple times and only has
-     * an effect the first time.
-     */
+    @Override
     public void finishStreaming() {
         if (this.ok == null) {
             BufferedRowList remainingRows = new BufferedRowList(this.rows);
             this.count = 1 + this.position + remainingRows.size();
             this.rows = remainingRows;
-            this.ok = this.completer.get();
+            this.ok = (StatementExecuteOk) this.completer.get();
         }
     }
 
-    /**
-     * Number of warnings generated during statement execution. This method forces internal buffering of the result.
-     * 
-     * @return number of warnings
-     */
-    public int getWarningsCount() {
-        return getStatementExecuteOk().getWarnings().size();
+    @Override
+    public long getAffectedItemsCount() {
+        return getStatementExecuteOk().getAffectedItemsCount();
     }
 
-    /**
-     * Warnings generated during statement execution. This method forces internal buffering of the result.
-     * 
-     * @return iterator over warnings
-     */
+    @Override
+    public int getWarningsCount() {
+        return getStatementExecuteOk().getWarningsCount();
+    }
+
+    @Override
     public Iterator<Warning> getWarnings() {
-        return getStatementExecuteOk().getWarnings().stream().map(w -> (Warning) new WarningImpl(w)).collect(Collectors.toList()).iterator();
+        return getStatementExecuteOk().getWarnings();
     }
 }

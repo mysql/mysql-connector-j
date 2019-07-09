@@ -30,15 +30,6 @@
 package com.mysql.cj;
 
 import java.net.SocketAddress;
-import java.util.Iterator;
-import java.util.Spliterators;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyKey;
@@ -51,11 +42,9 @@ import com.mysql.cj.log.Log;
 import com.mysql.cj.log.LogFactory;
 import com.mysql.cj.log.NullLogger;
 import com.mysql.cj.log.ProfilerEventHandler;
-import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.ServerSession;
-import com.mysql.cj.result.Row;
 import com.mysql.cj.util.Util;
 
 public abstract class CoreSession implements Session {
@@ -142,33 +131,6 @@ public abstract class CoreSession implements Session {
     @Override
     public <M extends Message> MessageBuilder<M> getMessageBuilder() {
         return (MessageBuilder<M>) this.messageBuilder;
-    }
-
-    public <QR extends QueryResult> QR sendMessage(Message message) {
-        return sendMessage(message, this.protocol::readQueryResult);
-    }
-
-    public <R> R sendMessage(Message message, Supplier<R> readResult) {
-        this.protocol.send(message, 0);
-        return readResult.get();
-    }
-
-    public <QR extends QueryResult> CompletableFuture<QR> asyncSendMessage(Message message) {
-        return this.protocol.sendAsync(message);
-    }
-
-    @Override
-    public <M extends Message, RES_T, R> RES_T query(M message, Predicate<Row> filterRow, Function<Row, R> mapRow, Collector<R, ?, RES_T> collector) {
-        this.protocol.send(message, 0);
-        ColumnDefinition metadata = this.protocol.readMetadata();
-        Iterator<Row> ris = this.protocol.getRowInputStream(metadata);
-        Stream<Row> stream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false);
-        if (filterRow != null) {
-            stream = stream.filter(filterRow);
-        }
-        RES_T result = stream.map(mapRow).collect(collector);
-        this.protocol.readQueryResult();
-        return result;
     }
 
     @Override

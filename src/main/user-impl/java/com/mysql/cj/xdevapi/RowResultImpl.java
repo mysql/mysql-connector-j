@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.protocol.ColumnDefinition;
-import com.mysql.cj.protocol.x.StatementExecuteOk;
+import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.RowList;
 
@@ -61,7 +61,7 @@ public class RowResultImpl extends AbstractDataResult<Row> implements RowResult 
      * @param pset
      *            {@link PropertySet}
      */
-    public RowResultImpl(ColumnDefinition metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer, PropertySet pset) {
+    public RowResultImpl(ColumnDefinition metadata, TimeZone defaultTimeZone, RowList rows, Supplier<ProtocolEntity> completer, PropertySet pset) {
         super(rows, completer, new RowFactory(metadata, defaultTimeZone, pset));
         this.metadata = metadata;
     }

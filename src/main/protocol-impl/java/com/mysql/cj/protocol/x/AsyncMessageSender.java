@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.CompletionHandler;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -68,7 +67,7 @@ public class AsyncMessageSender implements MessageSender<XMessage> {
     public void send(XMessage message) {
         CompletableFuture<Void> f = new CompletableFuture<>();
         // write a message asynchronously that will notify the future when complete
-        send(message, new ErrorToFutureCompletionHandler<Long>(f, () -> f.complete(null)));
+        send(message, f, () -> f.complete(null));
         // wait on the future to return
         try {
             f.get();
@@ -79,7 +78,8 @@ public class AsyncMessageSender implements MessageSender<XMessage> {
         }
     }
 
-    public void send(XMessage message, CompletionHandler<Long, Void> callback) {
+    @Override
+    public CompletableFuture<?> send(XMessage message, CompletableFuture<?> future, Runnable callback) {
         MessageLite msg = message.getMessage();
         int type = MessageConstants.getTypeForMessageClass(msg.getClass());
         int size = msg.getSerializedSize();
@@ -101,7 +101,8 @@ public class AsyncMessageSender implements MessageSender<XMessage> {
             throw new CJCommunicationsException("Unable to write message", ex);
         }
         messageBuf.flip();
-        this.bufferWriter.queueBuffer(messageBuf, callback);
+        this.bufferWriter.queueBuffer(messageBuf, new ErrorToFutureCompletionHandler<>(future, callback));
+        return future;
     }
 
     public void setMaxAllowedPacket(int maxAllowedPacket) {

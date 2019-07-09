@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
-import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -44,7 +43,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
+import com.google.protobuf.GeneratedMessageV3;
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
@@ -79,7 +80,7 @@ import com.mysql.cj.protocol.MessageSender;
 import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
-import com.mysql.cj.protocol.ResultListener;
+import com.mysql.cj.protocol.ResultBuilder;
 import com.mysql.cj.protocol.ResultStreamer;
 import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.protocol.ServerCapabilities;
@@ -92,16 +93,19 @@ import com.mysql.cj.result.Field;
 import com.mysql.cj.result.LongValueFactory;
 import com.mysql.cj.util.SequentialIdLease;
 import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.x.protobuf.Mysqlx.Error;
 import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities;
 import com.mysql.cj.x.protobuf.MysqlxConnection.Capability;
+import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
 import com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData;
+import com.mysql.cj.x.protobuf.MysqlxResultset.FetchDone;
+import com.mysql.cj.x.protobuf.MysqlxResultset.FetchDoneMoreResultsets;
 import com.mysql.cj.x.protobuf.MysqlxResultset.Row;
 import com.mysql.cj.x.protobuf.MysqlxSession.AuthenticateContinue;
-import com.mysql.cj.xdevapi.FilterParams;
+import com.mysql.cj.x.protobuf.MysqlxSql.StmtExecuteOk;
 import com.mysql.cj.xdevapi.PreparableStatement;
 import com.mysql.cj.xdevapi.PreparableStatement.PreparableStatementFinalizer;
-import com.mysql.cj.xdevapi.SqlResult;
 
 /**
  * Low-level interface to communications with X Plugin.
@@ -113,8 +117,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     private MessageSender<XMessage> sender;
     /** We take responsibility of the socket as the managed resource. We close it when we're done. */
     private Closeable managedResource;
-    private ProtocolEntityFactory<Field, XMessage> fieldFactory;
-    private String metadataCharacterSet;
 
     private ResultStreamer currentResultStreamer;
 
@@ -131,6 +133,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     private SequentialIdLease preparedStatementIds = new SequentialIdLease();
     private ReferenceQueue<PreparableStatement<?>> preparableStatementRefQueue = new ReferenceQueue<>();
     private Map<Integer, PreparableStatementFinalizer> preparableStatementFinalizerReferences = new TreeMap<>();
+
+    private Map<Class<? extends GeneratedMessageV3>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory = new HashMap<>();
 
     public XProtocol(String host, int port, String defaultSchema, PropertySet propertySet) {
 
@@ -182,9 +186,15 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         this.authProvider = new XAuthenticationProvider();
         this.authProvider.init(this, propSet, null);
 
-        this.metadataCharacterSet = "latin1"; // TODO configure from server session
-        this.fieldFactory = new FieldFactory(this.metadataCharacterSet);
         this.useSessionResetKeepOpen = null;
+
+        this.messageToProtocolEntityFactory.put(ColumnMetaData.class, new FieldFactory("latin1")); // TODO configure metadata character set from server session
+        this.messageToProtocolEntityFactory.put(Frame.class, new NoticeFactory());
+        this.messageToProtocolEntityFactory.put(Row.class, new XProtocolRowFactory());
+        this.messageToProtocolEntityFactory.put(FetchDoneMoreResultsets.class, new FetchDoneMoreResultsFactory());
+        this.messageToProtocolEntityFactory.put(FetchDone.class, new FetchDoneEntityFactory());
+        this.messageToProtocolEntityFactory.put(StmtExecuteOk.class, new StatementExecuteOkFactory());
+        this.messageToProtocolEntityFactory.put(com.mysql.cj.x.protobuf.Mysqlx.Ok.class, new OkFactory());
     }
 
     public ServerSession getServerSession() {
@@ -200,7 +210,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public void sendCapabilities(Map<String, Object> keyValuePair) {
         keyValuePair.forEach((k, v) -> ((XServerCapabilities) getServerSession().getCapabilities()).setCapability(k, v));
         this.sender.send(((XMessageBuilder) this.messageBuilder).buildCapabilitiesSet(keyValuePair));
-        readOk();
+        readQueryResult(new OkBuilder());
     }
 
     public void negotiateSSLConnection(int packLength) {
@@ -395,18 +405,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         send(this.messageBuilder.buildSqlStatement("select @@mysqlx_max_allowed_packet"), 0);
         // TODO: can use a simple default for this as we don't need metadata. need to prevent against exceptions though
         ColumnDefinition metadata = readMetadata();
-        long count = getRowInputStream(metadata).next().getValue(0, new LongValueFactory(this.propertySet));
-        readQueryResult();
+        long count = new XProtocolRowInputStream(metadata, this, null).next().getValue(0, new LongValueFactory(this.propertySet));
+        readQueryResult(new StatementExecuteOkBuilder());
         setMaxAllowedPacket((int) count);
-    }
-
-    public void readOk() {
-        try {
-            this.reader.readMessage(null, ServerMessages.Type.OK_VALUE);
-            // TODO OkBuilder.addNotice(this.reader.read(Frame.class));
-        } catch (IOException e) {
-            throw new XProtocolError(e.getMessage(), e);
-        }
     }
 
     public void readAuthenticateOk() {
@@ -463,25 +464,32 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <QR extends QueryResult> QR readQueryResult() {
+    public <T extends QueryResult> T readQueryResult(ResultBuilder<T> resultBuilder) {
         try {
-            StatementExecuteOkBuilder builder = new StatementExecuteOkBuilder();
-            XMessage mess = null;
             List<Notice> notices;
-            XMessageHeader header;
-            if ((header = this.reader.readHeader()).getMessageType() == ServerMessages.Type.RESULTSET_FETCH_DONE_VALUE) {
-                mess = this.reader.readMessage(null, header);
+            boolean done = false;
+
+            while (!done) {
+                XMessageHeader header = this.reader.readHeader();
+                XMessage mess = this.reader.readMessage(null, header);
+                @SuppressWarnings("unchecked")
+                Class<? extends GeneratedMessageV3> msgClass = (Class<? extends GeneratedMessageV3>) mess.getMessage().getClass();
+
+                if (Error.class.equals(msgClass)) {
+                    throw new XProtocolError(Error.class.cast(mess.getMessage()));
+
+                } else if (!this.messageToProtocolEntityFactory.containsKey(msgClass)) {
+                    throw new WrongArgumentException("Unhandled msg class (" + msgClass + ") + msg=" + mess.getMessage());
+
+                }
+
+                if ((notices = mess.getNotices()) != null) {
+                    notices.stream().forEach(resultBuilder::addProtocolEntity);
+                }
+                done = resultBuilder.addProtocolEntity(this.messageToProtocolEntityFactory.get(msgClass).createFromMessage(mess));
+
             }
-            if (mess != null && (notices = mess.getNotices()) != null) {
-                notices.stream().forEach(builder::addNotice);
-            }
-            mess = this.reader.readMessage(null, ServerMessages.Type.SQL_STMT_EXECUTE_OK_VALUE);
-            if (mess != null && (notices = mess.getNotices()) != null) {
-                notices.stream().forEach(builder::addNotice);
-            }
-            return (QR) builder.build();
+            return resultBuilder.build();
         } catch (IOException e) {
             throw new XProtocolError(e.getMessage(), e);
         }
@@ -535,7 +543,10 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
                 // TODO put notices somewhere like it's done eg. in readStatementExecuteOk(): builder.addNotice(this.reader.read(Frame.class));
             } while (this.reader.readHeader().getMessageType() == ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE);
             ArrayList<Field> metadata = new ArrayList<>(fromServer.size());
-            fromServer.forEach(col -> metadata.add(this.fieldFactory.createFromMessage(new XMessage(col))));
+            @SuppressWarnings("unchecked")
+            ProtocolEntityFactory<Field, XMessage> fieldFactory = (ProtocolEntityFactory<Field, XMessage>) this.messageToProtocolEntityFactory
+                    .get(ColumnMetaData.class);
+            fromServer.forEach(col -> metadata.add(fieldFactory.createFromMessage(new XMessage(col))));
 
             return new DefaultColumnDefinition(metadata.toArray(new Field[] {}));
         } catch (IOException e) {
@@ -543,12 +554,42 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
     }
 
-    public XProtocolRow readRowOrNull(ColumnDefinition metadata) {
+    public ColumnDefinition readMetadata(Field f, Consumer<Notice> noticeConsumer) {
         try {
+            List<Notice> notices;
+            List<ColumnMetaData> fromServer = new LinkedList<>();
+            while (this.reader.readHeader().getMessageType() == ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE) { // use this construct to read at least one
+                XMessage mess = this.reader.readMessage(null, ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE);
+                if (noticeConsumer != null && (notices = mess.getNotices()) != null) {
+                    notices.stream().forEach(noticeConsumer::accept);
+                }
+                fromServer.add((ColumnMetaData) mess.getMessage());
+            }
+            ArrayList<Field> metadata = new ArrayList<>(fromServer.size());
+            metadata.add(f);
+            @SuppressWarnings("unchecked")
+            ProtocolEntityFactory<Field, XMessage> fieldFactory = (ProtocolEntityFactory<Field, XMessage>) this.messageToProtocolEntityFactory
+                    .get(ColumnMetaData.class);
+            fromServer.forEach(col -> metadata.add(fieldFactory.createFromMessage(new XMessage(col))));
+
+            return new DefaultColumnDefinition(metadata.toArray(new Field[] {}));
+        } catch (IOException e) {
+            throw new XProtocolError(e.getMessage(), e);
+        }
+    }
+
+    public XProtocolRow readRowOrNull(ColumnDefinition metadata, Consumer<Notice> noticeConsumer) {
+        try {
+            List<Notice> notices;
             XMessageHeader header;
             if ((header = this.reader.readHeader()).getMessageType() == ServerMessages.Type.RESULTSET_ROW_VALUE) {
-                Row r = (Row) this.reader.readMessage(null, header).getMessage();
-                return new XProtocolRow(metadata, r);
+                XMessage mess = this.reader.readMessage(null, header);
+                if (noticeConsumer != null && (notices = mess.getNotices()) != null) {
+                    notices.stream().forEach(noticeConsumer::accept);
+                }
+                XProtocolRow res = new XProtocolRow((Row) mess.getMessage());
+                res.setMetadata(metadata);
+                return res;
             }
             return null;
         } catch (XProtocolError e) {
@@ -558,10 +599,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             this.currentResultStreamer = null;
             throw new XProtocolError(e.getMessage(), e);
         }
-    }
-
-    public XProtocolRowInputStream getRowInputStream(ColumnDefinition metadata) {
-        return new XProtocolRowInputStream(metadata, this);
     }
 
     /**
@@ -675,7 +712,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
                 psf.clear();
                 try {
                     this.sender.send(((XMessageBuilder) this.messageBuilder).buildPrepareDeallocate(psf.getPreparedStatementId()));
-                    readOk();
+                    readQueryResult(new OkBuilder());
                 } catch (XProtocolError e) {
                     if (e.getErrorCode() != MysqlErrorNumbers.ER_X_BAD_STATEMENT_ID) {
                         throw e;
@@ -687,34 +724,21 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
     }
 
-    public void setCurrentResultStreamer(ResultStreamer currentResultStreamer) {
-        this.currentResultStreamer = currentResultStreamer;
+    public <M extends Message, R extends QueryResult> R query(M message, ResultBuilder<R> resultBuilder) {
+        send(message, 0);
+        R res = readQueryResult(resultBuilder);
+        if (ResultStreamer.class.isAssignableFrom(res.getClass())) {
+            this.currentResultStreamer = (ResultStreamer) res;
+        }
+        return res;
     }
 
-    public CompletableFuture<SqlResult> asyncExecuteSql(String sql, List<Object> args) {
+    public <M extends Message, R extends QueryResult> CompletableFuture<R> queryAsync(M message, ResultBuilder<R> resultBuilder) {
         newCommand();
-        CompletableFuture<SqlResult> f = new CompletableFuture<>();
-        com.mysql.cj.protocol.MessageListener<XMessage> l = new SqlResultMessageListener(f, this.fieldFactory, this.serverSession.getDefaultTimeZone(),
-                this.propertySet);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f, () -> this.reader.pushMessageListener(l));
-        this.sender.send(this.messageBuilder.buildSqlStatement(sql, args), resultHandler);
+        CompletableFuture<R> f = new CompletableFuture<>();
+        MessageListener<XMessage> l = new ResultMessageListener<>(this.messageToProtocolEntityFactory, resultBuilder, f);
+        this.sender.send((XMessage) message, f, () -> this.reader.pushMessageListener(l));
         return f;
-    }
-
-    /**
-     *
-     * @param filterParams
-     *            {@link FilterParams}
-     * @param callbacks
-     *            {@link ResultListener}
-     * @param errorFuture
-     *            the {@link CompletableFuture} to complete exceptionally if the request fails
-     */
-    public void asyncFind(FilterParams filterParams, ResultListener<StatementExecuteOk> callbacks, CompletableFuture<?> errorFuture) {
-        newCommand();
-        MessageListener<XMessage> l = new ResultMessageListener(this.fieldFactory, callbacks);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(errorFuture, () -> this.reader.pushMessageListener(l));
-        this.sender.send(((XMessageBuilder) this.messageBuilder).buildFind(filterParams), resultHandler);
     }
 
     public boolean isOpen() {
@@ -724,7 +748,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public void close() throws IOException {
         try {
             send(this.messageBuilder.buildClose(), 0);
-            readOk();
+            readQueryResult(new OkBuilder());
         } catch (Exception e) {
             // ignore exceptions
         } finally {
@@ -768,17 +792,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         this.sender.send((XMessage) message);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <RES extends QueryResult> CompletableFuture<RES> sendAsync(Message message) {
-        newCommand();
-        CompletableFuture<StatementExecuteOk> f = new CompletableFuture<>();
-        final StatementExecuteOkMessageListener l = new StatementExecuteOkMessageListener(f);
-        CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(f, () -> this.reader.pushMessageListener(l));
-        this.sender.send((XMessage) message, resultHandler);
-        return (CompletableFuture<RES>) f;
-    }
-
     /**
      * Get the capabilities from the server.
      * <p>
@@ -804,7 +817,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         if (this.useSessionResetKeepOpen == null) {
             try {
                 send(((XMessageBuilder) this.messageBuilder).buildExpectOpen(), 0);
-                readOk();
+                readQueryResult(new OkBuilder());
                 this.useSessionResetKeepOpen = true;
             } catch (XProtocolError e) {
                 if (e.getErrorCode() != 5168 && /* for MySQL 5.7 */ e.getErrorCode() != 5160) {
@@ -815,10 +828,10 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
         if (this.useSessionResetKeepOpen) {
             send(((XMessageBuilder) this.messageBuilder).buildSessionResetKeepOpen(), 0);
-            readOk();
+            readQueryResult(new OkBuilder());
         } else {
             send(((XMessageBuilder) this.messageBuilder).buildSessionResetAndClose(), 0);
-            readOk();
+            readQueryResult(new OkBuilder());
 
             if (this.clientCapabilities.containsKey(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS)) {
                 // this code may never work because xplugin connection attributes were introduced later than new session reset

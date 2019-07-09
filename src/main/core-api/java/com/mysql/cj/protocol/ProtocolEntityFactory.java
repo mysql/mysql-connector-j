@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,7 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 public interface ProtocolEntityFactory<T, M extends Message> {
 
     /**
+     * Create ProtocolEntity of type {@link T} from protocol message.
      * 
      * @param message
      *            {@link Message} instance

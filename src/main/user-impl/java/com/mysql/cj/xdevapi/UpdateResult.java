@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,7 +30,6 @@
 package com.mysql.cj.xdevapi;
 
 import java.util.Iterator;
-import java.util.stream.Collectors;
 
 import com.mysql.cj.protocol.x.StatementExecuteOk;
 
@@ -52,16 +51,16 @@ public class UpdateResult implements Result {
 
     @Override
     public long getAffectedItemsCount() {
-        return this.ok.getRowsAffected();
+        return this.ok.getAffectedItemsCount();
     }
 
     @Override
     public int getWarningsCount() {
-        return this.ok.getWarnings().size();
+        return this.ok.getWarningsCount();
     }
 
     @Override
     public Iterator<Warning> getWarnings() {
-        return this.ok.getWarnings().stream().map(w -> (Warning) new WarningImpl(w)).collect(Collectors.toList()).iterator();
+        return this.ok.getWarnings();
     }
 }

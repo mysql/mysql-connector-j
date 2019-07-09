@@ -33,15 +33,14 @@ import java.util.TimeZone;
 import java.util.function.Supplier;
 
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.protocol.ColumnDefinition;
-import com.mysql.cj.protocol.x.StatementExecuteOk;
+import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.result.RowList;
 
 /**
- * SQL result with data. Implemented as a thin layer over {@link RowResultImpl}.
+ * {@link SqlResult} representing a single result set. Implemented as a thin layer over {@link RowResultImpl}.
  */
-public class SqlDataResult extends RowResultImpl implements SqlResult {
+public class SqlSingleResult extends RowResultImpl implements SqlResult {
     /**
      * Constructor.
      * 
@@ -56,22 +55,7 @@ public class SqlDataResult extends RowResultImpl implements SqlResult {
      * @param pset
      *            {@link PropertySet}
      */
-    public SqlDataResult(ColumnDefinition metadata, TimeZone defaultTimeZone, RowList rows, Supplier<StatementExecuteOk> completer, PropertySet pset) {
+    public SqlSingleResult(ColumnDefinition metadata, TimeZone defaultTimeZone, RowList rows, Supplier<ProtocolEntity> completer, PropertySet pset) {
         super(metadata, defaultTimeZone, rows, completer, pset);
-    }
-
-    @Override
-    public boolean nextResult() {
-        throw new FeatureNotAvailableException("Not a multi-result");
-    }
-
-    @Override
-    public long getAffectedItemsCount() {
-        return getStatementExecuteOk().getRowsAffected();
-    }
-
-    @Override
-    public Long getAutoIncrementValue() {
-        throw new XDevAPIError("Method getAutoIncrementValue() is allowed only for insert statements.");
     }
 }

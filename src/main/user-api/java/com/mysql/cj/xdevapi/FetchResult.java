@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -83,18 +83,4 @@ public interface FetchResult<T> extends Iterator<T>, Iterable<T> {
      * @return list of result elements
      */
     List<T> fetchAll();
-
-    /**
-     * Count of warnings generated during statement execution. This method forces internal buffering of the result.
-     * 
-     * @return number of warnings
-     */
-    int getWarningsCount();
-
-    /**
-     * Warnings generated during statement execution. This method forces internal buffering of the result.
-     * 
-     * @return iterator over warnings
-     */
-    Iterator<Warning> getWarnings();
 }

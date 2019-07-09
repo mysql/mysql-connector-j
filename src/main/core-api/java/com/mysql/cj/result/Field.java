@@ -32,12 +32,13 @@ package com.mysql.cj.result;
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.util.LazyString;
 
 /**
  * Field is a class used to describe fields in a ResultSet
  */
-public class Field {
+public class Field implements ProtocolEntity {
 
     private int collationIndex = 0;
 

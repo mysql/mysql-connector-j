@@ -40,6 +40,9 @@ import com.mysql.cj.util.LazyString;
 import com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData;
 import com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.FieldType;
 
+/**
+ * Factory producing {@link Field} from protocol message.
+ */
 public class FieldFactory implements ProtocolEntityFactory<Field, XMessage> {
 
     /**

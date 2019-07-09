@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.MysqlxSession;
-import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 
@@ -50,8 +49,7 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatement, Re
 
     @Override
     protected Result executeStatement() {
-        StatementExecuteOk ok = this.mysqlxSession.sendMessage(getMessageBuilder().buildRowUpdate(this.filterParams, this.updateParams));
-        return new UpdateResult(ok);
+        return this.mysqlxSession.query(getMessageBuilder().buildRowUpdate(this.filterParams, this.updateParams), new UpdateResultBuilder<>());
     }
 
     @Override
@@ -61,14 +59,13 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatement, Re
 
     @Override
     protected Result executePreparedStatement() {
-        StatementExecuteOk ok = this.mysqlxSession.sendMessage(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams));
-        return new UpdateResult(ok);
+        return this.mysqlxSession.query(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams), new UpdateResultBuilder<>());
     }
 
     public CompletableFuture<Result> executeAsync() {
-        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession
-                .asyncSendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildRowUpdate(this.filterParams, this.updateParams));
-        return okF.thenApply(ok -> new UpdateResult(ok));
+        return this.mysqlxSession.queryAsync(
+                ((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildRowUpdate(this.filterParams, this.updateParams),
+                new UpdateResultBuilder<>());
     }
 
     public UpdateStatement set(Map<String, Object> fieldsAndValues) {

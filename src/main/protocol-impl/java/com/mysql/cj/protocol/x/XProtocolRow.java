@@ -37,14 +37,22 @@ import com.mysql.cj.result.Field;
 import com.mysql.cj.result.ValueFactory;
 import com.mysql.cj.x.protobuf.MysqlxResultset.Row;
 
+/**
+ * ProtocolEntity representing an X Protocol result row.
+ */
 public class XProtocolRow implements com.mysql.cj.result.Row {
     private ColumnDefinition metadata;
     private Row rowMessage;
     private boolean wasNull = false;
 
-    public XProtocolRow(ColumnDefinition metadata, Row rowMessage) {
-        this.metadata = metadata;
+    public XProtocolRow(Row rowMessage) {
         this.rowMessage = rowMessage;
+    }
+
+    @Override
+    public com.mysql.cj.result.Row setMetadata(ColumnDefinition columnDefinition) {
+        this.metadata = columnDefinition;
+        return this;
     }
 
     public <T> T getValue(int columnIndex, ValueFactory<T> vf) {

@@ -32,7 +32,6 @@ package com.mysql.cj.xdevapi;
 import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.MysqlxSession;
-import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.XMessage;
 
 /**
@@ -46,8 +45,7 @@ public class DeleteStatementImpl extends FilterableStatement<DeleteStatement, Re
 
     @Override
     protected Result executeStatement() {
-        StatementExecuteOk ok = this.mysqlxSession.sendMessage(getMessageBuilder().buildDelete(this.filterParams));
-        return new UpdateResult(ok);
+        return this.mysqlxSession.query(getMessageBuilder().buildDelete(this.filterParams), new UpdateResultBuilder<>());
     }
 
     @Override
@@ -57,12 +55,10 @@ public class DeleteStatementImpl extends FilterableStatement<DeleteStatement, Re
 
     @Override
     protected Result executePreparedStatement() {
-        StatementExecuteOk ok = this.mysqlxSession.sendMessage(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams));
-        return new UpdateResult(ok);
+        return this.mysqlxSession.query(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams), new UpdateResultBuilder<>());
     }
 
     public CompletableFuture<Result> executeAsync() {
-        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncSendMessage(getMessageBuilder().buildDelete(this.filterParams));
-        return okF.thenApply(ok -> new UpdateResult(ok));
+        return this.mysqlxSession.queryAsync(getMessageBuilder().buildDelete(this.filterParams), new UpdateResultBuilder<>());
     }
 }

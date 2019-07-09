@@ -31,7 +31,6 @@ package com.mysql.cj.protocol;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.CompletableFuture;
 
 import com.mysql.cj.MessageBuilder;
 import com.mysql.cj.QueryResult;
@@ -40,7 +39,6 @@ import com.mysql.cj.TransactionEventHandler;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
-import com.mysql.cj.result.RowList;
 
 /**
  * A protocol provides the facilities to communicate with a MySQL server.
@@ -157,11 +155,7 @@ public interface Protocol<M extends Message> {
      */
     void send(Message message, int packetLen);
 
-    <RES extends QueryResult> CompletableFuture<RES> sendAsync(Message message);
-
     ColumnDefinition readMetadata();
-
-    RowList getRowInputStream(ColumnDefinition metadata);
 
     /**
      * Send a command to the MySQL server.
@@ -263,12 +257,18 @@ public interface Protocol<M extends Message> {
      */
     void setQueryComment(String comment);
 
-    <QR extends QueryResult> QR readQueryResult();
+    /**
+     * Read messages from server and deliver them to resultBuilder.
+     * 
+     * @param resultBuilder
+     *            {@link ResultBuilder} instance
+     * @param <T>
+     *            result type
+     * @return {@link QueryResult}
+     */
+    <T extends QueryResult> T readQueryResult(ResultBuilder<T> resultBuilder);
 
     void close() throws IOException;
-
-    // TODO remove when currentResultStreamer is set in Protocol entirely
-    void setCurrentResultStreamer(ResultStreamer currentResultStreamer);
 
     void configureTimezone();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,8 +30,10 @@
 package com.mysql.cj.protocol.x;
 
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 
 import com.mysql.cj.protocol.ColumnDefinition;
+import com.mysql.cj.result.Row;
 import com.mysql.cj.result.RowList;
 
 public class XProtocolRowInputStream implements RowList {
@@ -40,25 +42,35 @@ public class XProtocolRowInputStream implements RowList {
     private boolean isDone = false;
     private int position = -1;
     /** XProtocolRow */
-    private XProtocolRow next; // TODO document
+    private Row next; // TODO document
+    private Consumer<Notice> noticeConsumer;
 
-    public XProtocolRowInputStream(ColumnDefinition metadata, XProtocol protocol) {
+    public XProtocolRowInputStream(ColumnDefinition metadata, XProtocol protocol, Consumer<Notice> noticeConsumer) {
         this.metadata = metadata;
         this.protocol = protocol;
+        this.noticeConsumer = noticeConsumer;
     }
 
-    public XProtocolRow readRow() {
+    public XProtocolRowInputStream(ColumnDefinition metadata, Row row, XProtocol protocol, Consumer<Notice> noticeConsumer) {
+        this.metadata = metadata;
+        this.protocol = protocol;
+        this.next = row;
+        this.next.setMetadata(metadata);
+        this.noticeConsumer = noticeConsumer;
+    }
+
+    public Row readRow() {
         if (!hasNext()) {
             this.isDone = true;
             return null;
         }
         this.position++;
-        XProtocolRow r = this.next;
+        Row r = this.next;
         this.next = null;
         return r;
     }
 
-    public XProtocolRow next() {
+    public Row next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
@@ -69,7 +81,7 @@ public class XProtocolRowInputStream implements RowList {
         if (this.isDone) {
             return false;
         } else if (this.next == null) {
-            this.next = this.protocol.readRowOrNull(this.metadata);
+            this.next = this.protocol.readRowOrNull(this.metadata, this.noticeConsumer);
         }
         return this.next != null;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.CompletionHandler;
+import java.util.concurrent.CompletableFuture;
 
 import com.google.protobuf.MessageLite;
 import com.mysql.cj.Messages;
@@ -87,16 +88,19 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
         }
     }
 
-    public void send(XMessage message, CompletionHandler<Long, Void> callback) {
+    @Override
+    public CompletableFuture<?> send(XMessage message, CompletableFuture<?> future, Runnable callback) {
         synchronized (this.waitingAsyncOperationMonitor) {
+            CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(future, callback);
             MessageLite msg = message.getMessage();
             try {
                 send(message);
                 long result = 4 + 1 + msg.getSerializedSize();
-                callback.completed(result, null);
+                resultHandler.completed(result, null);
             } catch (Throwable t) {
-                callback.failed(t, null);
+                resultHandler.failed(t, null);
             }
+            return future;
         }
     }
 

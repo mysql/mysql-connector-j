@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,7 +38,6 @@ import com.mysql.cj.MysqlxSession;
 import com.mysql.cj.exceptions.AssertionFailedException;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
-import com.mysql.cj.protocol.x.StatementExecuteOk;
 import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 import com.mysql.cj.protocol.x.XProtocolError;
@@ -53,7 +52,7 @@ public class CollectionImpl implements Collection {
         this.mysqlxSession = mysqlxSession;
         this.schema = schema;
         this.name = name;
-        this.xbuilder = (XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder();
+        this.xbuilder = (XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder();
     }
 
     public Session getSession() {
@@ -120,21 +119,21 @@ public class CollectionImpl implements Collection {
 
     @Override
     public Result createIndex(String indexName, DbDoc indexDefinition) {
-        StatementExecuteOk ok = this.mysqlxSession
-                .sendMessage(this.xbuilder.buildCreateCollectionIndex(this.schema.getName(), this.name, new CreateIndexParams(indexName, indexDefinition)));
-        return new UpdateResult(ok);
+        return this.mysqlxSession.query(
+                this.xbuilder.buildCreateCollectionIndex(this.schema.getName(), this.name, new CreateIndexParams(indexName, indexDefinition)),
+                new UpdateResultBuilder<>());
     }
 
     @Override
     public Result createIndex(String indexName, String jsonIndexDefinition) {
-        StatementExecuteOk ok = this.mysqlxSession
-                .sendMessage(this.xbuilder.buildCreateCollectionIndex(this.schema.getName(), this.name, new CreateIndexParams(indexName, jsonIndexDefinition)));
-        return new UpdateResult(ok);
+        return this.mysqlxSession.query(
+                this.xbuilder.buildCreateCollectionIndex(this.schema.getName(), this.name, new CreateIndexParams(indexName, jsonIndexDefinition)),
+                new UpdateResultBuilder<>());
     }
 
     public void dropIndex(String indexName) {
         try {
-            this.mysqlxSession.sendMessage(this.xbuilder.buildDropCollectionIndex(this.schema.getName(), this.name, indexName));
+            this.mysqlxSession.query(this.xbuilder.buildDropCollectionIndex(this.schema.getName(), this.name, indexName), new UpdateResultBuilder<>());
         } catch (XProtocolError e) {
             // If specified object does not exist, dropX() methods succeed (no error is reported)
             // TODO check MySQL > 8.0.1 for built in solution, like passing ifExists to dropView

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,9 @@
 
 package com.mysql.cj.protocol;
 
+import com.mysql.cj.exceptions.CJOperationNotSupportedException;
+import com.mysql.cj.exceptions.ExceptionFactory;
+
 /**
  * Sink for messages that are read asynchonously from the socket.
  *
@@ -37,9 +40,25 @@ package com.mysql.cj.protocol;
  * @param <M>
  *            Message type
  */
-public interface MessageListener<M extends Message> extends ProtocolEntityFactory<Boolean, M> {
+public interface MessageListener<M extends Message> {
 
-    default void error(Throwable ex) {
-        ex.printStackTrace(); // TODO log error normally instead of sysout
+    /**
+     * Process protocol message.
+     * 
+     * @param message
+     *            {@link Message} instance
+     * @return true - if this listener is done with processing the messages sequence and may be discarded;
+     *         false - if the next message must be dispatched to the same listener
+     */
+    default boolean processMessage(M message) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
     }
+
+    /**
+     * Exceptionally complete underlying Future.
+     * 
+     * @param ex
+     *            exception to pass to underlying Future.
+     */
+    void error(Throwable ex);
 }

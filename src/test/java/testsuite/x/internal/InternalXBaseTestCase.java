@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,6 +46,7 @@ import com.mysql.cj.conf.PropertyDefinitions.AuthMech;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.x.StatementExecuteOkBuilder;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 import com.mysql.cj.protocol.x.XProtocol;
 import com.mysql.cj.protocol.x.XProtocolError;
@@ -133,7 +134,7 @@ public class InternalXBaseTestCase {
         XProtocol protocol = createTestProtocol();
         XMessageBuilder messageBuilder = (XMessageBuilder) protocol.getMessageBuilder();
 
-        AuthMech authMech = protocol.getPropertySet().<AuthMech> getEnumProperty(PropertyKey.xdevapiAuth).getValue();
+        AuthMech authMech = protocol.getPropertySet().<AuthMech>getEnumProperty(PropertyKey.xdevapiAuth).getValue();
         boolean overTLS = ((XServerCapabilities) protocol.getServerSession().getCapabilities()).getTls();
 
         // Choose the best default auth mechanism.
@@ -200,12 +201,12 @@ public class InternalXBaseTestCase {
 
         try {
             protocol.send(messageBuilder.buildDropCollection(getTestDatabase(), collName), 0);
-            protocol.readQueryResult();
+            protocol.readQueryResult(new StatementExecuteOkBuilder());
         } catch (XProtocolError err) {
             // ignore
         }
         protocol.send(messageBuilder.buildCreateCollection(getTestDatabase(), collName), 0);
-        protocol.readQueryResult();
+        protocol.readQueryResult(new StatementExecuteOkBuilder());
 
         return collName;
     }

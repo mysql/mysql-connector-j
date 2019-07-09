@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * A result exposing a set of rows from a SELECT query.
  */
-public interface RowResult extends FetchResult<Row> {
+public interface RowResult extends FetchResult<Row>, Result {
     /**
      * Count of columns.
      * 

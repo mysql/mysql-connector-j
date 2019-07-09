@@ -30,17 +30,21 @@
 package com.mysql.cj;
 
 import java.net.SocketAddress;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.exceptions.CJOperationNotSupportedException;
+import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.log.ProfilerEventHandler;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.Protocol;
+import com.mysql.cj.protocol.ResultBuilder;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.result.Row;
 
@@ -158,5 +162,61 @@ public interface Session {
 
     DataStoreMetadata getDataStoreMetadata();
 
-    <M extends Message, RES_T, R> RES_T query(M message, Predicate<Row> filterRow, Function<Row, R> mapRow, Collector<R, ?, RES_T> collector);
+    /**
+     * Synchronously query database with applying rows filtering and mapping.
+     * 
+     * @param message
+     *            query message
+     * @param rowFilter
+     *            row filter function
+     * @param rowMapper
+     *            row map function
+     * @param collector
+     *            result collector
+     * @param <M>
+     *            Message type
+     * @param <R>
+     *            Row type
+     * @param <RES>
+     *            Result type
+     * @return List of rows
+     */
+    default <M extends Message, R, RES> RES query(M message, Predicate<Row> rowFilter, Function<Row, R> rowMapper, Collector<R, ?, RES> collector) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
+    /**
+     * Synchronously query database.
+     * 
+     * @param message
+     *            query message
+     * @param resultBuilder
+     *            ResultBuilder instance
+     * @param <M>
+     *            Message type
+     * @param <R>
+     *            Result type
+     * @return {@link QueryResult} object
+     */
+    default <M extends Message, R extends QueryResult> R query(M message, ResultBuilder<R> resultBuilder) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
+    /**
+     * Asynchronously query database.
+     * 
+     * @param message
+     *            query message
+     * @param resultBuilder
+     *            ResultBuilder instance
+     * @param <M>
+     *            Message type
+     * @param <R>
+     *            Result type
+     * @return CompletableFuture providing a {@link QueryResult} object
+     */
+    default <M extends Message, R extends QueryResult> CompletableFuture<R> queryAsync(M message, ResultBuilder<R> resultBuilder) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
 }

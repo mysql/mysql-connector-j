@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -393,8 +393,13 @@ public class AsyncMessageReaderTest {
         try {
             reader.pushMessageListener(new MessageListener<XMessage>() {
                 @Override
-                public Boolean createFromMessage(XMessage message) {
+                public boolean processMessage(XMessage message) {
                     return true;
+                }
+
+                @Override
+                public void error(Throwable ex) {
+                    throw new XProtocolError(ex.getMessage(), ex);
                 }
             });
         } catch (CJCommunicationsException ex) {

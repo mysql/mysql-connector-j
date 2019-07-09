@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,26 +31,28 @@ package com.mysql.cj.xdevapi;
 
 import java.util.Iterator;
 
+import com.mysql.cj.QueryResult;
+
 /**
  * Base result.
  */
-public interface Result {
+public interface Result extends QueryResult {
     /**
-     * Get the count of affected items from manipulation statements.
+     * Get the count of affected items from manipulation statements. This method forces internal buffering of the result.
      * 
      * @return count
      */
     long getAffectedItemsCount();
 
     /**
-     * Count of warnings generated during statement execution.
+     * Get the number of warnings generated during statement execution. This method forces internal buffering of the result.
      * 
-     * @return count
+     * @return number of warnings
      */
     int getWarningsCount();
 
     /**
-     * Warnings generated during statement execution.
+     * Get warnings generated during statement execution. This method forces internal buffering of the result.
      * 
      * @return iterator over warnings
      */

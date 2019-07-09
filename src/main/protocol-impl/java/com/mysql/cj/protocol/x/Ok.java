@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -27,41 +27,17 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package com.mysql.cj.protocol;
+package com.mysql.cj.protocol.x;
 
-import com.mysql.cj.result.Field;
-import com.mysql.cj.result.Row;
+import com.mysql.cj.QueryResult;
+import com.mysql.cj.protocol.ProtocolEntity;
 
-public interface ResultListener<OK extends ProtocolEntity> {
-    /**
-     * Called when metadata is available.
-     * 
-     * @param metadata
-     *            list of {@link Field} objects
-     */
-    void onMetadata(ColumnDefinition metadata);
+/**
+ * ProtocolEntity representing an OK message.
+ */
+public class Ok implements ProtocolEntity, QueryResult {
 
-    /**
-     * Called when row is available.
-     * 
-     * @param r
-     *            {@link Row}
-     */
-    void onRow(Row r);
+    public Ok() {
+    }
 
-    /**
-     * Called when result processing is complete. No additional notifications will be delivered.
-     * 
-     * @param ok
-     *            {@link ProtocolEntity}
-     */
-    void onComplete(OK ok);
-
-    /**
-     * Called when an exception occurs. No additional notifications will be delivered.
-     * 
-     * @param t
-     *            {@link Throwable}
-     */
-    void onException(Throwable t);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,7 @@
 
 package com.mysql.cj.xdevapi;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
@@ -37,19 +38,20 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.ResultStreamer;
 
 /**
- * Result of {@link SqlStatement#execute()}.
+ * {@link SqlResult} representing a multiple result sets.
  */
-public class SqlResultImpl implements SqlResult, ResultStreamer {
+public class SqlMultiResult implements SqlResult, ResultStreamer {
     private Supplier<SqlResult> resultStream;
+    private List<SqlResult> pendingResults = new ArrayList<>();
     private SqlResult currentResult;
 
     /**
      * Constructor.
      * 
      * @param resultStream
-     *            Supplies the result stream depending on query type. Could be {@link SqlDataResult}, {@link SqlUpdateResult} etc.
+     *            Supplies the result stream depending on query type. Could be {@link SqlSingleResult}, {@link SqlUpdateResult} etc.
      */
-    public SqlResultImpl(Supplier<SqlResult> resultStream) {
+    public SqlMultiResult(Supplier<SqlResult> resultStream) {
         this.resultStream = resultStream;
         this.currentResult = resultStream.get();
     }
@@ -64,7 +66,7 @@ public class SqlResultImpl implements SqlResult, ResultStreamer {
     @Override
     public boolean nextResult() {
         if (this.currentResult == null) {
-            return false;
+            return false; // there was no first result thus we don't expect other ones
         }
         try {
             if (ResultStreamer.class.isAssignableFrom(this.currentResult.getClass())) {
@@ -74,14 +76,24 @@ public class SqlResultImpl implements SqlResult, ResultStreamer {
             // propagate any exception but clear the current result so we don't try to read any more results
             this.currentResult = null;
         }
-        this.currentResult = this.resultStream.get();
+        this.currentResult = this.pendingResults.size() > 0 ? this.pendingResults.remove(0) : this.resultStream.get();
         return this.currentResult != null;
     }
 
     @Override
     public void finishStreaming() {
-        while (nextResult()) {
-            ;
+        if (this.currentResult == null) {
+            return; // there was no first result thus we don't expect other ones
+        }
+        if (ResultStreamer.class.isAssignableFrom(this.currentResult.getClass())) {
+            ((ResultStreamer) this.currentResult).finishStreaming();
+        }
+        SqlResult pendingRs = null;
+        while ((pendingRs = this.resultStream.get()) != null) {
+            if (ResultStreamer.class.isAssignableFrom(pendingRs.getClass())) {
+                ((ResultStreamer) pendingRs).finishStreaming();
+            }
+            this.pendingResults.add(pendingRs);
         }
     }
 

@@ -71,13 +71,13 @@ public class SessionImpl implements Session {
         pset.initializeProperties(hostInfo.exposeAsProperties());
         this.session = new MysqlxSession(hostInfo, pset);
         this.defaultSchemaName = hostInfo.getDatabase();
-        this.xbuilder = (XMessageBuilder) this.session.<XMessage> getMessageBuilder();
+        this.xbuilder = (XMessageBuilder) this.session.<XMessage>getMessageBuilder();
     }
 
     public SessionImpl(XProtocol prot) {
         this.session = new MysqlxSession(prot);
         this.defaultSchemaName = prot.defaultSchemaName;
-        this.xbuilder = (XMessageBuilder) this.session.<XMessage> getMessageBuilder();
+        this.xbuilder = (XMessageBuilder) this.session.<XMessage>getMessageBuilder();
     }
 
     protected SessionImpl() {
@@ -108,7 +108,7 @@ public class SessionImpl implements Session {
     public Schema createSchema(String schemaName) {
         StringBuilder stmtString = new StringBuilder("CREATE DATABASE ");
         stmtString.append(StringUtils.quoteIdentifier(schemaName, true));
-        this.session.sendMessage(this.xbuilder.buildSqlStatement(stmtString.toString()));
+        this.session.query(this.xbuilder.buildSqlStatement(stmtString.toString()), new UpdateResultBuilder<>());
         return getSchema(schemaName);
     }
 
@@ -126,19 +126,19 @@ public class SessionImpl implements Session {
     public void dropSchema(String schemaName) {
         StringBuilder stmtString = new StringBuilder("DROP DATABASE ");
         stmtString.append(StringUtils.quoteIdentifier(schemaName, true));
-        this.session.sendMessage(this.xbuilder.buildSqlStatement(stmtString.toString()));
+        this.session.query(this.xbuilder.buildSqlStatement(stmtString.toString()), new UpdateResultBuilder<>());
     }
 
     public void startTransaction() {
-        this.session.sendMessage(this.xbuilder.buildSqlStatement("START TRANSACTION"));
+        this.session.query(this.xbuilder.buildSqlStatement("START TRANSACTION"), new UpdateResultBuilder<>());
     }
 
     public void commit() {
-        this.session.sendMessage(this.xbuilder.buildSqlStatement("COMMIT"));
+        this.session.query(this.xbuilder.buildSqlStatement("COMMIT"), new UpdateResultBuilder<>());
     }
 
     public void rollback() {
-        this.session.sendMessage(this.xbuilder.buildSqlStatement("ROLLBACK"));
+        this.session.query(this.xbuilder.buildSqlStatement("ROLLBACK"), new UpdateResultBuilder<>());
     }
 
     @Override
@@ -152,7 +152,7 @@ public class SessionImpl implements Session {
             throw new XDevAPIError(Messages.getString("XSession.0", new String[] { "name" }));
         }
 
-        this.session.sendMessage(this.xbuilder.buildSqlStatement("SAVEPOINT " + StringUtils.quoteIdentifier(name, true)));
+        this.session.query(this.xbuilder.buildSqlStatement("SAVEPOINT " + StringUtils.quoteIdentifier(name, true)), new UpdateResultBuilder<>());
         return name;
     }
 
@@ -162,7 +162,7 @@ public class SessionImpl implements Session {
             throw new XDevAPIError(Messages.getString("XSession.0", new String[] { "name" }));
         }
 
-        this.session.sendMessage(this.xbuilder.buildSqlStatement("ROLLBACK TO " + StringUtils.quoteIdentifier(name, true)));
+        this.session.query(this.xbuilder.buildSqlStatement("ROLLBACK TO " + StringUtils.quoteIdentifier(name, true)), new UpdateResultBuilder<>());
     }
 
     @Override
@@ -171,7 +171,7 @@ public class SessionImpl implements Session {
             throw new XDevAPIError(Messages.getString("XSession.0", new String[] { "name" }));
         }
 
-        this.session.sendMessage(this.xbuilder.buildSqlStatement("RELEASE SAVEPOINT " + StringUtils.quoteIdentifier(name, true)));
+        this.session.query(this.xbuilder.buildSqlStatement("RELEASE SAVEPOINT " + StringUtils.quoteIdentifier(name, true)), new UpdateResultBuilder<>());
     }
 
     public String getUri() {

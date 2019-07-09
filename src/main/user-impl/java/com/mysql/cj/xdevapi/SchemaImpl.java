@@ -59,7 +59,7 @@ public class SchemaImpl implements Schema {
         this.mysqlxSession = mysqlxSession;
         this.session = session;
         this.name = name;
-        this.xbuilder = (XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder();
+        this.xbuilder = (XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder();
         this.svf = new StringValueFactory(this.mysqlxSession.getPropertySet());
     }
 
@@ -139,7 +139,7 @@ public class SchemaImpl implements Schema {
     }
 
     public Collection createCollection(String collectionName) {
-        this.mysqlxSession.sendMessage(this.xbuilder.buildCreateCollection(this.name, collectionName));
+        this.mysqlxSession.query(this.xbuilder.buildCreateCollection(this.name, collectionName), new UpdateResultBuilder<>());
         return new CollectionImpl(this.mysqlxSession, this, collectionName);
     }
 
@@ -177,7 +177,7 @@ public class SchemaImpl implements Schema {
     @Override
     public void dropCollection(String collectionName) {
         try {
-            this.mysqlxSession.sendMessage(this.xbuilder.buildDropCollection(this.name, collectionName));
+            this.mysqlxSession.query(this.xbuilder.buildDropCollection(this.name, collectionName), new UpdateResultBuilder<>());
         } catch (XProtocolError e) {
             // If specified object does not exist, dropX() methods succeed (no error is reported)
             // TODO check MySQL > 8.0.1 for built in solution, like passing ifExists to dropView

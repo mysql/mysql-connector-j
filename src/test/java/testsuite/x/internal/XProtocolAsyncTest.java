@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,7 +36,6 @@ import static org.junit.Assert.assertNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -46,12 +45,17 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import com.mysql.cj.protocol.ColumnDefinition;
-import com.mysql.cj.protocol.ResultListener;
+import com.mysql.cj.protocol.ProtocolEntity;
+import com.mysql.cj.protocol.ResultBuilder;
 import com.mysql.cj.protocol.x.StatementExecuteOk;
+import com.mysql.cj.protocol.x.StatementExecuteOkBuilder;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 import com.mysql.cj.protocol.x.XProtocol;
+import com.mysql.cj.result.DefaultColumnDefinition;
+import com.mysql.cj.result.Field;
 import com.mysql.cj.result.Row;
 import com.mysql.cj.xdevapi.DocFilterParams;
+import com.mysql.cj.xdevapi.RowResult;
 
 /**
  * Tests for protocol-level <b>async</b> APIs against X Plugin via X Protocol.
@@ -100,7 +104,7 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': 1, 'insertedBy': 'Jess'}".replaceAll("'", "\"");
         this.protocol.send(this.messageBuilder.buildDocInsert(getTestDatabase(), collName, Arrays.asList(new String[] { json }), false), 0);
-        this.protocol.readQueryResult();
+        this.protocol.readQueryResult(new StatementExecuteOkBuilder());
 
         final ValueHolder<ColumnDefinition> metadataHolder = new ValueHolder<>();
         final ValueHolder<ArrayList<Row>> rowHolder = new ValueHolder<>();
@@ -108,29 +112,42 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
         final ValueHolder<StatementExecuteOk> okHolder = new ValueHolder<>();
         final ValueHolder<Throwable> excHolder = new ValueHolder<>();
 
-        this.protocol.asyncFind(new DocFilterParams(getTestDatabase(), collName), new ResultListener<StatementExecuteOk>() {
-            public void onMetadata(ColumnDefinition metadata) {
-                metadataHolder.accept(metadata);
-            }
+        this.protocol.queryAsync(this.messageBuilder.buildFind(new DocFilterParams(getTestDatabase(), collName)), new ResultBuilder<RowResult>() {
 
-            public void onRow(Row r) {
-                rowHolder.get().add(r);
-            }
+            private ArrayList<Field> fields = new ArrayList<>();
+            private ColumnDefinition metadata;
 
-            public void onComplete(StatementExecuteOk ok) {
-                okHolder.accept(ok);
-                synchronized (XProtocolAsyncTest.this) {
-                    XProtocolAsyncTest.this.notify();
+            @Override
+            public boolean addProtocolEntity(ProtocolEntity entity) {
+                if (entity instanceof Field) {
+                    this.fields.add((Field) entity);
+
+                } else if (entity instanceof ColumnDefinition) {
+                    this.metadata = (ColumnDefinition) entity;
+                    metadataHolder.accept(this.metadata);
+
+                } else if (entity instanceof Row) {
+                    if (this.metadata == null) {
+                        this.metadata = new DefaultColumnDefinition(this.fields.toArray(new Field[] {}));
+                        metadataHolder.accept(this.metadata);
+                    }
+                    rowHolder.get().add((Row) entity);
+
+                } else if (entity instanceof StatementExecuteOk) {
+                    okHolder.accept((StatementExecuteOk) entity);
+                    synchronized (XProtocolAsyncTest.this) {
+                        XProtocolAsyncTest.this.notify();
+                    }
+                    return true;
                 }
+                return false;
             }
 
-            public void onException(Throwable t) {
-                excHolder.accept(t);
-                synchronized (XProtocolAsyncTest.this) {
-                    XProtocolAsyncTest.this.notify();
-                }
+            @Override
+            public RowResult build() {
+                return null;
             }
-        }, new CompletableFuture<Void>());
+        });
 
         synchronized (this) {
             // timeout in case we get stuck

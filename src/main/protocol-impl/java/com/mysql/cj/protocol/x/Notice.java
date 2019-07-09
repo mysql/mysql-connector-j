@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,13 +36,17 @@ import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.Warning;
 import com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar;
 import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
 import com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged;
 import com.mysql.cj.x.protobuf.MysqlxNotice.SessionVariableChanged;
 
-public class Notice {
+/**
+ * ProtocolEntity representing a {@link Notice} message.
+ */
+public class Notice implements ProtocolEntity {
 
     public static Notice getInstance(XMessage message) {
         Frame notice = (Frame) message.getMessage();

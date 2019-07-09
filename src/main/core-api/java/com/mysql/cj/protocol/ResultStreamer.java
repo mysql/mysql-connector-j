@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,5 +35,9 @@ package com.mysql.cj.protocol;
  * buffer rows, etc. The connection is then free to execute the next command.
  */
 public interface ResultStreamer {
+    /**
+     * Finish the result streaming. This happens if a new command is started or the warnings/etc are requested. This is safe to call multiple times and only has
+     * an effect the first time.
+     */
     void finishStreaming();
 }

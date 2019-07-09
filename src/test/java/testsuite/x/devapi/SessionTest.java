@@ -77,6 +77,7 @@ import com.mysql.cj.xdevapi.SelectStatement;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
 import com.mysql.cj.xdevapi.SessionImpl;
+import com.mysql.cj.xdevapi.SqlMultiResult;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.SqlStatement;
 import com.mysql.cj.xdevapi.XDevAPIError;
@@ -1562,6 +1563,97 @@ public class SessionTest extends DevApiBaseTestCase {
             assertThrows(CJCommunicationsException.class, "Unable to write message", testFind::execute);
         } finally {
             this.schema.dropCollection("testPrepStmtPooling");
+        }
+    }
+
+    @Test
+    public void testBig23721537() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        try {
+            sqlUpdate("drop table if exists testBig23721537");
+            sqlUpdate("create table testBig23721537 (id int, name varchar(20) not null)");
+            sqlUpdate("insert into testBig23721537 values (0, 'a')");
+
+            this.session.sql("drop procedure if exists newproc").execute();
+            this.session.sql(
+                    "create procedure newproc (in p1 int,in p2 char(20)) begin select 1; update testBig23721537 set name='b' where id=0; select 2; select 3; end;")
+                    .execute();
+
+            /* sync execution */
+            SqlResult res1 = this.session.sql("call newproc(?,?)").bind(10).bind("X").execute();
+
+            assertTrue(res1 instanceof SqlMultiResult);
+            assertTrue(res1.hasData());
+            assertTrue(res1.hasNext());
+            Row r = res1.next();
+            assertEquals(1, r.getInt(0));
+            assertFalse(res1.hasNext());
+
+            SqlResult res2 = this.session.sql("select 10").execute(); // res1 should finish streaming here
+
+            assertTrue(res1.nextResult());
+            assertTrue(res1.hasData());
+            assertTrue(res1.hasNext());
+            r = res1.next();
+            assertEquals(2, r.getInt(0));
+            assertFalse(res1.hasNext());
+
+            assertTrue(res1.nextResult());
+            assertTrue(res1.hasData());
+            assertTrue(res1.hasNext());
+            r = res1.next();
+            assertEquals(3, r.getInt(0));
+            assertFalse(res1.hasNext());
+
+            assertFalse(res1.nextResult());
+
+            //
+            assertTrue(res2.hasData());
+            assertTrue(res2.hasNext());
+            r = res2.next();
+            assertEquals(10, r.getInt(0));
+            assertFalse(res2.hasNext());
+            assertFalse(res2.nextResult());
+
+            /* async execution */
+            res1 = this.session.sql("call newproc(?,?)").bind(10).bind("X").executeAsync().get();
+
+            assertTrue(res1.hasData());
+            r = res1.next();
+            assertEquals(1, r.getInt(0));
+            assertFalse(res1.hasNext());
+
+            res2 = this.session.sql("select 10").executeAsync().get(); // res1 should finish streaming here
+
+            assertTrue(res1.nextResult());
+            assertTrue(res1.hasData());
+            assertTrue(res1.hasNext());
+            r = res1.next();
+            assertEquals(2, r.getInt(0));
+            assertFalse(res1.hasNext());
+
+            assertTrue(res1.nextResult());
+            assertTrue(res1.hasData());
+            assertTrue(res1.hasNext());
+            r = res1.next();
+            assertEquals(3, r.getInt(0));
+            assertFalse(res1.hasNext());
+
+            assertFalse(res1.nextResult());
+
+            //
+            assertTrue(res2.hasData());
+            assertTrue(res2.hasNext());
+            r = res2.next();
+            assertEquals(10, r.getInt(0));
+            assertFalse(res2.hasNext());
+            assertFalse(res2.nextResult());
+
+        } finally {
+            sqlUpdate("drop table if exists testBig23721537");
+            this.session.sql("drop procedure if exists newproc").execute();
         }
     }
 }

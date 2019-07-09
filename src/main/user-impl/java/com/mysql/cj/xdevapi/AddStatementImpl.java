@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -90,9 +90,8 @@ public class AddStatementImpl implements AddStatement {
             StatementExecuteOk ok = new StatementExecuteOk(0, null, Collections.emptyList(), Collections.emptyList());
             return new AddResultImpl(ok);
         }
-        StatementExecuteOk ok = this.mysqlxSession.sendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder())
-                .buildDocInsert(this.schemaName, this.collectionName, serializeDocs(), this.upsert));
-        return new AddResultImpl(ok);
+        return this.mysqlxSession.query(((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildDocInsert(this.schemaName,
+                this.collectionName, serializeDocs(), this.upsert), new AddResultBuilder());
     }
 
     public CompletableFuture<AddResult> executeAsync() {
@@ -100,9 +99,8 @@ public class AddStatementImpl implements AddStatement {
             StatementExecuteOk ok = new StatementExecuteOk(0, null, Collections.emptyList(), Collections.emptyList());
             return CompletableFuture.completedFuture(new AddResultImpl(ok));
         }
-        CompletableFuture<StatementExecuteOk> okF = this.mysqlxSession.asyncSendMessage(((XMessageBuilder) this.mysqlxSession.<XMessage> getMessageBuilder())
-                .buildDocInsert(this.schemaName, this.collectionName, serializeDocs(), this.upsert));
-        return okF.thenApply(ok -> new AddResultImpl(ok));
+        return this.mysqlxSession.queryAsync(((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildDocInsert(this.schemaName,
+                this.collectionName, serializeDocs(), this.upsert), new AddResultBuilder());
     }
 
     public boolean isUpsert() {

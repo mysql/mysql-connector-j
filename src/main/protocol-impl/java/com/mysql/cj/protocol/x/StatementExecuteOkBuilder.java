@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,19 +34,44 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.ProtocolEntity;
+import com.mysql.cj.protocol.ResultBuilder;
 import com.mysql.cj.protocol.x.Notice.XSessionStateChanged;
 import com.mysql.cj.protocol.x.Notice.XWarning;
 
 /**
- * Handle state necessary to accumulate noticed and build a {@link StatementExecuteOk} response.
+ * Result builder producing a {@link StatementExecuteOk} instance. Handles state necessary to accumulate noticed and build a {@link StatementExecuteOk}
+ * response.
  */
-public class StatementExecuteOkBuilder {
+public class StatementExecuteOkBuilder implements ResultBuilder<StatementExecuteOk> {
+
     private long rowsAffected = 0;
     private Long lastInsertId = null;
     private List<String> generatedIds = Collections.emptyList();
     private List<com.mysql.cj.protocol.Warning> warnings = new ArrayList<>();
 
-    public void addNotice(Notice notice) {
+    @Override
+    public boolean addProtocolEntity(ProtocolEntity entity) {
+        if (entity instanceof Notice) {
+            addNotice((Notice) entity);
+            return false;
+
+        } else if (entity instanceof FetchDoneEntity) {
+            return false;
+
+        } else if (entity instanceof StatementExecuteOk) {
+            return true;
+        }
+        throw ExceptionFactory.createException(WrongArgumentException.class, "Unexpected protocol entity " + entity);
+    }
+
+    public StatementExecuteOk build() {
+        return new StatementExecuteOk(this.rowsAffected, this.lastInsertId, this.generatedIds, this.warnings);
+    }
+
+    private void addNotice(Notice notice) {
         if (notice instanceof XWarning) {
             this.warnings.add((XWarning) notice);
 
@@ -74,9 +99,5 @@ public class StatementExecuteOkBuilder {
                     // TODO do something with notices, expose them to client
             }
         }
-    }
-
-    public StatementExecuteOk build() {
-        return new StatementExecuteOk(this.rowsAffected, this.lastInsertId, this.generatedIds, this.warnings);
     }
 }

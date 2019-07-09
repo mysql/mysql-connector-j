@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,98 +29,57 @@
 
 package com.mysql.cj.protocol.x;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.mysql.cj.exceptions.WrongArgumentException;
-import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.MessageListener;
+import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
-import com.mysql.cj.protocol.ResultListener;
-import com.mysql.cj.result.DefaultColumnDefinition;
-import com.mysql.cj.result.Field;
+import com.mysql.cj.protocol.ResultBuilder;
 import com.mysql.cj.x.protobuf.Mysqlx.Error;
-import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
-import com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData;
-import com.mysql.cj.x.protobuf.MysqlxResultset.FetchDone;
-import com.mysql.cj.x.protobuf.MysqlxResultset.Row;
-import com.mysql.cj.x.protobuf.MysqlxSql.StmtExecuteOk;
 
 /**
- * A {@link MessageListener} to handle result data and propagate it to a {@link ResultListener}.
+ * A {@link MessageListener} to handle result data and propagate it to a {@link ResultBuilder}.
  */
-public class ResultMessageListener implements MessageListener<XMessage> {
-    private ResultListener<StatementExecuteOk> callbacks;
-    private ProtocolEntityFactory<Field, XMessage> fieldFactory;
+public class ResultMessageListener<R> implements MessageListener<XMessage> {
+    private ResultBuilder<?> resultBuilder;
+    private CompletableFuture<R> future;
 
-    /**
-     * Accumulate metadata before delivering to client.
-     */
-    private ArrayList<Field> fields = new ArrayList<>();
-    private ColumnDefinition metadata = null;
+    private Map<Class<? extends GeneratedMessageV3>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory = new HashMap<>();
 
-    /**
-     * Have we finished reading metadata and send it to client yet?
-     */
-    private boolean metadataSent = false;
-
-    private StatementExecuteOkBuilder okBuilder = new StatementExecuteOkBuilder();
-
-    public ResultMessageListener(ProtocolEntityFactory<Field, XMessage> colToField, ResultListener<StatementExecuteOk> callbacks) {
-        this.callbacks = callbacks;
-        this.fieldFactory = colToField;
+    public ResultMessageListener(
+            Map<Class<? extends GeneratedMessageV3>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory,
+            ResultBuilder<R> resultBuilder, CompletableFuture<R> future) {
+        this.messageToProtocolEntityFactory = messageToProtocolEntityFactory;
+        this.resultBuilder = resultBuilder;
+        this.future = future;
     }
 
-    public Boolean createFromMessage(XMessage message) {
-        @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
+    public boolean processMessage(XMessage message) {
         Class<? extends GeneratedMessageV3> msgClass = (Class<? extends GeneratedMessageV3>) message.getMessage().getClass();
 
-        // accumulate metadata and deliver to listener on first non-metadata message
-        if (ColumnMetaData.class.equals(msgClass)) {
-            Field f = this.fieldFactory.createFromMessage(message);
-            this.fields.add(f);
-            return false; /* done reading? */
-        }
-        if (!this.metadataSent) {
-            if (this.metadata == null) {
-                this.metadata = new DefaultColumnDefinition(this.fields.toArray(new Field[] {}));
+        if (Error.class.equals(msgClass)) {
+            this.future.completeExceptionally(new XProtocolError(Error.class.cast(message.getMessage())));
+
+        } else if (!this.messageToProtocolEntityFactory.containsKey(msgClass)) {
+            this.future.completeExceptionally(new WrongArgumentException("Unhandled msg class (" + msgClass + ") + msg=" + message.getMessage()));
+
+        } else {
+            if (!this.resultBuilder.addProtocolEntity(this.messageToProtocolEntityFactory.get(msgClass).createFromMessage(message))) {
+                return false;
             }
-            this.callbacks.onMetadata(this.metadata);
-            this.metadataSent = true;
+            this.future.complete((R) this.resultBuilder.build());
         }
 
-        if (StmtExecuteOk.class.equals(msgClass)) {
-            this.callbacks.onComplete(this.okBuilder.build());
-            return true; /* done reading? */
-
-        } else if (FetchDone.class.equals(msgClass)) {
-            // ignored. wait for StmtExecuteOk
-            return false; /* done reading? */
-
-        } else if (Row.class.equals(msgClass)) {
-            if (this.metadata == null) {
-                this.metadata = new DefaultColumnDefinition(this.fields.toArray(new Field[] {}));
-            }
-            XProtocolRow row = new XProtocolRow(this.metadata, Row.class.cast(message.getMessage()));
-            this.callbacks.onRow(row);
-            return false; /* done reading? */
-
-        } else if (Error.class.equals(msgClass)) {
-            XProtocolError e = new XProtocolError(Error.class.cast(message.getMessage()));
-            this.callbacks.onException(e);
-            return true; /* done reading? */
-
-        } else if (Frame.class.equals(msgClass)) {
-            this.okBuilder.addNotice(Notice.getInstance(message));
-            return false; /* done reading? */
-        }
-
-        this.callbacks.onException(new WrongArgumentException("Unhandled msg class (" + msgClass + ") + msg=" + message.getMessage()));
-        return false; /* done reading? */ // note, this doesn't comply with the specified semantics ResultListener
+        return true; /* done reading */
     }
 
     public void error(Throwable ex) {
-        this.callbacks.onException(ex);
+        this.future.completeExceptionally(ex);
     }
 
 }

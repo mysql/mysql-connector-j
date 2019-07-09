@@ -169,7 +169,7 @@ public abstract class PreparableStatement<RES_T> {
         }
         try {
             this.preparedStatementId = this.mysqlxSession.getNewPreparedStatementId(this);
-            this.mysqlxSession.sendMessage(getPrepareStatementXMessage(), this.mysqlxSession::readOk);
+            this.mysqlxSession.query(getPrepareStatementXMessage(), new UpdateResultBuilder<>());
         } catch (XProtocolError e) {
             if (this.mysqlxSession.failedPreparingStatement(this.preparedStatementId, e)) {
                 this.preparedStatementId = 0;
@@ -198,7 +198,7 @@ public abstract class PreparableStatement<RES_T> {
     protected void deallocatePrepared() {
         if (this.preparedState == PreparedState.PREPARED || this.preparedState == PreparedState.DEALLOCATE || this.preparedState == PreparedState.REPREPARE) {
             try {
-                this.mysqlxSession.sendMessage(getMessageBuilder().buildPrepareDeallocate(this.preparedStatementId), this.mysqlxSession::readOk);
+                this.mysqlxSession.query(getMessageBuilder().buildPrepareDeallocate(this.preparedStatementId), new UpdateResultBuilder<>());
             } finally {
                 this.mysqlxSession.freePreparedStatementId(this.preparedStatementId);
                 this.preparedStatementId = 0;

@@ -30,32 +30,27 @@
 package com.mysql.cj;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Iterator;
+import java.util.Spliterators;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.Predicate;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.protocol.ColumnDefinition;
-import com.mysql.cj.protocol.ResultListener;
-import com.mysql.cj.protocol.ResultStreamer;
-import com.mysql.cj.protocol.x.ResultCreatingResultListener;
-import com.mysql.cj.protocol.x.StatementExecuteOk;
+import com.mysql.cj.protocol.Message;
+import com.mysql.cj.protocol.ResultBuilder;
 import com.mysql.cj.protocol.x.StatementExecuteOkBuilder;
-import com.mysql.cj.protocol.x.XMessageBuilder;
 import com.mysql.cj.protocol.x.XProtocol;
 import com.mysql.cj.protocol.x.XProtocolError;
-import com.mysql.cj.result.RowList;
-import com.mysql.cj.xdevapi.FilterParams;
-import com.mysql.cj.xdevapi.FilterableStatement;
+import com.mysql.cj.protocol.x.XProtocolRowInputStream;
+import com.mysql.cj.result.Row;
 import com.mysql.cj.xdevapi.PreparableStatement;
-import com.mysql.cj.xdevapi.SqlDataResult;
-import com.mysql.cj.xdevapi.SqlResult;
-import com.mysql.cj.xdevapi.SqlResultImpl;
-import com.mysql.cj.xdevapi.SqlUpdateResult;
 
 public class MysqlxSession extends CoreSession {
 
@@ -85,6 +80,10 @@ public class MysqlxSession extends CoreSession {
         return this.protocol.getSocketConnection().getPort();
     }
 
+    public XProtocol getProtocol() {
+        return (XProtocol) this.protocol;
+    }
+
     @Override
     public void quit() {
         try {
@@ -95,14 +94,8 @@ public class MysqlxSession extends CoreSession {
         super.quit();
     }
 
-    /**
-     * Consume an OK packet from the underlying protocol.
-     * 
-     * @return <code>null</code>
-     */
-    public Void readOk() {
-        ((XProtocol) this.protocol).readOk();
-        return null;
+    public boolean isClosed() {
+        return !((XProtocol) this.protocol).isOpen();
     }
 
     /**
@@ -160,92 +153,24 @@ public class MysqlxSession extends CoreSession {
         return ((XProtocol) this.protocol).failedPreparingStatement(preparedStatementId, e);
     }
 
-    public <T extends ResultStreamer> T find(FilterParams filterParams,
-            Function<ColumnDefinition, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> resultCtor) {
-        this.protocol.send(((XMessageBuilder) this.messageBuilder).buildFind(filterParams), 0);
+    public <M extends Message, R, RES> RES query(M message, Predicate<Row> rowFilter, Function<Row, R> rowMapper, Collector<R, ?, RES> collector) {
+        this.protocol.send(message, 0);
         ColumnDefinition metadata = this.protocol.readMetadata();
-        T res = resultCtor.apply(metadata).apply(((XProtocol) this.protocol).getRowInputStream(metadata), this.protocol::readQueryResult);
-        this.protocol.setCurrentResultStreamer(res);
-        return res;
+        Iterator<Row> ris = new XProtocolRowInputStream(metadata, (XProtocol) this.protocol, null);
+        Stream<Row> stream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(ris, 0), false);
+        if (rowFilter != null) {
+            stream = stream.filter(rowFilter);
+        }
+        RES result = stream.map(rowMapper).collect(collector);
+        this.protocol.readQueryResult(new StatementExecuteOkBuilder());
+        return result;
     }
 
-    /**
-     * Execute a previously prepared find statement using the given arguments.
-     * 
-     * @param preparedStatementId
-     *            the prepared statement id to execute. This statement must be previously prepared
-     * @param filterParams
-     *            the {@link FilterableStatement} params that contain the arguments for the previously-defined placeholders
-     * @param resultCtor
-     *            a constructor that builds the results.
-     * @param <T>
-     *            result type
-     * @return
-     *         the result from the given constructor
-     */
-    public <T extends ResultStreamer> T executePreparedFind(int preparedStatementId, FilterParams filterParams,
-            Function<ColumnDefinition, BiFunction<RowList, Supplier<StatementExecuteOk>, T>> resultCtor) {
-        this.protocol.send(((XMessageBuilder) this.messageBuilder).buildPrepareExecute(preparedStatementId, filterParams), 0);
-        ColumnDefinition metadata = this.protocol.readMetadata();
-        T res = resultCtor.apply(metadata).apply(((XProtocol) this.protocol).getRowInputStream(metadata), this.protocol::readQueryResult);
-        this.protocol.setCurrentResultStreamer(res);
-        return res;
+    public <M extends Message, R extends QueryResult> R query(M message, ResultBuilder<R> resultBuilder) {
+        return ((XProtocol) this.protocol).query(message, resultBuilder);
     }
 
-    public <RES_T> CompletableFuture<RES_T> asyncFind(FilterParams filterParams,
-            Function<ColumnDefinition, BiFunction<RowList, Supplier<StatementExecuteOk>, RES_T>> resultCtor) {
-        CompletableFuture<RES_T> f = new CompletableFuture<>();
-        ResultListener<StatementExecuteOk> l = new ResultCreatingResultListener<>(resultCtor, f);
-        ((XProtocol) this.protocol).asyncFind(filterParams, l, f);
-        return f;
-    }
-
-    public SqlResult executeSql(String sql, List<Object> args) {
-        this.protocol.send(this.messageBuilder.buildSqlStatement(sql, args), 0);
-        return executeSqlProcessResult();
-    }
-
-    /**
-     * Process the response messages from a <i>StmtExecute</i> request.
-     * 
-     * @return
-     *         an {@link SqlResult} with the returned rows.
-     */
-    private SqlResult executeSqlProcessResult() {
-        boolean readLastResult[] = new boolean[1];
-        Supplier<StatementExecuteOk> okReader = () -> {
-            if (readLastResult[0]) {
-                throw new CJCommunicationsException("Invalid state attempting to read ok packet");
-            }
-            if (((XProtocol) this.protocol).hasMoreResults()) {
-                // empty/fabricated OK packet
-                return new StatementExecuteOkBuilder().build();
-            }
-            readLastResult[0] = true;
-            return this.protocol.readQueryResult();
-        };
-        Supplier<SqlResult> resultStream = () -> {
-            if (readLastResult[0]) {
-                return null;
-            } else if (((XProtocol) this.protocol).isSqlResultPending()) {
-                ColumnDefinition metadata = this.protocol.readMetadata();
-                return new SqlDataResult(metadata, this.protocol.getServerSession().getDefaultTimeZone(), this.protocol.getRowInputStream(metadata), okReader,
-                        this.propertySet);
-            } else {
-                readLastResult[0] = true;
-                return new SqlUpdateResult(this.protocol.readQueryResult());
-            }
-        };
-        SqlResultImpl res = new SqlResultImpl(resultStream);
-        this.protocol.setCurrentResultStreamer(res);
-        return res;
-    }
-
-    public CompletableFuture<SqlResult> asyncExecuteSql(String sql, List<Object> args) {
-        return ((XProtocol) this.protocol).asyncExecuteSql(sql, args);
-    }
-
-    public boolean isClosed() {
-        return !((XProtocol) this.protocol).isOpen();
+    public <M extends Message, R extends QueryResult> CompletableFuture<R> queryAsync(M message, ResultBuilder<R> resultBuilder) {
+        return ((XProtocol) this.protocol).queryAsync(message, resultBuilder);
     }
 }

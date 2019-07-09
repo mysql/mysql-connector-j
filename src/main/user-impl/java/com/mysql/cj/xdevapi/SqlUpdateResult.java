@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,7 +35,7 @@ import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.protocol.x.StatementExecuteOk;
 
 /**
- * SQL result for DML statements.
+ * {@link SqlResult} for insert, update, delete and DDL statements.
  */
 public class SqlUpdateResult extends UpdateResult implements SqlResult {
 
