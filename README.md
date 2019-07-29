@@ -1,6 +1,6 @@
 # MySQL Connector/J
 
-[![GitHub top language](https://img.shields.io/github/languages/top/mysql/mysql-connector-j.svg?color=5382a1)](https://github.com/mysql/mysql-connector-j/tree/release/5.1/src) [![License: GPLv2 with FOSS exception](https://img.shields.io/badge/license-GPLv2_with_FOSS_exception-c30014.svg)](COPYING) [![Maven Central](https://img.shields.io/maven-central/v/mysql/mysql-connector-java/5.svg)](https://search.maven.org/artifact/mysql/mysql-connector-java/5.1.48/jar)
+[![GitHub top language](https://img.shields.io/github/languages/top/mysql/mysql-connector-j.svg?color=5382a1)](https://github.com/mysql/mysql-connector-j/tree/release/5.1/src) [![License: GPLv2 with FOSS exception](https://img.shields.io/badge/license-GPLv2_with_FOSS_exception-c30014.svg)](COPYING) [![Maven Central](https://img.shields.io/maven-central/v/mysql/mysql-connector-java/5.svg)](https://search.maven.org/artifact/mysql/mysql-connector-java/5.1.49/jar)
 
 MySQL provides connectivity for client applications developed in the Java programming language with MySQL Connector/J, a driver that implements the [Java Database Connectivity (JDBC) API](https://www.oracle.com/technetwork/java/javase/jdbc/).
 
@@ -30,7 +30,7 @@ Alternatively, Connector/J can be obtained automatically via [Maven's dependency
 <dependency>
   <groupId>mysql</groupId>
   <artifactId>mysql-connector-java</artifactId>
-  <version>5.1.48</version>
+  <version>5.1.49</version>
 </dependency>
 ```
 

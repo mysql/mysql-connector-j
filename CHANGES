@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/5.1/en/
 
+Version 5.1.49
+
 Version 5.1.48
 
   - Fix for Bug#30035246, COMMUNITY README AND README.TXT FILES HAS THE WRONG YEAR (2018).
