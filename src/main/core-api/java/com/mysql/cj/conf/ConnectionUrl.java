@@ -33,6 +33,8 @@ import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -400,7 +402,31 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      *            the {@link ConnectionUrlParser} from where to collect the hosts information
      */
     protected void collectHostsInfo(ConnectionUrlParser connStrParser) {
+
         connStrParser.getHosts().stream().map(this::fixHostInfo).forEach(this.hosts::add);
+
+        try {
+            List<HostInfo> processedHosts = new ArrayList<HostInfo>();
+            for ( HostInfo host : hosts) {
+                System.out.println("working on " + host.getHost());
+                InetAddress[] addressList = InetAddress.getAllByName( host.getHost() );
+                System.out.println("addressList.length  " + addressList.length );
+                if (addressList.length > 1) {
+                    for (InetAddress address : addressList) {
+                        HostInfo newHostInfo = new HostInfo(this, address.getHostAddress(), host.getPort(), host.getUser(), host.getPassword(), host.getPassword() == null, host.getHostProperties());
+                        processedHosts.add(newHostInfo);
+                        System.out.println("working on " + newHostInfo.getHost());
+
+                    }
+                } else {
+                    processedHosts.add(host);
+                }
+            }
+            hosts = processedHosts;
+        } catch ( UnknownHostException uhe ) {
+            System.out.println("issue with resolving a host: " + uhe.toString());
+        }
+
     }
 
     /**
