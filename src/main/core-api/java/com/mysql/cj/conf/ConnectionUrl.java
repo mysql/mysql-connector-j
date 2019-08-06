@@ -402,29 +402,32 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      *            the {@link ConnectionUrlParser} from where to collect the hosts information
      */
     protected void collectHostsInfo(ConnectionUrlParser connStrParser) {
-
         connStrParser.getHosts().stream().map(this::fixHostInfo).forEach(this.hosts::add);
-
-        try {
-            List<HostInfo> processedHosts = new ArrayList<HostInfo>();
-            for ( HostInfo host : hosts) {
-                System.out.println("working on " + host.getHost());
-                InetAddress[] addressList = InetAddress.getAllByName( host.getHost() );
-                System.out.println("addressList.length  " + addressList.length );
-                if (addressList.length > 1) {
-                    for (InetAddress address : addressList) {
-                        HostInfo newHostInfo = new HostInfo(this, address.getHostAddress(), host.getPort(), host.getUser(), host.getPassword(), host.getPassword() == null, host.getHostProperties());
-                        processedHosts.add(newHostInfo);
-                        System.out.println("working on " + newHostInfo.getHost());
-
+        if (Boolean.parseBoolean(System.getProperty("com.mysql.cj.conf.ConnectionUrlParser.resolve-dns"))) {
+            boolean isDebug = Boolean.parseBoolean(System.getProperty("com.mysql.cj.conf.ConnectionUrlParser.debug"));
+            try {
+                List<HostInfo> processedHosts = new ArrayList<HostInfo>();
+                for (HostInfo host : hosts) {
+                    if (isDebug) {
+                        System.out.println("resolving " + host.getHost());
                     }
-                } else {
-                    processedHosts.add(host);
+                    InetAddress[] addressList = InetAddress.getAllByName(host.getHost());
+                    if (addressList.length > 1) {
+                        for (InetAddress address : addressList) {
+                            HostInfo newHostInfo = new HostInfo(this, address.getHostAddress(), host.getPort(), host.getUser(), host.getPassword(), host.getPassword() == null, host.getHostProperties());
+                            processedHosts.add(newHostInfo);
+                            if (isDebug) {
+                                System.out.println("replacing " + host.getHost() + " with " + newHostInfo.getHost());
+                            }
+                        }
+                    } else {
+                        processedHosts.add(host);
+                    }
                 }
+                hosts = processedHosts;
+            } catch (UnknownHostException uhe) {
+                System.out.println("issue with resolving a host: " + uhe.toString());
             }
-            hosts = processedHosts;
-        } catch ( UnknownHostException uhe ) {
-            System.out.println("issue with resolving a host: " + uhe.toString());
         }
 
     }
