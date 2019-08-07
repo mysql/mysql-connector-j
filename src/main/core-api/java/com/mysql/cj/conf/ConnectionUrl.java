@@ -53,6 +53,8 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.exceptions.UnsupportedConnectionStringException;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.log.Log;
+import com.mysql.cj.log.LogFactory;
 import com.mysql.cj.util.LRUCache;
 import com.mysql.cj.util.Util;
 
@@ -403,21 +405,26 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      */
     protected void collectHostsInfo(ConnectionUrlParser connStrParser) {
         connStrParser.getHosts().stream().map(this::fixHostInfo).forEach(this.hosts::add);
-        if (Boolean.parseBoolean(System.getProperty("com.mysql.cj.conf.ConnectionUrlParser.resolve-dns"))) {
-            boolean isDebug = Boolean.parseBoolean(System.getProperty("com.mysql.cj.conf.ConnectionUrlParser.debug"));
+        if (Boolean.parseBoolean(connStrParser.getProperties().get("resolveDNS"))) {
+            Log log = LogFactory.getLogger(connStrParser.getProperties().getOrDefault(PropertyKey.logger.getKeyName(),"com.mysql.cj.log.StandardLogger"), Log.LOGGER_INSTANCE_NAME);
             try {
                 List<HostInfo> processedHosts = new ArrayList<HostInfo>();
                 for (HostInfo host : hosts) {
-                    if (isDebug) {
-                        System.out.println("resolving " + host.getHost());
+                    if (log.isDebugEnabled()) {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("ConnectionUrl resolving host ").append(host.getHost());
+                        log.logDebug(sb.toString());
                     }
                     InetAddress[] addressList = InetAddress.getAllByName(host.getHost());
                     if (addressList.length > 1) {
                         for (InetAddress address : addressList) {
                             HostInfo newHostInfo = new HostInfo(this, address.getHostAddress(), host.getPort(), host.getUser(), host.getPassword(), host.getPassword() == null, host.getHostProperties());
                             processedHosts.add(newHostInfo);
-                            if (isDebug) {
-                                System.out.println("replacing " + host.getHost() + " with " + newHostInfo.getHost());
+                            if (log.isDebugEnabled()) {
+                                StringBuilder sb = new StringBuilder();
+                                sb.append("ConnectionUrl resolved host ").append(host.getHost());
+                                sb.append(" to ").append(newHostInfo.getHost());
+                                log.logDebug(sb.toString());
                             }
                         }
                     } else {
@@ -426,10 +433,15 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
                 }
                 hosts = processedHosts;
             } catch (UnknownHostException uhe) {
-                System.out.println("issue with resolving a host: " + uhe.toString());
+                if (log.isDebugEnabled()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("ConnectionUrl issue resolving host: ");
+                    sb.append(uhe);
+                    log.logDebug(sb.toString());
+                }
+
             }
         }
-
     }
 
     /**
