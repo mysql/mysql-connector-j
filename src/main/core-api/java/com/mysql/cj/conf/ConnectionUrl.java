@@ -410,21 +410,21 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
             try {
                 List<HostInfo> processedHosts = new ArrayList<HostInfo>();
                 for (HostInfo host : hosts) {
-                    if (log.isDebugEnabled()) {
+                    if (log.isTraceEnabled()) {
                         StringBuilder sb = new StringBuilder();
                         sb.append("ConnectionUrl resolving host ").append(host.getHost());
-                        log.logDebug(sb.toString());
+                        log.logTrace(sb.toString());
                     }
                     InetAddress[] addressList = InetAddress.getAllByName(host.getHost());
                     if (addressList.length > 1) {
                         for (InetAddress address : addressList) {
                             HostInfo newHostInfo = new HostInfo(this, address.getHostAddress(), host.getPort(), host.getUser(), host.getPassword(), host.getPassword() == null, host.getHostProperties());
                             processedHosts.add(newHostInfo);
-                            if (log.isDebugEnabled()) {
+                            if (log.isTraceEnabled()) {
                                 StringBuilder sb = new StringBuilder();
                                 sb.append("ConnectionUrl resolved host ").append(host.getHost());
                                 sb.append(" to ").append(newHostInfo.getHost());
-                                log.logDebug(sb.toString());
+                                log.logTrace(sb.toString());
                             }
                         }
                     } else {
@@ -433,11 +433,10 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
                 }
                 hosts = processedHosts;
             } catch (UnknownHostException uhe) {
-                if (log.isDebugEnabled()) {
+                if (log.isTraceEnabled()) {
                     StringBuilder sb = new StringBuilder();
                     sb.append("ConnectionUrl issue resolving host: ");
-                    sb.append(uhe);
-                    log.logDebug(sb.toString());
+                    log.logTrace(sb.toString(), uhe);
                 }
 
             }
