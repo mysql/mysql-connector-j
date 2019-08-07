@@ -33,6 +33,8 @@ import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +53,8 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.exceptions.UnsupportedConnectionStringException;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.log.Log;
+import com.mysql.cj.log.LogFactory;
 import com.mysql.cj.util.LRUCache;
 import com.mysql.cj.util.Util;
 
@@ -401,6 +405,42 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      */
     protected void collectHostsInfo(ConnectionUrlParser connStrParser) {
         connStrParser.getHosts().stream().map(this::fixHostInfo).forEach(this.hosts::add);
+        if (Boolean.parseBoolean(connStrParser.getProperties().get("resolveDNS"))) {
+            Log log = LogFactory.getLogger(connStrParser.getProperties().getOrDefault(PropertyKey.logger.getKeyName(),"com.mysql.cj.log.StandardLogger"), Log.LOGGER_INSTANCE_NAME);
+            try {
+                List<HostInfo> processedHosts = new ArrayList<HostInfo>();
+                for (HostInfo host : hosts) {
+                    if (log.isTraceEnabled()) {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("ConnectionUrl resolving host ").append(host.getHost());
+                        log.logTrace(sb.toString());
+                    }
+                    InetAddress[] addressList = InetAddress.getAllByName(host.getHost());
+                    if (addressList.length > 1) {
+                        for (InetAddress address : addressList) {
+                            HostInfo newHostInfo = new HostInfo(this, address.getHostAddress(), host.getPort(), host.getUser(), host.getPassword(), host.getPassword() == null, host.getHostProperties());
+                            processedHosts.add(newHostInfo);
+                            if (log.isTraceEnabled()) {
+                                StringBuilder sb = new StringBuilder();
+                                sb.append("ConnectionUrl resolved host ").append(host.getHost());
+                                sb.append(" to ").append(newHostInfo.getHost());
+                                log.logTrace(sb.toString());
+                            }
+                        }
+                    } else {
+                        processedHosts.add(host);
+                    }
+                }
+                hosts = processedHosts;
+            } catch (UnknownHostException uhe) {
+                if (log.isTraceEnabled()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("ConnectionUrl issue resolving host: ");
+                    log.logTrace(sb.toString(), uhe);
+                }
+
+            }
+        }
     }
 
     /**
