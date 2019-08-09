@@ -242,6 +242,8 @@ public enum PropertyKey {
     xdevapiConnectTimeout("xdevapi.connect-timeout", "xdevapiConnectTimeout", true), //
     xdevapiConnectionAttributes("xdevapi.connection-attributes", "xdevapiConnectionAttributes", true), //
     xdevapiSSLMode("xdevapi.ssl-mode", "xdevapiSSLMode", true), //
+    xdevapiTlsCiphersuites("xdevapi.tls-ciphersuites", "xdevapiTlsCiphersuites", true), //
+    xdevapiTlsVersions("xdevapi.tls-versions", "xdevapiTlsVersions", true), //
     xdevapiSSLTrustStoreUrl("xdevapi.ssl-truststore", "xdevapiSSLTruststore", true), //
     xdevapiSSLTrustStoreType("xdevapi.ssl-truststore-type", "xdevapiSSLTruststoreType", true), //
     xdevapiSSLTrustStorePassword("xdevapi.ssl-truststore-password", "xdevapiSSLTruststorePassword", true), //

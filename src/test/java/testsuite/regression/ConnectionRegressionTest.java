@@ -8341,6 +8341,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 System.out.println("Highest common TLS protocol: " + highestCommonTlsVersion);
 
                 assertEquals(highestCommonTlsVersion, tlsVersionUsed);
+            } else if (((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 6, 46)
+                    && !((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 7, 0)) {
+                assertEquals("TLSv1.2", tlsVersionUsed);
             } else {
                 assertEquals("TLSv1", tlsVersionUsed);
             }
@@ -8396,6 +8399,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 System.out.println("Server supports TLS protocols: " + serverSupportedProtocols);
                 commonSupportedProtocols.addAll(serverSupportedProtocols);
                 commonSupportedProtocols.retainAll(jvmSupportedProtocols);
+            } else if (((JdbcConnection) sslConn).getSession().versionMeetsMinimum(5, 6, 46)) {
+                commonSupportedProtocols.add("TLSv1");
+                commonSupportedProtocols.add("TLSv1.1");
+                commonSupportedProtocols.add("TLSv1.2");
             } else {
                 commonSupportedProtocols.add("TLSv1");
             }

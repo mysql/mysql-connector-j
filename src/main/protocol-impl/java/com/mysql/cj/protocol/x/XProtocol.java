@@ -37,6 +37,7 @@ import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -307,6 +308,33 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
         boolean verifyServerCert = sslMode.getValue() == SslMode.VERIFY_CA || sslMode.getValue() == SslMode.VERIFY_IDENTITY;
         String trustStoreUrl = this.propertySet.getStringProperty(PropertyKey.trustCertificateKeyStoreUrl).getValue();
+
+        RuntimeProperty<String> xdevapiTlsVersions = this.propertySet.getStringProperty(PropertyKey.xdevapiTlsVersions);
+        if (xdevapiTlsVersions.isExplicitlySet()) {
+            if (sslMode.getValue() == SslMode.DISABLED) {
+                throw ExceptionFactory.createException(WrongArgumentException.class,
+                        "Option '" + PropertyKey.xdevapiTlsVersions.getKeyName() + "' can not be specified when SSL connections are disabled.");
+            }
+            if (xdevapiTlsVersions.getValue().trim().isEmpty()) {
+                throw ExceptionFactory.createException(WrongArgumentException.class,
+                        "At least one TLS protocol version must be specified in '" + PropertyKey.xdevapiTlsVersions.getKeyName() + "' list.");
+            }
+
+            String[] tlsVersions = xdevapiTlsVersions.getValue().split("\\s*,\\s*");
+            List<String> tryProtocols = Arrays.asList(tlsVersions);
+            ExportControlled.checkValidProtocols(tryProtocols);
+            this.propertySet.getStringProperty(PropertyKey.enabledTLSProtocols).setValue(xdevapiTlsVersions.getValue());
+        }
+
+        RuntimeProperty<String> xdevapiTlsCiphersuites = this.propertySet.getStringProperty(PropertyKey.xdevapiTlsCiphersuites);
+        if (xdevapiTlsCiphersuites.isExplicitlySet()) {
+            if (sslMode.getValue() == SslMode.DISABLED) {
+                throw ExceptionFactory.createException(WrongArgumentException.class,
+                        "Option '" + PropertyKey.xdevapiTlsCiphersuites.getKeyName() + "' can not be specified when SSL connections are disabled.");
+            }
+
+            this.propertySet.getStringProperty(PropertyKey.enabledSSLCipherSuites).setValue(xdevapiTlsCiphersuites.getValue());
+        }
 
         if (!verifyServerCert && !StringUtils.isNullOrEmpty(trustStoreUrl)) {
             StringBuilder msg = new StringBuilder("Incompatible security settings. The property '");

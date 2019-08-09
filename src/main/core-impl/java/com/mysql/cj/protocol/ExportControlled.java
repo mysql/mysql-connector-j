@@ -62,11 +62,13 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -100,6 +102,7 @@ import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.RSAException;
 import com.mysql.cj.exceptions.SSLParamsException;
+import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.util.Base64Decoder;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
@@ -112,7 +115,25 @@ public class ExportControlled {
     private static final String TLSv1 = "TLSv1";
     private static final String TLSv1_1 = "TLSv1.1";
     private static final String TLSv1_2 = "TLSv1.2";
-    private static final String[] TLS_PROTOCOLS = new String[] { TLSv1_2, TLSv1_1, TLSv1 };
+    private static final String TLSv1_3 = "TLSv1.3";
+    private static final String[] TLS_PROTOCOLS = new String[] { TLSv1_3, TLSv1_2, TLSv1_1, TLSv1 };
+
+    private static final String TLS_SETTINGS_RESOURCE = "/com/mysql/cj/TlsSettings.properties";
+    private static final List<String> ALLOWED_CIPHERS = new ArrayList<>();
+    private static final List<String> RESTRICTED_CIPHER_SUBSTR = new ArrayList<>();
+
+    static {
+        try {
+            Properties tlsSettings = new Properties();
+            tlsSettings.load(ExportControlled.class.getResourceAsStream(TLS_SETTINGS_RESOURCE));
+            Arrays.stream(tlsSettings.getProperty("TLSCiphers.Mandatory").split("\\s*,\\s*")).forEach(s -> ALLOWED_CIPHERS.add(s.trim()));
+            Arrays.stream(tlsSettings.getProperty("TLSCiphers.Approved").split("\\s*,\\s*")).forEach(s -> ALLOWED_CIPHERS.add(s.trim()));
+            Arrays.stream(tlsSettings.getProperty("TLSCiphers.Deprecated").split("\\s*,\\s*")).forEach(s -> ALLOWED_CIPHERS.add(s.trim()));
+            Arrays.stream(tlsSettings.getProperty("TLSCiphers.Unacceptable.Mask").split("\\s*,\\s*")).forEach(s -> RESTRICTED_CIPHER_SUBSTR.add(s.trim()));
+        } catch (IOException e) {
+            throw ExceptionFactory.createException("Unable to load TlsSettings.properties");
+        }
+    }
 
     private ExportControlled() { /* prevent instantiation */
     }
@@ -122,59 +143,46 @@ public class ExportControlled {
         return true;
     }
 
-    private static String[] getAllowedCiphers(PropertySet pset, ServerVersion serverVersion, String[] socketCipherSuites) {
-        List<String> allowedCiphers = null;
-
+    private static String[] getAllowedCiphers(PropertySet pset, List<String> socketCipherSuites) {
         String enabledSSLCipherSuites = pset.getStringProperty(PropertyKey.enabledSSLCipherSuites).getValue();
-        if (!StringUtils.isNullOrEmpty(enabledSSLCipherSuites)) {
-            // If "enabledSSLCipherSuites" is set we check that JVM allows provided values.
-            // We don't disable DH algorithm. That allows c/J to deal with custom server builds with different security restrictions.
-            allowedCiphers = new ArrayList<>();
-            List<String> availableCiphers = Arrays.asList(socketCipherSuites);
-            for (String cipher : enabledSSLCipherSuites.split("\\s*,\\s*")) {
-                if (availableCiphers.contains(cipher)) {
-                    allowedCiphers.add(cipher);
-                }
-            }
-        } else if (serverVersion != null && (!(serverVersion.meetsMinimum(ServerVersion.parseVersion("5.7.6"))
-                || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.26")) && !serverVersion.meetsMinimum(ServerVersion.parseVersion("5.7.0"))
-                || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.5.45")) && !serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.0"))))) {
-            // If we don't override ciphers, then we check for known restrictions
+        Stream<String> filterStream = StringUtils.isNullOrEmpty(enabledSSLCipherSuites) ? socketCipherSuites.stream()
+                : Arrays.stream(enabledSSLCipherSuites.split("\\s*,\\s*")).filter(socketCipherSuites::contains);
 
-            // Java 8 default java.security contains jdk.tls.disabledAlgorithms=DH keySize < 768
-            // That causes handshake failures with older MySQL servers, eg 5.6.11. Thus we have to disable DH for them when running on Java 8+
-            // TODO check later for Java 9 behavior
-            allowedCiphers = new ArrayList<>();
-            for (String cipher : socketCipherSuites) {
-                if (cipher.indexOf("_DHE_") == -1 && cipher.indexOf("_DH_") == -1) {
-                    allowedCiphers.add(cipher);
-                }
-            }
-        }
+        List<String> allowedCiphers = filterStream
+                // mandatory, approved and deprecated ciphers
+                .filter(ALLOWED_CIPHERS::contains)
+                // unacceptable ciphers
+                .filter(c -> !RESTRICTED_CIPHER_SUBSTR.stream().filter(r -> c.contains(r)).findFirst().isPresent())
+                //
+                .collect(Collectors.toList());
 
-        return allowedCiphers == null ? null : allowedCiphers.toArray(new String[] {});
+        return allowedCiphers.toArray(new String[] {});
     }
 
     private static String[] getAllowedProtocols(PropertySet pset, ServerVersion serverVersion, String[] socketProtocols) {
+        String[] tryProtocols = null;
 
         // If enabledTLSProtocols configuration option is set, overriding the default TLS version restrictions.
         // This allows enabling TLSv1.2 for self-compiled MySQL versions supporting it, as well as the ability
         // for users to restrict TLS connections to approved protocols (e.g., prohibiting TLSv1) on the client side.
         String enabledTLSProtocols = pset.getStringProperty(PropertyKey.enabledTLSProtocols).getValue();
-
-        // Note that it is problematic to enable TLSv1.2 on the client side when the server is compiled with yaSSL. When client attempts to connect with
-        // TLSv1.2 yaSSL just closes the socket instead of re-attempting handshake with lower TLS version.
-        String[] tryProtocols = null;
         if (enabledTLSProtocols != null && enabledTLSProtocols.length() > 0) {
             tryProtocols = enabledTLSProtocols.split("\\s*,\\s*");
-        } else if (serverVersion != null && (serverVersion.meetsMinimum(ServerVersion.parseVersion("8.0.4"))
-                || serverVersion.meetsMinimum(ServerVersion.parseVersion("5.6.0")) && Util.isEnterpriseEdition(serverVersion.toString()))) {
-            // allow all known TLS versions for this subset of server versions by default
+        }
+        // It is problematic to enable TLSv1.2 on the client side when the server is compiled with yaSSL. When client attempts to connect with
+        // TLSv1.2 yaSSL just closes the socket instead of re-attempting handshake with lower TLS version. So here we allow all protocols only
+        // for server versions which are known to be compiled with OpenSSL.
+        else if (serverVersion == null) {
+            // X Protocol doesn't provide server version, but we prefer to use most recent TLS version, though it also mean that X Protocol
+            // connection to old MySQL 5.7 GPL releases will fail by default, user must use enabledTLSProtocols=TLSv1.1 to connect them.
+            tryProtocols = TLS_PROTOCOLS;
+        } else if (serverVersion.meetsMinimum(new ServerVersion(5, 7, 28))
+                || serverVersion.meetsMinimum(new ServerVersion(5, 6, 46)) && !serverVersion.meetsMinimum(new ServerVersion(5, 7, 0))
+                || serverVersion.meetsMinimum(new ServerVersion(5, 6, 0)) && Util.isEnterpriseEdition(serverVersion.toString())) {
             tryProtocols = TLS_PROTOCOLS;
         } else {
-            // allow TLSv1 and TLSv1.1 for all server versions by default
+            // allow only TLSv1 and TLSv1.1 for other server versions by default
             tryProtocols = new String[] { TLSv1_1, TLSv1 };
-
         }
 
         List<String> configuredProtocols = new ArrayList<>(Arrays.asList(tryProtocols));
@@ -188,6 +196,17 @@ public class ExportControlled {
         }
         return allowedProtocols.toArray(new String[0]);
 
+    }
+
+    public static void checkValidProtocols(List<String> protocols) {
+        List<String> validProtocols = Arrays.asList(TLS_PROTOCOLS);
+        for (String protocol : protocols) {
+            if (!validProtocols.contains(protocol)) {
+                throw ExceptionFactory.createException(WrongArgumentException.class,
+                        "'" + protocol + "' not recognized as a valid TLS protocol version (should be one of "
+                                + Arrays.stream(TLS_PROTOCOLS).collect(Collectors.joining(", ")) + ").");
+            }
+        }
     }
 
     private static class KeyStoreConf {
@@ -306,9 +325,10 @@ public class ExportControlled {
 
         SSLSocket sslSocket = (SSLSocket) socketFactory.createSocket(rawSocket, socketConnection.getHost(), socketConnection.getPort(), true);
 
-        sslSocket.setEnabledProtocols(getAllowedProtocols(pset, serverVersion, sslSocket.getSupportedProtocols()));
+        String[] allowedProtocols = getAllowedProtocols(pset, serverVersion, sslSocket.getSupportedProtocols());
+        sslSocket.setEnabledProtocols(allowedProtocols);
 
-        String[] allowedCiphers = getAllowedCiphers(pset, serverVersion, sslSocket.getEnabledCipherSuites());
+        String[] allowedCiphers = getAllowedCiphers(pset, Arrays.asList(sslSocket.getEnabledCipherSuites()));
         if (allowedCiphers != null) {
             sslSocket.setEnabledCipherSuites(allowedCiphers);
         }
@@ -635,7 +655,7 @@ public class ExportControlled {
 
         sslEngine.setEnabledProtocols(getAllowedProtocols(propertySet, null, sslEngine.getSupportedProtocols()));
 
-        String[] allowedCiphers = getAllowedCiphers(propertySet, null, sslEngine.getEnabledCipherSuites());
+        String[] allowedCiphers = getAllowedCiphers(propertySet, Arrays.asList(sslEngine.getEnabledCipherSuites()));
         if (allowedCiphers != null) {
             sslEngine.setEnabledCipherSuites(allowedCiphers);
         }
