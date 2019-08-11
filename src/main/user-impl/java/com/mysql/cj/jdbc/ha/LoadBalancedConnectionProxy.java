@@ -29,6 +29,8 @@
 
 package com.mysql.cj.jdbc.ha;
 
+import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -47,9 +49,10 @@ import java.util.stream.Collectors;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.PingTarget;
+import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyKey;
-import com.mysql.cj.conf.url.LoadbalanceConnectionUrl;
+import com.mysql.cj.conf.url.LoadBalanceConnectionUrl;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -113,7 +116,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * @throws SQLException
      *             if an error occurs
      */
-    public static LoadBalancedConnection createProxyInstance(LoadbalanceConnectionUrl connectionUrl) throws SQLException {
+    public static LoadBalancedConnection createProxyInstance(ConnectionUrl connectionUrl) throws SQLException {
         LoadBalancedConnectionProxy connProxy = new LoadBalancedConnectionProxy(connectionUrl);
         return (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(), INTERFACES_TO_PROXY, connProxy);
     }
@@ -126,7 +129,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * @throws SQLException
      *             if an error occurs
      */
-    public LoadBalancedConnectionProxy(LoadbalanceConnectionUrl connectionUrl) throws SQLException {
+    public LoadBalancedConnectionProxy(ConnectionUrl connectionUrl) throws SQLException {
         super();
 
         List<HostInfo> hosts;
@@ -142,13 +145,14 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        if (group != null) {
+        if (!isNullOrEmpty(group) && LoadBalanceConnectionUrl.class.isAssignableFrom(connectionUrl.getClass())) {
             this.connectionGroup = ConnectionGroupManager.getConnectionGroupInstance(group);
             if (enableJMX) {
                 ConnectionGroupManager.registerJmx();
             }
-            this.connectionGroupProxyID = this.connectionGroup.registerConnectionProxy(this, connectionUrl.getHostInfoListAsHostPortPairs());
-            hosts = connectionUrl.getHostInfoListFromHostPortPairs(this.connectionGroup.getInitialHosts());
+            this.connectionGroupProxyID = this.connectionGroup.registerConnectionProxy(this,
+                    ((LoadBalanceConnectionUrl) connectionUrl).getHostInfoListAsHostPortPairs());
+            hosts = ((LoadBalanceConnectionUrl) connectionUrl).getHostInfoListFromHostPortPairs(this.connectionGroup.getInitialHosts());
         } else {
             hosts = connectionUrl.getHostsList();
         }

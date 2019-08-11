@@ -3,6 +3,8 @@
 
 Version 8.0.19
 
+  - WL#13367, DNS SRV support.
+
   - WL#12736, DevAPI: Specify TLS ciphers to be used by a client or session.
 
   - Fix for regression tests broken by Bug#97079 fix.

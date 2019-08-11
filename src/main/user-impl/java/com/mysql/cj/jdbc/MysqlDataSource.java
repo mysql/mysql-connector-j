@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -76,26 +76,29 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
     /** Character Encoding */
     protected String encoding = null;
 
+    /** The JDBC URL */
+    protected String url = null;
+
+    /** Should we construct the URL, or has it been set explicitly? */
+    protected boolean explicitUrl = false;
+
     /** Hostname */
     protected String hostName = null;
+
+    /** Port number */
+    protected int port = ConnectionUrl.DEFAULT_PORT;
+
+    /** Was the port explicitly set? */
+    protected boolean explicitPort = false;
+
+    /** User name */
+    protected String user = null;
 
     /** Password */
     protected String password = null;
 
     /** The profileSQL property */
     protected String profileSQLString = "false";
-
-    /** The JDBC URL */
-    protected String url = null;
-
-    /** User name */
-    protected String user = null;
-
-    /** Should we construct the URL, or has it been set explicitly */
-    protected boolean explicitUrl = false;
-
-    /** Port number */
-    protected int port = 3306;
 
     protected String description = "MySQL Connector/J Data Source";
 
@@ -199,6 +202,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
      */
     public void setPort(int p) {
         this.port = p;
+        this.explicitPort = true;
     }
 
     /**
@@ -267,6 +271,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
         ref.add(new StringRefAddr(PropertyKey.PASSWORD.getKeyName(), this.password));
         ref.add(new StringRefAddr("serverName", getServerName()));
         ref.add(new StringRefAddr("port", "" + getPort()));
+        ref.add(new StringRefAddr("explicitPort", String.valueOf(this.explicitPort)));
         ref.add(new StringRefAddr("databaseName", getDatabaseName()));
         ref.add(new StringRefAddr("url", getUrl()));
         ref.add(new StringRefAddr("explicitUrl", String.valueOf(this.explicitUrl)));
@@ -350,7 +355,16 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
     public String getUrl() {
         if (!this.explicitUrl) {
             StringBuilder sbUrl = new StringBuilder(ConnectionUrl.Type.SINGLE_CONNECTION.getScheme());
-            sbUrl.append("//").append(getServerName()).append(":").append(getPort()).append("/").append(getDatabaseName());
+            sbUrl.append("//").append(getServerName());
+            try {
+                if (this.explicitPort || !getBooleanRuntimeProperty(PropertyKey.dnsSrv.getKeyName())) {
+                    sbUrl.append(":").append(getPort());
+                }
+            } catch (SQLException e) {
+                // Should not happen, but if so, just add the port.
+                sbUrl.append(":").append(getPort());
+            }
+            sbUrl.append("/").append(getDatabaseName());
             return sbUrl.toString();
         }
         return this.url;

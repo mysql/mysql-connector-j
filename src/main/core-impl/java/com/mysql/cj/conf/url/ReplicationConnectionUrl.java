@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.HostInfo;
+import com.mysql.cj.conf.HostsListView;
 import com.mysql.cj.conf.PropertyKey;
 
 public class ReplicationConnectionUrl extends ConnectionUrl {
@@ -114,14 +115,33 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
      */
     public ReplicationConnectionUrl(List<HostInfo> masters, List<HostInfo> slaves, Map<String, String> properties) {
         this.originalConnStr = ConnectionUrl.Type.REPLICATION_CONNECTION.getScheme() + "//**internally_generated**" + System.currentTimeMillis() + "**";
+        this.originalDatabase = properties.containsKey(PropertyKey.DBNAME.getKeyName()) ? properties.get(PropertyKey.DBNAME.getKeyName()) : "";
         this.type = ConnectionUrl.Type.REPLICATION_CONNECTION;
-        this.hosts.addAll(masters);
-        this.hosts.addAll(slaves);
-        this.masterHosts.addAll(masters);
-        this.slaveHosts.addAll(slaves);
         this.properties.putAll(properties);
         injectPerTypeProperties(this.properties);
         setupPropertiesTransformer(); // This is needed if new hosts come to be spawned in this connection URL.
+        masters.stream().map(this::fixHostInfo).peek(this.masterHosts::add).forEach(this.hosts::add); // Fix the hosts info based on the new properties before adding them.
+        slaves.stream().map(this::fixHostInfo).peek(this.slaveHosts::add).forEach(this.hosts::add); // Fix the hosts info based on the new properties before adding them.
+    }
+
+    /**
+     * Returns a list of the hosts in this connection URL, filtered for the given view.
+     * 
+     * @param view
+     *            the type of the view to use in the returned list of hosts.
+     * @return
+     *         the hosts list from this connection URL, filtered for the given view.
+     */
+    @Override
+    public List<HostInfo> getHostsList(HostsListView view) {
+        switch (view) {
+            case MASTERS:
+                return Collections.unmodifiableList(this.masterHosts);
+            case SLAVES:
+                return Collections.unmodifiableList(this.slaveHosts);
+            default:
+                return super.getHostsList(HostsListView.ALL);
+        }
     }
 
     /**
@@ -133,15 +153,6 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
      */
     public HostInfo getMasterHostOrSpawnIsolated(String hostPortPair) {
         return super.getHostOrSpawnIsolated(hostPortPair, this.masterHosts);
-    }
-
-    /**
-     * Returns the list of master hosts.
-     * 
-     * @return the list of master hosts.
-     */
-    public List<HostInfo> getMastersList() {
-        return Collections.unmodifiableList(this.masterHosts);
     }
 
     /**
@@ -174,15 +185,6 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
      */
     public HostInfo getSlaveHostOrSpawnIsolated(String hostPortPair) {
         return super.getHostOrSpawnIsolated(hostPortPair, this.slaveHosts);
-    }
-
-    /**
-     * Returns the list of slave hosts.
-     * 
-     * @return the list of slave hosts.
-     */
-    public List<HostInfo> getSlavesList() {
-        return Collections.unmodifiableList(this.slaveHosts);
     }
 
     /**

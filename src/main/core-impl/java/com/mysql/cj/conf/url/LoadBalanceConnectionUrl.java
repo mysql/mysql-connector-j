@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,9 +41,9 @@ import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.util.StringUtils;
 
-public class LoadbalanceConnectionUrl extends ConnectionUrl {
+public class LoadBalanceConnectionUrl extends ConnectionUrl {
     /**
-     * Constructs an instance of {@link LoadbalanceConnectionUrl}, performing all the required initializations and validations. A loadbalance connection
+     * Constructs an instance of {@link LoadBalanceConnectionUrl}, performing all the required initializations and validations. A load-balanced connection
      * cannot deal with multiple hosts with same host:port.
      * 
      * @param connStrParser
@@ -51,7 +51,7 @@ public class LoadbalanceConnectionUrl extends ConnectionUrl {
      * @param info
      *            the connection arguments map
      */
-    public LoadbalanceConnectionUrl(ConnectionUrlParser connStrParser, Properties info) {
+    public LoadBalanceConnectionUrl(ConnectionUrlParser connStrParser, Properties info) {
         super(connStrParser, info);
         this.type = Type.LOADBALANCE_CONNECTION;
 
@@ -69,7 +69,7 @@ public class LoadbalanceConnectionUrl extends ConnectionUrl {
     }
 
     /**
-     * Constructs an instance of a {@link LoadbalanceConnectionUrl} based on a list of hosts and a global set of properties instead of connection string
+     * Constructs an instance of a {@link LoadBalanceConnectionUrl} based on a list of hosts and a global set of properties instead of connection string
      * parsing.
      * {@link ConnectionUrl} instances created by this process are not cached.
      * 
@@ -78,13 +78,14 @@ public class LoadbalanceConnectionUrl extends ConnectionUrl {
      * @param properties
      *            the properties common to all hosts
      */
-    public LoadbalanceConnectionUrl(List<HostInfo> hosts, Map<String, String> properties) {
+    public LoadBalanceConnectionUrl(List<HostInfo> hosts, Map<String, String> properties) {
         this.originalConnStr = ConnectionUrl.Type.LOADBALANCE_CONNECTION.getScheme() + "//**internally_generated**" + System.currentTimeMillis() + "**";
+        this.originalDatabase = properties.containsKey(PropertyKey.DBNAME.getKeyName()) ? properties.get(PropertyKey.DBNAME.getKeyName()) : "";
         this.type = ConnectionUrl.Type.LOADBALANCE_CONNECTION;
-        this.hosts.addAll(hosts);
         this.properties.putAll(properties);
         injectPerTypeProperties(this.properties);
         setupPropertiesTransformer(); // This is needed if new hosts come to be spawned in this connection URL.
+        hosts.stream().map(this::fixHostInfo).forEach(this.hosts::add); // Fix the hosts info based on the new properties before adding them.
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -65,7 +65,7 @@ public class XAuthenticationProvider implements AuthenticationProvider<XMessage>
     @Override
     public void changeUser(ServerSession serverSession, String userName, String password, String database) {
         boolean overTLS = ((XServerCapabilities) this.protocol.getServerSession().getCapabilities()).getTls();
-        RuntimeProperty<AuthMech> authMechProp = this.protocol.getPropertySet().<AuthMech> getEnumProperty(PropertyKey.xdevapiAuth);
+        RuntimeProperty<AuthMech> authMechProp = this.protocol.getPropertySet().<AuthMech>getEnumProperty(PropertyKey.xdevapiAuth);
         List<AuthMech> tryAuthMech;
         if (overTLS || authMechProp.isExplicitlySet()) {
             tryAuthMech = Arrays.asList(authMechProp.getValue());
@@ -132,7 +132,6 @@ public class XAuthenticationProvider implements AuthenticationProvider<XMessage>
             XDevAPIError ex = new XDevAPIError(errMsg, capturedAuthErr);
             ex.setVendorCode(capturedAuthErr.getErrorCode());
             ex.setSQLState(capturedAuthErr.getSQLState());
-            ex.initCause(capturedAuthErr);
             throw ex;
         }
 

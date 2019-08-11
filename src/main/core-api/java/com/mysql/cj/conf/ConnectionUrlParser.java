@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -86,12 +86,12 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
     private static final String HOSTS_LIST_CLOSING_MARKERS = "])";
     private static final String ADDRESS_EQUALS_HOST_INFO_PREFIX = "ADDRESS=";
 
-    private static final Pattern CONNECTION_STRING_PTRN = Pattern.compile("(?<scheme>[\\w:%]+)\\s*" // scheme: required; alphanumeric, colon or percent
+    private static final Pattern CONNECTION_STRING_PTRN = Pattern.compile("(?<scheme>[\\w\\+:%]+)\\s*" // scheme: required; alphanumeric, plus, colon or percent
             + "(?://(?<authority>[^/?#]*))?\\s*" // authority: optional; starts with "//" followed by any char except "/", "?" and "#"
             + "(?:/(?!\\s*/)(?<path>[^?#]*))?" // path: optional; starts with "/" but not followed by "/", and then followed by by any char except "?" and "#"
             + "(?:\\?(?!\\s*\\?)(?<query>[^#]*))?" // query: optional; starts with "?" but not followed by "?", and then followed by by any char except "#"
             + "(?:\\s*#(?<fragment>.*))?"); // fragment: optional; starts with "#", and then followed by anything
-    private static final Pattern SCHEME_PTRN = Pattern.compile("(?<scheme>[\\w:%]+).*");
+    private static final Pattern SCHEME_PTRN = Pattern.compile("(?<scheme>[\\w\\+:%]+).*");
     private static final Pattern HOST_LIST_PTRN = Pattern.compile("^\\[(?<hosts>.*)\\]$");
     private static final Pattern GENERIC_HOST_PTRN = Pattern.compile("^(?<host>.*?)(?::(?<port>[^:]*))?$");
     private static final Pattern KEY_VALUE_HOST_PTRN = Pattern.compile("[,\\s]*(?<key>[\\w\\.\\-\\s%]*)(?:=(?<value>[^,]*))?");
@@ -149,7 +149,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionString.0"));
         }
         Matcher matcher = SCHEME_PTRN.matcher(connString);
-        return matcher.matches() && Type.isSupported(decode(matcher.group("scheme")));
+        return matcher.matches() && Type.isSupported(decodeSkippingPlusSign(matcher.group("scheme")));
     }
 
     /**
@@ -161,7 +161,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
         if (!matcher.matches()) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ConnectionString.1"));
         }
-        this.scheme = decode(matcher.group("scheme"));
+        this.scheme = decodeSkippingPlusSign(matcher.group("scheme"));
         this.authority = matcher.group("authority"); // Don't decode just yet.
         this.path = matcher.group("path") == null ? null : decode(matcher.group("path")).trim();
         this.query = matcher.group("query"); // Don't decode just yet.
@@ -195,7 +195,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
      * Most of the above placeholders can be omitted, representing a null, empty, or default value.
      * The placeholder _host_, can be a host name, IPv4 or IPv6. This parser doesn't check IP syntax. IPv6 addresses are enclosed by square brackets ([::1]).
      * The placeholder _any_of_the_above_?_ can be any of the above except for the user information part (_user_:_password_@).
-     * When the symbol ":" is not used, it means an null/empty password or a default (-1) port, respectively.
+     * When the symbol ":" is not used, it means an null/empty password or a default (HostInfo.NO_PORT) port, respectively.
      * When the symbol "@" is not used, it means that the authority part doesn't contain user information (depending on the scheme type can still be provided
      * via key=value pairs).
      * 
@@ -294,7 +294,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
             if (isNullOrEmpty(user) && isNullOrEmpty(password)) {
                 return new HostInfo();
             }
-            return new HostInfo(this, null, -1, user, password);
+            return new HostInfo(this, null, HostInfo.NO_PORT, user, password);
         }
         return null;
     }
@@ -313,14 +313,14 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
      */
     private HostInfo buildHostInfoResortingToUriParser(String user, String password, String hostInfo) {
         String host = null;
-        int port = -1;
+        int port = HostInfo.NO_PORT;
 
         try {
             URI uri = URI.create(DUMMY_SCHEMA + hostInfo);
             if (uri.getHost() != null) {
                 host = decode(uri.getHost());
             }
-            if (uri.getPort() != -1) {
+            if (uri.getPort() != -1) { // getPort() returns -1 if the port is undefined.
                 port = uri.getPort();
             }
             if (uri.getUserInfo() != null) {
@@ -331,7 +331,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
             // The URI failed to parse the host information.
             return null;
         }
-        if (host != null || port != -1) {
+        if (host != null || port != HostInfo.NO_PORT) {
             // The host info parsing succeeded.
             return new HostInfo(this, host, port, user, password);
         }
@@ -397,7 +397,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
             return null;
         }
         hostInfo = hostInfo.substring(KEY_VALUE_HOST_INFO_OPENING_MARKER.length(), hostInfo.length() - KEY_VALUE_HOST_INFO_CLOSING_MARKER.length());
-        return new HostInfo(this, null, -1, user, password, processKeyValuePattern(KEY_VALUE_HOST_PTRN, hostInfo));
+        return new HostInfo(this, null, HostInfo.NO_PORT, user, password, processKeyValuePattern(KEY_VALUE_HOST_PTRN, hostInfo));
     }
 
     /**
@@ -418,7 +418,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
             return null;
         }
         hostInfo = hostInfo.substring(p + ADDRESS_EQUALS_HOST_INFO_PREFIX.length()).trim();
-        return new HostInfo(this, null, -1, user, password, processKeyValuePattern(ADDRESS_EQUALS_HOST_PTRN, hostInfo));
+        return new HostInfo(this, null, HostInfo.NO_PORT, user, password, processKeyValuePattern(ADDRESS_EQUALS_HOST_PTRN, hostInfo));
     }
 
     /**
@@ -494,7 +494,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
         if (matcher.matches()) {
             String host = matcher.group("host");
             String portAsString = decode(safeTrim(matcher.group("port")));
-            Integer portAsInteger = -1;
+            Integer portAsInteger = HostInfo.NO_PORT;
             if (!isNullOrEmpty(portAsString)) {
                 try {
                     portAsInteger = Integer.parseInt(portAsString);
@@ -567,6 +567,27 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
         if (isNullOrEmpty(text)) {
             return text;
         }
+        try {
+            return URLDecoder.decode(text, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            // Won't happen.
+        }
+        return "";
+    }
+
+    /**
+     * URL-decode the given string skipping all occurrences of the plus sign.
+     * 
+     * @param text
+     *            the string to decode
+     * @return
+     *         the decoded string
+     */
+    private static String decodeSkippingPlusSign(String text) {
+        if (isNullOrEmpty(text)) {
+            return text;
+        }
+        text = text.replace("+", "%2B"); // Percent encode for "+" is "%2B".
         try {
             return URLDecoder.decode(text, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {

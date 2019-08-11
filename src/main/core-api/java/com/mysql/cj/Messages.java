@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,10 +38,10 @@ import java.util.ResourceBundle;
  * Support for localized messages.
  */
 public class Messages {
-
     private static final String BUNDLE_NAME = "com.mysql.cj.LocalizedErrorMessages";
 
     private static final ResourceBundle RESOURCE_BUNDLE;
+    private static final Object[] emptyObjectArray = {};
 
     static {
         ResourceBundle temp = null;
@@ -75,6 +75,10 @@ public class Messages {
      * @return The localized message for the key
      */
     public static String getString(String key) {
+        return getString(key, emptyObjectArray);
+    }
+
+    public static String getString(String key, Object[] args) {
         if (RESOURCE_BUNDLE == null) {
             throw new RuntimeException("Localized messages from resource bundle '" + BUNDLE_NAME + "' not loaded during initialization of driver.");
         }
@@ -90,14 +94,10 @@ public class Messages {
                 message = "Missing error message for key '" + key + "'";
             }
 
-            return message;
+            return MessageFormat.format(message, args);
         } catch (MissingResourceException e) {
             return '!' + key + '!';
         }
-    }
-
-    public static String getString(String key, Object[] args) {
-        return MessageFormat.format(getString(key), args);
     }
 
     /**

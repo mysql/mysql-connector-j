@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,8 @@
 
 package com.mysql.cj.jdbc.ha;
 
+import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
@@ -39,9 +41,11 @@ import java.util.concurrent.Executor;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.PingTarget;
+import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
+import com.mysql.cj.conf.HostsListView;
 import com.mysql.cj.conf.PropertyKey;
-import com.mysql.cj.conf.url.LoadbalanceConnectionUrl;
+import com.mysql.cj.conf.url.LoadBalanceConnectionUrl;
 import com.mysql.cj.conf.url.ReplicationConnectionUrl;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.JdbcConnection;
@@ -80,7 +84,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @throws SQLException
      *             if an error occurs
      */
-    public static ReplicationConnection createProxyInstance(ReplicationConnectionUrl connectionUrl) throws SQLException {
+    public static ReplicationConnection createProxyInstance(ConnectionUrl connectionUrl) throws SQLException {
         ReplicationConnectionProxy connProxy = new ReplicationConnectionProxy(connectionUrl);
         return (ReplicationConnection) java.lang.reflect.Proxy.newProxyInstance(ReplicationConnection.class.getClassLoader(),
                 new Class<?>[] { ReplicationConnection.class, JdbcConnection.class }, connProxy);
@@ -95,7 +99,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @throws SQLException
      *             if an error occurs
      */
-    private ReplicationConnectionProxy(ReplicationConnectionUrl connectionUrl) throws SQLException {
+    private ReplicationConnectionProxy(ConnectionUrl connectionUrl) throws SQLException {
         super();
 
         Properties props = connectionUrl.getConnectionArgumentsAsProperties();
@@ -141,19 +145,20 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         }
 
         String group = props.getProperty(PropertyKey.replicationConnectionGroup.getKeyName(), null);
-        if (group != null) {
+        if (!isNullOrEmpty(group) && ReplicationConnectionUrl.class.isAssignableFrom(connectionUrl.getClass())) {
             this.connectionGroup = ReplicationConnectionGroupManager.getConnectionGroupInstance(group);
             if (this.enableJMX) {
                 ReplicationConnectionGroupManager.registerJmx();
             }
             this.connectionGroupID = this.connectionGroup.registerReplicationConnection(this.thisAsReplicationConnection,
-                    connectionUrl.getMastersListAsHostPortPairs(), connectionUrl.getSlavesListAsHostPortPairs());
+                    ((ReplicationConnectionUrl) connectionUrl).getMastersListAsHostPortPairs(),
+                    ((ReplicationConnectionUrl) connectionUrl).getSlavesListAsHostPortPairs());
 
-            this.masterHosts = connectionUrl.getMasterHostsListFromHostPortPairs(this.connectionGroup.getMasterHosts());
-            this.slaveHosts = connectionUrl.getSlaveHostsListFromHostPortPairs(this.connectionGroup.getSlaveHosts());
+            this.masterHosts = ((ReplicationConnectionUrl) connectionUrl).getMasterHostsListFromHostPortPairs(this.connectionGroup.getMasterHosts());
+            this.slaveHosts = ((ReplicationConnectionUrl) connectionUrl).getSlaveHostsListFromHostPortPairs(this.connectionGroup.getSlaveHosts());
         } else {
-            this.masterHosts = new ArrayList<>(connectionUrl.getMastersList());
-            this.slaveHosts = new ArrayList<>(connectionUrl.getSlavesList());
+            this.masterHosts = new ArrayList<>(connectionUrl.getHostsList(HostsListView.MASTERS));
+            this.slaveHosts = new ArrayList<>(connectionUrl.getHostsList(HostsListView.SLAVES));
         }
 
         resetReadFromMasterWhenNoSlaves();
@@ -425,7 +430,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         }
 
         LoadBalancedConnection newMasterConn = LoadBalancedConnectionProxy
-                .createProxyInstance(new LoadbalanceConnectionUrl(this.masterHosts, this.connectionUrl.getOriginalProperties()));
+                .createProxyInstance(new LoadBalanceConnectionUrl(this.masterHosts, this.connectionUrl.getOriginalProperties()));
         newMasterConn.setProxy(getProxy());
 
         this.masterConnection = newMasterConn;
@@ -440,7 +445,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         }
 
         LoadBalancedConnection newSlavesConn = LoadBalancedConnectionProxy
-                .createProxyInstance(new LoadbalanceConnectionUrl(this.slaveHosts, this.connectionUrl.getOriginalProperties()));
+                .createProxyInstance(new LoadBalanceConnectionUrl(this.slaveHosts, this.connectionUrl.getOriginalProperties()));
         newSlavesConn.setProxy(getProxy());
         newSlavesConn.setReadOnly(true);
 

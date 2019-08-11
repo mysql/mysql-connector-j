@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,8 +43,6 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrl.Type;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyKey;
-import com.mysql.cj.conf.url.LoadbalanceConnectionUrl;
-import com.mysql.cj.conf.url.ReplicationConnectionUrl;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.UnableToConnectException;
@@ -198,14 +196,17 @@ public class NonRegisteringDriver implements java.sql.Driver {
                 case SINGLE_CONNECTION:
                     return com.mysql.cj.jdbc.ConnectionImpl.getInstance(conStr.getMainHost());
 
-                case LOADBALANCE_CONNECTION:
-                    return LoadBalancedConnectionProxy.createProxyInstance((LoadbalanceConnectionUrl) conStr);
-
                 case FAILOVER_CONNECTION:
+                case FAILOVER_DNS_SRV_CONNECTION:
                     return FailoverConnectionProxy.createProxyInstance(conStr);
 
+                case LOADBALANCE_CONNECTION:
+                case LOADBALANCE_DNS_SRV_CONNECTION:
+                    return LoadBalancedConnectionProxy.createProxyInstance(conStr);
+
                 case REPLICATION_CONNECTION:
-                    return ReplicationConnectionProxy.createProxyInstance((ReplicationConnectionUrl) conStr);
+                case REPLICATION_DNS_SRV_CONNECTION:
+                    return ReplicationConnectionProxy.createProxyInstance(conStr);
 
                 default:
                     return null;

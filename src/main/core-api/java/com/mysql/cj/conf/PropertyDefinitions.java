@@ -290,6 +290,9 @@ public class PropertyDefinitions {
                 new IntegerPropertyDefinition(PropertyKey.maxAllowedPacket, 65535, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.maxAllowedPacket"), "5.1.8", CATEGORY_NETWORK, Integer.MIN_VALUE),
 
+                new BooleanPropertyDefinition(PropertyKey.dnsSrv, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.dnsSrv"), "8.0.18", CATEGORY_NETWORK, Integer.MIN_VALUE),
+
                 //
                 // CATEGORY_SECURITY
                 //
@@ -795,7 +798,9 @@ public class PropertyDefinitions {
                 new IntegerPropertyDefinition(PropertyKey.xdevapiConnectTimeout, 10000, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.xdevapiConnectTimeout"), "8.0.13", CATEGORY_XDEVAPI, Integer.MIN_VALUE, 0, Integer.MAX_VALUE),
                 new StringPropertyDefinition(PropertyKey.xdevapiConnectionAttributes, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.xdevapiConnectionAttributes"), "8.0.16", CATEGORY_XDEVAPI, Integer.MIN_VALUE)
+                        Messages.getString("ConnectionProperties.xdevapiConnectionAttributes"), "8.0.16", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new BooleanPropertyDefinition(PropertyKey.xdevapiDnsSrv, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.xdevapiDnsSrv"), "8.0.18", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 //
         };
 

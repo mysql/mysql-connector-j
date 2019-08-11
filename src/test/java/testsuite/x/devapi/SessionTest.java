@@ -1567,18 +1567,18 @@ public class SessionTest extends DevApiBaseTestCase {
     }
 
     @Test
-    public void testBig23721537() throws Exception {
+    public void testBug23721537() throws Exception {
         if (!this.isSetForXTests) {
             return;
         }
         try {
-            sqlUpdate("drop table if exists testBig23721537");
-            sqlUpdate("create table testBig23721537 (id int, name varchar(20) not null)");
-            sqlUpdate("insert into testBig23721537 values (0, 'a')");
+            sqlUpdate("drop table if exists testBug23721537");
+            sqlUpdate("create table testBug23721537 (id int, name varchar(20) not null)");
+            sqlUpdate("insert into testBug23721537 values (0, 'a')");
 
             this.session.sql("drop procedure if exists newproc").execute();
             this.session.sql(
-                    "create procedure newproc (in p1 int,in p2 char(20)) begin select 1; update testBig23721537 set name='b' where id=0; select 2; select 3; end;")
+                    "create procedure newproc (in p1 int,in p2 char(20)) begin select 1; update testBug23721537 set name='b' where id=0; select 2; select 3; end;")
                     .execute();
 
             /* sync execution */
@@ -1652,7 +1652,7 @@ public class SessionTest extends DevApiBaseTestCase {
             assertFalse(res2.nextResult());
 
         } finally {
-            sqlUpdate("drop table if exists testBig23721537");
+            sqlUpdate("drop table if exists testBug23721537");
             this.session.sql("drop procedure if exists newproc").execute();
         }
     }

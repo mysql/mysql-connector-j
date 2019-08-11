@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -259,6 +259,13 @@ public class ClientImpl implements Client {
         }
 
         PooledXProtocol prot = null;
+        List<HostInfo> hostsList = this.connUrl.getHostsList();
+
+        synchronized (this.idleProtocols) {
+            // 0. Close and remove idle protocols connected to a host that is not usable anymore.
+            this.idleProtocols.stream().filter(p -> !p.isHostInfoValid(hostsList)).collect(Collectors.toList()).stream().peek(PooledXProtocol::realClose)
+                    .forEach(this.idleProtocols::remove);
+        }
 
         long start = System.currentTimeMillis();
         while (prot == null && (this.queueTimeout == 0 || System.currentTimeMillis() < start + this.queueTimeout)) { // TODO how to avoid endless loop?
@@ -279,7 +286,7 @@ public class ClientImpl implements Client {
                 } else if (this.idleProtocols.size() + this.activeProtocols.size() < this.maxSize) {
                     // 2. No idle Protocols but the pool has free space. Adding new Protocol to pool.
                     CJCommunicationsException latestException = null;
-                    for (HostInfo hi : this.connUrl.getHostsList()) {
+                    for (HostInfo hi : hostsList) {
                         PooledXProtocol tryProt = null;
                         try {
                             PropertySet pset = new DefaultPropertySet();
@@ -362,11 +369,12 @@ public class ClientImpl implements Client {
     }
 
     public class PooledXProtocol extends XProtocol {
-
         long idleSince = -1;
+        HostInfo hostInfo = null;
 
         public PooledXProtocol(HostInfo hostInfo, PropertySet propertySet) {
             super(hostInfo, propertySet);
+            this.hostInfo = hostInfo;
         }
 
         @Override
@@ -378,6 +386,10 @@ public class ClientImpl implements Client {
 
         boolean isIdleTimeoutReached() {
             return ClientImpl.this.maxIdleTime > 0 && this.idleSince > 0 && System.currentTimeMillis() > this.idleSince + ClientImpl.this.maxIdleTime;
+        }
+
+        boolean isHostInfoValid(List<HostInfo> hostsList) {
+            return hostsList.stream().filter(h -> h.equalHostPortPair(this.hostInfo)).findFirst().isPresent();
         }
 
         void realClose() {

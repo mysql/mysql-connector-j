@@ -103,6 +103,7 @@ public enum PropertyKey {
     detectCustomCollations("detectCustomCollations", true), //
     disabledAuthenticationPlugins("disabledAuthenticationPlugins", true), //
     disconnectOnExpiredPasswords("disconnectOnExpiredPasswords", true), //
+    dnsSrv("dnsSrv", true), //
     dontCheckOnDuplicateKeyUpdateInSQL("dontCheckOnDuplicateKeyUpdateInSQL", true), //
     dontTrackOpenResources("dontTrackOpenResources", true), //
     dumpQueriesOnException("dumpQueriesOnException", true), //
@@ -241,6 +242,7 @@ public enum PropertyKey {
     xdevapiAuth("xdevapi.auth", "xdevapiAuth", true), //
     xdevapiConnectTimeout("xdevapi.connect-timeout", "xdevapiConnectTimeout", true), //
     xdevapiConnectionAttributes("xdevapi.connection-attributes", "xdevapiConnectionAttributes", true), //
+    xdevapiDnsSrv("xdevapi.dns-srv", "xdevapiDnsSrv", true), //
     xdevapiSSLMode("xdevapi.ssl-mode", "xdevapiSSLMode", true), //
     xdevapiTlsCiphersuites("xdevapi.tls-ciphersuites", "xdevapiTlsCiphersuites", true), //
     xdevapiTlsVersions("xdevapi.tls-versions", "xdevapiTlsVersions", true), //
