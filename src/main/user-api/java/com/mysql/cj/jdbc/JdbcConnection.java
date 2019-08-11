@@ -575,6 +575,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     JdbcConnection getMultiHostSafeProxy();
 
+    JdbcConnection getMultiHostParentProxy();
+
     JdbcConnection getActiveMySQLConnection();
 
     /*

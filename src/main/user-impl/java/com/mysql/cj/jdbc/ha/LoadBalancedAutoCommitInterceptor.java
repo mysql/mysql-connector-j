@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -88,8 +88,9 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
     public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
 
         try {
-            // Don't count SETs neither SHOWs. Those are mostly used internally and must not trigger a connection switch.
-            if (!this.countStatements || StringUtils.startsWithIgnoreCase(sql.get(), "SET") || StringUtils.startsWithIgnoreCase(sql.get(), "SHOW")) {
+            // Don't count SETs, SHOWs neither USEs. Those are mostly used internally and must not trigger a connection switch.
+            if (!this.countStatements || StringUtils.startsWithIgnoreCase(sql.get(), "SET") || StringUtils.startsWithIgnoreCase(sql.get(), "SHOW")
+                    || StringUtils.startsWithIgnoreCase(sql.get(), "USE")) {
                 return originalResultSet;
             }
 
@@ -100,12 +101,12 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
             }
 
             if (this.proxy == null && this.conn.isProxySet()) {
-                JdbcConnection lcl_proxy = this.conn.getMultiHostSafeProxy();
-                while (lcl_proxy != null && !(lcl_proxy instanceof LoadBalancedMySQLConnection)) {
-                    lcl_proxy = lcl_proxy.getMultiHostSafeProxy();
+                JdbcConnection connParentProxy = this.conn.getMultiHostParentProxy();
+                while (connParentProxy != null && !(connParentProxy instanceof LoadBalancedMySQLConnection)) {
+                    connParentProxy = connParentProxy.getMultiHostParentProxy();
                 }
-                if (lcl_proxy != null) {
-                    this.proxy = ((LoadBalancedMySQLConnection) lcl_proxy).getThisAsProxy();
+                if (connParentProxy != null) {
+                    this.proxy = ((LoadBalancedMySQLConnection) connParentProxy).getThisAsProxy();
                 }
             }
 

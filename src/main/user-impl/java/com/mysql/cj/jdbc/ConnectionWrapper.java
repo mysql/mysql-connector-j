@@ -1214,6 +1214,11 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
+    public JdbcConnection getMultiHostParentProxy() {
+        return this.mc.getMultiHostParentProxy();
+    }
+
+    @Override
     public JdbcConnection getActiveMySQLConnection() {
         return this.mc.getActiveMySQLConnection();
     }

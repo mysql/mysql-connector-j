@@ -245,6 +245,11 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     @Override
+    public JdbcConnection getMultiHostParentProxy() {
+        return getThisAsProxy().getParentProxy();
+    }
+
+    @Override
     public DatabaseMetaData getMetaData() throws SQLException {
         return getActiveMySQLConnection().getMetaData();
     }

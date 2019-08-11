@@ -115,29 +115,38 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return this.session.getHostInfo().getHost();
     }
 
-    private JdbcConnection proxy = null;
+    private JdbcConnection parentProxy = null;
+    private JdbcConnection topProxy = null;
     private InvocationHandler realProxy = null;
 
     @Override
     public boolean isProxySet() {
-        return this.proxy != null;
+        return this.topProxy != null;
     }
 
     @Override
     public void setProxy(JdbcConnection proxy) {
-        this.proxy = proxy;
-        this.realProxy = this.proxy instanceof MultiHostMySQLConnection ? ((MultiHostMySQLConnection) proxy).getThisAsProxy() : null;
+        if (this.parentProxy == null) { // Only set this once.
+            this.parentProxy = proxy;
+        }
+        this.topProxy = proxy;
+        this.realProxy = this.topProxy instanceof MultiHostMySQLConnection ? ((MultiHostMySQLConnection) proxy).getThisAsProxy() : null;
     }
 
     // this connection has to be proxied when using multi-host settings so that statements get routed to the right physical connection
     // (works as "logical" connection)
     private JdbcConnection getProxy() {
-        return (this.proxy != null) ? this.proxy : (JdbcConnection) this;
+        return (this.topProxy != null) ? this.topProxy : (JdbcConnection) this;
     }
 
     @Override
     public JdbcConnection getMultiHostSafeProxy() {
         return this.getProxy();
+    }
+
+    @Override
+    public JdbcConnection getMultiHostParentProxy() {
+        return this.parentProxy;
     }
 
     @Override

@@ -3,6 +3,8 @@
 
 Version 8.0.18
 
+  - Fix for Bug#84098 (25223123), endless loop in LoadBalancedAutoCommitInterceptor.
+
   - Fix for Bug#23721537, MULTI-SELECT WITH EXECUTEASYNC() GIVES IMPROPER ERROR.
 
   - Fix for Bug#95741 (29898567), METADATA QUERY USES UPPER() AROUND NUMERIC EXPRESSION.

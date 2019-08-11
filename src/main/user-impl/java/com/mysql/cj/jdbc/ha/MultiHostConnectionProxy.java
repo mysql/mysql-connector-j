@@ -72,7 +72,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     boolean autoReconnect = false;
 
     JdbcConnection thisAsConnection = null;
-    JdbcConnection proxyConnection = null;
+    JdbcConnection parentProxyConnection = null;
+    JdbcConnection topProxyConnection = null;
 
     JdbcConnection currentConnection = null;
 
@@ -171,18 +172,31 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      *         Returns this connection's proxy if there is one or itself if this is the first one.
      */
     protected JdbcConnection getProxy() {
-        return this.proxyConnection != null ? this.proxyConnection : this.thisAsConnection;
+        return this.topProxyConnection != null ? this.topProxyConnection : this.thisAsConnection;
+    }
+
+    /**
+     * Get this connection's parent proxy.
+     * 
+     * @return
+     *         Returns this connection's proxy if there is one.
+     */
+    protected JdbcConnection getParentProxy() {
+        return this.parentProxyConnection;
     }
 
     /**
      * Sets this connection's proxy. This proxy should be the first connection in the multi-host connections chain.
-     * After setting the connection proxy locally, propagates it through the dependant connections.
+     * After setting the connection proxy locally, propagates it through the dependent connections.
      * 
      * @param proxyConn
      *            The top level connection in the multi-host connections chain.
      */
     protected final void setProxy(JdbcConnection proxyConn) {
-        this.proxyConnection = proxyConn;
+        if (this.parentProxyConnection == null) { // Only set this once.
+            this.parentProxyConnection = proxyConn;
+        }
+        this.topProxyConnection = proxyConn;
         propagateProxyDown(proxyConn);
     }
 
@@ -331,7 +345,11 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      */
     synchronized ConnectionImpl createConnectionForHost(HostInfo hostInfo) throws SQLException {
         ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(hostInfo);
-        conn.setProxy(getProxy());
+        JdbcConnection topmostProxy = getProxy();
+        if (topmostProxy != this.thisAsConnection) {
+            conn.setProxy(this.thisAsConnection); // First call sets this connection as underlying connection parent proxy (its creator).
+        }
+        conn.setProxy(topmostProxy); // Set the topmost proxy in the underlying connection.
         return conn;
     }
 
@@ -385,7 +403,10 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         sourceUseLocalSessionState.setValue(true);
 
         target.setAutoCommit(source.getAutoCommit());
-        target.setDatabase(source.getDatabase());
+        String db = source.getDatabase();
+        if (db != null && !db.isEmpty()) {
+            target.setDatabase(db);
+        }
         target.setTransactionIsolation(source.getTransactionIsolation());
         target.setSessionMaxRows(source.getSessionMaxRows());
 
