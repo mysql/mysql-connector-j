@@ -50,34 +50,39 @@ public class AbandonedConnectionCleanupThread implements Runnable {
     private static final Set<ConnectionFinalizerPhantomReference> connectionFinalizerPhantomRefs = ConcurrentHashMap.newKeySet();
     private static final ReferenceQueue<MysqlConnection> referenceQueue = new ReferenceQueue<>();
 
-    private static final ExecutorService cleanupThreadExcecutorService;
+    private static final ExecutorService cleanupThreadExecutorService;
     private static Thread threadRef = null;
     private static Lock threadRefLock = new ReentrantLock();
 
     static {
-        cleanupThreadExcecutorService = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "mysql-cj-abandoned-connection-cleanup");
-            t.setDaemon(true);
-            // Tie the thread's context ClassLoader to the ClassLoader that loaded the class instead of inheriting the context ClassLoader from the current
-            // thread, which would happen by default.
-            // Application servers may use this information if they attempt to shutdown this thread. By leaving the default context ClassLoader this thread
-            // could end up being shut down even when it is shared by other applications and, being it statically initialized, thus, never restarted again.
+        if (Boolean.getBoolean("com.mysql.disableAbandonedConnectionCleanup")) {
+            cleanupThreadExecutorService = null;
+        } else {
+            cleanupThreadExecutorService = Executors.newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "mysql-cj-abandoned-connection-cleanup");
+                t.setDaemon(true);
+                // Tie the thread's context ClassLoader to the ClassLoader that loaded the class instead of inheriting the context ClassLoader from the current
+                // thread, which would happen by default.
+                // Application servers may use this information if they attempt to shutdown this thread. By leaving the default context ClassLoader this thread
+                // could end up being shut down even when it is shared by other applications and, being it statically initialized, thus, never restarted again.
 
-            ClassLoader classLoader = AbandonedConnectionCleanupThread.class.getClassLoader();
-            if (classLoader == null) {
-                // This class was loaded by the Bootstrap ClassLoader, so lets tie the thread's context ClassLoader to the System ClassLoader instead.
-                classLoader = ClassLoader.getSystemClassLoader();
-            }
+                ClassLoader classLoader = AbandonedConnectionCleanupThread.class.getClassLoader();
+                if (classLoader == null) {
+                    // This class was loaded by the Bootstrap ClassLoader, so lets tie the thread's context ClassLoader to the System ClassLoader instead.
+                    classLoader = ClassLoader.getSystemClassLoader();
+                }
 
-            t.setContextClassLoader(classLoader);
-            return threadRef = t;
-        });
-        cleanupThreadExcecutorService.execute(new AbandonedConnectionCleanupThread());
+                t.setContextClassLoader(classLoader);
+                return threadRef = t;
+            });
+            cleanupThreadExecutorService.execute(new AbandonedConnectionCleanupThread());
+        }
     }
 
     private AbandonedConnectionCleanupThread() {
     }
 
+    @Override
     public void run() {
         for (;;) {
             try {
@@ -134,7 +139,7 @@ public class AbandonedConnectionCleanupThread implements Runnable {
             }
             ClassLoader callerCtxClassLoader = Thread.currentThread().getContextClassLoader();
             ClassLoader threadCtxClassLoader = threadRef.getContextClassLoader();
-            return callerCtxClassLoader != null && threadCtxClassLoader != null && callerCtxClassLoader == threadCtxClassLoader;
+            return threadCtxClassLoader != null && callerCtxClassLoader == threadCtxClassLoader;
         } finally {
             threadRefLock.unlock();
         }
@@ -152,7 +157,9 @@ public class AbandonedConnectionCleanupThread implements Runnable {
             // later on. An unchecked shutdown can still be done if needed by calling shutdown(false).
             return;
         }
-        cleanupThreadExcecutorService.shutdownNow();
+        if (cleanupThreadExecutorService != null) {
+            cleanupThreadExecutorService.shutdownNow();
+        }
     }
 
     /**
