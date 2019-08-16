@@ -3,6 +3,8 @@
 
 Version 8.0.18
 
+  - WL#13347, Connectors should handle expired password sandbox without SET operations.
+
   - Fix for Bug#84098 (25223123), endless loop in LoadBalancedAutoCommitInterceptor.
 
   - Fix for Bug#23721537, MULTI-SELECT WITH EXECUTEASYNC() GIVES IMPROPER ERROR.

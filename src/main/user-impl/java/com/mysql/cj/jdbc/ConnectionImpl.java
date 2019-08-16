@@ -1403,18 +1403,11 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
         if (useSessionStatus && !this.session.isClosed() && versionMeetsMinimum(5, 6, 5) && !this.useLocalSessionState.getValue()
                 && this.readOnlyPropagatesToServer.getValue()) {
-            try {
-                String s = this.session.queryServerVariable(
-                        versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0)) ? "@@session.transaction_read_only"
-                                : "@@session.tx_read_only");
-                if (s != null) {
-                    return Integer.parseInt(s) != 0; // mysql has a habit of tri+ state booleans
-                }
-            } catch (PasswordExpiredException ex) {
-                if (this.disconnectOnExpiredPasswords.getValue()) {
-                    throw SQLError.createSQLException(Messages.getString("Connection.16"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, ex,
-                            getExceptionInterceptor());
-                }
+            String s = this.session.queryServerVariable(
+                    versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0)) ? "@@session.transaction_read_only"
+                            : "@@session.tx_read_only");
+            if (s != null) {
+                return Integer.parseInt(s) != 0; // mysql has a habit of tri+ state booleans
             }
         }
 

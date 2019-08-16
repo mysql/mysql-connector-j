@@ -62,7 +62,6 @@ import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.ExceptionInterceptorChain;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.OperationCancelledException;
-import com.mysql.cj.exceptions.PasswordExpiredException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.interceptors.QueryInterceptor;
 import com.mysql.cj.log.Log;
@@ -514,16 +513,10 @@ public class NativeSession extends CoreSession implements Serializable {
                 }
 
                 if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches(mysqlCharsetName) || ucs2) {
-                    try {
-                        sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES " + mysqlCharsetName + connectionCollationSuffix), false, 0);
+                    sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES " + mysqlCharsetName + connectionCollationSuffix), false, 0);
 
-                        this.protocol.getServerSession().getServerVariables().put("character_set_client", mysqlCharsetName);
-                        this.protocol.getServerSession().getServerVariables().put("character_set_connection", mysqlCharsetName);
-                    } catch (PasswordExpiredException ex) {
-                        if (this.disconnectOnExpiredPasswords.getValue()) {
-                            throw ex;
-                        }
-                    }
+                    this.protocol.getServerSession().getServerVariables().put("character_set_client", mysqlCharsetName);
+                    this.protocol.getServerSession().getServerVariables().put("character_set_connection", mysqlCharsetName);
                 }
 
                 realJavaEncoding = this.characterEncoding.getValue();
@@ -541,14 +534,7 @@ public class NativeSession extends CoreSession implements Serializable {
                 // Only send if needed, if we're caching server variables we -have- to send, because we don't know what it was before we cached them.
                 //
                 if (onServer != null && onServer.length() > 0 && !"NULL".equalsIgnoreCase(onServer)) {
-                    try {
-                        sendCommand(this.commandBuilder.buildComQuery(null, "SET character_set_results = NULL"), false, 0);
-
-                    } catch (PasswordExpiredException ex) {
-                        if (this.disconnectOnExpiredPasswords.getValue()) {
-                            throw ex;
-                        }
-                    }
+                    sendCommand(this.commandBuilder.buildComQuery(null, "SET character_set_results = NULL"), false, 0);
                     this.protocol.getServerSession().getServerVariables().put(ServerSession.LOCAL_CHARACTER_SET_RESULTS, null);
                 } else {
                     this.protocol.getServerSession().getServerVariables().put(ServerSession.LOCAL_CHARACTER_SET_RESULTS, onServer);
@@ -580,14 +566,7 @@ public class NativeSession extends CoreSession implements Serializable {
                     StringBuilder setBuf = new StringBuilder("SET character_set_results = ".length() + mysqlEncodingName.length());
                     setBuf.append("SET character_set_results = ").append(mysqlEncodingName);
 
-                    try {
-                        sendCommand(this.commandBuilder.buildComQuery(null, setBuf.toString()), false, 0);
-
-                    } catch (PasswordExpiredException ex) {
-                        if (this.disconnectOnExpiredPasswords.getValue()) {
-                            throw ex;
-                        }
-                    }
+                    sendCommand(this.commandBuilder.buildComQuery(null, setBuf.toString()), false, 0);
 
                     this.protocol.getServerSession().getServerVariables().put(ServerSession.LOCAL_CHARACTER_SET_RESULTS, mysqlEncodingName);
 
@@ -806,10 +785,6 @@ public class NativeSession extends CoreSession implements Serializable {
                     this.protocol.getServerSession().getServerVariables().put(r.getValue(0, vf), r.getValue(1, vf));
                 }
             }
-        } catch (PasswordExpiredException ex) {
-            if (this.disconnectOnExpiredPasswords.getValue()) {
-                throw ex;
-            }
         } catch (IOException e) {
             throw ExceptionFactory.createException(e.getMessage(), e);
         }
@@ -890,10 +865,6 @@ public class NativeSession extends CoreSession implements Serializable {
                         customMblen.put(charsetName, null);
                     }
                 }
-            } catch (PasswordExpiredException ex) {
-                if (this.disconnectOnExpiredPasswords.getValue()) {
-                    throw ex;
-                }
             } catch (IOException e) {
                 throw ExceptionFactory.createException(e.getMessage(), e, this.exceptionInterceptor);
             }
@@ -915,10 +886,6 @@ public class NativeSession extends CoreSession implements Serializable {
                         if (customMblen.containsKey(charsetName)) {
                             customMblen.put(charsetName, r.getValue(maxlenColumn, ivf));
                         }
-                    }
-                } catch (PasswordExpiredException ex) {
-                    if (this.disconnectOnExpiredPasswords.getValue()) {
-                        throw ex;
                     }
                 } catch (IOException e) {
                     throw ExceptionFactory.createException(e.getMessage(), e, this.exceptionInterceptor);
