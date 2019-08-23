@@ -504,7 +504,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             return false;
         }
 
-        boolean allowMultiQueries = this.propertySet.getBooleanProperty(PropertyKey.allowMultiQueries).getValue();
+        boolean allowMultiQueries = this.propertySet.getBooleanProperty(PropertyKey.allowMultiQueries).getValue() || this.getSession().isTempMultiQueriesEnable();
 
         if (this.cachePrepStmts.getValue()) {
             synchronized (this.serverSideStatementCheckCache) {

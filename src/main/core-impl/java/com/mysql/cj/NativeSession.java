@@ -126,6 +126,9 @@ public class NativeSession extends CoreSession implements Serializable {
     /** Has this session been closed? */
     private boolean isClosed = true;
 
+    /** Does this session temp enable MultiQueries? */
+    private boolean isTempMultiQueriesEnable = false;
+
     /** Why was this session implicitly closed, if known? (for diagnostics) */
     private Throwable forceClosedReason;
 
@@ -220,11 +223,13 @@ public class NativeSession extends CoreSession implements Serializable {
 
     public void enableMultiQueries() {
         sendCommand(this.commandBuilder.buildComSetOption(((NativeProtocol) this.protocol).getSharedSendPacket(), 0), false, 0);
+        this.isTempMultiQueriesEnable = true;
         ((NativeServerSession) getServerSession()).preserveOldTransactionState();
     }
 
     public void disableMultiQueries() {
         sendCommand(this.commandBuilder.buildComSetOption(((NativeProtocol) this.protocol).getSharedSendPacket(), 1), false, 0);
+        this.isTempMultiQueriesEnable = false;
         ((NativeServerSession) getServerSession()).preserveOldTransactionState();
     }
 
@@ -1199,6 +1204,10 @@ public class NativeSession extends CoreSession implements Serializable {
 
     public boolean isClosed() {
         return this.isClosed;
+    }
+
+    public boolean isTempMultiQueriesEnable() {
+        return this.isTempMultiQueriesEnable;
     }
 
     public void checkClosed() {
