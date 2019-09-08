@@ -46,13 +46,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.Messages;
+import com.mysql.cj.conf.url.FailoverConnectionUrl;
+import com.mysql.cj.conf.url.LoadbalanceConnectionUrl;
+import com.mysql.cj.conf.url.ReplicationConnectionUrl;
+import com.mysql.cj.conf.url.SingleConnectionUrl;
+import com.mysql.cj.conf.url.XDevAPIConnectionUrl;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.exceptions.UnsupportedConnectionStringException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.util.LRUCache;
-import com.mysql.cj.util.Util;
 
 /**
  * A container for a database URL and a collection of given connection arguments.
@@ -197,24 +201,19 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
                     ConnectionUrlParser connStrParser = ConnectionUrlParser.parseConnectionString(connString);
                     switch (Type.fromValue(connStrParser.getScheme(), connStrParser.getHosts().size())) {
                         case SINGLE_CONNECTION:
-                            connectionString = (ConnectionUrl) Util.getInstance("com.mysql.cj.conf.url.SingleConnectionUrl",
-                                    new Class<?>[] { ConnectionUrlParser.class, Properties.class }, new Object[] { connStrParser, info }, null);
+                            connectionString = new SingleConnectionUrl(connStrParser, info);
                             break;
                         case FAILOVER_CONNECTION:
-                            connectionString = (ConnectionUrl) Util.getInstance("com.mysql.cj.conf.url.FailoverConnectionUrl",
-                                    new Class<?>[] { ConnectionUrlParser.class, Properties.class }, new Object[] { connStrParser, info }, null);
+                            connectionString = new FailoverConnectionUrl(connStrParser, info);
                             break;
                         case LOADBALANCE_CONNECTION:
-                            connectionString = (ConnectionUrl) Util.getInstance("com.mysql.cj.conf.url.LoadbalanceConnectionUrl",
-                                    new Class<?>[] { ConnectionUrlParser.class, Properties.class }, new Object[] { connStrParser, info }, null);
+                            connectionString = new LoadbalanceConnectionUrl(connStrParser, info);
                             break;
                         case REPLICATION_CONNECTION:
-                            connectionString = (ConnectionUrl) Util.getInstance("com.mysql.cj.conf.url.ReplicationConnectionUrl",
-                                    new Class<?>[] { ConnectionUrlParser.class, Properties.class }, new Object[] { connStrParser, info }, null);
+                            connectionString = new ReplicationConnectionUrl(connStrParser, info);
                             break;
                         case XDEVAPI_SESSION:
-                            connectionString = (ConnectionUrl) Util.getInstance("com.mysql.cj.conf.url.XDevAPIConnectionUrl",
-                                    new Class<?>[] { ConnectionUrlParser.class, Properties.class }, new Object[] { connStrParser, info }, null);
+                            connectionString = new XDevAPIConnectionUrl(connStrParser, info);
                             break;
                         default:
                             return null; // should not happen
