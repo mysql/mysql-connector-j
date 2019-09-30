@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.19
+
 Version 8.0.18
 
   - WL#13347, Connectors should handle expired password sandbox without SET operations.
