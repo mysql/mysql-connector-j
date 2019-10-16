@@ -52,7 +52,9 @@ public class Driver extends NonRegisteringDriver implements java.sql.Driver {
     //
     static {
         try {
-            java.sql.DriverManager.registerDriver(new Driver());
+            java.sql.DriverManager.registerDriver(new Driver(), () -> {
+                AbandonedConnectionCleanupThread.checkedShutdown();
+            });
         } catch (SQLException E) {
             throw new RuntimeException("Can't register driver!");
         }
