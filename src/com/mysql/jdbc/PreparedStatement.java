@@ -2572,7 +2572,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                     int paramCount = this.parameterValues.length;
 
                     for (int i = 1; i <= paramCount; i++) {
-                        mdStmt.setString(i, "");
+                        mdStmt.setString(i, null);
                     }
 
                     boolean hadResults = mdStmt.execute();
