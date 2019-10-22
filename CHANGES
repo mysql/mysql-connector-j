@@ -3,6 +3,8 @@
 
 Version 8.0.19
 
+  - Fix for Bug#96442 (30151808), INCORRECT DATE ERROR WHEN CALLING GETMETADATA ON PREPARED STATEMENT.
+
 Version 8.0.18
 
   - WL#13347, Connectors should handle expired password sandbox without SET operations.

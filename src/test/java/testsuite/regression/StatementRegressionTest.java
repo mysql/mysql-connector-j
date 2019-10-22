@@ -10668,4 +10668,31 @@ public class StatementRegressionTest extends BaseTestCase {
         } while ((useSPS = !useSPS) || (useCursorFetch = !useCursorFetch));
     }
 
+    /**
+     * Tests fix for Bug#96442 (30151808), INCORRECT DATE ERROR WHEN CALLING GETMETADATA ON PREPARED STATEMENT.
+     */
+    public void testBug96442() throws Exception {
+        createTable("testBug96442", "(id INT UNSIGNED NOT NULL, rdate DATE NOT NULL, ts TIMESTAMP NOT NULL)");
+
+        Properties props = new Properties();
+        boolean useSPS = false;
+        do {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            Connection con = getConnectionWithProps(props);
+            try {
+                con.prepareStatement("SELECT id FROM testBug96442 WHERE rdate = ? AND ts = ?").getMetaData();
+                con.prepareStatement("SELECT DISTINCT id FROM testBug96442 WHERE rdate = ? AND ts = ?").getMetaData();
+                con.prepareStatement("SELECT * FROM testBug96442 WHERE id = ? AND ts = ?").getMetaData();
+                con.prepareStatement("SELECT * FROM testBug96442 WHERE rdate = ? AND ts = ?").getMetaData();
+                con.prepareStatement("SELECT id,rdate FROM testBug96442 WHERE rdate = ? AND ts = ?").getMetaData();
+                con.prepareStatement("SELECT * FROM testBug96442 WHERE rdate = '2000-01-01' AND ts = ?").getMetaData();
+                con.prepareStatement("SELECT count(id) FROM testBug96442 WHERE rdate = ? AND ts = ?").getMetaData();
+                con.prepareStatement("SELECT * FROM testBug96442 HAVING rdate = ? AND ts = ?").getMetaData();
+            } finally {
+                con.close();
+            }
+        } while (useSPS = !useSPS);
+
+    }
+
 }

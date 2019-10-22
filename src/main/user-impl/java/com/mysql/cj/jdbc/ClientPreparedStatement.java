@@ -1189,7 +1189,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                     int paramCount = ((PreparedQuery<?>) this.query).getParameterCount();
 
                     for (int i = 1; i <= paramCount; i++) {
-                        mdStmt.setString(i, "");
+                        mdStmt.setString(i, null);
                     }
 
                     boolean hadResults = mdStmt.execute();
