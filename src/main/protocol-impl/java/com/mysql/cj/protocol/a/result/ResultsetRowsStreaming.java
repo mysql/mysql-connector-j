@@ -153,7 +153,7 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
         boolean hasNext = (this.nextRow != null);
 
         if (!hasNext && !this.streamerClosed) {
-            this.protocol.closeStreamer(this);
+            this.protocol.unsetStreamingData(this);
             this.streamerClosed = true;
         }
 
@@ -210,7 +210,7 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
                     this.protocol.readNextResultset((T) this.owner, this.owner.getOwningStatementMaxRows(), true, this.isBinaryEncoded, this.resultSetFactory);
 
                 } else {
-                    this.protocol.closeStreamer(this);
+                    this.protocol.unsetStreamingData(this);
                     this.streamerClosed = true;
                 }
             }

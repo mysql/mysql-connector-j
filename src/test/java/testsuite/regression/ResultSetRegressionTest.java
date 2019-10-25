@@ -104,6 +104,7 @@ import com.mysql.cj.log.Log;
 import com.mysql.cj.protocol.InternalDate;
 import com.mysql.cj.protocol.a.result.NativeResultset;
 import com.mysql.cj.protocol.a.result.ResultsetRowsCursor;
+import com.mysql.cj.protocol.a.result.ResultsetRowsStreaming;
 import com.mysql.cj.result.SqlDateValueFactory;
 import com.mysql.cj.util.TimeUtil;
 import com.mysql.cj.util.Util;
@@ -7145,4 +7146,61 @@ public class ResultSetRegressionTest extends BaseTestCase {
         }
     }
 
+    /**
+     * Tests fix for Bug#96059 (29999318), ERROR STREAMING MULTI RESULTSETS WITH MYSQL-CONNECTOR-JAVA 8.0.X.
+     *
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug96059() throws Exception {
+        createTable("testBug96059", "(f1 int, f2 int, f3 int)");
+        this.stmt.executeUpdate("INSERT INTO `testBug96059` VALUES (1,2,3),(4,5,6)");
+
+        Connection con = null;
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.allowMultiQueries.getKeyName(), "true");
+
+        for (boolean useSSPS : new boolean[] { false, true }) {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+            try {
+
+                con = getConnectionWithProps(props);
+
+                PreparedStatement st = con.prepareStatement("SELECT f1 from testBug96059;SELECT f2 from testBug96059;SELECT f3 from testBug96059;",
+                        ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                st.setFetchSize(Integer.MIN_VALUE);
+                st.setFetchDirection(ResultSet.FETCH_REVERSE);
+                assertTrue(st.execute());
+
+                // fetch results partially then try next result set
+                this.rs = st.getResultSet();
+                assertTrue(((ResultSetImpl) this.rs).getRows() instanceof ResultsetRowsStreaming<?>);
+                assertTrue(this.rs.next());
+                assertEquals(1, this.rs.getInt(1));
+                assertTrue(st.getMoreResults());
+
+                // fetch results fully then try next result set
+                this.rs = st.getResultSet();
+                assertTrue(((ResultSetImpl) this.rs).getRows() instanceof ResultsetRowsStreaming<?>);
+                assertTrue(this.rs.next());
+                assertEquals(2, this.rs.getInt(1));
+                assertTrue(this.rs.next());
+                assertEquals(5, this.rs.getInt(1));
+                assertFalse(this.rs.next());
+                assertTrue(st.getMoreResults());
+
+                // fetch results partially then try next result set
+                this.rs = st.getResultSet();
+                assertTrue(((ResultSetImpl) this.rs).getRows() instanceof ResultsetRowsStreaming<?>);
+                assertTrue(this.rs.next());
+                assertEquals(3, this.rs.getInt(1));
+                assertFalse(st.getMoreResults());
+
+            } finally {
+                if (con != null) {
+                    con.close();
+                }
+            }
+        }
+    }
 }

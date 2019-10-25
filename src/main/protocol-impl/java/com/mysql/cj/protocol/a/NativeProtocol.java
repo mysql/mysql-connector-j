@@ -1849,21 +1849,19 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         }
     }
 
-    public void closeStreamer(ResultsetRows streamer) {
+    public void unsetStreamingData(ResultsetRows streamer) {
         if (this.streamingData == null) {
             throw ExceptionFactory.createException(Messages.getString("MysqlIO.17") + streamer + Messages.getString("MysqlIO.18"), this.exceptionInterceptor);
         }
 
-        if (streamer != this.streamingData) {
-            throw ExceptionFactory.createException(Messages.getString("MysqlIO.19") + streamer + Messages.getString("MysqlIO.20")
-                    + Messages.getString("MysqlIO.21") + Messages.getString("MysqlIO.22"), this.exceptionInterceptor);
+        // don't try to discard streamer other than passed in; it's probably already replaced by the next result in a multi-resultset
+        if (streamer == this.streamingData) {
+            this.streamingData = null;
         }
-
-        this.streamingData = null;
     }
 
     public void scanForAndThrowDataTruncation() {
-        if ((this.streamingData == null) && this.propertySet.getBooleanProperty(PropertyKey.jdbcCompliantTruncation).getValue() && getWarningCount() > 0) {
+        if (this.streamingData == null && this.propertySet.getBooleanProperty(PropertyKey.jdbcCompliantTruncation).getValue() && getWarningCount() > 0) {
             int warningCountOld = getWarningCount();
             convertShowWarningsToSQLWarnings(getWarningCount(), true);
             setWarningCount(warningCountOld);
