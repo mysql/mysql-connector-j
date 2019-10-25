@@ -70,7 +70,7 @@ public class DoubleValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.lang.Double", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                DoubleValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0));
+                DoubleValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0, 0));
                 return null;
             }
         });
@@ -81,7 +81,7 @@ public class DoubleValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIMESTAMP to java.lang.Double", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                DoubleValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0));
+                DoubleValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0, 0));
                 return null;
             }
         });

@@ -35,6 +35,7 @@ public class InternalTime {
     private int minutes = 0;
     private int seconds = 0;
     private int nanos = 0;
+    private int scale = 0;
 
     /**
      * Constructs a zero time
@@ -42,11 +43,12 @@ public class InternalTime {
     public InternalTime() {
     }
 
-    public InternalTime(int hours, int minutes, int seconds, int nanos) {
+    public InternalTime(int hours, int minutes, int seconds, int nanos, int scale) {
         this.hours = hours;
         this.minutes = minutes;
         this.seconds = seconds;
         this.nanos = nanos;
+        this.scale = scale;
     }
 
     public int getHours() {
@@ -83,5 +85,13 @@ public class InternalTime {
 
     public boolean isZero() {
         return this.hours == 0 && this.minutes == 0 && this.seconds == 0 && this.nanos == 0;
+    }
+
+    public int getScale() {
+        return this.scale;
+    }
+
+    public void setScale(int scale) {
+        this.scale = scale;
     }
 }

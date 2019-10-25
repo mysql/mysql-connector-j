@@ -77,7 +77,7 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
      */
     @Override
     public Timestamp localCreateFromDate(InternalDate idate) {
-        return createFromTimestamp(new InternalTimestamp(idate.getYear(), idate.getMonth(), idate.getDay(), 0, 0, 0, 0));
+        return createFromTimestamp(new InternalTimestamp(idate.getYear(), idate.getMonth(), idate.getDay(), 0, 0, 0, 0, 0));
     }
 
     /**
@@ -92,7 +92,7 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
                     Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + it.getHours() + ":" + it.getMinutes() + ":" + it.getSeconds() }));
         }
 
-        return createFromTimestamp(new InternalTimestamp(1970, 1, 1, it.getHours(), it.getMinutes(), it.getSeconds(), it.getNanos()));
+        return createFromTimestamp(new InternalTimestamp(1970, 1, 1, it.getHours(), it.getMinutes(), it.getSeconds(), it.getNanos(), it.getScale()));
     }
 
     @Override

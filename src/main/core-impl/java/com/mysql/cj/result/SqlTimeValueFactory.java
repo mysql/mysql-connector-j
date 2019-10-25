@@ -102,7 +102,7 @@ public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
         }
 
         // truncate date information
-        return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos()));
+        return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos(), its.getScale()));
     }
 
     @Override

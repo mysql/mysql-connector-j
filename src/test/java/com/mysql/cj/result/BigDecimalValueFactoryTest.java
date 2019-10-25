@@ -70,7 +70,7 @@ public class BigDecimalValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.math.BigDecimal", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                BigDecimalValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0));
+                BigDecimalValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0, 0));
                 return null;
             }
         });
@@ -81,7 +81,7 @@ public class BigDecimalValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIMESTAMP to java.math.BigDecimal", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                BigDecimalValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0));
+                BigDecimalValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0, 0));
                 return null;
             }
         });

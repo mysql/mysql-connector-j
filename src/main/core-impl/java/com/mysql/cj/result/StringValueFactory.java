@@ -40,6 +40,7 @@ import com.mysql.cj.protocol.InternalTime;
 import com.mysql.cj.protocol.InternalTimestamp;
 import com.mysql.cj.util.DataTypeUtil;
 import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.TimeUtil;
 
 /**
  * A {@link com.mysql.cj.result.ValueFactory} implementation to create strings.
@@ -77,7 +78,8 @@ public class StringValueFactory implements ValueFactory<String> {
      */
     public String createFromTime(InternalTime it) {
         if (it.getNanos() > 0) {
-            return String.format("%02d:%02d:%02d.%09d", it.getHours(), it.getMinutes(), it.getSeconds(), it.getNanos());
+            return String.format("%02d:%02d:%02d.%s", it.getHours(), it.getMinutes(), it.getSeconds(),
+                    TimeUtil.formatNanos(it.getNanos(), it.getScale(), false));
         }
         return String.format("%02d:%02d:%02d", it.getHours(), it.getMinutes(), it.getSeconds());
     }
@@ -92,7 +94,7 @@ public class StringValueFactory implements ValueFactory<String> {
      */
     public String createFromTimestamp(InternalTimestamp its) {
         return String.format("%s %s", createFromDate(its),
-                createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos())));
+                createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos(), its.getScale())));
     }
 
     public String createFromLong(long l) {

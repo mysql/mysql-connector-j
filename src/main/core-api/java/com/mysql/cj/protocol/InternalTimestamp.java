@@ -35,6 +35,7 @@ public class InternalTimestamp extends InternalDate {
     private int minutes = 0;
     private int seconds = 0;
     private int nanos = 0;
+    private int scale = 0;
 
     /**
      * Constructs a zero datetime
@@ -43,7 +44,7 @@ public class InternalTimestamp extends InternalDate {
         super();
     }
 
-    public InternalTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos) {
+    public InternalTimestamp(int year, int month, int day, int hours, int minutes, int seconds, int nanos, int scale) {
         this.year = year;
         this.month = month;
         this.day = day;
@@ -51,6 +52,7 @@ public class InternalTimestamp extends InternalDate {
         this.minutes = minutes;
         this.seconds = seconds;
         this.nanos = nanos;
+        this.scale = scale;
     }
 
     public int getHours() {
@@ -88,5 +90,13 @@ public class InternalTimestamp extends InternalDate {
     @Override
     public boolean isZero() {
         return super.isZero() && this.hours == 0 && this.minutes == 0 && this.seconds == 0 && this.nanos == 0;
+    }
+
+    public int getScale() {
+        return this.scale;
+    }
+
+    public void setScale(int scale) {
+        this.scale = scale;
     }
 }

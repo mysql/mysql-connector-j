@@ -51,11 +51,11 @@ public class XProtocolDecoder implements ValueDecoder {
 
     @Override
     public <T> T decodeDate(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return decodeTimestamp(bytes, offset, length, vf);
+        return decodeTimestamp(bytes, offset, length, 0, vf);
     }
 
     @Override
-    public <T> T decodeTime(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+    public <T> T decodeTime(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
         try {
             CodedInputStream inputStream = CodedInputStream.newInstance(bytes, offset, length);
             boolean negative = inputStream.readRawByte() > 0;
@@ -78,14 +78,14 @@ public class XProtocolDecoder implements ValueDecoder {
                 }
             }
 
-            return vf.createFromTime(new InternalTime(negative ? -1 * hours : hours, minutes, seconds, nanos));
+            return vf.createFromTime(new InternalTime(negative ? -1 * hours : hours, minutes, seconds, nanos, scale));
         } catch (IOException e) {
             throw new DataReadException(e);
         }
     }
 
     @Override
-    public <T> T decodeTimestamp(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+    public <T> T decodeTimestamp(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
         try {
             CodedInputStream inputStream = CodedInputStream.newInstance(bytes, offset, length);
             int year = (int) inputStream.readUInt64();
@@ -113,7 +113,7 @@ public class XProtocolDecoder implements ValueDecoder {
                     }
                 }
 
-                return vf.createFromTimestamp(new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos));
+                return vf.createFromTimestamp(new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos, scale));
             }
             return vf.createFromDate(new InternalDate(year, month, day));
         } catch (IOException e) {

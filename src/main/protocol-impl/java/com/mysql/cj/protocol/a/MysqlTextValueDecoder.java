@@ -55,14 +55,16 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     public static final int DATE_BUF_LEN = 10;
     /** Min string length of MySQL time string: 'HH:MM:SS'. */
     public static final int TIME_STR_LEN_MIN = 8;
-    /** Max string length of MySQL time string (with microsecs): '-HHH:MM:SS.mmmmmm'. */
-    public static final int TIME_STR_LEN_MAX = 17;
-    /** String length of MySQL timestamp string (no microsecs): 'YYYY-MM-DD HH:MM:SS'. */
-    public static final int TIMESTAMP_NOFRAC_STR_LEN = 19;
+    /** Max string length of MySQL time string (with microseconds): '-HHH:MM:SS'. */
+    public static final int TIME_STR_LEN_MAX_NO_FRAC = 10;
+    /** Max string length of MySQL time string (with microseconds): '-HHH:MM:SS.mmmmmm'. */
+    public static final int TIME_STR_LEN_MAX_WITH_MICROS = TIME_STR_LEN_MAX_NO_FRAC + 7;
+    /** String length of MySQL timestamp string (no microseconds): 'YYYY-MM-DD HH:MM:SS'. */
+    public static final int TIMESTAMP_STR_LEN_NO_FRAC = 19;
     /** Max string length of MySQL timestamp (with microsecs): 'YYYY-MM-DD HH:MM:SS.mmmmmm'. */
-    public static final int TIMESTAMP_STR_LEN_MAX = TIMESTAMP_NOFRAC_STR_LEN + 7;
+    public static final int TIMESTAMP_STR_LEN_WITH_MICROS = TIMESTAMP_STR_LEN_NO_FRAC + 7;
     /** String length of String timestamp with nanos. This does not come from MySQL server but we support it via string conversion. */
-    public static final int TIMESTAMP_STR_LEN_WITH_NANOS = TIMESTAMP_NOFRAC_STR_LEN + 10;
+    public static final int TIMESTAMP_STR_LEN_WITH_NANOS = TIMESTAMP_STR_LEN_NO_FRAC + 10;
 
     /** Max string length of a signed long = 9223372036854775807 (19+1 for minus sign) */
     public static final int MAX_SIGNED_LONG_LEN = 20;
@@ -71,12 +73,12 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         return vf.createFromDate(getDate(bytes, offset, length));
     }
 
-    public <T> T decodeTime(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromTime(getTime(bytes, offset, length));
+    public <T> T decodeTime(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
+        return vf.createFromTime(getTime(bytes, offset, length, scale));
     }
 
-    public <T> T decodeTimestamp(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromTimestamp(getTimestamp(bytes, offset, length));
+    public <T> T decodeTimestamp(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
+        return vf.createFromTimestamp(getTimestamp(bytes, offset, length, scale));
     }
 
     public <T> T decodeUInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
@@ -243,11 +245,13 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     }
 
     public static boolean isTime(String s) {
-        return s.length() >= TIME_STR_LEN_MIN && s.length() <= TIME_STR_LEN_MAX && s.charAt(2) == ':' && s.charAt(5) == ':';
+        return s.contains(".") ? //
+                s.length() >= TIME_STR_LEN_MIN && s.length() <= TIME_STR_LEN_MAX_WITH_MICROS && s.charAt(2) == ':' && s.charAt(5) == ':'
+                : s.length() >= TIME_STR_LEN_MIN && s.length() <= TIME_STR_LEN_MAX_NO_FRAC && s.charAt(2) == ':' && s.charAt(5) == ':';
     }
 
     public static boolean isTimestamp(String s) {
-        return s.length() >= TIMESTAMP_NOFRAC_STR_LEN && (s.length() <= TIMESTAMP_STR_LEN_MAX || s.length() == TIMESTAMP_STR_LEN_WITH_NANOS)
+        return s.length() >= TIMESTAMP_STR_LEN_NO_FRAC && (s.length() <= TIMESTAMP_STR_LEN_WITH_MICROS || s.length() == TIMESTAMP_STR_LEN_WITH_NANOS)
                 && s.charAt(4) == '-' && s.charAt(7) == '-' && s.charAt(10) == ' ' && s.charAt(13) == ':' && s.charAt(16) == ':';
     }
 
@@ -261,12 +265,12 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         return new InternalDate(year, month, day);
     }
 
-    public static InternalTime getTime(byte[] bytes, int offset, int length) {
+    public static InternalTime getTime(byte[] bytes, int offset, int length, int scale) {
         int pos = 0;
         // used to track the length of the current time segment during parsing
         int segmentLen;
 
-        if (length < TIME_STR_LEN_MIN || length > TIME_STR_LEN_MAX) {
+        if (length < TIME_STR_LEN_MIN || length > TIME_STR_LEN_MAX_WITH_MICROS) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIME" }));
         }
 
@@ -331,15 +335,15 @@ public class MysqlTextValueDecoder implements ValueDecoder {
             nanos = nanos * (int) Math.pow(10, 9 - segmentLen);
         }
 
-        return new InternalTime(hours, minutes, seconds, nanos);
+        return new InternalTime(hours, minutes, seconds, nanos, scale);
     }
 
-    public static InternalTimestamp getTimestamp(byte[] bytes, int offset, int length) {
-        if (length < TIMESTAMP_NOFRAC_STR_LEN || (length > TIMESTAMP_STR_LEN_MAX && length != TIMESTAMP_STR_LEN_WITH_NANOS)) {
+    public static InternalTimestamp getTimestamp(byte[] bytes, int offset, int length, int scale) {
+        if (length < TIMESTAMP_STR_LEN_NO_FRAC || (length > TIMESTAMP_STR_LEN_WITH_MICROS && length != TIMESTAMP_STR_LEN_WITH_NANOS)) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIMESTAMP" }));
-        } else if (length != TIMESTAMP_NOFRAC_STR_LEN) {
+        } else if (length != TIMESTAMP_STR_LEN_NO_FRAC) {
             // need at least two extra bytes for fractional, '.' and a digit
-            if (bytes[offset + TIMESTAMP_NOFRAC_STR_LEN] != (byte) '.' || length < TIMESTAMP_NOFRAC_STR_LEN + 2) {
+            if (bytes[offset + TIMESTAMP_STR_LEN_NO_FRAC] != (byte) '.' || length < TIMESTAMP_STR_LEN_NO_FRAC + 2) {
                 throw new DataReadException(
                         Messages.getString("ResultSet.InvalidFormatForType", new Object[] { StringUtils.toString(bytes, offset, length), "TIMESTAMP" }));
             }
@@ -363,12 +367,12 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         if (length == TIMESTAMP_STR_LEN_WITH_NANOS) {
             nanos = getInt(bytes, offset + 20, offset + length);
         } else {
-            nanos = (length == TIMESTAMP_NOFRAC_STR_LEN) ? 0 : getInt(bytes, offset + 20, offset + length);
+            nanos = (length == TIMESTAMP_STR_LEN_NO_FRAC) ? 0 : getInt(bytes, offset + 20, offset + length);
             // scale out nanos appropriately. mysql supports up to 6 digits of fractional seconds, each additional digit increasing the range by a factor of
             // 10. one digit is tenths, two is hundreths, etc
-            nanos = nanos * (int) Math.pow(10, 9 - (length - TIMESTAMP_NOFRAC_STR_LEN - 1));
+            nanos = nanos * (int) Math.pow(10, 9 - (length - TIMESTAMP_STR_LEN_NO_FRAC - 1));
         }
 
-        return new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos);
+        return new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos, scale);
     }
 }

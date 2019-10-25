@@ -84,13 +84,13 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
         switch (f.getMysqlTypeId()) {
             case MysqlType.FIELD_TYPE_DATETIME:
             case MysqlType.FIELD_TYPE_TIMESTAMP:
-                return this.valueDecoder.decodeTimestamp(bytes, offset, length, vf);
+                return this.valueDecoder.decodeTimestamp(bytes, offset, length, f.getDecimals(), vf);
 
             case MysqlType.FIELD_TYPE_DATE:
                 return this.valueDecoder.decodeDate(bytes, offset, length, vf);
 
             case MysqlType.FIELD_TYPE_TIME:
-                return this.valueDecoder.decodeTime(bytes, offset, length, vf);
+                return this.valueDecoder.decodeTime(bytes, offset, length, f.getDecimals(), vf);
 
             case MysqlType.FIELD_TYPE_TINY:
                 return f.isUnsigned() ? this.valueDecoder.decodeUInt1(bytes, offset, length, vf) : this.valueDecoder.decodeInt1(bytes, offset, length, vf);
@@ -200,11 +200,11 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
 
             case DATETIME:
             case TIMESTAMP:
-                return this.valueDecoder.decodeTimestamp(bytes, offset, length, vf);
+                return this.valueDecoder.decodeTimestamp(bytes, offset, length, f.getDecimals(), vf);
             case DATE:
                 return this.valueDecoder.decodeDate(bytes, offset, length, vf);
             case TIME:
-                return this.valueDecoder.decodeTime(bytes, offset, length, vf);
+                return this.valueDecoder.decodeTime(bytes, offset, length, f.getDecimals(), vf);
 
             case NULL:
                 return vf.createFromNull();

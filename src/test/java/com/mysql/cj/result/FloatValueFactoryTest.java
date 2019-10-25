@@ -71,7 +71,7 @@ public class FloatValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.lang.Float", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                FloatValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0));
+                FloatValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0, 0));
                 return null;
             }
         });
@@ -82,7 +82,7 @@ public class FloatValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIMESTAMP to java.lang.Float", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                FloatValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0));
+                FloatValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0, 0));
                 return null;
             }
         });

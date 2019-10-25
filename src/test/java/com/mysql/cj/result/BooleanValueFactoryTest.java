@@ -70,7 +70,7 @@ public class BooleanValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.lang.Boolean", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                BooleanValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0));
+                BooleanValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0, 0));
                 return null;
             }
         });
@@ -81,7 +81,7 @@ public class BooleanValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIMESTAMP to java.lang.Boolean", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                BooleanValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0));
+                BooleanValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0, 0));
                 return null;
             }
         });

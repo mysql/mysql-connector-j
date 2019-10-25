@@ -77,16 +77,16 @@ public class SqlTimestampValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromTime() {
-        Timestamp ts = this.vf.createFromTime(new InternalTime(12, 20, 02, 4));
+        Timestamp ts = this.vf.createFromTime(new InternalTime(12, 20, 02, 4, 9));
         assertEquals("1970-01-01 12:20:02.000000004", ts.toString());
-        assertEquals(Timestamp.valueOf(LocalDateTime.of(1970, 1, 1, 1, 1, 1, 1)), this.vf.createFromTime(new InternalTime(1, 1, 1, 1)));
+        assertEquals(Timestamp.valueOf(LocalDateTime.of(1970, 1, 1, 1, 1, 1, 1)), this.vf.createFromTime(new InternalTime(1, 1, 1, 1, 9)));
 
         assertThrows(DataReadException.class,
                 "The value '-1:0:0' is an invalid TIME value. JDBC Time objects represent a wall-clock time and not a duration as MySQL treats them. If you are treating this type as a duration, consider retrieving this value as a string and dealing with it according to your requirements.",
                 new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        SqlTimestampValueFactoryTest.this.vf.createFromTime(new InternalTime(-1, 0, 0, 0));
+                        SqlTimestampValueFactoryTest.this.vf.createFromTime(new InternalTime(-1, 0, 0, 0, 9));
                         return null;
                     }
                 });
@@ -96,7 +96,7 @@ public class SqlTimestampValueFactoryTest extends CommonAsserts {
                 new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        SqlTimestampValueFactoryTest.this.vf.createFromTime(new InternalTime(44, 0, 0, 0));
+                        SqlTimestampValueFactoryTest.this.vf.createFromTime(new InternalTime(44, 0, 0, 0, 9));
                         return null;
                     }
                 });
@@ -104,36 +104,37 @@ public class SqlTimestampValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromTimestamp() {
-        Timestamp ts = this.vf.createFromTimestamp(new InternalTimestamp(2015, 05, 01, 12, 20, 02, 4));
+        Timestamp ts = this.vf.createFromTimestamp(new InternalTimestamp(2015, 05, 01, 12, 20, 02, 4, 9));
         // should be the same (in system timezone)
         assertEquals("2015-05-01 12:20:02.000000004", ts.toString());
-        assertEquals(Timestamp.valueOf(LocalDateTime.of(2018, 1, 1, 1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 1, 1, 1, 1, 1)));
+        assertEquals(Timestamp.valueOf(LocalDateTime.of(2018, 1, 1, 1, 1, 1, 1)),
+                this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 1, 1, 1, 1, 1, 9)));
 
         assertThrows(DataReadException.class, "Zero date value prohibited", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 0, 1, 1, 1, 1));
+                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 0, 1, 1, 1, 1, 9));
                 return null;
             }
         });
         assertThrows(WrongArgumentException.class, "YEAR", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 1, 1, 1, 1, 1));
+                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 1, 1, 1, 1, 1, 9));
                 return null;
             }
         });
         assertThrows(WrongArgumentException.class, "YEAR", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 0, 1, 1, 1, 1));
+                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 0, 1, 1, 1, 1, 9));
                 return null;
             }
         });
         assertThrows(WrongArgumentException.class, "YEAR", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 1, 1, 1, 1, 1));
+                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 1, 1, 1, 1, 1, 9));
                 return null;
             }
         });
@@ -141,14 +142,14 @@ public class SqlTimestampValueFactoryTest extends CommonAsserts {
         assertThrows(WrongArgumentException.class, "MONTH", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 0, 1, 1, 1, 1));
+                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 0, 1, 1, 1, 1, 9));
                 return null;
             }
         });
         assertThrows(WrongArgumentException.class, "MONTH", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 1, 1, 1, 1, 1));
+                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 1, 1, 1, 1, 1, 9));
                 return null;
             }
         });
@@ -156,7 +157,7 @@ public class SqlTimestampValueFactoryTest extends CommonAsserts {
         assertThrows(WrongArgumentException.class, "DAY_OF_MONTH", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 0, 1, 1, 1, 1));
+                SqlTimestampValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 0, 1, 1, 1, 1, 9));
                 return null;
             }
         });

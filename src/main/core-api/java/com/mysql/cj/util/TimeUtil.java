@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -180,7 +180,22 @@ public class TimeUtil {
      * @return fractional seconds part as a string
      */
     public static String formatNanos(int nanos, int fsp) {
+        return formatNanos(nanos, fsp, true);
+    }
 
+    /**
+     * Return a string representation of a fractional seconds part. This method assumes that all Timestamp adjustments are already done before,
+     * thus no rounding is needed, only a proper "0" padding to be done.
+     * 
+     * @param nanos
+     *            fractional seconds value
+     * @param fsp
+     *            required fractional part length
+     * @param truncateTrailingZeros
+     *            whether to remove trailing zero characters in a fractional part after formatting
+     * @return fractional seconds part as a string
+     */
+    public static String formatNanos(int nanos, int fsp, boolean truncateTrailingZeros) {
         if (nanos < 0 || nanos > 999999999) {
             throw ExceptionFactory.createException(WrongArgumentException.class, "nanos value must be in 0 to 999999999 range but was " + nanos);
         }
@@ -203,14 +218,13 @@ public class TimeUtil {
 
         nanosString = zeroPadding.substring(0, fsp - nanosString.length()) + nanosString;
 
-        int pos = fsp - 1; // the end, we're padded to the end by the code above
-
-        while (nanosString.charAt(pos) == '0') {
-            pos--;
+        if (truncateTrailingZeros) {
+            int pos = fsp - 1; // the end, we're padded to the end by the code above
+            while (nanosString.charAt(pos) == '0') {
+                pos--;
+            }
+            nanosString = nanosString.substring(0, pos + 1);
         }
-
-        nanosString = nanosString.substring(0, pos + 1);
-
         return nanosString;
     }
 
@@ -428,9 +442,17 @@ public class TimeUtil {
 
     private static final char getSuccessor(char c, int n) {
         return ((c == 'y') && (n == 2)) ? 'X'
-                : (((c == 'y') && (n < 4)) ? 'y' : ((c == 'y') ? 'M' : (((c == 'M') && (n == 2)) ? 'Y'
-                        : (((c == 'M') && (n < 3)) ? 'M' : ((c == 'M') ? 'd' : (((c == 'd') && (n < 2)) ? 'd' : ((c == 'd') ? 'H' : (((c == 'H') && (n < 2))
-                                ? 'H'
-                                : ((c == 'H') ? 'm' : (((c == 'm') && (n < 2)) ? 'm' : ((c == 'm') ? 's' : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
+                : (((c == 'y') && (n < 4)) ? 'y'
+                        : ((c == 'y') ? 'M'
+                                : (((c == 'M') && (n == 2)) ? 'Y'
+                                        : (((c == 'M') && (n < 3)) ? 'M'
+                                                : ((c == 'M') ? 'd'
+                                                        : (((c == 'd') && (n < 2)) ? 'd'
+                                                                : ((c == 'd') ? 'H'
+                                                                        : (((c == 'H') && (n < 2)) ? 'H'
+                                                                                : ((c == 'H') ? 'm'
+                                                                                        : (((c == 'm') && (n < 2)) ? 'm'
+                                                                                                : ((c == 'm') ? 's'
+                                                                                                        : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
     }
 }

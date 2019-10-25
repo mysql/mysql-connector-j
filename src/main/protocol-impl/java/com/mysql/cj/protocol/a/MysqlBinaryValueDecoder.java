@@ -47,10 +47,10 @@ import com.mysql.cj.util.StringUtils;
  */
 public class MysqlBinaryValueDecoder implements ValueDecoder {
 
-    public <T> T decodeTimestamp(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+    public <T> T decodeTimestamp(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
         if (length == 0) {
             return vf.createFromTimestamp(new InternalTimestamp());
-        } else if (length != NativeConstants.BIN_LEN_DATE && length != NativeConstants.BIN_LEN_TIMESTAMP && length != NativeConstants.BIN_LEN_TIMESTAMP_NO_US) {
+        } else if (length != NativeConstants.BIN_LEN_DATE && length != NativeConstants.BIN_LEN_TIMESTAMP_WITH_MICROS && length != NativeConstants.BIN_LEN_TIMESTAMP_NO_FRAC) {
             // the value can be any of these lengths (check protocol docs)
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIMESTAMP" }));
         }
@@ -75,19 +75,19 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
             seconds = bytes[offset + 6];
         }
 
-        if (length > NativeConstants.BIN_LEN_TIMESTAMP_NO_US) {
+        if (length > NativeConstants.BIN_LEN_TIMESTAMP_NO_FRAC) {
             // MySQL PS protocol uses microseconds
             nanos = 1000 * ((bytes[offset + 7] & 0xff) | ((bytes[offset + 8] & 0xff) << 8) | ((bytes[offset + 9] & 0xff) << 16)
                     | ((bytes[offset + 10] & 0xff) << 24));
         }
 
-        return vf.createFromTimestamp(new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos));
+        return vf.createFromTimestamp(new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos, scale));
     }
 
-    public <T> T decodeTime(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
+    public <T> T decodeTime(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
         if (length == 0) {
             return vf.createFromTime(new InternalTime());
-        } else if (length != NativeConstants.BIN_LEN_TIME && length != NativeConstants.BIN_LEN_TIME_NO_US) {
+        } else if (length != NativeConstants.BIN_LEN_TIME_WITH_MICROS && length != NativeConstants.BIN_LEN_TIME_NO_FRAC) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIME" }));
         }
 
@@ -108,13 +108,13 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
             days *= -1;
         }
 
-        if (length > NativeConstants.BIN_LEN_TIMESTAMP_NO_US) {
+        if (length > NativeConstants.BIN_LEN_TIME_NO_FRAC) {
             // MySQL PS protocol uses microseconds
-            nanos = 1000 * (bytes[offset + 1] & 0xff) | ((bytes[offset + 2] & 0xff) << 8) | ((bytes[offset + 3] & 0xff) << 16)
-                    | ((bytes[offset + 4] & 0xff) << 24);
+            nanos = 1000 * ((bytes[offset + 8] & 0xff) | ((bytes[offset + 9] & 0xff) << 8) | ((bytes[offset + 10] & 0xff) << 16)
+                    | ((bytes[offset + 11] & 0xff) << 24));
         }
 
-        return vf.createFromTime(new InternalTime(days * 24 + hours, minutes, seconds, nanos));
+        return vf.createFromTime(new InternalTime(days * 24 + hours, minutes, seconds, nanos, scale));
     }
 
     public <T> T decodeDate(byte[] bytes, int offset, int length, ValueFactory<T> vf) {

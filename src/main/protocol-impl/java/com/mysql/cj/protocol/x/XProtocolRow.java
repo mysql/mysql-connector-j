@@ -78,7 +78,9 @@ public class XProtocolRow implements com.mysql.cj.result.Row {
 
             case MysqlType.FIELD_TYPE_DATETIME:
                 this.wasNull = false;
-                return XProtocolDecoder.instance.decodeTimestamp(byteString.toByteArray(), 0, byteString.size(), vf);
+                // TODO scale is unavailable from X Protocol
+                //return XProtocolDecoder.instance.decodeTimestamp(byteString.toByteArray(), 0, byteString.size(), f.getDecimals(), vf);
+                return XProtocolDecoder.instance.decodeTimestamp(byteString.toByteArray(), 0, byteString.size(), 6, vf);
 
             case MysqlType.FIELD_TYPE_DOUBLE:
                 this.wasNull = false;
@@ -120,7 +122,9 @@ public class XProtocolRow implements com.mysql.cj.result.Row {
 
             case MysqlType.FIELD_TYPE_TIME:
                 this.wasNull = false;
-                return XProtocolDecoder.instance.decodeTime(byteString.toByteArray(), 0, byteString.size(), vf);
+                // TODO scale is unavailable from X Protocol
+                //return XProtocolDecoder.instance.decodeTime(byteString.toByteArray(), 0, byteString.size(), f.getDecimals(), vf);
+                return XProtocolDecoder.instance.decodeTime(byteString.toByteArray(), 0, byteString.size(), 6, vf);
 
             case MysqlType.FIELD_TYPE_VARCHAR:
                 this.wasNull = false;

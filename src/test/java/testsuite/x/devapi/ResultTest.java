@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -154,9 +154,9 @@ public class ResultTest extends DevApiBaseTestCase {
         assertEquals("2015-09-22", r.getString("w"));
         // use string comparison for java.sql.Date objects
         assertEquals(w.toString(), r.getDate("w").toString());
-        assertEquals("2015-09-22 12:31:16.136000000", r.getString("x"));
+        assertEquals("2015-09-22 12:31:16.136000", r.getString("x"));
         assertEquals(theDate, r.getTimestamp("x"));
-        assertEquals("2015-09-22 12:31:16.136000000", r.getString("y"));
+        assertEquals("2015-09-22 12:31:16.136000", r.getString("y"));
         assertEquals(y.toString(), r.getTimestamp("y").toString());
         assertEquals("12:31:16", r.getString("z"));
         assertEquals(z.toString(), r.getTime("z").toString());

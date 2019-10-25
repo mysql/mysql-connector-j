@@ -79,7 +79,7 @@ public abstract class AbstractDateTimeValueFactory<T> extends DefaultValueFactor
                 case CONVERT_TO_NULL:
                     return null;
                 case ROUND:
-                    return localCreateFromTimestamp(new InternalTimestamp(1, 1, 1, 0, 0, 0, 0));
+                    return localCreateFromTimestamp(new InternalTimestamp(1, 1, 1, 0, 0, 0, 0, 0));
                 default:
                     break;
             }
@@ -115,10 +115,10 @@ public abstract class AbstractDateTimeValueFactory<T> extends DefaultValueFactor
             return createFromDate(MysqlTextValueDecoder.getDate(newBytes, 0, newBytes.length));
 
         } else if (MysqlTextValueDecoder.isTime(s)) {
-            return createFromTime(MysqlTextValueDecoder.getTime(newBytes, 0, newBytes.length));
+            return createFromTime(MysqlTextValueDecoder.getTime(newBytes, 0, newBytes.length, f.getDecimals()));
 
         } else if (MysqlTextValueDecoder.isTimestamp(s)) {
-            return createFromTimestamp(MysqlTextValueDecoder.getTimestamp(newBytes, 0, newBytes.length));
+            return createFromTimestamp(MysqlTextValueDecoder.getTimestamp(newBytes, 0, newBytes.length, f.getDecimals()));
         }
         throw new DataConversionException(Messages.getString("ResultSet.UnableToConvertString", new Object[] { s, getTargetTypeName() }));
     }

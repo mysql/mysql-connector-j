@@ -76,13 +76,13 @@ public class MysqlTextValueDecoderTest {
         };
 
         // the fractional second part is determined by the # of digits
-        assertEquals(new Integer(900000000), this.valueDecoder.decodeTimestamp("2016-03-14 14:34:01.9".getBytes(), 0, 21, vf));
-        assertEquals(new Integer(950000000), this.valueDecoder.decodeTimestamp("2016-03-14 14:34:01.95".getBytes(), 0, 22, vf));
-        assertEquals(new Integer(956000000), this.valueDecoder.decodeTimestamp("2016-03-14 14:34:01.956".getBytes(), 0, 23, vf));
+        assertEquals(new Integer(900000000), this.valueDecoder.decodeTimestamp("2016-03-14 14:34:01.9".getBytes(), 0, 21, 9, vf));
+        assertEquals(new Integer(950000000), this.valueDecoder.decodeTimestamp("2016-03-14 14:34:01.95".getBytes(), 0, 22, 9, vf));
+        assertEquals(new Integer(956000000), this.valueDecoder.decodeTimestamp("2016-03-14 14:34:01.956".getBytes(), 0, 23, 9, vf));
 
-        assertEquals(new Integer(900000000), this.valueDecoder.decodeTime("14:34:01.9".getBytes(), 0, 10, vf));
-        assertEquals(new Integer(950000000), this.valueDecoder.decodeTime("14:34:01.95".getBytes(), 0, 11, vf));
-        assertEquals(new Integer(956000000), this.valueDecoder.decodeTime("14:34:01.956".getBytes(), 0, 12, vf));
+        assertEquals(new Integer(900000000), this.valueDecoder.decodeTime("14:34:01.9".getBytes(), 0, 10, 9, vf));
+        assertEquals(new Integer(950000000), this.valueDecoder.decodeTime("14:34:01.95".getBytes(), 0, 11, 9, vf));
+        assertEquals(new Integer(956000000), this.valueDecoder.decodeTime("14:34:01.956".getBytes(), 0, 12, 9, vf));
     }
 
     @Test

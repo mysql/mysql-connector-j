@@ -77,16 +77,16 @@ public class SqlTimeValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromTime() {
-        Time t = this.vf.createFromTime(new InternalTime(12, 20, 02, 4));
+        Time t = this.vf.createFromTime(new InternalTime(12, 20, 02, 4, 9));
         assertEquals("12:20:02", t.toString());
-        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTime(new InternalTime(1, 1, 1, 1)));
+        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTime(new InternalTime(1, 1, 1, 1, 9)));
 
         assertThrows(DataReadException.class,
                 "The value '-1:0:0' is an invalid TIME value. JDBC Time objects represent a wall-clock time and not a duration as MySQL treats them. If you are treating this type as a duration, consider retrieving this value as a string and dealing with it according to your requirements.",
                 new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        SqlTimeValueFactoryTest.this.vf.createFromTime(new InternalTime(-1, 0, 0, 0));
+                        SqlTimeValueFactoryTest.this.vf.createFromTime(new InternalTime(-1, 0, 0, 0, 9));
                         return null;
                     }
                 });
@@ -96,7 +96,7 @@ public class SqlTimeValueFactoryTest extends CommonAsserts {
                 new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        SqlTimeValueFactoryTest.this.vf.createFromTime(new InternalTime(44, 0, 0, 0));
+                        SqlTimeValueFactoryTest.this.vf.createFromTime(new InternalTime(44, 0, 0, 0, 9));
                         return null;
                     }
                 });
@@ -104,17 +104,17 @@ public class SqlTimeValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromTimestamp() {
-        Time t = this.vf.createFromTimestamp(new InternalTimestamp(2015, 05, 01, 12, 20, 02, 4));
+        Time t = this.vf.createFromTimestamp(new InternalTimestamp(2015, 05, 01, 12, 20, 02, 4, 9));
         // should be the same (in system timezone)
         assertEquals("12:20:02", t.toString());
-        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 1, 1, 1, 1, 1)));
-        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 0, 1, 1, 1, 1)));
-        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 1, 1, 1, 1, 1)));
-        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 0, 1, 1, 1, 1)));
-        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 1, 1, 1, 1, 1)));
-        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 0, 1, 1, 1, 1)));
-        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 1, 1, 1, 1, 1)));
-        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 0, 1, 1, 1, 1)));
+        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 1, 1, 1, 1, 1, 9)));
+        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 0, 1, 1, 1, 1, 9)));
+        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 1, 1, 1, 1, 1, 9)));
+        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 0, 1, 1, 1, 1, 9)));
+        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 1, 1, 1, 1, 1, 9)));
+        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 0, 1, 1, 1, 1, 9)));
+        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 1, 1, 1, 1, 1, 9)));
+        assertEquals(Time.valueOf(LocalTime.of(1, 1, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 0, 1, 1, 1, 1, 9)));
     }
 
     @Test

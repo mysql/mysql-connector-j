@@ -72,7 +72,7 @@ public class ShortValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.lang.Short", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                ShortValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0));
+                ShortValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0, 0));
                 return null;
             }
         });
@@ -83,7 +83,7 @@ public class ShortValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIMESTAMP to java.lang.Short", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                ShortValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0));
+                ShortValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0, 0));
                 return null;
             }
         });

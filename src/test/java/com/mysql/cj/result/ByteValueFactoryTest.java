@@ -73,7 +73,7 @@ public class ByteValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.lang.Byte", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                ByteValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0));
+                ByteValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0, 0));
                 return null;
             }
         });
@@ -84,7 +84,7 @@ public class ByteValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIMESTAMP to java.lang.Byte", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                ByteValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0));
+                ByteValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0, 0));
                 return null;
             }
         });

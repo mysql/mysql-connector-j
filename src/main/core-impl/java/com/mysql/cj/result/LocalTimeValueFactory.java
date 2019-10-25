@@ -74,7 +74,7 @@ public class LocalTimeValueFactory extends AbstractDateTimeValueFactory<LocalTim
             this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { getTargetTypeName() }));
         }
         // truncate date information
-        return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos()));
+        return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos(), its.getScale()));
     }
 
     @Override

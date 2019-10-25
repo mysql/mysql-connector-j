@@ -54,7 +54,7 @@ public class LocalDateTimeValueFactory extends AbstractDateTimeValueFactory<Loca
      */
     @Override
     public LocalDateTime localCreateFromDate(InternalDate idate) {
-        return createFromTimestamp(new InternalTimestamp(idate.getYear(), idate.getMonth(), idate.getDay(), 0, 0, 0, 0));
+        return createFromTimestamp(new InternalTimestamp(idate.getYear(), idate.getMonth(), idate.getDay(), 0, 0, 0, 0, 0));
     }
 
     /**
@@ -68,7 +68,7 @@ public class LocalDateTimeValueFactory extends AbstractDateTimeValueFactory<Loca
             throw new DataReadException(
                     Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + it.getHours() + ":" + it.getMinutes() + ":" + it.getSeconds() }));
         }
-        return createFromTimestamp(new InternalTimestamp(1970, 1, 1, it.getHours(), it.getMinutes(), it.getSeconds(), it.getNanos()));
+        return createFromTimestamp(new InternalTimestamp(1970, 1, 1, it.getHours(), it.getMinutes(), it.getSeconds(), it.getNanos(), it.getScale()));
     }
 
     @Override

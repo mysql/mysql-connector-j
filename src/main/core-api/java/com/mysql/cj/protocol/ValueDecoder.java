@@ -41,9 +41,9 @@ import com.mysql.cj.result.ValueFactory;
 public interface ValueDecoder {
     <T> T decodeDate(byte[] bytes, int offset, int length, ValueFactory<T> vf);
 
-    <T> T decodeTime(byte[] bytes, int offset, int length, ValueFactory<T> vf);
+    <T> T decodeTime(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf);
 
-    <T> T decodeTimestamp(byte[] bytes, int offset, int length, ValueFactory<T> vf);
+    <T> T decodeTimestamp(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf);
 
     <T> T decodeInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf);
 

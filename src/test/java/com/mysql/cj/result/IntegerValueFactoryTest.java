@@ -72,7 +72,7 @@ public class IntegerValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.lang.Integer", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                IntegerValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0));
+                IntegerValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0, 0));
                 return null;
             }
         });
@@ -83,7 +83,7 @@ public class IntegerValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIMESTAMP to java.lang.Integer", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                IntegerValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0));
+                IntegerValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0, 0));
                 return null;
             }
         });

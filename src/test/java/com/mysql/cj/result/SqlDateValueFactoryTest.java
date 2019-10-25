@@ -72,44 +72,44 @@ public class SqlDateValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromTime() {
-        assertEquals("1970-01-01", this.vf.createFromTime(new InternalTime(12, 20, 02, 4)).toString());
-        assertEquals("1970-01-01", this.vf.createFromTime(new InternalTime(1, 1, 1, 1)).toString());
-        assertEquals("1970-01-01", this.vf.createFromTime(new InternalTime(-1, 1, 1, 1)).toString());
-        assertEquals("1970-01-03", this.vf.createFromTime(new InternalTime(48, 1, 1, 1)).toString());
+        assertEquals("1970-01-01", this.vf.createFromTime(new InternalTime(12, 20, 02, 4, 9)).toString());
+        assertEquals("1970-01-01", this.vf.createFromTime(new InternalTime(1, 1, 1, 1, 9)).toString());
+        assertEquals("1970-01-01", this.vf.createFromTime(new InternalTime(-1, 1, 1, 1, 9)).toString());
+        assertEquals("1970-01-03", this.vf.createFromTime(new InternalTime(48, 1, 1, 1, 9)).toString());
     }
 
     @Test
     public void testCreateFromTimestamp() {
-        Date d = this.vf.createFromTimestamp(new InternalTimestamp(2015, 05, 01, 12, 20, 02, 4));
+        Date d = this.vf.createFromTimestamp(new InternalTimestamp(2015, 05, 01, 12, 20, 02, 4, 9));
         // should be the same (in system timezone)
         assertEquals("2015-05-01", d.toString());
-        assertEquals(Date.valueOf(LocalDate.of(2018, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 1, 1, 1, 1, 1)));
+        assertEquals(Date.valueOf(LocalDate.of(2018, 1, 1)), this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 1, 1, 1, 1, 1, 9)));
 
         assertThrows(WrongArgumentException.class, "YEAR", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 0, 1, 1, 1, 1));
+                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 0, 1, 1, 1, 1, 9));
                 return null;
             }
         });
         assertThrows(WrongArgumentException.class, "YEAR", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 1, 1, 1, 1, 1));
+                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 0, 1, 1, 1, 1, 1, 9));
                 return null;
             }
         });
         assertThrows(WrongArgumentException.class, "YEAR", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 0, 1, 1, 1, 1));
+                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 0, 1, 1, 1, 1, 9));
                 return null;
             }
         });
         assertThrows(WrongArgumentException.class, "YEAR", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 1, 1, 1, 1, 1));
+                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(0, 1, 1, 1, 1, 1, 1, 9));
                 return null;
             }
         });
@@ -117,14 +117,14 @@ public class SqlDateValueFactoryTest extends CommonAsserts {
         assertThrows(WrongArgumentException.class, "MONTH", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 0, 1, 1, 1, 1));
+                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 0, 1, 1, 1, 1, 9));
                 return null;
             }
         });
         assertThrows(WrongArgumentException.class, "MONTH", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 1, 1, 1, 1, 1));
+                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 0, 1, 1, 1, 1, 1, 9));
                 return null;
             }
         });
@@ -132,7 +132,7 @@ public class SqlDateValueFactoryTest extends CommonAsserts {
         assertThrows(WrongArgumentException.class, "DAY_OF_MONTH", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 0, 1, 1, 1, 1));
+                SqlDateValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2018, 1, 0, 1, 1, 1, 1, 9));
                 return null;
             }
         });

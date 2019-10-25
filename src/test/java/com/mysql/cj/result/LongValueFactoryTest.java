@@ -72,7 +72,7 @@ public class LongValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.lang.Long", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                LongValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0));
+                LongValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0, 0));
                 return null;
             }
         });
@@ -83,7 +83,7 @@ public class LongValueFactoryTest extends CommonAsserts {
         assertThrows(DataConversionException.class, "Unsupported conversion from TIMESTAMP to java.lang.Long", new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                LongValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0));
+                LongValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0, 0));
                 return null;
             }
         });

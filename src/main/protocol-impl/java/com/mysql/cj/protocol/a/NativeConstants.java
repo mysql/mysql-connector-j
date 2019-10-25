@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -55,10 +55,10 @@ public class NativeConstants {
     public static final int BIN_LEN_FLOAT = 4;
     public static final int BIN_LEN_DOUBLE = 8;
     public static final int BIN_LEN_DATE = 4;
-    public static final int BIN_LEN_TIMESTAMP = 11;
-    public static final int BIN_LEN_TIMESTAMP_NO_US = 7;
-    public static final int BIN_LEN_TIME = 8;
-    public static final int BIN_LEN_TIME_NO_US = 12;
+    public static final int BIN_LEN_TIMESTAMP_NO_FRAC = 7;
+    public static final int BIN_LEN_TIMESTAMP_WITH_MICROS = 11;
+    public static final int BIN_LEN_TIME_NO_FRAC = 8;
+    public static final int BIN_LEN_TIME_WITH_MICROS = 12;
 
     /*
      * Command signatures
