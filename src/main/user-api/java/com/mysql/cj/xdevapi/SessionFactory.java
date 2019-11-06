@@ -29,13 +29,16 @@
 
 package com.mysql.cj.xdevapi;
 
+import java.util.List;
 import java.util.Properties;
 
+import com.mysql.cj.Messages;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
 
@@ -75,16 +78,20 @@ public class SessionFactory {
      * @return a {@link Session} instance.
      */
     protected Session getSession(ConnectionUrl connUrl) {
-        CJCommunicationsException latestException = null;
-        for (HostInfo hi : connUrl.getHostsList()) {
+        CJException latestException = null;
+        List<HostInfo> hostsList = connUrl.getHostsList();
+        for (HostInfo hi : hostsList) {
             try {
                 return new SessionImpl(hi);
             } catch (CJCommunicationsException e) {
+                if (e.getCause() == null) {
+                    throw e;
+                }
                 latestException = e;
             }
         }
         if (latestException != null) {
-            throw latestException;
+            throw ExceptionFactory.createException(CJCommunicationsException.class, Messages.getString("Session.Create.Failover.0"), latestException);
         }
         return null;
     }

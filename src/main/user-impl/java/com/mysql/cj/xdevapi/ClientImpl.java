@@ -32,8 +32,10 @@ package com.mysql.cj.xdevapi;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -43,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.mysql.cj.Messages;
 import com.mysql.cj.conf.BooleanPropertyDefinition;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.DefaultPropertySet;
@@ -51,8 +54,10 @@ import com.mysql.cj.conf.IntegerPropertyDefinition;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJException;
+import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XProtocol;
+import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.util.StringUtils;
 
 public class ClientImpl implements Client {
@@ -64,6 +69,9 @@ public class ClientImpl implements Client {
     private int maxSize = 25;
     int maxIdleTime = 0;
     private int queueTimeout = 0;
+
+    private int demotedTimeout = 120_000;
+    Map<HostInfo, Long> demotedHosts = null;
 
     BlockingQueue<PooledXProtocol> idleProtocols = null;
     Set<WeakReference<PooledXProtocol>> activeProtocols = null;
@@ -225,6 +233,7 @@ public class ClientImpl implements Client {
         validateAndInitializeClientProps(clientProps);
 
         if (this.poolingEnabled) {
+            this.demotedHosts = new HashMap<>();
             this.idleProtocols = new LinkedBlockingQueue<>(this.maxSize);
             this.activeProtocols = new HashSet<>(this.maxSize);
         } else {
@@ -263,8 +272,9 @@ public class ClientImpl implements Client {
 
         synchronized (this.idleProtocols) {
             // 0. Close and remove idle protocols connected to a host that is not usable anymore.
-            this.idleProtocols.stream().filter(p -> !p.isHostInfoValid(hostsList)).collect(Collectors.toList()).stream().peek(PooledXProtocol::realClose)
-                    .forEach(this.idleProtocols::remove);
+            List<PooledXProtocol> toCloseAndRemove = this.idleProtocols.stream().filter(p -> !p.isHostInfoValid(hostsList)).collect(Collectors.toList());
+            toCloseAndRemove.stream().peek(PooledXProtocol::realClose).peek(this.idleProtocols::remove).map(PooledXProtocol::getHostInfo).sequential()
+                    .forEach(this.demotedHosts::remove);
         }
 
         long start = System.currentTimeMillis();
@@ -278,29 +288,59 @@ public class ClientImpl implements Client {
                         if (tryProt.isIdleTimeoutReached()) {
                             tryProt.realClose(); // close expired Session, try next idle Session
                         } else {
-                            prot = tryProt;
+                            try {
+                                tryProt.reset();
+                                prot = tryProt;
+                            } catch (CJCommunicationsException | XProtocolError e) {
+                                // This session is useless, let's try another one.
+                            }
                         }
-
                     }
 
                 } else if (this.idleProtocols.size() + this.activeProtocols.size() < this.maxSize) {
                     // 2. No idle Protocols but the pool has free space. Adding new Protocol to pool.
-                    CJCommunicationsException latestException = null;
+                    CJException latestException = null;
+                    List<HostInfo> hostsToRevisit = new ArrayList<>();
                     for (HostInfo hi : hostsList) {
-                        PooledXProtocol tryProt = null;
+                        if (this.demotedHosts.containsKey(hi)) {
+                            if (start - this.demotedHosts.get(hi) > this.demotedTimeout) {
+                                this.demotedHosts.remove(hi);
+                            } else {
+                                hostsToRevisit.add(hi);
+                                continue;
+                            }
+                        }
                         try {
-                            PropertySet pset = new DefaultPropertySet();
-                            pset.initializeProperties(hi.exposeAsProperties());
-                            tryProt = new PooledXProtocol(hi, pset);
-                            tryProt.connect(hi.getUser(), hi.getPassword(), hi.getDatabase());
-                            prot = tryProt;
+                            prot = newPooledXProtocol(hi);
                             break;
                         } catch (CJCommunicationsException e) {
+                            if (e.getCause() == null) {
+                                throw e;
+                            }
                             latestException = e;
+                            this.demotedHosts.put(hi, System.currentTimeMillis());
+                        }
+                    }
+                    if (prot == null) {
+                        // All non-demoted hosts have failed, let's try the ones that were previously demoted before calling it a failure.
+                        for (HostInfo hi : hostsToRevisit) {
+                            try {
+                                prot = newPooledXProtocol(hi);
+                                // This host is fine now so re-promote it.
+                                this.demotedHosts.remove(hi);
+                                break;
+                            } catch (CJCommunicationsException e) {
+                                if (e.getCause() == null) {
+                                    throw e;
+                                }
+                                latestException = e;
+                                this.demotedHosts.put(hi, System.currentTimeMillis());
+                            }
                         }
                     }
                     if (prot == null && latestException != null) {
-                        throw latestException;
+                        throw ExceptionFactory.createException(CJCommunicationsException.class, Messages.getString("Session.Create.Failover.0"),
+                                latestException);
                     }
 
                 } else if (this.queueTimeout > 0) {
@@ -326,6 +366,15 @@ public class ClientImpl implements Client {
         this.activeProtocols.add(new WeakReference<>(prot));
         SessionImpl sess = new SessionImpl(prot);
         return sess;
+    }
+
+    private PooledXProtocol newPooledXProtocol(HostInfo hi) {
+        PooledXProtocol tryProt;
+        PropertySet pset = new DefaultPropertySet();
+        pset.initializeProperties(hi.exposeAsProperties());
+        tryProt = new PooledXProtocol(hi, pset);
+        tryProt.connect(hi.getUser(), hi.getPassword(), hi.getDatabase());
+        return tryProt;
     }
 
     @Override
@@ -384,6 +433,10 @@ public class ClientImpl implements Client {
             idleProtocol(this);
         }
 
+        public HostInfo getHostInfo() {
+            return this.hostInfo;
+        }
+
         boolean isIdleTimeoutReached() {
             return ClientImpl.this.maxIdleTime > 0 && this.idleSince > 0 && System.currentTimeMillis() > this.idleSince + ClientImpl.this.maxIdleTime;
         }
@@ -401,5 +454,4 @@ public class ClientImpl implements Client {
         }
 
     }
-
 }

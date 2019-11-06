@@ -3,6 +3,8 @@
 
 Version 8.0.19
 
+  - WL#13346, Support for mult-host and failover.
+
   - Fix for Bug#97413 (30477722), DATABASEMETADATA IS BROKEN AFTER SERVER WL#13528.
 
   - WL#13367, DNS SRV support.

@@ -30,6 +30,7 @@
 package testsuite.x.devapi;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -1468,14 +1469,14 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 final ClientFactory cf = new ClientFactory();
 
                 // TS.FR.1_1. Create an X DevAPI session using a connection string containing the connection property xdevapi.tls-versions with a single TLS protocol.
-                // Access that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
+                // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
                 testSession = this.fact.getSession(this.opensslTlsFreeBaseUrl + useAsyncProtocolParam + makeParam(PropertyKey.xdevapiTlsVersions, "TLSv1"));
                 assertSecureSession(testSession);
                 assertTlsVersion(testSession, "TLSv1");
                 testSession.close();
 
                 // TS.FR.1_2. Create an X DevAPI session using a connection string containing the connection property xdevapi.tls-versions with a valid list of TLS protocols.
-                // Access that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
+                // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
                 testSession = this.fact
                         .getSession(this.opensslTlsFreeBaseUrl + useAsyncProtocolParam + makeParam(PropertyKey.xdevapiTlsVersions, "TLSv1.2,TLSv1.1,TLSv1"));
                 assertSecureSession(testSession);
@@ -1483,7 +1484,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 testSession.close();
 
                 // TS.FR.1_3. Create an X DevAPI session using a connection properties map containing the connection property xdevapi.tls-versions with a single TLS protocol.
-                // Access that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
+                // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
                 propsOpenSSL.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "TLSv1");
                 testSession = this.fact.getSession(propsOpenSSL);
                 assertSecureSession(testSession);
@@ -1491,7 +1492,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 testSession.close();
 
                 // TS.FR.1_4. Create an X DevAPI session using a connection properties map containing the connection property xdevapi.tls-versions with a valid list of TLS protocols.
-                // Access that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
+                // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
                 propsOpenSSL.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "TLSv1.2,TLSv1.1,TLSv1");
                 testSession = this.fact.getSession(propsOpenSSL);
                 assertSecureSession(testSession);
@@ -1555,7 +1556,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                         });
 
                 // TS.FR.4_1. Create an X DevAPI session using a connection string containing the connection property xdevapi.tls-ciphersuites with a single valid cipher-suite.
-                // Access that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
+                // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
                 testSession = this.fact.getSession(
                         this.opensslTlsFreeBaseUrl + useAsyncProtocolParam + makeParam(PropertyKey.xdevapiTlsCiphersuites, "TLS_DHE_RSA_WITH_AES_128_CBC_SHA"));
                 assertSessionStatusEquals(testSession, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
@@ -1563,7 +1564,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 testSession.close();
 
                 // TS.FR.4_2. Create an X DevAPI session using a connection string containing the connection property xdevapi.tls-ciphersuites with a valid list of cipher-suites.
-                // Access that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
+                // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
                 testSession = this.fact.getSession(this.opensslTlsFreeBaseUrl + useAsyncProtocolParam
                         + makeParam(PropertyKey.xdevapiTlsCiphersuites, "TLS_DHE_RSA_WITH_AES_128_CBC_SHA,AES256-SHA256"));
                 assertSessionStatusEquals(testSession, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
@@ -1571,7 +1572,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 testSession.close();
 
                 // TS.FR.4_3   Create an X DevAPI session using a connection string containing the connection property xdevapi.tls-ciphersuites with a list of valid and invalid cipher-suites,
-                // starting with an invalid one. Access that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
+                // starting with an invalid one. Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
                 testSession = this.fact.getSession(this.opensslTlsFreeBaseUrl + useAsyncProtocolParam
                         + makeParam(PropertyKey.xdevapiTlsCiphersuites, "TLS_RSA_EXPORT1024_WITH_RC4_56_MD5,TLS_DHE_RSA_WITH_AES_128_CBC_SHA"));
                 assertSessionStatusEquals(testSession, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
@@ -1579,16 +1580,18 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 testSession.close();
 
                 // TS.FR.4_4. Create an X DevAPI session using a connection string containing the connection property xdevapi.tls-ciphersuites with a single invalid cipher-suite.
-                // Access that the connection property is initialized with the correct values and that the connection fails with an SSL error.
-                assertThrows(CJCommunicationsException.class,
-                        "javax.net.ssl.SSLHandshakeException: No appropriate protocol \\(protocol is disabled or cipher suites are inappropriate\\)", () -> {
-                            this.fact.getSession(this.opensslTlsFreeBaseUrl + useAsyncProtocolParam
-                                    + makeParam(PropertyKey.xdevapiTlsCiphersuites, "TLS_RSA_EXPORT1024_WITH_RC4_56_MD5"));
-                            return null;
-                        });
+                // Assess that the connection property is initialized with the correct values and that the connection fails with an SSL error.
+                Throwable ex = assertThrows(CJCommunicationsException.class, "Unable to connect to any of the target hosts\\.", () -> {
+                    this.fact.getSession(this.opensslTlsFreeBaseUrl + useAsyncProtocolParam
+                            + makeParam(PropertyKey.xdevapiTlsCiphersuites, "TLS_RSA_EXPORT1024_WITH_RC4_56_MD5"));
+                    return null;
+                });
+                assertNotNull(ex.getCause());
+                assertEquals("javax.net.ssl.SSLHandshakeException: No appropriate protocol (protocol is disabled or cipher suites are inappropriate)",
+                        ex.getCause().getMessage());
 
                 // TS.FR.4_5. Create an X DevAPI session using a connection properties map containing the connection property xdevapi.tls-versions with a single valid cipher-suite.
-                // Access that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
+                // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
                 propsOpenSSL.remove(PropertyKey.xdevapiTlsVersions.getKeyName());
                 propsOpenSSL.setProperty(PropertyKey.xdevapiTlsCiphersuites.getKeyName(), "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
                 testSession = this.fact.getSession(propsOpenSSL);
@@ -1596,14 +1599,14 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 testSession.close();
 
                 // TS.FR.4_6. Create an X DevAPI session using a connection properties map containing the connection property xdevapi.tls-versions with a valid list of cipher-suites.
-                // Access that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
+                // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
                 propsOpenSSL.setProperty(PropertyKey.xdevapiTlsCiphersuites.getKeyName(), "TLS_DHE_RSA_WITH_AES_128_CBC_SHA,AES256-SHA256");
                 testSession = this.fact.getSession(propsOpenSSL);
                 assertSessionStatusEquals(testSession, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
                 testSession.close();
 
                 // TS.FR.4_7. Create an X DevAPI session using a connection properties map containing the connection property xdevapi.tls-versions with a list of valid and invalid cipher-suites,
-                // starting with an invalid one. Access that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
+                // starting with an invalid one. Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_cipher for details).
                 propsOpenSSL.setProperty(PropertyKey.xdevapiTlsCiphersuites.getKeyName(),
                         "TLS_RSA_EXPORT1024_WITH_RC4_56_MD5,TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
                 testSession = this.fact.getSession(propsOpenSSL);
@@ -1611,7 +1614,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 testSession.close();
 
                 // TS.FR.4_8. Create an X DevAPI session using a connection properties map containing the connection property xdevapi.tls-ciphersuites with a single invalid cipher-suite.
-                // Access that the connection property is initialized with the correct values and that the connection fails with an SSL error.
+                // Assess that the connection property is initialized with the correct values and that the connection fails with an SSL error.
                 propsOpenSSL.setProperty(PropertyKey.xdevapiTlsCiphersuites.getKeyName(), "TLS_RSA_EXPORT1024_WITH_RC4_56_MD5");
                 assertThrows(CJCommunicationsException.class,
                         "javax.net.ssl.SSLHandshakeException: No appropriate protocol \\(protocol is disabled or cipher suites are inappropriate\\)", () -> {
@@ -1646,15 +1649,17 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 assertTlsVersion(testSession, "TLSv1.2");
                 testSession.close();
 
-                assertThrows(CJCommunicationsException.class,
-                        "javax.net.ssl.SSLHandshakeException: No appropriate protocol \\(protocol is disabled or cipher suites are inappropriate\\)", () -> {
-                            Client cli1 = cf.getClient(
-                                    this.opensslTlsFreeBaseUrl + useAsyncProtocolParam
-                                            + makeParam(PropertyKey.xdevapiTlsCiphersuites, "TLS_RSA_EXPORT1024_WITH_RC4_56_MD5"),
-                                    "{\"pooling\": {\"enabled\": true}}");
-                            cli1.getSession();
-                            return null;
-                        });
+                ex = assertThrows(CJCommunicationsException.class, "Unable to connect to any of the target hosts\\.", () -> {
+                    Client cli1 = cf.getClient(
+                            this.opensslTlsFreeBaseUrl + useAsyncProtocolParam
+                                    + makeParam(PropertyKey.xdevapiTlsCiphersuites, "TLS_RSA_EXPORT1024_WITH_RC4_56_MD5"),
+                            "{\"pooling\": {\"enabled\": true}}");
+                    cli1.getSession();
+                    return null;
+                });
+                assertNotNull(ex.getCause());
+                assertEquals("javax.net.ssl.SSLHandshakeException: No appropriate protocol (protocol is disabled or cipher suites are inappropriate)",
+                        ex.getCause().getMessage());
 
                 // TS.FR.5_1. Create an X DevAPI session using a connection string without the connection properties xdevapi.tls-versions and xdevapi.tls-ciphersuites.
                 // Assess that the session is created successfully and the connection properties are initialized with the expected values.

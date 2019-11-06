@@ -42,6 +42,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -49,6 +50,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.After;
 import org.junit.Before;
@@ -81,6 +84,8 @@ import com.mysql.cj.xdevapi.SqlMultiResult;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.SqlStatement;
 import com.mysql.cj.xdevapi.XDevAPIError;
+
+import testsuite.UnreliableSocketFactory;
 
 public class SessionTest extends DevApiBaseTestCase {
     @Before
@@ -1105,7 +1110,7 @@ public class SessionTest extends DevApiBaseTestCase {
             Session sess2 = cli1.getSession(); // new connection #2
             sess2.sql("SELECT 1").execute();
 
-            assertThrows(CJCommunicationsException.class, "Cannot read packet header", () -> cli2.getSession());
+            assertThrows(CJCommunicationsException.class, "Unable to connect to any of the target hosts\\.", cli2::getSession);
 
             cli1.close();
             cli2.close();
@@ -1130,12 +1135,17 @@ public class SessionTest extends DevApiBaseTestCase {
                 this.fact.getSession(url);
                 fail("The named-pipe connection attempt must fail with " + (path != null ? path : "default") + " path.");
             } catch (Exception e) {
-                if (e instanceof CJCommunicationsException && e.getCause() != null && e.getCause() instanceof FileNotFoundException
-                        && ((path == null ? "\\\\.\\pipe\\MySQL" : path) + " (The system cannot find the file specified)").equals(e.getCause().getMessage())) {
-                    continue;
-                } else if (e instanceof XProtocolError && "ASSERTION FAILED: Unknown message type: 10 (server messages mapping: null)".equals(e.getMessage())) {
-                    // if named pipes are enabled on server then we expect this error because the pipe is bound to legacy protocol
-                    continue;
+                Throwable cause = e.getCause();
+                if (cause != null) {
+                    if (cause instanceof CJCommunicationsException && cause.getCause() != null && cause.getCause() instanceof FileNotFoundException
+                            && ((path == null ? "\\\\.\\pipe\\MySQL" : path) + " (The system cannot find the file specified)")
+                                    .equals(cause.getCause().getMessage())) {
+                        continue;
+                    } else if (cause instanceof XProtocolError
+                            && "ASSERTION FAILED: Unknown message type: 10 (server messages mapping: null)".equals(cause.getMessage())) {
+                        // if named pipes are enabled on server then we expect this error because the pipe is bound to legacy protocol
+                        continue;
+                    }
                 }
                 throw e;
             }
@@ -1655,5 +1665,343 @@ public class SessionTest extends DevApiBaseTestCase {
             sqlUpdate("drop table if exists testBug23721537");
             this.session.sql("drop procedure if exists newproc").execute();
         }
+    }
+
+    @Test
+    public void basicSessionFailoverRandomSort() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        UnreliableSocketFactory.flushAllStaticData();
+
+        final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
+                + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
+        String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
+                .map(h -> h + ":" + getTestPort()).collect(Collectors.joining(","));
+        String testUri = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+
+        Set<String> downHosts = new HashSet<>();
+        for (int i = 1; i <= 5; i++) {
+            Session testSession = this.fact.getSession(testUri);
+            assertTrue(UnreliableSocketFactory.isConnected());
+            testSession.close();
+
+            String lastHost = UnreliableSocketFactory.getHostFromLastConnection();
+            for (String h : downHosts) {
+                assertNotEquals(h, lastHost);
+            }
+            downHosts.add(lastHost);
+            UnreliableSocketFactory.downHost(lastHost.substring(1));
+        }
+
+        // None of the hosts is available by now.
+        assertThrows(CJCommunicationsException.class, "Unable to connect to any of the target hosts\\.", () -> {
+            this.fact.getSession(testUri);
+            return null;
+        });
+
+        UnreliableSocketFactory.dontDownHost("host3");
+
+        UnreliableSocketFactory.flushConnectionAttempts();
+        Session testSession = this.fact.getSession(testUri);
+        assertTrue(UnreliableSocketFactory.isConnected());
+        testSession.close();
+        assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host3"), UnreliableSocketFactory.getHostFromLastConnection());
+    }
+
+    @Test
+    public void basicSessionFailoverByPriorities() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        UnreliableSocketFactory.flushAllStaticData();
+
+        final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
+                + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
+        String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
+                .map(h -> "(address=" + h + ":" + getTestPort() + ",priority=%d)").collect(Collectors.joining(","));
+        String testUriPatternPriorities = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+        String testUri = String.format(testUriPatternPriorities, 60, 80, 100, 20, 40);
+        int[] hostsOrder = new int[] { 3, 2, 1, 5, 4 };
+
+        for (int i = 0; i < hostsOrder.length; i++) {
+            int h = hostsOrder[i];
+
+            Session testSession = this.fact.getSession(testUri);
+            assertTrue(UnreliableSocketFactory.isConnected());
+            testSession.close();
+
+            String lastHost = UnreliableSocketFactory.getHostFromLastConnection();
+            assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host" + h), lastHost);
+            List<String> connectionAttempts = UnreliableSocketFactory.getHostsFromAllConnections();
+            for (int a = 0; a < i; a++) {
+                assertEquals(UnreliableSocketFactory.getHostFailedStatus("host" + hostsOrder[a]), connectionAttempts.get(a));
+            }
+            UnreliableSocketFactory.downHost("host" + h);
+            UnreliableSocketFactory.flushConnectionAttempts();
+        }
+
+        // None of the hosts is available by now.
+        assertThrows(CJCommunicationsException.class, "Unable to connect to any of the target hosts\\.", () -> {
+            this.fact.getSession(testUri);
+            return null;
+        });
+
+        UnreliableSocketFactory.dontDownHost("host" + hostsOrder[1]);
+
+        UnreliableSocketFactory.flushConnectionAttempts();
+        Session testSession = this.fact.getSession(testUri);
+        assertTrue(UnreliableSocketFactory.isConnected());
+        testSession.close();
+        List<String> connectionAttempts = UnreliableSocketFactory.getHostsFromAllConnections();
+        assertEquals(2, connectionAttempts.size());
+        assertEquals(UnreliableSocketFactory.getHostFailedStatus("host" + hostsOrder[0]), connectionAttempts.get(0));
+        assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host" + hostsOrder[1]), connectionAttempts.get(1));
+    }
+
+    @Test
+    public void pooledSessionFailoverRandomSortAndPooling() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        UnreliableSocketFactory.flushAllStaticData();
+
+        final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
+                + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
+        String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
+                .map(h -> h + ":" + getTestPort()).collect(Collectors.joining(","));
+        String testUri = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+
+        final ClientFactory cf = new ClientFactory();
+        Client client = cf.getClient(testUri, "{\"pooling\" : {\"enabled\" : true, \"maxSize\" : 10} }");
+
+        Set<String> downHosts = new HashSet<>();
+        for (int i = 1; i <= 5; i++) {
+            Session testSession = client.getSession();
+            assertTrue(UnreliableSocketFactory.isConnected());
+            testSession.close(); // Pool this connection.
+
+            String lastHost = UnreliableSocketFactory.getHostFromLastConnection();
+            for (String h : downHosts) {
+                assertNotEquals(h, lastHost);
+            }
+            downHosts.add(lastHost);
+            UnreliableSocketFactory.downHost(lastHost.substring(1));
+            UnreliableSocketFactory.flushConnectionAttempts();
+        }
+
+        // None of the hosts is available by now.
+        assertThrows(CJCommunicationsException.class, "Unable to connect to any of the target hosts\\.", () -> {
+            client.getSession();
+            return null;
+        });
+
+        UnreliableSocketFactory.dontDownHost("host3");
+
+        UnreliableSocketFactory.flushConnectionAttempts();
+        Session testSession = client.getSession();
+        assertTrue(UnreliableSocketFactory.isConnected());
+        testSession.close();
+        assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host3"), UnreliableSocketFactory.getHostFromLastConnection());
+
+        UnreliableSocketFactory.flushConnectionAttempts();
+        Session testSession1 = client.getSession(); // Pick previous connection from the pool. Doesn't count as new connections.
+        assertEquals(0, UnreliableSocketFactory.getHostsFromAllConnections().size());
+        Session testSession2 = client.getSession(); // Create a new connection.
+        assertTrue(UnreliableSocketFactory.isConnected());
+        testSession1.close();
+        testSession2.close();
+        assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host3"), UnreliableSocketFactory.getHostFromLastConnection());
+
+        client.close();
+    }
+
+    @Test
+    public void pooledSessionFailoverRandomSortAndNoPooling() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        UnreliableSocketFactory.flushAllStaticData();
+
+        final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
+                + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
+        String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
+                .map(h -> h + ":" + getTestPort()).collect(Collectors.joining(","));
+        String testUri = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+
+        final ClientFactory cf = new ClientFactory();
+        Client client = cf.getClient(testUri, "{\"pooling\" : {\"enabled\" : true, \"maxSize\" : 10} }");
+
+        Set<String> downHosts = new HashSet<>();
+        for (int i = 1; i <= 5; i++) {
+            client.getSession(); // Don't pool this connection.
+            assertTrue(UnreliableSocketFactory.isConnected());
+
+            String lastHost = UnreliableSocketFactory.getHostFromLastConnection();
+            for (String h : downHosts) {
+                assertNotEquals(h, lastHost);
+            }
+            downHosts.add(lastHost);
+            UnreliableSocketFactory.downHost(lastHost.substring(1));
+            UnreliableSocketFactory.flushConnectionAttempts();
+        }
+
+        // None of the hosts is available by now.
+        assertThrows(CJCommunicationsException.class, "Unable to connect to any of the target hosts\\.", () -> {
+            client.getSession();
+            return null;
+        });
+
+        UnreliableSocketFactory.dontDownHost("host3");
+
+        UnreliableSocketFactory.flushConnectionAttempts();
+        client.getSession();
+        assertTrue(UnreliableSocketFactory.isConnected());
+        assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host3"), UnreliableSocketFactory.getHostFromLastConnection());
+
+        UnreliableSocketFactory.flushConnectionAttempts();
+        client.getSession();
+        assertTrue(UnreliableSocketFactory.isConnected());
+        assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host3"), UnreliableSocketFactory.getHostFromLastConnection());
+
+        client.close();
+    }
+
+    @Test
+    public void pooledSessionFailoverByPrioritiesAndPooling() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        UnreliableSocketFactory.flushAllStaticData();
+
+        final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
+                + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
+        String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
+                .map(h -> "(address=" + h + ":" + getTestPort() + ",priority=%d)").collect(Collectors.joining(","));
+        String testUriPatternPriorities = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+        String testUri = String.format(testUriPatternPriorities, 60, 80, 100, 20, 40);
+        int[] hostsOrder = new int[] { 3, 2, 1, 5, 4 };
+
+        final ClientFactory cf = new ClientFactory();
+        Client client = cf.getClient(testUri, "{\"pooling\" : {\"enabled\" : true, \"maxSize\" : 10} }");
+
+        for (int i = 0; i < hostsOrder.length; i++) {
+            int h = hostsOrder[i];
+
+            Session testSession = client.getSession();
+            assertTrue(UnreliableSocketFactory.isConnected());
+            testSession.close(); // Pool this connection.
+
+            String lastHost = UnreliableSocketFactory.getHostFromLastConnection();
+            assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host" + h), lastHost);
+            List<String> connectionAttempts = UnreliableSocketFactory.getHostsFromAllConnections();
+            assertEquals(i == 0 ? 1 : 2, connectionAttempts.size());
+            for (int a = 0; a < connectionAttempts.size() - 1; a++) {
+                assertEquals(UnreliableSocketFactory.getHostFailedStatus("host" + hostsOrder[i - 1 + a]), connectionAttempts.get(a));
+            }
+            UnreliableSocketFactory.downHost("host" + h);
+            UnreliableSocketFactory.flushConnectionAttempts();
+        }
+
+        // None of the hosts is available by now.
+        assertThrows(CJCommunicationsException.class, "Unable to connect to any of the target hosts\\.", () -> {
+            client.getSession();
+            return null;
+        });
+        // Final connection tried the last known to be good host (host4) and then the remaining hosts by their priority
+        List<String> connectionAttempts = UnreliableSocketFactory.getHostsFromAllConnections();
+        for (int i = 0; i < hostsOrder.length; i++) {
+            assertEquals(UnreliableSocketFactory.getHostFailedStatus("host" + hostsOrder[(i + 4) % 5]), connectionAttempts.get(i));
+        }
+
+        UnreliableSocketFactory.dontDownHost("host" + hostsOrder[1]);
+
+        UnreliableSocketFactory.flushConnectionAttempts();
+        Session testSession = client.getSession();
+        assertTrue(UnreliableSocketFactory.isConnected());
+        testSession.close();
+        connectionAttempts = UnreliableSocketFactory.getHostsFromAllConnections();
+        assertEquals(2, connectionAttempts.size());
+        assertEquals(UnreliableSocketFactory.getHostFailedStatus("host" + hostsOrder[0]), connectionAttempts.get(0));
+        assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host" + hostsOrder[1]), connectionAttempts.get(1));
+
+        UnreliableSocketFactory.flushConnectionAttempts();
+        Session testSession1 = client.getSession(); // Pick previous connection from the pool. Doesn't count as new connections.
+        assertEquals(0, UnreliableSocketFactory.getHostsFromAllConnections().size());
+        Session testSession2 = client.getSession(); // Create a new connection.
+        assertTrue(UnreliableSocketFactory.isConnected());
+        testSession1.close();
+        testSession2.close();
+        connectionAttempts = UnreliableSocketFactory.getHostsFromAllConnections();
+        assertEquals(1, connectionAttempts.size());
+        assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host" + hostsOrder[1]), connectionAttempts.get(0));
+
+        client.close();
+    }
+
+    @Test
+    public void pooledSessionFailoverByPrioritiesAndNoPooling() {
+        if (!this.isSetForXTests) {
+            return;
+        }
+        UnreliableSocketFactory.flushAllStaticData();
+
+        final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
+                + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
+        String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
+                .map(h -> "(address=" + h + ":" + getTestPort() + ",priority=%d)").collect(Collectors.joining(","));
+        String testUriPatternPriorities = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+        String testUri = String.format(testUriPatternPriorities, 60, 80, 100, 20, 40);
+        int[] hostsOrder = new int[] { 3, 2, 1, 5, 4 };
+
+        final ClientFactory cf = new ClientFactory();
+        Client client = cf.getClient(testUri, "{\"pooling\" : {\"enabled\" : true, \"maxSize\" : 10} }");
+
+        for (int i = 0; i < hostsOrder.length; i++) {
+            int h = hostsOrder[i];
+
+            client.getSession(); // Don't pool this connection.
+            assertTrue(UnreliableSocketFactory.isConnected());
+
+            String lastHost = UnreliableSocketFactory.getHostFromLastConnection();
+            assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host" + h), lastHost);
+            List<String> connectionAttempts = UnreliableSocketFactory.getHostsFromAllConnections();
+            assertEquals(i == 0 ? 1 : 2, connectionAttempts.size());
+            for (int a = 0; a < connectionAttempts.size() - 1; a++) {
+                assertEquals(UnreliableSocketFactory.getHostFailedStatus("host" + hostsOrder[i - 1 + a]), connectionAttempts.get(a));
+            }
+            UnreliableSocketFactory.downHost("host" + h);
+            UnreliableSocketFactory.flushConnectionAttempts();
+        }
+
+        // None of the hosts is available by now.
+        assertThrows(CJCommunicationsException.class, "Unable to connect to any of the target hosts\\.", () -> {
+            client.getSession();
+            return null;
+        });
+        // Final connection tried the last known to be good host (host4) and then the remaining hosts by their priority
+        List<String> connectionAttempts = UnreliableSocketFactory.getHostsFromAllConnections();
+        for (int i = 0; i < hostsOrder.length; i++) {
+            assertEquals(UnreliableSocketFactory.getHostFailedStatus("host" + hostsOrder[(i + 4) % 5]), connectionAttempts.get(i));
+        }
+
+        UnreliableSocketFactory.dontDownHost("host" + hostsOrder[1]);
+
+        UnreliableSocketFactory.flushConnectionAttempts();
+        client.getSession();
+        assertTrue(UnreliableSocketFactory.isConnected());
+        connectionAttempts = UnreliableSocketFactory.getHostsFromAllConnections();
+        assertEquals(2, connectionAttempts.size());
+        assertEquals(UnreliableSocketFactory.getHostFailedStatus("host" + hostsOrder[0]), connectionAttempts.get(0));
+        assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host" + hostsOrder[1]), connectionAttempts.get(1));
+
+        UnreliableSocketFactory.flushConnectionAttempts();
+        client.getSession();
+        assertTrue(UnreliableSocketFactory.isConnected());
+        connectionAttempts = UnreliableSocketFactory.getHostsFromAllConnections();
+        assertEquals(1, connectionAttempts.size());
+        assertEquals(UnreliableSocketFactory.getHostConnectedStatus("host" + hostsOrder[1]), connectionAttempts.get(0));
+
+        client.close();
     }
 }

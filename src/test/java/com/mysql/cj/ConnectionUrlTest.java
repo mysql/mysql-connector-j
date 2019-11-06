@@ -50,6 +50,8 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.Test;
 
@@ -1037,20 +1039,24 @@ public class ConnectionUrlTest {
                 hostIdx++;
             }
 
-            // Hosts sub list with "address" splitting (host3:3333) and without priority value.
+            // Hosts sub list with "address" splitting (host3:3333) and without priority value (randomly sorted).
             connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@[" + hostName + "1:1111,address=(host=" + hostName + "2)(port=2222),"
                     + "(address=" + hostName + "3:3333)]/db?address=host4:4444", null);
+            String hosts = IntStream.range(1, 4).mapToObj(i -> hostName + i).collect(Collectors.joining("|"));
+            String ports = IntStream.range(1, 4).mapToObj(i -> 1111 * i).map(i -> i.toString()).collect(Collectors.joining("|"));
             hostIdx = 1;
             for (HostInfo hi : connUrl.getHostsList()) {
                 String testCase = "Host " + hostIdx + ":";
                 assertEquals(testCase, "johndoe", hi.getUser());
                 assertEquals(testCase, "secret", hi.getPassword());
-                assertEquals(testCase, hostName + hostIdx, hi.getHost());
-                assertEquals(testCase, 1111 * hostIdx, hi.getPort());
+                hosts = hosts.replace(hi.getHost(), "");
+                ports = ports.replace(Integer.toString(hi.getPort()), "");
                 assertEquals(testCase, "db", hi.getDatabase());
                 assertFalse(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
                 hostIdx++;
             }
+            assertEquals("||", hosts);
+            assertEquals("||", ports);
 
             // Hosts list with "address" splitting (host3:3333) and priority value.
             connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@" + hostName + "1:1111,johndoe:secret@address=(host=" + hostName
@@ -1068,20 +1074,24 @@ public class ConnectionUrlTest {
                 hostIdx++;
             }
 
-            // Hosts list with "address" splitting (host3:3333) and without priority value.
+            // Hosts list with "address" splitting (host3:3333) and without priority value (randomly sorted).
             connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@" + hostName + "1:1111,johndoe:secret@address=(host=" + hostName
                     + "2)(port=2222)," + "johndoe:secret@(address=" + hostName + "3:3333)/db?address=host4:4444", null);
+            hosts = IntStream.range(1, 4).mapToObj(i -> hostName + i).collect(Collectors.joining("|"));
+            ports = IntStream.range(1, 4).mapToObj(i -> 1111 * i).map(i -> i.toString()).collect(Collectors.joining("|"));
             hostIdx = 1;
             for (HostInfo hi : connUrl.getHostsList()) {
                 String testCase = "Host " + hostIdx + ":";
                 assertEquals(testCase, "johndoe", hi.getUser());
                 assertEquals(testCase, "secret", hi.getPassword());
-                assertEquals(testCase, hostName + hostIdx, hi.getHost());
-                assertEquals(testCase, 1111 * hostIdx, hi.getPort());
+                hosts = hosts.replace(hi.getHost(), "");
+                ports = ports.replace(Integer.toString(hi.getPort()), "");
                 assertEquals(testCase, "db", hi.getDatabase());
                 assertFalse(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
                 hostIdx++;
             }
+            assertEquals("||", hosts);
+            assertEquals("||", ports);
 
             List<String> connStr;
 
@@ -1144,27 +1154,44 @@ public class ConnectionUrlTest {
                 }
             }
 
-            // Sorting hosts by default priority.
+            // Sorting hosts by default priority (random).
             connUrl = ConnectionUrl.getConnectionUrlInstance(
                     "mysqlx://johndoe:secret@[" + hostName + "2," + hostName + "3," + hostName + "1," + hostName + "5," + hostName + "4]/db", null);
-            assertEquals(hostName + "2", connUrl.getMainHost().getHost());
-            assertEquals(hostName + "2", connUrl.getHostsList().get(0).getHost());
-            assertEquals(hostName + "3", connUrl.getHostsList().get(1).getHost());
-            assertEquals(hostName + "1", connUrl.getHostsList().get(2).getHost());
-            assertEquals(hostName + "5", connUrl.getHostsList().get(3).getHost());
-            assertEquals(hostName + "4", connUrl.getHostsList().get(4).getHost());
+            List<HostInfo> hostsList = connUrl.getHostsList();
+            assertEquals(connUrl.getMainHost().getHost(), hostsList.get(0).getHost());
+            hosts = IntStream.range(1, 6).mapToObj(i -> hostName + i).collect(Collectors.joining("|"));
+            for (HostInfo hi : connUrl.getHostsList()) {
+                hosts = hosts.replace(hi.getHost(), "");
+            }
+            assertEquals("||||", hosts);
 
             // Sorting hosts by defined priority.
             connUrl = ConnectionUrl.getConnectionUrlInstance(
                     "mysqlx://johndoe:secret@[(address=" + hostName + "1,priority=50),(address=" + hostName + "2,priority=100),(address=" + hostName
                             + "3,priority=75)," + "(address=" + hostName + "4,priority=0),(address=" + hostName + "5,priority=25)]/db",
                     null);
+            hostsList = connUrl.getHostsList();
             assertEquals(hostName + "2", connUrl.getMainHost().getHost());
-            assertEquals(hostName + "2", connUrl.getHostsList().get(0).getHost());
-            assertEquals(hostName + "3", connUrl.getHostsList().get(1).getHost());
-            assertEquals(hostName + "1", connUrl.getHostsList().get(2).getHost());
-            assertEquals(hostName + "5", connUrl.getHostsList().get(3).getHost());
-            assertEquals(hostName + "4", connUrl.getHostsList().get(4).getHost());
+            assertEquals(hostName + "2", hostsList.get(0).getHost());
+            assertEquals(hostName + "3", hostsList.get(1).getHost());
+            assertEquals(hostName + "1", hostsList.get(2).getHost());
+            assertEquals(hostName + "5", hostsList.get(3).getHost());
+            assertEquals(hostName + "4", hostsList.get(4).getHost());
+
+            // Sorting hosts by defined priority, with duplicates.
+            connUrl = ConnectionUrl.getConnectionUrlInstance("mysqlx://johndoe:secret@[(address=" + hostName + "1,priority=50),(address=" + hostName
+                    + "2,priority=100),(address=" + hostName + "3,priority=10)," + "(address=" + hostName + "4,priority=50),(address=" + hostName
+                    + "5,priority=50),(address=" + hostName + "6,priority=75)]/db", null);
+            hostsList = connUrl.getHostsList();
+            assertEquals(hostName + "2", connUrl.getMainHost().getHost());
+            assertEquals(hostName + "2", hostsList.get(0).getHost());
+            assertEquals(hostName + "6", hostsList.get(1).getHost());
+            hosts = IntStream.of(1, 4, 5).mapToObj(i -> hostName + i).collect(Collectors.joining("|"));
+            hosts = hosts.replace(hostsList.get(2).getHost(), "");
+            hosts = hosts.replace(hostsList.get(3).getHost(), "");
+            hosts = hosts.replace(hostsList.get(4).getHost(), "");
+            assertEquals("||", hosts);
+            assertEquals(hostName + "3", hostsList.get(5).getHost());
         }
     }
 
