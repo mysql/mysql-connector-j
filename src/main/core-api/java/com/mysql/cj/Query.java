@@ -89,6 +89,16 @@ public interface Query {
 
     void setTimeoutInMillis(int timeoutInMillis);
 
+    void setElapsedTime(long elapsedTime);
+
+    /**
+     * Returns the elapsed time for the server to process the query.
+     * profileQueries must be enabled or <code>-1</code> will be returned.
+     *
+     * @return the elapsed time or <code>-1</code>.
+     */
+    long getElapsedTime();
+
     CancelQueryTask startQueryTimer(Query stmtToCancel, int timeout);
 
     AtomicBoolean getStatementExecuting();

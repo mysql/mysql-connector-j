@@ -167,6 +167,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     private boolean useAutoSlowLog;
 
     private boolean profileSQL = false;
+    private boolean profileQueries = false;
 
     private long slowQueryThreshold;
 
@@ -250,6 +251,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         this.logSlowQueries = this.propertySet.getBooleanProperty(PropertyKey.logSlowQueries).getValue();
         this.maxAllowedPacket = this.propertySet.getIntegerProperty(PropertyKey.maxAllowedPacket);
         this.profileSQL = this.propertySet.getBooleanProperty(PropertyKey.profileSQL).getValue();
+        this.profileQueries = this.propertySet.getBooleanProperty(PropertyKey.profileQueries).getValue();
         this.autoGenerateTestcaseScript = this.propertySet.getBooleanProperty(PropertyKey.autoGenerateTestcaseScript).getValue();
         this.useServerPrepStmts = this.propertySet.getBooleanProperty(PropertyKey.useServerPrepStmts);
 
@@ -911,7 +913,9 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     public final <T extends Resultset> T sendQueryPacket(Query callingQuery, NativePacketPayload queryPacket, int maxRows, boolean streamResults,
             ColumnDefinition cachedMetadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
 
-        long queryStartTime = this.profileSQL || this.logSlowQueries ? getCurrentTimeNanosOrMillis() : 0;
+        final boolean countDuration = this.profileSQL || this.profileQueries || this.logSlowQueries;
+
+        final long queryStartTime = countDuration ? getCurrentTimeNanosOrMillis() : 0;
 
         this.statementExecutionDepth++;
 
@@ -940,8 +944,14 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             // Send query command and sql query string
             NativePacketPayload resultPacket = sendCommand(queryPacket, false, 0);
 
-            long queryEndTime = this.profileSQL || this.logSlowQueries ? getCurrentTimeNanosOrMillis() : 0L;
-            long queryDuration = this.profileSQL || this.logSlowQueries ? queryEndTime - queryStartTime : 0L;
+            final long queryEndTime = countDuration ? getCurrentTimeNanosOrMillis() : 0L;
+            final long queryDuration;
+            if (countDuration && callingQuery != null) {
+                queryDuration = queryEndTime - queryStartTime;
+                callingQuery.setElapsedTime(queryDuration);
+            } else {
+                queryDuration = 0L;
+            }
 
             boolean queryWasSlow = this.logSlowQueries && (this.useAutoSlowLog ? this.metricsHolder.checkAbonormallyLongQuery(queryDuration)
                     : queryDuration > this.propertySet.getIntegerProperty(PropertyKey.slowQueryThresholdMillis).getValue());

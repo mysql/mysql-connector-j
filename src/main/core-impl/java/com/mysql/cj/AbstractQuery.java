@@ -87,6 +87,9 @@ public abstract class AbstractQuery implements Query {
     /** Has clearWarnings() been called? */
     protected boolean clearWarningsCalled = false;
 
+    /** Elapsed time of the execution */
+    private long elapsedTime = -1;
+
     public AbstractQuery(NativeSession sess) {
         statementCounter++;
         this.session = sess;
@@ -102,6 +105,16 @@ public abstract class AbstractQuery implements Query {
     @Override
     public void setCancelStatus(CancelStatus cs) {
         this.cancelStatus = cs;
+    }
+
+    @Override
+    public long getElapsedTime() {
+        return elapsedTime;
+    }
+
+    @Override
+    public void setElapsedTime(long elapsedTime) {
+        this.elapsedTime = elapsedTime;
     }
 
     @Override

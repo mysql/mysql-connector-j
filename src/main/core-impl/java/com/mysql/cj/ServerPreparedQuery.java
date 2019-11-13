@@ -74,6 +74,9 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     /** The "profileSQL" connection property value */
     protected boolean profileSQL = false;
 
+    /** The "profileQueries" connection property value */
+    private boolean profileQueries = false;
+
     /** The "gatherPerfMetrics" connection property value */
     protected boolean gatherPerfMetrics;
 
@@ -101,6 +104,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
     protected ServerPreparedQuery(NativeSession sess) {
         super(sess);
         this.profileSQL = sess.getPropertySet().getBooleanProperty(PropertyKey.profileSQL).getValue();
+        this.profileQueries = sess.getPropertySet().getBooleanProperty(PropertyKey.profileQueries).getValue();
         this.gatherPerfMetrics = sess.getPropertySet().getBooleanProperty(PropertyKey.gatherPerfMetrics).getValue();
         this.logSlowQueries = sess.getPropertySet().getBooleanProperty(PropertyKey.logSlowQueries).getValue();
         this.useAutoSlowLog = sess.getPropertySet().getBooleanProperty(PropertyKey.autoSlowLog).getValue();
@@ -318,9 +322,9 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
 
     public NativePacketPayload sendExecutePacket(NativePacketPayload packet, String queryAsString) { // TODO queryAsString should be shared instead of passed
 
-        boolean countDuration = this.profileSQL || this.logSlowQueries || this.gatherPerfMetrics;
+        final boolean countDuration = this.profileSQL || this.profileQueries || this.logSlowQueries || this.gatherPerfMetrics;
 
-        long begin = countDuration ? this.session.getCurrentTimeNanosOrMillis() : 0;
+        final long begin = countDuration ? this.session.getCurrentTimeNanosOrMillis() : 0;
 
         resetCancelledState();
 
@@ -342,7 +346,13 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
                 timeoutTask = null;
             }
 
-            long elapsedTime = countDuration ? queryEndTime - begin : 0L;
+            final long elapsedTime;
+            if (countDuration) {
+                elapsedTime = queryEndTime - begin;
+                setElapsedTime(elapsedTime);
+            } else {
+                elapsedTime = 0L;
+            }
 
             if (this.logSlowQueries) {
                 this.queryWasSlow = this.useAutoSlowLog ? //

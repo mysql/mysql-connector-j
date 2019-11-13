@@ -726,6 +726,9 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.autoGenerateTestcaseScript, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.autoGenerateTestcaseScript"), "3.1.9", CATEGORY_DEBUGING_PROFILING, 18),
 
+                new BooleanPropertyDefinition(PropertyKey.profileQueries, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                                              Messages.getString("ConnectionProperties.profileQueries"), "8.0.18", CATEGORY_DEBUGING_PROFILING, 19),
+
                 //
                 // CATEGORY_EXCEPTIONS
                 //
