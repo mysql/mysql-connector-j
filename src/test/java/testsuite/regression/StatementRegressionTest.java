@@ -2385,9 +2385,7 @@ public class StatementRegressionTest extends BaseTestCase {
             final String fileName = fileNameBuf.toString();
 
             assertThrows(SQLSyntaxErrorException.class,
-                    versionMeetsMinimum(8, 0, 19) ? "Loading local data is disabled; this must be enabled on both the client and server side"
-                            : "The used command is not allowed with this MySQL version",
-                    () -> {
+                    versionMeetsMinimum(8, 0, 19) ? "Loading local data is disabled;.*" : "The used command is not allowed with this MySQL version", () -> {
                         this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileName + "' INTO TABLE loadDataRegress CHARACTER SET "
                                 + CharsetMapping.getMysqlCharsetForJavaEncoding(
                                         ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
