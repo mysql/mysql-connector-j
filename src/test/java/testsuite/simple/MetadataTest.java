@@ -620,41 +620,29 @@ public class MetadataTest extends BaseTestCase {
         this.stmt.executeUpdate("INSERT INTO " + tableName + " VALUES (1)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.tinyInt1isBit.getKeyName(), "true");
-        props.setProperty(PropertyKey.transformedBitIsBoolean.getKeyName(), "true");
-        Connection boolConn = getConnectionWithProps(props);
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean tinyInt1isBit : new boolean[] { true, true }) {
+                for (boolean transformedBitIsBoolean : new boolean[] { false, true }) {
+                    props.clear();
+                    props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                    props.setProperty(PropertyKey.tinyInt1isBit.getKeyName(), "" + tinyInt1isBit);
+                    props.setProperty(PropertyKey.transformedBitIsBoolean.getKeyName(), "" + transformedBitIsBoolean);
+                    Connection boolConn = getConnectionWithProps(props);
 
-        this.rs = boolConn.createStatement().executeQuery("SELECT field1 FROM " + tableName);
-        checkBitOrBooleanType(false);
+                    this.rs = boolConn.createStatement().executeQuery("SELECT field1 FROM " + tableName);
+                    checkBitOrBooleanType(!transformedBitIsBoolean);
 
-        this.rs = boolConn.prepareStatement("SELECT field1 FROM " + tableName).executeQuery();
-        checkBitOrBooleanType(false);
+                    this.rs = boolConn.prepareStatement("SELECT field1 FROM " + tableName).executeQuery();
+                    checkBitOrBooleanType(!transformedBitIsBoolean);
 
-        this.rs = boolConn.getMetaData().getColumns(boolConn.getCatalog(), null, tableName, "field1");
-        assertTrue(this.rs.next());
+                    this.rs = boolConn.getMetaData().getColumns(boolConn.getCatalog(), null, tableName, "field1");
+                    assertTrue(this.rs.next());
 
-        assertEquals(Types.BOOLEAN, this.rs.getInt("DATA_TYPE"));
-
-        assertEquals("BOOLEAN", this.rs.getString("TYPE_NAME"));
-
-        props.clear();
-        props.setProperty(PropertyKey.transformedBitIsBoolean.getKeyName(), "false");
-        props.setProperty(PropertyKey.tinyInt1isBit.getKeyName(), "true");
-
-        Connection bitConn = getConnectionWithProps(props);
-
-        this.rs = bitConn.createStatement().executeQuery("SELECT field1 FROM " + tableName);
-        checkBitOrBooleanType(true);
-
-        this.rs = bitConn.prepareStatement("SELECT field1 FROM " + tableName).executeQuery();
-        checkBitOrBooleanType(true);
-
-        this.rs = bitConn.getMetaData().getColumns(boolConn.getCatalog(), null, tableName, "field1");
-        assertTrue(this.rs.next());
-
-        assertEquals(Types.BIT, this.rs.getInt("DATA_TYPE"));
-
-        assertEquals("BIT", this.rs.getString("TYPE_NAME"));
+                    assertEquals(transformedBitIsBoolean ? Types.BOOLEAN : Types.BIT, this.rs.getInt("DATA_TYPE"));
+                    assertEquals(transformedBitIsBoolean ? "BOOLEAN" : "BIT", this.rs.getString("TYPE_NAME"));
+                }
+            }
+        }
     }
 
     private void checkBitOrBooleanType(boolean usingBit) throws SQLException {
@@ -1836,8 +1824,8 @@ public class MetadataTest extends BaseTestCase {
         assertEquals("field1", rs1.getString("COLUMN_NAME"));
         assertEquals(Types.INTEGER, rs1.getInt("DATA_TYPE"));
         assertEquals("int", rs1.getString("TYPE_NAME"));
-        assertEquals(11, rs1.getInt("COLUMN_SIZE"));
-        assertEquals(11, rs1.getInt("BUFFER_LENGTH"));
+        assertEquals(versionMeetsMinimum(8, 0, 19) ? 10 : 11, rs1.getInt("COLUMN_SIZE"));
+        assertEquals(65535, rs1.getInt("BUFFER_LENGTH"));
         assertEquals(0, rs1.getShort("DECIMAL_DIGITS"));
         assertEquals(DatabaseMetaData.bestRowNotPseudo, rs1.getShort("PSEUDO_COLUMN"));
         assertFalse(rs1.next());

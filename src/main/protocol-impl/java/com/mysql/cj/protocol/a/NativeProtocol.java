@@ -1423,12 +1423,11 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             case MysqlType.FIELD_TYPE_TINY:
                 // Adjust for pseudo-boolean
-                if (length == 1) {
+                if (!isUnsigned && length == 1 && propertySet.getBooleanProperty(PropertyKey.tinyInt1isBit).getValue()) {
                     if (propertySet.getBooleanProperty(PropertyKey.transformedBitIsBoolean).getValue()) {
                         return MysqlType.BOOLEAN;
-                    } else if (propertySet.getBooleanProperty(PropertyKey.tinyInt1isBit).getValue()) {
-                        return MysqlType.BIT;
                     }
+                    return MysqlType.BIT;
                 }
                 return isUnsigned ? MysqlType.TINYINT_UNSIGNED : MysqlType.TINYINT;
 

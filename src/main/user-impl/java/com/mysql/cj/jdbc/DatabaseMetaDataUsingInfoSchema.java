@@ -129,15 +129,16 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" AS DATA_TYPE, ");
 
         sqlBuf.append("UPPER(CASE");
-        sqlBuf.append(
-                " WHEN LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 AND LOCATE('SET', UPPER(DATA_TYPE)) <> 1 AND LOCATE('ENUM', UPPER(DATA_TYPE)) <> 1 THEN CONCAT(DATA_TYPE, ' UNSIGNED')");
         if (this.tinyInt1isBit) {
             sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TINYINT' THEN CASE");
-            sqlBuf.append(" WHEN LOCATE('(1)', COLUMN_TYPE) != 0 THEN ");
+            sqlBuf.append(
+                    " WHEN LOCATE('ZEROFILL', UPPER(COLUMN_TYPE)) = 0 AND LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) = 0 AND LOCATE('(1)', COLUMN_TYPE) != 0 THEN ");
             sqlBuf.append(this.transformedBitIsBoolean ? "'BOOLEAN'" : "'BIT'");
             sqlBuf.append(" WHEN LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'");
             sqlBuf.append(" ELSE DATA_TYPE END ");
         }
+        sqlBuf.append(
+                " WHEN LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 AND LOCATE('SET', UPPER(DATA_TYPE)) <> 1 AND LOCATE('ENUM', UPPER(DATA_TYPE)) <> 1 THEN CONCAT(DATA_TYPE, ' UNSIGNED')");
 
         // spatial data types
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN 'GEOMETRY'");
@@ -167,8 +168,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         }
 
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='YEAR' THEN 4");
-        if (this.tinyInt1isBit) {
-            sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TINYINT' AND LOCATE('(1)', COLUMN_TYPE) != 0 THEN 1");
+        if (this.tinyInt1isBit && !this.transformedBitIsBoolean) {
+            sqlBuf.append(
+                    " WHEN UPPER(DATA_TYPE)='TINYINT' AND LOCATE('ZEROFILL', UPPER(COLUMN_TYPE)) = 0 AND LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) = 0 AND LOCATE('(1)', COLUMN_TYPE) != 0 THEN 1");
         }
         // workaround for Bug#69042 (16712664), "MEDIUMINT PRECISION/TYPE INCORRECT IN INFORMATION_SCHEMA.COLUMNS", I_S bug returns NUMERIC_PRECISION=7 for MEDIUMINT UNSIGNED when it must be 8.
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 THEN 8");
@@ -664,8 +666,30 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" END AS `COLUMN_TYPE`, ");
         appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "DTD_IDENTIFIER");
         sqlBuf.append(" AS `DATA_TYPE`, ");
-        sqlBuf.append(" UPPER(CASE WHEN LOCATE('UNSIGNED', UPPER(DATA_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0");
-        sqlBuf.append(" THEN CONCAT(DATA_TYPE, ' UNSIGNED') ELSE DATA_TYPE END) AS `TYPE_NAME`,");
+
+        sqlBuf.append("UPPER(CASE");
+        if (this.tinyInt1isBit) {
+            sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TINYINT' THEN CASE");
+            sqlBuf.append(
+                    " WHEN LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN ");
+            sqlBuf.append(this.transformedBitIsBoolean ? "'BOOLEAN'" : "'BIT'");
+            sqlBuf.append(" WHEN LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'");
+            sqlBuf.append(" ELSE DATA_TYPE END ");
+        }
+        sqlBuf.append(
+                " WHEN LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 AND LOCATE('SET', UPPER(DATA_TYPE)) <> 1 AND LOCATE('ENUM', UPPER(DATA_TYPE)) <> 1 THEN CONCAT(DATA_TYPE, ' UNSIGNED')");
+
+        // spatial data types
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='LINESTRING' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POLYGON' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOINT' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMCOLLECTION' THEN 'GEOMETRY'");
+
+        sqlBuf.append(" ELSE UPPER(DATA_TYPE) END) AS TYPE_NAME,");
 
         // PRECISION
         sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 0");
@@ -674,7 +698,14 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         } else {
             sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 0");
         }
-        sqlBuf.append(" ELSE NUMERIC_PRECISION END AS `PRECISION`,");
+        if (this.tinyInt1isBit && !this.transformedBitIsBoolean) {
+            sqlBuf.append(
+                    " WHEN (UPPER(DATA_TYPE)='TINYINT' AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0) AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1");
+        }
+        // workaround for Bug#69042 (16712664), "MEDIUMINT PRECISION/TYPE INCORRECT IN INFORMATION_SCHEMA.COLUMNS", I_S bug returns NUMERIC_PRECISION=7 for MEDIUMINT UNSIGNED when it must be 8.
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 THEN 8");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='JSON' THEN 1073741824"); // JSON columns is limited to the value of the max_allowed_packet system variable (max value 1073741824)
+        sqlBuf.append(" ELSE NUMERIC_PRECISION END AS `PRECISION`,"); //
 
         // LENGTH
         sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10");
@@ -686,12 +717,19 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8");
             sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 19");
         }
+        if (this.tinyInt1isBit && !this.transformedBitIsBoolean) {
+            sqlBuf.append(
+                    " WHEN (UPPER(DATA_TYPE)='TINYINT' OR UPPER(DATA_TYPE)='TINYINT UNSIGNED') AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1");
+        }
+        // workaround for Bug#69042 (16712664), "MEDIUMINT PRECISION/TYPE INCORRECT IN INFORMATION_SCHEMA.COLUMNS", I_S bug returns NUMERIC_PRECISION=7 for MEDIUMINT UNSIGNED when it must be 8.
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 THEN 8");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='JSON' THEN 1073741824"); // JSON columns is limited to the value of the max_allowed_packet system variable (max value 1073741824)
         sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION");
         sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH > ");
         sqlBuf.append(Integer.MAX_VALUE);
         sqlBuf.append(" THEN ");
         sqlBuf.append(Integer.MAX_VALUE);
-        sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH,");
+        sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH,"); //
 
         sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ");
         sqlBuf.append("10 AS RADIX,");
@@ -919,9 +957,29 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" END AS `COLUMN_TYPE`, ");
         appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "DTD_IDENTIFIER");
         sqlBuf.append(" AS `DATA_TYPE`, ");
+        sqlBuf.append("UPPER(CASE");
+        if (this.tinyInt1isBit) {
+            sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TINYINT' THEN CASE");
+            sqlBuf.append(
+                    " WHEN LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN ");
+            sqlBuf.append(this.transformedBitIsBoolean ? "'BOOLEAN'" : "'BIT'");
+            sqlBuf.append(" WHEN LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'");
+            sqlBuf.append(" ELSE DATA_TYPE END ");
+        }
         sqlBuf.append(
-                "UPPER(CASE WHEN LOCATE('UNSIGNED', UPPER(DATA_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN CONCAT(DATA_TYPE, ' UNSIGNED') "
-                        + "ELSE DATA_TYPE END) AS `TYPE_NAME`,");
+                " WHEN LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 AND LOCATE('SET', UPPER(DATA_TYPE)) <> 1 AND LOCATE('ENUM', UPPER(DATA_TYPE)) <> 1 THEN CONCAT(DATA_TYPE, ' UNSIGNED')");
+
+        // spatial data types
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='LINESTRING' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POLYGON' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOINT' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN 'GEOMETRY'");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMCOLLECTION' THEN 'GEOMETRY'");
+
+        sqlBuf.append(" ELSE UPPER(DATA_TYPE) END) AS TYPE_NAME,");
 
         // PRECISION
         sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 0");
@@ -930,7 +988,14 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         } else {
             sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 0");
         }
-        sqlBuf.append(" ELSE NUMERIC_PRECISION END AS `PRECISION`,");
+        if (this.tinyInt1isBit && !this.transformedBitIsBoolean) {
+            sqlBuf.append(
+                    " WHEN UPPER(DATA_TYPE)='TINYINT' AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1");
+        }
+        // workaround for Bug#69042 (16712664), "MEDIUMINT PRECISION/TYPE INCORRECT IN INFORMATION_SCHEMA.COLUMNS", I_S bug returns NUMERIC_PRECISION=7 for MEDIUMINT UNSIGNED when it must be 8.
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 THEN 8");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='JSON' THEN 1073741824"); // JSON columns is limited to the value of the max_allowed_packet system variable (max value 1073741824)
+        sqlBuf.append(" ELSE NUMERIC_PRECISION END AS `PRECISION`,"); //
 
         // LENGTH
         sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10");
@@ -942,6 +1007,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8");
             sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 19");
         }
+        if (this.tinyInt1isBit && !this.transformedBitIsBoolean) {
+            sqlBuf.append(
+                    " WHEN (UPPER(DATA_TYPE)='TINYINT' OR UPPER(DATA_TYPE)='TINYINT UNSIGNED') AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1");
+        }
+        // workaround for Bug#69042 (16712664), "MEDIUMINT PRECISION/TYPE INCORRECT IN INFORMATION_SCHEMA.COLUMNS", I_S bug returns NUMERIC_PRECISION=7 for MEDIUMINT UNSIGNED when it must be 8.
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 THEN 8");
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='JSON' THEN 1073741824"); // JSON columns is limited to the value of the max_allowed_packet system variable (max value 1073741824)
         sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION");
         sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH > " + Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE);
         sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ");
@@ -1133,15 +1205,14 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 case TINYINT_UNSIGNED:
                     if (this.tinyInt1isBit) {
                         buf.append("CASE");
-                        if (this.transformedBitIsBoolean) {
-                            buf.append(" WHEN LOCATE('(1)', ");
-                            buf.append(fullMysqlTypeColumnName);
-                            buf.append(") != 0 THEN 16");
-                        } else {
-                            buf.append(" WHEN LOCATE('(1)', ");
-                            buf.append(fullMysqlTypeColumnName);
-                            buf.append(") != 0 THEN -7");
-                        }
+                        buf.append(" WHEN LOCATE('ZEROFILL', UPPER(");
+                        buf.append(fullMysqlTypeColumnName);
+                        buf.append(")) = 0 AND LOCATE('UNSIGNED', UPPER(");
+                        buf.append(fullMysqlTypeColumnName);
+                        buf.append(")) = 0 AND LOCATE('(1)', ");
+                        buf.append(fullMysqlTypeColumnName);
+                        buf.append(") != 0 THEN ");
+                        buf.append(this.transformedBitIsBoolean ? "16" : "-7");
                         buf.append(" ELSE -6 END ");
                     } else {
                         buf.append(mysqlType.getJdbcType());

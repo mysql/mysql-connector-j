@@ -130,6 +130,23 @@ public class FieldFactory implements ProtocolEntityFactory<Field, XMessage> {
                 flags |= MysqlType.FIELD_FLAG_AUTO_INCREMENT;
             }
 
+            // According to SQL standard, NUMERIC_SCALE should be NULL for approximate numeric data types.
+            // DECIMAL_NOT_SPECIFIED=31 is the MySQL internal constant value used to indicate that NUMERIC_SCALE is not applicable.
+            // It's probably a mistake that it's exposed by protocol as a decimals and it should be replaced with 0. 
+            switch (mysqlType) {
+                case FLOAT:
+                case FLOAT_UNSIGNED:
+                case DOUBLE:
+                case DOUBLE_UNSIGNED:
+                    if (decimals == 31) {
+                        decimals = 0;
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+
             Field f = new Field(databaseName, tableName, originalTableName, columnName, originalColumnName, length, mysqlTypeId, flags, decimals,
                     collationIndex, encoding, mysqlType);
             return f;

@@ -3,6 +3,8 @@
 
 Version 8.0.19
 
+  - Fix for Bug#97413 (30477722), DATABASEMETADATA IS BROKEN AFTER SERVER WL#13528.
+
   - WL#13367, DNS SRV support.
 
   - WL#12736, DevAPI: Specify TLS ciphers to be used by a client or session.

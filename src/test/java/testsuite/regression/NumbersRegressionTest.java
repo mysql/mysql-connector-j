@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -123,16 +123,16 @@ public class NumbersRegressionTest extends BaseTestCase {
      *             if any errors occur
      */
     public void testPrecisionAndScale() throws Exception {
-        testPrecisionForType("TINYINT", 8, -1, false);
-        testPrecisionForType("TINYINT", 8, -1, true);
-        testPrecisionForType("SMALLINT", 8, -1, false);
-        testPrecisionForType("SMALLINT", 8, -1, true);
-        testPrecisionForType("MEDIUMINT", 8, -1, false);
+        testPrecisionForType("TINYINT", 3, -1, false);
+        testPrecisionForType("TINYINT", 3, -1, true);
+        testPrecisionForType("SMALLINT", 5, -1, false);
+        testPrecisionForType("SMALLINT", 5, -1, true);
+        testPrecisionForType("MEDIUMINT", 7, -1, false);
         testPrecisionForType("MEDIUMINT", 8, -1, true);
-        testPrecisionForType("INT", 8, -1, false);
-        testPrecisionForType("INT", 8, -1, true);
-        testPrecisionForType("BIGINT", 8, -1, false);
-        testPrecisionForType("BIGINT", 8, -1, true);
+        testPrecisionForType("INT", 10, -1, false);
+        testPrecisionForType("INT", 10, -1, true);
+        testPrecisionForType("BIGINT", 19, -1, false);
+        testPrecisionForType("BIGINT", 20, -1, true);
 
         testPrecisionForType("FLOAT", 8, 4, false);
         testPrecisionForType("FLOAT", 8, 4, true);
@@ -140,7 +140,9 @@ public class NumbersRegressionTest extends BaseTestCase {
         testPrecisionForType("DOUBLE", 8, 4, true);
 
         testPrecisionForType("DECIMAL", 8, 4, false);
-        testPrecisionForType("DECIMAL", 8, 4, true);
+        testPrecisionForType("DECIMAL", 8, 0, false);
+        testPrecisionForType("DECIMAL", 10, 4, true);
+        testPrecisionForType("DECIMAL", 10, 0, true);
 
         testPrecisionForType("DECIMAL", 9, 0, false);
         testPrecisionForType("DECIMAL", 9, 0, true);

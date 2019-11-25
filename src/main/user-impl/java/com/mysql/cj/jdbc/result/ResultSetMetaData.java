@@ -231,14 +231,6 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     public int getPrecision(int column) throws SQLException {
         Field f = getField(column);
 
-        if (f.getMysqlType().isDecimal()) {
-            if (f.getDecimals() > 0) {
-                return clampedGetLength(f) - 1 + getPrecisionAdjustFactor(f);
-            }
-
-            return clampedGetLength(f) + getPrecisionAdjustFactor(f);
-        }
-
         switch (f.getMysqlType()) {
             case TINYBLOB:
             case BLOB:
@@ -248,46 +240,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
                 return clampedGetLength(f);
 
             default:
-                return clampedGetLength(f) / this.session.getServerSession().getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
+                return f.getMysqlType().isDecimal() ? clampedGetLength(f)
+                        : clampedGetLength(f) / this.session.getServerSession().getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
 
         }
-    }
-
-    /**
-     * Returns amount of correction that should be applied to the precision
-     * value.
-     *
-     * Different versions of MySQL report different precision values.
-     * 
-     * @param f
-     *            field
-     *
-     * @return the amount to adjust precision value by.
-     */
-    public int getPrecisionAdjustFactor(Field f) {
-        //
-        // Handle odd values for 'M' for floating point/decimal numbers
-        //
-        if (!f.isUnsigned()) {
-            switch (f.getMysqlTypeId()) {
-                case MysqlType.FIELD_TYPE_DECIMAL:
-                case MysqlType.FIELD_TYPE_NEWDECIMAL:
-                    return -1;
-
-                case MysqlType.FIELD_TYPE_DOUBLE:
-                case MysqlType.FIELD_TYPE_FLOAT:
-                    return 1;
-
-            }
-        } else {
-            switch (f.getMysqlTypeId()) {
-                case MysqlType.FIELD_TYPE_DOUBLE:
-                case MysqlType.FIELD_TYPE_FLOAT:
-                    return 1;
-
-            }
-        }
-        return 0;
     }
 
     @Override

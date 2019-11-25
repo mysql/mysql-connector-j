@@ -134,6 +134,49 @@ public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefini
         MysqlType mysqlType = NativeProtocol.findMysqlType(this.protocol.getPropertySet(), colType, colFlag, colLength, tableName, originalTableName,
                 collationIndex, encoding);
 
+        // Protocol returns precision and scale differently for some types. We need to align then to I_S.
+        switch (mysqlType) {
+            case TINYINT:
+            case TINYINT_UNSIGNED:
+            case SMALLINT:
+            case SMALLINT_UNSIGNED:
+            case MEDIUMINT:
+            case MEDIUMINT_UNSIGNED:
+            case INT:
+            case INT_UNSIGNED:
+            case BIGINT:
+            case BIGINT_UNSIGNED:
+            case BOOLEAN:
+                colLength = mysqlType.getPrecision().intValue();
+                break;
+
+            case DECIMAL:
+                colLength--;
+                if (colDecimals > 0) {
+                    colLength--;
+                }
+                break;
+            case DECIMAL_UNSIGNED:
+                if (colDecimals > 0) {
+                    colLength--;
+                }
+                break;
+            case FLOAT:
+            case FLOAT_UNSIGNED:
+            case DOUBLE:
+            case DOUBLE_UNSIGNED:
+                // According to SQL standard, NUMERIC_SCALE should be NULL for approximate numeric data types.
+                // DECIMAL_NOT_SPECIFIED=31 is the MySQL internal constant value used to indicate that NUMERIC_SCALE is not applicable.
+                // It's probably a mistake that it's exposed by protocol as a decimals and it should be replaced with 0. 
+                if (colDecimals == 31) {
+                    colDecimals = 0;
+                }
+                break;
+
+            default:
+                break;
+        }
+
         return new Field(databaseName, tableName, originalTableName, columnName, originalColumnName, colLength, colType, colFlag, colDecimals, collationIndex,
                 encoding, mysqlType);
     }

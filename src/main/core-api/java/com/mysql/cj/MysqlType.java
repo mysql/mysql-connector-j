@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -472,23 +472,29 @@ public enum MysqlType implements SQLType {
 
         } else if (StringUtils.indexOfIgnoreCase(typeName, "TINYINT") != -1 || StringUtils.indexOfIgnoreCase(typeName, "TINY") != -1
                 || StringUtils.indexOfIgnoreCase(typeName, "INT1") != -1) {
-
-            // TODO BOOLEAN is a synonym for TINYINT(1)
-            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 ? TINYINT_UNSIGNED : TINYINT;
+            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 || StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "ZEROFILL") != -1
+                    ? TINYINT_UNSIGNED
+                    : TINYINT;
 
         } else if (StringUtils.indexOfIgnoreCase(typeName, "MEDIUMINT") != -1
                 // IMPORTANT: "INT24" must be checked before "INT2"
                 || StringUtils.indexOfIgnoreCase(typeName, "INT24") != -1 || StringUtils.indexOfIgnoreCase(typeName, "INT3") != -1
                 || StringUtils.indexOfIgnoreCase(typeName, "MIDDLEINT") != -1) {
-            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 ? MEDIUMINT_UNSIGNED : MEDIUMINT;
+            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 || StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "ZEROFILL") != -1
+                    ? MEDIUMINT_UNSIGNED
+                    : MEDIUMINT;
 
         } else if (StringUtils.indexOfIgnoreCase(typeName, "SMALLINT") != -1 || StringUtils.indexOfIgnoreCase(typeName, "INT2") != -1) {
-            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 ? SMALLINT_UNSIGNED : SMALLINT;
+            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 || StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "ZEROFILL") != -1
+                    ? SMALLINT_UNSIGNED
+                    : SMALLINT;
 
         } else if (StringUtils.indexOfIgnoreCase(typeName, "BIGINT") != -1 || StringUtils.indexOfIgnoreCase(typeName, "SERIAL") != -1
                 || StringUtils.indexOfIgnoreCase(typeName, "INT8") != -1) {
             // SERIAL is an alias for BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE.
-            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 ? BIGINT_UNSIGNED : BIGINT;
+            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 || StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "ZEROFILL") != -1
+                    ? BIGINT_UNSIGNED
+                    : BIGINT;
 
         } else if (StringUtils.indexOfIgnoreCase(typeName, "POINT") != -1) {
             // also covers "MULTIPOINT"
@@ -498,21 +504,27 @@ public enum MysqlType implements SQLType {
         } else if (StringUtils.indexOfIgnoreCase(typeName, "INT") != -1 || StringUtils.indexOfIgnoreCase(typeName, "INTEGER") != -1
                 || StringUtils.indexOfIgnoreCase(typeName, "INT4") != -1) {
             // IMPORTANT: "INT" must be checked after all "*INT*" types
-            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 ? INT_UNSIGNED : INT;
+            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 || StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "ZEROFILL") != -1
+                    ? INT_UNSIGNED
+                    : INT;
 
         } else if (StringUtils.indexOfIgnoreCase(typeName, "DOUBLE") != -1 || StringUtils.indexOfIgnoreCase(typeName, "REAL") != -1
         /* || StringUtils.indexOfIgnoreCase(name, "DOUBLE PRECISION") != -1 is caught by "DOUBLE" check */
         // IMPORTANT: "FLOAT8" must be checked before "FLOAT"
                 || StringUtils.indexOfIgnoreCase(typeName, "FLOAT8") != -1) {
             // TODO Exception: If the REAL_AS_FLOAT SQL mode is enabled, REAL is a synonym for FLOAT rather than DOUBLE.
-            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 ? DOUBLE_UNSIGNED : DOUBLE;
+            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 || StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "ZEROFILL") != -1
+                    ? DOUBLE_UNSIGNED
+                    : DOUBLE;
 
         } else if (StringUtils.indexOfIgnoreCase(typeName, "FLOAT") != -1 /*
                                                                            * || StringUtils.indexOfIgnoreCase(name, "FLOAT4") != -1 is caught by
                                                                            * "FLOAT" check
                                                                            */) {
             // TODO FLOAT(p) [UNSIGNED] [ZEROFILL]. If p is from 0 to 24, the data type becomes FLOAT with no M or D values. If p is from 25 to 53, the data type becomes DOUBLE with no M or D values.
-            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 ? FLOAT_UNSIGNED : FLOAT;
+            return StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "UNSIGNED") != -1 || StringUtils.indexOfIgnoreCase(fullMysqlTypeName, "ZEROFILL") != -1
+                    ? FLOAT_UNSIGNED
+                    : FLOAT;
 
         } else if (StringUtils.indexOfIgnoreCase(typeName, "NULL") != -1) {
             return NULL;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -222,7 +222,7 @@ public class MetadataTest extends BaseTableTestCase {
         assertEquals("TheId", idCol.getColumnLabel());
         assertEquals(Type.DOUBLE, idCol.getType());
         assertEquals(23, idCol.getLength());
-        assertEquals(31, idCol.getFractionalDigits());
+        assertEquals(0, idCol.getFractionalDigits());
         assertEquals(true, idCol.isNumberSigned());
         assertEquals(null, idCol.getCollationName());
         assertEquals(null, idCol.getCharacterSetName());
@@ -465,7 +465,7 @@ public class MetadataTest extends BaseTableTestCase {
         assertEquals("f", c.getColumnLabel());
         assertEquals(Type.DOUBLE, c.getType());
         assertEquals(22, c.getLength());
-        assertEquals(31, c.getFractionalDigits());
+        assertEquals(0, c.getFractionalDigits());
         assertEquals(true, c.isNumberSigned());
         // assertEquals(null, c.getCollationName()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(null, c.getCharacterSetName()); // irrelevant, we shouldn't expect any concrete value

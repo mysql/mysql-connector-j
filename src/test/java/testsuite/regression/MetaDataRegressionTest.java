@@ -36,10 +36,12 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
+import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -4926,6 +4928,276 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
         }
 
+    }
+
+    /**
+     * Tests fix for Bug#97413 (30477722), DATABASEMETADATA IS BROKEN AFTER SERVER WL#13528.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug97413() throws Exception {
+        createTable("testBug97413",
+                "(f1_1 TINYINT, f1_2 TINYINT UNSIGNED, f1_3 TINYINT(1), f1_4 TINYINT(1) UNSIGNED, f1_5 TINYINT(1) ZEROFILL, f1_6 TINYINT(1) UNSIGNED ZEROFILL,"
+                        + " f2_1 SMALLINT, f2_2 SMALLINT UNSIGNED, f2_3 SMALLINT(1), f2_4 SMALLINT(1) UNSIGNED, f2_5 SMALLINT(1) ZEROFILL, f2_6 SMALLINT(1) UNSIGNED ZEROFILL,"
+                        + " f3_1 MEDIUMINT, f3_2 MEDIUMINT UNSIGNED, f3_3 MEDIUMINT(1), f3_4 MEDIUMINT(1) UNSIGNED, f3_5 MEDIUMINT(1) ZEROFILL, f3_6 MEDIUMINT(1) UNSIGNED ZEROFILL,"
+                        + " f4_1 INT, f4_2 INT UNSIGNED, f4_3 INT(1), f4_4 INT(1) UNSIGNED, f4_5 INT(1) ZEROFILL, f4_6 INT(1) UNSIGNED ZEROFILL,"
+                        + " f5_1 BIGINT, f5_2 BIGINT UNSIGNED, f5_3 BIGINT(1), f5_4 BIGINT(1) UNSIGNED, f5_5 BIGINT(1) ZEROFILL, f5_6 BIGINT(1) UNSIGNED ZEROFILL,"
+                        + " f6_1 FLOAT(7), f6_2 FLOAT(7) UNSIGNED, f6_3 FLOAT(10, 7), f6_4 FLOAT(10, 7) UNSIGNED, f6_5 FLOAT(10, 7) ZEROFILL, f6_6 FLOAT(10, 7) UNSIGNED ZEROFILL,"
+                        + " f6_7 FLOAT(30), f6_8 FLOAT(30) UNSIGNED, f6_9 FLOAT(30) ZEROFILL, f6_10 FLOAT(30) UNSIGNED ZEROFILL,"
+                        + " f7_1 REAL, f7_2 REAL UNSIGNED, f7_3 REAL(10, 7), f7_4 REAL(10, 7) UNSIGNED, f7_5 REAL(10, 7) ZEROFILL, f7_6 REAL(10, 7) UNSIGNED ZEROFILL,"
+                        + " f8_1 DOUBLE, f8_2 DOUBLE UNSIGNED, f8_3 DOUBLE(12, 10), f8_4 DOUBLE(12, 10) UNSIGNED, f8_5 DOUBLE(12, 10) ZEROFILL, f8_6 DOUBLE(12, 10) UNSIGNED ZEROFILL"
+                        + ")");
+
+        int cnt1 = 0;
+        int cnt2 = 0;
+        int cnt3 = 0;
+        int cnt4 = 0;
+        if (versionMeetsMinimum(8, 0, 17)) {
+            SQLWarning warn = this.stmt.getWarnings();
+            assertNotNull(warn);
+            while (warn != null) {
+                if (warn.getMessage().startsWith("Integer display width is deprecated")) {
+                    cnt1++;
+                } else if (warn.getMessage().startsWith("Specifying number of digits for floating")) {
+                    cnt2++;
+                } else if (warn.getMessage().startsWith("The ZEROFILL attribute is deprecated")) {
+                    cnt3++;
+                } else if (warn.getMessage().startsWith("UNSIGNED for decimal and floating point data types is deprecated")) {
+                    cnt4++;
+                } else {
+                    System.out.println(warn.getMessage());
+                }
+                warn = warn.getNextWarning();
+            }
+            assertEquals(20, cnt1);
+            assertEquals(12, cnt2);
+            assertEquals(18, cnt3);
+            assertEquals(11, cnt4);
+        }
+
+        createProcedure("testBug97413p", "("
+                + " INOUT f1_1 TINYINT, INOUT f1_2 TINYINT UNSIGNED, INOUT f1_3 TINYINT(1), INOUT f1_4 TINYINT(1) UNSIGNED, INOUT f1_5 TINYINT(1) ZEROFILL, INOUT f1_6 TINYINT(1) UNSIGNED ZEROFILL,"
+                + " INOUT f2_1 SMALLINT, INOUT f2_2 SMALLINT UNSIGNED, INOUT f2_3 SMALLINT(1), INOUT f2_4 SMALLINT(1) UNSIGNED, INOUT f2_5 SMALLINT(1) ZEROFILL, INOUT f2_6 SMALLINT(1) UNSIGNED ZEROFILL,"
+                + " INOUT f3_1 MEDIUMINT, INOUT f3_2 MEDIUMINT UNSIGNED, INOUT f3_3 MEDIUMINT(1), INOUT f3_4 MEDIUMINT(1) UNSIGNED, INOUT f3_5 MEDIUMINT(1) ZEROFILL, INOUT f3_6 MEDIUMINT(1) UNSIGNED ZEROFILL,"
+                + " INOUT f4_1 INT, INOUT f4_2 INT UNSIGNED, INOUT f4_3 INT(1), INOUT f4_4 INT(1) UNSIGNED, INOUT f4_5 INT(1) ZEROFILL, INOUT f4_6 INT(1) UNSIGNED ZEROFILL,"
+                + " INOUT f5_1 BIGINT, INOUT f5_2 BIGINT UNSIGNED, INOUT f5_3 BIGINT(1), INOUT f5_4 BIGINT(1) UNSIGNED, INOUT f5_5 BIGINT(1) ZEROFILL, INOUT f5_6 BIGINT(1) UNSIGNED ZEROFILL,"
+                + " INOUT f6_1 FLOAT(7), INOUT f6_2 FLOAT(7) UNSIGNED, INOUT f6_3 FLOAT(10, 7), INOUT f6_4 FLOAT(10, 7) UNSIGNED, INOUT f6_5 FLOAT(10, 7) ZEROFILL, INOUT f6_6 FLOAT(10, 7) UNSIGNED ZEROFILL,"
+                + " INOUT f6_7 FLOAT(30), INOUT f6_8 FLOAT(30) UNSIGNED, INOUT f6_9 FLOAT(30) ZEROFILL, INOUT f6_10 FLOAT(30) UNSIGNED ZEROFILL,"
+                + " INOUT f7_1 REAL, INOUT f7_2 REAL UNSIGNED, INOUT f7_3 REAL(10, 7), INOUT f7_4 REAL(10, 7) UNSIGNED, INOUT f7_5 REAL(10, 7) ZEROFILL, INOUT f7_6 REAL(10, 7) UNSIGNED ZEROFILL,"
+                + " INOUT f8_1 DOUBLE, INOUT f8_2 DOUBLE UNSIGNED, INOUT f8_3 DOUBLE(12, 10), INOUT f8_4 DOUBLE(12, 10) UNSIGNED, INOUT f8_5 DOUBLE(12, 10) ZEROFILL, INOUT f8_6 DOUBLE(12, 10) UNSIGNED ZEROFILL"
+                + ") BEGIN SELECT CONCAT(f1_3, f1_4) INTO f1_1; END");
+
+        createFunction("testBug97413f",
+                "(f1_1 TINYINT, f1_2 TINYINT UNSIGNED, f1_3 TINYINT(1), f1_4 TINYINT(1) UNSIGNED, f1_5 TINYINT(1) ZEROFILL, f1_6 TINYINT(1) UNSIGNED ZEROFILL,"
+                        + " f2_1 SMALLINT, f2_2 SMALLINT UNSIGNED, f2_3 SMALLINT(1), f2_4 SMALLINT(1) UNSIGNED, f2_5 SMALLINT(1) ZEROFILL, f2_6 SMALLINT(1) UNSIGNED ZEROFILL,"
+                        + " f3_1 MEDIUMINT, f3_2 MEDIUMINT UNSIGNED, f3_3 MEDIUMINT(1), f3_4 MEDIUMINT(1) UNSIGNED, f3_5 MEDIUMINT(1) ZEROFILL, f3_6 MEDIUMINT(1) UNSIGNED ZEROFILL,"
+                        + " f4_1 INT, f4_2 INT UNSIGNED, f4_3 INT(1), f4_4 INT(1) UNSIGNED, f4_5 INT(1) ZEROFILL, f4_6 INT(1) UNSIGNED ZEROFILL,"
+                        + " f5_1 BIGINT, f5_2 BIGINT UNSIGNED, f5_3 BIGINT(1), f5_4 BIGINT(1) UNSIGNED, f5_5 BIGINT(1) ZEROFILL, f5_6 BIGINT(1) UNSIGNED ZEROFILL,"
+                        + " f6_1 FLOAT(7), f6_2 FLOAT(7) UNSIGNED, f6_3 FLOAT(10, 7), f6_4 FLOAT(10, 7) UNSIGNED, f6_5 FLOAT(10, 7) ZEROFILL, f6_6 FLOAT(10, 7) UNSIGNED ZEROFILL,"
+                        + " f6_7 FLOAT(30), f6_8 FLOAT(30) UNSIGNED, f6_9 FLOAT(30) ZEROFILL, f6_10 FLOAT(30) UNSIGNED ZEROFILL,"
+                        + " f7_1 REAL, f7_2 REAL UNSIGNED, f7_3 REAL(10, 7), f7_4 REAL(10, 7) UNSIGNED, f7_5 REAL(10, 7) ZEROFILL, f7_6 REAL(10, 7) UNSIGNED ZEROFILL,"
+                        + " f8_1 DOUBLE, f8_2 DOUBLE UNSIGNED, f8_3 DOUBLE(12, 10), f8_4 DOUBLE(12, 10) UNSIGNED, f8_5 DOUBLE(12, 10) ZEROFILL, f8_6 DOUBLE(12, 10) UNSIGNED ZEROFILL"
+                        + ") RETURNS INT(6) DETERMINISTIC RETURN CONCAT(f1_1, f2_1)");
+
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (boolean useSSPS : new boolean[] { false, true }) {
+                for (boolean tinyInt1isBit : new boolean[] { false, true }) {
+                    for (boolean transformedBitIsBoolean : new boolean[] { false, true }) {
+                        String errMsg = "useIS=" + useIS + ", useSSPS=" + useSSPS + ", tinyInt1isBit=" + tinyInt1isBit + ", transformedBitIsBoolean="
+                                + transformedBitIsBoolean + "\n";
+                        props.clear();
+                        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+                        props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+                        props.setProperty(PropertyKey.tinyInt1isBit.getKeyName(), "" + tinyInt1isBit);
+                        props.setProperty(PropertyKey.transformedBitIsBoolean.getKeyName(), "" + transformedBitIsBoolean);
+                        Connection c1 = getConnectionWithProps(props);
+
+                        /*
+                         * DatabaseMetaData
+                         */
+                        ResultSet rs1 = c1.getMetaData().getColumns(c1.getCatalog(), null, "testBug97413", "f%");
+                        new TestBug97413Columns(errMsg, tinyInt1isBit, transformedBitIsBoolean, rs1, "DATA_TYPE", "TYPE_NAME", null, "COLUMN_SIZE",
+                                "DECIMAL_DIGITS").run();
+
+                        /*
+                         * ResultSetMetaData
+                         */
+                        this.rs = c1.createStatement().executeQuery("SELECT * FROM testBug97413");
+                        ResultSetMetaData rm = this.rs.getMetaData();
+                        new TestBug97413Columns(errMsg, tinyInt1isBit, transformedBitIsBoolean, rm).run();
+
+                        /*
+                         * Procedures
+                         */
+                        CallableStatement storedProc = c1
+                                .prepareCall("{call testBug97413p(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+                                        + " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}");
+                        ParameterMetaData pm = storedProc.getParameterMetaData();
+                        new TestBug97413Columns(errMsg, tinyInt1isBit, transformedBitIsBoolean, pm).run();
+
+                        rs1 = c1.getMetaData().getProcedureColumns(null, null, "testBug97413p", null);
+                        new TestBug97413Columns(errMsg, tinyInt1isBit, transformedBitIsBoolean, rs1, "DATA_TYPE", "TYPE_NAME", "LENGTH", "PRECISION", "SCALE")
+                                .run();
+
+                        /*
+                         * Functions
+                         */
+                        storedProc = c1.prepareCall("{call testBug97413f(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+                                + " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}");
+                        pm = storedProc.getParameterMetaData();
+                        TestBug97413Columns testBug97413Columns = new TestBug97413Columns(errMsg, tinyInt1isBit, transformedBitIsBoolean, pm);
+                        testBug97413Columns.testBug97413CheckMDColumn(Types.INTEGER, "INT", 0, 10, 0); // return type
+                        testBug97413Columns.run();
+
+                        rs1 = c1.getMetaData().getFunctionColumns(null, null, "testBug97413f", null);
+                        testBug97413Columns = new TestBug97413Columns(errMsg, tinyInt1isBit, transformedBitIsBoolean, rs1, "DATA_TYPE", "TYPE_NAME", "LENGTH",
+                                "PRECISION", "SCALE"); // return type
+                        testBug97413Columns.testBug97413CheckMDColumn(Types.INTEGER, "INT", 10, 10, 0);
+                        testBug97413Columns.run();
+
+                        c1.close();
+                    }
+                }
+            }
+        }
+    }
+
+    private class TestBug97413Columns {
+        String errMsg = null;
+        boolean tinyInt1isBit = false;
+        boolean transformedBitIsBoolean = false;
+        ResultSet rset = null;
+        ParameterMetaData pm = null;
+        ResultSetMetaData rm = null;
+        int id = 0;
+        String tidField = null;
+        String tnField = null;
+        String widthField = null;
+        String precisionField = null;
+        String decimalField = null;
+
+        TestBug97413Columns(String errMsg, boolean tinyInt1isBit, boolean transformedBitIsBoolean, ResultSet rset, String tidField, String tnField,
+                String widthField, String precisionField, String decimalField) {
+            this.errMsg = errMsg;
+            this.tinyInt1isBit = tinyInt1isBit;
+            this.transformedBitIsBoolean = transformedBitIsBoolean;
+            this.rset = rset;
+            this.tidField = tidField;
+            this.tnField = tnField;
+            this.widthField = widthField;
+            this.precisionField = precisionField;
+            this.decimalField = decimalField;
+        }
+
+        TestBug97413Columns(String errMsg, boolean tinyInt1isBit, boolean transformedBitIsBoolean, ParameterMetaData pm) {
+            this.errMsg = errMsg;
+            this.tinyInt1isBit = tinyInt1isBit;
+            this.transformedBitIsBoolean = transformedBitIsBoolean;
+            this.pm = pm;
+        }
+
+        TestBug97413Columns(String errMsg, boolean tinyInt1isBit, boolean transformedBitIsBoolean, ResultSetMetaData rm) {
+            this.errMsg = errMsg;
+            this.tinyInt1isBit = tinyInt1isBit;
+            this.transformedBitIsBoolean = transformedBitIsBoolean;
+            this.rm = rm;
+        }
+
+        void testBug97413CheckMDColumn(int dataType, String typeName, int width, int precision, int decimalDigits) throws Exception {
+            if (this.rset != null) {
+                assertTrue(this.rset.next());
+                assertEquals(this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n", dataType, this.rset.getInt(this.tidField));
+                assertEquals(this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n", typeName, this.rset.getString(this.tnField));
+                if (this.widthField != null) {
+                    assertEquals(this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n", width, this.rset.getInt(this.widthField));
+                }
+                assertEquals(this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n", precision, this.rset.getInt(this.precisionField));
+                assertEquals(this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n", decimalDigits, this.rset.getInt(this.decimalField));
+            } else if (this.pm != null) {
+                this.id++;
+                assertEquals(this.errMsg, dataType, this.pm.getParameterType(this.id));
+                assertEquals(this.errMsg, typeName, this.pm.getParameterTypeName(this.id));
+                assertEquals(this.errMsg, precision, this.pm.getPrecision(this.id));
+                assertEquals(this.errMsg, decimalDigits, this.pm.getScale(this.id));
+            } else {
+                this.id++;
+                assertEquals(this.errMsg, dataType, this.rm.getColumnType(this.id));
+                assertEquals(this.errMsg, typeName, this.rm.getColumnTypeName(this.id));
+                assertEquals(this.errMsg, precision, this.rm.getPrecision(this.id));
+                assertEquals(this.errMsg, decimalDigits, this.rm.getScale(this.id));
+                assertEquals(this.errMsg, precision, this.rm.getColumnDisplaySize(this.id));
+            }
+
+        }
+
+        void run() throws Exception {
+            testBug97413CheckMDColumn(Types.TINYINT, "TINYINT", 3, 3, 0);
+            testBug97413CheckMDColumn(Types.TINYINT, "TINYINT UNSIGNED", 3, 3, 0);
+
+            testBug97413CheckMDColumn(this.tinyInt1isBit ? (this.transformedBitIsBoolean ? Types.BOOLEAN : Types.BIT) : Types.TINYINT,
+                    this.tinyInt1isBit ? (this.transformedBitIsBoolean ? "BOOLEAN" : "BIT") : "TINYINT",
+                    this.tinyInt1isBit ? (this.transformedBitIsBoolean ? 3 : 1) : 3, this.tinyInt1isBit ? (this.transformedBitIsBoolean ? 3 : 1) : 3, 0);
+            testBug97413CheckMDColumn(Types.TINYINT, "TINYINT UNSIGNED", 3, 3, 0);
+            testBug97413CheckMDColumn(Types.TINYINT, "TINYINT UNSIGNED", 3, 3, 0);
+            testBug97413CheckMDColumn(Types.TINYINT, "TINYINT UNSIGNED", 3, 3, 0);
+
+            testBug97413CheckMDColumn(Types.SMALLINT, "SMALLINT", 5, 5, 0);
+            testBug97413CheckMDColumn(Types.SMALLINT, "SMALLINT UNSIGNED", 5, 5, 0);
+            testBug97413CheckMDColumn(Types.SMALLINT, "SMALLINT", 5, 5, 0);
+            testBug97413CheckMDColumn(Types.SMALLINT, "SMALLINT UNSIGNED", 5, 5, 0);
+            testBug97413CheckMDColumn(Types.SMALLINT, "SMALLINT UNSIGNED", 5, 5, 0);
+            testBug97413CheckMDColumn(Types.SMALLINT, "SMALLINT UNSIGNED", 5, 5, 0);
+
+            testBug97413CheckMDColumn(Types.INTEGER, "MEDIUMINT", 7, 7, 0);
+            testBug97413CheckMDColumn(Types.INTEGER, "MEDIUMINT UNSIGNED", 8, 8, 0);
+            testBug97413CheckMDColumn(Types.INTEGER, "MEDIUMINT", 7, 7, 0);
+            testBug97413CheckMDColumn(Types.INTEGER, "MEDIUMINT UNSIGNED", 8, 8, 0);
+            testBug97413CheckMDColumn(Types.INTEGER, "MEDIUMINT UNSIGNED", 8, 8, 0);
+            testBug97413CheckMDColumn(Types.INTEGER, "MEDIUMINT UNSIGNED", 8, 8, 0);
+
+            testBug97413CheckMDColumn(Types.INTEGER, "INT", 10, 10, 0);
+            testBug97413CheckMDColumn(Types.INTEGER, "INT UNSIGNED", 10, 10, 0);
+            testBug97413CheckMDColumn(Types.INTEGER, "INT", 10, 10, 0);
+            testBug97413CheckMDColumn(Types.INTEGER, "INT UNSIGNED", 10, 10, 0);
+            testBug97413CheckMDColumn(Types.INTEGER, "INT UNSIGNED", 10, 10, 0);
+            testBug97413CheckMDColumn(Types.INTEGER, "INT UNSIGNED", 10, 10, 0);
+
+            testBug97413CheckMDColumn(Types.BIGINT, "BIGINT", 19, 19, 0);
+            testBug97413CheckMDColumn(Types.BIGINT, "BIGINT UNSIGNED", 20, 20, 0);
+            testBug97413CheckMDColumn(Types.BIGINT, "BIGINT", 19, 19, 0);
+            testBug97413CheckMDColumn(Types.BIGINT, "BIGINT UNSIGNED", 20, 20, 0);
+            testBug97413CheckMDColumn(Types.BIGINT, "BIGINT UNSIGNED", 20, 20, 0);
+            testBug97413CheckMDColumn(Types.BIGINT, "BIGINT UNSIGNED", 20, 20, 0);
+
+            testBug97413CheckMDColumn(Types.REAL, "FLOAT", 12, 12, 0);
+            testBug97413CheckMDColumn(Types.REAL, "FLOAT UNSIGNED", 12, 12, 0);
+            testBug97413CheckMDColumn(Types.REAL, "FLOAT", 10, 10, 7);
+            testBug97413CheckMDColumn(Types.REAL, "FLOAT UNSIGNED", 10, 10, 7);
+            testBug97413CheckMDColumn(Types.REAL, "FLOAT UNSIGNED", 10, 10, 7);
+            testBug97413CheckMDColumn(Types.REAL, "FLOAT UNSIGNED", 10, 10, 7);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE", 22, 22, 0);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 22, 22, 0);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 22, 22, 0);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 22, 22, 0);
+
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE", 22, 22, 0);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 22, 22, 0);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE", 10, 10, 7);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 10, 10, 7);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 10, 10, 7);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 10, 10, 7);
+
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE", 22, 22, 0);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 22, 22, 0);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE", 12, 12, 10);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 12, 12, 10);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 12, 12, 10);
+            testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 12, 12, 10);
+        }
     }
 
 }

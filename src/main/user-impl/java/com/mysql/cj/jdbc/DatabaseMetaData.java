@@ -245,10 +245,26 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     this.columnSize = Integer.valueOf(maxLength);
                     break;
 
-                case DECIMAL:
-                case DECIMAL_UNSIGNED:
                 case FLOAT:
                 case FLOAT_UNSIGNED:
+                    if (typeInfo.indexOf(",") != -1) {
+                        // Numeric with decimals
+                        this.columnSize = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(","))).trim());
+                        this.decimalDigits = Integer.valueOf(typeInfo.substring((typeInfo.indexOf(",") + 1), (typeInfo.indexOf(")"))).trim());
+                    } else if (typeInfo.indexOf("(") != -1) {
+                        int size = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(")"))).trim());
+                        if (size > 23) {
+                            this.mysqlType = this.mysqlType == MysqlType.FLOAT ? MysqlType.DOUBLE : MysqlType.DOUBLE_UNSIGNED;
+                            this.columnSize = Integer.valueOf(22);
+                            this.decimalDigits = 0;
+                        }
+                    } else {
+                        this.columnSize = Integer.valueOf(12);
+                        this.decimalDigits = 0;
+                    }
+                    break;
+                case DECIMAL:
+                case DECIMAL_UNSIGNED:
                 case DOUBLE:
                 case DOUBLE_UNSIGNED:
                     if (typeInfo.indexOf(",") != -1) {
@@ -260,10 +276,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             case DECIMAL:
                             case DECIMAL_UNSIGNED:
                                 this.columnSize = Integer.valueOf(65);
-                                break;
-                            case FLOAT:
-                            case FLOAT_UNSIGNED:
-                                this.columnSize = Integer.valueOf(12);
                                 break;
                             case DOUBLE:
                             case DOUBLE_UNSIGNED:
@@ -316,7 +328,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     break;
 
                 case TINYINT:
-                case TINYINT_UNSIGNED:
                     if (DatabaseMetaData.this.tinyInt1isBit && typeInfo.indexOf("(1)") != -1) {
                         if (DatabaseMetaData.this.transformedBitIsBoolean) {
                             this.mysqlType = MysqlType.BOOLEAN;
@@ -326,6 +337,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     } else {
                         this.columnSize = Integer.valueOf(3);
                     }
+                    break;
+
+                case TINYINT_UNSIGNED:
+                    this.columnSize = Integer.valueOf(3);
                     break;
 
                 case DATE:
@@ -1281,6 +1296,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                     String type = results.getString("Type");
                                     int size = stmt.getMaxFieldSize();
                                     int decimals = 0;
+                                    boolean hasLength = false;
 
                                     /*
                                      * Parse the Type column from MySQL
@@ -1298,6 +1314,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                         decimals = 0;
                                         type = "enum";
                                     } else if (type.indexOf("(") != -1) {
+                                        hasLength = true;
                                         if (type.indexOf(",") != -1) {
                                             size = Integer.parseInt(type.substring(type.indexOf("(") + 1, type.indexOf(",")));
                                             decimals = Integer.parseInt(type.substring(type.indexOf(",") + 1, type.indexOf(")")));
@@ -1311,8 +1328,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                     MysqlType ft = MysqlType.getByName(type.toUpperCase());
                                     rowVal[2] = s2b(String.valueOf(ft.getJdbcType()));
                                     rowVal[3] = s2b(type);
-                                    rowVal[4] = Integer.toString(size + decimals).getBytes();
-                                    rowVal[5] = Integer.toString(size + decimals).getBytes();
+                                    rowVal[4] = hasLength ? Integer.toString(size + decimals).getBytes() : Long.toString(ft.getPrecision()).getBytes();
+                                    rowVal[5] = Integer.toString(maxBufferSize).getBytes();
                                     rowVal[6] = Integer.toString(decimals).getBytes();
                                     rowVal[7] = Integer.toString(java.sql.DatabaseMetaData.bestRowNotPseudo).getBytes();
 

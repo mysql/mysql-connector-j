@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -823,7 +823,7 @@ public abstract class BaseTestCase extends TestCase {
      * @throws SQLException
      *             if an error occurs.
      */
-    protected boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
+    public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
         return (((JdbcConnection) this.conn).getSession().versionMeetsMinimum(major, minor, subminor));
     }
 
