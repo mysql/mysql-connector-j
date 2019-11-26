@@ -8331,7 +8331,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 assertTrue(this.rs.next());
                 List<String> serverSupportedProtocols = Arrays.asList(this.rs.getString(2).trim().split("\\s*,\\s*"));
                 String highestCommonTlsVersion = "";
-                for (String p : new String[] { "TLSv1.2", "TLSv1.1", "TLSv1" }) {
+                for (String p : new String[] { "TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1" }) {
                     if (jvmSupportedProtocols.contains(p) && serverSupportedProtocols.contains(p)) {
                         highestCommonTlsVersion = p;
                         break;

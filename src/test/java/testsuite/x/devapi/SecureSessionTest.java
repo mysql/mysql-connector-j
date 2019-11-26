@@ -32,8 +32,12 @@ package testsuite.x.devapi;
 import static org.junit.Assert.assertEquals;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.function.Function;
+
+import javax.net.ssl.SSLContext;
 
 import org.junit.After;
 import org.junit.Before;
@@ -1041,15 +1045,19 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      * For example, add these variables to the ant call:
      * -Dcom.mysql.cj.testsuite.mysqlx.url=mysqlx://localhost:33060/cjtest_5_1?user=root&password=pwd
      * -Dcom.mysql.cj.testsuite.mysqlx.url.openssl=mysqlx://localhost:33070/cjtest_5_1?user=root&password=pwd
+     * 
+     * @throws Exception
      */
     @Test
-    public void testTLSv1_2() {
+    public void testTLSv1_2() throws Exception {
         if (!this.isSetForXTests) {
             return;
         }
 
         // newer GPL servers, like 8.0.4+, are using OpenSSL and can use RSA encryption, while old ones compiled with yaSSL cannot
         boolean gplWithRSA = allowsRsa(this.fact.getSession(this.sslFreeBaseUrl));
+
+        String highestCommonTlsVersion = getHighestCommonTlsVersion(this.fact.getSession(this.sslFreeBaseUrl));
 
         Properties props = new Properties(this.sslFreeTestProperties);
         props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.VERIFY_CA.toString());
@@ -1061,13 +1069,13 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         // defaults to TLSv1.1
         Session testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
-        assertTlsVersion(testSession, "TLSv1.2");
+        assertTlsVersion(testSession, highestCommonTlsVersion);
         testSession.close();
 
         props.setProperty(PropertyKey.xdevapiUseAsyncProtocol.getKeyName(), "true");
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
-        assertTlsVersion(testSession, "TLSv1.2");
+        assertTlsVersion(testSession, highestCommonTlsVersion);
         testSession.close();
 
         // restricted to TLSv1
@@ -1118,13 +1126,13 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             // defaults to TLSv1.1
             testSession = this.fact.getSession(propsOpenSSL);
             assertSecureSession(testSession);
-            assertTlsVersion(testSession, "TLSv1.2");
+            assertTlsVersion(testSession, highestCommonTlsVersion);
             testSession.close();
 
             propsOpenSSL.setProperty(PropertyKey.xdevapiUseAsyncProtocol.getKeyName(), "true");
             testSession = this.fact.getSession(propsOpenSSL);
             assertSecureSession(testSession);
-            assertTlsVersion(testSession, "TLSv1.2");
+            assertTlsVersion(testSession, highestCommonTlsVersion);
             testSession.close();
 
             // restricted to TLSv1
@@ -1186,6 +1194,32 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         SqlResult rs = sess.sql("SHOW SESSION STATUS LIKE 'mysqlx_ssl_version'").execute();
         String actual = rs.fetchOne().getString(1);
         assertEquals(expectedTlsVersion, actual);
+    }
+
+    private String getHighestCommonTlsVersion(Session sess) throws Exception {
+        // Find out which TLS protocol versions are supported by this JVM.
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, null, null);
+        List<String> jvmSupportedProtocols = Arrays.asList(sslContext.createSSLEngine().getSupportedProtocols());
+
+        SqlResult rset = sess.sql("SHOW GLOBAL VARIABLES LIKE 'tls_version'").execute();
+        String value = rset.fetchOne().getString(1);
+        //  this.rs = sslConn.createStatement().executeQuery("SHOW GLOBAL VARIABLES LIKE 'tls_version'");
+        //  assertTrue(this.rs.next());
+
+        List<String> serverSupportedProtocols = Arrays.asList(value.trim().split("\\s*,\\s*"));
+        String highestCommonTlsVersion = "";
+        for (String p : new String[] { "TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1" }) {
+            if (jvmSupportedProtocols.contains(p) && serverSupportedProtocols.contains(p)) {
+                highestCommonTlsVersion = p;
+                break;
+            }
+        }
+        System.out.println("Server supports TLS protocols: " + serverSupportedProtocols);
+        System.out.println("Highest common TLS protocol: " + highestCommonTlsVersion);
+
+        return highestCommonTlsVersion;
+
     }
 
     /**
@@ -1371,13 +1405,15 @@ public class SecureSessionTest extends DevApiBaseTestCase {
     }
 
     @Test
-    public void testXdevapiTlsVersionsAndCiphersuites() {
+    public void testXdevapiTlsVersionsAndCiphersuites() throws Exception {
         if (!this.isSetForXTests) {
             return;
         }
 
         // newer GPL servers, like 8.0.4+, are using OpenSSL and can use RSA encryption, while old ones compiled with yaSSL cannot
         boolean gplWithRSA = allowsRsa(this.fact.getSession(this.sslFreeBaseUrl));
+
+        String highestCommonTlsVersion = getHighestCommonTlsVersion(this.fact.getSession(this.sslFreeBaseUrl));
 
         Properties props = new Properties(this.sslFreeTestProperties);
         props.setProperty(PropertyKey.xdevapiSSLMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.VERIFY_CA.toString());
@@ -1397,7 +1433,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             // defaults to TLSv1.1
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
-            assertTlsVersion(testSession, "TLSv1.2");
+            assertTlsVersion(testSession, highestCommonTlsVersion);
             testSession.close();
 
             // restricted to TLSv1
@@ -1624,7 +1660,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 // Assess that the session is created successfully and the connection properties are initialized with the expected values.
                 testSession = this.fact.getSession(this.opensslTlsFreeBaseUrl + useAsyncProtocolParam);
                 assertSecureSession(testSession);
-                assertTlsVersion(testSession, "TLSv1.2");
+                assertTlsVersion(testSession, highestCommonTlsVersion);
                 testSession.close();
 
                 // TS.FR.5_2. Create an X DevAPI session using a connection string with the connection property xdevapi.tls-versions but without xdevapi.tls-ciphersuites.
@@ -1648,7 +1684,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 propsOpenSSL.remove(PropertyKey.xdevapiTlsCiphersuites.getKeyName());
                 testSession = this.fact.getSession(propsOpenSSL);
                 assertSecureSession(testSession);
-                assertTlsVersion(testSession, "TLSv1.2");
+                assertTlsVersion(testSession, highestCommonTlsVersion);
                 testSession.close();
 
                 // TS.FR.5_5. Create an X DevAPI session using a connection properties map with the connection property xdevapi.tls-versions but without xdevapi.tls-ciphersuites.
@@ -1672,7 +1708,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 cli = cf.getClient(this.opensslTlsFreeBaseUrl + useAsyncProtocolParam, "{\"pooling\": {\"enabled\": true}}");
                 testSession = cli.getSession();
                 assertSecureSession(testSession);
-                assertTlsVersion(testSession, "TLSv1.2");
+                assertTlsVersion(testSession, highestCommonTlsVersion);
                 cli.close();
 
                 cli = cf.getClient(this.opensslTlsFreeBaseUrl + useAsyncProtocolParam + makeParam(PropertyKey.xdevapiTlsVersions, "TLSv1.2"),
