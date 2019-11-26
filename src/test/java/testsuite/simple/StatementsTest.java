@@ -1516,19 +1516,14 @@ public class StatementsTest extends BaseTestCase {
         createTable("rewriteErrors", "(field1 int not null primary key) ENGINE=MyISAM");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
+        props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "5600");
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
         Connection multiConn = null;
 
-        for (int j = 0; j < 2; j++) {
-            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
+        for (boolean continueBatchOnError : new boolean[] { false, true }) {
+            props.setProperty(PropertyKey.continueBatchOnError.getKeyName(), Boolean.toString(continueBatchOnError));
 
-            if (j == 1) {
-                props.setProperty(PropertyKey.continueBatchOnError.getKeyName(), "false");
-            } else {
-                props.setProperty(PropertyKey.continueBatchOnError.getKeyName(), "true");
-            }
-
-            props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "4096");
-            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
             multiConn = getConnectionWithProps(props);
             this.pstmt = multiConn.prepareStatement("INSERT INTO rewriteErrors VALUES (?)");
             Statement multiStmt = multiConn.createStatement();
