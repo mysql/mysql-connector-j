@@ -3,6 +3,8 @@
 
 Version 5.1.49
 
+  - Fix for Bug#30657312, Disable external entities in Fabric's XML parser.
+
   - Fix for Bug#96442 (30151808), INCORRECT DATE ERROR WHEN CALLING GETMETADATA ON PREPARED STATEMENT.
 
 Version 5.1.48

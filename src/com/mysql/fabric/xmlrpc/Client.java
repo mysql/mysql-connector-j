@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,6 +32,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -89,6 +90,8 @@ public class Client {
             // Get Response
             InputStream is = connection.getInputStream();
             SAXParserFactory factory = SAXParserFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             SAXParser parser = factory.newSAXParser();
             ResponseParser saxp = new ResponseParser();
 
