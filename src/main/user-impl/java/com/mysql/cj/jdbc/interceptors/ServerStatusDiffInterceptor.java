@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,9 @@
 
 package com.mysql.cj.jdbc.interceptors;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -40,7 +42,6 @@ import com.mysql.cj.Query;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.interceptors.QueryInterceptor;
 import com.mysql.cj.jdbc.JdbcConnection;
-import com.mysql.cj.jdbc.util.ResultSetUtil;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.protocol.ServerSession;
@@ -75,23 +76,14 @@ public class ServerStatusDiffInterceptor implements QueryInterceptor {
     }
 
     private void populateMapWithSessionStatusValues(Map<String, String> toPopulate) {
-        java.sql.Statement stmt = null;
-        java.sql.ResultSet rs = null;
-
         try {
-            try {
+            try (Statement stmt = this.connection.createStatement()) {
                 toPopulate.clear();
 
-                stmt = this.connection.createStatement();
-                rs = stmt.executeQuery("SHOW SESSION STATUS");
-                ResultSetUtil.resultSetToMap(toPopulate, rs);
-            } finally {
-                if (rs != null) {
-                    rs.close();
-                }
-
-                if (stmt != null) {
-                    stmt.close();
+                try (ResultSet rs = stmt.executeQuery("SHOW SESSION STATUS")) {
+                    while (rs.next()) {
+                        toPopulate.put(rs.getString(1), rs.getString(2));
+                    }
                 }
             }
         } catch (SQLException ex) {

@@ -3,6 +3,8 @@
 
 Version 8.0.20
 
+  - Fix for Bug#30636056, ResultSetUtil.resultSetToMap() can be unsafe to use.
+
   - Fix for Bug#97757 (30584907), NULLPOINTEREXCEPTION WITH CACHERESULTSETMETADATA=TRUE AND EXECUTEQUERY OF "SET".
 
 Version 8.0.19
