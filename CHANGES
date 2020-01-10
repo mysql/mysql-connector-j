@@ -3,6 +3,8 @@
 
 Version 8.0.20
 
+  - Fix for Bug#97757 (30584907), NULLPOINTEREXCEPTION WITH CACHERESULTSETMETADATA=TRUE AND EXECUTEQUERY OF "SET".
+
 Version 8.0.19
 
   - WL#13346, Support for mult-host and failover.

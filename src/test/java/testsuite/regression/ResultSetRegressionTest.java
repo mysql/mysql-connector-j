@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -7234,6 +7234,25 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
                 con.close();
             }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#97757 (30584907), NULLPOINTEREXCEPTION WITH CACHERESULTSETMETADATA=TRUE AND EXECUTEQUERY OF "SET".
+     */
+    public void testBug97757() throws Exception {
+        Properties props = new Properties();
+        for (boolean cacheResultSetMetadata : new boolean[] { false, true }) {
+            props.setProperty(PropertyKey.cacheResultSetMetadata.getKeyName(), "" + cacheResultSetMetadata);
+            Connection con = getConnectionWithProps(props);
+
+            DatabaseMetaData meta = con.getMetaData();
+            System.out.println("MySQL Server: " + meta.getDatabaseProductVersion() + "; Driver: " + meta.getDriverName() + meta.getDriverVersion());
+
+            Statement s = con.createStatement();
+            s.executeQuery("set autocommit = 0;");
+
+            con.close();
         }
     }
 }
