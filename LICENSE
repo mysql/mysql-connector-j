@@ -10,7 +10,7 @@ Introduction
    third-party software which may be included in this distribution of
    MySQL Connector/J 8.0.
 
-   Last updated: November 2019
+   Last updated: January 2020
 
 Licensing Information
 
@@ -33,7 +33,7 @@ Licensing Information
    a copy of which is reproduced below and can also be found along with
    its FAQ at http://oss.oracle.com/licenses/universal-foss-exception.
 
-   Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights
+   Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights
    reserved.
 
 Election of GPLv2
