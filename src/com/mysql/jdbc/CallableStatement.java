@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -179,7 +179,6 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
             this.numParameters = this.parameterList.size();
         }
 
-        @SuppressWarnings("synthetic-access")
         CallableStatementParamInfo(java.sql.ResultSet paramTypesRs) throws SQLException {
             boolean hadRows = paramTypesRs.last();
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -63,15 +63,15 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
         try {
             toPopulate.clear();
-
             stmt = connection.createStatement();
             rs = stmt.executeQuery("SHOW SESSION STATUS");
-            Util.resultSetToMap(toPopulate, rs);
+            while (rs.next()) {
+                toPopulate.put(rs.getString(1), rs.getString(2));
+            }
         } finally {
             if (rs != null) {
                 rs.close();
             }
-
             if (stmt != null) {
                 stmt.close();
             }

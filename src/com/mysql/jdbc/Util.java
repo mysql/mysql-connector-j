@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -23,7 +23,6 @@
 
 package com.mysql.jdbc;
 
-import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -297,27 +296,6 @@ public class Util {
         return randStruct;
     }
 
-    /**
-     * Given a ResultSet and an index into the columns of that ResultSet, read
-     * binary data from the column which represents a serialized object, and
-     * re-create the object.
-     * 
-     * @param resultSet
-     *            the ResultSet to use.
-     * @param index
-     *            an index into the ResultSet.
-     * @return the object if it can be de-serialized
-     * @throws Exception
-     *             if an error occurs
-     */
-    public static Object readObject(java.sql.ResultSet resultSet, int index) throws Exception {
-        ObjectInputStream objIn = new ObjectInputStream(resultSet.getBinaryStream(index));
-        Object obj = objIn.readObject();
-        objIn.close();
-
-        return obj;
-    }
-
     private static double rnd(RandStructcture randStruct) {
         randStruct.seed1 = ((randStruct.seed1 * 3) + randStruct.seed2) % randStruct.maxValue;
         randStruct.seed2 = (randStruct.seed1 + randStruct.seed2 + 33) % randStruct.maxValue;
@@ -458,27 +436,6 @@ public class Util {
             return networkInterfaceClass.getMethod("getByName", (Class[]) null).invoke(networkInterfaceClass, new Object[] { hostname }) != null;
         } catch (Throwable t) {
             return false;
-        }
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs) throws SQLException {
-        while (rs.next()) {
-            mappedValues.put(rs.getObject(1), rs.getObject(2));
-        }
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, int key, int value) throws SQLException {
-        while (rs.next()) {
-            mappedValues.put(rs.getObject(key), rs.getObject(value));
-        }
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, String key, String value) throws SQLException {
-        while (rs.next()) {
-            mappedValues.put(rs.getObject(key), rs.getObject(value));
         }
     }
 
