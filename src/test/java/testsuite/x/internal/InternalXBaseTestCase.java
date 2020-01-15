@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -172,6 +172,7 @@ public class InternalXBaseTestCase {
 
             try {
                 protocol.readAuthenticateOk();
+                protocol.afterHandshake();
                 return protocol;
             } catch (XProtocolError e) {
                 if (authMech == AuthMech.MYSQL41) {

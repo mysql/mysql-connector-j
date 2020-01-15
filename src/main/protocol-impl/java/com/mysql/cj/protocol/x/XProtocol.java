@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,10 +38,12 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -55,6 +57,7 @@ import com.mysql.cj.Session;
 import com.mysql.cj.TransactionEventHandler;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.Compression;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyDefinitions.XdevapiSslMode;
 import com.mysql.cj.conf.PropertyKey;
@@ -74,6 +77,7 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.AbstractProtocol;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ExportControlled;
+import com.mysql.cj.protocol.FullReadInputStream;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.MessageReader;
@@ -112,6 +116,8 @@ import com.mysql.cj.xdevapi.PreparableStatement.PreparableStatementFinalizer;
  * Low-level interface to communications with X Plugin.
  */
 public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XMessage> {
+    private static final String[] SUPPORTED_COMPRESSION_ALGORITHMS_PRIORITY = new String[] { "zstd_stream", "lz4_message", "deflate_stream" };
+
     private static int RETRY_PREPARE_STATEMENT_COUNTDOWN = 100;
 
     private MessageReader<XMessageHeader, XMessage> reader;
@@ -134,6 +140,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     private SequentialIdLease preparedStatementIds = new SequentialIdLease();
     private ReferenceQueue<PreparableStatement<?>> preparableStatementRefQueue = new ReferenceQueue<>();
     private Map<Integer, PreparableStatementFinalizer> preparableStatementFinalizerReferences = new TreeMap<>();
+
+    private boolean compressionEnabled = false;
+    private CompressionAlgorithm compressionAlgorithm;
 
     private Map<Class<? extends GeneratedMessageV3>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory = new HashMap<>();
 
@@ -253,6 +262,58 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     }
 
+    /**
+     * Negotiates compression capabilities with the server.
+     */
+    public void negotiateCompression() {
+        Compression compression = this.propertySet.<Compression>getEnumProperty(PropertyKey.xdevapiCompression.getKeyName()).getValue();
+        String compressionAlgorithmsTriplets = this.propertySet.getStringProperty(PropertyKey.xdevapiCompressionAlgorithm.getKeyName()).getValue();
+        compressionAlgorithmsTriplets = compressionAlgorithmsTriplets == null ? "" : compressionAlgorithmsTriplets.trim();
+
+        if (compression == Compression.DISABLED) {
+            if (!compressionAlgorithmsTriplets.isEmpty()) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.0"));
+            }
+            return;
+        }
+
+        Map<String, List<String>> compressionCapabilities = this.serverSession.serverCapabilities.getCompression();
+        if (compressionCapabilities.isEmpty() || !compressionCapabilities.containsKey(XServerCapabilities.SUBKEY_COMPRESSION_ALGORITHM)
+                || compressionCapabilities.get(XServerCapabilities.SUBKEY_COMPRESSION_ALGORITHM).isEmpty()) {
+            if (compression == Compression.REQUIRED) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.1"));
+            } // TODO Log "Compression negotiation failed. Connection will proceed uncompressed."
+            return;
+        }
+
+        if (!this.socketConnection.isSynchronous()) {
+            if (compression == Compression.REQUIRED) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.2"));
+            } // TODO Log "Compression negotiation failed. Connection will proceed uncompressed."
+            return;
+        }
+
+        Map<String, CompressionAlgorithm> compressionAlgorithms = getCompressionAlgorithms(compressionAlgorithmsTriplets);
+        Optional<String> algorithmOpt = Arrays.stream(SUPPORTED_COMPRESSION_ALGORITHMS_PRIORITY).sequential()
+                .filter(compressionCapabilities.get(XServerCapabilities.SUBKEY_COMPRESSION_ALGORITHM)::contains).filter(compressionAlgorithms::containsKey)
+                .findFirst();
+        if (!algorithmOpt.isPresent()) {
+            if (compression == Compression.REQUIRED) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.4"));
+            } // TODO Log "Compression negotiation failed. Connection will proceed uncompressed."
+            return;
+        }
+        String algorithm = algorithmOpt.get();
+        this.compressionAlgorithm = compressionAlgorithms.get(algorithm);
+
+        Map<String, Object> compressionCap = new HashMap<>();
+        compressionCap.put(XServerCapabilities.SUBKEY_COMPRESSION_ALGORITHM, algorithm);
+        compressionCap.put(XServerCapabilities.SUBKEY_COMPRESSION_SERVER_COMBINE_MIXED_MESSAGES, true);
+        sendCapabilities(Collections.singletonMap(XServerCapabilities.KEY_COMPRESSION, compressionCap));
+
+        this.compressionEnabled = true;
+    }
+
     public void beforeHandshake() {
         this.serverSession = new XServerSession();
 
@@ -301,7 +362,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         // TODO WL#9925 will redefine other SSL connection properties for X Protocol
 
         RuntimeProperty<SslMode> sslMode = this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode);
-
         if (sslMode.getValue() == SslMode.PREFERRED) { // PREFERRED mode is not applicable to X Protocol
             sslMode.setValue(SslMode.REQUIRED);
         }
@@ -361,6 +421,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         if (xdevapiSslMode.getValue() != XdevapiSslMode.DISABLED) {
             negotiateSSLConnection(0);
         }
+
+        // Configure compression.
+        negotiateCompression();
     }
 
     private Map<String, String> getConnectionAttributesMap(String attStr) {
@@ -396,6 +459,51 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         return attMap;
     }
 
+    /**
+     * Parses and validates the connection option 'xdevapi.compress-algorithm' value given. With the information obtained, creates a map of supported
+     * compression algorithms.
+     * 
+     * @param compressionAlgorithmsTriplets
+     *            the value of the option 'xdevapi.compress-algorithm' containing a list of triplets with the format
+     *            "algorithm-name,inflater-InputStream-class-name,deflater-OutputStream-class-name".
+     * @return
+     *         a map with all the supported compression algorithms, booth natively supported an user configures.
+     */
+    private Map<String, CompressionAlgorithm> getCompressionAlgorithms(String compressionAlgorithmsTriplets) {
+        Map<String, CompressionAlgorithm> compressionAlgorithms = CompressionAlgorithm.getDefaultInstances();
+
+        if (compressionAlgorithmsTriplets.length() == 0) {
+            return compressionAlgorithms;
+        }
+
+        String[] compressionAlgorithmsParts = compressionAlgorithmsTriplets.split(",");
+        if (compressionAlgorithmsParts.length % 3 != 0) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.3"));
+        }
+
+        for (int i = 0; i < compressionAlgorithmsParts.length; i += 3) {
+            String algorithmName = compressionAlgorithmsParts[i];
+            String inputStreamClassName = compressionAlgorithmsParts[i + 1];
+            Class<?> inputStreamClass = null;
+            try {
+                inputStreamClass = Class.forName(inputStreamClassName);
+            } catch (ClassNotFoundException e) {
+                throw ExceptionFactory.createException(WrongArgumentException.class,
+                        Messages.getString("Protocol.Compression.5", new Object[] { inputStreamClassName }), e);
+            }
+            String outputStreamClassName = compressionAlgorithmsParts[i + 2];
+            Class<?> outputStreamClass = null;
+            try {
+                outputStreamClass = Class.forName(outputStreamClassName);
+            } catch (ClassNotFoundException e) {
+                throw ExceptionFactory.createException(WrongArgumentException.class,
+                        Messages.getString("Protocol.Compression.5", new Object[] { outputStreamClassName }), e);
+            }
+            compressionAlgorithms.put(algorithmName, new CompressionAlgorithm(algorithmName, inputStreamClass, outputStreamClass));
+        }
+        return compressionAlgorithms;
+    }
+
     private String currUser = null, currPassword = null, currDatabase = null; // TODO remove these variables after implementing mysql_reset_connection() in reset() method
 
     @Override
@@ -418,6 +526,22 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     public void afterHandshake() {
         // TODO setup all required server session states
+
+        if (this.compressionEnabled) {
+            try {
+                this.reader = new SyncMessageReader(new FullReadInputStream(
+                        new CompressionSplittedInputStream(this.socketConnection.getMysqlInput(), new CompressorStreamsFactory(this.compressionAlgorithm))));
+            } catch (IOException e) {
+                ExceptionFactory.createException(Messages.getString("Protocol.Compression.8"), e);
+            }
+            try {
+                this.sender = new SyncMessageSender(
+                        new CompressionSplittedOutputStream(this.socketConnection.getMysqlOutput(), new CompressorStreamsFactory(this.compressionAlgorithm)));
+            } catch (IOException e) {
+                ExceptionFactory.createException(Messages.getString("Protocol.Compression.9"), e);
+            }
+        }
+
         initServerSession();
     }
 
@@ -719,7 +843,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     }
 
     /**
-     * Signal the intent to start processing a new command. A session supports processing a single command at a time. Results are reading lazily from the
+     * Signal the intent to start processing a new command. A session supports processing a single command at a time. Results are read lazily from the
      * wire. It is necessary to flush any pending result before starting a new command. This method performs the flush if necessary.
      */
     protected void newCommand() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,10 @@ import java.nio.ByteOrder;
 import com.mysql.cj.protocol.MessageHeader;
 
 public class XMessageHeader implements MessageHeader {
+    public static final int MESSAGE_SIZE_LENGTH = 4;
+    public static final int MESSAGE_TYPE_LENGTH = 1;
+    public static final int HEADER_LENGTH = MESSAGE_SIZE_LENGTH + MESSAGE_TYPE_LENGTH;
+
     private ByteBuffer headerBuf;
     /** Type tag of the message to read (indicates parser to use). */
     private int messageType = -1;
@@ -42,7 +46,7 @@ public class XMessageHeader implements MessageHeader {
     private int messageSize = -1;
 
     public XMessageHeader() {
-        this.headerBuf = ByteBuffer.allocate(5).order(ByteOrder.LITTLE_ENDIAN);
+        this.headerBuf = ByteBuffer.allocate(HEADER_LENGTH).order(ByteOrder.LITTLE_ENDIAN);
     }
 
     public XMessageHeader(byte[] buf) {

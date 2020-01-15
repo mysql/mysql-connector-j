@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,8 +29,8 @@
 
 package com.mysql.cj.protocol.x;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.CompletionHandler;
@@ -52,7 +52,7 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
      */
     static final int HEADER_LEN = 5;
 
-    private BufferedOutputStream outputStream;
+    private OutputStream outputStream;
     private long lastPacketSentTime = 0;
     private long previousPacketSentTime = 0;
     private int maxAllowedPacket = -1;
@@ -60,7 +60,7 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
     /** Lock to protect async writes from sync ones. */
     Object waitingAsyncOperationMonitor = new Object();
 
-    public SyncMessageSender(BufferedOutputStream os) {
+    public SyncMessageSender(OutputStream os) {
         this.outputStream = os;
     }
 
@@ -116,5 +116,4 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
     public void setMaxAllowedPacket(int maxAllowedPacket) {
         this.maxAllowedPacket = maxAllowedPacket;
     }
-
 }

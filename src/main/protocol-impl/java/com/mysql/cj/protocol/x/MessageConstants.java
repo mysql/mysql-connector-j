@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,6 +45,7 @@ import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities;
 import com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet;
 import com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet;
+import com.mysql.cj.x.protobuf.MysqlxConnection.Compression;
 import com.mysql.cj.x.protobuf.MysqlxCrud.CreateView;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Delete;
 import com.mysql.cj.x.protobuf.MysqlxCrud.DropView;
@@ -116,6 +117,7 @@ public class MessageConstants {
         messageClassToParser.put(Frame.class, Frame.getDefaultInstance().getParserForType());
         messageClassToParser.put(Row.class, Row.getDefaultInstance().getParserForType());
         messageClassToParser.put(StmtExecuteOk.class, StmtExecuteOk.getDefaultInstance().getParserForType());
+        messageClassToParser.put(Compression.class, Compression.getDefaultInstance().getParserForType());
         // embedded notices (no type tags)
         messageClassToParser.put(SessionStateChanged.class, SessionStateChanged.getDefaultInstance().getParserForType());
         messageClassToParser.put(SessionVariableChanged.class, SessionVariableChanged.getDefaultInstance().getParserForType());
@@ -132,6 +134,7 @@ public class MessageConstants {
         messageClassToType.put(Frame.class, ServerMessages.Type.NOTICE_VALUE);
         messageClassToType.put(Row.class, ServerMessages.Type.RESULTSET_ROW_VALUE);
         messageClassToType.put(StmtExecuteOk.class, ServerMessages.Type.SQL_STMT_EXECUTE_OK_VALUE);
+        messageClassToType.put(Compression.class, ServerMessages.Type.COMPRESSION_VALUE);
         for (Map.Entry<Class<? extends GeneratedMessageV3>, Integer> entry : messageClassToType.entrySet()) {
             messageTypeToClass.put(entry.getValue(), entry.getKey());
         }

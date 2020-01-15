@@ -3,6 +3,8 @@
 
 Version 8.0.20
 
+  - WL#12248, DevAPI: Connection compression.
+
   - Fix for Bug#30636056, ResultSetUtil.resultSetToMap() can be unsafe to use.
 
   - Fix for Bug#97757 (30584907), NULLPOINTEREXCEPTION WITH CACHERESULTSETMETADATA=TRUE AND EXECUTEQUERY OF "SET".
@@ -41,7 +43,7 @@ Version 8.0.18
 
 Version 8.0.17
 
-  - WL#13210, Generate Javadocs via ant.A
+  - WL#13210, Generate Javadocs via ant.
 
   - WL#12247, DevAPI: indexing array fields.
 

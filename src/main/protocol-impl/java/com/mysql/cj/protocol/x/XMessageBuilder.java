@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -107,10 +107,10 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
         Capabilities.Builder capsB = Capabilities.newBuilder();
         keyValuePair.forEach((k, v) -> {
             Any val;
-            if (XServerCapabilities.KEY_SESSION_CONNECT_ATTRS.equals(k)) {
+            if (XServerCapabilities.KEY_SESSION_CONNECT_ATTRS.equals(k) || XServerCapabilities.KEY_COMPRESSION.equals(k)) {
                 MysqlxDatatypes.Object.Builder attrB = MysqlxDatatypes.Object.newBuilder();
-                ((Map<String, String>) v)
-                        .forEach((name, value) -> attrB.addFld(ObjectField.newBuilder().setKey(name).setValue(ExprUtil.buildAny(value)).build()));
+                ((Map<String, Object>) v)
+                        .forEach((name, value) -> attrB.addFld(ObjectField.newBuilder().setKey(name).setValue(ExprUtil.argObjectToScalarAny(value)).build()));
                 val = Any.newBuilder().setType(Any.Type.OBJECT).setObj(attrB).build();
 
             } else {

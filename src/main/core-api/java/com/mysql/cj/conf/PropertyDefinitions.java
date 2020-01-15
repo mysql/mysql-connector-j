@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -155,6 +155,10 @@ public class PropertyDefinitions {
 
     public enum AuthMech { // xdevapi.auth
         PLAIN, MYSQL41, SHA256_MEMORY, EXTERNAL;
+    }
+
+    public enum Compression { // xdevapi.compress
+        PREFERRED, REQUIRED, DISABLED;
     }
 
     public enum DatabaseTerm {
@@ -801,6 +805,10 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.xdevapiConnectionAttributes"), "8.0.16", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new BooleanPropertyDefinition(PropertyKey.xdevapiDnsSrv, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.xdevapiDnsSrv"), "8.0.19", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new EnumPropertyDefinition<>(PropertyKey.xdevapiCompression, Compression.PREFERRED, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.xdevapiCompression"), "8.0.20", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new StringPropertyDefinition(PropertyKey.xdevapiCompressionAlgorithm, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.xdevapiCompressionAlgorithm"), "8.0.20", CATEGORY_XDEVAPI, Integer.MIN_VALUE)
                 //
         };
 

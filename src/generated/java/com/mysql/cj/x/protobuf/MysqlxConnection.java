@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,395 +34,51 @@ package com.mysql.cj.x.protobuf;
 @SuppressWarnings({ "cast", "deprecation" })
 
 public final class MysqlxConnection {
-  private MysqlxConnection() {}
-  public static void registerAllExtensions(
-      com.google.protobuf.ExtensionRegistryLite registry) {
-  }
-
-  public static void registerAllExtensions(
-      com.google.protobuf.ExtensionRegistry registry) {
-    registerAllExtensions(
-        (com.google.protobuf.ExtensionRegistryLite) registry);
-  }
-  public interface CapabilityOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Connection.Capability)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required string name = 1;</code>
-     */
-    boolean hasName();
-    /**
-     * <code>required string name = 1;</code>
-     */
-    java.lang.String getName();
-    /**
-     * <code>required string name = 1;</code>
-     */
-    com.google.protobuf.ByteString
-        getNameBytes();
-
-    /**
-     * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-     */
-    boolean hasValue();
-    /**
-     * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-     */
-    com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getValue();
-    /**
-     * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-     */
-    com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getValueOrBuilder();
-  }
-  /**
-   * <pre>
-   * a Capability
-   * a tuple of a ``name`` and a :protobuf:msg:`Mysqlx.Datatypes::Any`
-   * </pre>
-   *
-   * Protobuf type {@code Mysqlx.Connection.Capability}
-   */
-  public  static final class Capability extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Connection.Capability)
-      CapabilityOrBuilder {
-  private static final long serialVersionUID = 0L;
-    // Use Capability.newBuilder() to construct.
-    private Capability(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private Capability() {
-      name_ = "";
+    private MysqlxConnection() {
     }
 
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return this.unknownFields;
-    }
-    private Capability(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            case 10: {
-              com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000001;
-              name_ = bs;
-              break;
-            }
-            case 18: {
-              com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000002) == 0x00000002)) {
-                subBuilder = value_.toBuilder();
-              }
-              value_ = input.readMessage(com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(value_);
-                value_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000002;
-              break;
-            }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capability_descriptor;
+    public static void registerAllExtensions(com.google.protobuf.ExtensionRegistryLite registry) {
     }
 
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capability_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.x.protobuf.MysqlxConnection.Capability.class, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder.class);
+    public static void registerAllExtensions(com.google.protobuf.ExtensionRegistry registry) {
+        registerAllExtensions((com.google.protobuf.ExtensionRegistryLite) registry);
     }
 
-    private int bitField0_;
-    public static final int NAME_FIELD_NUMBER = 1;
-    private volatile java.lang.Object name_;
-    /**
-     * <code>required string name = 1;</code>
-     */
-    public boolean hasName() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required string name = 1;</code>
-     */
-    public java.lang.String getName() {
-      java.lang.Object ref = name_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string name = 1;</code>
-     */
-    public com.google.protobuf.ByteString
-        getNameBytes() {
-      java.lang.Object ref = name_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        name_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
+    public interface CapabilityOrBuilder extends
+            // @@protoc_insertion_point(interface_extends:Mysqlx.Connection.Capability)
+            com.google.protobuf.MessageOrBuilder {
+
+        /**
+         * <code>required string name = 1;</code>
+         */
+        boolean hasName();
+
+        /**
+         * <code>required string name = 1;</code>
+         */
+        java.lang.String getName();
+
+        /**
+         * <code>required string name = 1;</code>
+         */
+        com.google.protobuf.ByteString getNameBytes();
+
+        /**
+         * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+         */
+        boolean hasValue();
+
+        /**
+         * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+         */
+        com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getValue();
+
+        /**
+         * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+         */
+        com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getValueOrBuilder();
     }
 
-    public static final int VALUE_FIELD_NUMBER = 2;
-    private com.mysql.cj.x.protobuf.MysqlxDatatypes.Any value_;
-    /**
-     * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-     */
-    public boolean hasValue() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-     */
-    public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getValue() {
-      return value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance() : value_;
-    }
-    /**
-     * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-     */
-    public com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getValueOrBuilder() {
-      return value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance() : value_;
-    }
-
-    private byte memoizedIsInitialized = -1;
-    @java.lang.Override
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasName()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasValue()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!getValue().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    @java.lang.Override
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeMessage(2, getValue());
-      }
-      unknownFields.writeTo(output);
-    }
-
-    @java.lang.Override
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, getValue());
-      }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
-      return size;
-    }
-
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Capability)) {
-        return super.equals(obj);
-      }
-      com.mysql.cj.x.protobuf.MysqlxConnection.Capability other = (com.mysql.cj.x.protobuf.MysqlxConnection.Capability) obj;
-
-      boolean result = true;
-      result = result && (hasName() == other.hasName());
-      if (hasName()) {
-        result = result && getName()
-            .equals(other.getName());
-      }
-      result = result && (hasValue() == other.hasValue());
-      if (hasValue()) {
-        result = result && getValue()
-            .equals(other.getValue());
-      }
-      result = result && unknownFields.equals(other.unknownFields);
-      return result;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
-      if (hasName()) {
-        hash = (37 * hash) + NAME_FIELD_NUMBER;
-        hash = (53 * hash) + getName().hashCode();
-      }
-      if (hasValue()) {
-        hash = (37 * hash) + VALUE_FIELD_NUMBER;
-        hash = (53 * hash) + getValue().hashCode();
-      }
-      hash = (29 * hash) + unknownFields.hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    @java.lang.Override
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.Capability prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    @java.lang.Override
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
     /**
      * <pre>
      * a Capability
@@ -431,747 +87,788 @@ public final class MysqlxConnection {
      *
      * Protobuf type {@code Mysqlx.Connection.Capability}
      */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Connection.Capability)
-        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capability_descriptor;
-      }
+    public static final class Capability extends com.google.protobuf.GeneratedMessageV3 implements
+            // @@protoc_insertion_point(message_implements:Mysqlx.Connection.Capability)
+            CapabilityOrBuilder {
+        private static final long serialVersionUID = 0L;
 
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capability_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.x.protobuf.MysqlxConnection.Capability.class, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.Capability.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
-          getValueFieldBuilder();
+        // Use Capability.newBuilder() to construct.
+        private Capability(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+            super(builder);
         }
-      }
-      @java.lang.Override
-      public Builder clear() {
-        super.clear();
-        name_ = "";
-        bitField0_ = (bitField0_ & ~0x00000001);
-        if (valueBuilder_ == null) {
-          value_ = null;
-        } else {
-          valueBuilder_.clear();
+
+        private Capability() {
+            this.name_ = "";
         }
-        bitField0_ = (bitField0_ & ~0x00000002);
-        return this;
-      }
 
-      @java.lang.Override
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capability_descriptor;
-      }
-
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capability getDefaultInstanceForType() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.Capability.getDefaultInstance();
-      }
-
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capability build() {
-        com.mysql.cj.x.protobuf.MysqlxConnection.Capability result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
+        @java.lang.Override
+        public final com.google.protobuf.UnknownFieldSet getUnknownFields() {
+            return this.unknownFields;
         }
-        return result;
-      }
 
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capability buildPartial() {
-        com.mysql.cj.x.protobuf.MysqlxConnection.Capability result = new com.mysql.cj.x.protobuf.MysqlxConnection.Capability(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.name_ = name_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        if (valueBuilder_ == null) {
-          result.value_ = value_;
-        } else {
-          result.value_ = valueBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      @java.lang.Override
-      public Builder clone() {
-        return (Builder) super.clone();
-      }
-      @java.lang.Override
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return (Builder) super.setField(field, value);
-      }
-      @java.lang.Override
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
-      }
-      @java.lang.Override
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
-      }
-      @java.lang.Override
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
-      }
-      @java.lang.Override
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return (Builder) super.addRepeatedField(field, value);
-      }
-      @java.lang.Override
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Capability) {
-          return mergeFrom((com.mysql.cj.x.protobuf.MysqlxConnection.Capability)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxConnection.Capability other) {
-        if (other == com.mysql.cj.x.protobuf.MysqlxConnection.Capability.getDefaultInstance()) return this;
-        if (other.hasName()) {
-          bitField0_ |= 0x00000001;
-          name_ = other.name_;
-          onChanged();
-        }
-        if (other.hasValue()) {
-          mergeValue(other.getValue());
-        }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
-        return this;
-      }
-
-      @java.lang.Override
-      public final boolean isInitialized() {
-        if (!hasName()) {
-          return false;
-        }
-        if (!hasValue()) {
-          return false;
-        }
-        if (!getValue().isInitialized()) {
-          return false;
-        }
-        return true;
-      }
-
-      @java.lang.Override
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.x.protobuf.MysqlxConnection.Capability parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.x.protobuf.MysqlxConnection.Capability) e.getUnfinishedMessage();
-          throw e.unwrapIOException();
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private java.lang.Object name_ = "";
-      /**
-       * <code>required string name = 1;</code>
-       */
-      public boolean hasName() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required string name = 1;</code>
-       */
-      public java.lang.String getName() {
-        java.lang.Object ref = name_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            name_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>required string name = 1;</code>
-       */
-      public com.google.protobuf.ByteString
-          getNameBytes() {
-        java.lang.Object ref = name_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          name_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string name = 1;</code>
-       */
-      public Builder setName(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        name_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string name = 1;</code>
-       */
-      public Builder clearName() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        name_ = getDefaultInstance().getName();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string name = 1;</code>
-       */
-      public Builder setNameBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        name_ = value;
-        onChanged();
-        return this;
-      }
-
-      private com.mysql.cj.x.protobuf.MysqlxDatatypes.Any value_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          com.mysql.cj.x.protobuf.MysqlxDatatypes.Any, com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder> valueBuilder_;
-      /**
-       * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-       */
-      public boolean hasValue() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-       */
-      public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getValue() {
-        if (valueBuilder_ == null) {
-          return value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance() : value_;
-        } else {
-          return valueBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-       */
-      public Builder setValue(com.mysql.cj.x.protobuf.MysqlxDatatypes.Any value) {
-        if (valueBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          value_ = value;
-          onChanged();
-        } else {
-          valueBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-       */
-      public Builder setValue(
-          com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
-        if (valueBuilder_ == null) {
-          value_ = builderForValue.build();
-          onChanged();
-        } else {
-          valueBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-       */
-      public Builder mergeValue(com.mysql.cj.x.protobuf.MysqlxDatatypes.Any value) {
-        if (valueBuilder_ == null) {
-          if (((bitField0_ & 0x00000002) == 0x00000002) &&
-              value_ != null &&
-              value_ != com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance()) {
-            value_ =
-              com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.newBuilder(value_).mergeFrom(value).buildPartial();
-          } else {
-            value_ = value;
-          }
-          onChanged();
-        } else {
-          valueBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000002;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-       */
-      public Builder clearValue() {
-        if (valueBuilder_ == null) {
-          value_ = null;
-          onChanged();
-        } else {
-          valueBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000002);
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-       */
-      public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder getValueBuilder() {
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return getValueFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-       */
-      public com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getValueOrBuilder() {
-        if (valueBuilder_ != null) {
-          return valueBuilder_.getMessageOrBuilder();
-        } else {
-          return value_ == null ?
-              com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance() : value_;
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          com.mysql.cj.x.protobuf.MysqlxDatatypes.Any, com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder> 
-          getValueFieldBuilder() {
-        if (valueBuilder_ == null) {
-          valueBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              com.mysql.cj.x.protobuf.MysqlxDatatypes.Any, com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder>(
-                  getValue(),
-                  getParentForChildren(),
-                  isClean());
-          value_ = null;
-        }
-        return valueBuilder_;
-      }
-      @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
-      }
-
-      @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Connection.Capability)
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Connection.Capability)
-    private static final com.mysql.cj.x.protobuf.MysqlxConnection.Capability DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxConnection.Capability();
-    }
-
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<Capability>
-        PARSER = new com.google.protobuf.AbstractParser<Capability>() {
-      @java.lang.Override
-      public Capability parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new Capability(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<Capability> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<Capability> getParserForType() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.mysql.cj.x.protobuf.MysqlxConnection.Capability getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  public interface CapabilitiesOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Connection.Capabilities)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-     */
-    java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability> 
-        getCapabilitiesList();
-    /**
-     * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-     */
-    com.mysql.cj.x.protobuf.MysqlxConnection.Capability getCapabilities(int index);
-    /**
-     * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-     */
-    int getCapabilitiesCount();
-    /**
-     * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-     */
-    java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder> 
-        getCapabilitiesOrBuilderList();
-    /**
-     * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-     */
-    com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder getCapabilitiesOrBuilder(
-        int index);
-  }
-  /**
-   * <pre>
-   * Capabilities
-   * </pre>
-   *
-   * Protobuf type {@code Mysqlx.Connection.Capabilities}
-   */
-  public  static final class Capabilities extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Connection.Capabilities)
-      CapabilitiesOrBuilder {
-  private static final long serialVersionUID = 0L;
-    // Use Capabilities.newBuilder() to construct.
-    private Capabilities(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private Capabilities() {
-      capabilities_ = java.util.Collections.emptyList();
-    }
-
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return this.unknownFields;
-    }
-    private Capabilities(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            case 10: {
-              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                capabilities_ = new java.util.ArrayList<com.mysql.cj.x.protobuf.MysqlxConnection.Capability>();
-                mutable_bitField0_ |= 0x00000001;
-              }
-              capabilities_.add(
-                  input.readMessage(com.mysql.cj.x.protobuf.MysqlxConnection.Capability.PARSER, extensionRegistry));
-              break;
+        private Capability(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            this();
+            if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
+            int mutable_bitField0_ = 0;
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields = com.google.protobuf.UnknownFieldSet.newBuilder();
+            try {
+                boolean done = false;
+                while (!done) {
+                    int tag = input.readTag();
+                    switch (tag) {
+                        case 0:
+                            done = true;
+                            break;
+                        case 10: {
+                            com.google.protobuf.ByteString bs = input.readBytes();
+                            this.bitField0_ |= 0x00000001;
+                            this.name_ = bs;
+                            break;
+                        }
+                        case 18: {
+                            com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder subBuilder = null;
+                            if (((this.bitField0_ & 0x00000002) == 0x00000002)) {
+                                subBuilder = this.value_.toBuilder();
+                            }
+                            this.value_ = input.readMessage(com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.PARSER, extensionRegistry);
+                            if (subBuilder != null) {
+                                subBuilder.mergeFrom(this.value_);
+                                this.value_ = subBuilder.buildPartial();
+                            }
+                            this.bitField0_ |= 0x00000002;
+                            break;
+                        }
+                        default: {
+                            if (!parseUnknownField(input, unknownFields, extensionRegistry, tag)) {
+                                done = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                throw e.setUnfinishedMessage(this);
+            } catch (java.io.IOException e) {
+                throw new com.google.protobuf.InvalidProtocolBufferException(e).setUnfinishedMessage(this);
+            } finally {
+                this.unknownFields = unknownFields.build();
+                makeExtensionsImmutable();
             }
-          }
         }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e).setUnfinishedMessage(this);
-      } finally {
-        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-          capabilities_ = java.util.Collections.unmodifiableList(capabilities_);
+
+        public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capability_descriptor;
         }
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capabilities_descriptor;
-    }
 
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capabilities_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.class, com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder.class);
-    }
-
-    public static final int CAPABILITIES_FIELD_NUMBER = 1;
-    private java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability> capabilities_;
-    /**
-     * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-     */
-    public java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability> getCapabilitiesList() {
-      return capabilities_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-     */
-    public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder> 
-        getCapabilitiesOrBuilderList() {
-      return capabilities_;
-    }
-    /**
-     * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-     */
-    public int getCapabilitiesCount() {
-      return capabilities_.size();
-    }
-    /**
-     * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-     */
-    public com.mysql.cj.x.protobuf.MysqlxConnection.Capability getCapabilities(int index) {
-      return capabilities_.get(index);
-    }
-    /**
-     * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-     */
-    public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder getCapabilitiesOrBuilder(
-        int index) {
-      return capabilities_.get(index);
-    }
-
-    private byte memoizedIsInitialized = -1;
-    @java.lang.Override
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      for (int i = 0; i < getCapabilitiesCount(); i++) {
-        if (!getCapabilities(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capability_fieldAccessorTable.ensureFieldAccessorsInitialized(
+                    com.mysql.cj.x.protobuf.MysqlxConnection.Capability.class, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder.class);
         }
-      }
-      memoizedIsInitialized = 1;
-      return true;
+
+        private int bitField0_;
+        public static final int NAME_FIELD_NUMBER = 1;
+        private volatile java.lang.Object name_;
+
+        /**
+         * <code>required string name = 1;</code>
+         */
+        public boolean hasName() {
+            return ((this.bitField0_ & 0x00000001) == 0x00000001);
+        }
+
+        /**
+         * <code>required string name = 1;</code>
+         */
+        public java.lang.String getName() {
+            java.lang.Object ref = this.name_;
+            if (ref instanceof java.lang.String) {
+                return (java.lang.String) ref;
+            } else {
+                com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
+                java.lang.String s = bs.toStringUtf8();
+                if (bs.isValidUtf8()) {
+                    this.name_ = s;
+                }
+                return s;
+            }
+        }
+
+        /**
+         * <code>required string name = 1;</code>
+         */
+        public com.google.protobuf.ByteString getNameBytes() {
+            java.lang.Object ref = this.name_;
+            if (ref instanceof java.lang.String) {
+                com.google.protobuf.ByteString b = com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
+                this.name_ = b;
+                return b;
+            } else {
+                return (com.google.protobuf.ByteString) ref;
+            }
+        }
+
+        public static final int VALUE_FIELD_NUMBER = 2;
+        private com.mysql.cj.x.protobuf.MysqlxDatatypes.Any value_;
+
+        /**
+         * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+         */
+        public boolean hasValue() {
+            return ((this.bitField0_ & 0x00000002) == 0x00000002);
+        }
+
+        /**
+         * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+         */
+        public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getValue() {
+            return this.value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance() : this.value_;
+        }
+
+        /**
+         * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+         */
+        public com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getValueOrBuilder() {
+            return this.value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance() : this.value_;
+        }
+
+        private byte memoizedIsInitialized = -1;
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+            byte isInitialized = this.memoizedIsInitialized;
+            if (isInitialized == 1) {
+                return true;
+            }
+            if (isInitialized == 0) {
+                return false;
+            }
+
+            if (!hasName()) {
+                this.memoizedIsInitialized = 0;
+                return false;
+            }
+            if (!hasValue()) {
+                this.memoizedIsInitialized = 0;
+                return false;
+            }
+            if (!getValue().isInitialized()) {
+                this.memoizedIsInitialized = 0;
+                return false;
+            }
+            this.memoizedIsInitialized = 1;
+            return true;
+        }
+
+        @java.lang.Override
+        public void writeTo(com.google.protobuf.CodedOutputStream output) throws java.io.IOException {
+            if (((this.bitField0_ & 0x00000001) == 0x00000001)) {
+                com.google.protobuf.GeneratedMessageV3.writeString(output, 1, this.name_);
+            }
+            if (((this.bitField0_ & 0x00000002) == 0x00000002)) {
+                output.writeMessage(2, getValue());
+            }
+            this.unknownFields.writeTo(output);
+        }
+
+        @java.lang.Override
+        public int getSerializedSize() {
+            int size = this.memoizedSize;
+            if (size != -1) {
+                return size;
+            }
+
+            size = 0;
+            if (((this.bitField0_ & 0x00000001) == 0x00000001)) {
+                size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, this.name_);
+            }
+            if (((this.bitField0_ & 0x00000002) == 0x00000002)) {
+                size += com.google.protobuf.CodedOutputStream.computeMessageSize(2, getValue());
+            }
+            size += this.unknownFields.getSerializedSize();
+            this.memoizedSize = size;
+            return size;
+        }
+
+        @java.lang.Override
+        public boolean equals(final java.lang.Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Capability)) {
+                return super.equals(obj);
+            }
+            com.mysql.cj.x.protobuf.MysqlxConnection.Capability other = (com.mysql.cj.x.protobuf.MysqlxConnection.Capability) obj;
+
+            boolean result = true;
+            result = result && (hasName() == other.hasName());
+            if (hasName()) {
+                result = result && getName().equals(other.getName());
+            }
+            result = result && (hasValue() == other.hasValue());
+            if (hasValue()) {
+                result = result && getValue().equals(other.getValue());
+            }
+            result = result && this.unknownFields.equals(other.unknownFields);
+            return result;
+        }
+
+        @java.lang.Override
+        public int hashCode() {
+            if (this.memoizedHashCode != 0) {
+                return this.memoizedHashCode;
+            }
+            int hash = 41;
+            hash = (19 * hash) + getDescriptor().hashCode();
+            if (hasName()) {
+                hash = (37 * hash) + NAME_FIELD_NUMBER;
+                hash = (53 * hash) + getName().hashCode();
+            }
+            if (hasValue()) {
+                hash = (37 * hash) + VALUE_FIELD_NUMBER;
+                hash = (53 * hash) + getValue().hashCode();
+            }
+            hash = (29 * hash) + this.unknownFields.hashCode();
+            this.memoizedHashCode = hash;
+            return hash;
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(java.nio.ByteBuffer data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(java.nio.ByteBuffer data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(byte[] data) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(byte[] data, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseDelimitedFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseDelimitedFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(com.google.protobuf.CodedInputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability parseFrom(com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        @java.lang.Override
+        public Builder newBuilderForType() {
+            return newBuilder();
+        }
+
+        public static Builder newBuilder() {
+            return DEFAULT_INSTANCE.toBuilder();
+        }
+
+        public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.Capability prototype) {
+            return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        }
+
+        @java.lang.Override
+        public Builder toBuilder() {
+            return this == DEFAULT_INSTANCE ? new Builder() : new Builder().mergeFrom(this);
+        }
+
+        @java.lang.Override
+        protected Builder newBuilderForType(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+            Builder builder = new Builder(parent);
+            return builder;
+        }
+
+        /**
+         * <pre>
+         * a Capability
+         * a tuple of a ``name`` and a :protobuf:msg:`Mysqlx.Datatypes::Any`
+         * </pre>
+         *
+         * Protobuf type {@code Mysqlx.Connection.Capability}
+         */
+        public static final class Builder extends com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+                // @@protoc_insertion_point(builder_implements:Mysqlx.Connection.Capability)
+                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder {
+            public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capability_descriptor;
+            }
+
+            @java.lang.Override
+            protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capability_fieldAccessorTable.ensureFieldAccessorsInitialized(
+                        com.mysql.cj.x.protobuf.MysqlxConnection.Capability.class, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder.class);
+            }
+
+            // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.Capability.newBuilder()
+            private Builder() {
+                maybeForceBuilderInitialization();
+            }
+
+            private Builder(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+                super(parent);
+                maybeForceBuilderInitialization();
+            }
+
+            private void maybeForceBuilderInitialization() {
+                if (com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders) {
+                    getValueFieldBuilder();
+                }
+            }
+
+            @java.lang.Override
+            public Builder clear() {
+                super.clear();
+                this.name_ = "";
+                this.bitField0_ = (this.bitField0_ & ~0x00000001);
+                if (this.valueBuilder_ == null) {
+                    this.value_ = null;
+                } else {
+                    this.valueBuilder_.clear();
+                }
+                this.bitField0_ = (this.bitField0_ & ~0x00000002);
+                return this;
+            }
+
+            @java.lang.Override
+            public com.google.protobuf.Descriptors.Descriptor getDescriptorForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capability_descriptor;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capability getDefaultInstanceForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.Capability.getDefaultInstance();
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capability build() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Capability result = buildPartial();
+                if (!result.isInitialized()) {
+                    throw newUninitializedMessageException(result);
+                }
+                return result;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capability buildPartial() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Capability result = new com.mysql.cj.x.protobuf.MysqlxConnection.Capability(this);
+                int from_bitField0_ = this.bitField0_;
+                int to_bitField0_ = 0;
+                if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+                    to_bitField0_ |= 0x00000001;
+                }
+                result.name_ = this.name_;
+                if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+                    to_bitField0_ |= 0x00000002;
+                }
+                if (this.valueBuilder_ == null) {
+                    result.value_ = this.value_;
+                } else {
+                    result.value_ = this.valueBuilder_.build();
+                }
+                result.bitField0_ = to_bitField0_;
+                onBuilt();
+                return result;
+            }
+
+            @java.lang.Override
+            public Builder clone() {
+                return super.clone();
+            }
+
+            @java.lang.Override
+            public Builder setField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.setField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder clearField(com.google.protobuf.Descriptors.FieldDescriptor field) {
+                return super.clearField(field);
+            }
+
+            @java.lang.Override
+            public Builder clearOneof(com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+                return super.clearOneof(oneof);
+            }
+
+            @java.lang.Override
+            public Builder setRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, int index, java.lang.Object value) {
+                return super.setRepeatedField(field, index, value);
+            }
+
+            @java.lang.Override
+            public Builder addRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.addRepeatedField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.Message other) {
+                if (other instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Capability) {
+                    return mergeFrom((com.mysql.cj.x.protobuf.MysqlxConnection.Capability) other);
+                } else {
+                    super.mergeFrom(other);
+                    return this;
+                }
+            }
+
+            public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxConnection.Capability other) {
+                if (other == com.mysql.cj.x.protobuf.MysqlxConnection.Capability.getDefaultInstance()) {
+                    return this;
+                }
+                if (other.hasName()) {
+                    this.bitField0_ |= 0x00000001;
+                    this.name_ = other.name_;
+                    onChanged();
+                }
+                if (other.hasValue()) {
+                    mergeValue(other.getValue());
+                }
+                this.mergeUnknownFields(other.unknownFields);
+                onChanged();
+                return this;
+            }
+
+            @java.lang.Override
+            public final boolean isInitialized() {
+                if (!hasName()) {
+                    return false;
+                }
+                if (!hasValue()) {
+                    return false;
+                }
+                if (!getValue().isInitialized()) {
+                    return false;
+                }
+                return true;
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws java.io.IOException {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Capability parsedMessage = null;
+                try {
+                    parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                    parsedMessage = (com.mysql.cj.x.protobuf.MysqlxConnection.Capability) e.getUnfinishedMessage();
+                    throw e.unwrapIOException();
+                } finally {
+                    if (parsedMessage != null) {
+                        mergeFrom(parsedMessage);
+                    }
+                }
+                return this;
+            }
+
+            private int bitField0_;
+
+            private java.lang.Object name_ = "";
+
+            /**
+             * <code>required string name = 1;</code>
+             */
+            public boolean hasName() {
+                return ((this.bitField0_ & 0x00000001) == 0x00000001);
+            }
+
+            /**
+             * <code>required string name = 1;</code>
+             */
+            public java.lang.String getName() {
+                java.lang.Object ref = this.name_;
+                if (!(ref instanceof java.lang.String)) {
+                    com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
+                    java.lang.String s = bs.toStringUtf8();
+                    if (bs.isValidUtf8()) {
+                        this.name_ = s;
+                    }
+                    return s;
+                } else {
+                    return (java.lang.String) ref;
+                }
+            }
+
+            /**
+             * <code>required string name = 1;</code>
+             */
+            public com.google.protobuf.ByteString getNameBytes() {
+                java.lang.Object ref = this.name_;
+                if (ref instanceof String) {
+                    com.google.protobuf.ByteString b = com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
+                    this.name_ = b;
+                    return b;
+                } else {
+                    return (com.google.protobuf.ByteString) ref;
+                }
+            }
+
+            /**
+             * <code>required string name = 1;</code>
+             */
+            public Builder setName(java.lang.String value) {
+                if (value == null) {
+                    throw new NullPointerException();
+                }
+                this.bitField0_ |= 0x00000001;
+                this.name_ = value;
+                onChanged();
+                return this;
+            }
+
+            /**
+             * <code>required string name = 1;</code>
+             */
+            public Builder clearName() {
+                this.bitField0_ = (this.bitField0_ & ~0x00000001);
+                this.name_ = getDefaultInstance().getName();
+                onChanged();
+                return this;
+            }
+
+            /**
+             * <code>required string name = 1;</code>
+             */
+            public Builder setNameBytes(com.google.protobuf.ByteString value) {
+                if (value == null) {
+                    throw new NullPointerException();
+                }
+                this.bitField0_ |= 0x00000001;
+                this.name_ = value;
+                onChanged();
+                return this;
+            }
+
+            private com.mysql.cj.x.protobuf.MysqlxDatatypes.Any value_ = null;
+            private com.google.protobuf.SingleFieldBuilderV3<com.mysql.cj.x.protobuf.MysqlxDatatypes.Any, com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder> valueBuilder_;
+
+            /**
+             * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+             */
+            public boolean hasValue() {
+                return ((this.bitField0_ & 0x00000002) == 0x00000002);
+            }
+
+            /**
+             * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+             */
+            public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getValue() {
+                if (this.valueBuilder_ == null) {
+                    return this.value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance() : this.value_;
+                } else {
+                    return this.valueBuilder_.getMessage();
+                }
+            }
+
+            /**
+             * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+             */
+            public Builder setValue(com.mysql.cj.x.protobuf.MysqlxDatatypes.Any value) {
+                if (this.valueBuilder_ == null) {
+                    if (value == null) {
+                        throw new NullPointerException();
+                    }
+                    this.value_ = value;
+                    onChanged();
+                } else {
+                    this.valueBuilder_.setMessage(value);
+                }
+                this.bitField0_ |= 0x00000002;
+                return this;
+            }
+
+            /**
+             * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+             */
+            public Builder setValue(com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder builderForValue) {
+                if (this.valueBuilder_ == null) {
+                    this.value_ = builderForValue.build();
+                    onChanged();
+                } else {
+                    this.valueBuilder_.setMessage(builderForValue.build());
+                }
+                this.bitField0_ |= 0x00000002;
+                return this;
+            }
+
+            /**
+             * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+             */
+            public Builder mergeValue(com.mysql.cj.x.protobuf.MysqlxDatatypes.Any value) {
+                if (this.valueBuilder_ == null) {
+                    if (((this.bitField0_ & 0x00000002) == 0x00000002) && this.value_ != null
+                            && this.value_ != com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance()) {
+                        this.value_ = com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.newBuilder(this.value_).mergeFrom(value).buildPartial();
+                    } else {
+                        this.value_ = value;
+                    }
+                    onChanged();
+                } else {
+                    this.valueBuilder_.mergeFrom(value);
+                }
+                this.bitField0_ |= 0x00000002;
+                return this;
+            }
+
+            /**
+             * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+             */
+            public Builder clearValue() {
+                if (this.valueBuilder_ == null) {
+                    this.value_ = null;
+                    onChanged();
+                } else {
+                    this.valueBuilder_.clear();
+                }
+                this.bitField0_ = (this.bitField0_ & ~0x00000002);
+                return this;
+            }
+
+            /**
+             * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+             */
+            public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder getValueBuilder() {
+                this.bitField0_ |= 0x00000002;
+                onChanged();
+                return getValueFieldBuilder().getBuilder();
+            }
+
+            /**
+             * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+             */
+            public com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getValueOrBuilder() {
+                if (this.valueBuilder_ != null) {
+                    return this.valueBuilder_.getMessageOrBuilder();
+                } else {
+                    return this.value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance() : this.value_;
+                }
+            }
+
+            /**
+             * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
+             */
+            private com.google.protobuf.SingleFieldBuilderV3<com.mysql.cj.x.protobuf.MysqlxDatatypes.Any, com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder> getValueFieldBuilder() {
+                if (this.valueBuilder_ == null) {
+                    this.valueBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<>(
+                            getValue(), getParentForChildren(), isClean());
+                    this.value_ = null;
+                }
+                return this.valueBuilder_;
+            }
+
+            @java.lang.Override
+            public final Builder setUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.setUnknownFields(unknownFields);
+            }
+
+            @java.lang.Override
+            public final Builder mergeUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.mergeUnknownFields(unknownFields);
+            }
+
+            // @@protoc_insertion_point(builder_scope:Mysqlx.Connection.Capability)
+        }
+
+        // @@protoc_insertion_point(class_scope:Mysqlx.Connection.Capability)
+        private static final com.mysql.cj.x.protobuf.MysqlxConnection.Capability DEFAULT_INSTANCE;
+        static {
+            DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxConnection.Capability();
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capability getDefaultInstance() {
+            return DEFAULT_INSTANCE;
+        }
+
+        @java.lang.Deprecated
+        public static final com.google.protobuf.Parser<Capability> PARSER = new com.google.protobuf.AbstractParser<Capability>() {
+            @java.lang.Override
+            public Capability parsePartialFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws com.google.protobuf.InvalidProtocolBufferException {
+                return new Capability(input, extensionRegistry);
+            }
+        };
+
+        public static com.google.protobuf.Parser<Capability> parser() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Parser<Capability> getParserForType() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.mysql.cj.x.protobuf.MysqlxConnection.Capability getDefaultInstanceForType() {
+            return DEFAULT_INSTANCE;
+        }
+
     }
 
-    @java.lang.Override
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      for (int i = 0; i < capabilities_.size(); i++) {
-        output.writeMessage(1, capabilities_.get(i));
-      }
-      unknownFields.writeTo(output);
+    public interface CapabilitiesOrBuilder extends
+            // @@protoc_insertion_point(interface_extends:Mysqlx.Connection.Capabilities)
+            com.google.protobuf.MessageOrBuilder {
+
+        /**
+         * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+         */
+        java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability> getCapabilitiesList();
+
+        /**
+         * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+         */
+        com.mysql.cj.x.protobuf.MysqlxConnection.Capability getCapabilities(int index);
+
+        /**
+         * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+         */
+        int getCapabilitiesCount();
+
+        /**
+         * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+         */
+        java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder> getCapabilitiesOrBuilderList();
+
+        /**
+         * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+         */
+        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder getCapabilitiesOrBuilder(int index);
     }
 
-    @java.lang.Override
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      for (int i = 0; i < capabilities_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, capabilities_.get(i));
-      }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
-      return size;
-    }
-
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities)) {
-        return super.equals(obj);
-      }
-      com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities other = (com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities) obj;
-
-      boolean result = true;
-      result = result && getCapabilitiesList()
-          .equals(other.getCapabilitiesList());
-      result = result && unknownFields.equals(other.unknownFields);
-      return result;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
-      if (getCapabilitiesCount() > 0) {
-        hash = (37 * hash) + CAPABILITIES_FIELD_NUMBER;
-        hash = (53 * hash) + getCapabilitiesList().hashCode();
-      }
-      hash = (29 * hash) + unknownFields.hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    @java.lang.Override
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    @java.lang.Override
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
     /**
      * <pre>
      * Capabilities
@@ -1179,709 +876,754 @@ public final class MysqlxConnection {
      *
      * Protobuf type {@code Mysqlx.Connection.Capabilities}
      */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Connection.Capabilities)
-        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capabilities_descriptor;
-      }
+    public static final class Capabilities extends com.google.protobuf.GeneratedMessageV3 implements
+            // @@protoc_insertion_point(message_implements:Mysqlx.Connection.Capabilities)
+            CapabilitiesOrBuilder {
+        private static final long serialVersionUID = 0L;
 
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capabilities_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.class, com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
-          getCapabilitiesFieldBuilder();
+        // Use Capabilities.newBuilder() to construct.
+        private Capabilities(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+            super(builder);
         }
-      }
-      @java.lang.Override
-      public Builder clear() {
-        super.clear();
-        if (capabilitiesBuilder_ == null) {
-          capabilities_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
-        } else {
-          capabilitiesBuilder_.clear();
+
+        private Capabilities() {
+            this.capabilities_ = java.util.Collections.emptyList();
         }
-        return this;
-      }
 
-      @java.lang.Override
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capabilities_descriptor;
-      }
-
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getDefaultInstanceForType() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance();
-      }
-
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities build() {
-        com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
+        @java.lang.Override
+        public final com.google.protobuf.UnknownFieldSet getUnknownFields() {
+            return this.unknownFields;
         }
-        return result;
-      }
 
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities buildPartial() {
-        com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities result = new com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities(this);
-        int from_bitField0_ = bitField0_;
-        if (capabilitiesBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            capabilities_ = java.util.Collections.unmodifiableList(capabilities_);
-            bitField0_ = (bitField0_ & ~0x00000001);
-          }
-          result.capabilities_ = capabilities_;
-        } else {
-          result.capabilities_ = capabilitiesBuilder_.build();
-        }
-        onBuilt();
-        return result;
-      }
-
-      @java.lang.Override
-      public Builder clone() {
-        return (Builder) super.clone();
-      }
-      @java.lang.Override
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return (Builder) super.setField(field, value);
-      }
-      @java.lang.Override
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
-      }
-      @java.lang.Override
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
-      }
-      @java.lang.Override
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
-      }
-      @java.lang.Override
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return (Builder) super.addRepeatedField(field, value);
-      }
-      @java.lang.Override
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities) {
-          return mergeFrom((com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities other) {
-        if (other == com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance()) return this;
-        if (capabilitiesBuilder_ == null) {
-          if (!other.capabilities_.isEmpty()) {
-            if (capabilities_.isEmpty()) {
-              capabilities_ = other.capabilities_;
-              bitField0_ = (bitField0_ & ~0x00000001);
-            } else {
-              ensureCapabilitiesIsMutable();
-              capabilities_.addAll(other.capabilities_);
+        private Capabilities(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            this();
+            if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
             }
-            onChanged();
-          }
-        } else {
-          if (!other.capabilities_.isEmpty()) {
-            if (capabilitiesBuilder_.isEmpty()) {
-              capabilitiesBuilder_.dispose();
-              capabilitiesBuilder_ = null;
-              capabilities_ = other.capabilities_;
-              bitField0_ = (bitField0_ & ~0x00000001);
-              capabilitiesBuilder_ = 
-                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
-                   getCapabilitiesFieldBuilder() : null;
-            } else {
-              capabilitiesBuilder_.addAllMessages(other.capabilities_);
+            int mutable_bitField0_ = 0;
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields = com.google.protobuf.UnknownFieldSet.newBuilder();
+            try {
+                boolean done = false;
+                while (!done) {
+                    int tag = input.readTag();
+                    switch (tag) {
+                        case 0:
+                            done = true;
+                            break;
+                        case 10: {
+                            if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                                this.capabilities_ = new java.util.ArrayList<>();
+                                mutable_bitField0_ |= 0x00000001;
+                            }
+                            this.capabilities_.add(input.readMessage(com.mysql.cj.x.protobuf.MysqlxConnection.Capability.PARSER, extensionRegistry));
+                            break;
+                        }
+                        default: {
+                            if (!parseUnknownField(input, unknownFields, extensionRegistry, tag)) {
+                                done = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                throw e.setUnfinishedMessage(this);
+            } catch (java.io.IOException e) {
+                throw new com.google.protobuf.InvalidProtocolBufferException(e).setUnfinishedMessage(this);
+            } finally {
+                if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                    this.capabilities_ = java.util.Collections.unmodifiableList(this.capabilities_);
+                }
+                this.unknownFields = unknownFields.build();
+                makeExtensionsImmutable();
             }
-          }
         }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
-        return this;
-      }
 
-      @java.lang.Override
-      public final boolean isInitialized() {
-        for (int i = 0; i < getCapabilitiesCount(); i++) {
-          if (!getCapabilities(i).isInitialized()) {
-            return false;
-          }
+        public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capabilities_descriptor;
         }
-        return true;
-      }
 
-      @java.lang.Override
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities) e.getUnfinishedMessage();
-          throw e.unwrapIOException();
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capabilities_fieldAccessorTable.ensureFieldAccessorsInitialized(
+                    com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.class, com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder.class);
         }
-        return this;
-      }
-      private int bitField0_;
 
-      private java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability> capabilities_ =
-        java.util.Collections.emptyList();
-      private void ensureCapabilitiesIsMutable() {
-        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          capabilities_ = new java.util.ArrayList<com.mysql.cj.x.protobuf.MysqlxConnection.Capability>(capabilities_);
-          bitField0_ |= 0x00000001;
-         }
-      }
+        public static final int CAPABILITIES_FIELD_NUMBER = 1;
+        private java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability> capabilities_;
 
-      private com.google.protobuf.RepeatedFieldBuilderV3<
-          com.mysql.cj.x.protobuf.MysqlxConnection.Capability, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder> capabilitiesBuilder_;
+        /**
+         * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+         */
+        public java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability> getCapabilitiesList() {
+            return this.capabilities_;
+        }
 
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability> getCapabilitiesList() {
-        if (capabilitiesBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(capabilities_);
-        } else {
-          return capabilitiesBuilder_.getMessageList();
+        /**
+         * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+         */
+        public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder> getCapabilitiesOrBuilderList() {
+            return this.capabilities_;
         }
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public int getCapabilitiesCount() {
-        if (capabilitiesBuilder_ == null) {
-          return capabilities_.size();
-        } else {
-          return capabilitiesBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capability getCapabilities(int index) {
-        if (capabilitiesBuilder_ == null) {
-          return capabilities_.get(index);
-        } else {
-          return capabilitiesBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public Builder setCapabilities(
-          int index, com.mysql.cj.x.protobuf.MysqlxConnection.Capability value) {
-        if (capabilitiesBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureCapabilitiesIsMutable();
-          capabilities_.set(index, value);
-          onChanged();
-        } else {
-          capabilitiesBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public Builder setCapabilities(
-          int index, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder builderForValue) {
-        if (capabilitiesBuilder_ == null) {
-          ensureCapabilitiesIsMutable();
-          capabilities_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          capabilitiesBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public Builder addCapabilities(com.mysql.cj.x.protobuf.MysqlxConnection.Capability value) {
-        if (capabilitiesBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureCapabilitiesIsMutable();
-          capabilities_.add(value);
-          onChanged();
-        } else {
-          capabilitiesBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public Builder addCapabilities(
-          int index, com.mysql.cj.x.protobuf.MysqlxConnection.Capability value) {
-        if (capabilitiesBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureCapabilitiesIsMutable();
-          capabilities_.add(index, value);
-          onChanged();
-        } else {
-          capabilitiesBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public Builder addCapabilities(
-          com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder builderForValue) {
-        if (capabilitiesBuilder_ == null) {
-          ensureCapabilitiesIsMutable();
-          capabilities_.add(builderForValue.build());
-          onChanged();
-        } else {
-          capabilitiesBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public Builder addCapabilities(
-          int index, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder builderForValue) {
-        if (capabilitiesBuilder_ == null) {
-          ensureCapabilitiesIsMutable();
-          capabilities_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          capabilitiesBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public Builder addAllCapabilities(
-          java.lang.Iterable<? extends com.mysql.cj.x.protobuf.MysqlxConnection.Capability> values) {
-        if (capabilitiesBuilder_ == null) {
-          ensureCapabilitiesIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, capabilities_);
-          onChanged();
-        } else {
-          capabilitiesBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public Builder clearCapabilities() {
-        if (capabilitiesBuilder_ == null) {
-          capabilities_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
-          onChanged();
-        } else {
-          capabilitiesBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public Builder removeCapabilities(int index) {
-        if (capabilitiesBuilder_ == null) {
-          ensureCapabilitiesIsMutable();
-          capabilities_.remove(index);
-          onChanged();
-        } else {
-          capabilitiesBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder getCapabilitiesBuilder(
-          int index) {
-        return getCapabilitiesFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder getCapabilitiesOrBuilder(
-          int index) {
-        if (capabilitiesBuilder_ == null) {
-          return capabilities_.get(index);  } else {
-          return capabilitiesBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder> 
-           getCapabilitiesOrBuilderList() {
-        if (capabilitiesBuilder_ != null) {
-          return capabilitiesBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(capabilities_);
-        }
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder addCapabilitiesBuilder() {
-        return getCapabilitiesFieldBuilder().addBuilder(
-            com.mysql.cj.x.protobuf.MysqlxConnection.Capability.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder addCapabilitiesBuilder(
-          int index) {
-        return getCapabilitiesFieldBuilder().addBuilder(
-            index, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
-       */
-      public java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder> 
-           getCapabilitiesBuilderList() {
-        return getCapabilitiesFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilderV3<
-          com.mysql.cj.x.protobuf.MysqlxConnection.Capability, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder> 
-          getCapabilitiesFieldBuilder() {
-        if (capabilitiesBuilder_ == null) {
-          capabilitiesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-              com.mysql.cj.x.protobuf.MysqlxConnection.Capability, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder>(
-                  capabilities_,
-                  ((bitField0_ & 0x00000001) == 0x00000001),
-                  getParentForChildren(),
-                  isClean());
-          capabilities_ = null;
-        }
-        return capabilitiesBuilder_;
-      }
-      @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
-      }
 
-      @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
-      }
+        /**
+         * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+         */
+        public int getCapabilitiesCount() {
+            return this.capabilities_.size();
+        }
 
+        /**
+         * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+         */
+        public com.mysql.cj.x.protobuf.MysqlxConnection.Capability getCapabilities(int index) {
+            return this.capabilities_.get(index);
+        }
 
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Connection.Capabilities)
-    }
+        /**
+         * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+         */
+        public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder getCapabilitiesOrBuilder(int index) {
+            return this.capabilities_.get(index);
+        }
 
-    // @@protoc_insertion_point(class_scope:Mysqlx.Connection.Capabilities)
-    private static final com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities();
-    }
+        private byte memoizedIsInitialized = -1;
 
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<Capabilities>
-        PARSER = new com.google.protobuf.AbstractParser<Capabilities>() {
-      @java.lang.Override
-      public Capabilities parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new Capabilities(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<Capabilities> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<Capabilities> getParserForType() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  public interface CapabilitiesGetOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Connection.CapabilitiesGet)
-      com.google.protobuf.MessageOrBuilder {
-  }
-  /**
-   * <pre>
-   * get supported connection capabilities and their current state
-   *   :returns: :protobuf:msg:`Mysqlx.Connection::Capabilities` or :protobuf:msg:`Mysqlx::Error`
-   * </pre>
-   *
-   * Protobuf type {@code Mysqlx.Connection.CapabilitiesGet}
-   */
-  public  static final class CapabilitiesGet extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Connection.CapabilitiesGet)
-      CapabilitiesGetOrBuilder {
-  private static final long serialVersionUID = 0L;
-    // Use CapabilitiesGet.newBuilder() to construct.
-    private CapabilitiesGet(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private CapabilitiesGet() {
-    }
-
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return this.unknownFields;
-    }
-    private CapabilitiesGet(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
+        @java.lang.Override
+        public final boolean isInitialized() {
+            byte isInitialized = this.memoizedIsInitialized;
+            if (isInitialized == 1) {
+                return true;
             }
-          }
+            if (isInitialized == 0) {
+                return false;
+            }
+
+            for (int i = 0; i < getCapabilitiesCount(); i++) {
+                if (!getCapabilities(i).isInitialized()) {
+                    this.memoizedIsInitialized = 0;
+                    return false;
+                }
+            }
+            this.memoizedIsInitialized = 1;
+            return true;
         }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor;
+
+        @java.lang.Override
+        public void writeTo(com.google.protobuf.CodedOutputStream output) throws java.io.IOException {
+            for (int i = 0; i < this.capabilities_.size(); i++) {
+                output.writeMessage(1, this.capabilities_.get(i));
+            }
+            this.unknownFields.writeTo(output);
+        }
+
+        @java.lang.Override
+        public int getSerializedSize() {
+            int size = this.memoizedSize;
+            if (size != -1) {
+                return size;
+            }
+
+            size = 0;
+            for (int i = 0; i < this.capabilities_.size(); i++) {
+                size += com.google.protobuf.CodedOutputStream.computeMessageSize(1, this.capabilities_.get(i));
+            }
+            size += this.unknownFields.getSerializedSize();
+            this.memoizedSize = size;
+            return size;
+        }
+
+        @java.lang.Override
+        public boolean equals(final java.lang.Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities)) {
+                return super.equals(obj);
+            }
+            com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities other = (com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities) obj;
+
+            boolean result = true;
+            result = result && getCapabilitiesList().equals(other.getCapabilitiesList());
+            result = result && this.unknownFields.equals(other.unknownFields);
+            return result;
+        }
+
+        @java.lang.Override
+        public int hashCode() {
+            if (this.memoizedHashCode != 0) {
+                return this.memoizedHashCode;
+            }
+            int hash = 41;
+            hash = (19 * hash) + getDescriptor().hashCode();
+            if (getCapabilitiesCount() > 0) {
+                hash = (37 * hash) + CAPABILITIES_FIELD_NUMBER;
+                hash = (53 * hash) + getCapabilitiesList().hashCode();
+            }
+            hash = (29 * hash) + this.unknownFields.hashCode();
+            this.memoizedHashCode = hash;
+            return hash;
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(java.nio.ByteBuffer data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(java.nio.ByteBuffer data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(byte[] data) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(byte[] data, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseDelimitedFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseDelimitedFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(com.google.protobuf.CodedInputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parseFrom(com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        @java.lang.Override
+        public Builder newBuilderForType() {
+            return newBuilder();
+        }
+
+        public static Builder newBuilder() {
+            return DEFAULT_INSTANCE.toBuilder();
+        }
+
+        public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities prototype) {
+            return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        }
+
+        @java.lang.Override
+        public Builder toBuilder() {
+            return this == DEFAULT_INSTANCE ? new Builder() : new Builder().mergeFrom(this);
+        }
+
+        @java.lang.Override
+        protected Builder newBuilderForType(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+            Builder builder = new Builder(parent);
+            return builder;
+        }
+
+        /**
+         * <pre>
+         * Capabilities
+         * </pre>
+         *
+         * Protobuf type {@code Mysqlx.Connection.Capabilities}
+         */
+        public static final class Builder extends com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+                // @@protoc_insertion_point(builder_implements:Mysqlx.Connection.Capabilities)
+                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder {
+            public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capabilities_descriptor;
+            }
+
+            @java.lang.Override
+            protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capabilities_fieldAccessorTable
+                        .ensureFieldAccessorsInitialized(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.class,
+                                com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder.class);
+            }
+
+            // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.newBuilder()
+            private Builder() {
+                maybeForceBuilderInitialization();
+            }
+
+            private Builder(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+                super(parent);
+                maybeForceBuilderInitialization();
+            }
+
+            private void maybeForceBuilderInitialization() {
+                if (com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders) {
+                    getCapabilitiesFieldBuilder();
+                }
+            }
+
+            @java.lang.Override
+            public Builder clear() {
+                super.clear();
+                if (this.capabilitiesBuilder_ == null) {
+                    this.capabilities_ = java.util.Collections.emptyList();
+                    this.bitField0_ = (this.bitField0_ & ~0x00000001);
+                } else {
+                    this.capabilitiesBuilder_.clear();
+                }
+                return this;
+            }
+
+            @java.lang.Override
+            public com.google.protobuf.Descriptors.Descriptor getDescriptorForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Capabilities_descriptor;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getDefaultInstanceForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance();
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities build() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities result = buildPartial();
+                if (!result.isInitialized()) {
+                    throw newUninitializedMessageException(result);
+                }
+                return result;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities buildPartial() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities result = new com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities(this);
+                int from_bitField0_ = this.bitField0_;
+                if (this.capabilitiesBuilder_ == null) {
+                    if (((this.bitField0_ & 0x00000001) == 0x00000001)) {
+                        this.capabilities_ = java.util.Collections.unmodifiableList(this.capabilities_);
+                        this.bitField0_ = (this.bitField0_ & ~0x00000001);
+                    }
+                    result.capabilities_ = this.capabilities_;
+                } else {
+                    result.capabilities_ = this.capabilitiesBuilder_.build();
+                }
+                onBuilt();
+                return result;
+            }
+
+            @java.lang.Override
+            public Builder clone() {
+                return super.clone();
+            }
+
+            @java.lang.Override
+            public Builder setField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.setField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder clearField(com.google.protobuf.Descriptors.FieldDescriptor field) {
+                return super.clearField(field);
+            }
+
+            @java.lang.Override
+            public Builder clearOneof(com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+                return super.clearOneof(oneof);
+            }
+
+            @java.lang.Override
+            public Builder setRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, int index, java.lang.Object value) {
+                return super.setRepeatedField(field, index, value);
+            }
+
+            @java.lang.Override
+            public Builder addRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.addRepeatedField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.Message other) {
+                if (other instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities) {
+                    return mergeFrom((com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities) other);
+                } else {
+                    super.mergeFrom(other);
+                    return this;
+                }
+            }
+
+            public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities other) {
+                if (other == com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance()) {
+                    return this;
+                }
+                if (this.capabilitiesBuilder_ == null) {
+                    if (!other.capabilities_.isEmpty()) {
+                        if (this.capabilities_.isEmpty()) {
+                            this.capabilities_ = other.capabilities_;
+                            this.bitField0_ = (this.bitField0_ & ~0x00000001);
+                        } else {
+                            ensureCapabilitiesIsMutable();
+                            this.capabilities_.addAll(other.capabilities_);
+                        }
+                        onChanged();
+                    }
+                } else {
+                    if (!other.capabilities_.isEmpty()) {
+                        if (this.capabilitiesBuilder_.isEmpty()) {
+                            this.capabilitiesBuilder_.dispose();
+                            this.capabilitiesBuilder_ = null;
+                            this.capabilities_ = other.capabilities_;
+                            this.bitField0_ = (this.bitField0_ & ~0x00000001);
+                            this.capabilitiesBuilder_ = com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ? getCapabilitiesFieldBuilder() : null;
+                        } else {
+                            this.capabilitiesBuilder_.addAllMessages(other.capabilities_);
+                        }
+                    }
+                }
+                this.mergeUnknownFields(other.unknownFields);
+                onChanged();
+                return this;
+            }
+
+            @java.lang.Override
+            public final boolean isInitialized() {
+                for (int i = 0; i < getCapabilitiesCount(); i++) {
+                    if (!getCapabilities(i).isInitialized()) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws java.io.IOException {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities parsedMessage = null;
+                try {
+                    parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                    parsedMessage = (com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities) e.getUnfinishedMessage();
+                    throw e.unwrapIOException();
+                } finally {
+                    if (parsedMessage != null) {
+                        mergeFrom(parsedMessage);
+                    }
+                }
+                return this;
+            }
+
+            private int bitField0_;
+
+            private java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability> capabilities_ = java.util.Collections.emptyList();
+
+            private void ensureCapabilitiesIsMutable() {
+                if (!((this.bitField0_ & 0x00000001) == 0x00000001)) {
+                    this.capabilities_ = new java.util.ArrayList<>(this.capabilities_);
+                    this.bitField0_ |= 0x00000001;
+                }
+            }
+
+            private com.google.protobuf.RepeatedFieldBuilderV3<com.mysql.cj.x.protobuf.MysqlxConnection.Capability, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder> capabilitiesBuilder_;
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability> getCapabilitiesList() {
+                if (this.capabilitiesBuilder_ == null) {
+                    return java.util.Collections.unmodifiableList(this.capabilities_);
+                } else {
+                    return this.capabilitiesBuilder_.getMessageList();
+                }
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public int getCapabilitiesCount() {
+                if (this.capabilitiesBuilder_ == null) {
+                    return this.capabilities_.size();
+                } else {
+                    return this.capabilitiesBuilder_.getCount();
+                }
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capability getCapabilities(int index) {
+                if (this.capabilitiesBuilder_ == null) {
+                    return this.capabilities_.get(index);
+                } else {
+                    return this.capabilitiesBuilder_.getMessage(index);
+                }
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public Builder setCapabilities(int index, com.mysql.cj.x.protobuf.MysqlxConnection.Capability value) {
+                if (this.capabilitiesBuilder_ == null) {
+                    if (value == null) {
+                        throw new NullPointerException();
+                    }
+                    ensureCapabilitiesIsMutable();
+                    this.capabilities_.set(index, value);
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.setMessage(index, value);
+                }
+                return this;
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public Builder setCapabilities(int index, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder builderForValue) {
+                if (this.capabilitiesBuilder_ == null) {
+                    ensureCapabilitiesIsMutable();
+                    this.capabilities_.set(index, builderForValue.build());
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.setMessage(index, builderForValue.build());
+                }
+                return this;
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public Builder addCapabilities(com.mysql.cj.x.protobuf.MysqlxConnection.Capability value) {
+                if (this.capabilitiesBuilder_ == null) {
+                    if (value == null) {
+                        throw new NullPointerException();
+                    }
+                    ensureCapabilitiesIsMutable();
+                    this.capabilities_.add(value);
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.addMessage(value);
+                }
+                return this;
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public Builder addCapabilities(int index, com.mysql.cj.x.protobuf.MysqlxConnection.Capability value) {
+                if (this.capabilitiesBuilder_ == null) {
+                    if (value == null) {
+                        throw new NullPointerException();
+                    }
+                    ensureCapabilitiesIsMutable();
+                    this.capabilities_.add(index, value);
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.addMessage(index, value);
+                }
+                return this;
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public Builder addCapabilities(com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder builderForValue) {
+                if (this.capabilitiesBuilder_ == null) {
+                    ensureCapabilitiesIsMutable();
+                    this.capabilities_.add(builderForValue.build());
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.addMessage(builderForValue.build());
+                }
+                return this;
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public Builder addCapabilities(int index, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder builderForValue) {
+                if (this.capabilitiesBuilder_ == null) {
+                    ensureCapabilitiesIsMutable();
+                    this.capabilities_.add(index, builderForValue.build());
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.addMessage(index, builderForValue.build());
+                }
+                return this;
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public Builder addAllCapabilities(java.lang.Iterable<? extends com.mysql.cj.x.protobuf.MysqlxConnection.Capability> values) {
+                if (this.capabilitiesBuilder_ == null) {
+                    ensureCapabilitiesIsMutable();
+                    com.google.protobuf.AbstractMessageLite.Builder.addAll(values, this.capabilities_);
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.addAllMessages(values);
+                }
+                return this;
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public Builder clearCapabilities() {
+                if (this.capabilitiesBuilder_ == null) {
+                    this.capabilities_ = java.util.Collections.emptyList();
+                    this.bitField0_ = (this.bitField0_ & ~0x00000001);
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.clear();
+                }
+                return this;
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public Builder removeCapabilities(int index) {
+                if (this.capabilitiesBuilder_ == null) {
+                    ensureCapabilitiesIsMutable();
+                    this.capabilities_.remove(index);
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.remove(index);
+                }
+                return this;
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder getCapabilitiesBuilder(int index) {
+                return getCapabilitiesFieldBuilder().getBuilder(index);
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder getCapabilitiesOrBuilder(int index) {
+                if (this.capabilitiesBuilder_ == null) {
+                    return this.capabilities_.get(index);
+                } else {
+                    return this.capabilitiesBuilder_.getMessageOrBuilder(index);
+                }
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder> getCapabilitiesOrBuilderList() {
+                if (this.capabilitiesBuilder_ != null) {
+                    return this.capabilitiesBuilder_.getMessageOrBuilderList();
+                } else {
+                    return java.util.Collections.unmodifiableList(this.capabilities_);
+                }
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder addCapabilitiesBuilder() {
+                return getCapabilitiesFieldBuilder().addBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.Capability.getDefaultInstance());
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder addCapabilitiesBuilder(int index) {
+                return getCapabilitiesFieldBuilder().addBuilder(index, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.getDefaultInstance());
+            }
+
+            /**
+             * <code>repeated .Mysqlx.Connection.Capability capabilities = 1;</code>
+             */
+            public java.util.List<com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder> getCapabilitiesBuilderList() {
+                return getCapabilitiesFieldBuilder().getBuilderList();
+            }
+
+            private com.google.protobuf.RepeatedFieldBuilderV3<com.mysql.cj.x.protobuf.MysqlxConnection.Capability, com.mysql.cj.x.protobuf.MysqlxConnection.Capability.Builder, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilityOrBuilder> getCapabilitiesFieldBuilder() {
+                if (this.capabilitiesBuilder_ == null) {
+                    this.capabilitiesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<>(
+                            this.capabilities_, ((this.bitField0_ & 0x00000001) == 0x00000001), getParentForChildren(), isClean());
+                    this.capabilities_ = null;
+                }
+                return this.capabilitiesBuilder_;
+            }
+
+            @java.lang.Override
+            public final Builder setUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.setUnknownFields(unknownFields);
+            }
+
+            @java.lang.Override
+            public final Builder mergeUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.mergeUnknownFields(unknownFields);
+            }
+
+            // @@protoc_insertion_point(builder_scope:Mysqlx.Connection.Capabilities)
+        }
+
+        // @@protoc_insertion_point(class_scope:Mysqlx.Connection.Capabilities)
+        private static final com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities DEFAULT_INSTANCE;
+        static {
+            DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities();
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getDefaultInstance() {
+            return DEFAULT_INSTANCE;
+        }
+
+        @java.lang.Deprecated
+        public static final com.google.protobuf.Parser<Capabilities> PARSER = new com.google.protobuf.AbstractParser<Capabilities>() {
+            @java.lang.Override
+            public Capabilities parsePartialFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws com.google.protobuf.InvalidProtocolBufferException {
+                return new Capabilities(input, extensionRegistry);
+            }
+        };
+
+        public static com.google.protobuf.Parser<Capabilities> parser() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Parser<Capabilities> getParserForType() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getDefaultInstanceForType() {
+            return DEFAULT_INSTANCE;
+        }
+
     }
 
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesGet_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.class, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.Builder.class);
+    public interface CapabilitiesGetOrBuilder extends
+            // @@protoc_insertion_point(interface_extends:Mysqlx.Connection.CapabilitiesGet)
+            com.google.protobuf.MessageOrBuilder {
     }
 
-    private byte memoizedIsInitialized = -1;
-    @java.lang.Override
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    @java.lang.Override
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      unknownFields.writeTo(output);
-    }
-
-    @java.lang.Override
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
-      return size;
-    }
-
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet)) {
-        return super.equals(obj);
-      }
-      com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet other = (com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet) obj;
-
-      boolean result = true;
-      result = result && unknownFields.equals(other.unknownFields);
-      return result;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (29 * hash) + unknownFields.hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    @java.lang.Override
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    @java.lang.Override
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
     /**
      * <pre>
      * get supported connection capabilities and their current state
@@ -1890,496 +1632,419 @@ public final class MysqlxConnection {
      *
      * Protobuf type {@code Mysqlx.Connection.CapabilitiesGet}
      */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Connection.CapabilitiesGet)
-        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGetOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor;
-      }
+    public static final class CapabilitiesGet extends com.google.protobuf.GeneratedMessageV3 implements
+            // @@protoc_insertion_point(message_implements:Mysqlx.Connection.CapabilitiesGet)
+            CapabilitiesGetOrBuilder {
+        private static final long serialVersionUID = 0L;
 
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesGet_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.class, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
+        // Use CapabilitiesGet.newBuilder() to construct.
+        private CapabilitiesGet(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+            super(builder);
         }
-      }
-      @java.lang.Override
-      public Builder clear() {
-        super.clear();
-        return this;
-      }
 
-      @java.lang.Override
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor;
-      }
-
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet getDefaultInstanceForType() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.getDefaultInstance();
-      }
-
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet build() {
-        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
+        private CapabilitiesGet() {
         }
-        return result;
-      }
 
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet buildPartial() {
-        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet result = new com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet(this);
-        onBuilt();
-        return result;
-      }
-
-      @java.lang.Override
-      public Builder clone() {
-        return (Builder) super.clone();
-      }
-      @java.lang.Override
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return (Builder) super.setField(field, value);
-      }
-      @java.lang.Override
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
-      }
-      @java.lang.Override
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
-      }
-      @java.lang.Override
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
-      }
-      @java.lang.Override
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return (Builder) super.addRepeatedField(field, value);
-      }
-      @java.lang.Override
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet) {
-          return mergeFrom((com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
+        @java.lang.Override
+        public final com.google.protobuf.UnknownFieldSet getUnknownFields() {
+            return this.unknownFields;
         }
-      }
 
-      public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet other) {
-        if (other == com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.getDefaultInstance()) return this;
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
-        return this;
-      }
-
-      @java.lang.Override
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      @java.lang.Override
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet) e.getUnfinishedMessage();
-          throw e.unwrapIOException();
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
-      }
-
-      @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Connection.CapabilitiesGet)
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Connection.CapabilitiesGet)
-    private static final com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet();
-    }
-
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<CapabilitiesGet>
-        PARSER = new com.google.protobuf.AbstractParser<CapabilitiesGet>() {
-      @java.lang.Override
-      public CapabilitiesGet parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new CapabilitiesGet(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<CapabilitiesGet> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<CapabilitiesGet> getParserForType() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  public interface CapabilitiesSetOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Connection.CapabilitiesSet)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-     */
-    boolean hasCapabilities();
-    /**
-     * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-     */
-    com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getCapabilities();
-    /**
-     * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-     */
-    com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder getCapabilitiesOrBuilder();
-  }
-  /**
-   * <pre>
-   * sets connection capabilities atomically
-   * only provided values are changed, other values are left unchanged.
-   * If any of the changes fails, all changes are discarded.
-   * :precond: active sessions == 0
-   * :returns: :protobuf:msg:`Mysqlx::Ok` or :protobuf:msg:`Mysqlx::Error`
-   * </pre>
-   *
-   * Protobuf type {@code Mysqlx.Connection.CapabilitiesSet}
-   */
-  public  static final class CapabilitiesSet extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Connection.CapabilitiesSet)
-      CapabilitiesSetOrBuilder {
-  private static final long serialVersionUID = 0L;
-    // Use CapabilitiesSet.newBuilder() to construct.
-    private CapabilitiesSet(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private CapabilitiesSet() {
-    }
-
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return this.unknownFields;
-    }
-    private CapabilitiesSet(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            case 10: {
-              com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                subBuilder = capabilities_.toBuilder();
-              }
-              capabilities_ = input.readMessage(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(capabilities_);
-                capabilities_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000001;
-              break;
+        private CapabilitiesGet(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            this();
+            if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields = com.google.protobuf.UnknownFieldSet.newBuilder();
+            try {
+                boolean done = false;
+                while (!done) {
+                    int tag = input.readTag();
+                    switch (tag) {
+                        case 0:
+                            done = true;
+                            break;
+                        default: {
+                            if (!parseUnknownField(input, unknownFields, extensionRegistry, tag)) {
+                                done = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                throw e.setUnfinishedMessage(this);
+            } catch (java.io.IOException e) {
+                throw new com.google.protobuf.InvalidProtocolBufferException(e).setUnfinishedMessage(this);
+            } finally {
+                this.unknownFields = unknownFields.build();
+                makeExtensionsImmutable();
             }
-          }
         }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor;
+
+        public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesGet_fieldAccessorTable
+                    .ensureFieldAccessorsInitialized(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.class,
+                            com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.Builder.class);
+        }
+
+        private byte memoizedIsInitialized = -1;
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+            byte isInitialized = this.memoizedIsInitialized;
+            if (isInitialized == 1) {
+                return true;
+            }
+            if (isInitialized == 0) {
+                return false;
+            }
+
+            this.memoizedIsInitialized = 1;
+            return true;
+        }
+
+        @java.lang.Override
+        public void writeTo(com.google.protobuf.CodedOutputStream output) throws java.io.IOException {
+            this.unknownFields.writeTo(output);
+        }
+
+        @java.lang.Override
+        public int getSerializedSize() {
+            int size = this.memoizedSize;
+            if (size != -1) {
+                return size;
+            }
+
+            size = 0;
+            size += this.unknownFields.getSerializedSize();
+            this.memoizedSize = size;
+            return size;
+        }
+
+        @java.lang.Override
+        public boolean equals(final java.lang.Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet)) {
+                return super.equals(obj);
+            }
+            com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet other = (com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet) obj;
+
+            boolean result = true;
+            result = result && this.unknownFields.equals(other.unknownFields);
+            return result;
+        }
+
+        @java.lang.Override
+        public int hashCode() {
+            if (this.memoizedHashCode != 0) {
+                return this.memoizedHashCode;
+            }
+            int hash = 41;
+            hash = (19 * hash) + getDescriptor().hashCode();
+            hash = (29 * hash) + this.unknownFields.hashCode();
+            this.memoizedHashCode = hash;
+            return hash;
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(java.nio.ByteBuffer data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(java.nio.ByteBuffer data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(byte[] data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(byte[] data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseDelimitedFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseDelimitedFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(com.google.protobuf.CodedInputStream input)
+                throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parseFrom(com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        @java.lang.Override
+        public Builder newBuilderForType() {
+            return newBuilder();
+        }
+
+        public static Builder newBuilder() {
+            return DEFAULT_INSTANCE.toBuilder();
+        }
+
+        public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet prototype) {
+            return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        }
+
+        @java.lang.Override
+        public Builder toBuilder() {
+            return this == DEFAULT_INSTANCE ? new Builder() : new Builder().mergeFrom(this);
+        }
+
+        @java.lang.Override
+        protected Builder newBuilderForType(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+            Builder builder = new Builder(parent);
+            return builder;
+        }
+
+        /**
+         * <pre>
+         * get supported connection capabilities and their current state
+         *   :returns: :protobuf:msg:`Mysqlx.Connection::Capabilities` or :protobuf:msg:`Mysqlx::Error`
+         * </pre>
+         *
+         * Protobuf type {@code Mysqlx.Connection.CapabilitiesGet}
+         */
+        public static final class Builder extends com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+                // @@protoc_insertion_point(builder_implements:Mysqlx.Connection.CapabilitiesGet)
+                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGetOrBuilder {
+            public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor;
+            }
+
+            @java.lang.Override
+            protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesGet_fieldAccessorTable
+                        .ensureFieldAccessorsInitialized(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.class,
+                                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.Builder.class);
+            }
+
+            // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.newBuilder()
+            private Builder() {
+                maybeForceBuilderInitialization();
+            }
+
+            private Builder(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+                super(parent);
+                maybeForceBuilderInitialization();
+            }
+
+            private void maybeForceBuilderInitialization() {
+                if (com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders) {
+                }
+            }
+
+            @java.lang.Override
+            public Builder clear() {
+                super.clear();
+                return this;
+            }
+
+            @java.lang.Override
+            public com.google.protobuf.Descriptors.Descriptor getDescriptorForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet getDefaultInstanceForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.getDefaultInstance();
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet build() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet result = buildPartial();
+                if (!result.isInitialized()) {
+                    throw newUninitializedMessageException(result);
+                }
+                return result;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet buildPartial() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet result = new com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet(this);
+                onBuilt();
+                return result;
+            }
+
+            @java.lang.Override
+            public Builder clone() {
+                return super.clone();
+            }
+
+            @java.lang.Override
+            public Builder setField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.setField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder clearField(com.google.protobuf.Descriptors.FieldDescriptor field) {
+                return super.clearField(field);
+            }
+
+            @java.lang.Override
+            public Builder clearOneof(com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+                return super.clearOneof(oneof);
+            }
+
+            @java.lang.Override
+            public Builder setRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, int index, java.lang.Object value) {
+                return super.setRepeatedField(field, index, value);
+            }
+
+            @java.lang.Override
+            public Builder addRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.addRepeatedField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.Message other) {
+                if (other instanceof com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet) {
+                    return mergeFrom((com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet) other);
+                } else {
+                    super.mergeFrom(other);
+                    return this;
+                }
+            }
+
+            public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet other) {
+                if (other == com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet.getDefaultInstance()) {
+                    return this;
+                }
+                this.mergeUnknownFields(other.unknownFields);
+                onChanged();
+                return this;
+            }
+
+            @java.lang.Override
+            public final boolean isInitialized() {
+                return true;
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws java.io.IOException {
+                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet parsedMessage = null;
+                try {
+                    parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                    parsedMessage = (com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet) e.getUnfinishedMessage();
+                    throw e.unwrapIOException();
+                } finally {
+                    if (parsedMessage != null) {
+                        mergeFrom(parsedMessage);
+                    }
+                }
+                return this;
+            }
+
+            @java.lang.Override
+            public final Builder setUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.setUnknownFields(unknownFields);
+            }
+
+            @java.lang.Override
+            public final Builder mergeUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.mergeUnknownFields(unknownFields);
+            }
+
+            // @@protoc_insertion_point(builder_scope:Mysqlx.Connection.CapabilitiesGet)
+        }
+
+        // @@protoc_insertion_point(class_scope:Mysqlx.Connection.CapabilitiesGet)
+        private static final com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet DEFAULT_INSTANCE;
+        static {
+            DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet();
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet getDefaultInstance() {
+            return DEFAULT_INSTANCE;
+        }
+
+        @java.lang.Deprecated
+        public static final com.google.protobuf.Parser<CapabilitiesGet> PARSER = new com.google.protobuf.AbstractParser<CapabilitiesGet>() {
+            @java.lang.Override
+            public CapabilitiesGet parsePartialFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws com.google.protobuf.InvalidProtocolBufferException {
+                return new CapabilitiesGet(input, extensionRegistry);
+            }
+        };
+
+        public static com.google.protobuf.Parser<CapabilitiesGet> parser() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Parser<CapabilitiesGet> getParserForType() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesGet getDefaultInstanceForType() {
+            return DEFAULT_INSTANCE;
+        }
+
     }
 
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesSet_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.class, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.Builder.class);
+    public interface CapabilitiesSetOrBuilder extends
+            // @@protoc_insertion_point(interface_extends:Mysqlx.Connection.CapabilitiesSet)
+            com.google.protobuf.MessageOrBuilder {
+
+        /**
+         * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+         */
+        boolean hasCapabilities();
+
+        /**
+         * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+         */
+        com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getCapabilities();
+
+        /**
+         * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+         */
+        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder getCapabilitiesOrBuilder();
     }
 
-    private int bitField0_;
-    public static final int CAPABILITIES_FIELD_NUMBER = 1;
-    private com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities capabilities_;
-    /**
-     * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-     */
-    public boolean hasCapabilities() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-     */
-    public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getCapabilities() {
-      return capabilities_ == null ? com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance() : capabilities_;
-    }
-    /**
-     * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-     */
-    public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder getCapabilitiesOrBuilder() {
-      return capabilities_ == null ? com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance() : capabilities_;
-    }
-
-    private byte memoizedIsInitialized = -1;
-    @java.lang.Override
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasCapabilities()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!getCapabilities().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    @java.lang.Override
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeMessage(1, getCapabilities());
-      }
-      unknownFields.writeTo(output);
-    }
-
-    @java.lang.Override
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, getCapabilities());
-      }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
-      return size;
-    }
-
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet)) {
-        return super.equals(obj);
-      }
-      com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet other = (com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet) obj;
-
-      boolean result = true;
-      result = result && (hasCapabilities() == other.hasCapabilities());
-      if (hasCapabilities()) {
-        result = result && getCapabilities()
-            .equals(other.getCapabilities());
-      }
-      result = result && unknownFields.equals(other.unknownFields);
-      return result;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
-      if (hasCapabilities()) {
-        hash = (37 * hash) + CAPABILITIES_FIELD_NUMBER;
-        hash = (53 * hash) + getCapabilities().hashCode();
-      }
-      hash = (29 * hash) + unknownFields.hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    @java.lang.Override
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    @java.lang.Override
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
     /**
      * <pre>
      * sets connection capabilities atomically
@@ -2391,567 +2056,615 @@ public final class MysqlxConnection {
      *
      * Protobuf type {@code Mysqlx.Connection.CapabilitiesSet}
      */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Connection.CapabilitiesSet)
-        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSetOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor;
-      }
+    public static final class CapabilitiesSet extends com.google.protobuf.GeneratedMessageV3 implements
+            // @@protoc_insertion_point(message_implements:Mysqlx.Connection.CapabilitiesSet)
+            CapabilitiesSetOrBuilder {
+        private static final long serialVersionUID = 0L;
 
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesSet_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.class, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
-          getCapabilitiesFieldBuilder();
+        // Use CapabilitiesSet.newBuilder() to construct.
+        private CapabilitiesSet(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+            super(builder);
         }
-      }
-      @java.lang.Override
-      public Builder clear() {
-        super.clear();
-        if (capabilitiesBuilder_ == null) {
-          capabilities_ = null;
-        } else {
-          capabilitiesBuilder_.clear();
+
+        private CapabilitiesSet() {
         }
-        bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
 
-      @java.lang.Override
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor;
-      }
-
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet getDefaultInstanceForType() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.getDefaultInstance();
-      }
-
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet build() {
-        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
+        @java.lang.Override
+        public final com.google.protobuf.UnknownFieldSet getUnknownFields() {
+            return this.unknownFields;
         }
-        return result;
-      }
 
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet buildPartial() {
-        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet result = new com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        if (capabilitiesBuilder_ == null) {
-          result.capabilities_ = capabilities_;
-        } else {
-          result.capabilities_ = capabilitiesBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      @java.lang.Override
-      public Builder clone() {
-        return (Builder) super.clone();
-      }
-      @java.lang.Override
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return (Builder) super.setField(field, value);
-      }
-      @java.lang.Override
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
-      }
-      @java.lang.Override
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
-      }
-      @java.lang.Override
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
-      }
-      @java.lang.Override
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return (Builder) super.addRepeatedField(field, value);
-      }
-      @java.lang.Override
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet) {
-          return mergeFrom((com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet other) {
-        if (other == com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.getDefaultInstance()) return this;
-        if (other.hasCapabilities()) {
-          mergeCapabilities(other.getCapabilities());
-        }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
-        return this;
-      }
-
-      @java.lang.Override
-      public final boolean isInitialized() {
-        if (!hasCapabilities()) {
-          return false;
-        }
-        if (!getCapabilities().isInitialized()) {
-          return false;
-        }
-        return true;
-      }
-
-      @java.lang.Override
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet) e.getUnfinishedMessage();
-          throw e.unwrapIOException();
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities capabilities_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities, com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder> capabilitiesBuilder_;
-      /**
-       * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-       */
-      public boolean hasCapabilities() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-       */
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getCapabilities() {
-        if (capabilitiesBuilder_ == null) {
-          return capabilities_ == null ? com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance() : capabilities_;
-        } else {
-          return capabilitiesBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-       */
-      public Builder setCapabilities(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities value) {
-        if (capabilitiesBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          capabilities_ = value;
-          onChanged();
-        } else {
-          capabilitiesBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-       */
-      public Builder setCapabilities(
-          com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder builderForValue) {
-        if (capabilitiesBuilder_ == null) {
-          capabilities_ = builderForValue.build();
-          onChanged();
-        } else {
-          capabilitiesBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-       */
-      public Builder mergeCapabilities(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities value) {
-        if (capabilitiesBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              capabilities_ != null &&
-              capabilities_ != com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance()) {
-            capabilities_ =
-              com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.newBuilder(capabilities_).mergeFrom(value).buildPartial();
-          } else {
-            capabilities_ = value;
-          }
-          onChanged();
-        } else {
-          capabilitiesBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-       */
-      public Builder clearCapabilities() {
-        if (capabilitiesBuilder_ == null) {
-          capabilities_ = null;
-          onChanged();
-        } else {
-          capabilitiesBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
-      /**
-       * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-       */
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder getCapabilitiesBuilder() {
-        bitField0_ |= 0x00000001;
-        onChanged();
-        return getCapabilitiesFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-       */
-      public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder getCapabilitiesOrBuilder() {
-        if (capabilitiesBuilder_ != null) {
-          return capabilitiesBuilder_.getMessageOrBuilder();
-        } else {
-          return capabilities_ == null ?
-              com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance() : capabilities_;
-        }
-      }
-      /**
-       * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities, com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder> 
-          getCapabilitiesFieldBuilder() {
-        if (capabilitiesBuilder_ == null) {
-          capabilitiesBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities, com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder>(
-                  getCapabilities(),
-                  getParentForChildren(),
-                  isClean());
-          capabilities_ = null;
-        }
-        return capabilitiesBuilder_;
-      }
-      @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
-      }
-
-      @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Connection.CapabilitiesSet)
-    }
-
-    // @@protoc_insertion_point(class_scope:Mysqlx.Connection.CapabilitiesSet)
-    private static final com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet();
-    }
-
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<CapabilitiesSet>
-        PARSER = new com.google.protobuf.AbstractParser<CapabilitiesSet>() {
-      @java.lang.Override
-      public CapabilitiesSet parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new CapabilitiesSet(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<CapabilitiesSet> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<CapabilitiesSet> getParserForType() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  public interface CloseOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:Mysqlx.Connection.Close)
-      com.google.protobuf.MessageOrBuilder {
-  }
-  /**
-   * <pre>
-   * announce to the server that the client wants to close the connection
-   * it discards any session state of the server
-   * :Returns: :protobuf:msg:`Mysqlx::Ok`
-   * </pre>
-   *
-   * Protobuf type {@code Mysqlx.Connection.Close}
-   */
-  public  static final class Close extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:Mysqlx.Connection.Close)
-      CloseOrBuilder {
-  private static final long serialVersionUID = 0L;
-    // Use Close.newBuilder() to construct.
-    private Close(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private Close() {
-    }
-
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return this.unknownFields;
-    }
-    private Close(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
+        private CapabilitiesSet(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            this();
+            if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
             }
-          }
+            int mutable_bitField0_ = 0;
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields = com.google.protobuf.UnknownFieldSet.newBuilder();
+            try {
+                boolean done = false;
+                while (!done) {
+                    int tag = input.readTag();
+                    switch (tag) {
+                        case 0:
+                            done = true;
+                            break;
+                        case 10: {
+                            com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder subBuilder = null;
+                            if (((this.bitField0_ & 0x00000001) == 0x00000001)) {
+                                subBuilder = this.capabilities_.toBuilder();
+                            }
+                            this.capabilities_ = input.readMessage(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.PARSER, extensionRegistry);
+                            if (subBuilder != null) {
+                                subBuilder.mergeFrom(this.capabilities_);
+                                this.capabilities_ = subBuilder.buildPartial();
+                            }
+                            this.bitField0_ |= 0x00000001;
+                            break;
+                        }
+                        default: {
+                            if (!parseUnknownField(input, unknownFields, extensionRegistry, tag)) {
+                                done = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                throw e.setUnfinishedMessage(this);
+            } catch (java.io.IOException e) {
+                throw new com.google.protobuf.InvalidProtocolBufferException(e).setUnfinishedMessage(this);
+            } finally {
+                this.unknownFields = unknownFields.build();
+                makeExtensionsImmutable();
+            }
         }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Close_descriptor;
+
+        public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesSet_fieldAccessorTable
+                    .ensureFieldAccessorsInitialized(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.class,
+                            com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.Builder.class);
+        }
+
+        private int bitField0_;
+        public static final int CAPABILITIES_FIELD_NUMBER = 1;
+        private com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities capabilities_;
+
+        /**
+         * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+         */
+        public boolean hasCapabilities() {
+            return ((this.bitField0_ & 0x00000001) == 0x00000001);
+        }
+
+        /**
+         * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+         */
+        public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getCapabilities() {
+            return this.capabilities_ == null ? com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance() : this.capabilities_;
+        }
+
+        /**
+         * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+         */
+        public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder getCapabilitiesOrBuilder() {
+            return this.capabilities_ == null ? com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance() : this.capabilities_;
+        }
+
+        private byte memoizedIsInitialized = -1;
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+            byte isInitialized = this.memoizedIsInitialized;
+            if (isInitialized == 1) {
+                return true;
+            }
+            if (isInitialized == 0) {
+                return false;
+            }
+
+            if (!hasCapabilities()) {
+                this.memoizedIsInitialized = 0;
+                return false;
+            }
+            if (!getCapabilities().isInitialized()) {
+                this.memoizedIsInitialized = 0;
+                return false;
+            }
+            this.memoizedIsInitialized = 1;
+            return true;
+        }
+
+        @java.lang.Override
+        public void writeTo(com.google.protobuf.CodedOutputStream output) throws java.io.IOException {
+            if (((this.bitField0_ & 0x00000001) == 0x00000001)) {
+                output.writeMessage(1, getCapabilities());
+            }
+            this.unknownFields.writeTo(output);
+        }
+
+        @java.lang.Override
+        public int getSerializedSize() {
+            int size = this.memoizedSize;
+            if (size != -1) {
+                return size;
+            }
+
+            size = 0;
+            if (((this.bitField0_ & 0x00000001) == 0x00000001)) {
+                size += com.google.protobuf.CodedOutputStream.computeMessageSize(1, getCapabilities());
+            }
+            size += this.unknownFields.getSerializedSize();
+            this.memoizedSize = size;
+            return size;
+        }
+
+        @java.lang.Override
+        public boolean equals(final java.lang.Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet)) {
+                return super.equals(obj);
+            }
+            com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet other = (com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet) obj;
+
+            boolean result = true;
+            result = result && (hasCapabilities() == other.hasCapabilities());
+            if (hasCapabilities()) {
+                result = result && getCapabilities().equals(other.getCapabilities());
+            }
+            result = result && this.unknownFields.equals(other.unknownFields);
+            return result;
+        }
+
+        @java.lang.Override
+        public int hashCode() {
+            if (this.memoizedHashCode != 0) {
+                return this.memoizedHashCode;
+            }
+            int hash = 41;
+            hash = (19 * hash) + getDescriptor().hashCode();
+            if (hasCapabilities()) {
+                hash = (37 * hash) + CAPABILITIES_FIELD_NUMBER;
+                hash = (53 * hash) + getCapabilities().hashCode();
+            }
+            hash = (29 * hash) + this.unknownFields.hashCode();
+            this.memoizedHashCode = hash;
+            return hash;
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(java.nio.ByteBuffer data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(java.nio.ByteBuffer data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(byte[] data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(byte[] data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseDelimitedFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseDelimitedFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(com.google.protobuf.CodedInputStream input)
+                throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parseFrom(com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        @java.lang.Override
+        public Builder newBuilderForType() {
+            return newBuilder();
+        }
+
+        public static Builder newBuilder() {
+            return DEFAULT_INSTANCE.toBuilder();
+        }
+
+        public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet prototype) {
+            return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        }
+
+        @java.lang.Override
+        public Builder toBuilder() {
+            return this == DEFAULT_INSTANCE ? new Builder() : new Builder().mergeFrom(this);
+        }
+
+        @java.lang.Override
+        protected Builder newBuilderForType(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+            Builder builder = new Builder(parent);
+            return builder;
+        }
+
+        /**
+         * <pre>
+         * sets connection capabilities atomically
+         * only provided values are changed, other values are left unchanged.
+         * If any of the changes fails, all changes are discarded.
+         * :precond: active sessions == 0
+         * :returns: :protobuf:msg:`Mysqlx::Ok` or :protobuf:msg:`Mysqlx::Error`
+         * </pre>
+         *
+         * Protobuf type {@code Mysqlx.Connection.CapabilitiesSet}
+         */
+        public static final class Builder extends com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+                // @@protoc_insertion_point(builder_implements:Mysqlx.Connection.CapabilitiesSet)
+                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSetOrBuilder {
+            public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor;
+            }
+
+            @java.lang.Override
+            protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesSet_fieldAccessorTable
+                        .ensureFieldAccessorsInitialized(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.class,
+                                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.Builder.class);
+            }
+
+            // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.newBuilder()
+            private Builder() {
+                maybeForceBuilderInitialization();
+            }
+
+            private Builder(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+                super(parent);
+                maybeForceBuilderInitialization();
+            }
+
+            private void maybeForceBuilderInitialization() {
+                if (com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders) {
+                    getCapabilitiesFieldBuilder();
+                }
+            }
+
+            @java.lang.Override
+            public Builder clear() {
+                super.clear();
+                if (this.capabilitiesBuilder_ == null) {
+                    this.capabilities_ = null;
+                } else {
+                    this.capabilitiesBuilder_.clear();
+                }
+                this.bitField0_ = (this.bitField0_ & ~0x00000001);
+                return this;
+            }
+
+            @java.lang.Override
+            public com.google.protobuf.Descriptors.Descriptor getDescriptorForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet getDefaultInstanceForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.getDefaultInstance();
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet build() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet result = buildPartial();
+                if (!result.isInitialized()) {
+                    throw newUninitializedMessageException(result);
+                }
+                return result;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet buildPartial() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet result = new com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet(this);
+                int from_bitField0_ = this.bitField0_;
+                int to_bitField0_ = 0;
+                if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+                    to_bitField0_ |= 0x00000001;
+                }
+                if (this.capabilitiesBuilder_ == null) {
+                    result.capabilities_ = this.capabilities_;
+                } else {
+                    result.capabilities_ = this.capabilitiesBuilder_.build();
+                }
+                result.bitField0_ = to_bitField0_;
+                onBuilt();
+                return result;
+            }
+
+            @java.lang.Override
+            public Builder clone() {
+                return super.clone();
+            }
+
+            @java.lang.Override
+            public Builder setField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.setField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder clearField(com.google.protobuf.Descriptors.FieldDescriptor field) {
+                return super.clearField(field);
+            }
+
+            @java.lang.Override
+            public Builder clearOneof(com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+                return super.clearOneof(oneof);
+            }
+
+            @java.lang.Override
+            public Builder setRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, int index, java.lang.Object value) {
+                return super.setRepeatedField(field, index, value);
+            }
+
+            @java.lang.Override
+            public Builder addRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.addRepeatedField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.Message other) {
+                if (other instanceof com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet) {
+                    return mergeFrom((com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet) other);
+                } else {
+                    super.mergeFrom(other);
+                    return this;
+                }
+            }
+
+            public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet other) {
+                if (other == com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet.getDefaultInstance()) {
+                    return this;
+                }
+                if (other.hasCapabilities()) {
+                    mergeCapabilities(other.getCapabilities());
+                }
+                this.mergeUnknownFields(other.unknownFields);
+                onChanged();
+                return this;
+            }
+
+            @java.lang.Override
+            public final boolean isInitialized() {
+                if (!hasCapabilities()) {
+                    return false;
+                }
+                if (!getCapabilities().isInitialized()) {
+                    return false;
+                }
+                return true;
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws java.io.IOException {
+                com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet parsedMessage = null;
+                try {
+                    parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                    parsedMessage = (com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet) e.getUnfinishedMessage();
+                    throw e.unwrapIOException();
+                } finally {
+                    if (parsedMessage != null) {
+                        mergeFrom(parsedMessage);
+                    }
+                }
+                return this;
+            }
+
+            private int bitField0_;
+
+            private com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities capabilities_ = null;
+            private com.google.protobuf.SingleFieldBuilderV3<com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities, com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder> capabilitiesBuilder_;
+
+            /**
+             * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+             */
+            public boolean hasCapabilities() {
+                return ((this.bitField0_ & 0x00000001) == 0x00000001);
+            }
+
+            /**
+             * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+             */
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities getCapabilities() {
+                if (this.capabilitiesBuilder_ == null) {
+                    return this.capabilities_ == null ? com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance() : this.capabilities_;
+                } else {
+                    return this.capabilitiesBuilder_.getMessage();
+                }
+            }
+
+            /**
+             * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+             */
+            public Builder setCapabilities(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities value) {
+                if (this.capabilitiesBuilder_ == null) {
+                    if (value == null) {
+                        throw new NullPointerException();
+                    }
+                    this.capabilities_ = value;
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.setMessage(value);
+                }
+                this.bitField0_ |= 0x00000001;
+                return this;
+            }
+
+            /**
+             * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+             */
+            public Builder setCapabilities(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder builderForValue) {
+                if (this.capabilitiesBuilder_ == null) {
+                    this.capabilities_ = builderForValue.build();
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.setMessage(builderForValue.build());
+                }
+                this.bitField0_ |= 0x00000001;
+                return this;
+            }
+
+            /**
+             * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+             */
+            public Builder mergeCapabilities(com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities value) {
+                if (this.capabilitiesBuilder_ == null) {
+                    if (((this.bitField0_ & 0x00000001) == 0x00000001) && this.capabilities_ != null
+                            && this.capabilities_ != com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance()) {
+                        this.capabilities_ = com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.newBuilder(this.capabilities_).mergeFrom(value)
+                                .buildPartial();
+                    } else {
+                        this.capabilities_ = value;
+                    }
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.mergeFrom(value);
+                }
+                this.bitField0_ |= 0x00000001;
+                return this;
+            }
+
+            /**
+             * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+             */
+            public Builder clearCapabilities() {
+                if (this.capabilitiesBuilder_ == null) {
+                    this.capabilities_ = null;
+                    onChanged();
+                } else {
+                    this.capabilitiesBuilder_.clear();
+                }
+                this.bitField0_ = (this.bitField0_ & ~0x00000001);
+                return this;
+            }
+
+            /**
+             * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+             */
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder getCapabilitiesBuilder() {
+                this.bitField0_ |= 0x00000001;
+                onChanged();
+                return getCapabilitiesFieldBuilder().getBuilder();
+            }
+
+            /**
+             * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+             */
+            public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder getCapabilitiesOrBuilder() {
+                if (this.capabilitiesBuilder_ != null) {
+                    return this.capabilitiesBuilder_.getMessageOrBuilder();
+                } else {
+                    return this.capabilities_ == null ? com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.getDefaultInstance() : this.capabilities_;
+                }
+            }
+
+            /**
+             * <code>required .Mysqlx.Connection.Capabilities capabilities = 1;</code>
+             */
+            private com.google.protobuf.SingleFieldBuilderV3<com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities, com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities.Builder, com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesOrBuilder> getCapabilitiesFieldBuilder() {
+                if (this.capabilitiesBuilder_ == null) {
+                    this.capabilitiesBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<>(
+                            getCapabilities(), getParentForChildren(), isClean());
+                    this.capabilities_ = null;
+                }
+                return this.capabilitiesBuilder_;
+            }
+
+            @java.lang.Override
+            public final Builder setUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.setUnknownFields(unknownFields);
+            }
+
+            @java.lang.Override
+            public final Builder mergeUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.mergeUnknownFields(unknownFields);
+            }
+
+            // @@protoc_insertion_point(builder_scope:Mysqlx.Connection.CapabilitiesSet)
+        }
+
+        // @@protoc_insertion_point(class_scope:Mysqlx.Connection.CapabilitiesSet)
+        private static final com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet DEFAULT_INSTANCE;
+        static {
+            DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet();
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet getDefaultInstance() {
+            return DEFAULT_INSTANCE;
+        }
+
+        @java.lang.Deprecated
+        public static final com.google.protobuf.Parser<CapabilitiesSet> PARSER = new com.google.protobuf.AbstractParser<CapabilitiesSet>() {
+            @java.lang.Override
+            public CapabilitiesSet parsePartialFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws com.google.protobuf.InvalidProtocolBufferException {
+                return new CapabilitiesSet(input, extensionRegistry);
+            }
+        };
+
+        public static com.google.protobuf.Parser<CapabilitiesSet> parser() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Parser<CapabilitiesSet> getParserForType() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.mysql.cj.x.protobuf.MysqlxConnection.CapabilitiesSet getDefaultInstanceForType() {
+            return DEFAULT_INSTANCE;
+        }
+
     }
 
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Close_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.mysql.cj.x.protobuf.MysqlxConnection.Close.class, com.mysql.cj.x.protobuf.MysqlxConnection.Close.Builder.class);
+    public interface CloseOrBuilder extends
+            // @@protoc_insertion_point(interface_extends:Mysqlx.Connection.Close)
+            com.google.protobuf.MessageOrBuilder {
     }
 
-    private byte memoizedIsInitialized = -1;
-    @java.lang.Override
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    @java.lang.Override
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      unknownFields.writeTo(output);
-    }
-
-    @java.lang.Override
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
-      return size;
-    }
-
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Close)) {
-        return super.equals(obj);
-      }
-      com.mysql.cj.x.protobuf.MysqlxConnection.Close other = (com.mysql.cj.x.protobuf.MysqlxConnection.Close) obj;
-
-      boolean result = true;
-      result = result && unknownFields.equals(other.unknownFields);
-      return result;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (29 * hash) + unknownFields.hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    @java.lang.Override
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.Close prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    @java.lang.Override
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
     /**
      * <pre>
      * announce to the server that the client wants to close the connection
@@ -2961,294 +2674,1263 @@ public final class MysqlxConnection {
      *
      * Protobuf type {@code Mysqlx.Connection.Close}
      */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:Mysqlx.Connection.Close)
-        com.mysql.cj.x.protobuf.MysqlxConnection.CloseOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Close_descriptor;
-      }
+    public static final class Close extends com.google.protobuf.GeneratedMessageV3 implements
+            // @@protoc_insertion_point(message_implements:Mysqlx.Connection.Close)
+            CloseOrBuilder {
+        private static final long serialVersionUID = 0L;
 
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Close_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.mysql.cj.x.protobuf.MysqlxConnection.Close.class, com.mysql.cj.x.protobuf.MysqlxConnection.Close.Builder.class);
-      }
-
-      // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.Close.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
+        // Use Close.newBuilder() to construct.
+        private Close(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+            super(builder);
         }
-      }
-      @java.lang.Override
-      public Builder clear() {
-        super.clear();
-        return this;
-      }
 
-      @java.lang.Override
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Close_descriptor;
-      }
-
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Close getDefaultInstanceForType() {
-        return com.mysql.cj.x.protobuf.MysqlxConnection.Close.getDefaultInstance();
-      }
-
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Close build() {
-        com.mysql.cj.x.protobuf.MysqlxConnection.Close result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
+        private Close() {
         }
-        return result;
-      }
 
-      @java.lang.Override
-      public com.mysql.cj.x.protobuf.MysqlxConnection.Close buildPartial() {
-        com.mysql.cj.x.protobuf.MysqlxConnection.Close result = new com.mysql.cj.x.protobuf.MysqlxConnection.Close(this);
-        onBuilt();
-        return result;
-      }
-
-      @java.lang.Override
-      public Builder clone() {
-        return (Builder) super.clone();
-      }
-      @java.lang.Override
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return (Builder) super.setField(field, value);
-      }
-      @java.lang.Override
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
-      }
-      @java.lang.Override
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
-      }
-      @java.lang.Override
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
-      }
-      @java.lang.Override
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return (Builder) super.addRepeatedField(field, value);
-      }
-      @java.lang.Override
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Close) {
-          return mergeFrom((com.mysql.cj.x.protobuf.MysqlxConnection.Close)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
+        @java.lang.Override
+        public final com.google.protobuf.UnknownFieldSet getUnknownFields() {
+            return this.unknownFields;
         }
-      }
 
-      public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxConnection.Close other) {
-        if (other == com.mysql.cj.x.protobuf.MysqlxConnection.Close.getDefaultInstance()) return this;
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
-        return this;
-      }
-
-      @java.lang.Override
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      @java.lang.Override
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.mysql.cj.x.protobuf.MysqlxConnection.Close parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.mysql.cj.x.protobuf.MysqlxConnection.Close) e.getUnfinishedMessage();
-          throw e.unwrapIOException();
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
+        private Close(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            this();
+            if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+            }
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields = com.google.protobuf.UnknownFieldSet.newBuilder();
+            try {
+                boolean done = false;
+                while (!done) {
+                    int tag = input.readTag();
+                    switch (tag) {
+                        case 0:
+                            done = true;
+                            break;
+                        default: {
+                            if (!parseUnknownField(input, unknownFields, extensionRegistry, tag)) {
+                                done = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                throw e.setUnfinishedMessage(this);
+            } catch (java.io.IOException e) {
+                throw new com.google.protobuf.InvalidProtocolBufferException(e).setUnfinishedMessage(this);
+            } finally {
+                this.unknownFields = unknownFields.build();
+                makeExtensionsImmutable();
+            }
         }
-        return this;
-      }
-      @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
-      }
 
-      @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
-      }
+        public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Close_descriptor;
+        }
 
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Close_fieldAccessorTable.ensureFieldAccessorsInitialized(
+                    com.mysql.cj.x.protobuf.MysqlxConnection.Close.class, com.mysql.cj.x.protobuf.MysqlxConnection.Close.Builder.class);
+        }
 
-      // @@protoc_insertion_point(builder_scope:Mysqlx.Connection.Close)
-    }
+        private byte memoizedIsInitialized = -1;
 
-    // @@protoc_insertion_point(class_scope:Mysqlx.Connection.Close)
-    private static final com.mysql.cj.x.protobuf.MysqlxConnection.Close DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxConnection.Close();
-    }
+        @java.lang.Override
+        public final boolean isInitialized() {
+            byte isInitialized = this.memoizedIsInitialized;
+            if (isInitialized == 1) {
+                return true;
+            }
+            if (isInitialized == 0) {
+                return false;
+            }
 
-    public static com.mysql.cj.x.protobuf.MysqlxConnection.Close getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
+            this.memoizedIsInitialized = 1;
+            return true;
+        }
 
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<Close>
-        PARSER = new com.google.protobuf.AbstractParser<Close>() {
-      @java.lang.Override
-      public Close parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new Close(input, extensionRegistry);
-      }
-    };
+        @java.lang.Override
+        public void writeTo(com.google.protobuf.CodedOutputStream output) throws java.io.IOException {
+            this.unknownFields.writeTo(output);
+        }
 
-    public static com.google.protobuf.Parser<Close> parser() {
-      return PARSER;
-    }
+        @java.lang.Override
+        public int getSerializedSize() {
+            int size = this.memoizedSize;
+            if (size != -1) {
+                return size;
+            }
 
-    @java.lang.Override
-    public com.google.protobuf.Parser<Close> getParserForType() {
-      return PARSER;
-    }
+            size = 0;
+            size += this.unknownFields.getSerializedSize();
+            this.memoizedSize = size;
+            return size;
+        }
 
-    @java.lang.Override
-    public com.mysql.cj.x.protobuf.MysqlxConnection.Close getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
+        @java.lang.Override
+        public boolean equals(final java.lang.Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Close)) {
+                return super.equals(obj);
+            }
+            com.mysql.cj.x.protobuf.MysqlxConnection.Close other = (com.mysql.cj.x.protobuf.MysqlxConnection.Close) obj;
 
-  }
+            boolean result = true;
+            result = result && this.unknownFields.equals(other.unknownFields);
+            return result;
+        }
 
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Connection_Capability_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_Mysqlx_Connection_Capability_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Connection_Capabilities_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_Mysqlx_Connection_Capabilities_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_Mysqlx_Connection_CapabilitiesGet_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_Mysqlx_Connection_CapabilitiesSet_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_Mysqlx_Connection_Close_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_Mysqlx_Connection_Close_fieldAccessorTable;
+        @java.lang.Override
+        public int hashCode() {
+            if (this.memoizedHashCode != 0) {
+                return this.memoizedHashCode;
+            }
+            int hash = 41;
+            hash = (19 * hash) + getDescriptor().hashCode();
+            hash = (29 * hash) + this.unknownFields.hashCode();
+            this.memoizedHashCode = hash;
+            return hash;
+        }
 
-  public static com.google.protobuf.Descriptors.FileDescriptor
-      getDescriptor() {
-    return descriptor;
-  }
-  private static  com.google.protobuf.Descriptors.FileDescriptor
-      descriptor;
-  static {
-    java.lang.String[] descriptorData = {
-      "\n\027mysqlx_connection.proto\022\021Mysqlx.Connec" +
-      "tion\032\026mysqlx_datatypes.proto\032\014mysqlx.pro" +
-      "to\"@\n\nCapability\022\014\n\004name\030\001 \002(\t\022$\n\005value\030" +
-      "\002 \002(\0132\025.Mysqlx.Datatypes.Any\"I\n\014Capabili" +
-      "ties\0223\n\014capabilities\030\001 \003(\0132\035.Mysqlx.Conn" +
-      "ection.Capability:\004\220\3520\002\"\027\n\017CapabilitiesG" +
-      "et:\004\210\3520\001\"N\n\017CapabilitiesSet\0225\n\014capabilit" +
-      "ies\030\001 \002(\0132\037.Mysqlx.Connection.Capabiliti" +
-      "es:\004\210\3520\002\"\r\n\005Close:\004\210\3520\003B\031\n\027com.mysql.cj." +
-      "x.protobuf"
-    };
-    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
-          public com.google.protobuf.ExtensionRegistry assignDescriptors(
-              com.google.protobuf.Descriptors.FileDescriptor root) {
-            descriptor = root;
-            return null;
-          }
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(java.nio.ByteBuffer data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(java.nio.ByteBuffer data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(byte[] data) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(byte[] data, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseDelimitedFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseDelimitedFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(com.google.protobuf.CodedInputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close parseFrom(com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        @java.lang.Override
+        public Builder newBuilderForType() {
+            return newBuilder();
+        }
+
+        public static Builder newBuilder() {
+            return DEFAULT_INSTANCE.toBuilder();
+        }
+
+        public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.Close prototype) {
+            return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        }
+
+        @java.lang.Override
+        public Builder toBuilder() {
+            return this == DEFAULT_INSTANCE ? new Builder() : new Builder().mergeFrom(this);
+        }
+
+        @java.lang.Override
+        protected Builder newBuilderForType(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+            Builder builder = new Builder(parent);
+            return builder;
+        }
+
+        /**
+         * <pre>
+         * announce to the server that the client wants to close the connection
+         * it discards any session state of the server
+         * :Returns: :protobuf:msg:`Mysqlx::Ok`
+         * </pre>
+         *
+         * Protobuf type {@code Mysqlx.Connection.Close}
+         */
+        public static final class Builder extends com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+                // @@protoc_insertion_point(builder_implements:Mysqlx.Connection.Close)
+                com.mysql.cj.x.protobuf.MysqlxConnection.CloseOrBuilder {
+            public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Close_descriptor;
+            }
+
+            @java.lang.Override
+            protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Close_fieldAccessorTable.ensureFieldAccessorsInitialized(
+                        com.mysql.cj.x.protobuf.MysqlxConnection.Close.class, com.mysql.cj.x.protobuf.MysqlxConnection.Close.Builder.class);
+            }
+
+            // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.Close.newBuilder()
+            private Builder() {
+                maybeForceBuilderInitialization();
+            }
+
+            private Builder(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+                super(parent);
+                maybeForceBuilderInitialization();
+            }
+
+            private void maybeForceBuilderInitialization() {
+                if (com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders) {
+                }
+            }
+
+            @java.lang.Override
+            public Builder clear() {
+                super.clear();
+                return this;
+            }
+
+            @java.lang.Override
+            public com.google.protobuf.Descriptors.Descriptor getDescriptorForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Close_descriptor;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Close getDefaultInstanceForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.Close.getDefaultInstance();
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Close build() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Close result = buildPartial();
+                if (!result.isInitialized()) {
+                    throw newUninitializedMessageException(result);
+                }
+                return result;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Close buildPartial() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Close result = new com.mysql.cj.x.protobuf.MysqlxConnection.Close(this);
+                onBuilt();
+                return result;
+            }
+
+            @java.lang.Override
+            public Builder clone() {
+                return super.clone();
+            }
+
+            @java.lang.Override
+            public Builder setField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.setField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder clearField(com.google.protobuf.Descriptors.FieldDescriptor field) {
+                return super.clearField(field);
+            }
+
+            @java.lang.Override
+            public Builder clearOneof(com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+                return super.clearOneof(oneof);
+            }
+
+            @java.lang.Override
+            public Builder setRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, int index, java.lang.Object value) {
+                return super.setRepeatedField(field, index, value);
+            }
+
+            @java.lang.Override
+            public Builder addRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.addRepeatedField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.Message other) {
+                if (other instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Close) {
+                    return mergeFrom((com.mysql.cj.x.protobuf.MysqlxConnection.Close) other);
+                } else {
+                    super.mergeFrom(other);
+                    return this;
+                }
+            }
+
+            public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxConnection.Close other) {
+                if (other == com.mysql.cj.x.protobuf.MysqlxConnection.Close.getDefaultInstance()) {
+                    return this;
+                }
+                this.mergeUnknownFields(other.unknownFields);
+                onChanged();
+                return this;
+            }
+
+            @java.lang.Override
+            public final boolean isInitialized() {
+                return true;
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws java.io.IOException {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Close parsedMessage = null;
+                try {
+                    parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                    parsedMessage = (com.mysql.cj.x.protobuf.MysqlxConnection.Close) e.getUnfinishedMessage();
+                    throw e.unwrapIOException();
+                } finally {
+                    if (parsedMessage != null) {
+                        mergeFrom(parsedMessage);
+                    }
+                }
+                return this;
+            }
+
+            @java.lang.Override
+            public final Builder setUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.setUnknownFields(unknownFields);
+            }
+
+            @java.lang.Override
+            public final Builder mergeUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.mergeUnknownFields(unknownFields);
+            }
+
+            // @@protoc_insertion_point(builder_scope:Mysqlx.Connection.Close)
+        }
+
+        // @@protoc_insertion_point(class_scope:Mysqlx.Connection.Close)
+        private static final com.mysql.cj.x.protobuf.MysqlxConnection.Close DEFAULT_INSTANCE;
+        static {
+            DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxConnection.Close();
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Close getDefaultInstance() {
+            return DEFAULT_INSTANCE;
+        }
+
+        @java.lang.Deprecated
+        public static final com.google.protobuf.Parser<Close> PARSER = new com.google.protobuf.AbstractParser<Close>() {
+            @java.lang.Override
+            public Close parsePartialFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws com.google.protobuf.InvalidProtocolBufferException {
+                return new Close(input, extensionRegistry);
+            }
         };
-    com.google.protobuf.Descriptors.FileDescriptor
-      .internalBuildGeneratedFileFrom(descriptorData,
-        new com.google.protobuf.Descriptors.FileDescriptor[] {
-          com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor(),
-          com.mysql.cj.x.protobuf.Mysqlx.getDescriptor(),
-        }, assigner);
-    internal_static_Mysqlx_Connection_Capability_descriptor =
-      getDescriptor().getMessageTypes().get(0);
-    internal_static_Mysqlx_Connection_Capability_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_Mysqlx_Connection_Capability_descriptor,
-        new java.lang.String[] { "Name", "Value", });
-    internal_static_Mysqlx_Connection_Capabilities_descriptor =
-      getDescriptor().getMessageTypes().get(1);
-    internal_static_Mysqlx_Connection_Capabilities_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_Mysqlx_Connection_Capabilities_descriptor,
-        new java.lang.String[] { "Capabilities", });
-    internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor =
-      getDescriptor().getMessageTypes().get(2);
-    internal_static_Mysqlx_Connection_CapabilitiesGet_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor,
-        new java.lang.String[] { });
-    internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor =
-      getDescriptor().getMessageTypes().get(3);
-    internal_static_Mysqlx_Connection_CapabilitiesSet_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor,
-        new java.lang.String[] { "Capabilities", });
-    internal_static_Mysqlx_Connection_Close_descriptor =
-      getDescriptor().getMessageTypes().get(4);
-    internal_static_Mysqlx_Connection_Close_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_Mysqlx_Connection_Close_descriptor,
-        new java.lang.String[] { });
-    com.google.protobuf.ExtensionRegistry registry =
-        com.google.protobuf.ExtensionRegistry.newInstance();
-    registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
-    registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
-    com.google.protobuf.Descriptors.FileDescriptor
-        .internalUpdateFileDescriptor(descriptor, registry);
-    com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor();
-    com.mysql.cj.x.protobuf.Mysqlx.getDescriptor();
-  }
 
-  // @@protoc_insertion_point(outer_class_scope)
+        public static com.google.protobuf.Parser<Close> parser() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Parser<Close> getParserForType() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.mysql.cj.x.protobuf.MysqlxConnection.Close getDefaultInstanceForType() {
+            return DEFAULT_INSTANCE;
+        }
+
+    }
+
+    public interface CompressionOrBuilder extends
+            // @@protoc_insertion_point(interface_extends:Mysqlx.Connection.Compression)
+            com.google.protobuf.MessageOrBuilder {
+
+        /**
+         * <code>optional uint64 uncompressed_size = 1;</code>
+         */
+        boolean hasUncompressedSize();
+
+        /**
+         * <code>optional uint64 uncompressed_size = 1;</code>
+         */
+        long getUncompressedSize();
+
+        /**
+         * <code>optional .Mysqlx.ServerMessages.Type server_messages = 2;</code>
+         */
+        boolean hasServerMessages();
+
+        /**
+         * <code>optional .Mysqlx.ServerMessages.Type server_messages = 2;</code>
+         */
+        com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type getServerMessages();
+
+        /**
+         * <code>optional .Mysqlx.ClientMessages.Type client_messages = 3;</code>
+         */
+        boolean hasClientMessages();
+
+        /**
+         * <code>optional .Mysqlx.ClientMessages.Type client_messages = 3;</code>
+         */
+        com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type getClientMessages();
+
+        /**
+         * <code>required bytes payload = 4;</code>
+         */
+        boolean hasPayload();
+
+        /**
+         * <code>required bytes payload = 4;</code>
+         */
+        com.google.protobuf.ByteString getPayload();
+    }
+
+    /**
+     * Protobuf type {@code Mysqlx.Connection.Compression}
+     */
+    public static final class Compression extends com.google.protobuf.GeneratedMessageV3 implements
+            // @@protoc_insertion_point(message_implements:Mysqlx.Connection.Compression)
+            CompressionOrBuilder {
+        private static final long serialVersionUID = 0L;
+
+        // Use Compression.newBuilder() to construct.
+        private Compression(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+            super(builder);
+        }
+
+        private Compression() {
+            this.uncompressedSize_ = 0L;
+            this.serverMessages_ = 0;
+            this.clientMessages_ = 1;
+            this.payload_ = com.google.protobuf.ByteString.EMPTY;
+        }
+
+        @java.lang.Override
+        public final com.google.protobuf.UnknownFieldSet getUnknownFields() {
+            return this.unknownFields;
+        }
+
+        private Compression(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            this();
+            if (extensionRegistry == null) {
+                throw new java.lang.NullPointerException();
+            }
+            int mutable_bitField0_ = 0;
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields = com.google.protobuf.UnknownFieldSet.newBuilder();
+            try {
+                boolean done = false;
+                while (!done) {
+                    int tag = input.readTag();
+                    switch (tag) {
+                        case 0:
+                            done = true;
+                            break;
+                        case 8: {
+                            this.bitField0_ |= 0x00000001;
+                            this.uncompressedSize_ = input.readUInt64();
+                            break;
+                        }
+                        case 16: {
+                            int rawValue = input.readEnum();
+                            @SuppressWarnings("deprecation")
+                            com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type value = com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type.valueOf(rawValue);
+                            if (value == null) {
+                                unknownFields.mergeVarintField(2, rawValue);
+                            } else {
+                                this.bitField0_ |= 0x00000002;
+                                this.serverMessages_ = rawValue;
+                            }
+                            break;
+                        }
+                        case 24: {
+                            int rawValue = input.readEnum();
+                            @SuppressWarnings("deprecation")
+                            com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type value = com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type.valueOf(rawValue);
+                            if (value == null) {
+                                unknownFields.mergeVarintField(3, rawValue);
+                            } else {
+                                this.bitField0_ |= 0x00000004;
+                                this.clientMessages_ = rawValue;
+                            }
+                            break;
+                        }
+                        case 34: {
+                            this.bitField0_ |= 0x00000008;
+                            this.payload_ = input.readBytes();
+                            break;
+                        }
+                        default: {
+                            if (!parseUnknownField(input, unknownFields, extensionRegistry, tag)) {
+                                done = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                throw e.setUnfinishedMessage(this);
+            } catch (java.io.IOException e) {
+                throw new com.google.protobuf.InvalidProtocolBufferException(e).setUnfinishedMessage(this);
+            } finally {
+                this.unknownFields = unknownFields.build();
+                makeExtensionsImmutable();
+            }
+        }
+
+        public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Compression_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+            return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Compression_fieldAccessorTable.ensureFieldAccessorsInitialized(
+                    com.mysql.cj.x.protobuf.MysqlxConnection.Compression.class, com.mysql.cj.x.protobuf.MysqlxConnection.Compression.Builder.class);
+        }
+
+        private int bitField0_;
+        public static final int UNCOMPRESSED_SIZE_FIELD_NUMBER = 1;
+        private long uncompressedSize_;
+
+        /**
+         * <code>optional uint64 uncompressed_size = 1;</code>
+         */
+        public boolean hasUncompressedSize() {
+            return ((this.bitField0_ & 0x00000001) == 0x00000001);
+        }
+
+        /**
+         * <code>optional uint64 uncompressed_size = 1;</code>
+         */
+        public long getUncompressedSize() {
+            return this.uncompressedSize_;
+        }
+
+        public static final int SERVER_MESSAGES_FIELD_NUMBER = 2;
+        private int serverMessages_;
+
+        /**
+         * <code>optional .Mysqlx.ServerMessages.Type server_messages = 2;</code>
+         */
+        public boolean hasServerMessages() {
+            return ((this.bitField0_ & 0x00000002) == 0x00000002);
+        }
+
+        /**
+         * <code>optional .Mysqlx.ServerMessages.Type server_messages = 2;</code>
+         */
+        public com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type getServerMessages() {
+            @SuppressWarnings("deprecation")
+            com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type result = com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type.valueOf(this.serverMessages_);
+            return result == null ? com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type.OK : result;
+        }
+
+        public static final int CLIENT_MESSAGES_FIELD_NUMBER = 3;
+        private int clientMessages_;
+
+        /**
+         * <code>optional .Mysqlx.ClientMessages.Type client_messages = 3;</code>
+         */
+        public boolean hasClientMessages() {
+            return ((this.bitField0_ & 0x00000004) == 0x00000004);
+        }
+
+        /**
+         * <code>optional .Mysqlx.ClientMessages.Type client_messages = 3;</code>
+         */
+        public com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type getClientMessages() {
+            @SuppressWarnings("deprecation")
+            com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type result = com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type.valueOf(this.clientMessages_);
+            return result == null ? com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type.CON_CAPABILITIES_GET : result;
+        }
+
+        public static final int PAYLOAD_FIELD_NUMBER = 4;
+        private com.google.protobuf.ByteString payload_;
+
+        /**
+         * <code>required bytes payload = 4;</code>
+         */
+        public boolean hasPayload() {
+            return ((this.bitField0_ & 0x00000008) == 0x00000008);
+        }
+
+        /**
+         * <code>required bytes payload = 4;</code>
+         */
+        public com.google.protobuf.ByteString getPayload() {
+            return this.payload_;
+        }
+
+        private byte memoizedIsInitialized = -1;
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+            byte isInitialized = this.memoizedIsInitialized;
+            if (isInitialized == 1) {
+                return true;
+            }
+            if (isInitialized == 0) {
+                return false;
+            }
+
+            if (!hasPayload()) {
+                this.memoizedIsInitialized = 0;
+                return false;
+            }
+            this.memoizedIsInitialized = 1;
+            return true;
+        }
+
+        @java.lang.Override
+        public void writeTo(com.google.protobuf.CodedOutputStream output) throws java.io.IOException {
+            if (((this.bitField0_ & 0x00000001) == 0x00000001)) {
+                output.writeUInt64(1, this.uncompressedSize_);
+            }
+            if (((this.bitField0_ & 0x00000002) == 0x00000002)) {
+                output.writeEnum(2, this.serverMessages_);
+            }
+            if (((this.bitField0_ & 0x00000004) == 0x00000004)) {
+                output.writeEnum(3, this.clientMessages_);
+            }
+            if (((this.bitField0_ & 0x00000008) == 0x00000008)) {
+                output.writeBytes(4, this.payload_);
+            }
+            this.unknownFields.writeTo(output);
+        }
+
+        @java.lang.Override
+        public int getSerializedSize() {
+            int size = this.memoizedSize;
+            if (size != -1) {
+                return size;
+            }
+
+            size = 0;
+            if (((this.bitField0_ & 0x00000001) == 0x00000001)) {
+                size += com.google.protobuf.CodedOutputStream.computeUInt64Size(1, this.uncompressedSize_);
+            }
+            if (((this.bitField0_ & 0x00000002) == 0x00000002)) {
+                size += com.google.protobuf.CodedOutputStream.computeEnumSize(2, this.serverMessages_);
+            }
+            if (((this.bitField0_ & 0x00000004) == 0x00000004)) {
+                size += com.google.protobuf.CodedOutputStream.computeEnumSize(3, this.clientMessages_);
+            }
+            if (((this.bitField0_ & 0x00000008) == 0x00000008)) {
+                size += com.google.protobuf.CodedOutputStream.computeBytesSize(4, this.payload_);
+            }
+            size += this.unknownFields.getSerializedSize();
+            this.memoizedSize = size;
+            return size;
+        }
+
+        @java.lang.Override
+        public boolean equals(final java.lang.Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (!(obj instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Compression)) {
+                return super.equals(obj);
+            }
+            com.mysql.cj.x.protobuf.MysqlxConnection.Compression other = (com.mysql.cj.x.protobuf.MysqlxConnection.Compression) obj;
+
+            boolean result = true;
+            result = result && (hasUncompressedSize() == other.hasUncompressedSize());
+            if (hasUncompressedSize()) {
+                result = result && (getUncompressedSize() == other.getUncompressedSize());
+            }
+            result = result && (hasServerMessages() == other.hasServerMessages());
+            if (hasServerMessages()) {
+                result = result && this.serverMessages_ == other.serverMessages_;
+            }
+            result = result && (hasClientMessages() == other.hasClientMessages());
+            if (hasClientMessages()) {
+                result = result && this.clientMessages_ == other.clientMessages_;
+            }
+            result = result && (hasPayload() == other.hasPayload());
+            if (hasPayload()) {
+                result = result && getPayload().equals(other.getPayload());
+            }
+            result = result && this.unknownFields.equals(other.unknownFields);
+            return result;
+        }
+
+        @java.lang.Override
+        public int hashCode() {
+            if (this.memoizedHashCode != 0) {
+                return this.memoizedHashCode;
+            }
+            int hash = 41;
+            hash = (19 * hash) + getDescriptor().hashCode();
+            if (hasUncompressedSize()) {
+                hash = (37 * hash) + UNCOMPRESSED_SIZE_FIELD_NUMBER;
+                hash = (53 * hash) + com.google.protobuf.Internal.hashLong(getUncompressedSize());
+            }
+            if (hasServerMessages()) {
+                hash = (37 * hash) + SERVER_MESSAGES_FIELD_NUMBER;
+                hash = (53 * hash) + this.serverMessages_;
+            }
+            if (hasClientMessages()) {
+                hash = (37 * hash) + CLIENT_MESSAGES_FIELD_NUMBER;
+                hash = (53 * hash) + this.clientMessages_;
+            }
+            if (hasPayload()) {
+                hash = (37 * hash) + PAYLOAD_FIELD_NUMBER;
+                hash = (53 * hash) + getPayload().hashCode();
+            }
+            hash = (29 * hash) + this.unknownFields.hashCode();
+            this.memoizedHashCode = hash;
+            return hash;
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseFrom(java.nio.ByteBuffer data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseFrom(java.nio.ByteBuffer data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseFrom(com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseFrom(com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseFrom(byte[] data) throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseFrom(byte[] data, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
+            return PARSER.parseFrom(data, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseDelimitedFrom(java.io.InputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseDelimitedFrom(java.io.InputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseFrom(com.google.protobuf.CodedInputStream input) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input);
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression parseFrom(com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry) throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageV3.parseWithIOException(PARSER, input, extensionRegistry);
+        }
+
+        @java.lang.Override
+        public Builder newBuilderForType() {
+            return newBuilder();
+        }
+
+        public static Builder newBuilder() {
+            return DEFAULT_INSTANCE.toBuilder();
+        }
+
+        public static Builder newBuilder(com.mysql.cj.x.protobuf.MysqlxConnection.Compression prototype) {
+            return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+        }
+
+        @java.lang.Override
+        public Builder toBuilder() {
+            return this == DEFAULT_INSTANCE ? new Builder() : new Builder().mergeFrom(this);
+        }
+
+        @java.lang.Override
+        protected Builder newBuilderForType(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+            Builder builder = new Builder(parent);
+            return builder;
+        }
+
+        /**
+         * Protobuf type {@code Mysqlx.Connection.Compression}
+         */
+        public static final class Builder extends com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+                // @@protoc_insertion_point(builder_implements:Mysqlx.Connection.Compression)
+                com.mysql.cj.x.protobuf.MysqlxConnection.CompressionOrBuilder {
+            public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Compression_descriptor;
+            }
+
+            @java.lang.Override
+            protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Compression_fieldAccessorTable
+                        .ensureFieldAccessorsInitialized(com.mysql.cj.x.protobuf.MysqlxConnection.Compression.class,
+                                com.mysql.cj.x.protobuf.MysqlxConnection.Compression.Builder.class);
+            }
+
+            // Construct using com.mysql.cj.x.protobuf.MysqlxConnection.Compression.newBuilder()
+            private Builder() {
+                maybeForceBuilderInitialization();
+            }
+
+            private Builder(com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+                super(parent);
+                maybeForceBuilderInitialization();
+            }
+
+            private void maybeForceBuilderInitialization() {
+                if (com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders) {
+                }
+            }
+
+            @java.lang.Override
+            public Builder clear() {
+                super.clear();
+                this.uncompressedSize_ = 0L;
+                this.bitField0_ = (this.bitField0_ & ~0x00000001);
+                this.serverMessages_ = 0;
+                this.bitField0_ = (this.bitField0_ & ~0x00000002);
+                this.clientMessages_ = 1;
+                this.bitField0_ = (this.bitField0_ & ~0x00000004);
+                this.payload_ = com.google.protobuf.ByteString.EMPTY;
+                this.bitField0_ = (this.bitField0_ & ~0x00000008);
+                return this;
+            }
+
+            @java.lang.Override
+            public com.google.protobuf.Descriptors.Descriptor getDescriptorForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.internal_static_Mysqlx_Connection_Compression_descriptor;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Compression getDefaultInstanceForType() {
+                return com.mysql.cj.x.protobuf.MysqlxConnection.Compression.getDefaultInstance();
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Compression build() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Compression result = buildPartial();
+                if (!result.isInitialized()) {
+                    throw newUninitializedMessageException(result);
+                }
+                return result;
+            }
+
+            @java.lang.Override
+            public com.mysql.cj.x.protobuf.MysqlxConnection.Compression buildPartial() {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Compression result = new com.mysql.cj.x.protobuf.MysqlxConnection.Compression(this);
+                int from_bitField0_ = this.bitField0_;
+                int to_bitField0_ = 0;
+                if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+                    to_bitField0_ |= 0x00000001;
+                }
+                result.uncompressedSize_ = this.uncompressedSize_;
+                if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+                    to_bitField0_ |= 0x00000002;
+                }
+                result.serverMessages_ = this.serverMessages_;
+                if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+                    to_bitField0_ |= 0x00000004;
+                }
+                result.clientMessages_ = this.clientMessages_;
+                if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+                    to_bitField0_ |= 0x00000008;
+                }
+                result.payload_ = this.payload_;
+                result.bitField0_ = to_bitField0_;
+                onBuilt();
+                return result;
+            }
+
+            @java.lang.Override
+            public Builder clone() {
+                return super.clone();
+            }
+
+            @java.lang.Override
+            public Builder setField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.setField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder clearField(com.google.protobuf.Descriptors.FieldDescriptor field) {
+                return super.clearField(field);
+            }
+
+            @java.lang.Override
+            public Builder clearOneof(com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+                return super.clearOneof(oneof);
+            }
+
+            @java.lang.Override
+            public Builder setRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, int index, java.lang.Object value) {
+                return super.setRepeatedField(field, index, value);
+            }
+
+            @java.lang.Override
+            public Builder addRepeatedField(com.google.protobuf.Descriptors.FieldDescriptor field, java.lang.Object value) {
+                return super.addRepeatedField(field, value);
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.Message other) {
+                if (other instanceof com.mysql.cj.x.protobuf.MysqlxConnection.Compression) {
+                    return mergeFrom((com.mysql.cj.x.protobuf.MysqlxConnection.Compression) other);
+                } else {
+                    super.mergeFrom(other);
+                    return this;
+                }
+            }
+
+            public Builder mergeFrom(com.mysql.cj.x.protobuf.MysqlxConnection.Compression other) {
+                if (other == com.mysql.cj.x.protobuf.MysqlxConnection.Compression.getDefaultInstance()) {
+                    return this;
+                }
+                if (other.hasUncompressedSize()) {
+                    setUncompressedSize(other.getUncompressedSize());
+                }
+                if (other.hasServerMessages()) {
+                    setServerMessages(other.getServerMessages());
+                }
+                if (other.hasClientMessages()) {
+                    setClientMessages(other.getClientMessages());
+                }
+                if (other.hasPayload()) {
+                    setPayload(other.getPayload());
+                }
+                this.mergeUnknownFields(other.unknownFields);
+                onChanged();
+                return this;
+            }
+
+            @java.lang.Override
+            public final boolean isInitialized() {
+                if (!hasPayload()) {
+                    return false;
+                }
+                return true;
+            }
+
+            @java.lang.Override
+            public Builder mergeFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws java.io.IOException {
+                com.mysql.cj.x.protobuf.MysqlxConnection.Compression parsedMessage = null;
+                try {
+                    parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+                    parsedMessage = (com.mysql.cj.x.protobuf.MysqlxConnection.Compression) e.getUnfinishedMessage();
+                    throw e.unwrapIOException();
+                } finally {
+                    if (parsedMessage != null) {
+                        mergeFrom(parsedMessage);
+                    }
+                }
+                return this;
+            }
+
+            private int bitField0_;
+
+            private long uncompressedSize_;
+
+            /**
+             * <code>optional uint64 uncompressed_size = 1;</code>
+             */
+            public boolean hasUncompressedSize() {
+                return ((this.bitField0_ & 0x00000001) == 0x00000001);
+            }
+
+            /**
+             * <code>optional uint64 uncompressed_size = 1;</code>
+             */
+            public long getUncompressedSize() {
+                return this.uncompressedSize_;
+            }
+
+            /**
+             * <code>optional uint64 uncompressed_size = 1;</code>
+             */
+            public Builder setUncompressedSize(long value) {
+                this.bitField0_ |= 0x00000001;
+                this.uncompressedSize_ = value;
+                onChanged();
+                return this;
+            }
+
+            /**
+             * <code>optional uint64 uncompressed_size = 1;</code>
+             */
+            public Builder clearUncompressedSize() {
+                this.bitField0_ = (this.bitField0_ & ~0x00000001);
+                this.uncompressedSize_ = 0L;
+                onChanged();
+                return this;
+            }
+
+            private int serverMessages_ = 0;
+
+            /**
+             * <code>optional .Mysqlx.ServerMessages.Type server_messages = 2;</code>
+             */
+            public boolean hasServerMessages() {
+                return ((this.bitField0_ & 0x00000002) == 0x00000002);
+            }
+
+            /**
+             * <code>optional .Mysqlx.ServerMessages.Type server_messages = 2;</code>
+             */
+            public com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type getServerMessages() {
+                @SuppressWarnings("deprecation")
+                com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type result = com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type.valueOf(this.serverMessages_);
+                return result == null ? com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type.OK : result;
+            }
+
+            /**
+             * <code>optional .Mysqlx.ServerMessages.Type server_messages = 2;</code>
+             */
+            public Builder setServerMessages(com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type value) {
+                if (value == null) {
+                    throw new NullPointerException();
+                }
+                this.bitField0_ |= 0x00000002;
+                this.serverMessages_ = value.getNumber();
+                onChanged();
+                return this;
+            }
+
+            /**
+             * <code>optional .Mysqlx.ServerMessages.Type server_messages = 2;</code>
+             */
+            public Builder clearServerMessages() {
+                this.bitField0_ = (this.bitField0_ & ~0x00000002);
+                this.serverMessages_ = 0;
+                onChanged();
+                return this;
+            }
+
+            private int clientMessages_ = 1;
+
+            /**
+             * <code>optional .Mysqlx.ClientMessages.Type client_messages = 3;</code>
+             */
+            public boolean hasClientMessages() {
+                return ((this.bitField0_ & 0x00000004) == 0x00000004);
+            }
+
+            /**
+             * <code>optional .Mysqlx.ClientMessages.Type client_messages = 3;</code>
+             */
+            public com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type getClientMessages() {
+                @SuppressWarnings("deprecation")
+                com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type result = com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type.valueOf(this.clientMessages_);
+                return result == null ? com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type.CON_CAPABILITIES_GET : result;
+            }
+
+            /**
+             * <code>optional .Mysqlx.ClientMessages.Type client_messages = 3;</code>
+             */
+            public Builder setClientMessages(com.mysql.cj.x.protobuf.Mysqlx.ClientMessages.Type value) {
+                if (value == null) {
+                    throw new NullPointerException();
+                }
+                this.bitField0_ |= 0x00000004;
+                this.clientMessages_ = value.getNumber();
+                onChanged();
+                return this;
+            }
+
+            /**
+             * <code>optional .Mysqlx.ClientMessages.Type client_messages = 3;</code>
+             */
+            public Builder clearClientMessages() {
+                this.bitField0_ = (this.bitField0_ & ~0x00000004);
+                this.clientMessages_ = 1;
+                onChanged();
+                return this;
+            }
+
+            private com.google.protobuf.ByteString payload_ = com.google.protobuf.ByteString.EMPTY;
+
+            /**
+             * <code>required bytes payload = 4;</code>
+             */
+            public boolean hasPayload() {
+                return ((this.bitField0_ & 0x00000008) == 0x00000008);
+            }
+
+            /**
+             * <code>required bytes payload = 4;</code>
+             */
+            public com.google.protobuf.ByteString getPayload() {
+                return this.payload_;
+            }
+
+            /**
+             * <code>required bytes payload = 4;</code>
+             */
+            public Builder setPayload(com.google.protobuf.ByteString value) {
+                if (value == null) {
+                    throw new NullPointerException();
+                }
+                this.bitField0_ |= 0x00000008;
+                this.payload_ = value;
+                onChanged();
+                return this;
+            }
+
+            /**
+             * <code>required bytes payload = 4;</code>
+             */
+            public Builder clearPayload() {
+                this.bitField0_ = (this.bitField0_ & ~0x00000008);
+                this.payload_ = getDefaultInstance().getPayload();
+                onChanged();
+                return this;
+            }
+
+            @java.lang.Override
+            public final Builder setUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.setUnknownFields(unknownFields);
+            }
+
+            @java.lang.Override
+            public final Builder mergeUnknownFields(final com.google.protobuf.UnknownFieldSet unknownFields) {
+                return super.mergeUnknownFields(unknownFields);
+            }
+
+            // @@protoc_insertion_point(builder_scope:Mysqlx.Connection.Compression)
+        }
+
+        // @@protoc_insertion_point(class_scope:Mysqlx.Connection.Compression)
+        private static final com.mysql.cj.x.protobuf.MysqlxConnection.Compression DEFAULT_INSTANCE;
+        static {
+            DEFAULT_INSTANCE = new com.mysql.cj.x.protobuf.MysqlxConnection.Compression();
+        }
+
+        public static com.mysql.cj.x.protobuf.MysqlxConnection.Compression getDefaultInstance() {
+            return DEFAULT_INSTANCE;
+        }
+
+        @java.lang.Deprecated
+        public static final com.google.protobuf.Parser<Compression> PARSER = new com.google.protobuf.AbstractParser<Compression>() {
+            @java.lang.Override
+            public Compression parsePartialFrom(com.google.protobuf.CodedInputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                    throws com.google.protobuf.InvalidProtocolBufferException {
+                return new Compression(input, extensionRegistry);
+            }
+        };
+
+        public static com.google.protobuf.Parser<Compression> parser() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Parser<Compression> getParserForType() {
+            return PARSER;
+        }
+
+        @java.lang.Override
+        public com.mysql.cj.x.protobuf.MysqlxConnection.Compression getDefaultInstanceForType() {
+            return DEFAULT_INSTANCE;
+        }
+
+    }
+
+    private static final com.google.protobuf.Descriptors.Descriptor internal_static_Mysqlx_Connection_Capability_descriptor;
+    private static final com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internal_static_Mysqlx_Connection_Capability_fieldAccessorTable;
+    private static final com.google.protobuf.Descriptors.Descriptor internal_static_Mysqlx_Connection_Capabilities_descriptor;
+    private static final com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internal_static_Mysqlx_Connection_Capabilities_fieldAccessorTable;
+    private static final com.google.protobuf.Descriptors.Descriptor internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor;
+    private static final com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internal_static_Mysqlx_Connection_CapabilitiesGet_fieldAccessorTable;
+    private static final com.google.protobuf.Descriptors.Descriptor internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor;
+    private static final com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internal_static_Mysqlx_Connection_CapabilitiesSet_fieldAccessorTable;
+    private static final com.google.protobuf.Descriptors.Descriptor internal_static_Mysqlx_Connection_Close_descriptor;
+    private static final com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internal_static_Mysqlx_Connection_Close_fieldAccessorTable;
+    private static final com.google.protobuf.Descriptors.Descriptor internal_static_Mysqlx_Connection_Compression_descriptor;
+    private static final com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internal_static_Mysqlx_Connection_Compression_fieldAccessorTable;
+
+    public static com.google.protobuf.Descriptors.FileDescriptor getDescriptor() {
+        return descriptor;
+    }
+
+    private static com.google.protobuf.Descriptors.FileDescriptor descriptor;
+    static {
+        java.lang.String[] descriptorData = { "\n\027mysqlx_connection.proto\022\021Mysqlx.Connec" + "tion\032\026mysqlx_datatypes.proto\032\014mysqlx.pro"
+                + "to\"@\n\nCapability\022\014\n\004name\030\001 \002(\t\022$\n\005value\030" + "\002 \002(\0132\025.Mysqlx.Datatypes.Any\"I\n\014Capabili"
+                + "ties\0223\n\014capabilities\030\001 \003(\0132\035.Mysqlx.Conn" + "ection.Capability:\004\220\3520\002\"\027\n\017CapabilitiesG"
+                + "et:\004\210\3520\001\"N\n\017CapabilitiesSet\0225\n\014capabilit" + "ies\030\001 \002(\0132\037.Mysqlx.Connection.Capabiliti"
+                + "es:\004\210\3520\002\"\r\n\005Close:\004\210\3520\003\"\257\001\n\013Compression\022"
+                + "\031\n\021uncompressed_size\030\001 \001(\004\0224\n\017server_mes" + "sages\030\002 \001(\0162\033.Mysqlx.ServerMessages.Type"
+                + "\0224\n\017client_messages\030\003 \001(\0162\033.Mysqlx.Clien"
+                + "tMessages.Type\022\017\n\007payload\030\004 \002(\014:\010\220\3520\023\210\3520" + ".B\031\n\027com.mysql.cj.x.protobuf" };
+        com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner = new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
+            public com.google.protobuf.ExtensionRegistry assignDescriptors(com.google.protobuf.Descriptors.FileDescriptor root) {
+                descriptor = root;
+                return null;
+            }
+        };
+        com.google.protobuf.Descriptors.FileDescriptor.internalBuildGeneratedFileFrom(descriptorData, new com.google.protobuf.Descriptors.FileDescriptor[] {
+                com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor(), com.mysql.cj.x.protobuf.Mysqlx.getDescriptor(), }, assigner);
+        internal_static_Mysqlx_Connection_Capability_descriptor = getDescriptor().getMessageTypes().get(0);
+        internal_static_Mysqlx_Connection_Capability_fieldAccessorTable = new com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+                internal_static_Mysqlx_Connection_Capability_descriptor, new java.lang.String[] { "Name", "Value", });
+        internal_static_Mysqlx_Connection_Capabilities_descriptor = getDescriptor().getMessageTypes().get(1);
+        internal_static_Mysqlx_Connection_Capabilities_fieldAccessorTable = new com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+                internal_static_Mysqlx_Connection_Capabilities_descriptor, new java.lang.String[] { "Capabilities", });
+        internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor = getDescriptor().getMessageTypes().get(2);
+        internal_static_Mysqlx_Connection_CapabilitiesGet_fieldAccessorTable = new com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+                internal_static_Mysqlx_Connection_CapabilitiesGet_descriptor, new java.lang.String[] {});
+        internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor = getDescriptor().getMessageTypes().get(3);
+        internal_static_Mysqlx_Connection_CapabilitiesSet_fieldAccessorTable = new com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+                internal_static_Mysqlx_Connection_CapabilitiesSet_descriptor, new java.lang.String[] { "Capabilities", });
+        internal_static_Mysqlx_Connection_Close_descriptor = getDescriptor().getMessageTypes().get(4);
+        internal_static_Mysqlx_Connection_Close_fieldAccessorTable = new com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+                internal_static_Mysqlx_Connection_Close_descriptor, new java.lang.String[] {});
+        internal_static_Mysqlx_Connection_Compression_descriptor = getDescriptor().getMessageTypes().get(5);
+        internal_static_Mysqlx_Connection_Compression_fieldAccessorTable = new com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+                internal_static_Mysqlx_Connection_Compression_descriptor,
+                new java.lang.String[] { "UncompressedSize", "ServerMessages", "ClientMessages", "Payload", });
+        com.google.protobuf.ExtensionRegistry registry = com.google.protobuf.ExtensionRegistry.newInstance();
+        registry.add(com.mysql.cj.x.protobuf.Mysqlx.clientMessageId);
+        registry.add(com.mysql.cj.x.protobuf.Mysqlx.serverMessageId);
+        com.google.protobuf.Descriptors.FileDescriptor.internalUpdateFileDescriptor(descriptor, registry);
+        com.mysql.cj.x.protobuf.MysqlxDatatypes.getDescriptor();
+        com.mysql.cj.x.protobuf.Mysqlx.getDescriptor();
+    }
+
+    // @@protoc_insertion_point(outer_class_scope)
 }
