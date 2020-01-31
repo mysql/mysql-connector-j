@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -60,6 +60,7 @@ import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLTransientException;
@@ -130,6 +131,7 @@ import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.PasswordExpiredException;
 import com.mysql.cj.exceptions.PropertyNotModifiableException;
 import com.mysql.cj.interceptors.QueryInterceptor;
+import com.mysql.cj.jdbc.ClientInfoProvider;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.ConnectionGroupManager;
 import com.mysql.cj.jdbc.ConnectionImpl;
@@ -11488,6 +11490,125 @@ public class ConnectionRegressionTest extends BaseTestCase {
             BufferingLogger.dropBuffer();
             if (loggedConn != null) {
                 loggedConn.close();
+            }
+        }
+    }
+
+    /**
+     * Test fix for Bug#98445 (30832513), Connection option clientInfoProvider=ClientInfoProviderSP causes NPE.
+     */
+    public void testBug98445() throws Exception {
+        createProcedure("setCiTestBug98445", "(IN k VARCHAR(100), IN v VARCHAR(100)) BEGIN SET @testBug98445=v; END");
+
+        // clientInfoProvider=ClientInfoProviderSP
+        Connection testConn1 = getConnectionWithProps("clientInfoProvider=ClientInfoProviderSP,clientInfoSetSPName=setCiTestBug98445");
+        testConn1.setClientInfo("testBug98445", "testBug98445Data1");
+        Statement testStmt = testConn1.createStatement();
+        this.rs = testStmt.executeQuery("SELECT @testBug98445");
+        assertTrue(this.rs.next());
+        assertEquals("testBug98445Data1", this.rs.getString(1));
+        testConn1.close();
+
+        // clientInfoProvider=com.mysql.cj.jdbc.ClientInfoProviderSP
+        testConn1 = getConnectionWithProps("clientInfoProvider=com.mysql.cj.jdbc.ClientInfoProviderSP,clientInfoSetSPName=setCiTestBug98445");
+        testConn1.setClientInfo("testBug98445", "testBug98445Data2");
+        testStmt = testConn1.createStatement();
+        this.rs = testStmt.executeQuery("SELECT @testBug98445");
+        assertTrue(this.rs.next());
+        assertEquals("testBug98445Data2", this.rs.getString(1));
+        testConn1.close();
+
+        PrintStream oldErr = System.err;
+        ByteArrayOutputStream newErr = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(newErr));
+
+        // clientInfoProvider=CommentClientInfoProvider
+        testConn1 = getConnectionWithProps("clientInfoProvider=CommentClientInfoProvider,profileSQL=true");
+        testConn1.setClientInfo("testBug98445", "testBug98445Data3");
+        testStmt = testConn1.createStatement();
+        this.rs = testStmt.executeQuery("SELECT 'testBug98445Data3'");
+        assertTrue(this.rs.next());
+        assertEquals("testBug98445Data3", this.rs.getString(1));
+        testConn1.close();
+
+        newErr.flush();
+        assertTrue(newErr.toString().contains("testBug98445=testBug98445Data3"));
+        newErr.reset();
+
+        // clientInfoProvider=com.mysql.cj.jdbc.CommentClientInfoProvider
+        testConn1 = getConnectionWithProps("clientInfoProvider=com.mysql.cj.jdbc.CommentClientInfoProvider,profileSQL=true");
+        testConn1.setClientInfo("testBug98445", "testBug98445Data4");
+        testStmt = testConn1.createStatement();
+        this.rs = testStmt.executeQuery("SELECT 'testBug98445Data4'");
+        assertTrue(this.rs.next());
+        assertEquals("testBug98445Data4", this.rs.getString(1));
+        testConn1.close();
+
+        newErr.flush();
+        assertTrue(newErr.toString().contains("testBug98445=testBug98445Data4"));
+        newErr.reset();
+        System.setErr(oldErr);
+
+        // clientInfoProvider=TestBug98445ClientInfoProvider
+        testConn1 = getConnectionWithProps("clientInfoProvider=" + TestBug98445ClientInfoProvider.class.getName());
+        testConn1.setClientInfo("testBug98445", "testBug98445Data7");
+        testStmt = testConn1.createStatement();
+        this.rs = testStmt.executeQuery("SELECT @testBug98445");
+        assertTrue(this.rs.next());
+        assertEquals("testBug98445Data7", this.rs.getString(1));
+        testConn1.close();
+
+        // clientInfoProvider=DummyClass
+        Connection testConn2 = getConnectionWithProps("clientInfoProvider=DummyClass");
+        Throwable t = assertThrows(SQLClientInfoException.class, () -> {
+            testConn2.setClientInfo("testBug98445", "testBug98445Data5");
+            return null;
+        });
+        assertEquals(SQLException.class, t.getCause().getClass());
+        assertEquals("Can't instantiate required class", t.getCause().getMessage());
+        testConn2.close();
+
+        // clientInfoProvider=java.lang.Object
+        Connection testConn3 = getConnectionWithProps("clientInfoProvider=java.lang.Object");
+        t = assertThrows(SQLClientInfoException.class, () -> {
+            testConn3.setClientInfo("testBug98445", "testBug98445Data6");
+            return null;
+        });
+        assertEquals(SQLException.class, t.getCause().getClass());
+        assertEquals("Configured clientInfoProvider class 'java.lang.Object' does not implement com.mysql.cj.jdbc.ClientInfoProvider.",
+                t.getCause().getMessage());
+        testConn3.close();
+    }
+
+    public static class TestBug98445ClientInfoProvider implements ClientInfoProvider {
+        @Override
+        public void initialize(Connection conn, Properties configurationProps) throws SQLException {
+        }
+
+        @Override
+        public void destroy() throws SQLException {
+        }
+
+        @Override
+        public Properties getClientInfo(Connection conn) throws SQLException {
+            return null;
+        }
+
+        @Override
+        public String getClientInfo(Connection conn, String name) throws SQLException {
+            return null;
+        }
+
+        @Override
+        public void setClientInfo(Connection conn, Properties properties) throws SQLClientInfoException {
+        }
+
+        @Override
+        public void setClientInfo(Connection conn, String name, String value) throws SQLClientInfoException {
+            try {
+                conn.createStatement().executeQuery("CALL setCiTestBug98445('" + name + "', '" + value + "')");
+            } catch (SQLException e) {
+                fail("Not supposed to fail here.");
             }
         }
     }

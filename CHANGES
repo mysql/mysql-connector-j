@@ -3,6 +3,8 @@
 
 Version 8.0.20
 
+  - Fix for Bug#98445 (30832513), Connection option clientInfoProvider=ClientInfoProviderSP causes NPE.
+
   - WL#12248, DevAPI: Connection compression.
 
   - Fix for Bug#30636056, ResultSetUtil.resultSetToMap() can be unsafe to use.
