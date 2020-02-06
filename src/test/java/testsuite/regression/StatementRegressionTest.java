@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1822,7 +1822,7 @@ public class StatementRegressionTest extends BaseTestCase {
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf-8");
 
             Connection utf8Conn = getConnectionWithProps(props);
-            Statement utfStmt = utf8Conn.createStatement();
+            Statement utfStmt = utf8Conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
             this.stmt.executeUpdate("DROP TABLE IF EXISTS " + table);
 
@@ -6008,7 +6008,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         this.stmt.execute("INSERT INTO testBug36478 VALUES ('bahblah',1,1,1)");
         this.stmt.execute("INSERT INTO testBug36478 VALUES ('bahblah2',2,2,2)");
-        this.pstmt = this.conn.prepareStatement("select 1 FROM testBug36478");
+        this.pstmt = this.conn.prepareStatement("select 1 FROM testBug36478", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
         this.pstmt.setMaxRows(1);
         this.rs = this.pstmt.executeQuery();
@@ -6016,7 +6016,8 @@ public class StatementRegressionTest extends BaseTestCase {
         assertTrue(this.rs.isFirst());
         assertTrue(this.rs.isLast());
 
-        this.pstmt = this.conn.prepareStatement("select `limit`, id_limit, limit1, maxlimit2 FROM testBug36478");
+        this.pstmt = this.conn.prepareStatement("select `limit`, id_limit, limit1, maxlimit2 FROM testBug36478", ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY);
         this.pstmt.setMaxRows(0);
         this.rs = this.pstmt.executeQuery();
         this.rs.first();
@@ -6031,7 +6032,7 @@ public class StatementRegressionTest extends BaseTestCase {
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
 
             _conn = getConnectionWithProps(props);
-            s = _conn.prepareStatement("select 1 FROM testBug36478");
+            s = _conn.prepareStatement("select 1 FROM testBug36478", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
             s.setMaxRows(1);
             ResultSet _rs = s.executeQuery();
@@ -6040,7 +6041,8 @@ public class StatementRegressionTest extends BaseTestCase {
             assertTrue(_rs.isLast());
 
             s.close();
-            s = _conn.prepareStatement("select `limit`, id_limit, limit1, maxlimit2 FROM testBug36478");
+            s = _conn.prepareStatement("select `limit`, id_limit, limit1, maxlimit2 FROM testBug36478", ResultSet.TYPE_SCROLL_INSENSITIVE,
+                    ResultSet.CONCUR_READ_ONLY);
             s.setMaxRows(0);
             _rs = s.executeQuery();
             _rs.first();
@@ -6372,8 +6374,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
             // bug occurs in 2nd call only
             for (int i = 1; i <= 2; i++) {
-                for (PreparedStatement testStmt : new PreparedStatement[] { testConn.prepareStatement("SELECT * FROM testBug55340"),
-                        testConn.prepareCall("CALL testBug55340()") }) {
+                for (PreparedStatement testStmt : new PreparedStatement[] {
+                        testConn.prepareStatement("SELECT * FROM testBug55340", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY),
+                        testConn.prepareCall("CALL testBug55340()", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY) }) {
 
                     assertTrue(testStmt.execute());
                     this.rs = testStmt.getResultSet();
@@ -6655,7 +6658,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     private Statement testBug71396StatementInit(Connection testConn, int maxRows) throws SQLException {
         ResultSet testRS;
-        Statement testStmt = testConn.createStatement();
+        Statement testStmt = testConn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
         testStmt.setMaxRows(maxRows);
         // while consulting SQL_SELECT_LIMIT setting also forces limit to be applied into current session
@@ -6673,7 +6676,7 @@ public class StatementRegressionTest extends BaseTestCase {
         if (queries.length != expRowCount.length) {
             fail("Bad arguments!");
         }
-        Statement testStmt = testConn.createStatement();
+        Statement testStmt = testConn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         testBug71396StatementMultiCheck(testStmt, queries, expRowCount);
         testStmt.close();
     }
@@ -6715,7 +6718,7 @@ public class StatementRegressionTest extends BaseTestCase {
         PreparedStatement[] testPStmt = new PreparedStatement[queries.length];
 
         for (int i = 0; i < queries.length; i++) {
-            testPStmt[i] = testConn.prepareStatement(queries[i]);
+            testPStmt[i] = testConn.prepareStatement(queries[i], ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             if (maxRows > 0) {
                 testPStmt[i].setMaxRows(maxRows);
             }
@@ -6763,7 +6766,7 @@ public class StatementRegressionTest extends BaseTestCase {
     private void testBug71396PrepStatementCheck(Connection testConn, String query, int expRowCount, int maxRows) throws SQLException {
         PreparedStatement chkPStmt;
 
-        chkPStmt = testConn.prepareStatement(query);
+        chkPStmt = testConn.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         if (maxRows > 0) {
             chkPStmt.setMaxRows(maxRows);
         }
@@ -6796,7 +6799,7 @@ public class StatementRegressionTest extends BaseTestCase {
     private void testBug71396MultiSettingsCheck(String connProps, int maxRows, int limitClause, int expRowCount) throws SQLException {
         Connection testConn = getConnectionWithProps(connProps);
 
-        Statement testStmt = testConn.createStatement();
+        Statement testStmt = testConn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         if (maxRows > 0) {
             testStmt.setMaxRows(maxRows);
         }

@@ -1769,7 +1769,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Statement updStmt = null;
 
         try {
-            updStmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+            updStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
 
             this.rs = updStmt.executeQuery(sSQLQuery);
 
@@ -3533,7 +3533,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         try {
             createTable("bug30851", "(CharCol CHAR(10) DEFAULT NULL)");
             this.stmt.execute("INSERT INTO bug30851 VALUES (NULL)");
-            this.rs = padConn.createStatement().executeQuery("SELECT * FROM bug30851");
+            this.rs = padConn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY).executeQuery("SELECT * FROM bug30851");
             this.rs.first();
             String strvar = this.rs.getString(1);
             assertNull("Should be null", strvar);
@@ -3914,7 +3914,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(1, this.pstmt.executeUpdate());
             this.pstmt.close();
 
-            this.pstmt = cachedRsmdConn.prepareStatement("SELECT * FROM bug41484 WHERE id = ?");
+            this.pstmt = cachedRsmdConn.prepareStatement("SELECT * FROM bug41484 WHERE id = ?", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             this.pstmt.setInt(1, 1);
             this.rs = this.pstmt.executeQuery();
             this.rs.first();
@@ -3927,7 +3927,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(1, this.pstmt.executeUpdate());
             this.pstmt.close();
 
-            this.pstmt = cachedRsmdConn.prepareStatement("SELECT * FROM bug41484 WHERE id = ?");
+            this.pstmt = cachedRsmdConn.prepareStatement("SELECT * FROM bug41484 WHERE id = ?", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             this.pstmt.setInt(1, 2);
             this.rs = this.pstmt.executeQuery();
             this.rs.first();
@@ -4081,7 +4081,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             }
         }
 
-        this.rs = noBlobsConn.createStatement().executeQuery("SELECT PASSWORD ('SOMETHING')");
+        this.rs = noBlobsConn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY).executeQuery("SELECT PASSWORD ('SOMETHING')");
         this.rs.first();
 
         String fromPlainResultSet = this.rs.getString(1);
@@ -4274,7 +4274,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     public void testBug38252() throws Exception {
         createTable("testBug38252", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY)");
 
-        this.stmt = this.conn.createStatement();
+        this.stmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         this.stmt.executeUpdate("INSERT INTO testBug38252 VALUES (NULL), (NULL)");
 
         this.rs = this.stmt.executeQuery("SELECT * FROM testBug38252");
@@ -4299,7 +4299,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.stmt.close();
 
         // test ResultSet.absolute(0) with an empty ResultSet
-        this.stmt = this.conn.createStatement();
+        this.stmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         this.rs = this.stmt.executeQuery("SELECT * FROM testBug38252 where 0 = 1");
         assertFalse("Cursor should be moved to before the first row.", this.rs.absolute(0));
     }
@@ -5742,49 +5742,49 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(i++, rs1.getInt("a"));
         }
 
-        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", new Callable<Void>() {
             public Void call() throws Exception {
                 rs1.absolute(1);
                 return null;
             }
         });
 
-        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", new Callable<Void>() {
             public Void call() throws Exception {
                 rs1.afterLast();
                 return null;
             }
         });
 
-        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", new Callable<Void>() {
             public Void call() throws Exception {
                 rs1.beforeFirst();
                 return null;
             }
         });
 
-        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", new Callable<Void>() {
             public Void call() throws Exception {
                 rs1.first();
                 return null;
             }
         });
 
-        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", new Callable<Void>() {
             public Void call() throws Exception {
                 rs1.last();
                 return null;
             }
         });
 
-        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", new Callable<Void>() {
             public Void call() throws Exception {
                 rs1.previous();
                 return null;
             }
         });
 
-        assertThrows(SQLException.class, "Operation is not allowed for the result set with TYPE_FORWARD_ONLY type.", new Callable<Void>() {
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", new Callable<Void>() {
             public Void call() throws Exception {
                 rs1.relative(1);
                 return null;
@@ -6691,7 +6691,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), useSSPS);
             Connection c1 = getConnectionWithProps(props);
             try (PreparedStatement stmt1 = c1.prepareStatement("SELECT `key`, `value` FROM `testBug92536` WHERE `key`=? FOR UPDATE",
-                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE)) {
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 stmt1.setString(1, "key");
                 try (ResultSet res = stmt1.executeQuery()) {
                     res.next();
@@ -7253,6 +7253,70 @@ public class ResultSetRegressionTest extends BaseTestCase {
             s.executeQuery("set autocommit = 0;");
 
             con.close();
+        }
+    }
+
+    /**
+     * Tests fix for Bug#30474158, CONNECTOR/J 8 DOES NOT HONOR THE REQUESTED RESULTSETTYPE SCROLL_INSENSITIVE ETC.
+     */
+    public void testBug30474158() throws Exception {
+        this.stmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+        assertEquals(ResultSet.TYPE_FORWARD_ONLY, this.stmt.getResultSetType());
+        this.rs = this.stmt.executeQuery("SELECT 'testBug30474158'");
+        this.rs.next();
+        assertEquals("testBug30474158", this.rs.getString(1));
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", () -> {
+            this.rs.beforeFirst();
+            return null;
+        });
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", () -> {
+            this.rs.first();
+            return null;
+        });
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", () -> {
+            this.rs.last();
+            return null;
+        });
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", () -> {
+            this.rs.afterLast();
+            return null;
+        });
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", () -> {
+            this.rs.previous();
+            return null;
+        });
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", () -> {
+            this.rs.absolute(1);
+            return null;
+        });
+        assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", () -> {
+            this.rs.relative(-1);
+            return null;
+        });
+
+        for (int t : new int[] { ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.TYPE_SCROLL_SENSITIVE }) {
+            this.stmt = this.conn.createStatement(t, ResultSet.CONCUR_READ_ONLY);
+            this.rs = this.stmt.executeQuery("SELECT 'testBug30474158'");
+            this.rs.next();
+            assertEquals("testBug30474158", this.rs.getString(1));
+            this.rs.beforeFirst();
+            assertTrue(this.rs.isBeforeFirst());
+            this.rs.next();
+            assertEquals("testBug30474158", this.rs.getString(1));
+            this.rs.first();
+            assertEquals("testBug30474158", this.rs.getString(1));
+            this.rs.last();
+            assertEquals("testBug30474158", this.rs.getString(1));
+            this.rs.afterLast();
+            assertTrue(this.rs.isAfterLast());
+            this.rs.previous();
+            assertEquals("testBug30474158", this.rs.getString(1));
+            this.rs.absolute(1);
+            assertEquals("testBug30474158", this.rs.getString(1));
+            this.rs.next();
+            this.rs.afterLast();
+            this.rs.relative(-1);
+            assertEquals("testBug30474158", this.rs.getString(1));
         }
     }
 }

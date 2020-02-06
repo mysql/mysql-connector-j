@@ -44,6 +44,7 @@ import java.sql.Array;
 import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Ref;
+import java.sql.ResultSet;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -348,6 +349,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean absolute(int row) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+                throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+            }
 
             boolean b;
 
@@ -393,6 +397,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public void afterLast() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+                throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+            }
 
             if (this.rowData.size() != 0) {
                 this.rowData.afterLast();
@@ -406,6 +413,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public void beforeFirst() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+                throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+            }
 
             if (this.rowData.size() == 0) {
                 return;
@@ -558,6 +568,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean first() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+                throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+            }
 
             boolean b = true;
 
@@ -1682,6 +1695,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean last() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+                throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+            }
 
             boolean b = true;
 
@@ -1785,6 +1801,10 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean previous() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+                throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+            }
+
             return prev();
         }
     }
@@ -1903,6 +1923,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean relative(int rows) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+                throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+            }
 
             if (this.rowData.size() == 0) {
                 setRowPositionValidity();
@@ -1940,6 +1963,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             if ((direction != FETCH_FORWARD) && (direction != FETCH_REVERSE) && (direction != FETCH_UNKNOWN)) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.Illegal_value_for_fetch_direction_64"),
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            }
+
+            if (getType() == ResultSet.TYPE_FORWARD_ONLY && direction != FETCH_FORWARD) {
+                String constName = direction == ResultSet.FETCH_REVERSE ? "ResultSet.FETCH_REVERSE" : "ResultSet.FETCH_UNKNOWN";
+                throw ExceptionFactory.createException(Messages.getString("ResultSet.Unacceptable_value_for_fetch_direction", new Object[] { constName }));
             }
 
             this.fetchDirection = direction;

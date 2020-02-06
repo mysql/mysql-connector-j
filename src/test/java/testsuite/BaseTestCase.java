@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -666,7 +666,7 @@ public abstract class BaseTestCase extends TestCase {
 
         this.serverVersion = ((JdbcConnection) this.conn).getServerVersion();
 
-        this.stmt = this.conn.createStatement();
+        this.stmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
         try {
             if (dbUrl.indexOf("mysql") != -1) {

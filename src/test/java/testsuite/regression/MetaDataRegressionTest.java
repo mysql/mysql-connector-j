@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -2607,7 +2607,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             Connection conn1 = null;
 
             conn1 = getConnectionWithProps(props);
-            this.stmt = conn1.createStatement();
+            this.stmt = conn1.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             this.stmt.executeUpdate("INSERT INTO bug57808(ID, ADate) VALUES(1, 0000-00-00)");
 
             this.rs = this.stmt.executeQuery("SELECT ID, ADate FROM bug57808 WHERE ID = 1");

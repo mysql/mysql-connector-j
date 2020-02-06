@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,6 +36,7 @@ import java.math.BigDecimal;
 import java.sql.Clob;
 import java.sql.JDBCType;
 import java.sql.NClob;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLType;
 import java.sql.SQLXML;
@@ -50,6 +51,7 @@ import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.AssertionFailedException;
+import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
@@ -155,40 +157,36 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public boolean absolute(int row) throws SQLException {
+        boolean ret = super.absolute(row);
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
-
         if (this.doingUpdates) {
             this.doingUpdates = false;
         }
-        return super.absolute(row);
+        return ret;
     }
 
     @Override
     public void afterLast() throws SQLException {
+        super.afterLast();
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
-
         if (this.doingUpdates) {
             this.doingUpdates = false;
         }
-
-        super.afterLast();
     }
 
     @Override
     public void beforeFirst() throws SQLException {
+        super.beforeFirst();
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
-
         if (this.doingUpdates) {
             this.doingUpdates = false;
         }
-
-        super.beforeFirst();
     }
 
     @Override
@@ -429,7 +427,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.deleter.executeUpdate();
             this.rowData.remove();
 
-            previous(); // position on previous row - Bug#27431
+            prev(); // position on previous row - Bug#27431
         }
     }
 
@@ -541,15 +539,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public boolean first() throws SQLException {
+        boolean ret = super.first();
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
-
         if (this.doingUpdates) {
             this.doingUpdates = false;
         }
-
-        return super.first();
+        return ret;
     }
 
     /**
@@ -784,15 +781,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public boolean last() throws SQLException {
+        boolean ret = super.last();
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
-
         if (this.doingUpdates) {
             this.doingUpdates = false;
         }
-
-        return super.last();
+        return ret;
     }
 
     @Override
@@ -885,33 +881,38 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public boolean next() throws SQLException {
+        boolean ret = super.next();
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
-
         if (this.doingUpdates) {
             this.doingUpdates = false;
         }
-
-        return super.next();
+        return ret;
     }
 
     @Override
     public boolean prev() throws SQLException {
-        return super.prev();
+        boolean ret = super.prev();
+        if (this.onInsertRow) {
+            this.onInsertRow = false;
+        }
+        if (this.doingUpdates) {
+            this.doingUpdates = false;
+        }
+        return ret;
     }
 
     @Override
     public boolean previous() throws SQLException {
+        boolean ret = super.previous();
         if (this.onInsertRow) {
             this.onInsertRow = false;
         }
-
         if (this.doingUpdates) {
             this.doingUpdates = false;
         }
-
-        return super.previous();
+        return ret;
     }
 
     @Override
@@ -973,6 +974,10 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public void refreshRow() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+                throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
+            }
+
             if (!this.isUpdatable) {
                 throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
             }
@@ -1073,7 +1078,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public boolean relative(int rows) throws SQLException {
-        return super.relative(rows);
+        boolean ret = super.relative(rows);
+        if (this.onInsertRow) {
+            this.onInsertRow = false;
+        }
+        if (this.doingUpdates) {
+            this.doingUpdates = false;
+        }
+        return ret;
     }
 
     private void resetInserter() throws SQLException {
@@ -1171,7 +1183,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             if (this.doingUpdates) {
                 this.updater.executeUpdate();
-                refreshRow();
+                refreshRow(this.updater, this.thisRow);
                 this.doingUpdates = false;
             } else if (this.onInsertRow) {
                 throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.44"), getExceptionInterceptor());

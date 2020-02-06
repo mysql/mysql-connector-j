@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -4693,12 +4693,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public boolean supportsResultSetHoldability(int holdability) throws SQLException {
-        return (holdability == ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        return holdability == ResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
 
     @Override
     public boolean supportsResultSetType(int type) throws SQLException {
-        return (type == ResultSet.TYPE_SCROLL_INSENSITIVE); // TODO other types?
+        return type == ResultSet.TYPE_FORWARD_ONLY || type == ResultSet.TYPE_SCROLL_INSENSITIVE;
     }
 
     @Override
@@ -4898,7 +4898,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     protected java.sql.PreparedStatement prepareMetaDataSafeStatement(String sql) throws SQLException {
         // Can't use server-side here as we coerce a lot of types to match the spec.
-        java.sql.PreparedStatement pStmt = this.conn.clientPrepareStatement(sql);
+        java.sql.PreparedStatement pStmt = this.conn.clientPrepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
         if (pStmt.getMaxRows() != 0) {
             pStmt.setMaxRows(0);
