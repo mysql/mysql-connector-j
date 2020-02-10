@@ -369,6 +369,9 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PropertyKey.queryInterceptors, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.queryInterceptors"), "8.0.7", CATEGORY_STATEMENTS, Integer.MIN_VALUE),
 
+                new BooleanPropertyDefinition(PropertyKey.cacheDefaultTimezone, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.cacheDefaultTimezone"), "8.0.20", CATEGORY_STATEMENTS, Integer.MIN_VALUE),
+
                 //
                 // CATEGORY_PREPARED_STATEMENTS
                 //

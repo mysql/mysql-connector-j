@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,6 +38,7 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.ServerCapabilities;
@@ -116,11 +117,13 @@ public class NativeServerSession implements ServerSession {
     /** The timezone of the server */
     private TimeZone serverTimeZone = null;
 
-    /** c.f. getDefaultTimeZone(). this value may be overridden during connection initialization */
     private TimeZone defaultTimeZone = TimeZone.getDefault();
+
+    private RuntimeProperty<Boolean> cacheDefaultTimezone = null;
 
     public NativeServerSession(PropertySet propertySet) {
         this.propertySet = propertySet;
+        this.cacheDefaultTimezone = this.propertySet.getBooleanProperty(PropertyKey.cacheDefaultTimezone);
 
         // preconfigure some server variables which are consulted before their initialization from server
         this.serverVariables.put("character_set_server", "utf8");
@@ -546,10 +549,9 @@ public class NativeServerSession implements ServerSession {
     }
 
     public TimeZone getDefaultTimeZone() {
-        return this.defaultTimeZone;
-    }
-
-    public void setDefaultTimeZone(TimeZone defaultTimeZone) {
-        this.defaultTimeZone = defaultTimeZone;
+        if (this.cacheDefaultTimezone.getValue()) {
+            return this.defaultTimeZone;
+        }
+        return TimeZone.getDefault();
     }
 }

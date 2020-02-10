@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -69,7 +69,8 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
     protected void initBindValues(int parameterCount) {
         this.bindValues = new ServerPreparedQueryBindValue[parameterCount];
         for (int i = 0; i < parameterCount; i++) {
-            this.bindValues[i] = new ServerPreparedQueryBindValue(this.session.getServerSession().getDefaultTimeZone());
+            this.bindValues[i] = new ServerPreparedQueryBindValue(this.session.getServerSession().getDefaultTimeZone(),
+                    this.session.getServerSession().getServerTimeZone(), this.session.getPropertySet());
         }
     }
 
@@ -469,7 +470,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
     }
 
     public void setTime(int parameterIndex, Time x) {
-        setTime(parameterIndex, x, null); // this.session.getServerSession().getDefaultTimeZone()
+        setTime(parameterIndex, x, null);
     }
 
     @Override

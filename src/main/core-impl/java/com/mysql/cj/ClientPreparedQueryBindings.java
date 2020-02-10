@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -728,7 +728,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
         if (x == null) {
             setNull(parameterIndex);
         } else {
-            this.tdf = TimeUtil.getSimpleDateFormat(this.tdf, "''HH:mm:ss''", cal, cal != null ? null : this.session.getServerSession().getDefaultTimeZone());
+            this.tdf = TimeUtil.getSimpleDateFormat(this.tdf, "''HH:mm:ss''", cal, cal != null ? null : this.session.getServerSession().getServerTimeZone());
             setValue(parameterIndex, this.tdf.format(x), MysqlType.TIME);
         }
     }
@@ -783,7 +783,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
             x = TimeUtil.adjustTimestampNanosPrecision(x, fractionalLength, !this.session.getServerSession().isServerTruncatesFracSecs());
 
             this.tsdf = TimeUtil.getSimpleDateFormat(this.tsdf, "''yyyy-MM-dd HH:mm:ss", targetCalendar,
-                    targetCalendar != null ? null : this.session.getServerSession().getDefaultTimeZone());
+                    targetCalendar != null ? null : this.session.getServerSession().getServerTimeZone());
 
             StringBuffer buf = new StringBuffer();
             buf.append(this.tsdf.format(x));

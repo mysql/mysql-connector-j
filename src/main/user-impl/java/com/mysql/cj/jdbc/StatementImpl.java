@@ -684,7 +684,7 @@ public class StatementImpl implements JdbcStatement {
                 setupStreamingTimeout(locallyScopedConn);
 
                 if (this.doEscapeProcessing) {
-                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getDefaultTimeZone(),
+                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getServerTimeZone(),
                             this.session.getServerSession().getCapabilities().serverSupportsFracSecs(),
                             this.session.getServerSession().isServerTruncatesFracSecs(), getExceptionInterceptor());
                     sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;
@@ -1124,7 +1124,7 @@ public class StatementImpl implements JdbcStatement {
             setupStreamingTimeout(locallyScopedConn);
 
             if (this.doEscapeProcessing) {
-                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getDefaultTimeZone(),
+                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getServerTimeZone(),
                         this.session.getServerSession().getCapabilities().serverSupportsFracSecs(), this.session.getServerSession().isServerTruncatesFracSecs(),
                         getExceptionInterceptor());
                 sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;
@@ -1262,7 +1262,7 @@ public class StatementImpl implements JdbcStatement {
             ResultSetInternalMethods rs = null;
 
             if (this.doEscapeProcessing) {
-                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getDefaultTimeZone(),
+                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getServerTimeZone(),
                         this.session.getServerSession().getCapabilities().serverSupportsFracSecs(), this.session.getServerSession().isServerTruncatesFracSecs(),
                         getExceptionInterceptor());
                 sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;

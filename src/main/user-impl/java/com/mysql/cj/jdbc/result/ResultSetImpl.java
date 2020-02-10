@@ -194,8 +194,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     private ValueFactory<Double> doubleValueFactory;
     private ValueFactory<BigDecimal> bigDecimalValueFactory;
     private ValueFactory<InputStream> binaryStreamValueFactory;
-    // temporal values include the default conn TZ, can be overridden with cal param, e.g. getDate(1, calWithOtherTZ)
-    private ValueFactory<Date> defaultDateValueFactory;
     private ValueFactory<Time> defaultTimeValueFactory;
     private ValueFactory<Timestamp> defaultTimestampValueFactory;
 
@@ -269,9 +267,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         this.bigDecimalValueFactory = new BigDecimalValueFactory(pset);
         this.binaryStreamValueFactory = new BinaryStreamValueFactory(pset);
 
-        this.defaultDateValueFactory = new SqlDateValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(), this);
-        this.defaultTimeValueFactory = new SqlTimeValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(), this);
-        this.defaultTimestampValueFactory = new SqlTimestampValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone());
+        this.defaultTimeValueFactory = new SqlTimeValueFactory(pset, null, this.session.getServerSession().getServerTimeZone(), this);
+        this.defaultTimestampValueFactory = new SqlTimestampValueFactory(pset, null, this.session.getServerSession().getServerTimeZone());
 
         this.defaultLocalDateValueFactory = new LocalDateValueFactory(pset, this);
         this.defaultLocalTimeValueFactory = new LocalTimeValueFactory(pset, this);
@@ -751,16 +748,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public Date getDate(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        return this.thisRow.getValue(columnIndex - 1, this.defaultDateValueFactory);
+        return this.thisRow.getValue(columnIndex - 1,
+                new SqlDateValueFactory(this.session.getPropertySet(), null, this.session.getServerSession().getDefaultTimeZone(), this));
     }
 
     @Override
     public Date getDate(int columnIndex, Calendar cal) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
-        ValueFactory<Date> vf = new SqlDateValueFactory(this.session.getPropertySet(), cal,
-                cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone(), this);
-        return this.thisRow.getValue(columnIndex - 1, vf);
+        return this.thisRow.getValue(columnIndex - 1, new SqlDateValueFactory(this.session.getPropertySet(), cal,
+                cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone(), this));
     }
 
     @Override
@@ -896,7 +893,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkRowPos();
         checkColumnBounds(columnIndex);
         ValueFactory<Time> vf = new SqlTimeValueFactory(this.session.getPropertySet(), cal,
-                cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone());
+                cal != null ? cal.getTimeZone() : this.session.getServerSession().getServerTimeZone());
         return this.thisRow.getValue(columnIndex - 1, vf);
     }
 
@@ -947,7 +944,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkRowPos();
         checkColumnBounds(columnIndex);
 
-        TimeZone tz = cal != null ? cal.getTimeZone() : this.session.getServerSession().getDefaultTimeZone();
+        TimeZone tz = cal != null ? cal.getTimeZone() : this.session.getServerSession().getServerTimeZone();
         if (this.customTsVf != null && tz == this.lastTsCustomTz) {
             return this.thisRow.getValue(columnIndex - 1, this.customTsVf);
         }

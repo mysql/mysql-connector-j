@@ -3,6 +3,8 @@
 
 Version 8.0.20
 
+  - Fix for Bug#91112 (28125069), AGAIN WRONG JAVA.SQL.DATE.
+
   - Fix for Bug#30474158, CONNECTOR/J 8 DOES NOT HONOR THE REQUESTED RESULTSETTYPE SCROLL_INSENSITIVE ETC.
 
   - Fix for Bug#98445 (30832513), Connection option clientInfoProvider=ClientInfoProviderSP causes NPE.

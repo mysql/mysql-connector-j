@@ -78,6 +78,7 @@ public enum PropertyKey {
     blobsAreStrings("blobsAreStrings", true), //
     blobSendChunkSize("blobSendChunkSize", true), //
     cacheCallableStmts("cacheCallableStmts", true), //
+    cacheDefaultTimezone("cacheDefaultTimezone", true), //
     cachePrepStmts("cachePrepStmts", true), //
     cacheResultSetMetadata("cacheResultSetMetadata", true), //
     cacheServerConfiguration("cacheServerConfiguration", true), //

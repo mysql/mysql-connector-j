@@ -69,9 +69,11 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1359,7 +1361,7 @@ public class StatementRegressionTest extends BaseTestCase {
             createTable("testBug3620", "(field1 TIMESTAMP) ENGINE=InnoDB");
 
             Properties props = new Properties();
-            props.put("cacheDefaultTimezone", "false");
+            props.put(PropertyKey.cacheDefaultTimezone.getKeyName(), "false");
 
             Connection connNoTz = getConnectionWithProps(props);
             PreparedStatement tsPstmt = connNoTz.prepareStatement("INSERT INTO testBug3620 VALUES (?)");
@@ -1893,11 +1895,6 @@ public class StatementRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug5874() throws Exception {
-        if (this.DISABLED_testBug5874) {
-            // TODO: this test is working in c/J 5.1 but fails here; disable for later analysis
-            return;
-        }
-
         TimeZone defaultTimezone = TimeZone.getDefault();
 
         try {
@@ -1918,8 +1915,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
             Properties props = new Properties();
             props.put("useTimezone", "true");
-            props.put("serverTimezone", serverTimezoneName);
-            props.put("cacheDefaultTimezone", "false");
+            props.put(PropertyKey.serverTimezone.getKeyName(), serverTimezoneName);
+            props.put(PropertyKey.cacheDefaultTimezone.getKeyName(), "false");
 
             Connection tzConn = getConnectionWithProps(props);
             Statement tzStmt = tzConn.createStatement();
@@ -8823,7 +8820,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
         final Properties testConnProps = new Properties();
         //testConnProps.setProperty("useTimezone", "true"); // TODO property was removed in 6.0
-        //testConnProps.setProperty("cacheDefaultTimezone", "false"); // TODO property isn't defined
+        testConnProps.setProperty(PropertyKey.cacheDefaultTimezone.getKeyName(), "false");
 
         Connection testConn = null;
 
@@ -8834,7 +8831,7 @@ public class StatementRegressionTest extends BaseTestCase {
             final SimpleDateFormat tFormat = TimeUtil.getSimpleDateFormat(null, "HH:mm:ss", null, null);
             final Time time = new Time(tFormat.parse("10:00:00").getTime());
 
-            // Test a number of time zones that coincide with 'GMT' on the some specifip point in time.
+            // Test a number of time zones that coincide with 'GMT' on the some specific point in time.
             for (String tz : new String[] { "Europe/Lisbon", "UTC", "GMT+00", "GMT" }) {
                 //  Europe/Lisbon ~~ WET (UTC) on 2015-01-01; ~~ CET (UTC+01) on 1970-01-01
                 System.out.println("\nServer time zone: " + tz);
@@ -10699,4 +10696,135 @@ public class StatementRegressionTest extends BaseTestCase {
 
     }
 
+    /**
+     * Tests fix for Bug#Bug#91112 (28125069), AGAIN WRONG JAVA.SQL.DATE.
+     */
+    public void testBug91112() throws Exception {
+        createTable("testBug91112", "(d1 DATE, d2 DATE, d3 DATE)");
+        String query = "select d1, CONVERT(d1, CHAR(10)) as d1c, d2, CONVERT(d2, CHAR(10)) as d2c, d3, CONVERT(d3, CHAR(10)) as d3c from testBug91112";
+
+        TimeZone defaultTimezone = TimeZone.getDefault();
+        Properties props = new Properties();
+        //props.put(PropertyKey.serverTimezone, "Europe/Berlin");
+        props.put(PropertyKey.serverTimezone, "UTC");
+        try {
+            // setting a custom calendar time zone later than the client one to detect day switch 
+            Calendar cal_Los_Angeles = GregorianCalendar.getInstance(TimeZone.getTimeZone("America/Los_Angeles"), Locale.US);
+            SimpleDateFormat sdf_Los_Angeles = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", cal_Los_Angeles, null);
+
+            for (boolean useSSPS : new boolean[] { false, true }) {
+                for (boolean cacheDefaultTimezone : new boolean[] { true, false }) {
+                    String errMsg = "Using useSSPS=" + useSSPS + ", cacheDefaultTimezone=" + cacheDefaultTimezone + ":";
+                    System.out.println(errMsg);
+                    props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+                    props.put(PropertyKey.cacheDefaultTimezone.getKeyName(), "" + cacheDefaultTimezone);
+
+                    // setting a client time zone ahead of the server one to detect day switch 
+                    TimeZone.setDefault(TimeZone.getTimeZone("Europe/Moscow"));
+
+                    Connection con = getConnectionWithProps(props);
+
+                    PreparedStatement pst1 = con.prepareStatement("insert into testBug91112 values (?, ?, ?)");
+                    java.sql.Date d_1982_04_01_MSK = java.sql.Date.valueOf("1982-04-01");
+                    java.sql.Date d_1990_10_20_MSK = java.sql.Date.valueOf("1990-10-20");
+                    LocalDate ld_1990_10_20 = LocalDate.of(1990, 10, 20);
+
+                    pst1.setDate(1, d_1982_04_01_MSK);
+                    pst1.setDate(2, d_1982_04_01_MSK, cal_Los_Angeles);
+                    pst1.setObject(3, ld_1990_10_20);
+                    pst1.execute();
+
+                    this.rs = con.createStatement().executeQuery(query);
+                    testBug91112CheckResultMSK(d_1982_04_01_MSK, d_1990_10_20_MSK, cal_Los_Angeles, sdf_Los_Angeles);
+
+                    PreparedStatement pst2 = con.prepareStatement(query);
+                    this.rs = pst2.executeQuery();
+                    testBug91112CheckResultMSK(d_1982_04_01_MSK, d_1990_10_20_MSK, cal_Los_Angeles, sdf_Los_Angeles);
+
+                    // check the cacheDefaultTimezone behaviour, changing time zone in runtime
+                    TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"));
+
+                    this.stmt.execute("TRUNCATE TABLE testBug91112");
+
+                    pst1.setDate(1, d_1982_04_01_MSK);
+                    pst1.setDate(2, d_1982_04_01_MSK, cal_Los_Angeles);
+                    pst1.setObject(3, ld_1990_10_20);
+                    pst1.execute();
+
+                    this.rs = con.createStatement().executeQuery(query);
+                    testBug91112CheckResultBerlin(d_1982_04_01_MSK, d_1990_10_20_MSK, cal_Los_Angeles, sdf_Los_Angeles, cacheDefaultTimezone);
+
+                    this.rs = pst2.executeQuery();
+                    testBug91112CheckResultBerlin(d_1982_04_01_MSK, d_1990_10_20_MSK, cal_Los_Angeles, sdf_Los_Angeles, cacheDefaultTimezone);
+
+                    PreparedStatement pst3 = con.prepareStatement(query);
+                    this.rs = pst3.executeQuery();
+                    testBug91112CheckResultBerlin(d_1982_04_01_MSK, d_1990_10_20_MSK, cal_Los_Angeles, sdf_Los_Angeles, cacheDefaultTimezone);
+
+                    this.stmt.execute("TRUNCATE TABLE testBug91112");
+                }
+            }
+
+        } finally {
+            TimeZone.setDefault(defaultTimezone);
+        }
+
+    }
+
+    public void testBug91112CheckResultMSK(java.sql.Date d_1982_04_01_MSK, java.sql.Date d_1990_10_20_MSK, Calendar cal_Los_Angeles,
+            SimpleDateFormat sdf_Los_Angeles) throws Exception {
+        assertTrue(this.rs.next());
+        assertEquals("1982-04-01", this.rs.getString(1));
+        assertEquals("1982-04-01", this.rs.getString(2));
+        assertEquals("1982-03-31", this.rs.getString(3));
+        assertEquals("1982-03-31", this.rs.getString(4));
+        assertEquals("1990-10-20", this.rs.getString(5));
+        assertEquals("1990-10-20", this.rs.getString(6));
+        assertEquals(d_1982_04_01_MSK, this.rs.getDate(1));
+        assertEquals(d_1982_04_01_MSK, this.rs.getDate(1, Calendar.getInstance()));
+        assertEquals("1982-03-30 13:00:00", sdf_Los_Angeles.format(this.rs.getDate(3)));
+        assertEquals("1982-03-31 00:00:00", sdf_Los_Angeles.format(this.rs.getDate(3, cal_Los_Angeles)));
+        assertEquals(d_1990_10_20_MSK, this.rs.getDate(5));
+        assertEquals(d_1990_10_20_MSK, this.rs.getDate(5, Calendar.getInstance()));
+    }
+
+    public void testBug91112CheckResultBerlin(java.sql.Date d_1982_04_01_MSK, java.sql.Date d_1990_10_20_MSK, Calendar cal_Los_Angeles,
+            SimpleDateFormat sdf_Los_Angeles, boolean cacheDefaultTimezone) throws Exception {
+        assertTrue(this.rs.next());
+        if (cacheDefaultTimezone) {
+            assertEquals("1982-04-01", this.rs.getString(1));
+            assertEquals("1982-04-01", this.rs.getString(2));
+            assertEquals("1982-03-30 13:00:00", sdf_Los_Angeles.format(this.rs.getDate(3)));
+        } else {
+            assertEquals("1982-03-31", this.rs.getString(1));
+            assertEquals("1982-03-31", this.rs.getString(2));
+            assertEquals("1982-03-30 14:00:00", sdf_Los_Angeles.format(this.rs.getDate(3)));
+        }
+        assertEquals("1982-03-31", this.rs.getString(4));
+        assertEquals("1990-10-20", this.rs.getString(5));
+        assertEquals("1990-10-20", this.rs.getString(6));
+
+        java.sql.Date d_1982_03_31_Berlin = java.sql.Date.valueOf("1982-03-31");
+        java.sql.Date d_1990_10_20_Berlin = java.sql.Date.valueOf("1990-10-20");
+
+        if (cacheDefaultTimezone) {
+            assertEquals(d_1982_04_01_MSK, this.rs.getDate(1));
+            assertEquals(d_1982_04_01_MSK, this.rs.getDate(1, Calendar.getInstance(TimeZone.getTimeZone("Europe/Moscow"))));
+        } else {
+            assertEquals(d_1982_03_31_Berlin, this.rs.getDate(1));
+            assertEquals(d_1982_03_31_Berlin, this.rs.getDate(1, Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"))));
+        }
+
+        assertEquals("1982-03-31", this.rs.getString(3));
+        assertEquals("1982-03-31 00:00:00", sdf_Los_Angeles.format(this.rs.getDate(3, cal_Los_Angeles)));
+
+        if (cacheDefaultTimezone) {
+            assertEquals(d_1990_10_20_MSK, this.rs.getDate(5));
+            assertEquals(d_1990_10_20_MSK, this.rs.getDate(5, Calendar.getInstance(TimeZone.getTimeZone("Europe/Moscow"))));
+        } else {
+            assertEquals(d_1990_10_20_Berlin, this.rs.getDate(5));
+            assertEquals(d_1990_10_20_Berlin, this.rs.getDate(5, Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"))));
+        }
+
+    }
 }

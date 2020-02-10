@@ -1478,7 +1478,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             return null;
         }
 
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession().getServerSession().getDefaultTimeZone(),
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession().getServerSession().getServerTimeZone(),
                 getMultiHostSafeProxy().getSession().getServerSession().getCapabilities().serverSupportsFracSecs(),
                 getMultiHostSafeProxy().getSession().getServerSession().isServerTruncatesFracSecs(), getExceptionInterceptor());
 
@@ -1490,7 +1490,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     private CallableStatement parseCallableStatement(String sql) throws SQLException {
-        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession().getServerSession().getDefaultTimeZone(),
+        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, getMultiHostSafeProxy().getSession().getServerSession().getServerTimeZone(),
                 getMultiHostSafeProxy().getSession().getServerSession().getCapabilities().serverSupportsFracSecs(),
                 getMultiHostSafeProxy().getSession().getServerSession().isServerTruncatesFracSecs(), getExceptionInterceptor());
 

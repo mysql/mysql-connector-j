@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -84,8 +84,8 @@ class EscapeProcessor {
      * 
      * @param sql
      *            the SQL to escape process.
-     * @param defaultTimeZone
-     *            time zone
+     * @param serverTimeZone
+     *            server time zone
      * @param serverSupportsFractionalSecond
      *            flag indicating if server supports fractional seconds
      * @param serverTruncatesFractionalSecond
@@ -98,7 +98,7 @@ class EscapeProcessor {
      * @throws SQLException
      *             if error occurs
      */
-    public static final Object escapeSQL(String sql, TimeZone defaultTimeZone, boolean serverSupportsFractionalSecond, boolean serverTruncatesFractionalSecond,
+    public static final Object escapeSQL(String sql, TimeZone serverTimeZone, boolean serverSupportsFractionalSecond, boolean serverTruncatesFractionalSecond,
             ExceptionInterceptor exceptionInterceptor) throws java.sql.SQLException {
         boolean replaceEscapeSequence = false;
         String escapeSequence = null;
@@ -140,7 +140,7 @@ class EscapeProcessor {
                         if (nestedBrace != -1) {
                             StringBuilder buf = new StringBuilder(token.substring(0, 1));
 
-                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), defaultTimeZone, serverSupportsFractionalSecond,
+                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), serverTimeZone, serverSupportsFractionalSecond,
                                     serverTruncatesFractionalSecond, exceptionInterceptor);
 
                             String remaining = null;
@@ -223,7 +223,7 @@ class EscapeProcessor {
                             }
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{ts")) {
-                        processTimestampToken(defaultTimeZone, newSql, token, serverSupportsFractionalSecond, serverTruncatesFractionalSecond,
+                        processTimestampToken(serverTimeZone, newSql, token, serverSupportsFractionalSecond, serverTruncatesFractionalSecond,
                                 exceptionInterceptor);
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{t")) {
                         processTimeToken(newSql, token, serverSupportsFractionalSecond, exceptionInterceptor);

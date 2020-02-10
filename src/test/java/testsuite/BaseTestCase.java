@@ -80,7 +80,6 @@ public abstract class BaseTestCase extends TestCase {
     protected boolean DISABLED_testBug65503 = true; // TODO disabled for unknown reason
     protected boolean DISABLED_testContention = true; // TODO disabled for unknown reason
     protected boolean DISABLED_testBug3620new = true; // TODO this test is working in c/J 5.1 but fails here; disabled for later analysis
-    protected boolean DISABLED_testBug5874 = true; // TODO this test is working in c/J 5.1 but fails here; disabled for later analysis
 
     /**
      * JDBC URL, initialized from com.mysql.cj.testsuite.url system property, or defaults to jdbc:mysql:///test and its connection URL.

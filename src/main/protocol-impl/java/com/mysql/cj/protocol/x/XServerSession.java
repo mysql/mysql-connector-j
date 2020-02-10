@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,7 +47,6 @@ public class XServerSession implements ServerSession {
     /** The timezone of the server */
     //private TimeZone serverTimeZone = null;
 
-    /** c.f. getDefaultTimeZone(). this value may be overridden during connection initialization */
     private TimeZone defaultTimeZone = TimeZone.getDefault();
 
     @Override
@@ -333,9 +332,5 @@ public class XServerSession implements ServerSession {
 
     public TimeZone getDefaultTimeZone() {
         return this.defaultTimeZone;
-    }
-
-    public void setDefaultTimeZone(TimeZone defaultTimeZone) {
-        this.defaultTimeZone = defaultTimeZone;
     }
 }

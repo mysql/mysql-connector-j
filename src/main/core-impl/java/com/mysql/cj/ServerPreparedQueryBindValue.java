@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,9 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -53,11 +56,15 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     public Calendar calendar;
 
     private TimeZone defaultTimeZone;
+    private TimeZone serverTimeZone;
+    private RuntimeProperty<Boolean> cacheDefaultTimezone = null;
 
     protected String charEncoding = null;
 
-    public ServerPreparedQueryBindValue(TimeZone defaultTZ) {
+    public ServerPreparedQueryBindValue(TimeZone defaultTZ, TimeZone serverTZ, PropertySet pset) {
         this.defaultTimeZone = defaultTZ;
+        this.serverTimeZone = serverTZ;
+        this.cacheDefaultTimezone = pset.getBooleanProperty(PropertyKey.cacheDefaultTimezone);
     }
 
     @Override
@@ -68,7 +75,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     private ServerPreparedQueryBindValue(ServerPreparedQueryBindValue copyMe) {
         super(copyMe);
 
-        this.defaultTimeZone = copyMe.defaultTimeZone;
+        this.serverTimeZone = copyMe.serverTimeZone;
         this.bufferType = copyMe.bufferType;
         this.calendar = copyMe.calendar;
         this.charEncoding = copyMe.charEncoding;
@@ -229,6 +236,8 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
                         storeTime(intoPacket);
                         return;
                     case MysqlType.FIELD_TYPE_DATE:
+                        storeDate(intoPacket);
+                        return;
                     case MysqlType.FIELD_TYPE_DATETIME:
                     case MysqlType.FIELD_TYPE_TIMESTAMP:
                         storeDateTime(intoPacket);
@@ -263,13 +272,45 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
         intoPacket.writeInteger(IntegerDataType.INT4, 0); // tm->day, not used
 
         if (this.calendar == null) {
-            this.calendar = Calendar.getInstance(this.defaultTimeZone, Locale.US);
+            this.calendar = Calendar.getInstance(this.serverTimeZone, Locale.US);
         }
 
         this.calendar.setTime((java.util.Date) this.value);
         intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.HOUR_OF_DAY));
         intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.MINUTE));
         intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.SECOND));
+    }
+
+    private void storeDate(NativePacketPayload intoPacket) {
+        synchronized (this) {
+            if (this.calendar == null) {
+                this.calendar = Calendar.getInstance(this.cacheDefaultTimezone.getValue() ? this.defaultTimeZone : TimeZone.getDefault(), Locale.US);
+            }
+
+            this.calendar.setTime((java.util.Date) this.value);
+
+            this.calendar.set(Calendar.HOUR_OF_DAY, 0);
+            this.calendar.set(Calendar.MINUTE, 0);
+            this.calendar.set(Calendar.SECOND, 0);
+
+            byte length = (byte) 7;
+
+            intoPacket.ensureCapacity(length);
+
+            intoPacket.writeInteger(IntegerDataType.INT1, length); // length
+
+            int year = this.calendar.get(Calendar.YEAR);
+            int month = this.calendar.get(Calendar.MONTH) + 1;
+            int date = this.calendar.get(Calendar.DAY_OF_MONTH);
+
+            intoPacket.writeInteger(IntegerDataType.INT2, year);
+            intoPacket.writeInteger(IntegerDataType.INT1, month);
+            intoPacket.writeInteger(IntegerDataType.INT1, date);
+
+            intoPacket.writeInteger(IntegerDataType.INT1, 0);
+            intoPacket.writeInteger(IntegerDataType.INT1, 0);
+            intoPacket.writeInteger(IntegerDataType.INT1, 0);
+        }
     }
 
     /**
@@ -279,7 +320,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     private void storeDateTime(NativePacketPayload intoPacket) {
         synchronized (this) {
             if (this.calendar == null) {
-                this.calendar = Calendar.getInstance(this.defaultTimeZone, Locale.US);
+                this.calendar = Calendar.getInstance(this.serverTimeZone, Locale.US);
             }
 
             this.calendar.setTime((java.util.Date) this.value);
