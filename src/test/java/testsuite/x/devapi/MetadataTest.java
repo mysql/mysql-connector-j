@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -81,7 +81,11 @@ public class MetadataTest extends BaseTableTestCase {
         }
         assertEquals(0, idCol.getFractionalDigits());
         assertEquals(false, idCol.isNumberSigned()); // odd default
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.20"))) {
+            // after Bug#30516849 fix
+            assertEquals("utf8mb4_0900_ai_ci", idCol.getCollationName());
+            assertEquals("utf8mb4", idCol.getCharacterSetName());
+        } else if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
             // after Bug#28180155 fix
             assertEquals("utf8mb4_general_ci", idCol.getCollationName());
             assertEquals("utf8mb4", idCol.getCharacterSetName());
@@ -110,7 +114,11 @@ public class MetadataTest extends BaseTableTestCase {
         }
         assertEquals(0, nameCol.getFractionalDigits());
         assertEquals(false, nameCol.isNumberSigned());
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.20"))) {
+            // after Bug#30516849 fix
+            assertEquals("utf8mb4_0900_ai_ci", nameCol.getCollationName());
+            assertEquals("utf8mb4", nameCol.getCharacterSetName());
+        } else if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
             // after Bug#28180155 fix
             assertEquals("utf8mb4_general_ci", nameCol.getCollationName());
             assertEquals("utf8mb4", nameCol.getCharacterSetName());
@@ -188,7 +196,11 @@ public class MetadataTest extends BaseTableTestCase {
         }
         assertEquals(0, idCol.getFractionalDigits());
         assertEquals(false, idCol.isNumberSigned());
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.20"))) {
+            // after Bug#30516849 fix
+            assertEquals("utf8mb4_0900_ai_ci", idCol.getCollationName());
+            assertEquals("utf8mb4", idCol.getCharacterSetName());
+        } else if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
             // after Bug#28180155 fix
             assertEquals("utf8mb4_general_ci", idCol.getCollationName());
             assertEquals("utf8mb4", idCol.getCharacterSetName());
@@ -385,7 +397,11 @@ public class MetadataTest extends BaseTableTestCase {
         }
         // assertEquals(0, c.getFractionalDigits()); // irrelevant, we shouldn't expect any concrete value
         assertEquals(false, c.isNumberSigned());
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.20"))) {
+            // after Bug#30516849 fix
+            assertEquals("utf8mb4_0900_ai_ci", c.getCollationName());
+            assertEquals("utf8mb4", c.getCharacterSetName());
+        } else if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
             // after Bug#28180155 fix
             assertEquals("utf8mb4_general_ci", c.getCollationName());
             assertEquals("utf8mb4", c.getCharacterSetName());
@@ -581,7 +597,11 @@ public class MetadataTest extends BaseTableTestCase {
         // assertEquals(3, c.getLength()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(0, c.getFractionalDigits()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(false, c.isNumberSigned()); // irrelevant, we shouldn't expect any concrete value
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.20"))) {
+            // after Bug#30516849 fix
+            assertEquals("utf8mb4_0900_ai_ci", c.getCollationName());
+            assertEquals("utf8mb4", c.getCharacterSetName());
+        } else if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
             // after Bug#28180155 fix
             assertEquals("utf8mb4_general_ci", c.getCollationName());
             assertEquals("utf8mb4", c.getCharacterSetName());
@@ -606,7 +626,11 @@ public class MetadataTest extends BaseTableTestCase {
         // assertEquals(1, c.getLength()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(0, c.getFractionalDigits()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(false, c.isNumberSigned()); // irrelevant, we shouldn't expect any concrete value
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.20"))) {
+            // after Bug#30516849 fix
+            assertEquals("utf8mb4_0900_ai_ci", c.getCollationName());
+            assertEquals("utf8mb4", c.getCharacterSetName());
+        } else if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
             // after Bug#28180155 fix
             assertEquals("utf8mb4_general_ci", c.getCollationName());
             assertEquals("utf8mb4", c.getCharacterSetName());
