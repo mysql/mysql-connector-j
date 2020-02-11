@@ -523,6 +523,18 @@ public class ExportControlled {
                 }
             }
         }
+        else {
+            try{
+                if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreType)) {
+                    KeyStore clientKeyStore = KeyStore.getInstance(clientCertificateKeyStoreType);
+                    clientKeyStore.load(null);
+                    kmf.init(null);
+                    kms = kmf.getKeyManagers();
+                }
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+        }
 
         InputStream trustStoreIS = null;
         try {
