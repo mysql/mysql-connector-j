@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1758,12 +1758,18 @@ public class StatementsTest extends BaseTestCase {
         createTable("localInfileHooked", "(field1 int, field2 varchar(255))");
         String streamData = "1\tabcd\n2\tefgh\n3\tijkl";
         InputStream stream = new ByteArrayInputStream(streamData.getBytes());
+
+        Properties props = new Properties();
+        props.setProperty("allowLoadLocalInfile", "true");
+        Connection testConn = getConnectionWithProps(props);
+        Statement testStmt = testConn.createStatement();
+
         try {
-            ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
-            this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
+            ((com.mysql.jdbc.Statement) testStmt).setLocalInfileInputStream(stream);
+            testStmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
                     + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) this.conn).getEncoding(), (com.mysql.jdbc.Connection) this.conn));
             assertEquals(-1, stream.read());
-            this.rs = this.stmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");
+            this.rs = testStmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");
             this.rs.next();
             assertEquals("abcd", this.rs.getString(1));
             this.rs.next();
@@ -1771,7 +1777,8 @@ public class StatementsTest extends BaseTestCase {
             this.rs.next();
             assertEquals("ijkl", this.rs.getString(1));
         } finally {
-            ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(null);
+            ((com.mysql.jdbc.Statement) testStmt).setLocalInfileInputStream(null);
+            testConn.close();
         }
     }
 }

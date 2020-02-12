@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -668,7 +668,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
         }).exposeAsDriverPropertyInfoInternal(info, slotsToReserve);
     }
 
-    private BooleanConnectionProperty allowLoadLocalInfile = new BooleanConnectionProperty("allowLoadLocalInfile", true,
+    private BooleanConnectionProperty allowLoadLocalInfile = new BooleanConnectionProperty("allowLoadLocalInfile", false,
             Messages.getString("ConnectionProperties.loadDataLocal"), "3.0.3", SECURITY_CATEGORY, Integer.MAX_VALUE);
 
     private BooleanConnectionProperty allowMultiQueries = new BooleanConnectionProperty("allowMultiQueries", false,

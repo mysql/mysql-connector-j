@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2255,8 +2255,25 @@ public class StatementRegressionTest extends BaseTestCase {
             } else {
                 fileNameBuf = new StringBuilder(tempFile.getAbsolutePath());
             }
+            final String fileName = fileNameBuf.toString();
 
-            int updateCount = this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "
+            assertThrows(SQLException.class,
+                    versionMeetsMinimum(8, 0, 19) ? "Loading local data is disabled;.*" : "The used command is not allowed with this MySQL version",
+                    new Callable<Void>() {
+                        public Void call() throws Exception {
+                            StatementRegressionTest.this.stmt
+                                    .executeUpdate("LOAD DATA LOCAL INFILE '" + fileName + "' INTO TABLE loadDataRegress CHARACTER SET "
+                                            + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) StatementRegressionTest.this.conn).getEncoding(),
+                                                    (com.mysql.jdbc.Connection) StatementRegressionTest.this.conn));
+                            return null;
+                        }
+                    });
+
+            Properties props = new Properties();
+            props.setProperty("allowLoadLocalInfile", "true");
+            Connection testConn = getConnectionWithProps(props);
+            int updateCount = testConn.createStatement().executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString()
+                    + "' INTO TABLE loadDataRegress CHARACTER SET "
                     + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) this.conn).getEncoding(), (com.mysql.jdbc.Connection) this.conn));
             assertTrue(updateCount == rowCount);
         } finally {

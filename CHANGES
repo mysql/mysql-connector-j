@@ -3,6 +3,8 @@
 
 Version 5.1.49
 
+  - Fix for Bug#30866178, Not recommended default for 'allowLoadLocalInfile'. Back-port from Bug#94051 (29261254).
+
   - Fix for Bug#30657312, Disable external entities in Fabric's XML parser.
 
   - Fix for Bug#96442 (30151808), INCORRECT DATE ERROR WHEN CALLING GETMETADATA ON PREPARED STATEMENT.

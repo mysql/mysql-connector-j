@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -733,6 +733,7 @@ public class ConnectionTest extends BaseTestCase {
         createTable("testLocalInfileWithUrl", "(field1 LONGTEXT)");
 
         Properties props = new Properties();
+        props.setProperty("allowLoadLocalInfile", "true");
         props.setProperty("allowUrlInLocalInfile", "true");
 
         Connection loadConn = getConnectionWithProps(props);
@@ -784,7 +785,7 @@ public class ConnectionTest extends BaseTestCase {
     public void testLocalInfileDisabled() throws Exception {
         createTable("testLocalInfileDisabled", "(field1 varchar(255))");
 
-        File infile = File.createTempFile("foo", "txt");
+        final File infile = File.createTempFile("foo", "txt");
         infile.deleteOnExit();
         //String url = infile.toURL().toExternalForm();
         FileWriter output = new FileWriter(infile);
@@ -792,17 +793,32 @@ public class ConnectionTest extends BaseTestCase {
         output.flush();
         output.close();
 
-        Connection loadConn = getConnectionWithProps(new Properties());
+        // Test load local infile support disabled via client capabilities by default.
+        assertThrows(SQLException.class,
+                versionMeetsMinimum(8, 0, 19) ? "Loading local data is disabled;.*" : "The used command is not allowed with this MySQL version",
+                new Callable<Void>() {
+                    public Void call() throws Exception {
+                        ConnectionTest.this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
+                        return null;
+                    }
+                });
+
+        // Test load local infile support enabled via client capabilities but disabled on the connector.
+        Properties props = new Properties();
+        props.setProperty("allowLoadLocalInfile", "true");
+        final Connection loadConn = getConnectionWithProps(props);
 
         try {
-            // have to do this after connect, otherwise it's the server that's enforcing it
-            ((com.mysql.jdbc.Connection) loadConn).setAllowLoadLocalInfile(false);
-            try {
-                loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
-                fail("Should've thrown an exception.");
-            } catch (SQLException sqlEx) {
-                assertEquals(SQLError.SQL_STATE_GENERAL_ERROR, sqlEx.getSQLState());
-            }
+            // Must be set after connect, otherwise it's the server that's enforcing it.
+            ((ConnectionProperties) loadConn).setAllowLoadLocalInfile(false);
+
+            assertThrows(SQLException.class, "Server asked for stream in response to LOAD DATA LOCAL INFILE but functionality is disabled at client by "
+                    + "'allowLoadLocalInfile' being set to 'false'\\.", new Callable<Void>() {
+                        public Void call() throws Exception {
+                            loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
+                            return null;
+                        }
+                    });
 
             assertFalse(loadConn.createStatement().executeQuery("SELECT * FROM testLocalInfileDisabled").next());
         } finally {

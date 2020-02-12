@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -4911,6 +4911,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         Properties props = new Properties();
+        props.put("allowLoadLocalInfile", "true");
         props.put("useCompression", "true");
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
@@ -4919,7 +4920,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 + CharsetMapping.getMysqlCharsetForJavaEncoding(((MySQLConnection) this.conn).getEncoding(), (com.mysql.jdbc.Connection) conn1));
 
         assertTrue(updateCount == loops);
-
     }
 
     public void testStackOverflowOnMissingInterceptor() throws Exception {
