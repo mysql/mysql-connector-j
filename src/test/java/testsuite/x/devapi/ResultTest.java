@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -143,7 +143,7 @@ public class ResultTest extends DevApiBaseTestCase {
         sqlUpdate("drop table if exists testx");
         sqlUpdate("create table testx (w date, x datetime(6), y timestamp(6), z time)");
         Table table = this.schema.getTable("testx");
-        SimpleDateFormat df = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd'T'HH:mm:ss.S", null, null);
+        SimpleDateFormat df = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd'T'HH:mm:ss.S", null);
         java.util.Date theDate = df.parse("2015-09-22T12:31:16.136");
         Date w = new Date(theDate.getTime());
         Timestamp y = new Timestamp(theDate.getTime());

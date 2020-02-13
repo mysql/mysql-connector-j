@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -255,15 +255,44 @@ public class TimeUtil {
         return truncatedTimestamp;
     }
 
-    public static SimpleDateFormat getSimpleDateFormat(SimpleDateFormat cachedSimpleDateFormat, String pattern, Calendar cal, TimeZone tz) {
+    /**
+     * Get SimpleDateFormat with a default Calendar which TimeZone is replaced with the provided one.
+     * <p>
+     * Note: The SimpleDateFormat object returned by this method contains a default Calendar with an altered TimeZone. It's safe to cache it between this method
+     * calls because the Calendar object itself is not altered.
+     * 
+     * @param cachedSimpleDateFormat
+     *            existing SimpleDateFormat to use instead of creating a new one
+     * @param pattern
+     *            format pattern
+     * @param tz
+     *            {@link TimeZone} object replacing the default one
+     * @return {@link SimpleDateFormat} object
+     */
+    public static SimpleDateFormat getSimpleDateFormat(SimpleDateFormat cachedSimpleDateFormat, String pattern, TimeZone tz) {
         SimpleDateFormat sdf = cachedSimpleDateFormat != null ? cachedSimpleDateFormat : new SimpleDateFormat(pattern, Locale.US);
-
-        if (cal != null) {
-            sdf.setCalendar((Calendar) cal.clone()); // cloning the original calendar to avoid it's modification
-        }
-
         if (tz != null) {
             sdf.setTimeZone(tz);
+        }
+        return sdf;
+    }
+
+    /**
+     * Get SimpleDateFormat where a default Calendar is replaced with the provided one.
+     * <p>
+     * Note: Don't cache the SimpleDateFormat object returned by this method. Other methods could rely on assumption that the cached SimpleDateFormat has a
+     * default Calendar and that it is safe to change only it's time zone (see {@link #getSimpleDateFormat(SimpleDateFormat, String, TimeZone)}.
+     * 
+     * @param pattern
+     *            format pattern
+     * @param cal
+     *            {@link Calendar} object replacing the default one
+     * @return {@link SimpleDateFormat} object
+     */
+    public static SimpleDateFormat getSimpleDateFormat(String pattern, Calendar cal) {
+        SimpleDateFormat sdf = new SimpleDateFormat(pattern, Locale.US);
+        if (cal != null) {
+            sdf.setCalendar(cal);
         }
         return sdf;
     }

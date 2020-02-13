@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,10 +52,10 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
  */
 public class ExprUtil {
     // Date formats for sending dates and times to the server as strings.
-    private static SimpleDateFormat javaSqlDateFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd", null, null);
-    private static SimpleDateFormat javaSqlTimestampFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd'T'HH:mm:ss.S", null, null);
-    private static SimpleDateFormat javaSqlTimeFormat = TimeUtil.getSimpleDateFormat(null, "HH:mm:ss.S", null, null);
-    private static SimpleDateFormat javaUtilDateFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd'T'HH:mm:ss.S", null, null);
+    private static SimpleDateFormat javaSqlDateFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd", null);
+    private static SimpleDateFormat javaSqlTimestampFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd'T'HH:mm:ss.S", null);
+    private static SimpleDateFormat javaSqlTimeFormat = TimeUtil.getSimpleDateFormat(null, "HH:mm:ss.S", null);
+    private static SimpleDateFormat javaUtilDateFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd'T'HH:mm:ss.S", null);
 
     /**
      * Protocol buffers helper to build a LITERAL Expr with a Scalar NULL type.

@@ -1908,8 +1908,8 @@ public class StatementRegressionTest extends BaseTestCase {
 
             long offsetDifference = clientTimezoneOffsetMillis - serverTimezoneOffsetMillis;
 
-            SimpleDateFormat timestampFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null);
-            SimpleDateFormat timeFormat = TimeUtil.getSimpleDateFormat(null, "HH:mm:ss", null, null);
+            SimpleDateFormat timestampFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null);
+            SimpleDateFormat timeFormat = TimeUtil.getSimpleDateFormat(null, "HH:mm:ss", null);
 
             long pointInTime = timestampFormat.parse("2004-10-04 09:19:00").getTime();
 
@@ -3883,7 +3883,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(earlier, datetimeSeconds1);
             assertEquals(earlier, timestampSeconds1);
 
-            SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, "MM/dd/yyyy HH:mm z", null, TimeZone.getTimeZone("America/New_York"));
+            SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, "MM/dd/yyyy HH:mm z", TimeZone.getTimeZone("America/New_York"));
             System.out.println(sdf.format(ts2));
             System.out.println(sdf.format(ts1));
         } finally {
@@ -8826,9 +8826,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
         try {
             TimeZone.setDefault(TimeZone.getTimeZone("America/Chicago")); // ~~ CST (UTC-06)
-            final SimpleDateFormat tsFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null);
+            final SimpleDateFormat tsFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null);
             final Timestamp timestamp = new Timestamp(tsFormat.parse("2015-01-01 10:00:00").getTime());
-            final SimpleDateFormat tFormat = TimeUtil.getSimpleDateFormat(null, "HH:mm:ss", null, null);
+            final SimpleDateFormat tFormat = TimeUtil.getSimpleDateFormat(null, "HH:mm:ss", null);
             final Time time = new Time(tFormat.parse("10:00:00").getTime());
 
             // Test a number of time zones that coincide with 'GMT' on the some specific point in time.
@@ -8936,8 +8936,7 @@ public class StatementRegressionTest extends BaseTestCase {
             return;
         }
 
-        Timestamp originalTs = new Timestamp(
-                TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.SSS", null, null).parse("2014-12-31 23:59:59.999").getTime());
+        Timestamp originalTs = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.SSS", null).parse("2014-12-31 23:59:59.999").getTime());
         Timestamp roundedTs = new Timestamp(originalTs.getTime() + 1);
         Timestamp truncatedTs = new Timestamp(originalTs.getTime() - 999);
 
@@ -10710,7 +10709,7 @@ public class StatementRegressionTest extends BaseTestCase {
         try {
             // setting a custom calendar time zone later than the client one to detect day switch 
             Calendar cal_Los_Angeles = GregorianCalendar.getInstance(TimeZone.getTimeZone("America/Los_Angeles"), Locale.US);
-            SimpleDateFormat sdf_Los_Angeles = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", cal_Los_Angeles, null);
+            SimpleDateFormat sdf_Los_Angeles = TimeUtil.getSimpleDateFormat("yyyy-MM-dd HH:mm:ss", cal_Los_Angeles);
 
             for (boolean useSSPS : new boolean[] { false, true }) {
                 for (boolean cacheDefaultTimezone : new boolean[] { true, false }) {
@@ -10827,4 +10826,68 @@ public class StatementRegressionTest extends BaseTestCase {
         }
 
     }
+
+    /**
+     * Tests fix for Bug#98536 (30877755), SIMPLEDATEFORMAT COULD CACHE A WRONG CALENDAR.
+     */
+    public void testBug98536() throws Exception {
+        GregorianCalendar prolepticGc = new GregorianCalendar();
+        prolepticGc.setGregorianChange(new Date(Long.MIN_VALUE));
+        prolepticGc.clear();
+        prolepticGc.set(Calendar.DAY_OF_MONTH, 8);
+        prolepticGc.set(Calendar.MONTH, Calendar.OCTOBER);
+        prolepticGc.set(Calendar.YEAR, 1582);
+
+        GregorianCalendar gc = new GregorianCalendar();
+        gc.clear();
+        gc.setTimeInMillis(prolepticGc.getTimeInMillis());
+
+        assertEquals(1582, gc.get(Calendar.YEAR));
+        assertEquals(8, gc.get(Calendar.MONTH));
+        assertEquals(28, gc.get(Calendar.DAY_OF_MONTH));
+
+        createTable("testBug98536", "(d1 date, pd date, d2 date)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+
+        boolean useServerPrepStmts = false;
+
+        do {
+            final String testCase = String.format("Case: [useServerPrepStmts=%s]", useServerPrepStmts ? "Y" : "N");
+            System.out.println(testCase);
+
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useServerPrepStmts);
+
+            Connection c1 = getConnectionWithProps(props);
+            Statement st1 = c1.createStatement();
+
+            st1.execute("truncate table testBug98536");
+
+            java.sql.Date d1 = new java.sql.Date(prolepticGc.getTime().getTime());
+
+            this.pstmt = c1.prepareStatement("insert into testBug98536 values(?,?,?)");
+            this.pstmt.setDate(1, d1);
+            this.pstmt.setDate(2, d1, prolepticGc);
+            this.pstmt.setDate(3, d1);
+            this.pstmt.execute();
+
+            /*
+             * Checking stored values by retrieving them as strings to avoid conversions on c/J side.
+             */
+            this.rs = st1.executeQuery(
+                    "select DATE_FORMAT(d1, '%Y-%m-%d') as d1, DATE_FORMAT(pd, '%Y-%m-%d') as pd, DATE_FORMAT(d2, '%Y-%m-%d') as d2 from testBug98536");
+            this.rs.next();
+            System.out.println(this.rs.getString(1) + ", " + this.rs.getString(2) + ", " + this.rs.getString(3));
+
+            assertEquals(testCase, "1582-09-28", this.rs.getString(1)); // according to Julian calendar
+            assertEquals(testCase, "1582-10-08", this.rs.getString(2)); // according to proleptic Gregorian calendar
+            assertEquals(testCase, "1582-09-28", this.rs.getString(3)); // according to Julian calendar
+
+            c1.close();
+
+        } while (useServerPrepStmts = !useServerPrepStmts);
+    }
+
 }

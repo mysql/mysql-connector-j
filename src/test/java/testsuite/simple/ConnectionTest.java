@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1937,7 +1937,7 @@ public class ConnectionTest extends BaseTestCase {
             testUrl = testUrl.substring(0, b) + testUrl.substring(e, testUrl.length());
         }
         String query = "SELECT /* testEnableEscapeProcessing: (%d) */ {fn sin(pi()/2)}, {ts '2015-08-16 11:22:33'}, {fn ucase('this is mysql')}";
-        Timestamp testTimestamp = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null).parse("2015-08-16 11:22:33").getTime());
+        Timestamp testTimestamp = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null).parse("2015-08-16 11:22:33").getTime());
 
         for (int tst = 0; tst < 8; tst++) {
             boolean enableEscapeProcessing = (tst & 0x1) != 0;

@@ -4711,7 +4711,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         testStmt.executeUpdate("INSERT INTO testBug80522 VALUES ('00:00:00', '0000-00-00', 'Zeros')");
         final ResultSet testRs = testStmt.executeQuery("SELECT * FROM testBug80522");
         assertTrue(testRs.next());
-        assertEquals(new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null, null).parse("1970-01-01 00:00:00").getTime()),
+        assertEquals(new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null).parse("1970-01-01 00:00:00").getTime()),
                 testRs.getTimestamp(1));
         assertThrows(SQLException.class, "Zero date value prohibited", new Callable<Void>() {
             public Void call() throws Exception {
@@ -5799,7 +5799,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      *             if the test fails
      */
     public void testBug23702040() throws Exception {
-        SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd", null, TimeZone.getTimeZone("Europe/Bucharest"));
+        SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd", TimeZone.getTimeZone("Europe/Bucharest"));
         sdf.setLenient(false);
 
         java.util.Date expected = sdf.parse("1994-03-27");
@@ -6220,7 +6220,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             }
             testConn2 = getConnectionWithProps(props);
 
-            Timestamp ts2 = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.SSS", null, null).parse("2019-12-30 13:59:57.789").getTime());
+            Timestamp ts2 = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.SSS", null).parse("2019-12-30 13:59:57.789").getTime());
             createTable("testBug22305979_orig_1",
                     "(id int, tmp int,ts1 timestamp(6),ts2 timestamp(3) NOT NULL DEFAULT '2001-01-01 00:00:01',primary key(id,ts1) )");
             this.stmt.execute("insert into testBug22305979_orig_1 values (1,100,'2014-12-31 23:59:59.123','2015-12-31 23:59:59.456')");
