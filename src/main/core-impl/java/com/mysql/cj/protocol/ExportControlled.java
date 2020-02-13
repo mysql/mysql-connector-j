@@ -522,17 +522,16 @@ public class ExportControlled {
                     }
                 }
             }
-        }
-        else {
+        } else {
+            // Some KeyManagers do not require a keystore to be in a file, so see if there's a functional KeyManager even though
+            // clientCertificateKeyStoreUrl was empty.
             try{
                 if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreType)) {
-                    KeyStore clientKeyStore = KeyStore.getInstance(clientCertificateKeyStoreType);
-                    clientKeyStore.load(null);
-                    kmf.init(null);
                     kms = kmf.getKeyManagers();
                 }
-            } catch (Exception e) {
-                System.out.println(e);
+            } catch (IllegalStateException ise) {
+                throw ExceptionFactory.createException(SSLParamsException.class, "No keystore file/URL given, and client certificate key store of type " + clientCertificateKeyStoreType + " is not initialized.",
+                        ise, exceptionInterceptor);
             }
         }
 
