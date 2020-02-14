@@ -3,6 +3,9 @@
 
 Version 8.0.20
 
+  - Fix for Bug#97724 (30570721), Contribution: Allow \'3.\' formatted numbers.
+    Thanks to Nick Pollett for his contribution.
+
   - Fix for Bug#98536 (30877755), SIMPLEDATEFORMAT COULD CACHE A WRONG CALENDAR.
 
   - Fix for Bug#91112 (28125069), AGAIN WRONG JAVA.SQL.DATE.

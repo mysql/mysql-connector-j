@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,7 +52,7 @@ public abstract class AbstractNumericValueFactory<T> extends DefaultValueFactory
         String s = StringUtils.toString(bytes, offset, length, f.getEncoding());
         byte[] newBytes = s.getBytes();
 
-        if (s.contains("e") || s.contains("E") || s.matches("-?(\\d+)?\\.\\d+")) {
+        if (s.contains("e") || s.contains("E") || s.matches("-?\\d*\\.\\d*")) {
             // floating point
             return createFromDouble(MysqlTextValueDecoder.getDouble(newBytes, 0, newBytes.length));
         } else if (s.matches("-?\\d+")) {

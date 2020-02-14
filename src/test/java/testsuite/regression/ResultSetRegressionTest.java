@@ -7319,4 +7319,30 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals("testBug30474158", this.rs.getString(1));
         }
     }
+
+    /**
+     * Tests fix for Bug#97724 (30570721), Contribution: Allow \'3.\' formatted numbers.
+     */
+    public void testBug97724() throws Exception {
+        createTable("testBug97724", "(data VARCHAR(100))");
+        assertEquals(4, this.stmt.executeUpdate("INSERT INTO testBug97724 VALUES ('0.0'), ('.1'), ('2.'), ('3.3')"));
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug97724");
+        assertTrue(this.rs.next());
+        assertFalse(this.rs.getBoolean(1));
+        assertEquals(0, this.rs.getInt(1));
+        assertEquals(0.0d, this.rs.getDouble(1));
+        assertTrue(this.rs.next());
+        assertTrue(this.rs.getBoolean(1));
+        assertEquals(0, this.rs.getInt(1));
+        assertEquals(0.1d, this.rs.getDouble(1));
+        assertTrue(this.rs.next());
+        assertTrue(this.rs.getBoolean(1));
+        assertEquals(2, this.rs.getInt(1));
+        assertEquals(2.0d, this.rs.getDouble(1));
+        assertTrue(this.rs.next());
+        assertTrue(this.rs.getBoolean(1));
+        assertEquals(3, this.rs.getInt(1));
+        assertEquals(3.3d, this.rs.getDouble(1));
+        assertFalse(this.rs.next());
+    }
 }
