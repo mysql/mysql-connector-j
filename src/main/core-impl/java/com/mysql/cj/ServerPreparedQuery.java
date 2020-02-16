@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -318,9 +318,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
 
     public NativePacketPayload sendExecutePacket(NativePacketPayload packet, String queryAsString) { // TODO queryAsString should be shared instead of passed
 
-        boolean countDuration = this.profileSQL || this.logSlowQueries || this.gatherPerfMetrics;
-
-        long begin = countDuration ? this.session.getCurrentTimeNanosOrMillis() : 0;
+        final long begin = this.session.getCurrentTimeNanosOrMillis();
 
         resetCancelledState();
 
@@ -335,34 +333,35 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
 
             NativePacketPayload resultPacket = this.session.sendCommand(packet, false, 0);
 
-            long queryEndTime = countDuration ? this.session.getCurrentTimeNanosOrMillis() : 0L;
+            final long queryEndTime = this.session.getCurrentTimeNanosOrMillis();
 
             if (timeoutTask != null) {
                 stopQueryTimer(timeoutTask, true, true);
                 timeoutTask = null;
             }
 
-            long elapsedTime = countDuration ? queryEndTime - begin : 0L;
+            final long executeTime = queryEndTime - begin;
+            setExecuteTime(executeTime);
 
             if (this.logSlowQueries) {
                 this.queryWasSlow = this.useAutoSlowLog ? //
-                        this.session.getProtocol().getMetricsHolder().checkAbonormallyLongQuery(elapsedTime)
-                        : elapsedTime > this.slowQueryThresholdMillis.getValue();
+                        this.session.getProtocol().getMetricsHolder().checkAbonormallyLongQuery(executeTime)
+                        : executeTime > this.slowQueryThresholdMillis.getValue();
 
                 if (this.queryWasSlow) {
-                    this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_SLOW_QUERY, this.session, this, null, elapsedTime, new Throwable(),
+                    this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_SLOW_QUERY, this.session, this, null, executeTime, new Throwable(),
                             Messages.getString("ServerPreparedStatement.15", new String[] { String.valueOf(this.session.getSlowQueryThreshold()),
-                                    String.valueOf(elapsedTime), this.originalSql, queryAsString }));
+                                    String.valueOf(executeTime), this.originalSql, queryAsString }));
                 }
             }
 
             if (this.gatherPerfMetrics) {
-                this.session.getProtocol().getMetricsHolder().registerQueryExecutionTime(elapsedTime);
+                this.session.getProtocol().getMetricsHolder().registerQueryExecutionTime(executeTime);
                 this.session.getProtocol().getMetricsHolder().incrementNumberOfPreparedExecutes();
             }
 
             if (this.profileSQL) {
-                this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_EXECUTE, this.session, this, null, elapsedTime, new Throwable(),
+                this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_EXECUTE, this.session, this, null, executeTime, new Throwable(),
                         truncateQueryToLog(queryAsString));
             }
 

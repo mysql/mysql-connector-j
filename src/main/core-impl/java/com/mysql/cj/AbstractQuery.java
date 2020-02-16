@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -87,6 +87,9 @@ public abstract class AbstractQuery implements Query {
     /** Has clearWarnings() been called? */
     protected boolean clearWarningsCalled = false;
 
+    /** Elapsed time of the execution */
+    private long executeTime = -1;
+
     public AbstractQuery(NativeSession sess) {
         statementCounter++;
         this.session = sess;
@@ -102,6 +105,16 @@ public abstract class AbstractQuery implements Query {
     @Override
     public void setCancelStatus(CancelStatus cs) {
         this.cancelStatus = cs;
+    }
+
+    @Override
+    public long getExecuteTime() {
+        return this.executeTime;
+    }
+
+    @Override
+    public void setExecuteTime(long executeTime) {
+        this.executeTime = executeTime;
     }
 
     @Override

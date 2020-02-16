@@ -911,7 +911,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     public final <T extends Resultset> T sendQueryPacket(Query callingQuery, NativePacketPayload queryPacket, int maxRows, boolean streamResults,
             ColumnDefinition cachedMetadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
 
-        long queryStartTime = this.profileSQL || this.logSlowQueries ? getCurrentTimeNanosOrMillis() : 0;
+        final long queryStartTime = getCurrentTimeNanosOrMillis();
 
         this.statementExecutionDepth++;
 
@@ -940,8 +940,11 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             // Send query command and sql query string
             NativePacketPayload resultPacket = sendCommand(queryPacket, false, 0);
 
-            long queryEndTime = this.profileSQL || this.logSlowQueries ? getCurrentTimeNanosOrMillis() : 0L;
-            long queryDuration = this.profileSQL || this.logSlowQueries ? queryEndTime - queryStartTime : 0L;
+            final long queryEndTime = getCurrentTimeNanosOrMillis();
+            final long queryDuration = queryEndTime - queryStartTime;
+            if (callingQuery != null) {
+                callingQuery.setExecuteTime(queryDuration);
+            }
 
             boolean queryWasSlow = this.logSlowQueries && (this.useAutoSlowLog ? this.metricsHolder.checkAbonormallyLongQuery(queryDuration)
                     : queryDuration > this.propertySet.getIntegerProperty(PropertyKey.slowQueryThresholdMillis).getValue());

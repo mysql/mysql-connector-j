@@ -3,6 +3,9 @@
 
 Version 8.0.20
 
+  - Fix for Bug#97714 (30570249), Contribution: Expose elapsed time for query interceptor to avoid hacky thread local implementations.
+    Thanks to Matti Sillanpää and Johnathan Crawford for their contribution.
+
   - Fix for Bug#97724 (30570721), Contribution: Allow \'3.\' formatted numbers.
     Thanks to Nick Pollett for his contribution.
 

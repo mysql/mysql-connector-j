@@ -143,6 +143,8 @@ import com.mysql.cj.jdbc.MysqlXAConnection;
 import com.mysql.cj.jdbc.MysqlXADataSource;
 import com.mysql.cj.jdbc.MysqlXid;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.ServerPreparedStatement;
+import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.SuspendableXAConnection;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
@@ -11611,5 +11613,34 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 fail("Not supposed to fail here.");
             }
         }
+    }
+
+    /**
+     * Test fix for Bug#97714 (30570249), Contribution: Expose elapsed time for query interceptor to avoid hacky thread local implementations.
+     */
+    public void testBug97714() throws Exception {
+        boolean useSPS = false;
+
+        do {
+            final String testCase = String.format("Case: [useServerPrepStmts: %s]", useSPS ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty("useServerPrepStmts", Boolean.toString(useSPS));
+            Connection testConn = getConnectionWithProps(props);
+
+            // Statement
+            Statement testStmt = testConn.createStatement();
+            assertEquals(testCase, StatementImpl.class, testStmt.getClass());
+            this.rs = testStmt.executeQuery("SELECT SLEEP(0.25)");
+            assertTrue(testCase, ((Query) testStmt).getExecuteTime() >= 250);
+
+            // PreparedStatement
+            PreparedStatement testPstmt = testConn.prepareStatement("SELECT SLEEP(0.25)");
+            assertEquals(testCase, useSPS ? ServerPreparedStatement.class : ClientPreparedStatement.class, testPstmt.getClass());
+            this.rs = testPstmt.executeQuery();
+            assertTrue(testCase, ((Query) testPstmt).getExecuteTime() >= 250);
+
+            testConn.close();
+        } while (useSPS = !useSPS);
     }
 }

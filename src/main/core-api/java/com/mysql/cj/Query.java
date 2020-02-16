@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -88,6 +88,15 @@ public interface Query {
     int getTimeoutInMillis();
 
     void setTimeoutInMillis(int timeoutInMillis);
+
+    void setExecuteTime(long executeTime);
+
+    /**
+     * Returns the elapsed time for the server to execute the query.
+     *
+     * @return the time it took for the server to execute the query.
+     */
+    long getExecuteTime();
 
     CancelQueryTask startQueryTimer(Query stmtToCancel, int timeout);
 

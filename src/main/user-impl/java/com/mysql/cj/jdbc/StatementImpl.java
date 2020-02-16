@@ -2238,6 +2238,16 @@ public class StatementImpl implements JdbcStatement {
     }
 
     @Override
+    public long getExecuteTime() {
+        return this.query.getExecuteTime();
+    }
+
+    @Override
+    public void setExecuteTime(long executeTime) {
+        this.query.setExecuteTime(executeTime);
+    }
+
+    @Override
     public AtomicBoolean getStatementExecuting() {
         return this.query.getStatementExecuting();
     }
