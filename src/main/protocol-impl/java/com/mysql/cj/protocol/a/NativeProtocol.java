@@ -130,6 +130,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     protected static final int INITIAL_PACKET_SIZE = 1024;
     protected static final int COMP_HEADER_LENGTH = 3;
     protected static final int MAX_QUERY_SIZE_TO_EXPLAIN = 1024 * 1024; // don't explain queries above 1MB
+    protected static final int SSL_REQUEST_LENGTH = 32;
     private static final String EXPLAINABLE_STATEMENT = "SELECT";
     private static final String[] EXPLAINABLE_STATEMENT_EXTENSION = new String[] { "INSERT", "UPDATE", "REPLACE", "DELETE" };
 
@@ -302,21 +303,16 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     /**
      * Negotiates the SSL communications channel used when connecting
      * to a MySQL server that understands SSL.
-     * 
-     * @param packLength
-     *            packet length
      */
     @Override
-    public void negotiateSSLConnection(int packLength) {
+    public void negotiateSSLConnection() {
         if (!ExportControlled.enabled()) {
             throw new CJConnectionFeatureNotAvailableException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder(), null);
         }
 
         long clientParam = this.serverSession.getClientParam();
-        clientParam |= NativeServerSession.CLIENT_SSL;
-        this.serverSession.setClientParam(clientParam);
 
-        NativePacketPayload packet = new NativePacketPayload(packLength);
+        NativePacketPayload packet = new NativePacketPayload(SSL_REQUEST_LENGTH);
         packet.writeInteger(IntegerDataType.INT4, clientParam);
         packet.writeInteger(IntegerDataType.INT4, NativeConstants.MAX_PACKET_SIZE);
         packet.writeInteger(IntegerDataType.INT1, AuthenticationProvider.getCharsetForHandshake(this.authProvider.getEncodingForHandshake(),
@@ -378,8 +374,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         this.serverSession = new NativeServerSession(this.propertySet);
 
         // Read the first packet
-        NativeCapabilities capabilities = readServerCapabilities();
-        this.serverSession.setCapabilities(capabilities);
+        this.serverSession.setCapabilities(readServerCapabilities());
 
     }
 
@@ -388,18 +383,16 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         checkTransactionState();
 
-        PropertySet pset = this.getPropertySet();
-
         try {
             //
             // Can't enable compression until after handshake
             //
             if (((this.serverSession.getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_COMPRESS) != 0)
-                    && pset.getBooleanProperty(PropertyKey.useCompression).getValue()
+                    && this.propertySet.getBooleanProperty(PropertyKey.useCompression).getValue()
                     && !(this.socketConnection.getMysqlInput().getUnderlyingStream() instanceof CompressedInputStream)) {
                 this.useCompression = true;
-                this.socketConnection.setMysqlInput(new FullReadInputStream(
-                        new CompressedInputStream(this.socketConnection.getMysqlInput(), pset.getBooleanProperty(PropertyKey.traceProtocol), this.log)));
+                this.socketConnection.setMysqlInput(new FullReadInputStream(new CompressedInputStream(this.socketConnection.getMysqlInput(),
+                        this.propertySet.getBooleanProperty(PropertyKey.traceProtocol), this.log)));
                 this.compressedPacketSender = new CompressedPacketSender(this.socketConnection.getMysqlOutput());
                 this.packetSender = this.compressedPacketSender;
             }
@@ -408,14 +401,20 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             this.socketConnection.getSocketFactory().afterHandshake();
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder(),
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder(),
                     this.getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+        }
+
+        // Changing defaults for 8.0.3+ server: PNAME_useInformationSchema=true
+        RuntimeProperty<Boolean> useInformationSchema = this.propertySet.<Boolean>getProperty(PropertyKey.useInformationSchema);
+        if (versionMeetsMinimum(8, 0, 3) && !useInformationSchema.getValue() && !useInformationSchema.isExplicitlySet()) {
+            useInformationSchema.setValue(true);
         }
 
         // listen for properties changes to allow decorators reconfiguration
         this.maintainTimeStats.addListener(this);
-        pset.getBooleanProperty(PropertyKey.traceProtocol).addListener(this);
-        pset.getBooleanProperty(PropertyKey.enablePacketDebug).addListener(this);
+        this.propertySet.getBooleanProperty(PropertyKey.traceProtocol).addListener(this);
+        this.propertySet.getBooleanProperty(PropertyKey.enablePacketDebug).addListener(this);
     }
 
     @Override

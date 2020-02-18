@@ -166,11 +166,6 @@ public class XServerSession implements ServerSession {
     }
 
     @Override
-    public void setHasLongColumnInfo(boolean hasLongColumnInfo) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
     public Map<String, String> getServerVariables() {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }

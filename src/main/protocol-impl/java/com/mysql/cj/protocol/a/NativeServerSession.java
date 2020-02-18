@@ -84,7 +84,6 @@ public class NativeServerSession implements ServerSession {
     private int statusFlags = 0;
     private int serverDefaultCollationIndex;
     private long clientParam = 0;
-    private boolean hasLongColumnInfo = false;
 
     /** The map of server variables that we retrieve at connection init. */
     private Map<String, String> serverVariables = new HashMap<>();
@@ -252,12 +251,7 @@ public class NativeServerSession implements ServerSession {
 
     @Override
     public boolean hasLongColumnInfo() {
-        return this.hasLongColumnInfo;
-    }
-
-    @Override
-    public void setHasLongColumnInfo(boolean hasLongColumnInfo) {
-        this.hasLongColumnInfo = hasLongColumnInfo;
+        return (this.clientParam & CLIENT_LONG_FLAG) != 0;
     }
 
     @Override

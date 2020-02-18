@@ -223,7 +223,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         readQueryResult(new OkBuilder());
     }
 
-    public void negotiateSSLConnection(int packLength) {
+    public void negotiateSSLConnection() {
 
         if (!ExportControlled.enabled()) {
             throw new CJConnectionFeatureNotAvailableException();
@@ -419,7 +419,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
 
         if (xdevapiSslMode.getValue() != XdevapiSslMode.DISABLED) {
-            negotiateSSLConnection(0);
+            negotiateSSLConnection();
         }
 
         // Configure compression.

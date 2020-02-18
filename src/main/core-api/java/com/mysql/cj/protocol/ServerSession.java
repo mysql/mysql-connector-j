@@ -141,14 +141,6 @@ public interface ServerSession {
 
     boolean hasLongColumnInfo();
 
-    /**
-     * Does the server send back extra column info?
-     * 
-     * @param hasLongColumnInfo
-     *            flag
-     */
-    void setHasLongColumnInfo(boolean hasLongColumnInfo);
-
     Map<String, String> getServerVariables();
 
     String getServerVariable(String name);

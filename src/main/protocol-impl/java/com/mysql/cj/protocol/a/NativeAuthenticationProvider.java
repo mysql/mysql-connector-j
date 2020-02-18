@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,7 +41,6 @@ import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.UnableToConnectException;
@@ -99,111 +98,77 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      */
     @Override
     public void connect(ServerSession sessState, String user, String password, String database) {
-        long clientParam = sessState.getClientParam();
-
         NativeCapabilities capabilities = (NativeCapabilities) sessState.getCapabilities();
-
         NativePacketPayload buf = capabilities.getInitialHandshakePacket();
 
-        // read auth-plugin-data-part-1 (string[8])
-        this.seed = capabilities.getSeed();
-
-        // read character set (1 byte)
-        sessState.setServerDefaultCollationIndex(capabilities.getServerDefaultCollationIndex());
-        // read status flags (2 bytes)
-        sessState.setStatusFlags(capabilities.getStatusFlags());
-
+        SslMode sslMode = this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode).getValue();
         int capabilityFlags = capabilities.getCapabilityFlags();
-
-        if ((capabilityFlags & NativeServerSession.CLIENT_SECURE_CONNECTION) != 0) {
-            clientParam |= NativeServerSession.CLIENT_SECURE_CONNECTION;
-            String seedPart2;
-            StringBuilder newSeed;
-            int authPluginDataLength = capabilities.getAuthPluginDataLength();
-
-            // read string[$len] auth-plugin-data-part-2 ($len=MAX(13, length of auth-plugin-data - 8))
-            if (authPluginDataLength > 0) {
-                // TODO: disabled the following check for further clarification
-                //                  if (this.authPluginDataLength < 21) {
-                //                      forceClose();
-                //                      throw SQLError.createSQLException(Messages.getString("MysqlIO.103"), 
-                //                          SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
-                //                  }
-                seedPart2 = buf.readString(StringLengthDataType.STRING_FIXED, "ASCII", authPluginDataLength - 8);
-                newSeed = new StringBuilder(authPluginDataLength);
-            } else {
-                seedPart2 = buf.readString(StringSelfDataType.STRING_TERM, "ASCII");
-                newSeed = new StringBuilder(NativeConstants.SEED_LENGTH);
-            }
-            newSeed.append(this.seed);
-            newSeed.append(seedPart2);
-            this.seed = newSeed.toString();
-        } else {
+        if (((capabilityFlags & NativeServerSession.CLIENT_SSL) == 0) && sslMode != SslMode.DISABLED && sslMode != SslMode.PREFERRED) {
+            // check SSL availability
+            throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("MysqlIO.15"), getExceptionInterceptor());
+        } else if ((capabilityFlags & NativeServerSession.CLIENT_SECURE_CONNECTION) == 0) {
             // TODO: better messaging
             throw ExceptionFactory.createException(UnableToConnectException.class, "CLIENT_SECURE_CONNECTION is required", getExceptionInterceptor());
-
+        } else if ((capabilityFlags & NativeServerSession.CLIENT_PLUGIN_AUTH) == 0) {
+            // TODO: better messaging
+            throw ExceptionFactory.createException(UnableToConnectException.class, "CLIENT_PLUGIN_AUTH is required", getExceptionInterceptor());
         }
 
-        if (((capabilityFlags & NativeServerSession.CLIENT_COMPRESS) != 0) && this.propertySet.getBooleanProperty(PropertyKey.useCompression).getValue()) {
-            clientParam |= NativeServerSession.CLIENT_COMPRESS;
-        }
+        sessState.setServerDefaultCollationIndex(capabilities.getServerDefaultCollationIndex()); // read character set (1 byte)
+        sessState.setStatusFlags(capabilities.getStatusFlags()); // read status flags (2 bytes)
+        int authPluginDataLength = capabilities.getAuthPluginDataLength();
+
+        StringBuilder fullSeed = new StringBuilder(authPluginDataLength > 0 ? authPluginDataLength : NativeConstants.SEED_LENGTH);
+        fullSeed.append(capabilities.getSeed()); // read auth-plugin-data-part-1 (string[8])
+        fullSeed.append(authPluginDataLength > 0 ?  // read string[$len] auth-plugin-data-part-2 ($len=MAX(13, length of auth-plugin-data - 8))
+                buf.readString(StringLengthDataType.STRING_FIXED, "ASCII", authPluginDataLength - 8) : buf.readString(StringSelfDataType.STRING_TERM, "ASCII"));
+        this.seed = fullSeed.toString();
 
         this.useConnectWithDb = (database != null) && (database.length() > 0)
                 && !this.propertySet.getBooleanProperty(PropertyKey.createDatabaseIfNotExist).getValue();
 
-        if (this.useConnectWithDb) {
-            clientParam |= NativeServerSession.CLIENT_CONNECT_WITH_DB;
+        long clientParam = NativeServerSession.CLIENT_SECURE_CONNECTION | NativeServerSession.CLIENT_PLUGIN_AUTH
+                | (capabilityFlags & NativeServerSession.CLIENT_LONG_PASSWORD)  //
+                | (capabilityFlags & NativeServerSession.CLIENT_PROTOCOL_41)    //
+                | (capabilityFlags & NativeServerSession.CLIENT_TRANSACTIONS)   // Need this to get server status values
+                | (capabilityFlags & NativeServerSession.CLIENT_MULTI_RESULTS)  // We always allow multiple result sets
+                | (capabilityFlags & NativeServerSession.CLIENT_PS_MULTI_RESULTS)  // We always allow multiple result sets for SSPS
+                | (capabilityFlags & NativeServerSession.CLIENT_LONG_FLAG)      //
+                | (capabilityFlags & NativeServerSession.CLIENT_DEPRECATE_EOF)  //
+                | (capabilityFlags & NativeServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA)
+                | (this.propertySet.getBooleanProperty(PropertyKey.useCompression).getValue() ? (capabilityFlags & NativeServerSession.CLIENT_COMPRESS) : 0)
+                | (this.useConnectWithDb ? (capabilityFlags & NativeServerSession.CLIENT_CONNECT_WITH_DB) : 0)
+                | (this.propertySet.getBooleanProperty(PropertyKey.useAffectedRows).getValue() ? 0 : (capabilityFlags & NativeServerSession.CLIENT_FOUND_ROWS))
+                | (this.propertySet.getBooleanProperty(PropertyKey.allowLoadLocalInfile).getValue() ? (capabilityFlags & NativeServerSession.CLIENT_LOCAL_FILES)
+                        : 0)
+                | (this.propertySet.getBooleanProperty(PropertyKey.interactiveClient).getValue() ? (capabilityFlags & NativeServerSession.CLIENT_INTERACTIVE)
+                        : 0)
+                | (this.propertySet.getBooleanProperty(PropertyKey.allowMultiQueries).getValue()
+                        ? (capabilityFlags & NativeServerSession.CLIENT_MULTI_STATEMENTS)
+                        : 0)
+                | (this.propertySet.getBooleanProperty(PropertyKey.disconnectOnExpiredPasswords).getValue() ? 0
+                        : (capabilityFlags & NativeServerSession.CLIENT_CAN_HANDLE_EXPIRED_PASSWORD))
+                | (NONE.equals(this.propertySet.getStringProperty(PropertyKey.connectionAttributes).getValue()) ? 0
+                        : (capabilityFlags & NativeServerSession.CLIENT_CONNECT_ATTRS))
+                | (this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode).getValue() != SslMode.DISABLED
+                        ? (capabilityFlags & NativeServerSession.CLIENT_SSL)
+                        : 0);
+
+        // TODO MYSQLCONNJ-437
+        // clientParam |= (capabilityFlags & NativeServerSession.CLIENT_SESSION_TRACK);
+
+        sessState.setClientParam(clientParam);
+
+        /* First, negotiate SSL connection */
+        if ((clientParam & NativeServerSession.CLIENT_SSL) != 0) {
+            this.protocol.negotiateSSLConnection();
         }
 
-        // Changing defaults for 8.0.3+ server: PNAME_useInformationSchema=true
-        RuntimeProperty<Boolean> useInformationSchema = this.propertySet.<Boolean> getProperty(PropertyKey.useInformationSchema);
-        if (this.protocol.versionMeetsMinimum(8, 0, 3) && !useInformationSchema.getValue() && !useInformationSchema.isExplicitlySet()) {
-            useInformationSchema.setValue(true);
+        if (buf.isOKPacket()) {
+            throw ExceptionFactory.createException(Messages.getString("AuthenticationProvider.UnexpectedAuthenticationApproval"), getExceptionInterceptor());
         }
 
-        // check SSL availability
-        SslMode sslMode = this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).getValue();
-        if (((capabilityFlags & NativeServerSession.CLIENT_SSL) == 0) && sslMode != SslMode.DISABLED && sslMode != SslMode.PREFERRED) {
-            throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("MysqlIO.15"), getExceptionInterceptor());
-        }
-
-        if ((capabilityFlags & NativeServerSession.CLIENT_LONG_FLAG) != 0) {
-            clientParam |= NativeServerSession.CLIENT_LONG_FLAG;
-            sessState.setHasLongColumnInfo(true);
-        }
-
-        // return FOUND rows
-        if (!this.propertySet.getBooleanProperty(PropertyKey.useAffectedRows).getValue()) {
-            clientParam |= NativeServerSession.CLIENT_FOUND_ROWS;
-        }
-
-        if (this.propertySet.getBooleanProperty(PropertyKey.allowLoadLocalInfile).getValue()) {
-            clientParam |= NativeServerSession.CLIENT_LOCAL_FILES;
-        }
-
-        if (this.propertySet.getBooleanProperty(PropertyKey.interactiveClient).getValue()) {
-            clientParam |= NativeServerSession.CLIENT_INTERACTIVE;
-        }
-
-        if ((capabilityFlags & NativeServerSession.CLIENT_SESSION_TRACK) != 0) {
-            // TODO MYSQLCONNJ-437
-            // clientParam |= NativeServerSession.CLIENT_SESSION_TRACK;
-        }
-
-        if ((capabilityFlags & NativeServerSession.CLIENT_DEPRECATE_EOF) != 0) {
-            clientParam |= NativeServerSession.CLIENT_DEPRECATE_EOF;
-        }
-
-        //
-        // switch to pluggable authentication if available
-        //
-        if ((capabilityFlags & NativeServerSession.CLIENT_PLUGIN_AUTH) != 0) {
-            sessState.setClientParam(clientParam);
-            proceedHandshakeWithPluggableAuthentication(sessState, user, password, database, buf);
-        } else {
-            // TODO: better messaging
-            throw ExceptionFactory.createException(UnableToConnectException.class, "CLIENT_PLUGIN_AUTH is required", getExceptionInterceptor());
-        }
+        proceedHandshakeWithPluggableAuthentication(sessState, user, password, database, buf);
 
     }
 
@@ -393,16 +358,13 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     }
 
     /**
-     * Performs an authentication handshake to authorize connection to a
-     * given database as a given MySQL user. This can happen upon initial
-     * connection to the server, after receiving Auth Challenge Packet, or
-     * at any moment during the connection life-time via a Change User
-     * request.
+     * Performs an authentication handshake to authorize connection to a given database as a given MySQL user.
+     * This can happen upon initial connection to the server, after receiving Auth Challenge Packet, or
+     * at any moment during the connection life-time via a Change User request.
      * 
-     * This method is aware of pluggable authentication and will use
-     * registered authentication plugins as requested by the server.
+     * This method will use registered authentication plugins as requested by the server.
      * 
-     * @param sessState
+     * @param serverSession
      *            The current state of the session
      * @param user
      *            the MySQL user account to log into
@@ -416,281 +378,130 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      *            this method is used during the initial connection.
      *            Otherwise null.
      */
-    private void proceedHandshakeWithPluggableAuthentication(ServerSession sessState, String user, String password, String database,
-            NativePacketPayload challenge) {
+    private void proceedHandshakeWithPluggableAuthentication(ServerSession serverSession, String user, String password, String database,
+            final NativePacketPayload challenge) {
         if (this.authenticationPlugins == null) {
             loadAuthenticationPlugins();
         }
 
+        boolean isChangeUser = challenge == null;
+
+        /* Select initial plugin */
+        String pluginName = isChangeUser
+                ? (this.serverDefaultAuthenticationPluginName == null ? this.clientDefaultAuthenticationPluginName : this.serverDefaultAuthenticationPluginName)
+                // Due to Bug#59453 the auth-plugin-name is missing the terminating NUL-char in versions prior to 5.5.10 and 5.6.2.
+                : !this.protocol.versionMeetsMinimum(5, 5, 10) || this.protocol.versionMeetsMinimum(5, 6, 0) && !this.protocol.versionMeetsMinimum(5, 6, 2)
+                        ? challenge.readString(StringLengthDataType.STRING_FIXED, "ASCII",
+                                ((NativeCapabilities) serverSession.getCapabilities()).getAuthPluginDataLength())
+                        : challenge.readString(StringSelfDataType.STRING_TERM, "ASCII");
+
+        AuthenticationPlugin<NativePacketPayload> plugin = getAuthenticationPlugin(pluginName);
+
         boolean skipPassword = false;
-        int passwordLength = 16;
-        int userLength = (user != null) ? user.length() : 0;
-        int databaseLength = (database != null) ? database.length() : 0;
+        if (plugin == null) {
+            /* Use default if there is no plugin for pluginName. */
+            plugin = getAuthenticationPlugin(this.clientDefaultAuthenticationPluginName);
+        } else if (pluginName.equals(Sha256PasswordPlugin.PLUGIN_NAME) && !this.protocol.getSocketConnection().isSSLEstablished()
+                && this.propertySet.getStringProperty(PropertyKey.serverRSAPublicKeyFile).getValue() == null
+                && !this.propertySet.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).getValue()) {
+            /*
+             * Fall back to default if plugin is 'sha256_password' but required conditions for this to work aren't met. If default is other than
+             * 'sha256_password' this will result in an immediate authentication switch request, allowing for other plugins to authenticate
+             * successfully. If default is 'sha256_password' then the authentication will fail as expected. In both cases user's password won't be
+             * sent to avoid subjecting it to lesser security levels.
+             */
+            plugin = getAuthenticationPlugin(this.clientDefaultAuthenticationPluginName);
+            skipPassword = !this.clientDefaultAuthenticationPluginName.equals(pluginName);
+        }
 
-        int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + AUTH_411_OVERHEAD;
+        this.serverDefaultAuthenticationPluginName = plugin.getProtocolPluginName();
 
-        long clientParam = sessState.getClientParam();
-        int serverCapabilities = sessState.getCapabilities().getCapabilityFlags();
+        checkConfidentiality(plugin);
 
-        AuthenticationPlugin<NativePacketPayload> plugin = null;
-        NativePacketPayload fromServer = null;
-        ArrayList<NativePacketPayload> toServer = new ArrayList<>();
-        boolean done = false;
-        NativePacketPayload last_sent = null;
+        // Servers not affected by Bug#70865 expect the Change User Request containing a correct answer
+        // to seed sent by the server during the initial handshake, thus we reuse it here.
+        // Servers affected by Bug#70865 will just ignore it and send the Auth Switch.
+        NativePacketPayload fromServer = new NativePacketPayload(StringUtils.getBytes(this.seed));
 
         boolean old_raw_challenge = false;
+        NativePacketPayload last_sent = null;
+        NativePacketPayload last_received = challenge;
+        ArrayList<NativePacketPayload> toServer = new ArrayList<>();
 
+        /* Max iterations number */
         int counter = 100;
-
         while (0 < counter--) {
-
-            if (!done) {
-
-                if (challenge != null) {
-
-                    if (challenge.isOKPacket()) {
-                        throw ExceptionFactory.createException(
-                                Messages.getString("AuthenticationProvider.UnexpectedAuthenticationApproval", new Object[] { plugin.getProtocolPluginName() }),
-                                getExceptionInterceptor());
-                    }
-
-                    // read Auth Challenge Packet
-
-                    clientParam |= NativeServerSession.CLIENT_PLUGIN_AUTH | NativeServerSession.CLIENT_LONG_PASSWORD | NativeServerSession.CLIENT_PROTOCOL_41
-                            | NativeServerSession.CLIENT_TRANSACTIONS // Need this to get server status values
-                            | NativeServerSession.CLIENT_MULTI_RESULTS // We always allow multiple result sets
-                            | NativeServerSession.CLIENT_PS_MULTI_RESULTS  // We always allow multiple result sets for SSPS
-                            | NativeServerSession.CLIENT_SECURE_CONNECTION; // protocol with pluggable authentication always support this
-
-                    // We allow the user to configure whether or not they want to support multiple queries (by default, this is disabled).
-                    if (this.propertySet.getBooleanProperty(PropertyKey.allowMultiQueries).getValue()) {
-                        clientParam |= NativeServerSession.CLIENT_MULTI_STATEMENTS;
-                    }
-
-                    if (((serverCapabilities & NativeServerSession.CLIENT_CAN_HANDLE_EXPIRED_PASSWORD) != 0)
-                            && !this.propertySet.getBooleanProperty(PropertyKey.disconnectOnExpiredPasswords).getValue()) {
-                        clientParam |= NativeServerSession.CLIENT_CAN_HANDLE_EXPIRED_PASSWORD;
-                    }
-                    if (((serverCapabilities & NativeServerSession.CLIENT_CONNECT_ATTRS) != 0)
-                            && !NONE.equals(this.propertySet.getStringProperty(PropertyKey.connectionAttributes).getValue())) {
-                        clientParam |= NativeServerSession.CLIENT_CONNECT_ATTRS;
-                    }
-                    if ((serverCapabilities & NativeServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
-                        clientParam |= NativeServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA;
-                    }
-
-                    sessState.setClientParam(clientParam);
-
-                    if (((serverCapabilities & NativeServerSession.CLIENT_SSL) != 0)
-                            && this.propertySet.<SslMode> getEnumProperty(PropertyKey.sslMode).getValue() != SslMode.DISABLED) {
-                        negotiateSSLConnection(packLength);
-                    }
-
-                    String pluginName = null;
-                    if ((serverCapabilities & NativeServerSession.CLIENT_PLUGIN_AUTH) != 0) {
-                        // Due to Bug#59453 the auth-plugin-name is missing the terminating NUL-char in versions prior to 5.5.10 and 5.6.2.
-                        if (!this.protocol.versionMeetsMinimum(5, 5, 10)
-                                || this.protocol.versionMeetsMinimum(5, 6, 0) && !this.protocol.versionMeetsMinimum(5, 6, 2)) {
-                            pluginName = challenge.readString(StringLengthDataType.STRING_FIXED, "ASCII",
-                                    ((NativeCapabilities) sessState.getCapabilities()).getAuthPluginDataLength());
-                        } else {
-                            pluginName = challenge.readString(StringSelfDataType.STRING_TERM, "ASCII");
-                        }
-                    }
-
-                    plugin = getAuthenticationPlugin(pluginName);
-                    if (plugin == null) {
-                        /*
-                         * Use default if there is no plugin for pluginName.
-                         */
-                        plugin = getAuthenticationPlugin(this.clientDefaultAuthenticationPluginName);
-                    } else if (pluginName.equals(Sha256PasswordPlugin.PLUGIN_NAME) && !this.protocol.getSocketConnection().isSSLEstablished()
-                            && this.propertySet.getStringProperty(PropertyKey.serverRSAPublicKeyFile).getValue() == null
-                            && !this.propertySet.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).getValue()) {
-                        /*
-                         * Fall back to default if plugin is 'sha256_password' but required conditions for this to work aren't met. If default is other than
-                         * 'sha256_password' this will result in an immediate authentication switch request, allowing for other plugins to authenticate
-                         * successfully. If default is 'sha256_password' then the authentication will fail as expected. In both cases user's password won't be
-                         * sent to avoid subjecting it to lesser security levels.
-                         */
-                        plugin = getAuthenticationPlugin(this.clientDefaultAuthenticationPluginName);
-                        skipPassword = !this.clientDefaultAuthenticationPluginName.equals(pluginName);
-                    }
-
-                    this.serverDefaultAuthenticationPluginName = plugin.getProtocolPluginName();
-
-                    checkConfidentiality(plugin);
-                    fromServer = new NativePacketPayload(StringUtils.getBytes(this.seed));
-                } else {
-                    // no challenge so this is a changeUser call
-                    plugin = getAuthenticationPlugin(this.serverDefaultAuthenticationPluginName == null ? this.clientDefaultAuthenticationPluginName
-                            : this.serverDefaultAuthenticationPluginName);
-
-                    checkConfidentiality(plugin);
-
-                    // Servers not affected by Bug#70865 expect the Change User Request containing a correct answer
-                    // to seed sent by the server during the initial handshake, thus we reuse it here.
-                    // Servers affected by Bug#70865 will just ignore it and send the Auth Switch.
-                    fromServer = new NativePacketPayload(StringUtils.getBytes(this.seed));
-                }
-
-            } else {
-
-                // read packet from server and check if it's an ERROR packet
-                challenge = this.protocol.checkErrorMessage();
-                old_raw_challenge = false;
-
-                if (plugin == null) {
-                    // this shouldn't happen in normal handshake packets exchange,
-                    // we do it just to ensure that we don't get NPE in other case
-                    plugin = getAuthenticationPlugin(this.serverDefaultAuthenticationPluginName == null ? this.clientDefaultAuthenticationPluginName
-                            : this.serverDefaultAuthenticationPluginName);
-                }
-
-                if (challenge.isOKPacket()) {
-                    // read OK packet
-                    OkPacket ok = OkPacket.parse(challenge, null);
-                    sessState.setStatusFlags(ok.getStatusFlags(), true);
-
-                    // if OK packet then finish handshake
-                    plugin.destroy();
-                    break;
-
-                } else if (challenge.isAuthMethodSwitchRequestPacket()) {
-                    skipPassword = false;
-
-                    // read Auth Method Switch Request Packet
-                    String pluginName;
-                    pluginName = challenge.readString(StringSelfDataType.STRING_TERM, "ASCII");
-
-                    // get new plugin
-                    if (!plugin.getProtocolPluginName().equals(pluginName)) {
-                        plugin.destroy();
-                        plugin = getAuthenticationPlugin(pluginName);
-                        // if plugin is not found for pluginName throw exception
-                        if (plugin == null) {
-                            throw ExceptionFactory.createException(WrongArgumentException.class,
-                                    Messages.getString("AuthenticationProvider.BadAuthenticationPlugin", new Object[] { pluginName }),
-                                    getExceptionInterceptor());
-                        }
-                    } else {
-                        plugin.reset();
-                    }
-
-                    checkConfidentiality(plugin);
-                    fromServer = new NativePacketPayload(StringUtils.getBytes(challenge.readString(StringSelfDataType.STRING_TERM, "ASCII")));
-
-                } else {
-                    // read raw packet
-                    if (!this.protocol.versionMeetsMinimum(5, 5, 16)) {
-                        old_raw_challenge = true;
-                        challenge.setPosition(challenge.getPosition() - 1);
-                    }
-                    fromServer = new NativePacketPayload(challenge.readBytes(StringSelfDataType.STRING_EOF));
-                }
-
-            }
-
-            // call plugin
+            /*
+             * call plugin
+             */
             plugin.setAuthenticationParameters(user, skipPassword ? null : password);
-            done = plugin.nextAuthenticationStep(fromServer, toServer);
+            plugin.nextAuthenticationStep(fromServer, toServer);
 
-            // send response
+            /*
+             * send response to server
+             */
             if (toServer.size() > 0) {
-                if (challenge == null) {
-                    String enc = getEncodingForHandshake();
-
+                if (isChangeUser) {
                     // write COM_CHANGE_USER Packet
-                    last_sent = new NativePacketPayload(packLength + 1);
-                    last_sent.writeInteger(IntegerDataType.INT1, NativeConstants.COM_CHANGE_USER);
-
-                    // User/Password data
-                    last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(user, enc));
-
-                    // 'auth-response-len' is limited to one Byte but, in case of success, COM_CHANGE_USER will be followed by an AuthSwitchRequest anyway
-                    if (toServer.get(0).getPayloadLength() < 256) {
-                        // non-mysql servers may use this information to authenticate without requiring another round-trip
-                        last_sent.writeInteger(IntegerDataType.INT1, toServer.get(0).getPayloadLength());
-                        last_sent.writeBytes(StringSelfDataType.STRING_EOF, toServer.get(0).getByteBuffer(), 0, toServer.get(0).getPayloadLength());
-                    } else {
-                        last_sent.writeInteger(IntegerDataType.INT1, 0);
-                    }
-
-                    if (this.useConnectWithDb) {
-                        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(database, enc));
-                    } else {
-                        /* For empty database */
-                        last_sent.writeInteger(IntegerDataType.INT1, 0);
-                    }
-
-                    last_sent.writeInteger(IntegerDataType.INT1,
-                            AuthenticationProvider.getCharsetForHandshake(enc, sessState.getCapabilities().getServerVersion()));
-                    // two (little-endian) bytes for charset in this packet
-                    last_sent.writeInteger(IntegerDataType.INT1, 0);
-
-                    // plugin name
-                    if ((serverCapabilities & NativeServerSession.CLIENT_PLUGIN_AUTH) != 0) {
-                        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(plugin.getProtocolPluginName(), enc));
-                    }
-
-                    // connection attributes
-                    if ((clientParam & NativeServerSession.CLIENT_CONNECT_ATTRS) != 0) {
-                        appendConnectionAttributes(last_sent, this.propertySet.getStringProperty(PropertyKey.connectionAttributes).getValue(), enc);
-                    }
-
+                    last_sent = createChangeUserPacket(serverSession, user, database, plugin.getProtocolPluginName(), toServer);
                     this.protocol.send(last_sent, last_sent.getPosition());
+                    isChangeUser = false; // this branch should be executed only once
 
-                } else if (challenge.isAuthMethodSwitchRequestPacket()) {
-                    // write Auth Method Switch Response Packet
-                    this.protocol.send(toServer.get(0), toServer.get(0).getPayloadLength());
-
-                } else if (challenge.isAuthMoreData() || old_raw_challenge) {
-                    // write raw packet(s)
+                } else if (last_received.isAuthMethodSwitchRequestPacket() || last_received.isAuthMoreData() || old_raw_challenge) {
+                    // write AuthSwitchResponse packet or raw packet(s)
                     for (NativePacketPayload buffer : toServer) {
                         this.protocol.send(buffer, buffer.getPayloadLength());
                     }
 
                 } else {
-                    // write Auth Response Packet
-                    String enc = getEncodingForHandshake();
-
-                    last_sent = new NativePacketPayload(packLength);
-                    last_sent.writeInteger(IntegerDataType.INT4, clientParam);
-                    last_sent.writeInteger(IntegerDataType.INT4, NativeConstants.MAX_PACKET_SIZE);
-
-                    last_sent.writeInteger(IntegerDataType.INT1,
-                            AuthenticationProvider.getCharsetForHandshake(enc, sessState.getCapabilities().getServerVersion()));
-
-                    last_sent.writeBytes(StringLengthDataType.STRING_FIXED, new byte[23]);   // Set of bytes reserved for future use.
-
-                    // User/Password data
-                    last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(user, enc));
-
-                    if ((serverCapabilities & NativeServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
-                        // send lenenc-int length of auth-response and string[n] auth-response
-                        last_sent.writeBytes(StringSelfDataType.STRING_LENENC, toServer.get(0).readBytes(StringSelfDataType.STRING_EOF));
-                    } else {
-                        // send 1 byte length of auth-response and string[n] auth-response
-                        last_sent.writeInteger(IntegerDataType.INT1, toServer.get(0).getPayloadLength());
-                        last_sent.writeBytes(StringSelfDataType.STRING_EOF, toServer.get(0).getByteBuffer());
-                    }
-
-                    if (this.useConnectWithDb) {
-                        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(database, enc));
-                    }
-
-                    if ((serverCapabilities & NativeServerSession.CLIENT_PLUGIN_AUTH) != 0) {
-                        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(plugin.getProtocolPluginName(), enc));
-                    }
-
-                    // connection attributes
-                    if (((clientParam & NativeServerSession.CLIENT_CONNECT_ATTRS) != 0)) {
-                        appendConnectionAttributes(last_sent, this.propertySet.getStringProperty(PropertyKey.connectionAttributes).getValue(), enc);
-                    }
-
+                    // write HandshakeResponse packet
+                    last_sent = createHandshakeResponsePacket(serverSession, user, database, plugin.getProtocolPluginName(), toServer);
                     this.protocol.send(last_sent, last_sent.getPosition());
                 }
+            }
 
+            /*
+             * read packet from server
+             */
+            last_received = this.protocol.checkErrorMessage();
+            old_raw_challenge = false;
+
+            if (last_received.isOKPacket()) {
+                // read OK packet
+                OkPacket ok = OkPacket.parse(last_received, null);
+                serverSession.setStatusFlags(ok.getStatusFlags(), true);
+
+                // if OK packet then finish handshake
+                plugin.destroy();
+                break;
+
+            } else if (last_received.isAuthMethodSwitchRequestPacket()) {
+                // read AuthSwitchRequest Packet
+                skipPassword = false;
+
+                pluginName = last_received.readString(StringSelfDataType.STRING_TERM, "ASCII");
+                if (plugin.getProtocolPluginName().equals(pluginName)) {
+                    plugin.reset(); // just reset the current one
+                } else {
+                    // get new plugin
+                    plugin.destroy();
+                    plugin = getAuthenticationPlugin(pluginName);
+                    if (plugin == null) {
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("AuthenticationProvider.BadAuthenticationPlugin", new Object[] { pluginName }), getExceptionInterceptor());
+                    }
+                }
+
+                checkConfidentiality(plugin);
+                fromServer = new NativePacketPayload(StringUtils.getBytes(last_received.readString(StringSelfDataType.STRING_TERM, "ASCII")));
+
+            } else {
+                // read raw packet
+                if (!this.protocol.versionMeetsMinimum(5, 5, 16)) {
+                    old_raw_challenge = true;
+                    last_received.setPosition(last_received.getPosition() - 1);
+                }
+                fromServer = new NativePacketPayload(last_received.readBytes(StringSelfDataType.STRING_EOF));
             }
 
         }
@@ -767,17 +578,6 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     }
 
     /**
-     * Negotiates the SSL communications channel used when connecting
-     * to a MySQL server that understands SSL.
-     * 
-     * @param packLength
-     *            packet length
-     */
-    private void negotiateSSLConnection(int packLength) {
-        this.protocol.negotiateSSLConnection(packLength);
-    }
-
-    /**
      * Re-authenticates as the given user and password
      * 
      * @param serverSession
@@ -794,4 +594,87 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         proceedHandshakeWithPluggableAuthentication(serverSession, userName, password, database, null);
     }
 
+    private NativePacketPayload createHandshakeResponsePacket(ServerSession serverSession, String user, String database, String pluginName,
+            ArrayList<NativePacketPayload> toServer) {
+
+        long clientParam = serverSession.getClientParam();
+        String enc = getEncodingForHandshake();
+
+        NativePacketPayload last_sent = new NativePacketPayload(AUTH_411_OVERHEAD + 7 //
+                + 48                    // passwordLength
+                + (3 * user.length())   // userLength
+                + (this.useConnectWithDb ? 3 * database.length() : 0)   // databaseLength
+        );
+        last_sent.writeInteger(IntegerDataType.INT4, clientParam);
+        last_sent.writeInteger(IntegerDataType.INT4, NativeConstants.MAX_PACKET_SIZE);
+        last_sent.writeInteger(IntegerDataType.INT1, AuthenticationProvider.getCharsetForHandshake(enc, serverSession.getCapabilities().getServerVersion()));
+        last_sent.writeBytes(StringLengthDataType.STRING_FIXED, new byte[23]);   // Set of bytes reserved for future use.
+
+        // User/Password data
+        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(user, enc));
+        if ((clientParam & NativeServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0) {
+            // send lenenc-int length of auth-response and string[n] auth-response
+            last_sent.writeBytes(StringSelfDataType.STRING_LENENC, toServer.get(0).readBytes(StringSelfDataType.STRING_EOF));
+        } else {
+            // send 1 byte length of auth-response and string[n] auth-response
+            last_sent.writeInteger(IntegerDataType.INT1, toServer.get(0).getPayloadLength());
+            last_sent.writeBytes(StringSelfDataType.STRING_EOF, toServer.get(0).getByteBuffer());
+        }
+
+        if (this.useConnectWithDb) {
+            last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(database, enc));
+        }
+
+        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(pluginName, enc));
+
+        // connection attributes
+        if (((clientParam & NativeServerSession.CLIENT_CONNECT_ATTRS) != 0)) {
+            appendConnectionAttributes(last_sent, this.propertySet.getStringProperty(PropertyKey.connectionAttributes).getValue(), enc);
+        }
+        return last_sent;
+    }
+
+    private NativePacketPayload createChangeUserPacket(ServerSession serverSession, String user, String database, String pluginName,
+            ArrayList<NativePacketPayload> toServer) {
+        // write Auth Response Packet
+        long clientParam = serverSession.getClientParam();
+        String enc = getEncodingForHandshake();
+
+        NativePacketPayload last_sent = new NativePacketPayload(AUTH_411_OVERHEAD + 7 //
+                + 48                // passwordLength
+                + 3 * user.length() // userLength
+                + (this.useConnectWithDb ? 3 * database.length() : 1)   // databaseLength
+                + 1);
+        last_sent.writeInteger(IntegerDataType.INT1, NativeConstants.COM_CHANGE_USER);
+
+        // User/Password data
+        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(user, enc));
+        // 'auth-response-len' is limited to one Byte but, in case of success, COM_CHANGE_USER will be followed by an AuthSwitchRequest anyway
+        if (toServer.get(0).getPayloadLength() < 256) {
+            // non-mysql servers may use this information to authenticate without requiring another round-trip
+            last_sent.writeInteger(IntegerDataType.INT1, toServer.get(0).getPayloadLength());
+            last_sent.writeBytes(StringSelfDataType.STRING_EOF, toServer.get(0).getByteBuffer(), 0, toServer.get(0).getPayloadLength());
+        } else {
+            last_sent.writeInteger(IntegerDataType.INT1, 0);
+        }
+
+        if (this.useConnectWithDb) {
+            last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(database, enc));
+        } else {
+            /* For empty database */
+            last_sent.writeInteger(IntegerDataType.INT1, 0);
+        }
+
+        last_sent.writeInteger(IntegerDataType.INT1, AuthenticationProvider.getCharsetForHandshake(enc, serverSession.getCapabilities().getServerVersion()));
+        last_sent.writeInteger(IntegerDataType.INT1, 0); // two (little-endian) bytes for charset in this packet
+
+        // plugin name
+        last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(pluginName, enc));
+
+        // connection attributes
+        if ((clientParam & NativeServerSession.CLIENT_CONNECT_ATTRS) != 0) {
+            appendConnectionAttributes(last_sent, this.propertySet.getStringProperty(PropertyKey.connectionAttributes).getValue(), enc);
+        }
+        return last_sent;
+    }
 }

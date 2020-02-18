@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -107,29 +107,14 @@ public interface AuthenticationPlugin<M extends Message> {
     void setAuthenticationParameters(String user, String password);
 
     /**
-     * Process authentication handshake data from server and optionally
-     * produce data to be sent back to the server. The driver will keep
-     * calling this method until either an Exception is thrown
-     * (authentication failure, please use appropriate SQLStates) or the
-     * method returns false or driver receives an OK packet from the server
-     * which indicates that the connection has been already approved.
+     * Process authentication handshake data from server and optionally produce data to be sent back to the server.
+     * The driver will keep calling this method on each new server packet arrival until either an Exception is thrown
+     * (authentication failure, please use appropriate SQLStates) or the number of exchange iterations exceeded max
+     * limit or an OK packet is sent by server indicating that the connection has been approved.
      * 
-     * If, on return from this method, toServer is a non-empty list of
-     * buffers, then these buffers should be sent to the server in order and
-     * without any reads in between them. If toServer is an empty list, no
-     * data should be sent to server.
-     * 
-     * If method returns true, it means that this plugin does not need any
-     * more data from the server to conclude the handshake and this method
-     * should not be called again. (Note that server can send an Auth Method
-     * Switch request and then another handshake will start, possibly using a
-     * different plugin.)
-     * 
-     * If this method returns false, it means that plugin needs more data from
-     * the server to conclude the handshake. In that case next handshake data
-     * payload should be read from the server (after possibly writing data
-     * from toServer as explained above). Then this method should be called
-     * again with the new data in fromServer parameter.
+     * If, on return from this method, toServer is a non-empty list of buffers, then these buffers will be sent to
+     * the server in the same order and without any reads in between them. If toServer is an empty list, no
+     * data will be sent to server, driver immediately reads the next packet from server.
      * 
      * In case of errors the method should throw Exception.
      * 
@@ -141,8 +126,7 @@ public interface AuthenticationPlugin<M extends Message> {
      *            (the list can be empty, but buffers in the list
      *            should contain data).
      * 
-     * @return False if more data should be read from the server and next call
-     *         to this method made, true otherwise.
+     * @return return value is ignored.
      */
     boolean nextAuthenticationStep(M fromServer, List<M> toServer);
 }
