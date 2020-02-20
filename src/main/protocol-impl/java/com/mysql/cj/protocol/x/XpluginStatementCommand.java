@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,9 +31,10 @@ package com.mysql.cj.protocol.x;
 
 public enum XpluginStatementCommand {
     XPLUGIN_STMT_CREATE_COLLECTION("create_collection"), XPLUGIN_STMT_CREATE_COLLECTION_INDEX("create_collection_index"),
-    XPLUGIN_STMT_DROP_COLLECTION("drop_collection"), XPLUGIN_STMT_DROP_COLLECTION_INDEX("drop_collection_index"), XPLUGIN_STMT_PING("ping"),
-    XPLUGIN_STMT_LIST_OBJECTS("list_objects"), XPLUGIN_STMT_ENABLE_NOTICES("enable_notices"), XPLUGIN_STMT_DISABLE_NOTICES("disable_notices"),
-    XPLUGIN_STMT_LIST_NOTICES("list_notices"); // TODO add support for "ping", "list_clients", "kill_client" and "ensure_collection" commands
+    XPLUGIN_STMT_DROP_COLLECTION("drop_collection"), XPLUGIN_STMT_DROP_COLLECTION_INDEX("drop_collection_index"),
+    XPLUGIN_STMT_MODIFY_COLLECTION_OPTIONS("modify_collection_options"), XPLUGIN_STMT_PING("ping"), XPLUGIN_STMT_LIST_OBJECTS("list_objects"),
+    XPLUGIN_STMT_ENABLE_NOTICES("enable_notices"), XPLUGIN_STMT_DISABLE_NOTICES("disable_notices"), XPLUGIN_STMT_LIST_NOTICES("list_notices");
+    // TODO add support for "ping", "list_clients", "kill_client" and "ensure_collection" commands
 
     public String commandName;
 

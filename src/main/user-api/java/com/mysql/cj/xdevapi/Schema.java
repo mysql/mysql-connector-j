@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -137,11 +137,32 @@ public interface Schema extends DatabaseObject {
      * 
      * @param name
      *            collection name
-     * @param reuseExistingObject
+     * @param reuseExisting
      *            true if allowed to reuse
      * @return {@link Collection}
      */
-    Collection createCollection(String name, boolean reuseExistingObject);
+    Collection createCollection(String name, boolean reuseExisting);
+
+    /**
+     * Create a new collection.
+     * 
+     * @param collectionName
+     *            collection name
+     * @param options
+     *            reuseExisting, validation level and JSON schema options
+     * @return {@link Collection}
+     */
+    Collection createCollection(String collectionName, CreateCollectionOptions options);
+
+    /**
+     * Modify the schema validation of a collection.
+     * 
+     * @param collectionName
+     *            collection name
+     * @param options
+     *            validation level and JSON schema options
+     */
+    void modifyCollection(String collectionName, ModifyCollectionOptions options);
 
     /**
      * Drop the collection from this schema.
@@ -150,4 +171,122 @@ public interface Schema extends DatabaseObject {
      *            name of collection to drop
      */
     void dropCollection(String collectionName);
+
+    /**
+     * Defines options to be passed to {@link Schema#createCollection(String, CreateCollectionOptions)}.
+     * <p>
+     * Allowed options are:
+     * <ul>
+     * <li>reuseExisting flag - similar to IF NOT EXISTS for CREATE TABLE
+     * <li>{@link Validation} object
+     * </ul>
+     * 
+     * Examples:
+     * 
+     * <pre>
+     * schema.createCollection(collName,
+     *         new CreateCollectionOptions().setReuseExisting(false)
+     *                 .setValidation(new Validation().setLevel(ValidationLevel.STRICT)
+     *                         .setSchema("{\"id\": \"http://json-schema.org/idx\", \"$schema\": \"http://json-schema.org/draft-06/schema#\","
+     *                                 + "\"type\": \"object\", \"properties\": {\"index\": {\"type\": \"number\"}},\"required\": [\"index\"]}")));
+     * </pre>
+     * 
+     * <pre>
+     * schema.createCollection(collName, new CreateCollectionOptions().setReuseExisting(false).setValidation(new Validation().setLevel(ValidationLevel.OFF)));
+     * </pre>
+     * 
+     * <pre>
+     * schema.createCollection(collName,
+     *         new CreateCollectionOptions().setReuseExisting(true);
+     * </pre>
+     */
+    public class CreateCollectionOptions {
+
+        private Boolean reuseExisting = null;
+        private Validation validation = null;
+
+        public CreateCollectionOptions setReuseExisting(boolean reuse) {
+            this.reuseExisting = reuse;
+            return this;
+        }
+
+        public Boolean getReuseExisting() {
+            return this.reuseExisting;
+        }
+
+        public CreateCollectionOptions setValidation(Validation validation) {
+            this.validation = validation;
+            return this;
+        }
+
+        public Validation getValidation() {
+            return this.validation;
+        }
+    }
+
+    /**
+     * Defines options to be passed to {@link Schema#modifyCollection(String, ModifyCollectionOptions)}. Options are defined by {@link Validation} object.
+     * <p>
+     * Example:
+     * </p>
+     * 
+     * <pre>
+     * schema.modifyCollection(collName1, new ModifyCollectionOptions().setValidation(new Validation().setLevel(ValidationLevel.OFF)));
+     * </pre>
+     */
+    public class ModifyCollectionOptions {
+
+        private Validation validation = null;
+
+        public ModifyCollectionOptions setValidation(Validation validation) {
+            this.validation = validation;
+            return this;
+        }
+
+        public Validation getValidation() {
+            return this.validation;
+        }
+
+    }
+
+    /**
+     * Validation options to be passed to {@link Schema#createCollection(String, CreateCollectionOptions)} or
+     * {@link Schema#modifyCollection(String, ModifyCollectionOptions)}.
+     * <p>
+     * Allowed options are:
+     * <li>schema - JSON schema as a String
+     * <li>level - {@link ValidationLevel}
+     */
+    public static class Validation {
+
+        /**
+         * Defines how validation options are applied.
+         * <li>STRICT - enable JSON schema validation for documents in the collection.
+         * <li>OFF - disable JSON schema validation.
+         */
+        public static enum ValidationLevel {
+            STRICT, OFF
+        };
+
+        private ValidationLevel level = null;
+        private String schema = null;
+
+        public Validation setLevel(ValidationLevel level) {
+            this.level = level;
+            return this;
+        }
+
+        public ValidationLevel getLevel() {
+            return this.level;
+        }
+
+        public Validation setSchema(String schema) {
+            this.schema = schema;
+            return this;
+        }
+
+        public String getSchema() {
+            return this.schema;
+        }
+    }
 }

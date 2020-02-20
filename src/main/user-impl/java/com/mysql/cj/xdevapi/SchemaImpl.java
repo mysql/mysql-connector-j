@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,7 +36,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlxSession;
+import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XMessage;
@@ -143,12 +145,37 @@ public class SchemaImpl implements Schema {
         return new CollectionImpl(this.mysqlxSession, this, collectionName);
     }
 
-    public Collection createCollection(String collectionName, boolean reuseExistingObject) {
+    public Collection createCollection(String collectionName, boolean reuseExisting) {
         try {
             return createCollection(collectionName);
         } catch (XProtocolError ex) {
-            if (reuseExistingObject && ex.getErrorCode() == MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR) {
+            if (reuseExisting && ex.getErrorCode() == MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR) {
                 return getCollection(collectionName);
+            }
+            throw ex;
+        }
+    }
+
+    @Override
+    public Collection createCollection(String collectionName, CreateCollectionOptions options) {
+        try {
+            this.mysqlxSession.query(this.xbuilder.buildCreateCollection(this.name, collectionName, options), new UpdateResultBuilder<>());
+            return new CollectionImpl(this.mysqlxSession, this, collectionName);
+        } catch (XProtocolError ex) {
+            if (ex.getErrorCode() == MysqlErrorNumbers.ER_X_CMD_NUM_ARGUMENTS) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Schema.CreateCollection"), ex);
+            }
+            throw ex;
+        }
+    }
+
+    @Override
+    public void modifyCollection(String collectionName, ModifyCollectionOptions options) {
+        try {
+            this.mysqlxSession.query(this.xbuilder.buildModifyCollectionOptions(this.name, collectionName, options), new UpdateResultBuilder<>());
+        } catch (XProtocolError ex) {
+            if (ex.getErrorCode() == MysqlErrorNumbers.ER_X_INVALID_ADMIN_COMMAND) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Schema.CreateCollection"), ex);
             }
             throw ex;
         }

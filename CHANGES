@@ -3,6 +3,8 @@
 
 Version 8.0.21
 
+  - WL#13008, DevAPI: Add schema validation to create collection.
+
 Version 8.0.20
 
   - Fix for Bug#30805426, IN CASE OF ISAUTHMETHODSWITCHREQUESTPACKET , TOSERVERS > 1 ARE IGNORED.
