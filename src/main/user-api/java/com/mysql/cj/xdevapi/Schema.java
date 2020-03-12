@@ -254,15 +254,19 @@ public interface Schema extends DatabaseObject {
      * {@link Schema#modifyCollection(String, ModifyCollectionOptions)}.
      * <p>
      * Allowed options are:
+     * <ul>
      * <li>schema - JSON schema as a String
      * <li>level - {@link ValidationLevel}
+     * </ul>
      */
     public static class Validation {
 
         /**
          * Defines how validation options are applied.
+         * <ul>
          * <li>STRICT - enable JSON schema validation for documents in the collection.
          * <li>OFF - disable JSON schema validation.
+         * </ul>
          */
         public static enum ValidationLevel {
             STRICT, OFF
