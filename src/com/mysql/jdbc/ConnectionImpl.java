@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -910,7 +910,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements MySQLCon
                 try {
                     results = stmt.executeQuery("SHOW COLLATION");
                     while (results.next()) {
-                        int collationIndex = ((Number) results.getObject(3)).intValue();
+                        int collationIndex = results.getInt(3);
                         String charsetName = results.getString(2);
 
                         // if no static map for charsetIndex or server has a different mapping then our static map, adding it to custom map 
