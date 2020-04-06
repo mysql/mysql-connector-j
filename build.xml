@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!--
-  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -219,10 +219,6 @@ com.mysql.jdbc.noCleanBetweenCompiles=yes
 
     <path id="project.build.classpath">
         <fileset dir="${com.mysql.jdbc.extra.libs}">
-            <include name="**/*.jar" />
-        </fileset>
-
-        <fileset dir="${buildDir}/${fullProdName}/lib">
             <include name="**/*.jar" />
         </fileset>
 
@@ -731,7 +727,7 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
                 <patternset refid="non.test.sources" />
             </fileset>
 
-            <fileset dir="." includes="src/com/**, src/doc/**, src/lib/*, src/org/**, src/testsuite/**, src/demo/**, build.xml, CHANGES, COPYING">
+            <fileset dir="." includes="src/com/**, src/doc/**, src/org/**, src/testsuite/**, src/demo/**, build.xml, CHANGES, COPYING">
                 <patternset refid="non.test.sources" />
             </fileset>
         </copy>
@@ -1203,9 +1199,6 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
                     <include name="**/*.jar" />
                 </fileset>
-                <fileset dir="${buildDir}/${fullProdName}/lib">
-                    <include name="**/*.jar" />
-                </fileset>
                 <pathelement location="${buildDir}/${fullProdName}-instr" />
                 <pathelement location="${buildDir}/${fullProdName}" />
                 <pathelement path="${java.class.path}" />
@@ -1255,9 +1248,6 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
                     <include name="**/*.jar" />
                 </fileset>
-                <fileset dir="${buildDir}/${fullProdName}/lib">
-                    <include name="**/*.jar" />
-                </fileset>
                 <pathelement location="${buildDir}/${fullProdName}-instr" />
                 <pathelement location="${buildDir}/${fullProdName}" />
                 <pathelement path="${java.class.path}" />
@@ -1298,9 +1288,6 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
             <classpath>
                 <pathelement location="${com.mysql.jdbc.extra.libs}/jcov/jcov_file_saver.jar" />
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
-                    <include name="**/*.jar" />
-                </fileset>
-                <fileset dir="${buildDir}/${fullProdName}/lib">
                     <include name="**/*.jar" />
                 </fileset>
                 <pathelement location="${buildDir}/${fullProdName}-instr" />
@@ -1395,9 +1382,6 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
 
             <classpath>
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
-                    <include name="**/*.jar" />
-                </fileset>
-                <fileset dir="${buildDir}/${fullProdName}/lib">
                     <include name="**/*.jar" />
                 </fileset>
                 <pathelement location="${buildDir}/${fullProdName}" />
@@ -1626,9 +1610,6 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
                     <fileset dir="${com.mysql.jdbc.extra.libs}">
                         <include name="**/*.jar" />
                     </fileset>
-                    <fileset dir="${buildDir}/${fullProdName}/lib">
-                        <include name="**/*.jar" />
-                    </fileset>
                     <pathelement location="${buildDir}/${fullProdName}" />
                     <pathelement path="${java.class.path}" />
                 </classpath>
@@ -1677,9 +1658,6 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
 
             <classpath>
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
-                    <include name="**/*.jar" />
-                </fileset>
-                <fileset dir="${buildDir}/${fullProdName}/lib">
                     <include name="**/*.jar" />
                 </fileset>
                 <pathelement location="${buildDir}/${fullProdName}" />
@@ -1764,9 +1742,6 @@ Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this 
 
             <classpath>
                 <fileset dir="${com.mysql.jdbc.extra.libs}">
-                    <include name="**/*.jar" />
-                </fileset>
-                <fileset dir="src/lib">
                     <include name="**/*.jar" />
                 </fileset>
                 <dirset dir="${buildDir}/${fullProdName}" />

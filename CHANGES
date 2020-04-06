@@ -3,6 +3,8 @@
 
 Version 5.1.49
 
+  - WL#14007, Remove third-party libraries from sources and bundles.
+
   - Fix for Bug#98237 (30911870), PREPAREDSTATEMENT.SETOBJECT(I, "FALSE", TYPES.BOOLEAN) ALWAYS SETS TRUE OR 1.
 
   - Fix for Bug#30866178, Not recommended default for 'allowLoadLocalInfile'. Back-port from Bug#94051 (29261254).
