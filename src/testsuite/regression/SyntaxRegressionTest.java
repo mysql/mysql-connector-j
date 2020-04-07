@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1511,11 +1511,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
         args.put("mpl", geoMultiPolygon);
         args.put("gc", geoGeometryCollection);
         args.put("gh", "'s14f5h28wc04jsq093jd'");
-        args.put("js",
-                "'{\"type\": \"GeometryCollection\", \"geometries\": [" + //
-                        "{\"type\": \"Point\", \"coordinates\": [8, 0]}, " + //
-                        "{\"type\": \"LineString\", \"coordinates\": [[0, 0], [8, 0], [4, 6], [0, 0]]}, " + //
-                        "{\"type\": \"Polygon\", \"coordinates\": [[[0, 3], [8, 3], [4, 9], [0, 3]]]}]}'");
+        args.put("js", "'{\"type\": \"GeometryCollection\", \"geometries\": [" + //
+                "{\"type\": \"Point\", \"coordinates\": [8, 0]}, " + //
+                "{\"type\": \"LineString\", \"coordinates\": [[0, 0], [8, 0], [4, 6], [0, 0]]}, " + //
+                "{\"type\": \"Polygon\", \"coordinates\": [[[0, 3], [8, 3], [4, 9], [0, 3]]]}]}'");
 
         final class GisFunction {
             String function;
@@ -2025,7 +2024,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         } else { // Syntax can still be tested by with different outcome.
             System.out.println("Although not required it is recommended that the 'keyring_file' plugin is properly installed and configured to run this test.");
 
-            String err = versionMeetsMinimum(8, 0, 4)
+            String err = versionMeetsMinimum(8, 0, 4) || versionMeetsMinimum(5, 7, 22) && !versionMeetsMinimum(8, 0, 0)
                     ? "Can't find master key from keyring, please check in the server log if a keyring plugin is loaded and initialized successfully."
                     : "Can't find master key from keyring, please check keyring plugin is loaded.";
 

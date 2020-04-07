@@ -7838,6 +7838,10 @@ public class StatementRegressionTest extends BaseTestCase {
      * Tests fix for Bug#23201930 - CLIENT HANG WHEN RSLT CUNCURRENCY=CONCUR_UPDATABLE AND RSLTSET TYPE=FORWARD_ONLY.
      */
     public void testBug23201930() throws Exception {
+        if (!versionMeetsMinimum(5, 5)) {
+            return;
+        }
+
         boolean useSSL = false;
         boolean useSPS = false;
         boolean useCursor = false;

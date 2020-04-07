@@ -1718,7 +1718,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug25545() throws Exception {
-        if (!versionMeetsMinimum(5, 0)) {
+        if (!versionMeetsMinimum(5, 0) || (!versionMeetsMinimum(5, 5) && !Util.jvmMeetsMinimum(8, 0))) {
             return;
         }
 
@@ -1758,6 +1758,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug36948() throws Exception {
+        if (!versionMeetsMinimum(5, 5)) {
+            return;
+        }
         Connection _conn = null;
 
         try {
@@ -7538,7 +7541,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug20685022() throws Exception {
-        if (!isCommunityEdition()) {
+        if (!isCommunityEdition() || !versionMeetsMinimum(5, 5)) {
             return;
         }
 
@@ -8340,6 +8343,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug21947042() throws Exception {
+        if (!versionMeetsMinimum(5, 5)) {
+            return;
+        }
+
         Connection sslConn = null;
         Properties props = new Properties();
         props.setProperty("logger", BufferingLogger.class.getName());
@@ -8535,6 +8542,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * Test certificates from testsuite/ssl-test-certs must be installed on both servers.
      */
     public void testTLSVersion() throws Exception {
+        if (!versionMeetsMinimum(5, 5) && !Util.jvmMeetsMinimum(8, 0)) {
+            return;
+        }
         // Find out which TLS protocol versions are supported by this JVM.
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, null, null);
@@ -8582,6 +8592,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 System.out.println("Highest common TLS protocol: " + highestCommonTlsVersion);
 
                 assertEquals(highestCommonTlsVersion, tlsVersionUsed);
+            } else if (((MySQLConnection) sslConn).versionMeetsMinimum(5, 6, 46)) {
+                assertEquals(jvmSupportedProtocols.contains("TLSv1.2") ? "TLSv1.2" : jvmSupportedProtocols.contains("TLSv1.1") ? "TLSv1.1" : "TLSv1",
+                        tlsVersionUsed);
             } else {
                 assertEquals("TLSv1", tlsVersionUsed);
             }
@@ -8602,6 +8615,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * Test certificates from testsuite/ssl-test-certs must be installed on both servers.
      */
     public void testEnableTLSVersion() throws Exception {
+        if (!versionMeetsMinimum(5, 5)) {
+            return;
+        }
         // Find out which TLS protocol versions are supported by this JVM.
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, null, null);
@@ -8636,6 +8652,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 List<String> serverSupportedProtocols = Arrays.asList(this.rs.getString(2).trim().split("\\s*,\\s*"));
                 System.out.println("Server supports TLS protocols: " + serverSupportedProtocols);
                 commonSupportedProtocols.addAll(serverSupportedProtocols);
+                commonSupportedProtocols.retainAll(jvmSupportedProtocols);
+            } else if (((MySQLConnection) sslConn).versionMeetsMinimum(5, 6, 46) && !((MySQLConnection) sslConn).versionMeetsMinimum(5, 7, 0)) {
+                commonSupportedProtocols.add("TLSv1");
+                commonSupportedProtocols.add("TLSv1.1");
+                commonSupportedProtocols.add("TLSv1.2");
                 commonSupportedProtocols.retainAll(jvmSupportedProtocols);
             } else {
                 commonSupportedProtocols.add("TLSv1");
@@ -10153,6 +10174,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * packets flow faster and desynchronization occurs rarely, which is the root cause for this problem.
      */
     public void testBug88242() throws Exception {
+        if (!versionMeetsMinimum(5, 5)) {
+            return;
+        }
+
         Properties props = new Properties();
         props.setProperty("useSSL", "true");
         props.setProperty("verifyServerCertificate", "false");

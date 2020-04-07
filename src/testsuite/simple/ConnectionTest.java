@@ -1597,6 +1597,10 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public void testNonVerifyServerCert() throws Exception {
+        if (!versionMeetsMinimum(5, 5)) {
+            return;
+        }
+
         Properties props = new Properties();
         props.setProperty("useSSL", "true");
         props.setProperty("verifyServerCertificate", "false");
