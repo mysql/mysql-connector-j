@@ -2260,6 +2260,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertThrows(SQLException.class,
                     versionMeetsMinimum(8, 0, 19) ? "Loading local data is disabled;.*" : "The used command is not allowed with this MySQL version",
                     new Callable<Void>() {
+                        @SuppressWarnings("synthetic-access")
                         public Void call() throws Exception {
                             StatementRegressionTest.this.stmt
                                     .executeUpdate("LOAD DATA LOCAL INFILE '" + fileName + "' INTO TABLE loadDataRegress CHARACTER SET "
@@ -8858,4 +8859,60 @@ public class StatementRegressionTest extends BaseTestCase {
 
     }
 
+    /**
+     * Tests fix for Bug#98237 (30911870), PREPAREDSTATEMENT.SETOBJECT(I, "FALSE", TYPES.BOOLEAN) ALWAYS SETS TRUE OR 1.
+     */
+    public void testBug98237() throws Exception {
+        createTable("testBug98237", "(b tinyint)");
+
+        String[] falses = new String[] { "False", "n", "0", "-0", "0.00", "-0.0" };
+        String[] trues = new String[] { "true", "y", "1", "-1", "1.0", "-1.0", "0.01", "-0.01" };
+
+        Properties props = new Properties();
+        boolean useSPS = false;
+        do {
+            props.setProperty("useServerPrepStmts", Boolean.toString(useSPS));
+            Connection con = getConnectionWithProps(props);
+            try {
+                final PreparedStatement ps = con.prepareStatement("insert into testBug98237 values(?)");
+                Statement st = con.createStatement();
+
+                con.createStatement().execute("truncate table testBug98237");
+                for (String val : falses) {
+                    ps.clearParameters();
+                    ps.setObject(1, val, Types.BOOLEAN);
+                    ps.execute();
+                }
+                this.rs = st.executeQuery("select * from testBug98237");
+                for (String val : falses) {
+                    assertTrue(this.rs.next());
+                    assertEquals("'false' was expected for " + val, 0, this.rs.getInt(1));
+                }
+
+                con.createStatement().execute("truncate table testBug98237");
+                for (String val : trues) {
+                    ps.clearParameters();
+                    ps.setObject(1, val, Types.BOOLEAN);
+                    ps.execute();
+                }
+                this.rs = st.executeQuery("select * from testBug98237");
+                for (String val : trues) {
+                    assertTrue(this.rs.next());
+                    assertEquals("'true' was expected for " + val, 1, this.rs.getInt(1));
+                }
+
+                ps.clearParameters();
+                assertThrows(SQLException.class, "No conversion from abc to Types.BOOLEAN possible.", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        ps.setObject(1, "abc", Types.BOOLEAN);
+                        return null;
+                    }
+                });
+
+            } finally {
+                con.close();
+            }
+        } while (useSPS = !useSPS);
+
+    }
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -3682,7 +3682,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
 
                                 break;
                             } else if (parameterObj instanceof String) {
-                                setBoolean(parameterIndex, "true".equalsIgnoreCase((String) parameterObj) || !"0".equalsIgnoreCase((String) parameterObj));
+                                if ("true".equalsIgnoreCase((String) parameterObj) || "Y".equalsIgnoreCase((String) parameterObj)) {
+                                    setBoolean(parameterIndex, true);
+                                } else if ("false".equalsIgnoreCase((String) parameterObj) || "N".equalsIgnoreCase((String) parameterObj)) {
+                                    setBoolean(parameterIndex, false);
+                                } else if (((String) parameterObj).matches("-?\\d+\\.?\\d*")) {
+                                    setBoolean(parameterIndex, !((String) parameterObj).matches("-?[0]+[.]*[0]*"));
+                                } else {
+                                    throw SQLError.createSQLException("No conversion from " + parameterObj + " to Types.BOOLEAN possible.",
+                                            SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                                }
 
                                 break;
                             } else if (parameterObj instanceof Number) {
