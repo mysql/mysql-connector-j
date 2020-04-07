@@ -3,6 +3,8 @@
 
 Version 8.0.21
 
+  - Fix for Bug#98237 (30911870), PREPAREDSTATEMENT.SETOBJECT(I, "FALSE", TYPES.BOOLEAN) ALWAYS SETS TRUE OR 1.
+
   - WL#13008, DevAPI: Add schema validation to create collection.
 
 Version 8.0.20
