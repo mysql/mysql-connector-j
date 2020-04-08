@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,6 +24,7 @@
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -44,7 +45,12 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
     public ConnectionImpl pickConnection(LoadBalancedConnectionProxy proxy, List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException {
 
+        List<String> whiteList = new ArrayList<String>(configuredHosts.size());
+        whiteList.addAll(configuredHosts);
+
         Map<String, Long> blackList = proxy.getGlobalBlacklist();
+
+        whiteList.removeAll(blackList.keySet());
 
         SQLException ex = null;
 
@@ -61,7 +67,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
             for (int i = 0; i < responseTimes.length; i++) {
                 long candidateResponseTime = responseTimes[i];
 
-                if (candidateResponseTime < minResponseTime && !blackList.containsKey(configuredHosts.get(i))) {
+                if (candidateResponseTime < minResponseTime && !blackList.containsKey(whiteList.get(i))) {
                     if (candidateResponseTime == 0) {
                         bestHostIndex = i;
 
@@ -73,7 +79,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
                 }
             }
 
-            String bestHost = configuredHosts.get(bestHostIndex);
+            String bestHost = whiteList.get(bestHostIndex);
 
             ConnectionImpl conn = liveConnections.get(bestHost);
 
