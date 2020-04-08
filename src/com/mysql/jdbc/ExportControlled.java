@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -115,7 +115,8 @@ public class ExportControlled {
             String enabledTLSProtocols = mysqlIO.connection.getEnabledTLSProtocols();
             if (enabledTLSProtocols != null && enabledTLSProtocols.length() > 0) {
                 tryProtocols = enabledTLSProtocols.split("\\s*,\\s*");
-            } else if (mysqlIO.versionMeetsMinimum(8, 0, 4) || mysqlIO.versionMeetsMinimum(5, 6, 0) && Util.isEnterpriseEdition(mysqlIO.getServerVersion())) {
+            } else if (mysqlIO.versionMeetsMinimum(5, 7, 28) || mysqlIO.versionMeetsMinimum(5, 6, 46) && !mysqlIO.versionMeetsMinimum(5, 7, 0)
+                    || mysqlIO.versionMeetsMinimum(5, 6, 0) && Util.isEnterpriseEdition(mysqlIO.getServerVersion())) {
                 // allow all known TLS versions for this subset of server versions by default
                 tryProtocols = TLS_PROTOCOLS;
             } else {
