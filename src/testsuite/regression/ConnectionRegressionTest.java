@@ -8148,7 +8148,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
      *             if the test fails.
      */
     public void testBug16634180() throws Exception {
-
         if (Util.isJdbc4()) {
             // relevant JDBC4+ test is testsuite.regression.jdbc4.ConnectionRegressionTest.testBug16634180()
             return;
@@ -10916,7 +10915,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * Test fix for Bug#89948 (27658489), Batched statements are not committed for useLocalTransactionState=true.
      */
     public void testBug89948() throws Exception {
-        createTable("testBug89948", "(id INT PRIMARY KEY)");
+        createTable("testBug89948", "(id INT PRIMARY KEY)", "InnoDB");
 
         boolean resetConn = false;
         boolean allowMQ = false;
