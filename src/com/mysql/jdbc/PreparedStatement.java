@@ -409,22 +409,23 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
             int indexOfValues = -1;
             int valuesSearchStart = this.statementStartPos;
 
+            // VALUE is a synonym for VALUES
             while (indexOfValues == -1) {
                 if (quoteCharStr.length() > 0) {
-                    indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, sql, "VALUES", quoteCharStr, quoteCharStr,
+                    indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, sql, "VALUE", quoteCharStr, quoteCharStr,
                             StringUtils.SEARCH_MODE__MRK_COM_WS);
                 } else {
-                    indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, sql, "VALUES");
+                    indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, sql, "VALUE");
                 }
 
                 if (indexOfValues > 0) {
-                    /* check if the char immediately preceding VALUES may be part of the table name */
+                    /* check if the char immediately preceding VALUE[S] may be part of the table name */
                     char c = sql.charAt(indexOfValues - 1);
                     if (!(Character.isWhitespace(c) || c == ')' || c == '`')) {
                         valuesSearchStart = indexOfValues + 6;
                         indexOfValues = -1;
                     } else {
-                        /* check if the char immediately following VALUES may be whitespace or open parenthesis */
+                        /* check if the char immediately following VALUE[S] may be whitespace or open parenthesis */
                         c = sql.charAt(indexOfValues + 6);
                         if (!(Character.isWhitespace(c) || c == '(')) {
                             valuesSearchStart = indexOfValues + 6;
@@ -440,7 +441,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements j
                 return null;
             }
 
-            int indexOfFirstParen = sql.indexOf('(', indexOfValues + 6);
+            // VALUE vs VALUES length
+            int valLength = sql.length() > indexOfValues + 5 && Character.toUpperCase(sql.charAt(indexOfValues + 5)) == 'S' ? 6 : 5;
+            int indexOfFirstParen = sql.indexOf('(', indexOfValues + valLength);
 
             if (indexOfFirstParen == -1) {
                 return null;

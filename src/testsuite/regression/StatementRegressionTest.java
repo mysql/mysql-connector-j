@@ -8917,6 +8917,68 @@ public class StatementRegressionTest extends BaseTestCase {
                 con.close();
             }
         } while (useSPS = !useSPS);
+    }
 
+    /**
+     * Test fix for Bug#77183 (21181501), INSERT..VALUE..lead to invalidation of batch insert.
+     * 
+     * @throws Exception
+     */
+    public void testBug77183() throws Exception {
+        createTable("testBug77183", "(c1 INT, c2 INT)");
+
+        boolean useSPS = false;
+        boolean rwBS = false;
+        boolean useRep = false;
+        boolean useValue = false;
+
+        do {
+            Properties props = new Properties();
+            props.setProperty("useServerPrepStmts", Boolean.toString(useSPS));
+            props.setProperty("rewriteBatchedStatements", Boolean.toString(rwBS));
+            props.setProperty("statementInterceptors", TestBug77183StatementInterceptor.class.getName());
+
+            Connection testConn = getConnectionWithProps(props);
+
+            this.pstmt = testConn.prepareStatement((useRep ? "REPLACE" : "INSERT") + " INTO testBug77183 " + (useValue ? "VALUE" : "VALUES") + " (?, ?)");
+            for (int i = 1; i <= 3; i++) {
+                this.pstmt.setInt(1, i);
+                this.pstmt.setInt(2, i);
+                this.pstmt.addBatch();
+            }
+            this.pstmt.executeBatch();
+
+            testConn.close();
+        } while ((useSPS = !useSPS) || (rwBS = !rwBS) || (useRep = !useRep) || (useValue = !useValue));
+
+        assertEquals(32, TestBug77183StatementInterceptor.countInterceptions);
+    }
+
+    public static class TestBug77183StatementInterceptor extends BaseStatementInterceptor {
+        public static int countInterceptions = 0;
+
+        @Override
+        public ResultSetInternalMethods preProcess(String sql, com.mysql.jdbc.Statement interceptedStatement, com.mysql.jdbc.Connection connection)
+                throws SQLException {
+            if (sql == null) {
+                sql = "";
+            }
+            if (sql.length() == 0 && interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
+                sql = ((com.mysql.jdbc.PreparedStatement) interceptedStatement).asSql();
+            }
+            if (interceptedStatement instanceof PreparedStatement) {
+                countInterceptions++;
+
+                final boolean useSPS = connection.getUseServerPreparedStmts();
+                final boolean rwBS = connection.getRewriteBatchedStatements();
+                final String testCase = String.format("Case [SPS: %s, RwBS: %s, Query: %s]", useSPS ? "Y" : "N", rwBS ? "Y" : "N", sql);
+                final int numParamSets = sql.length() - sql.replace("(", "").length();
+                final int numPlaceholders = sql.length() - sql.replace("?", "").length();
+
+                assertEquals(testCase, rwBS ? 3 : 1, numParamSets);
+                assertEquals(testCase, useSPS ? rwBS ? 6 : 2 : 0, numPlaceholders);
+            }
+            return super.preProcess(sql, interceptedStatement, connection);
+        }
     }
 }

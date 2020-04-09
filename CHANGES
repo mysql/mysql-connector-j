@@ -3,6 +3,8 @@
 
 Version 5.1.49
 
+  - Fix for Bug#77183 (21181501), INSERT..VALUE..lead to invalidation of batch insert.
+
   - Fix for Bug#23143279, CLIENT HANG WHEN LOADBALANCESTRATEGY IS BESTRESPONSETIME.
 
   - WL#14007, Remove third-party libraries from sources and bundles.
