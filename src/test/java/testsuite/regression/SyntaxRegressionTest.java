@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -163,6 +163,12 @@ public class SyntaxRegressionTest extends BaseTestCase {
                     if (File.separatorChar == '\\') {
                         tmpdir = StringUtils.escapeQuote(tmpdir, File.separator);
                     }
+                    if (versionMeetsMinimum(8, 0, 21) && !getMysqlVariable("innodb_directories").contains(tmpdir)) {
+                        // The server is not configured properly, skip this test.
+                        System.err.println("testTransportableTablespaces: server must be initialized with '--innodb-directories=\"<dir>\"' "
+                                + "where <dir> is the same value as the system variable 'tmpdir'.");
+                        return;
+                    }
                 } else if ("innodb_file_per_table".equals(this.rs.getString(1))) {
                     if (!this.rs.getString(2).equals("ON")) {
                         fail("You need to set innodb_file_per_table to ON before running this test!");
@@ -234,6 +240,12 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 tmpdir = this.rs.getString(2);
                 if (tmpdir.endsWith(File.separator)) {
                     tmpdir = tmpdir.substring(0, tmpdir.length() - File.separator.length());
+                }
+                if (versionMeetsMinimum(8, 0, 21) && !getMysqlVariable("innodb_directories").contains(tmpdir)) {
+                    // The server is not configured properly, skip this test.
+                    System.err.println("testTransportableTablespaces: server must be initialized with '--innodb-directories=\"<dir>\"' "
+                            + "where <dir> is the same value as the system variable 'tmpdir'.");
+                    return;
                 }
             } else if ("innodb_file_per_table".equals(this.rs.getString(1))) {
                 if (!this.rs.getString(2).equals("ON")) {
