@@ -56,7 +56,7 @@ Coverage and instrumentation
 ============================
 
 This file ships with target "test-coverage" for collecting coverage results and "report-coverage" for creating the HTML coverage report.
-The JaCoCo library needed to run these targets can be found at https://github.com/jacoco/jacoco, it's JARs should be placed
+The JaCoCo library needed to run these targets can be found at https://github.com/jacoco/jacoco, its JARs should be placed
 into ${com.mysql.cj.extra.libs}/jacoco directory.
 The "test-coverage" target enables tests execution-time JaCoCo instrumentation, runs tests collecting coverage info into result file
 which path is set as ${com.mysql.cj.coverage.result.dir}/${com.mysql.cj.coverage.result.name}.
@@ -1312,50 +1312,75 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <isset property="com.mysql.cj.coverage.result.dir.final" />
         </condition>
 
-        <jacoco:coverage destfile="${com.mysql.cj.coverage.result.dir.final}/${com.mysql.cj.coverage.result.name.final}"
-                         enabled="${com.mysql.cj.testsuite.test.coverage}">
-            <junit printsummary="yes"
-                   fork="on"
-                   forkmode="once"
-                   jvm="${com.mysql.cj.testsuite.jvm.java}"
-                   errorproperty="com.mysql.cj.testsuite.junit.fail"
-                   failureproperty="com.mysql.cj.testsuite.junit.fail">
-                <jvmarg value="-Xmx1024m" />
+        <local name="com.mysql.cj.testsuite.test.coverage.jvmarg" />
+        <jacoco:agent destfile="${com.mysql.cj.coverage.result.dir.final}/${com.mysql.cj.coverage.result.name.final}"
+                      enabled="${com.mysql.cj.testsuite.test.coverage}"
+                      property="com.mysql.cj.testsuite.test.coverage.jvmarg" />
 
-                <syspropertyset refid="junit.system.properties" />
-                <sysproperty key="com.mysql.cj.testsuite.url" value="${com.mysql.cj.testsuite.url}" />
+        <local name="com.mysql.cj.testsuite.test.coverage.jvmargfinal" />
+        <condition property="com.mysql.cj.testsuite.test.coverage.jvmargfinal"
+                   value="${com.mysql.cj.testsuite.test.coverage.jvmarg}"
+                   else="-Dcoverage=disabled">
+            <and>
+                <isset property="com.mysql.cj.testsuite.test.coverage.jvmarg" />
+                <not>
+                    <equals arg1="${com.mysql.cj.testsuite.test.coverage.jvmarg}" arg2="" />
+                </not>
+            </and>
+        </condition>
 
-                <classpath>
-                    <fileset dir="${com.mysql.cj.extra.libs}">
-                        <include name="**/*.jar" />
-                        <exclude name="**/protobuf-java-2.6.0.jar" />
-                    </fileset>
-                    <pathelement location="${com.mysql.cj.build.dir.driver}" />
-                    <pathelement location="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}" />
-                    <pathelement path="${com.mysql.cj.testsuite.build.classpath}" />
-                    <pathelement path="${java.class.path}" />
-                </classpath>
+        <junitlauncher haltOnFailure="false" printSummary="true" failureProperty="com.mysql.cj.testsuite.junit.fail">
+            <classpath>
+                <fileset dir="${com.mysql.cj.extra.libs}">
+                    <include name="**/*.jar" />
+                    <exclude name="**/protobuf-java-2.6.0.jar" />
+                </fileset>
+                <pathelement location="${com.mysql.cj.build.dir.driver}" />
+                <pathelement location="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}" />
+                <pathelement path="${com.mysql.cj.testsuite.build.classpath}" />
+                <pathelement path="${java.class.path}" />
+            </classpath>
 
-                <formatter type="xml" />
+            <test if="${com.mysql.cj.testsuite.test.methods.enabled}"
+                  name="${com.mysql.cj.testsuite.test.class}"
+                  methods="${com.mysql.cj.testsuite.test.methods}"
+                  outputdir="${com.mysql.cj.testsuite.junit.results}">
+                <fork>
+                    <jvmarg value="-Xmx1024m" />
+                    <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
+                    <syspropertyset refid="junit.system.properties" />
+                </fork>
+                <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
+                <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
+            </test>
 
-                <test if="${com.mysql.cj.testsuite.test.methods.enabled}"
-                      name="${com.mysql.cj.testsuite.test.class}"
-                      methods="${com.mysql.cj.testsuite.test.methods}"
-                      todir="${com.mysql.cj.testsuite.junit.results}" />
+            <test if="com.mysql.cj.testsuite.test.class"
+                  unless="com.mysql.cj.testsuite.test.methods"
+                  name="${com.mysql.cj.testsuite.test.class}"
+                  outputdir="${com.mysql.cj.testsuite.junit.results}">
+                <fork>
+                    <jvmarg value="-Xmx1024m" />
+                    <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
+                    <syspropertyset refid="junit.system.properties" />
+                </fork>
+                <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
+                <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
+            </test>
 
-                <test if="com.mysql.cj.testsuite.test.class"
-                      unless="com.mysql.cj.testsuite.test.methods"
-                      name="${com.mysql.cj.testsuite.test.class}"
-                      todir="${com.mysql.cj.testsuite.junit.results}" />
-
-                <batchtest unless="com.mysql.cj.testsuite.test.class" todir="${com.mysql.cj.testsuite.junit.results}">
-                    <fileset dir="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}">
-                        <include name="**/*Test.java" />
-                        <exclude name="**/perf/*.java" />
-                    </fileset>
-                </batchtest>
-            </junit>
-        </jacoco:coverage>
+            <testclasses unless="com.mysql.cj.testsuite.test.class" outputdir="${com.mysql.cj.testsuite.junit.results}">
+                <fileset dir="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}">
+                    <include name="**/*Test.class" />
+                    <exclude name="**/perf/*.class" />
+                </fileset>
+                <fork>
+                    <jvmarg value="-Xmx1024m" />
+                    <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
+                    <syspropertyset refid="junit.system.properties" />
+                </fork>
+                <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
+                <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
+            </testclasses>
+        </junitlauncher>
 
         <junitreport todir="${com.mysql.cj.testsuite.junit.results}/report">
             <fileset dir="${com.mysql.cj.testsuite.junit.results}">

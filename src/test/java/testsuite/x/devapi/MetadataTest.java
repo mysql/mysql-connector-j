@@ -29,12 +29,12 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData;
@@ -47,10 +47,8 @@ import com.mysql.cj.xdevapi.Type;
  * Tests for "Column" table metadata API.
  */
 public class MetadataTest extends BaseTableTestCase {
-    @Before
-    @Override
+    @BeforeEach
     public void setupTableTest() {
-        super.setupTableTest();
         if (this.isSetForXTests) {
             sqlUpdate("drop table if exists example_metadata");
             sqlUpdate("create table example_metadata (_id varchar(32), name varchar(20), birthday date, age int)");
@@ -644,6 +642,5 @@ public class MetadataTest extends BaseTableTestCase {
         // assertEquals(false, c.isPrimaryKey()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(false, c.isUniqueKey()); // irrelevant, we shouldn't expect any concrete value
         // assertEquals(false, c.isPartKey()); // irrelevant, we shouldn't expect any concrete value
-
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,16 +30,16 @@
 package testsuite.x.devapi;
 
 import static com.mysql.cj.xdevapi.Expression.expr;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.StringReader;
 import java.util.concurrent.Callable;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.xdevapi.AddResult;
@@ -62,7 +62,6 @@ import com.mysql.cj.xdevapi.XDevAPIError;
  * @todo
  */
 public class CollectionModifyTest extends BaseCollectionTestCase {
-
     @Test
     public void testSet() {
         if (!this.isSetForXTests) {
@@ -275,7 +274,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
                 assertEquals(xArray.toString(), jd.get("y").toString());
             }
         }
-
     }
 
     /**
@@ -319,7 +317,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         docs = this.collection.find().execute();
         doc = docs.next();
         assertEquals(doc2.toString(), doc.toString());
-
     }
 
     @Test
@@ -669,7 +666,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         });
 
         assertNull(this.collection.getOne(null));
-
     }
 
     /**

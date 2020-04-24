@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,17 +29,17 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.net.Inet6Address;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions;
@@ -51,7 +51,7 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
     List<String> ipv6Addrs;
     String testUser = "testIPv6User";
 
-    @Before
+    @BeforeEach
     public void setupIpv6SupportTest() {
         if (setupTestSession()) {
             List<Inet6Address> ipv6List = TestUtils.getIpv6List();
@@ -64,7 +64,7 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void teardownIpv6SupportTest() {
         if (this.isSetForXTests && this.session.isOpen()) {
             this.session.sql("DROP USER '" + this.testUser + "'@'%'").execute();
@@ -78,9 +78,9 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
      */
     @Test
     public void testIpv6SupportInSession() {
-        Assume.assumeTrue("Not set to run X tests. Set the url to the X server using the property " + PropertyDefinitions.SYSP_testsuite_url_mysqlx,
-                this.isSetForXTests);
-        Assume.assumeTrue("Server version 5.7.17 or higher is required.", mysqlVersionMeetsMinimum(ServerVersion.parseVersion("5.7.17")));
+        assumeTrue(this.isSetForXTests,
+                "Not set to run X tests. Set the url to the X server using the property " + PropertyDefinitions.SYSP_testsuite_url_mysqlx);
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("5.7.17")), "Server version 5.7.17 or higher is required.");
 
         // Although per specification IPv6 addresses must be enclosed by square brackets, we actually support them directly.
         String[] urls = new String[] { "mysqlx://%s:%s@%s:%d", "mysqlx://%s:%s@[%s]:%d", "mysqlx://%s:%s@(address=%s:%d)", "mysqlx://%s:%s@(address=[%s]:%d)",
@@ -95,7 +95,7 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
                 for (String url : urls) {
                     String ipv6Url = String.format(url, this.testUser, this.testUser, TestUtils.encodePercent(host), port);
                     Session sess = this.fact.getSession(ipv6Url);
-                    Assert.assertFalse(sess.getSchemas().isEmpty());
+                    assertFalse(sess.getSchemas().isEmpty());
                     sess.close();
                 }
             }

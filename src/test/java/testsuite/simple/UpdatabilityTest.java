@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,16 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 
@@ -41,45 +48,25 @@ import testsuite.BaseTestCase;
  * Tests for updatable result sets
  */
 public class UpdatabilityTest extends BaseTestCase {
-    /**
-     * Creates a new UpdatabilityTest object.
-     * 
-     * @param name
-     */
-    public UpdatabilityTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(UpdatabilityTest.class);
-    }
-
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
         createTestTable();
     }
 
-    @Override
+    @AfterEach
     public void tearDown() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE UPDATABLE");
         } catch (SQLException SQLE) {
         }
-        super.tearDown();
     }
 
     /**
      * Tests if aliased tables work as updatable result sets.
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testAliasedTables() throws Exception {
         Statement scrollableStmt = null;
 
@@ -116,12 +103,11 @@ public class UpdatabilityTest extends BaseTestCase {
     }
 
     /**
-     * Tests that the driver does not let you update result sets that come from
-     * tables that don't have primary keys
+     * Tests that the driver does not let you update result sets that come from tables that don't have primary keys
      * 
      * @throws SQLException
-     *             if an error occurs
      */
+    @Test
     public void testBogusTable() throws SQLException {
         this.stmt.executeUpdate("DROP TABLE IF EXISTS BOGUS_UPDATABLE");
         this.stmt.executeUpdate("CREATE TABLE BOGUS_UPDATABLE (field1 int)");
@@ -152,12 +138,11 @@ public class UpdatabilityTest extends BaseTestCase {
     }
 
     /**
-     * Tests that the driver does not let you update result sets that come from
-     * queries that haven't selected all primary keys
+     * Tests that the driver does not let you update result sets that come from queries that haven't selected all primary keys
      * 
      * @throws SQLException
-     *             if an error occurs
      */
+    @Test
     public void testMultiKeyTable() throws SQLException {
         this.stmt.executeUpdate("DROP TABLE IF EXISTS MULTI_UPDATABLE");
         this.stmt.executeUpdate("CREATE TABLE MULTI_UPDATABLE (field1 int NOT NULL, field2 int NOT NULL, PRIMARY KEY (field1, field2))");
@@ -187,6 +172,7 @@ public class UpdatabilityTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testUpdatability() throws SQLException {
         Statement scrollableStmt = null;
 
@@ -215,7 +201,7 @@ public class UpdatabilityTest extends BaseTestCase {
             int rememberedPosition = this.rs.getRow();
             this.rs.moveToInsertRow();
             this.rs.moveToCurrentRow();
-            assertTrue("ResultSet.moveToCurrentRow() failed", this.rs.getRow() == rememberedPosition);
+            assertTrue(this.rs.getRow() == rememberedPosition, "ResultSet.moveToCurrentRow() failed");
             this.rs.close();
             this.rs = scrollableStmt.executeQuery("SELECT * FROM UPDATABLE ORDER BY pos1");
 
@@ -229,7 +215,7 @@ public class UpdatabilityTest extends BaseTestCase {
                 }
             }
 
-            assertTrue("Updates failed", dataGood);
+            assertTrue(dataGood, "Updates failed");
 
             // move back, and change the primary key
             // This should work
@@ -239,7 +225,7 @@ public class UpdatabilityTest extends BaseTestCase {
             this.rs.updateRow();
 
             int savedPrimaryKeyId = this.rs.getInt(1);
-            assertTrue("Updated primary key does not match", (newPrimaryKeyId == savedPrimaryKeyId));
+            assertTrue((newPrimaryKeyId == savedPrimaryKeyId), "Updated primary key does not match");
 
             // Check cancelRowUpdates()
             this.rs.absolute(1);
@@ -250,7 +236,7 @@ public class UpdatabilityTest extends BaseTestCase {
             this.rs.cancelRowUpdates();
 
             int newValue = this.rs.getInt(2);
-            assertTrue("ResultSet.cancelRowUpdates() failed", newValue == originalValue);
+            assertTrue(newValue == originalValue, "ResultSet.cancelRowUpdates() failed");
 
             // Now check refreshRow()
             // Check cancelRowUpdates()
@@ -258,7 +244,7 @@ public class UpdatabilityTest extends BaseTestCase {
             primaryKey = this.rs.getInt(1);
             this.stmt.executeUpdate("UPDATE UPDATABLE SET char_field='foo' WHERE pos1=" + primaryKey);
             this.rs.refreshRow();
-            assertTrue("ResultSet.refreshRow failed", this.rs.getString("char_field").equals("foo"));
+            assertTrue(this.rs.getString("char_field").equals("foo"), "ResultSet.refreshRow failed");
 
             // Now check deleteRow()
             this.rs.last();
@@ -266,7 +252,7 @@ public class UpdatabilityTest extends BaseTestCase {
             int oldLastRow = this.rs.getRow();
             this.rs.deleteRow();
             this.rs.last();
-            assertTrue("ResultSet.deleteRow() failed", this.rs.getRow() == (oldLastRow - 1));
+            assertTrue(this.rs.getRow() == (oldLastRow - 1), "ResultSet.deleteRow() failed");
             this.rs.close();
 
             /*

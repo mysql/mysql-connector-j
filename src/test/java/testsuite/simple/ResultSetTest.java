@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,12 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
@@ -56,6 +62,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.PropertyKey;
@@ -66,20 +74,7 @@ import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import testsuite.BaseTestCase;
 
 public class ResultSetTest extends BaseTestCase {
-
-    public ResultSetTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(ResultSetTest.class);
-    }
-
+    @Test
     public void testPadding() throws Exception {
         Connection paddedConn = null;
 
@@ -172,8 +167,8 @@ public class ResultSetTest extends BaseTestCase {
         }
     }
 
+    @Test
     private void testPaddingForConnection(Connection paddedConn, int numChars, StringBuilder selectBuf) throws SQLException {
-
         String query = "SELECT " + selectBuf.toString() + " FROM testPadding ORDER by ord";
 
         this.rs = paddedConn.createStatement().executeQuery(query);
@@ -181,10 +176,8 @@ public class ResultSetTest extends BaseTestCase {
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
-                assertEquals(
-                        "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1),
-                        numChars, this.rs.getString(i + 1).length());
+                assertEquals(numChars, this.rs.getString(i + 1).length(), "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                        + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1));
             }
         }
 
@@ -192,10 +185,8 @@ public class ResultSetTest extends BaseTestCase {
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
-                assertEquals(
-                        "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1),
-                        numChars, this.rs.getString(i + 1).length());
+                assertEquals(numChars, this.rs.getString(i + 1).length(), "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                        + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1));
             }
         }
 
@@ -203,10 +194,8 @@ public class ResultSetTest extends BaseTestCase {
 
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
-                assertEquals(
-                        "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1),
-                        numChars, this.rs.getString(i + 1).length());
+                assertEquals(numChars, this.rs.getString(i + 1).length(), "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                        + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1));
             }
         }
 
@@ -215,15 +204,11 @@ public class ResultSetTest extends BaseTestCase {
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
                 if (this.rs.getRow() != 3) {
-                    assertTrue(
-                            "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1),
-                            numChars != this.rs.getString(i + 1).length());
+                    assertTrue(numChars != this.rs.getString(i + 1).length(), "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                            + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1));
                 } else {
-                    assertEquals(
-                            "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1),
-                            numChars, this.rs.getString(i + 1).length());
+                    assertEquals(numChars, this.rs.getString(i + 1).length(), "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                            + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1));
                 }
             }
         }
@@ -233,15 +218,11 @@ public class ResultSetTest extends BaseTestCase {
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
                 if (this.rs.getRow() != 3) {
-                    assertTrue(
-                            "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1),
-                            numChars != this.rs.getString(i + 1).length());
+                    assertTrue(numChars != this.rs.getString(i + 1).length(), "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                            + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1));
                 } else {
-                    assertEquals(
-                            "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1),
-                            numChars, this.rs.getString(i + 1).length());
+                    assertEquals(numChars, this.rs.getString(i + 1).length(), "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                            + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1));
                 }
             }
         }
@@ -251,20 +232,17 @@ public class ResultSetTest extends BaseTestCase {
         while (this.rs.next()) {
             for (int i = 0; i < numCols; i++) {
                 if (this.rs.getRow() != 3) {
-                    assertTrue(
-                            "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1),
-                            numChars != this.rs.getString(i + 1).length());
+                    assertTrue(numChars != this.rs.getString(i + 1).length(), "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                            + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1));
                 } else {
-                    assertEquals(
-                            "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
-                                    + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1),
-                            numChars, this.rs.getString(i + 1).length());
+                    assertEquals(numChars, this.rs.getString(i + 1).length(), "For column '" + this.rs.getMetaData().getColumnName(i + 1) + "' of collation "
+                            + ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(i + 1));
                 }
             }
         }
     }
 
+    @Test
     public void testWarningOnTimestampTruncation() throws SQLException {
         this.rs = this.stmt.executeQuery("select cast('2006-01-01 12:13:14' as DATETIME) as ts_val");
         this.rs.next();
@@ -292,9 +270,12 @@ public class ResultSetTest extends BaseTestCase {
         assertNull(this.rs.getWarnings().getNextWarning().getNextWarning());
     }
 
-    /*
+    /**
      * Date and time retrieval tests with and without ssps.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testDateTimeRetrieval() throws Exception {
         testDateTimeRetrieval_internal(this.conn);
         Connection sspsConn = getConnectionWithProps("useServerPrepStmts=true");
@@ -302,6 +283,7 @@ public class ResultSetTest extends BaseTestCase {
         sspsConn.close();
     }
 
+    @Test
     private void testDateTimeRetrieval_internal(Connection c) throws Exception {
         createTable("testDateTypes", "(d DATE, t TIME, dt DATETIME)");
         this.stmt.executeUpdate("INSERT INTO testDateTypes VALUES ('2006-02-01', '-40:20:10', '2006-02-01 12:13:14')");
@@ -340,8 +322,11 @@ public class ResultSetTest extends BaseTestCase {
     }
 
     /**
-     * Test for ResultSet.updateObject(), non-updatable ResultSet behaviour.
+     * Test for ResultSet.updateObject(), non-updatable ResultSet behavior.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testNonUpdResultSetUpdateObject() throws Exception {
         this.rs = this.stmt.executeQuery("SELECT 'testResultSetUpdateObject' AS test");
 
@@ -407,7 +392,10 @@ public class ResultSetTest extends BaseTestCase {
     /**
      * Test for (Updatable)ResultSet.[update|get]Object().
      * Note: ResultSet.getObject() is covered in methods TestJDBC42Statemet.validateTestData[Local|Offset]DTTypes.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testUpdResultSetUpdateObjectAndNewSupportedTypes() throws Exception {
         /*
          * Objects java.time.Local[Date][Time] are supported via conversion to/from java.sql.[Date|Time|Timestamp].
@@ -627,29 +615,29 @@ public class ResultSetTest extends BaseTestCase {
         int rowCount = 0;
         while (this.rs.next()) {
             String row = "Row " + this.rs.getInt(1);
-            assertEquals(row, ++rowCount, this.rs.getInt(1));
+            assertEquals(++rowCount, this.rs.getInt(1), row);
 
-            assertEquals(row, testSqlDate, this.rs.getDate(2));
-            assertEquals(row, testSqlTime, this.rs.getTime(3));
-            assertEquals(row, testSqlTimeStamp, this.rs.getTimestamp(4));
-            assertEquals(row, testSqlTimeStamp, this.rs.getTimestamp(5));
+            assertEquals(testSqlDate, this.rs.getDate(2), row);
+            assertEquals(testSqlTime, this.rs.getTime(3), row);
+            assertEquals(testSqlTimeStamp, this.rs.getTimestamp(4), row);
+            assertEquals(testSqlTimeStamp, this.rs.getTimestamp(5), row);
 
-            assertEquals(row, testLocalDate, this.rs.getObject(2, LocalDate.class));
-            assertEquals(row, testLocalTime, this.rs.getObject(3, LocalTime.class));
-            assertEquals(row, testLocalDateTime, this.rs.getObject(4, LocalDateTime.class));
-            assertEquals(row, testLocalDateTime, this.rs.getObject(5, LocalDateTime.class));
+            assertEquals(testLocalDate, this.rs.getObject(2, LocalDate.class), row);
+            assertEquals(testLocalTime, this.rs.getObject(3, LocalTime.class), row);
+            assertEquals(testLocalDateTime, this.rs.getObject(4, LocalDateTime.class), row);
+            assertEquals(testLocalDateTime, this.rs.getObject(5, LocalDateTime.class), row);
 
-            assertEquals(row, rowCount, this.rs.getInt("id"));
+            assertEquals(rowCount, this.rs.getInt("id"), row);
 
-            assertEquals(row, testSqlDate, this.rs.getDate("d"));
-            assertEquals(row, testSqlTime, this.rs.getTime("t"));
-            assertEquals(row, testSqlTimeStamp, this.rs.getTimestamp("dt"));
-            assertEquals(row, testSqlTimeStamp, this.rs.getTimestamp("ts"));
+            assertEquals(testSqlDate, this.rs.getDate("d"), row);
+            assertEquals(testSqlTime, this.rs.getTime("t"), row);
+            assertEquals(testSqlTimeStamp, this.rs.getTimestamp("dt"), row);
+            assertEquals(testSqlTimeStamp, this.rs.getTimestamp("ts"), row);
 
-            assertEquals(row, testLocalDate, this.rs.getObject("d", LocalDate.class));
-            assertEquals(row, testLocalTime, this.rs.getObject("t", LocalTime.class));
-            assertEquals(row, testLocalDateTime, this.rs.getObject("dt", LocalDateTime.class));
-            assertEquals(row, testLocalDateTime, this.rs.getObject("ts", LocalDateTime.class));
+            assertEquals(testLocalDate, this.rs.getObject("d", LocalDate.class), row);
+            assertEquals(testLocalTime, this.rs.getObject("t", LocalTime.class), row);
+            assertEquals(testLocalDateTime, this.rs.getObject("dt", LocalDateTime.class), row);
+            assertEquals(testLocalDateTime, this.rs.getObject("ts", LocalDateTime.class), row);
         }
         assertEquals(12, rowCount);
 
@@ -684,19 +672,19 @@ public class ResultSetTest extends BaseTestCase {
         rowCount = 0;
         while (this.rs.next()) {
             String row = "Row " + this.rs.getInt(1);
-            assertEquals(row, ++rowCount, this.rs.getInt(1));
+            assertEquals(++rowCount, this.rs.getInt(1), row);
 
-            assertEquals(row, testOffsetTime, this.rs.getObject(2, OffsetTime.class));
-            assertEquals(row, testOffsetTime, this.rs.getObject(3, OffsetTime.class));
-            assertEquals(row, testOffsetDateTime, this.rs.getObject(4, OffsetDateTime.class));
-            assertEquals(row, testOffsetDateTime, this.rs.getObject(5, OffsetDateTime.class));
+            assertEquals(testOffsetTime, this.rs.getObject(2, OffsetTime.class), row);
+            assertEquals(testOffsetTime, this.rs.getObject(3, OffsetTime.class), row);
+            assertEquals(testOffsetDateTime, this.rs.getObject(4, OffsetDateTime.class), row);
+            assertEquals(testOffsetDateTime, this.rs.getObject(5, OffsetDateTime.class), row);
 
-            assertEquals(row, rowCount, this.rs.getInt("id"));
+            assertEquals(rowCount, this.rs.getInt("id"), row);
 
-            assertEquals(row, testOffsetTime, this.rs.getObject("ot1", OffsetTime.class));
-            assertEquals(row, testOffsetTime, this.rs.getObject("ot2", OffsetTime.class));
-            assertEquals(row, testOffsetDateTime, this.rs.getObject("odt1", OffsetDateTime.class));
-            assertEquals(row, testOffsetDateTime, this.rs.getObject("odt2", OffsetDateTime.class));
+            assertEquals(testOffsetTime, this.rs.getObject("ot1", OffsetTime.class), row);
+            assertEquals(testOffsetTime, this.rs.getObject("ot2", OffsetTime.class), row);
+            assertEquals(testOffsetDateTime, this.rs.getObject("odt1", OffsetDateTime.class), row);
+            assertEquals(testOffsetDateTime, this.rs.getObject("odt2", OffsetDateTime.class), row);
         }
         assertEquals(2, rowCount);
 
@@ -705,7 +693,10 @@ public class ResultSetTest extends BaseTestCase {
 
     /**
      * Test for (Updatable)ResultSet.updateObject(), unsupported SQL types TIME_WITH_TIMEZONE, TIMESTAMP_WITH_TIMEZONE and REF_CURSOR.
+     * 
+     * @throws SQLException
      */
+    @Test
     public void testUpdResultSetUpdateObjectAndNewUnsupportedTypes() throws SQLException {
         createTable("testUnsupportedTypes", "(id INT PRIMARY KEY, col VARCHAR(20))");
 
@@ -808,7 +799,10 @@ public class ResultSetTest extends BaseTestCase {
 
     /**
      * Test exceptions thrown when trying to update a read-only result set.
+     * 
+     * @throws SQLException
      */
+    @Test
     public void testUpdateForReadOnlyResultSet() throws SQLException {
         Statement testStmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
         this.rs = testStmt.executeQuery("SELECT 'aaa' as f1");

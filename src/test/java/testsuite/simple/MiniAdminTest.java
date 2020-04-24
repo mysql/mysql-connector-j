@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,8 @@
 
 package testsuite.simple;
 
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.jdbc.admin.MiniAdmin;
 
@@ -38,34 +40,14 @@ import testsuite.BaseTestCase;
  * Testsuite for MiniAdmin functionality.
  */
 public class MiniAdminTest extends BaseTestCase {
-
-    /**
-     * Creates a new test case
-     * 
-     * @param name
-     *            the test to run
-     */
-    public MiniAdminTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(MiniAdminTest.class);
-    }
-
     /**
      * Tests whether or not you can shutdown the server with MiniAdmin.
      * 
      * Only runs if SHUTDOWN_PROP is defined.
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testShutdown() throws Exception {
         if (runTestIfSysPropDefined(PropertyDefinitions.SYSP_testsuite_miniAdminTest_runShutdown)) {
             new MiniAdmin(this.conn).shutdown();
@@ -76,8 +58,8 @@ public class MiniAdminTest extends BaseTestCase {
      * Tests whether or not you can construct a MiniAdmin with a JDBC URL.
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testUrlConstructor() throws Exception {
         new MiniAdmin(dbUrl);
     }

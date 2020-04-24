@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,10 +29,10 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +40,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -57,7 +57,7 @@ import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
 import com.mysql.cj.xdevapi.SqlResult;
 
-@Category(testsuite.x.AsyncTests.class)
+@Tag("Async")
 public class AsyncQueryTest extends BaseCollectionTestCase {
 
     @Test
@@ -124,9 +124,9 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
                 DbDoc d = docs.next();
                 JsonString mode = (JsonString) d.get("mode");
                 if (i % 5 == 0) {
-                    assertEquals("i = " + i, "sync", mode.getString());
+                    assertEquals("sync", mode.getString(), "i = " + i);
                 } else {
-                    assertEquals("i = " + i, "async", mode.getString());
+                    assertEquals("async", mode.getString(), "i = " + i);
                 }
             } catch (Throwable t) {
                 throw new Exception("Error on i = " + i, t);
@@ -250,6 +250,8 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
 
     /**
      * This test addresses the "correlation" of messages to their proper async listeners.
+     * 
+     * @throws Exception
      */
     @Test
     public void manyFutures() throws Exception {

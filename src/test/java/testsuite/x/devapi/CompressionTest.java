@@ -29,11 +29,11 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.sql.Connection;
 import java.sql.Driver;
@@ -45,9 +45,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.Compression;
@@ -173,7 +173,7 @@ public class CompressionTest extends DevApiBaseTestCase {
         }
     }
 
-    @Before
+    @BeforeEach
     public void setupCompressionTest() {
         if (setupTestSession()) {
             this.compressFreeTestProperties.remove(PropertyKey.xdevapiCompression.getKeyName());
@@ -193,7 +193,7 @@ public class CompressionTest extends DevApiBaseTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void teardownCompressionTest() {
         if (this.counters != null) {
             this.counters.releaseResources();
@@ -225,32 +225,32 @@ public class CompressionTest extends DevApiBaseTestCase {
             Session testSession = this.fact.getSession(this.compressFreeBaseUrl + makeParam(PropertyKey.xdevapiCompression, Compression.PREFERRED));
             Collection col = testSession.getDefaultSchema().getCollection("compressionNegotiation");
 
-            assertTrue(testCase, this.counters.resetCounters());
+            assertTrue(this.counters.resetCounters(), testCase);
 
             AddResult res = col.add(longData).execute(); // Enough bytes to trigger compression.
-            assertEquals(testCase, 1, res.getAffectedItemsCount());
+            assertEquals(1, res.getAffectedItemsCount(), testCase);
             String docId = res.getGeneratedIds().get(0);
 
-            assertTrue(testCase, this.counters.resetCounters());
+            assertTrue(this.counters.resetCounters(), testCase);
             if (expected[i]) {
-                assertTrue(testCase, this.counters.downlinkCompressionUsed()); // Server compresses small messages anyway.
-                assertTrue(testCase, this.counters.uplinkCompressionUsed());
+                assertTrue(this.counters.downlinkCompressionUsed(), testCase); // Server compresses small messages anyway.
+                assertTrue(this.counters.uplinkCompressionUsed(), testCase);
             } else {
-                assertFalse(testCase, this.counters.downlinkCompressionUsed());
-                assertFalse(testCase, this.counters.uplinkCompressionUsed());
+                assertFalse(this.counters.downlinkCompressionUsed(), testCase);
+                assertFalse(this.counters.uplinkCompressionUsed(), testCase);
             }
 
             DbDoc doc = col.getOne(docId);
-            assertNotNull(testCase, doc);
-            assertEquals(testCase, longDataDoc.get("data").toString(), doc.get("data").toString());
+            assertNotNull(doc, testCase);
+            assertEquals(longDataDoc.get("data").toString(), doc.get("data").toString(), testCase);
 
-            assertTrue(testCase, this.counters.resetCounters());
+            assertTrue(this.counters.resetCounters(), testCase);
             if (expected[i]) {
-                assertTrue(testCase, this.counters.downlinkCompressionUsed());
-                assertFalse(testCase, this.counters.uplinkCompressionUsed());
+                assertTrue(this.counters.downlinkCompressionUsed(), testCase);
+                assertFalse(this.counters.uplinkCompressionUsed(), testCase);
             } else {
-                assertFalse(testCase, this.counters.downlinkCompressionUsed());
-                assertFalse(testCase, this.counters.uplinkCompressionUsed());
+                assertFalse(this.counters.downlinkCompressionUsed(), testCase);
+                assertFalse(this.counters.uplinkCompressionUsed(), testCase);
             }
 
             dropCollection("compressionNegotiation");
@@ -328,12 +328,12 @@ public class CompressionTest extends DevApiBaseTestCase {
             col = testSession.getDefaultSchema().getCollection("downlinkCompression");
 
             DocResult docs = col.find().execute();
-            assertEquals(testCase, 1, docs.count());
-            assertEquals(testCase, longDataDoc.get("data").toString(), docs.fetchOne().get("data").toString());
+            assertEquals(1, docs.count(), testCase);
+            assertEquals(longDataDoc.get("data").toString(), docs.fetchOne().get("data").toString(), testCase);
 
-            assertTrue(testCase, this.counters.resetCounters());
-            assertFalse(testCase, this.counters.uplinkCompressionUsed());
-            assertTrue(testCase, this.counters.downlinkCompressionUsed());
+            assertTrue(this.counters.resetCounters(), testCase);
+            assertFalse(this.counters.uplinkCompressionUsed(), testCase);
+            assertTrue(this.counters.downlinkCompressionUsed(), testCase);
         }
 
         dropCollection("downlinkCompression");
@@ -360,25 +360,25 @@ public class CompressionTest extends DevApiBaseTestCase {
                     .getSession(this.compressFreeBaseUrl + (compr == Compression.DISABLED ? "" : makeParam(PropertyKey.xdevapiCompression, compr)));
             Collection col = testSession.getDefaultSchema().getCollection("uplinkCompression");
 
-            assertTrue(testCase, this.counters.resetCounters());
+            assertTrue(this.counters.resetCounters(), testCase);
 
             AddResult res = col.add(longData).execute(); // Enough bytes to trigger compression.
-            assertEquals(testCase, 1, res.getAffectedItemsCount());
+            assertEquals(1, res.getAffectedItemsCount(), testCase);
 
-            assertTrue(testCase, this.counters.resetCounters());
-            assertTrue(testCase, this.counters.downlinkCompressionUsed()); // Server compresses small messages anyway.
-            assertTrue(testCase, this.counters.uplinkCompressionUsed());
+            assertTrue(this.counters.resetCounters(), testCase);
+            assertTrue(this.counters.downlinkCompressionUsed(), testCase); // Server compresses small messages anyway.
+            assertTrue(this.counters.uplinkCompressionUsed(), testCase);
 
             testSession.close();
             testSession = this.fact.getSession(this.compressFreeBaseUrl + makeParam(PropertyKey.xdevapiCompression, Compression.DISABLED));
             col = testSession.getDefaultSchema().getCollection("uplinkCompression");
 
             DocResult docs = col.find().execute();
-            assertEquals(testCase, 1, docs.count());
-            assertEquals(testCase, longDataDoc.get("data").toString(), docs.fetchOne().get("data").toString());
+            assertEquals(1, docs.count(), testCase);
+            assertEquals(longDataDoc.get("data").toString(), docs.fetchOne().get("data").toString(), testCase);
 
-            assertTrue(testCase, this.counters.resetCounters());
-            assertFalse(testCase, this.counters.usedCompression());
+            assertTrue(this.counters.resetCounters(), testCase);
+            assertFalse(this.counters.usedCompression(), testCase);
 
             dropCollection("uplinkCompression");
             testSession.close();

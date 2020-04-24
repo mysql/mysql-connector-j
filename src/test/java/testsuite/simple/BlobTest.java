@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,9 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,13 +41,15 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.sql.Connection;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import testsuite.BaseTestCase;
 
 /**
  * Tests BLOB functionality in the driver.
  */
 public class BlobTest extends BaseTestCase {
-
     protected static File testBlobFile;
 
     static {
@@ -64,34 +69,12 @@ public class BlobTest extends BaseTestCase {
     }
 
     /**
-     * Creates a new BlobTest object.
-     * 
-     * @param name
-     *            the test to run
-     */
-    public BlobTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(BlobTest.class);
-    }
-
-    /**
      * Setup the test case
      * 
      * @throws Exception
-     *             if an error occurs
      */
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
-
         int requiredSize = 32 * 1024 * 1024;
 
         if (testBlobFile == null || testBlobFile.length() != requiredSize) {
@@ -101,6 +84,7 @@ public class BlobTest extends BaseTestCase {
         createTestTable();
     }
 
+    @Test
     public void testByteStreamInsert() throws Exception {
         if (versionMeetsMinimum(5, 6, 20) && !versionMeetsMinimum(5, 7)) {
             /*
@@ -122,8 +106,9 @@ public class BlobTest extends BaseTestCase {
     /**
      * Tests inserting blob data as a stream
      * 
+     * @param c
+     * 
      * @throws Exception
-     *             if an error occurs
      */
     private void testByteStreamInsert(Connection c) throws Exception {
         BufferedInputStream bIn = new BufferedInputStream(new FileInputStream(testBlobFile));
@@ -178,12 +163,9 @@ public class BlobTest extends BaseTestCase {
     /**
      * Mark this as deprecated to avoid warnings from compiler...
      * 
-     * @deprecated
-     * 
      * @throws Exception
-     *             if an error occurs retrieving the value
      */
-    @Deprecated
+    @SuppressWarnings("deprecation")
     private void doRetrieval() throws Exception {
         boolean passed = false;
         this.rs = this.stmt.executeQuery("SELECT blobdata from BLOBTEST LIMIT 1");
@@ -191,10 +173,10 @@ public class BlobTest extends BaseTestCase {
 
         byte[] retrBytes = this.rs.getBytes(1);
         passed = checkBlob(retrBytes);
-        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getBytes().", passed);
+        assertTrue(passed, "Inserted BLOB data did not match retrieved BLOB data for getBytes().");
         retrBytes = this.rs.getBlob(1).getBytes(1L, (int) this.rs.getBlob(1).length());
         passed = checkBlob(retrBytes);
-        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getBlob().", passed);
+        assertTrue(passed, "Inserted BLOB data did not match retrieved BLOB data for getBlob().");
 
         InputStream inStr = this.rs.getBinaryStream(1);
         ByteArrayOutputStream bOut = new ByteArrayOutputStream();
@@ -206,7 +188,7 @@ public class BlobTest extends BaseTestCase {
 
         retrBytes = bOut.toByteArray();
         passed = checkBlob(retrBytes);
-        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getBinaryStream().", passed);
+        assertTrue(passed, "Inserted BLOB data did not match retrieved BLOB data for getBinaryStream().");
         inStr = this.rs.getAsciiStream(1);
         bOut = new ByteArrayOutputStream();
 
@@ -216,7 +198,7 @@ public class BlobTest extends BaseTestCase {
 
         retrBytes = bOut.toByteArray();
         passed = checkBlob(retrBytes);
-        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getAsciiStream().", passed);
+        assertTrue(passed, "Inserted BLOB data did not match retrieved BLOB data for getAsciiStream().");
         inStr = this.rs.getUnicodeStream(1);
         bOut = new ByteArrayOutputStream();
 
@@ -226,7 +208,7 @@ public class BlobTest extends BaseTestCase {
 
         retrBytes = bOut.toByteArray();
         passed = checkBlob(retrBytes);
-        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getUnicodeStream().", passed);
+        assertTrue(passed, "Inserted BLOB data did not match retrieved BLOB data for getUnicodeStream().");
     }
 
     private final static String TEST_BLOB_FILE_PREFIX = "cmj-testblob";

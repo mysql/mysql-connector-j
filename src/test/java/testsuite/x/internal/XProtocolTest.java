@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,9 @@
 
 package testsuite.x.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,9 +44,9 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -78,7 +78,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
     private XProtocol protocol;
     private XMessageBuilder messageBuilder;
 
-    @Before
+    @BeforeEach
     public void setupTestProtocol() {
         if (this.isSetForXTests) {
             this.protocol = createAuthenticatedTestProtocol();
@@ -86,7 +86,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void destroyTestProtocol() throws IOException {
         if (this.isSetForXTests && this.protocol != null) {
             try {

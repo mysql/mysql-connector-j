@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,23 +29,17 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
 import testsuite.BaseTestCase;
 
 public class ExceptionSubclassesTest extends BaseTestCase {
-    /**
-     * Creates a new ExceptionSubclassesTest.
-     * 
-     * @param name
-     *            the name of the test
-     */
-    public ExceptionSubclassesTest(String name) {
-        super(name);
-    }
-
+    @Test
     public void testBug17750877() throws Exception {
-
         assertEquals("java.sql.SQLTransientConnectionException", SQLError.createSQLException("test", "08000", 0, true, null).getClass().getCanonicalName());
         assertEquals("java.sql.SQLNonTransientConnectionException", SQLError.createSQLException("test", "08000", 0, false, null).getClass().getCanonicalName());
         assertEquals("java.sql.SQLSyntaxErrorException", SQLError.createSQLException("test", "42000", null).getClass().getCanonicalName());
@@ -54,7 +48,5 @@ public class ExceptionSubclassesTest extends BaseTestCase {
                 SQLError.createSQLException("test", "40000", null).getClass().getCanonicalName());
         assertEquals("com.mysql.cj.jdbc.exceptions.MySQLQueryInterruptedException",
                 SQLError.createSQLException("test", "70100", null).getClass().getCanonicalName());
-
     }
-
 }

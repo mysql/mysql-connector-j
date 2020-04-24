@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,15 +29,15 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DbDocImpl;
@@ -52,7 +52,6 @@ import com.mysql.cj.xdevapi.Table;
  * @todo
  */
 public class TableInsertTest extends BaseTableTestCase {
-
     @Test
     public void lastInsertId() {
         if (!this.isSetForXTests) {

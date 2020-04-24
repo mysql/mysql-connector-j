@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,10 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -42,6 +46,9 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.jdbc.MysqlXADataSource;
 import com.mysql.cj.jdbc.MysqlXid;
@@ -54,9 +61,8 @@ import testsuite.BaseTestCase;
 public class XATest extends BaseTestCase {
     MysqlXADataSource xaDs;
 
-    public XATest(String name) {
-        super(name);
-
+    @BeforeEach
+    public void setup() {
         this.xaDs = new MysqlXADataSource();
         this.xaDs.setUrl(BaseTestCase.dbUrl);
         this.xaDs.getProperty(PropertyKey.rollbackOnPooledClose).setValue(true);
@@ -66,8 +72,8 @@ public class XATest extends BaseTestCase {
      * Tests that simple distributed transaction processing works as expected.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testCoordination() throws Exception {
         createTable("testCoordination", "(field1 int) ENGINE=InnoDB");
 
@@ -169,8 +175,8 @@ public class XATest extends BaseTestCase {
      * Tests that XA RECOVER works as expected.
      * 
      * @throws Exception
-     *             if test fails
      */
+    @Test
     public void testRecover() throws Exception {
         if (versionMeetsMinimum(5, 7) && !versionMeetsMinimum(5, 7, 5)) {
             // Test is broken in 5.7.0 - 5.7.4 after server bug#14670465 fix which changed the XA RECOVER output format.
@@ -257,14 +263,12 @@ public class XATest extends BaseTestCase {
     }
 
     /**
-     * Tests operation of local transactions on XAConnections when global
-     * transactions are in or not in progress (follows from BUG#17401).
+     * Tests operation of local transactions on XAConnections when global transactions are in or not in progress (follows from BUG#17401).
      * 
      * @throws Exception
-     *             if the testcase fails
      */
+    @Test
     public void testLocalTransaction() throws Exception {
-
         createTable("testLocalTransaction", "(field1 int) ENGINE=InnoDB");
 
         Connection conn1 = null;
@@ -365,13 +369,14 @@ public class XATest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testSuspendableTx() throws Exception {
         Connection conn1 = null;
 
         MysqlXADataSource suspXaDs = new MysqlXADataSource();
         suspXaDs.setUrl(BaseTestCase.dbUrl);
-        suspXaDs.<Boolean> getProperty(PropertyKey.pinGlobalTxToPhysicalConnection).setValue(true);
-        suspXaDs.<Boolean> getProperty(PropertyKey.rollbackOnPooledClose).setValue(true);
+        suspXaDs.<Boolean>getProperty(PropertyKey.pinGlobalTxToPhysicalConnection).setValue(true);
+        suspXaDs.<Boolean>getProperty(PropertyKey.rollbackOnPooledClose).setValue(true);
 
         XAConnection xaConn1 = null;
 

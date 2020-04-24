@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,10 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +42,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.util.LazyString;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.StringUtils.SearchMode;
@@ -46,29 +52,11 @@ import testsuite.BaseTestCase;
 
 public class StringUtilsTest extends BaseTestCase {
     /**
-     * Creates a new StringUtilsTest.
-     * 
-     * @param name
-     *            the name of the test
-     */
-    public StringUtilsTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(StringUtilsTest.class);
-    }
-
-    /**
      * Tests StringUtil.indexOfIgnoreCase() methods
      * 
      * @throws Exception
      */
+    @Test
     public void testIndexOfIgnoreCase() throws Exception {
         final String markerStart = "\"'`(";
         final String markerEnd = "\"'`)";
@@ -99,7 +87,7 @@ public class StringUtilsTest extends BaseTestCase {
         searchForMulti = new String[] { "STR", "sstr", "Z", "a str", " in", "b" };
         expectedIdx = new int[] { 2, 18, -1, 0, 40, 29 };
         for (int i = 0; i < searchForMulti.length; i++) {
-            assertEquals("Test A." + i, expectedIdx[i], StringUtils.indexOfIgnoreCase(searchIn, searchForMulti[i]));
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(searchIn, searchForMulti[i]), "Test A." + i);
         }
 
         /*
@@ -119,7 +107,7 @@ public class StringUtilsTest extends BaseTestCase {
         searchForMulti = new String[] { "STR", "sstr", "Z", "a str", " in", "b" };
         expectedIdx = new int[] { 10, 18, -1, -1, 40, 29 };
         for (int i = 0; i < searchForMulti.length; i++) {
-            assertEquals("Test B." + i, expectedIdx[i], StringUtils.indexOfIgnoreCase(3, searchIn, searchForMulti[i]));
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(3, searchIn, searchForMulti[i]), "Test B." + i);
         }
 
         /*
@@ -148,16 +136,18 @@ public class StringUtilsTest extends BaseTestCase {
         for (int i = 0; i < searchForMulti.length; i++) {
             for (int j = 0; j < searchInMulti.length; j++) {
                 // multiple markers
-                assertEquals("Test C." + j + "." + i, expectedIdx[i],
-                        StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__MRK_WS));
-                assertEquals("Test C." + j + "." + i, expectedIdx[i],
-                        StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
+                assertEquals(expectedIdx[i],
+                        StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__MRK_WS),
+                        "Test C." + j + "." + i);
+                assertEquals(expectedIdx[i],
+                        StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS),
+                        "Test C." + j + "." + i);
 
                 // single marker
-                assertEquals("Test C." + j + "." + i, expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i],
-                        markerStart.substring(j, j + 1), markerEnd.substring(j, j + 1), StringUtils.SEARCH_MODE__MRK_WS));
-                assertEquals("Test C." + j + "." + i, expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i],
-                        markerStart.substring(j, j + 1), markerEnd.substring(j, j + 1), StringUtils.SEARCH_MODE__BSESC_MRK_WS));
+                assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart.substring(j, j + 1),
+                        markerEnd.substring(j, j + 1), StringUtils.SEARCH_MODE__MRK_WS), "Test C." + j + "." + i);
+                assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart.substring(j, j + 1),
+                        markerEnd.substring(j, j + 1), StringUtils.SEARCH_MODE__BSESC_MRK_WS), "Test C." + j + "." + i);
             }
         }
 
@@ -166,11 +156,12 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 18, 26, -1, -1, 48, 37 };
         for (int i = 0; i < searchForMulti.length; i++) {
             // multiple markers
-            assertEquals("Test C.4." + i, expectedIdx[i],
-                    StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
+            assertEquals(expectedIdx[i],
+                    StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS),
+                    "Test C.4." + i);
             // single marker
-            assertEquals("Test C.5." + i, expectedIdx[i],
-                    StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], "'", "'", StringUtils.SEARCH_MODE__BSESC_MRK_WS));
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], "'", "'", StringUtils.SEARCH_MODE__BSESC_MRK_WS),
+                    "Test C.5." + i);
         }
 
         searchIn = "A 'strange \\''STRONG \\`SsSTRING\\\" to be searched in";
@@ -178,11 +169,12 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 14, 24, -1, -1, 48, 37 };
         for (int i = 0; i < searchForMulti.length; i++) {
             // multiple markers
-            assertEquals("Test C.6." + i, expectedIdx[i],
-                    StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
+            assertEquals(expectedIdx[i],
+                    StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS),
+                    "Test C.6." + i);
             // single marker
-            assertEquals("Test C.7." + i, expectedIdx[i],
-                    StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], "'", "'", StringUtils.SEARCH_MODE__BSESC_MRK_WS));
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], "'", "'", StringUtils.SEARCH_MODE__BSESC_MRK_WS),
+                    "Test C.7." + i);
         }
 
         /*
@@ -229,7 +221,7 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 3, 8, 13, 18, 24, 25, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
-            assertEquals("Test D.2a." + i, expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.2a." + i);
         }
         // 2b. search mode: only skip markers
         searchMode = EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS);
@@ -237,7 +229,7 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 1, 2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
-            assertEquals("Test D.2b." + i, expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.2b." + i);
         }
 
         // 3a. search mode: all but skip line comments
@@ -247,7 +239,7 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 5, 10, 15, 20, 24, 25, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
-            assertEquals("Test D.3a." + i, expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.3a." + i);
         }
         // 3b. search mode: only skip line comments
         searchMode = EnumSet.of(SearchMode.SKIP_LINE_COMMENTS);
@@ -255,7 +247,7 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24, 25, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
-            assertEquals("Test D.3b." + i, expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.3b." + i);
         }
 
         // 4a. search mode: all but skip block comments
@@ -264,7 +256,7 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 1, 2, 4, 6, 7, 9, 11, 12, 14, 16, 17, 19, 21, 22, 24, 25, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
-            assertEquals("Test D.4a." + i, expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.4a." + i);
         }
         // 4b. search mode: only skip block comments
         searchMode = EnumSet.of(SearchMode.SKIP_BLOCK_COMMENTS);
@@ -272,7 +264,7 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 3, 5, 8, 10, 13, 15, 18, 20, 23, 24, 25, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
-            assertEquals("Test D.4b." + i, expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.4b." + i);
         }
 
         // 5a. search mode: all but allow backslash escape
@@ -284,7 +276,7 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
-            assertEquals("Test D.5b." + i, expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.5b." + i);
         }
 
         // 6. all together
@@ -292,7 +284,7 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 24, 25, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL);
-            assertEquals("Test D.6." + i, expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.6." + i);
         }
         pos = StringUtils.indexOfIgnoreCase(0, searchIn, "YourSQL", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL);
         assertEquals(-1, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
@@ -301,7 +293,7 @@ public class StringUtilsTest extends BaseTestCase {
         pos = 0;
         for (int i = 1; i <= 25; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, StringUtils.SEARCH_MODE__NONE);
-            assertEquals("Test D.7." + i, i, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
+            assertEquals(i, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.7." + i);
         }
         pos = StringUtils.indexOfIgnoreCase(pos + 1, searchIn, searchFor, markerStart, markerEnd, StringUtils.SEARCH_MODE__NONE);
         assertEquals(-1, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
@@ -369,12 +361,12 @@ public class StringUtilsTest extends BaseTestCase {
         searchForMulti = new String[] { "one", "two", "three", "four" };
         expectedIdx = new int[] { 0, -1, -1, 32 };
         for (int i = 0; i < searchForMulti.length; i++) {
-            assertEquals("Test F.1." + i, expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode));
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode), "Test F.1." + i);
         }
         searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_LINE_COMMENTS, SearchMode.SKIP_WHITE_SPACE);
         expectedIdx = new int[] { 0, 9, 20, 32 };
         for (int i = 0; i < searchForMulti.length; i++) {
-            assertEquals("Test F.2." + i, expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode));
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode), "Test F.2." + i);
         }
 
         // double quoted escapes, including some "noise" chars
@@ -383,12 +375,12 @@ public class StringUtilsTest extends BaseTestCase {
         searchForMulti = new String[] { "one", "two", "three", "four" };
         expectedIdx = new int[] { 0, -1, -1, 21 };
         for (int i = 0; i < searchForMulti.length; i++) {
-            assertEquals("Test F.3." + i, expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode));
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode), "Test F.3." + i);
         }
         searchMode = StringUtils.SEARCH_MODE__BSESC_COM_WS;
         expectedIdx = new int[] { 0, 5, 12, 21 };
         for (int i = 0; i < searchForMulti.length; i++) {
-            assertEquals("Test F.4." + i, expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode));
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode), "Test F.4." + i);
         }
 
         // nested different opening/closing marker, including some "noise" chars
@@ -397,12 +389,12 @@ public class StringUtilsTest extends BaseTestCase {
         searchForMulti = new String[] { "one", "two", "three", "four" };
         expectedIdx = new int[] { 0, -1, -1, 24 };
         for (int i = 0; i < searchForMulti.length; i++) {
-            assertEquals("Test F.5." + i, expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode));
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode), "Test F.5." + i);
         }
         searchMode = StringUtils.SEARCH_MODE__BSESC_COM_WS;
         expectedIdx = new int[] { 0, 5, 12, 24 };
         for (int i = 0; i < searchForMulti.length; i++) {
-            assertEquals("Test F.6." + i, expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode));
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode), "Test F.6." + i);
         }
 
         /*
@@ -540,6 +532,7 @@ public class StringUtilsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testIndexOfQuoteDoubleAware() throws Exception {
         final String[] searchInDoubledQt = new String[] { "A 'strange' \"STRONG\" `SsStRiNg` to be searched in",
                 "A ''strange'' \"\"STRONG\"\" ``SsStRiNg`` to be searched in" };
@@ -572,6 +565,7 @@ public class StringUtilsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testAppendAsHex() throws Exception {
         final byte[] testBytes = new byte[256];
         final int[] testInts = new int[] { Integer.MIN_VALUE, -1023, 0, 511, 512, 0x100FF, 0x10000FF, Integer.MAX_VALUE };
@@ -592,13 +586,13 @@ public class StringUtilsTest extends BaseTestCase {
         builder = new StringBuilder(1024);
         StringUtils.appendAsHex(builder, testBytes);
 
-        assertEquals("Wrong byte[] to HEX convertion", expected, builder.toString());
+        assertEquals(expected, builder.toString(), "Wrong byte[] to HEX convertion");
 
         // test StringUtils.appendAsHex(StringBuilder, int)
         for (int i : testInts) {
             builder = new StringBuilder(1024);
             StringUtils.appendAsHex(builder, i);
-            assertEquals("Wrong int to HEX convertion", "0x" + Integer.toHexString(i), builder.toString());
+            assertEquals("0x" + Integer.toHexString(i), builder.toString(), "Wrong int to HEX convertion");
         }
     }
 
@@ -607,6 +601,7 @@ public class StringUtilsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testGetBytes() throws Exception {
         final int offset = 8;
         final int length = 13;
@@ -666,6 +661,7 @@ public class StringUtilsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testQuoteUnQuoteIdentifierWithBackQuote() throws Exception {
         // Base set of identifiers
         String[] identifiers = new String[] { "abcxyz", "abc`xyz", "abc``xyz", "abc```xyz", // 1..4
@@ -718,24 +714,24 @@ public class StringUtilsTest extends BaseTestCase {
         // Quoting rules (non-pedantic mode):
         // * identifiers[n] --> identifiersQuotedNonPedantic[n]
         for (int i = 0; i < identifiers.length; i++) {
-            assertEquals(i + 1 + ". " + identifiers[i] + ". non-pedantic quoting", identifiersQuotedNonPedantic[i],
-                    StringUtils.quoteIdentifier(identifiers[i], "`", false));
-            assertEquals(i + 1 + ". " + identifiers[i] + ". non-pedantic quoting", identifiersQuotedNonPedantic[i],
-                    StringUtils.quoteIdentifier(identifiers[i], false));
+            assertEquals(identifiersQuotedNonPedantic[i], StringUtils.quoteIdentifier(identifiers[i], "`", false),
+                    i + 1 + ". " + identifiers[i] + ". non-pedantic quoting");
+            assertEquals(identifiersQuotedNonPedantic[i], StringUtils.quoteIdentifier(identifiers[i], false),
+                    i + 1 + ". " + identifiers[i] + ". non-pedantic quoting");
         }
 
         // Quoting rules (pedantic mode):
         // * identifiers[n] --> identifiersQuotedPedantic[n]
         // * identifiersUnQuoted[n] --> identifiersQuotedNonPedantic[n]
         for (int i = 0; i < identifiers.length; i++) {
-            assertEquals(i + 1 + ". " + identifiers[i] + ". pedantic quoting", identifiersQuotedPedantic[i],
-                    StringUtils.quoteIdentifier(identifiers[i], "`", true));
-            assertEquals(i + 1 + ". " + identifiers[i] + ". pedantic quoting", identifiersQuotedPedantic[i], StringUtils.quoteIdentifier(identifiers[i], true));
+            assertEquals(identifiersQuotedPedantic[i], StringUtils.quoteIdentifier(identifiers[i], "`", true),
+                    i + 1 + ". " + identifiers[i] + ". pedantic quoting");
+            assertEquals(identifiersQuotedPedantic[i], StringUtils.quoteIdentifier(identifiers[i], true), i + 1 + ". " + identifiers[i] + ". pedantic quoting");
 
-            assertEquals(i + 1 + ". " + identifiersUnQuoted[i] + ". pedantic quoting", identifiersQuotedNonPedantic[i],
-                    StringUtils.quoteIdentifier(identifiersUnQuoted[i], "`", true));
-            assertEquals(i + 1 + ". " + identifiersUnQuoted[i] + ". pedantic quoting", identifiersQuotedNonPedantic[i],
-                    StringUtils.quoteIdentifier(identifiersUnQuoted[i], true));
+            assertEquals(identifiersQuotedNonPedantic[i], StringUtils.quoteIdentifier(identifiersUnQuoted[i], "`", true),
+                    i + 1 + ". " + identifiersUnQuoted[i] + ". pedantic quoting");
+            assertEquals(identifiersQuotedNonPedantic[i], StringUtils.quoteIdentifier(identifiersUnQuoted[i], true),
+                    i + 1 + ". " + identifiersUnQuoted[i] + ". pedantic quoting");
         }
 
         // Unquoting rules:
@@ -743,11 +739,11 @@ public class StringUtilsTest extends BaseTestCase {
         // * identifiersQuotedNonPedantic[n] --> identifiersUnQuoted[n]
         // * identifiersQuotedPedantic[n] --> identifiers[n]
         for (int i = 0; i < identifiers.length; i++) {
-            assertEquals(i + 1 + ". " + identifiers[i] + ". unquoting", identifiersUnQuoted[i], StringUtils.unQuoteIdentifier(identifiers[i], "`"));
-            assertEquals(i + 1 + ". " + identifiersQuotedNonPedantic[i] + ". non-pedantic unquoting", identifiersUnQuoted[i],
-                    StringUtils.unQuoteIdentifier(identifiersQuotedNonPedantic[i], "`"));
-            assertEquals(i + 1 + ". " + identifiersQuotedPedantic[i] + ". pedantic unquoting", identifiers[i],
-                    StringUtils.unQuoteIdentifier(identifiersQuotedPedantic[i], "`"));
+            assertEquals(identifiersUnQuoted[i], StringUtils.unQuoteIdentifier(identifiers[i], "`"), i + 1 + ". " + identifiers[i] + ". unquoting");
+            assertEquals(identifiersUnQuoted[i], StringUtils.unQuoteIdentifier(identifiersQuotedNonPedantic[i], "`"),
+                    i + 1 + ". " + identifiersQuotedNonPedantic[i] + ". non-pedantic unquoting");
+            assertEquals(identifiers[i], StringUtils.unQuoteIdentifier(identifiersQuotedPedantic[i], "`"),
+                    i + 1 + ". " + identifiersQuotedPedantic[i] + ". pedantic unquoting");
         }
     }
 
@@ -756,6 +752,7 @@ public class StringUtilsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testQuoteUnQuoteIdentifierWithDoubleQuote() throws Exception {
         // Base set of identifiers
         String[] identifiers = new String[] { "abcxyz", "abc\"xyz", "abc\"\"xyz", "abc\"\"\"xyz",                   // 1..4
@@ -814,19 +811,19 @@ public class StringUtilsTest extends BaseTestCase {
         // Quoting rules (non-pedantic mode):
         // * identifiers[n] --> identifiersQuotedNonPedantic[n]
         for (int i = 0; i < identifiers.length; i++) {
-            assertEquals(i + 1 + ". " + identifiers[i] + ". non-pedantic quoting", identifiersQuotedNonPedantic[i],
-                    StringUtils.quoteIdentifier(identifiers[i], "\"", false));
+            assertEquals(identifiersQuotedNonPedantic[i], StringUtils.quoteIdentifier(identifiers[i], "\"", false),
+                    i + 1 + ". " + identifiers[i] + ". non-pedantic quoting");
         }
 
         // Quoting rules (pedantic mode):
         // * identifiers[n] --> identifiersQuotedPedantic[n]
         // * identifiersUnQuoted[n] --> identifiersQuotedNonPedantic[n]
         for (int i = 0; i < identifiers.length; i++) {
-            assertEquals(i + 1 + ". " + identifiers[i] + ". pedantic quoting", identifiersQuotedPedantic[i],
-                    StringUtils.quoteIdentifier(identifiers[i], "\"", true));
+            assertEquals(identifiersQuotedPedantic[i], StringUtils.quoteIdentifier(identifiers[i], "\"", true),
+                    i + 1 + ". " + identifiers[i] + ". pedantic quoting");
 
-            assertEquals(i + 1 + ". " + identifiersUnQuoted[i] + ". pedantic quoting", identifiersQuotedNonPedantic[i],
-                    StringUtils.quoteIdentifier(identifiersUnQuoted[i], "\"", true));
+            assertEquals(identifiersQuotedNonPedantic[i], StringUtils.quoteIdentifier(identifiersUnQuoted[i], "\"", true),
+                    i + 1 + ". " + identifiersUnQuoted[i] + ". pedantic quoting");
         }
 
         // Unquoting rules:
@@ -834,17 +831,20 @@ public class StringUtilsTest extends BaseTestCase {
         // * identifiersQuotedNonPedantic[n] --> identifiersUnQuoted[n]
         // * identifiersQuotedPedantic[n] --> identifiers[n]
         for (int i = 0; i < identifiers.length; i++) {
-            assertEquals(i + 1 + ". " + identifiers[i] + ". unquoting", identifiersUnQuoted[i], StringUtils.unQuoteIdentifier(identifiers[i], "\""));
-            assertEquals(i + 1 + ". " + identifiersQuotedNonPedantic[i] + ". non-pedantic unquoting", identifiersUnQuoted[i],
-                    StringUtils.unQuoteIdentifier(identifiersQuotedNonPedantic[i], "\""));
-            assertEquals(i + 1 + ". " + identifiersQuotedPedantic[i] + ". pedantic unquoting", identifiers[i],
-                    StringUtils.unQuoteIdentifier(identifiersQuotedPedantic[i], "\""));
+            assertEquals(identifiersUnQuoted[i], StringUtils.unQuoteIdentifier(identifiers[i], "\""), i + 1 + ". " + identifiers[i] + ". unquoting");
+            assertEquals(identifiersUnQuoted[i], StringUtils.unQuoteIdentifier(identifiersQuotedNonPedantic[i], "\""),
+                    i + 1 + ". " + identifiersQuotedNonPedantic[i] + ". non-pedantic unquoting");
+            assertEquals(identifiers[i], StringUtils.unQuoteIdentifier(identifiersQuotedPedantic[i], "\""),
+                    i + 1 + ". " + identifiersQuotedPedantic[i] + ". pedantic unquoting");
         }
     }
 
     /**
      * Tests StringUtils.wildCompare() method.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testWildCompare() throws Exception {
         // Null values.
         assertFalse(StringUtils.wildCompareIgnoreCase(null, null));
@@ -1103,7 +1103,10 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtils.split() methods.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testSplit() throws Exception {
         String testString = "  abstract, (contents, table of \"['figure''s'],(tables\"),  introduction  , \"methods(), ()results\", ['discussion'']', conclusion]   ";
         List<String> stringParts;
@@ -1174,7 +1177,10 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtils.split() methods for corner cases.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testSplitCornerCases() throws Exception {
         List<String> stringParts;
 
@@ -1184,23 +1190,23 @@ public class StringUtilsTest extends BaseTestCase {
 
             // single delimiter, trim
             stringParts = StringUtils.split(s, ",", true);
-            assertEquals(testCase, 2, stringParts.size());
-            assertEquals(testCase, "", stringParts.get(0));
-            assertEquals(testCase, "", stringParts.get(1));
+            assertEquals(2, stringParts.size(), testCase);
+            assertEquals("", stringParts.get(0), testCase);
+            assertEquals("", stringParts.get(1), testCase);
             stringParts = StringUtils.split(s, ",", "([", ")]", true);
-            assertEquals(testCase, 2, stringParts.size());
-            assertEquals(testCase, "", stringParts.get(0));
-            assertEquals(testCase, "", stringParts.get(1));
+            assertEquals(2, stringParts.size(), testCase);
+            assertEquals("", stringParts.get(0), testCase);
+            assertEquals("", stringParts.get(1), testCase);
 
             // single delimiter, don't trim
             stringParts = StringUtils.split(s, ",", false);
-            assertEquals(testCase, 2, stringParts.size());
-            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0));
-            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(1));
+            assertEquals(2, stringParts.size(), testCase);
+            assertEquals((c & 0x01) == 0 ? "" : "  ", stringParts.get(0), testCase);
+            assertEquals((c & 0x02) == 0 ? "" : "  ", stringParts.get(1), testCase);
             stringParts = StringUtils.split(s, ",", "([", ")]", false);
-            assertEquals(testCase, 2, stringParts.size());
-            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0));
-            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(1));
+            assertEquals(2, stringParts.size(), testCase);
+            assertEquals((c & 0x01) == 0 ? "" : "  ", stringParts.get(0), testCase);
+            assertEquals((c & 0x02) == 0 ? "" : "  ", stringParts.get(1), testCase);
             c++;
         }
 
@@ -1211,31 +1217,31 @@ public class StringUtilsTest extends BaseTestCase {
 
             // trim
             stringParts = StringUtils.split(s, ",", true);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, "", stringParts.get(0));
-            assertEquals(testCase, "", stringParts.get(1));
-            assertEquals(testCase, "", stringParts.get(2));
-            assertEquals(testCase, "", stringParts.get(3));
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals("", stringParts.get(0), testCase);
+            assertEquals("", stringParts.get(1), testCase);
+            assertEquals("", stringParts.get(2), testCase);
+            assertEquals("", stringParts.get(3), testCase);
             stringParts = StringUtils.split(s, ",", "([", ")]", true);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, "", stringParts.get(0));
-            assertEquals(testCase, "", stringParts.get(1));
-            assertEquals(testCase, "", stringParts.get(2));
-            assertEquals(testCase, "", stringParts.get(3));
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals("", stringParts.get(0), testCase);
+            assertEquals("", stringParts.get(1), testCase);
+            assertEquals("", stringParts.get(2), testCase);
+            assertEquals("", stringParts.get(3), testCase);
 
             // don't trim
             stringParts = StringUtils.split(s, ",", false);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
-            assertEquals(testCase, "", stringParts.get(1)); // empty
-            assertEquals(testCase, "", stringParts.get(2)); // empty
-            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3)); // [empty|2sp]
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals((c & 0x01) == 0 ? "" : "  ", stringParts.get(0), testCase); // [empty|2sp]
+            assertEquals("", stringParts.get(1), testCase); // empty
+            assertEquals("", stringParts.get(2), testCase); // empty
+            assertEquals((c & 0x02) == 0 ? "" : "  ", stringParts.get(3), testCase); // [empty|2sp]
             stringParts = StringUtils.split(s, ",", "([", ")]", false);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
-            assertEquals(testCase, "", stringParts.get(1)); // empty
-            assertEquals(testCase, "", stringParts.get(2)); // empty
-            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3)); // [empty|2sp]
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals((c & 0x01) == 0 ? "" : "  ", stringParts.get(0), testCase); // [empty|2sp]
+            assertEquals("", stringParts.get(1), testCase); // empty
+            assertEquals("", stringParts.get(2), testCase); // empty
+            assertEquals((c & 0x02) == 0 ? "" : "  ", stringParts.get(3), testCase); // [empty|2sp]
             c++;
         }
 
@@ -1246,31 +1252,31 @@ public class StringUtilsTest extends BaseTestCase {
 
             // trim
             stringParts = StringUtils.split(s, ",", true);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, "", stringParts.get(0));
-            assertEquals(testCase, "", stringParts.get(1));
-            assertEquals(testCase, "", stringParts.get(2));
-            assertEquals(testCase, "", stringParts.get(3));
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals("", stringParts.get(0), testCase);
+            assertEquals("", stringParts.get(1), testCase);
+            assertEquals("", stringParts.get(2), testCase);
+            assertEquals("", stringParts.get(3), testCase);
             stringParts = StringUtils.split(s, ",", "([", ")]", true);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, "", stringParts.get(0));
-            assertEquals(testCase, "", stringParts.get(1));
-            assertEquals(testCase, "", stringParts.get(2));
-            assertEquals(testCase, "", stringParts.get(3));
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals("", stringParts.get(0), testCase);
+            assertEquals("", stringParts.get(1), testCase);
+            assertEquals("", stringParts.get(2), testCase);
+            assertEquals("", stringParts.get(3), testCase);
 
             // don't trim
             stringParts = StringUtils.split(s, ",", false);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
-            assertEquals(testCase, "", stringParts.get(1)); // empty
-            assertEquals(testCase, " ", stringParts.get(2)); // 1sp
-            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3));// [empty|2sp]
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals((c & 0x01) == 0 ? "" : "  ", stringParts.get(0), testCase); // [empty|2sp]
+            assertEquals("", stringParts.get(1), testCase); // empty
+            assertEquals(" ", stringParts.get(2), testCase); // 1sp
+            assertEquals((c & 0x02) == 0 ? "" : "  ", stringParts.get(3), testCase);// [empty|2sp]
             stringParts = StringUtils.split(s, ",", "([", ")]", false);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
-            assertEquals(testCase, "", stringParts.get(1)); // empty
-            assertEquals(testCase, " ", stringParts.get(2)); // 1sp
-            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3));// [empty|2sp]
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals((c & 0x01) == 0 ? "" : "  ", stringParts.get(0), testCase); // [empty|2sp]
+            assertEquals("", stringParts.get(1), testCase); // empty
+            assertEquals(" ", stringParts.get(2), testCase); // 1sp
+            assertEquals((c & 0x02) == 0 ? "" : "  ", stringParts.get(3), testCase);// [empty|2sp]
             c++;
         }
 
@@ -1281,38 +1287,41 @@ public class StringUtilsTest extends BaseTestCase {
 
             // trim
             stringParts = StringUtils.split(s, ",", true);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, "", stringParts.get(0));
-            assertEquals(testCase, "", stringParts.get(1));
-            assertEquals(testCase, "", stringParts.get(2));
-            assertEquals(testCase, "", stringParts.get(3));
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals("", stringParts.get(0), testCase);
+            assertEquals("", stringParts.get(1), testCase);
+            assertEquals("", stringParts.get(2), testCase);
+            assertEquals("", stringParts.get(3), testCase);
             stringParts = StringUtils.split(s, ",", "([", ")]", true);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, "", stringParts.get(0));
-            assertEquals(testCase, "", stringParts.get(1));
-            assertEquals(testCase, "", stringParts.get(2));
-            assertEquals(testCase, "", stringParts.get(3));
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals("", stringParts.get(0), testCase);
+            assertEquals("", stringParts.get(1), testCase);
+            assertEquals("", stringParts.get(2), testCase);
+            assertEquals("", stringParts.get(3), testCase);
 
             // don't trim
             stringParts = StringUtils.split(s, ",", false);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
-            assertEquals(testCase, "   ", stringParts.get(1)); // 3sp
-            assertEquals(testCase, " ", stringParts.get(2)); // 1sp
-            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3)); // [empty|2sp]
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals((c & 0x01) == 0 ? "" : "  ", stringParts.get(0), testCase); // [empty|2sp]
+            assertEquals("   ", stringParts.get(1), testCase); // 3sp
+            assertEquals(" ", stringParts.get(2), testCase); // 1sp
+            assertEquals((c & 0x02) == 0 ? "" : "  ", stringParts.get(3), testCase); // [empty|2sp]
             stringParts = StringUtils.split(s, ",", "([", ")]", false);
-            assertEquals(testCase, 4, stringParts.size());
-            assertEquals(testCase, (c & 0x01) == 0 ? "" : "  ", stringParts.get(0)); // [empty|2sp]
-            assertEquals(testCase, "   ", stringParts.get(1)); // 3sp
-            assertEquals(testCase, " ", stringParts.get(2)); // 1sp
-            assertEquals(testCase, (c & 0x02) == 0 ? "" : "  ", stringParts.get(3)); // [empty|2sp]
+            assertEquals(4, stringParts.size(), testCase);
+            assertEquals((c & 0x01) == 0 ? "" : "  ", stringParts.get(0), testCase); // [empty|2sp]
+            assertEquals("   ", stringParts.get(1), testCase); // 3sp
+            assertEquals(" ", stringParts.get(2), testCase); // 1sp
+            assertEquals((c & 0x02) == 0 ? "" : "  ", stringParts.get(3), testCase); // [empty|2sp]
             c++;
         }
     }
 
     /**
      * Tests StringUtils.joinWithSerialComma().
+     * 
+     * @throws Exception
      */
+    @Test
     public void testJoinWithSerialComma() throws Exception {
         assertEquals("", StringUtils.joinWithSerialComma(null));
         assertEquals("", StringUtils.joinWithSerialComma(Collections.emptyList()));
@@ -1328,8 +1337,13 @@ public class StringUtilsTest extends BaseTestCase {
         assertEquals("A, B, and C", StringUtils.joinWithSerialComma(Arrays.asList(new LazyString("A"), new LazyString("B"), new LazyString("C"))));
     }
 
+    /**
+     * Tests StringUtils.quoteBytes()
+     * 
+     * @throws Exception
+     */
+    @Test
     public void testQuoteUnquoteBytes() throws Exception {
-
         byte[] origBytes = "ab'c\\''de".getBytes();
         byte[] expectedBytes = "'ab''c\\''''de'".getBytes();
         byte[] quotedBytes = StringUtils.quoteBytes(origBytes);
@@ -1343,6 +1357,5 @@ public class StringUtilsTest extends BaseTestCase {
         for (int i = 0; i < unquotedBytes.length; i++) {
             assertEquals(origBytes[i], unquotedBytes[i]);
         }
-
     }
 }

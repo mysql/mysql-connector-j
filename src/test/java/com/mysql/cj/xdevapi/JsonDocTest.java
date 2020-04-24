@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,16 +29,16 @@
 
 package com.mysql.cj.xdevapi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.util.concurrent.Callable;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.exceptions.WrongArgumentException;
 
@@ -69,7 +69,6 @@ public class JsonDocTest {
                 return null;
             }
         });
-
     }
 
     @Test
@@ -292,12 +291,10 @@ public class JsonDocTest {
                 return null;
             }
         });
-
     }
 
     @Test
     public void testParseTrueLiteral() throws Exception {
-
         JsonLiteral val;
 
         val = JsonParser.parseLiteral(new StringReader("true"));
@@ -350,12 +347,10 @@ public class JsonDocTest {
                 return null;
             }
         });
-
     }
 
     @Test
     public void testParseFalseLiteral() throws Exception {
-
         JsonLiteral val;
 
         val = JsonParser.parseLiteral(new StringReader("false"));
@@ -408,12 +403,10 @@ public class JsonDocTest {
                 return null;
             }
         });
-
     }
 
     @Test
     public void testParseNullLiteral() throws Exception {
-
         JsonLiteral val;
 
         val = JsonParser.parseLiteral(new StringReader("null"));
@@ -466,7 +459,6 @@ public class JsonDocTest {
                 return null;
             }
         });
-
     }
 
     @Test
@@ -538,7 +530,6 @@ public class JsonDocTest {
         // empty array
         val = JsonParser.parseArray(new StringReader("[]"));
         assertEquals("[]", val.toString());
-
     }
 
     @Test
@@ -694,7 +685,6 @@ public class JsonDocTest {
         assertTrue(DbDoc.class.isAssignableFrom(doc.get("x").getClass()));
         assertEquals("{\"y\":true}", doc.get("x").toString());
         assertEquals("{\n\"y\" : true\n}", doc.get("x").toFormattedString());
-
     }
 
     @Test

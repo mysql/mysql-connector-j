@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.NumberFormat;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.conf.PropertyDefinitions;
 
 import testsuite.BaseTestCase;
@@ -50,15 +54,8 @@ public class LoadStorePerfTest extends BasePerfTest {
 
     private boolean largeResults = false;
 
-    /**
-     * Constructor for LoadStorePerfTest.
-     * 
-     * @param name
-     *            the name of the test to run
-     */
-    public LoadStorePerfTest(String name) {
-        super(name);
-
+    @BeforeEach
+    public void setUp() throws Exception {
         String newTableType = System.getProperty(PropertyDefinitions.SYSP_testsuite_loadstoreperf_tabletype);
 
         this.largeResults = "TRUE".equalsIgnoreCase(System.getProperty(PropertyDefinitions.SYSP_testsuite_loadstoreperf_useBigResults));
@@ -68,27 +65,6 @@ public class LoadStorePerfTest extends BasePerfTest {
 
             System.out.println("Using specified table type of '" + this.tableType + "'");
         }
-    }
-
-    /**
-     * Runs all tests in this test case
-     * 
-     * @param args
-     *            ignored
-     * 
-     * @throws Exception
-     *             if an error occurs
-     */
-    public static void main(String[] args) throws Exception {
-        new LoadStorePerfTest("test1000Transactions").run();
-    }
-
-    /**
-     * @see junit.framework.TestCase#setUp()
-     */
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
 
         try {
             this.stmt.executeUpdate("DROP TABLE perfLoadStore");
@@ -156,18 +132,13 @@ public class LoadStorePerfTest extends BasePerfTest {
         }
     }
 
-    /**
-     * @see junit.framework.TestCase#tearDown()
-     */
-    @Override
+    @AfterEach
     public void tearDown() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE perfLoadStore");
         } catch (SQLException sqlEx) {
             // ignore
         }
-
-        super.tearDown();
     }
 
     /**
@@ -176,6 +147,7 @@ public class LoadStorePerfTest extends BasePerfTest {
      * @throws Exception
      *             if an error occurs
      */
+    @Test
     public void test1000Transactions() throws Exception {
         this.takeMeasurements = false;
         warmUp();

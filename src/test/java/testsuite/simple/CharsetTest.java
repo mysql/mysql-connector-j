@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,11 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.sql.Connection;
@@ -45,21 +50,15 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.conf.PropertyKey;
 
 import testsuite.BaseTestCase;
 
 public class CharsetTest extends BaseTestCase {
-
-    public CharsetTest(String name) {
-        super(name);
-    }
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(CharsetTest.class);
-    }
-
+    @Test
     public void testCP932Backport() throws Exception {
         try {
             "".getBytes("WINDOWS-31J");
@@ -72,6 +71,7 @@ public class CharsetTest extends BaseTestCase {
         getConnectionWithProps(props).close();
     }
 
+    @Test
     public void testNECExtendedCharsByEUCJPSolaris() throws Exception {
         try {
             "".getBytes("EUC_JP_Solaris");
@@ -114,8 +114,7 @@ public class CharsetTest extends BaseTestCase {
     }
 
     /**
-     * Test data of sjis. sjis consists of ASCII, JIS-Roman, JISX0201 and
-     * JISX0208.
+     * Test data of sjis. sjis consists of ASCII, JIS-Roman, JISX0201 and JISX0208.
      */
     public static final char[] SJIS_CHARS = new char[] { 0xFF71, // halfwidth katakana letter A, 0xB100 of SJIS, one of JISX0201.
             0x65E5, // CJK unified ideograph, 0x93FA of SJIS, one of JISX0208.
@@ -124,9 +123,8 @@ public class CharsetTest extends BaseTestCase {
     };
 
     /**
-     * Test data of cp932. WINDOWS-31J consists of ASCII, JIS-Roman, JISX0201,
-     * JISX0208, NEC special characters(row13), NEC selected IBM special
-     * characters, and IBM special characters.
+     * Test data of cp932. WINDOWS-31J consists of ASCII, JIS-Roman, JISX0201, JISX0208, NEC special characters(row13), NEC selected IBM special characters, and
+     * IBM special characters.
      */
     private static final char[] CP932_CHARS = new char[] { 0xFF71, // halfwidth katakana letter A, 0xB100 of WINDOWS-31J, one of JISX0201.
             0x65E5, // CJK unified ideograph, 0x93FA of WINDOWS-31J, one of JISX0208.
@@ -138,8 +136,7 @@ public class CharsetTest extends BaseTestCase {
     };
 
     /**
-     * Test data of ujis. ujis consists of ASCII, JIS-Roman, JISX0201, JISX0208,
-     * JISX0212.
+     * Test data of ujis. ujis consists of ASCII, JIS-Roman, JISX0201, JISX0208, JISX0212.
      */
     public static final char[] UJIS_CHARS = new char[] { 0xFF71, // halfwidth katakana letter A, 0x8EB1 of ujis, one of JISX0201.
             0x65E5, // CJK unified ideograph, 0xC6FC of ujis, one of JISX0208.
@@ -148,8 +145,7 @@ public class CharsetTest extends BaseTestCase {
     };
 
     /**
-     * Test data of eucjpms. ujis consists of ASCII, JIS-Roman, JISX0201,
-     * JISX0208, JISX0212, NEC special characters(row13)
+     * Test data of eucjpms. ujis consists of ASCII, JIS-Roman, JISX0201, JISX0208, JISX0212, NEC special characters(row13)
      */
     public static final char[] EUCJPMS_CHARS = new char[] { 0xFF71, // halfwidth katakana letter A, 0x8EB1 of ujis, one of JISX0201.
             0x65E5, // CJK unified ideograph, 0xC6FC of ujis, one of JISX0208.
@@ -158,6 +154,7 @@ public class CharsetTest extends BaseTestCase {
             0xFF5E // wave dash, 0xA1C1 of eucjpms, convertion rule is different from ujis
     };
 
+    @Test
     public void testInsertCharStatement() throws Exception {
         try {
             "".getBytes("SJIS");
@@ -239,18 +236,19 @@ public class CharsetTest extends BaseTestCase {
                 this.rs.next();
                 String value = this.rs.getString(1);
 
-                assertEquals("For character set " + charset + "/ " + mysqlCharset, String.valueOf(testData[i]), value);
+                assertEquals(String.valueOf(testData[i]), value, "For character set " + charset + "/ " + mysqlCharset);
             }
             String query5 = "DROP TABLE t1";
             stmt2.executeUpdate(query5);
         }
     }
 
+    @Test
     public void testStaticCharsetMappingConsistency() {
         for (int i = 1; i < CharsetMapping.MAP_SIZE; i++) {
-            assertNotNull("Assertion failure: No mapping from charset index " + i + " to a mysql collation",
-                    CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i]);
-            assertNotNull("Assertion failure: No mapping from charset index " + i + " to a Java character set", CharsetMapping.COLLATION_INDEX_TO_CHARSET[i]);
+            assertNotNull(CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i],
+                    "Assertion failure: No mapping from charset index " + i + " to a mysql collation");
+            assertNotNull(CharsetMapping.COLLATION_INDEX_TO_CHARSET[i], "Assertion failure: No mapping from charset index " + i + " to a Java character set");
         }
     }
 
@@ -259,6 +257,7 @@ public class CharsetTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testCharsetMapping() throws Exception {
         SortedMap<String, Charset> availableCharsets = Charset.availableCharsets();
         Set<String> k = availableCharsets.keySet();
@@ -315,6 +314,7 @@ public class CharsetTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testGB18030() throws Exception {
         // check that server supports this character set
         this.rs = this.stmt.executeQuery("show collation like 'gb18030_chinese_ci'");
@@ -379,7 +379,7 @@ public class CharsetTest extends BaseTestCase {
         while (rset.next()) {
             resCount++;
             String hex = rset.getString(2);
-            assertTrue("HEX value " + hex + " for char " + rset.getString(1) + " is unexpected", expected.containsKey(hex));
+            assertTrue(expected.containsKey(hex), "HEX value " + hex + " for char " + rset.getString(1) + " is unexpected");
             assertEquals(expected.get(hex), rset.getString(1));
             assertEquals(expected.get(hex), rset.getString(3));
         }
@@ -404,6 +404,5 @@ public class CharsetTest extends BaseTestCase {
 
         st.executeUpdate("DROP TABLE IF EXISTS testGB18030");
         con.close();
-
     }
 }

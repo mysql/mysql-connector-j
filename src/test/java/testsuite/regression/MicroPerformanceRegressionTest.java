@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,12 +29,17 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import testsuite.BaseTestCase;
 
@@ -43,7 +48,6 @@ import testsuite.BaseTestCase;
  */
 public class MicroPerformanceRegressionTest extends BaseTestCase {
     private static double[] scaleFactorSamples = new double[5];
-
     private static double scaleFactor = 0.0;
 
     private final static double ORIGINAL_LOOP_TIME_MS = 2300.0;
@@ -51,7 +55,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
     // (Used to be 10.0 for JVM < 1.7 but since HW and VMs are much faster now a minimal disruption can cause significant deviations)
     private final static double LEEWAY = 50.0; // account for VMs
 
-    private final static Map<String, Double> BASELINE_TIMES = new HashMap<String, Double>();
+    private final static Map<String, Double> BASELINE_TIMES = new HashMap<>();
 
     static {
         BASELINE_TIMES.put("ResultSet.getInt()", new Double(0.00661));
@@ -83,26 +87,85 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
         System.out.println("Global performance scaling factor is: " + scaleFactor);
     }
 
-    public MicroPerformanceRegressionTest(String name) {
-        super(name);
+    @BeforeEach
+    public void setUp() throws Exception {
+        System.out.println("Adjusting global performance scaling factor...");
+        System.out.println("Gobal performance scaling factor adjusted from: " + scaleFactor + " to: " + adjustScaleFactor());
     }
 
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(MicroPerformanceRegressionTest.class);
+    private static final double adjustScaleFactor() {
+        double newScaleFactor = calculateScaleFactor();
+        double maxDeviation = Math.abs(newScaleFactor - scaleFactor);
+
+        // discard the farthest value from previous mean (scaleFactor);
+        for (int i = 0; i < scaleFactorSamples.length; i++) {
+            double deviation = Math.abs(scaleFactorSamples[i] - scaleFactor);
+            if (deviation > maxDeviation) {
+                Double swapValue = scaleFactorSamples[i];
+                scaleFactorSamples[i] = newScaleFactor;
+                newScaleFactor = swapValue;
+                maxDeviation = deviation;
+            }
+        }
+
+        // calculate new mean (scaleFactor)
+        newScaleFactor = 0.0;
+        for (double d : scaleFactorSamples) {
+            newScaleFactor += d;
+        }
+        scaleFactor = newScaleFactor / scaleFactorSamples.length;
+
+        return scaleFactor;
+    }
+
+    private static final double calculateScaleFactor() {
+        // Run this simple test to get some sort of performance scaling factor, compared to the development environment. This should help reduce false-positives
+        // on this test.
+        int numLoops = 10000;
+
+        long start = BaseTestCase.currentTimeMillis();
+
+        for (int j = 0; j < 2000; j++) {
+            // StringBuffer below is used for measuring and can't be changed to StringBuilder.
+            StringBuffer buf = new StringBuffer(numLoops);
+
+            for (int i = 0; i < numLoops; i++) {
+                buf.append('a');
+            }
+        }
+
+        long elapsedTime = BaseTestCase.currentTimeMillis() - start;
+        return elapsedTime / ORIGINAL_LOOP_TIME_MS;
+    }
+
+    private synchronized void checkTime(String testType, double avgExecTimeMs) throws Exception {
+
+        double adjustForVendor = 1.0D;
+
+        if (isRunningOnJRockit()) {
+            adjustForVendor = 4.0D;
+        }
+
+        Double baselineExecTimeMs = BASELINE_TIMES.get(testType);
+
+        if (baselineExecTimeMs == null) {
+            throw new Exception("No baseline time recorded for test '" + testType + "'");
+        }
+
+        double acceptableTime = LEEWAY * baselineExecTimeMs.doubleValue() * scaleFactor * adjustForVendor;
+
+        System.out.println(testType + ": avg time = " + avgExecTimeMs + ", acceptable time = " + acceptableTime);
+
+        assertTrue(avgExecTimeMs <= acceptableTime,
+                "Average execution time of " + avgExecTimeMs + " ms. exceeded baseline * leeway of " + acceptableTime + " ms.");
     }
 
     /**
      * Tests result set accessors performance.
      * 
      * @throws Exception
-     *             if the performance of these methods does not meet
-     *             expectations.
      */
+    @Test
     public void testResultSetAccessors() throws Exception {
         createTable("marktest", "(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
         this.stmt.executeUpdate(
@@ -189,6 +252,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
         checkTime("ResultSet.getObject() on a string", getStringObjAvgMs);
     }
 
+    @Test
     public void testPreparedStatementTimes() throws Exception {
         createTable("marktest", "(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
         this.stmt.executeUpdate(
@@ -327,81 +391,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
         start = currentTimeMillis();
     }
 
-    @Override
-    public synchronized void setUp() throws Exception {
-        super.setUp();
-
-        System.out.println("Adjusting global performance scaling factor...");
-        System.out.println("Gobal performance scaling factor adjusted from: " + scaleFactor + " to: " + adjustScaleFactor());
-    }
-
-    private static final double adjustScaleFactor() {
-        double newScaleFactor = calculateScaleFactor();
-        double maxDeviation = Math.abs(newScaleFactor - scaleFactor);
-
-        // discard the farthest value from previous mean (scaleFactor);
-        for (int i = 0; i < scaleFactorSamples.length; i++) {
-            double deviation = Math.abs(scaleFactorSamples[i] - scaleFactor);
-            if (deviation > maxDeviation) {
-                Double swapValue = scaleFactorSamples[i];
-                scaleFactorSamples[i] = newScaleFactor;
-                newScaleFactor = swapValue;
-                maxDeviation = deviation;
-            }
-        }
-
-        // calculate new mean (scaleFactor)
-        newScaleFactor = 0.0;
-        for (double d : scaleFactorSamples) {
-            newScaleFactor += d;
-        }
-        scaleFactor = newScaleFactor / scaleFactorSamples.length;
-
-        return scaleFactor;
-    }
-
-    private static final double calculateScaleFactor() {
-        // Run this simple test to get some sort of performance scaling factor, compared to the development environment. This should help reduce false-positives
-        // on this test.
-        int numLoops = 10000;
-
-        long start = BaseTestCase.currentTimeMillis();
-
-        for (int j = 0; j < 2000; j++) {
-            // StringBuffer below is used for measuring and can't be changed to StringBuilder.
-            StringBuffer buf = new StringBuffer(numLoops);
-
-            for (int i = 0; i < numLoops; i++) {
-                buf.append('a');
-            }
-        }
-
-        long elapsedTime = BaseTestCase.currentTimeMillis() - start;
-        return elapsedTime / ORIGINAL_LOOP_TIME_MS;
-    }
-
-    private synchronized void checkTime(String testType, double avgExecTimeMs) throws Exception {
-
-        double adjustForVendor = 1.0D;
-
-        if (isRunningOnJRockit()) {
-            adjustForVendor = 4.0D;
-        }
-
-        Double baselineExecTimeMs = BASELINE_TIMES.get(testType);
-
-        if (baselineExecTimeMs == null) {
-            throw new Exception("No baseline time recorded for test '" + testType + "'");
-        }
-
-        double acceptableTime = LEEWAY * baselineExecTimeMs.doubleValue() * scaleFactor * adjustForVendor;
-
-        System.out.println(testType + ": avg time = " + avgExecTimeMs + ", acceptable time = " + acceptableTime);
-
-        assertTrue("Average execution time of " + avgExecTimeMs + " ms. exceeded baseline * leeway of " + acceptableTime + " ms.",
-                (avgExecTimeMs <= acceptableTime));
-    }
-
+    @Test
     public void testBug6359() throws Exception {
         if (runLongTests()) {
             int numRows = 550000;
@@ -471,5 +461,4 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
             checkTime("total time all queries", seconds);
         }
     }
-
 }

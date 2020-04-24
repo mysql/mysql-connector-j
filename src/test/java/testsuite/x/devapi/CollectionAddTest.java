@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,9 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -40,10 +40,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -57,18 +55,6 @@ import com.mysql.cj.xdevapi.Result;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
 public class CollectionAddTest extends BaseCollectionTestCase {
-    @Before
-    @Override
-    public void setupCollectionTest() {
-        super.setupCollectionTest();
-    }
-
-    @After
-    @Override
-    public void teardownCollectionTest() {
-        super.teardownCollectionTest();
-    }
-
     @Test
     public void testBasicAddString() {
         if (!this.isSetForXTests) {
@@ -171,7 +157,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
     }
 
     @Test
-    @Ignore("needs implemented")
+    @Disabled("needs implemented")
     public void testBasicAddMap() {
         if (!this.isSetForXTests) {
             return;
@@ -335,7 +321,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
                 return null;
             }
         });
-
     }
 
     /**
@@ -353,7 +338,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
                 return null;
             }
         });
-
     }
 
     /**

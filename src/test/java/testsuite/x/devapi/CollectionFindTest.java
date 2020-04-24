@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,14 +31,14 @@ package testsuite.x.devapi;
 
 import static com.mysql.cj.xdevapi.Expression.expr;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -50,8 +50,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hamcrest.CoreMatchers;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -75,18 +74,17 @@ import com.mysql.cj.xdevapi.Table;
  * @todo
  */
 public class CollectionFindTest extends BaseCollectionTestCase {
-
-    @After
-    @Override
-    public void teardownCollectionTest() {
-        try {
-            super.teardownCollectionTest();
-        } catch (Exception ex) {
-            // expected-to-fail tests may destroy the connection, don't penalize them here
-            System.err.println("Exception during teardown:");
-            ex.printStackTrace();
-        }
-    }
+    //    @AfterEach
+    //    @Override
+    //    public void teardownCollectionTest() {
+    //        try {
+    //            super.teardownCollectionTest();
+    //        } catch (Exception ex) {
+    //            // expected-to-fail tests may destroy the connection, don't penalize them here
+    //            System.err.println("Exception during teardown:");
+    //            ex.printStackTrace();
+    //        }
+    //    }
 
     @Test
     public void testProjection() {
@@ -583,7 +581,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
                 session2.close();
             }
         }
-
     }
 
     @Test
@@ -949,7 +946,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         assertEquals(14, ((JsonNumber) doc.get("age_group")).getInteger().intValue());
         assertEquals(2, ((JsonNumber) doc.get("cnt")).getInteger().intValue());
         assertEquals(0, ((JsonNumber) doc.get("something")).getInteger().intValue());
-
     }
 
     /**
@@ -1317,5 +1313,4 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         res = this.collection.find("['21', '2', '3'] OVERLAPS $.age").execute();
         assertEquals(0, res.count());
     }
-
 }

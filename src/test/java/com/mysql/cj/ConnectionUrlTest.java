@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,13 +29,13 @@
 
 package com.mysql.cj;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -53,10 +53,11 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.ConnectionPropertiesTransform;
 import com.mysql.cj.conf.ConnectionUrl;
+import com.mysql.cj.conf.ConnectionUrl.Type;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.HostsListView;
@@ -175,7 +176,7 @@ public class ConnectionUrlTest {
         /**
          * Create an instance of {@link ConnectionStringGenerator} and initializes internal data for the iterator.
          * 
-         * @param numberOfHosts
+         * @param urlMode
          */
         public ConnectionStringGenerator(UrlMode urlMode) {
             this.urlMode = urlMode;
@@ -469,7 +470,7 @@ public class ConnectionUrlTest {
     }
 
     /**
-     * Checks if the values returned from {@link ConnectionUrl.Type#fromValue(String, int)} are correct.
+     * Checks if the values returned from {@link Type#fromValue(String, int)} are correct.
      */
     @Test
     public void testTypeEnumCorrectValues() {
@@ -502,9 +503,9 @@ public class ConnectionUrlTest {
                 String expected;
                 String actual;
                 // Protocol:
-                assertEquals(cs, csg.getProtocol(), cup.getScheme());
+                assertEquals(csg.getProtocol(), cup.getScheme(), cs);
                 // User & Host:
-                assertEquals(cs, urlMode.getHostsCount(), cup.getHosts().size());
+                assertEquals(urlMode.getHostsCount(), cup.getHosts().size(), cs);
                 for (int hostIndex = 0; hostIndex < urlMode.getHostsCount(); hostIndex++) {
                     HostInfo hi = cup.getHosts().get(hostIndex);
                     // User(n):
@@ -512,12 +513,12 @@ public class ConnectionUrlTest {
                     actual = new StringBuilder(hi.getUser() == null ? "" : hi.getUser()).append(":").append(hi.getPassword() == null ? "" : hi.getPassword())
                             .toString();
                     actual = testCSParserTrimTail(testCSParserTrimHead(actual, ":"), ":");
-                    assertEquals(cs, expected, actual);
+                    assertEquals(expected, actual, cs);
                     if (csg.getHostInfo(hostIndex).startsWith("address=") || csg.getHostInfo(hostIndex).startsWith("(")) {
                         // Host props(n):
-                        assertEquals(cs, csg.getHostParamsCount(hostIndex), hi.getHostProperties().size());
+                        assertEquals(csg.getHostParamsCount(hostIndex), hi.getHostProperties().size(), cs);
                         for (Entry<String, String> kv : hi.getHostProperties().entrySet()) {
-                            assertTrue(cs, csg.hasHostParam(hostIndex, kv.getKey(), kv.getValue()));
+                            assertTrue(csg.hasHostParam(hostIndex, kv.getKey(), kv.getValue()), cs);
                         }
                     } else {
                         // Host(n)
@@ -525,17 +526,17 @@ public class ConnectionUrlTest {
                         actual = new StringBuilder(hi.getHost() == null ? "" : hi.getHost()).append(":").append(hi.getPort() == -1 ? "" : hi.getPort())
                                 .toString();
                         actual = testCSParserTrimTail(testCSParserTrimHead(actual, ":"), ":");
-                        assertEquals(cs, expected, actual);
+                        assertEquals(expected, actual, cs);
                     }
                 }
                 // Database:
                 expected = testCSParserTrimHead(csg.getDatabase(), "/");
                 actual = cup.getPath() == null ? "" : testCSParserTrimHead(cup.getPath(), "/");
-                assertEquals(cs, expected, actual);
+                assertEquals(expected, actual, cs);
                 // Connection arguments:
-                assertEquals(cs, csg.getParamsCount(), cup.getProperties().size());
+                assertEquals(csg.getParamsCount(), cup.getProperties().size(), cs);
                 for (Entry<String, String> kv : cup.getProperties().entrySet()) {
-                    assertTrue(cs, csg.hasParam(kv.getKey(), kv.getValue()));
+                    assertTrue(csg.hasParam(kv.getKey(), kv.getValue()), cs);
                 }
             }
         }
@@ -632,7 +633,6 @@ public class ConnectionUrlTest {
         assertTrue(ConnectionUrl.acceptsUrl("mysqlx+srv://johndoe:secret@[::1]:1234/db?key=value"));
         assertTrue(ConnectionUrl.acceptsUrl("mysqlx+srv://johndoe:secret@[[::1]:1234]/db?key=value"));
         assertTrue(ConnectionUrl.acceptsUrl("mysqlx+srv://johndoe:secret@[[::1]:1234,(address=[abcd:1000::f09a]:4321,priority=100)]/db?key=value"));
-
     }
 
     /**
@@ -650,7 +650,7 @@ public class ConnectionUrlTest {
                     ConnectionUrl.getConnectionUrlInstance(cs, props);
                 } catch (WrongArgumentException e) {
                     // X plugin connections ("mysqlx:") don't allow different credentials in different hosts and the generator doesn't account for that.
-                    assertEquals(cs, ConnectionUrl.Type.XDEVAPI_SESSION.getScheme(), csg.getProtocol());
+                    assertEquals(ConnectionUrl.Type.XDEVAPI_SESSION.getScheme(), csg.getProtocol(), cs);
                     boolean first = true;
                     boolean ok = false;
                     String lastUi = "";
@@ -865,7 +865,7 @@ public class ConnectionUrlTest {
                 System.out.println(ConnectionUrl.getConnectionUrlInstance(cs, null));
                 fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
             } catch (Exception e) {
-                assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(), WrongArgumentException.class.isAssignableFrom(e.getClass()));
+                assertTrue(WrongArgumentException.class.isAssignableFrom(e.getClass()), cs + ": expected to throw a " + WrongArgumentException.class.getName());
             }
         }
     }
@@ -907,13 +907,13 @@ public class ConnectionUrlTest {
         for (String cs : connStr.keySet()) {
             ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(cs, null);
             for (HostInfo hi : connUrl.getHostsList()) {
-                assertEquals(cs + "#databaseUrl", cs, hi.getDatabaseUrl());
-                assertEquals(cs + "#host", "localhost", hi.getHost());
-                assertEquals(cs + "#port", connStr.get(cs).intValue(), hi.getPort());
-                assertEquals(cs + "#hostPortPair", "localhost:" + connStr.get(cs), hi.getHostPortPair());
-                assertEquals(cs + "#user", "", hi.getUser());
-                assertEquals(cs + "#password", "", hi.getPassword());
-                assertEquals(cs + "#database", "", hi.getDatabase());
+                assertEquals(cs, hi.getDatabaseUrl(), cs + "#databaseUrl");
+                assertEquals("localhost", hi.getHost(), cs + "#host");
+                assertEquals(connStr.get(cs).intValue(), hi.getPort(), cs + "#port");
+                assertEquals("localhost:" + connStr.get(cs), hi.getHostPortPair(), cs + "#hostPortPair");
+                assertEquals("", hi.getUser(), cs + "#user");
+                assertEquals("", hi.getPassword(), cs + "#password");
+                assertEquals("", hi.getDatabase(), cs + "#database");
             }
         }
     }
@@ -942,16 +942,16 @@ public class ConnectionUrlTest {
                 // Properties from file must be found simultaneously in per connection properties and per host.
                 Properties asProps = connUrl.getConnectionArgumentsAsProperties();
                 for (String key : propsFromFile.stringPropertyNames()) {
-                    assertEquals(cs + "#" + key, propsFromFile.getProperty(key), asProps.getProperty(key));
+                    assertEquals(propsFromFile.getProperty(key), asProps.getProperty(key), cs + "#" + key);
                 }
                 Map<String, String> asMap = connUrl.getOriginalProperties();
                 for (String key : propsFromFile.stringPropertyNames()) {
-                    assertEquals(cs + "#" + key, propsFromFile.getProperty(key), asMap.get(key));
+                    assertEquals(propsFromFile.getProperty(key), asMap.get(key), cs + "#" + key);
                 }
             }
             Properties hostProps = connUrl.getMainHost().exposeAsProperties();
             for (String key : propsFromFile.stringPropertyNames()) {
-                assertEquals(cs + "#" + key, propsFromFile.getProperty(key), hostProps.getProperty(key));
+                assertEquals(propsFromFile.getProperty(key), hostProps.getProperty(key), cs + "#" + key);
             }
         }
     }
@@ -990,13 +990,13 @@ public class ConnectionUrlTest {
             // "propertiesTransform" doesn't apply when set through host internal properties.
             boolean transforms = cs.indexOf("(propertiesTransform") == -1;
 
-            assertEquals(cs + "#hostProps", transforms ? "**" : "*", connUrl.getMainHost().getProperty("stars"));
+            assertEquals(transforms ? "**" : "*", connUrl.getMainHost().getProperty("stars"), cs + "#hostProps");
             if (cs.indexOf("(stars") == -1) {
-                assertEquals(cs + "#originalProps", "*", connUrl.getOriginalProperties().get("stars"));
-                assertEquals(cs + "#connProps", transforms ? "**" : "*", connUrl.getConnectionArgumentsAsProperties().getProperty("stars"));
+                assertEquals("*", connUrl.getOriginalProperties().get("stars"), cs + "#originalProps");
+                assertEquals(transforms ? "**" : "*", connUrl.getConnectionArgumentsAsProperties().getProperty("stars"), cs + "#connProps");
             } else {
-                assertNull(cs + "#originalProps", connUrl.getOriginalProperties().get("stars"));
-                assertNull(cs + "#connProps", connUrl.getConnectionArgumentsAsProperties().getProperty("stars"));
+                assertNull(connUrl.getOriginalProperties().get("stars"), cs + "#originalProps");
+                assertNull(connUrl.getConnectionArgumentsAsProperties().getProperty("stars"), cs + "#connProps");
             }
         }
     }
@@ -1029,13 +1029,13 @@ public class ConnectionUrlTest {
             hostIdx = 1;
             for (HostInfo hi : connUrl.getHostsList()) {
                 String testCase = "Host " + hostIdx + ":";
-                assertEquals(testCase, "johndoe", hi.getUser());
-                assertEquals(testCase, "secret", hi.getPassword());
-                assertEquals(testCase, hostName + hostIdx, hi.getHost());
-                assertEquals(testCase, 1111 * hostIdx, hi.getPort());
-                assertEquals(testCase, "db", hi.getDatabase());
-                assertTrue(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
-                assertEquals(testCase, Integer.toString(101 - hostIdx), hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()));
+                assertEquals("johndoe", hi.getUser(), testCase);
+                assertEquals("secret", hi.getPassword(), testCase);
+                assertEquals(hostName + hostIdx, hi.getHost(), testCase);
+                assertEquals(1111 * hostIdx, hi.getPort(), testCase);
+                assertEquals("db", hi.getDatabase(), testCase);
+                assertTrue(hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()), testCase);
+                assertEquals(Integer.toString(101 - hostIdx), hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()), testCase);
                 hostIdx++;
             }
 
@@ -1047,12 +1047,12 @@ public class ConnectionUrlTest {
             hostIdx = 1;
             for (HostInfo hi : connUrl.getHostsList()) {
                 String testCase = "Host " + hostIdx + ":";
-                assertEquals(testCase, "johndoe", hi.getUser());
-                assertEquals(testCase, "secret", hi.getPassword());
+                assertEquals("johndoe", hi.getUser(), testCase);
+                assertEquals("secret", hi.getPassword(), testCase);
                 hosts = hosts.replace(hi.getHost(), "");
                 ports = ports.replace(Integer.toString(hi.getPort()), "");
-                assertEquals(testCase, "db", hi.getDatabase());
-                assertFalse(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
+                assertEquals("db", hi.getDatabase(), testCase);
+                assertFalse(hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()), testCase);
                 hostIdx++;
             }
             assertEquals("||", hosts);
@@ -1064,13 +1064,13 @@ public class ConnectionUrlTest {
             hostIdx = 1;
             for (HostInfo hi : connUrl.getHostsList()) {
                 String testCase = "Host " + hostIdx + ":";
-                assertEquals(testCase, "johndoe", hi.getUser());
-                assertEquals(testCase, "secret", hi.getPassword());
-                assertEquals(testCase, hostName + hostIdx, hi.getHost());
-                assertEquals(testCase, 1111 * hostIdx, hi.getPort());
-                assertEquals(testCase, "db", hi.getDatabase());
-                assertTrue(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
-                assertEquals(testCase, Integer.toString(101 - hostIdx), hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()));
+                assertEquals("johndoe", hi.getUser(), testCase);
+                assertEquals("secret", hi.getPassword(), testCase);
+                assertEquals(hostName + hostIdx, hi.getHost(), testCase);
+                assertEquals(1111 * hostIdx, hi.getPort(), testCase);
+                assertEquals("db", hi.getDatabase(), testCase);
+                assertTrue(hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()), testCase);
+                assertEquals(Integer.toString(101 - hostIdx), hi.getHostProperties().get(PropertyKey.PRIORITY.getKeyName()), testCase);
                 hostIdx++;
             }
 
@@ -1082,12 +1082,12 @@ public class ConnectionUrlTest {
             hostIdx = 1;
             for (HostInfo hi : connUrl.getHostsList()) {
                 String testCase = "Host " + hostIdx + ":";
-                assertEquals(testCase, "johndoe", hi.getUser());
-                assertEquals(testCase, "secret", hi.getPassword());
+                assertEquals("johndoe", hi.getUser(), testCase);
+                assertEquals("secret", hi.getPassword(), testCase);
                 hosts = hosts.replace(hi.getHost(), "");
                 ports = ports.replace(Integer.toString(hi.getPort()), "");
-                assertEquals(testCase, "db", hi.getDatabase());
-                assertFalse(testCase, hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()));
+                assertEquals("db", hi.getDatabase(), testCase);
+                assertFalse(hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName()), testCase);
                 hostIdx++;
             }
             assertEquals("||", hosts);
@@ -1109,10 +1109,10 @@ public class ConnectionUrlTest {
                     System.out.println(connUrl);
                     fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
                 } catch (Exception e) {
-                    assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(),
-                            WrongArgumentException.class.isAssignableFrom(e.getClass()));
-                    assertEquals(cs, Messages.getString("ConnectionString.14", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }),
-                            e.getMessage());
+                    assertTrue(WrongArgumentException.class.isAssignableFrom(e.getClass()),
+                            cs + ": expected to throw a " + WrongArgumentException.class.getName());
+                    assertEquals(Messages.getString("ConnectionString.14", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }), e.getMessage(),
+                            cs);
                 }
             }
 
@@ -1130,10 +1130,10 @@ public class ConnectionUrlTest {
                     System.out.println(connUrl);
                     fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
                 } catch (Exception e) {
-                    assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(),
-                            WrongArgumentException.class.isAssignableFrom(e.getClass()));
-                    assertEquals(cs, Messages.getString("ConnectionString.15", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }),
-                            e.getMessage());
+                    assertTrue(WrongArgumentException.class.isAssignableFrom(e.getClass()),
+                            cs + ": expected to throw a " + WrongArgumentException.class.getName());
+                    assertEquals(Messages.getString("ConnectionString.15", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }), e.getMessage(),
+                            cs);
                 }
             }
 
@@ -1147,10 +1147,10 @@ public class ConnectionUrlTest {
                     System.out.println(connUrl);
                     fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
                 } catch (Exception e) {
-                    assertTrue(cs + ": expected to throw a " + WrongArgumentException.class.getName(),
-                            WrongArgumentException.class.isAssignableFrom(e.getClass()));
-                    assertEquals(cs, Messages.getString("ConnectionString.16", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }),
-                            e.getMessage());
+                    assertTrue(WrongArgumentException.class.isAssignableFrom(e.getClass()),
+                            cs + ": expected to throw a " + WrongArgumentException.class.getName());
+                    assertEquals(Messages.getString("ConnectionString.16", new Object[] { ConnectionUrl.Type.XDEVAPI_SESSION.getScheme() }), e.getMessage(),
+                            cs);
                 }
             }
 

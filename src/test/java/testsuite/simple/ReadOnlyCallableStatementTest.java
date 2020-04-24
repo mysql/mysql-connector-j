@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,10 +29,15 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
+
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
@@ -41,10 +46,7 @@ import com.mysql.cj.jdbc.JdbcConnection;
 import testsuite.BaseTestCase;
 
 public class ReadOnlyCallableStatementTest extends BaseTestCase {
-    public ReadOnlyCallableStatementTest(String name) {
-        super(name);
-    }
-
+    @Test
     public void testReadOnlyWithProcBodyAccess() throws Exception {
         Connection replConn = null;
         Properties props = getHostFreePropertiesFromTestsuiteUrl();
@@ -62,8 +64,9 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
             cstmt.execute();
             cstmt.execute();
 
-            String db = ((JdbcConnection) replConn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
-                    .getValue() == DatabaseTerm.SCHEMA ? replConn.getSchema() : replConn.getCatalog();
+            String db = ((JdbcConnection) replConn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA
+                    ? replConn.getSchema()
+                    : replConn.getCatalog();
 
             cstmt = replConn.prepareCall("CALL `" + db + "`.testProc1()");
             cstmt.execute();
@@ -79,6 +82,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testNotReadOnlyWithProcBodyAccess() throws Exception {
         Connection replConn = null;
         Properties props = getHostFreePropertiesFromTestsuiteUrl();
@@ -98,11 +102,12 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
                 cstmt.execute();
                 fail("Should not execute because procedure modifies data.");
             } catch (SQLException e) {
-                assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
+                assertEquals(e.getSQLState(), "S1009", "Should error for read-only connection.");
             }
 
-            String db = ((JdbcConnection) replConn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
-                    .getValue() == DatabaseTerm.SCHEMA ? replConn.getSchema() : replConn.getCatalog();
+            String db = ((JdbcConnection) replConn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA
+                    ? replConn.getSchema()
+                    : replConn.getCatalog();
 
             cstmt = replConn.prepareCall("CALL `" + db + "`.testProc2()");
 
@@ -110,7 +115,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
                 cstmt.execute();
                 fail("Should not execute because procedure modifies data.");
             } catch (SQLException e) {
-                assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
+                assertEquals(e.getSQLState(), "S1009", "Should error for read-only connection.");
             }
 
             cstmt = replConn.prepareCall("CALL `" + db + "`.`testProc.2`()");
@@ -119,7 +124,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
                 cstmt.execute();
                 fail("Should not execute because procedure modifies data.");
             } catch (SQLException e) {
-                assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
+                assertEquals(e.getSQLState(), "S1009", "Should error for read-only connection.");
             }
 
         } finally {

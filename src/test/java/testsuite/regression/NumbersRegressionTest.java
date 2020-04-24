@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,12 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.ResultSetMetaData;
+
+import org.junit.jupiter.api.Test;
 
 import testsuite.BaseTestCase;
 
@@ -38,34 +43,11 @@ import testsuite.BaseTestCase;
  */
 public class NumbersRegressionTest extends BaseTestCase {
     /**
-     * Constructor for NumbersRegressionTest.
-     * 
-     * @param name
-     *            the test name
-     */
-    public NumbersRegressionTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases
-     * 
-     * @param args
-     *            command-line args
-     * 
-     * @throws Exception
-     *             if any errors occur
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(NumbersRegressionTest.class);
-    }
-
-    /**
      * Tests that BIGINT retrieval works correctly
      * 
      * @throws Exception
-     *             if any errors occur
      */
+    @Test
     public void testBigInt() throws Exception {
         createTable("bigIntRegression", "(val BIGINT NOT NULL)");
         this.stmt.executeUpdate("INSERT INTO bigIntRegression VALUES (6692730313872877584)");
@@ -74,7 +56,7 @@ public class NumbersRegressionTest extends BaseTestCase {
         while (this.rs.next()) {
             // check retrieval
             long retrieveAsLong = this.rs.getLong(1);
-            assertTrue(retrieveAsLong == 6692730313872877584L);
+            assertEquals(6692730313872877584L, retrieveAsLong);
         }
 
         this.rs.close();
@@ -92,8 +74,8 @@ public class NumbersRegressionTest extends BaseTestCase {
      * Tests correct type assignment for MySQL FLOAT and REAL datatypes.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testFloatsAndReals() throws Exception {
         createTable("floatsAndReals", "(floatCol FLOAT, realCol REAL, doubleCol DOUBLE)");
         this.stmt.executeUpdate("INSERT INTO floatsAndReals VALUES (0, 0, 0)");
@@ -112,16 +94,14 @@ public class NumbersRegressionTest extends BaseTestCase {
 
         assertTrue(rsmd.getColumnClassName(3).equals("java.lang.Double"));
         assertTrue(this.rs.getObject(3).getClass().getName().equals("java.lang.Double"));
-
     }
 
     /**
-     * Tests that ResultSetMetaData precision and scale methods work correctly
-     * for all numeric types.
+     * Tests that ResultSetMetaData precision and scale methods work correctly for all numeric types.
      * 
      * @throws Exception
-     *             if any errors occur
      */
+    @Test
     public void testPrecisionAndScale() throws Exception {
         testPrecisionForType("TINYINT", 3, -1, false);
         testPrecisionForType("TINYINT", 3, -1, true);
@@ -175,11 +155,11 @@ public class NumbersRegressionTest extends BaseTestCase {
             this.rs = this.stmt.executeQuery("SELECT val FROM precisionAndScaleRegression");
 
             ResultSetMetaData rsmd = this.rs.getMetaData();
-            assertTrue("Precision returned incorrectly for type " + typeName + ", " + m + " != rsmd.getPrecision() = " + rsmd.getPrecision(1),
-                    rsmd.getPrecision(1) == m);
+            assertTrue(rsmd.getPrecision(1) == m,
+                    "Precision returned incorrectly for type " + typeName + ", " + m + " != rsmd.getPrecision() = " + rsmd.getPrecision(1));
 
             if (d != -1) {
-                assertTrue("Scale returned incorrectly for type " + typeName + ", " + d + " != rsmd.getScale() = " + rsmd.getScale(1), rsmd.getScale(1) == d);
+                assertTrue(rsmd.getScale(1) == d, "Scale returned incorrectly for type " + typeName + ", " + d + " != rsmd.getScale() = " + rsmd.getScale(1));
             }
         } finally {
             if (this.rs != null) {
@@ -194,6 +174,7 @@ public class NumbersRegressionTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testIntShouldReturnLong() throws Exception {
         createTable("testIntRetLong", "(field1 INT)");
         this.stmt.executeUpdate("INSERT INTO testIntRetLong VALUES (1)");
@@ -208,8 +189,8 @@ public class NumbersRegressionTest extends BaseTestCase {
      * Tests fix for BUG#5729, UNSIGNED BIGINT returned incorrectly
      * 
      * @throws Exception
-     *             if the test fails
      */
+    @Test
     public void testBug5729() throws Exception {
         String valueAsString = "1095923280000";
 
@@ -223,14 +204,13 @@ public class NumbersRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#8484 - ResultSet.getBigDecimal() throws exception when
-     * rounding would need to occur to set scale.
+     * Tests fix for BUG#8484 - ResultSet.getBigDecimal() throws exception when rounding would need to occur to set scale.
      * 
      * @throws Exception
-     *             if the test fails
      * @deprecated
      */
     @Deprecated
+    @Test
     public void testBug8484() throws Exception {
         createTable("testBug8484", "(field1 DECIMAL(16, 8), field2 varchar(32))");
         this.stmt.executeUpdate("INSERT INTO testBug8484 VALUES (12345678.12345678, '')");

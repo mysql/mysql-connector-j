@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,20 +29,20 @@
 
 package testsuite.x.devapi;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 /**
  * @todo
  */
 public class BaseTableTestCase extends DevApiBaseTestCase {
-    @Before
-    public void setupTableTest() {
+    @BeforeEach
+    public void setupBaseTableTest() {
         super.setupTestSession();
     }
 
-    @After
-    public void teardownTableTest() {
+    @AfterEach
+    public void teardownBaseTableTest() {
         super.destroyTestSession();
     }
 }

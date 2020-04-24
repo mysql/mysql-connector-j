@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,12 +29,18 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
+
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.ConnectionImpl;
@@ -49,30 +55,10 @@ import testsuite.BaseTestCase;
 
 public class UtilsTest extends BaseTestCase {
     /**
-     * Creates a new UtilsTest.
-     * 
-     * @param name
-     *            the name of the test
-     */
-    public UtilsTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(UtilsTest.class);
-    }
-
-    /**
      * Tests Util.isJdbcInterface()
-     * 
-     * @throws Exception
      */
-    public void testIsJdbcInterface() throws Exception {
+    @Test
+    public void testIsJdbcInterface() {
         // Classes directly or indirectly implementing JDBC interfaces.
         assertTrue(Util.isJdbcInterface(ClientPreparedStatement.class));
         assertTrue(Util.isJdbcInterface(StatementImpl.class));
@@ -89,15 +75,13 @@ public class UtilsTest extends BaseTestCase {
         // Classes not implementing JDBC interfaces.
         assertFalse(Util.isJdbcInterface(Util.class));
         assertFalse(Util.isJdbcInterface(UtilsTest.class));
-
     }
 
     /**
      * Tests Util.isJdbcPackage()
-     * 
-     * @throws Exception
      */
-    public void testIsJdbcPackage() throws Exception {
+    @Test
+    public void testIsJdbcPackage() {
         // JDBC packages.
         assertTrue(Util.isJdbcPackage("java.sql"));
         assertTrue(Util.isJdbcPackage("javax.sql"));
@@ -119,10 +103,9 @@ public class UtilsTest extends BaseTestCase {
 
     /**
      * Tests Util.isJdbcPackage()
-     * 
-     * @throws Exception
      */
-    public void testGetImplementedInterfaces() throws Exception {
+    @Test
+    public void testGetImplementedInterfaces() {
         Class<?>[] ifaces;
         ifaces = Util.getImplementedInterfaces(JdbcStatement.class);
         assertEquals(2, ifaces.length);
@@ -143,6 +126,7 @@ public class UtilsTest extends BaseTestCase {
     /**
      * Tests Util.getPackageName()
      */
+    @Test
     public void testGetPackageName() {
         assertEquals(MultiHostConnectionProxy.class.getPackage().getName(), Util.getPackageName(MultiHostConnectionProxy.class));
         assertEquals(JdbcConnection.class.getPackage().getName(), Util.getPackageName(this.conn.getClass().getInterfaces()[0]));

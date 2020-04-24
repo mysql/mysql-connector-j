@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,26 +29,12 @@
 
 package com.mysql.cj.jdbc.integration.jboss;
 
-import java.sql.SQLException;
-
 import org.jboss.resource.adapter.jdbc.vendor.MySQLExceptionSorter;
 
 /**
  * Exception sorter used for JBoss to make recovery of downed/stale connections work more consistently.
+ * Super already implements all that is needed. This class is maintained as a placeholder for configurations pointing to it.
  */
 public final class ExtendedMysqlExceptionSorter extends MySQLExceptionSorter {
-
-    static final long serialVersionUID = -2454582336945931069L;
-
-    @Override
-    public boolean isExceptionFatal(SQLException ex) {
-        String sqlState = ex.getSQLState();
-
-        if (sqlState != null && sqlState.startsWith("08")) {
-            return true;
-        }
-
-        return super.isExceptionFatal(ex);
-    }
-
+    private static final long serialVersionUID = 9152916997722442502L;
 }

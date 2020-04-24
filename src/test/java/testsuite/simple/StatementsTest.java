@@ -29,6 +29,13 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.CharArrayReader;
@@ -64,6 +71,10 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.MysqlType;
@@ -86,37 +97,13 @@ import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
 
 public class StatementsTest extends BaseTestCase {
     private static final int MAX_COLUMN_LENGTH = 255;
-
     private static final int MAX_COLUMNS_TO_TEST = 40;
-
     private static final int STEP = 8;
 
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(StatementsTest.class);
-    }
-
-    /**
-     * Creates a new StatementsTest object.
-     * 
-     * @param name
-     */
-    public StatementsTest(String name) {
-        super(name);
-    }
-
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
-
         this.stmt.executeUpdate("DROP TABLE IF EXISTS statement_test");
-
         this.stmt.executeUpdate("DROP TABLE IF EXISTS statement_batch_test");
-
         this.stmt.executeUpdate(
                 "CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
 
@@ -177,28 +164,25 @@ public class StatementsTest extends BaseTestCase {
         // this.conn.setCatalog(this.conn.getCatalog().toUpperCase());
     }
 
-    @Override
+    @AfterEach
     public void tearDown() throws Exception {
+        this.stmt.executeUpdate("DROP TABLE statement_test");
+
+        for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
+            StringBuilder stmtBuf = new StringBuilder("DROP TABLE IF EXISTS statement_col_test_");
+            stmtBuf.append(i);
+            this.stmt.executeUpdate(stmtBuf.toString());
+        }
+
         try {
-            this.stmt.executeUpdate("DROP TABLE statement_test");
-
-            for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
-                StringBuilder stmtBuf = new StringBuilder("DROP TABLE IF EXISTS statement_col_test_");
-                stmtBuf.append(i);
-                this.stmt.executeUpdate(stmtBuf.toString());
-            }
-
-            try {
-                this.stmt.executeUpdate("DROP TABLE statement_batch_test");
-            } catch (SQLException sqlEx) {
-            }
-        } finally {
-            super.tearDown();
+            this.stmt.executeUpdate("DROP TABLE statement_batch_test");
+        } catch (SQLException sqlEx) {
         }
     }
 
+    @Test
     public void testAccessorsAndMutators() throws SQLException {
-        assertTrue("Connection can not be null, and must be same connection", this.stmt.getConnection() == this.conn);
+        assertTrue(this.stmt.getConnection() == this.conn, "Connection can not be null, and must be same connection");
 
         // Set max rows, to exercise code in execute(), executeQuery() and executeUpdate()
         Statement accessorStmt = null;
@@ -208,7 +192,7 @@ public class StatementsTest extends BaseTestCase {
             accessorStmt.setMaxRows(1);
             accessorStmt.setMaxRows(0); // FIXME, test that this actually affects rows returned
             accessorStmt.setMaxFieldSize(255);
-            assertTrue("Max field size should match what was set", accessorStmt.getMaxFieldSize() == 255);
+            assertTrue(accessorStmt.getMaxFieldSize() == 255, "Max field size should match what was set");
 
             try {
                 accessorStmt.setMaxFieldSize(Integer.MAX_VALUE);
@@ -222,7 +206,7 @@ public class StatementsTest extends BaseTestCase {
             accessorStmt.setFetchDirection(java.sql.ResultSet.FETCH_FORWARD);
 
             int fetchDirection = accessorStmt.getFetchDirection();
-            assertTrue("Set fetch direction != get fetch direction", fetchDirection == java.sql.ResultSet.FETCH_FORWARD);
+            assertTrue(fetchDirection == java.sql.ResultSet.FETCH_FORWARD, "Set fetch direction != get fetch direction");
 
             try {
                 accessorStmt.setFetchDirection(Integer.MAX_VALUE);
@@ -262,7 +246,7 @@ public class StatementsTest extends BaseTestCase {
                 // ignore
             }
 
-            assertTrue("Fetch size before invalid setFetchSize() calls should match fetch size now", fetchSize == this.stmt.getFetchSize());
+            assertTrue(fetchSize == this.stmt.getFetchSize(), "Fetch size before invalid setFetchSize() calls should match fetch size now");
         } finally {
             if (accessorStmt != null) {
                 try {
@@ -276,6 +260,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testAutoIncrement() throws SQLException {
         try {
             this.stmt.setFetchSize(Integer.MIN_VALUE);
@@ -303,8 +288,8 @@ public class StatementsTest extends BaseTestCase {
             }
 
             if ((autoIncKeyFromApi != -1) && (autoIncKeyFromFunc != -1)) {
-                assertTrue("Key retrieved from API (" + autoIncKeyFromApi + ") does not match key retrieved from LAST_INSERT_ID() " + autoIncKeyFromFunc
-                        + ") function", autoIncKeyFromApi == autoIncKeyFromFunc);
+                assertTrue(autoIncKeyFromApi == autoIncKeyFromFunc, "Key retrieved from API (" + autoIncKeyFromApi
+                        + ") does not match key retrieved from LAST_INSERT_ID() " + autoIncKeyFromFunc + ") function");
             } else {
                 fail("AutoIncrement keys were '0'");
             }
@@ -322,11 +307,11 @@ public class StatementsTest extends BaseTestCase {
     }
 
     /**
-     * Tests all variants of numerical types (signed/unsigned) for correct
-     * operation when used as return values from a prepared statement.
+     * Tests all variants of numerical types (signed/unsigned) for correct operation when used as return values from a prepared statement.
      * 
      * @throws Exception
      */
+    @Test
     public void testBinaryResultSetNumericTypes() throws Exception {
         testBinaryResultSetNumericTypesInternal(this.conn);
         Connection sspsConn = getConnectionWithProps("useServerPrepStmts=true");
@@ -334,6 +319,7 @@ public class StatementsTest extends BaseTestCase {
         sspsConn.close();
     }
 
+    @Test
     private void testBinaryResultSetNumericTypesInternal(Connection con) throws Exception {
         /*
          * TINYINT 1 -128 127 SMALLINT 2 -32768 32767 MEDIUMINT 3 -8388608
@@ -433,8 +419,8 @@ public class StatementsTest extends BaseTestCase {
      * Tests stored procedure functionality
      * 
      * @throws Exception
-     *             if an error occurs.
      */
+    @Test
     public void testCallableStatement() throws Exception {
         CallableStatement cStmt = null;
         String stringVal = "abcdefg";
@@ -499,6 +485,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testCancelStatement() throws Exception {
 
         Connection cancelConn = null;
@@ -514,7 +501,7 @@ public class StatementsTest extends BaseTestCase {
             try {
                 cancelStmt.execute("SELECT SLEEP(30)");
             } catch (SQLException sqlEx) {
-                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+                assertTrue(System.currentTimeMillis() - begin < 30000, "Probably wasn't actually cancelled");
             }
 
             for (int i = 0; i < 1000; i++) {
@@ -559,7 +546,7 @@ public class StatementsTest extends BaseTestCase {
             try {
                 cancelStmt.execute("SELECT SLEEP(30)");
             } catch (SQLException sqlEx) {
-                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+                assertTrue(System.currentTimeMillis() - begin < 30000, "Probably wasn't actually cancelled");
             }
 
             for (int i = 0; i < 1000; i++) {
@@ -586,7 +573,7 @@ public class StatementsTest extends BaseTestCase {
             try {
                 cancelPstmt.execute();
             } catch (SQLException sqlEx) {
-                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+                assertTrue(System.currentTimeMillis() - begin < 30000, "Probably wasn't actually cancelled");
             }
 
             for (int i = 0; i < 1000; i++) {
@@ -630,7 +617,7 @@ public class StatementsTest extends BaseTestCase {
             try {
                 cancelPstmt.execute();
             } catch (SQLException sqlEx) {
-                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+                assertTrue(System.currentTimeMillis() - begin < 30000, "Probably wasn't actually cancelled");
             }
 
             for (int i = 0; i < 1000; i++) {
@@ -657,7 +644,7 @@ public class StatementsTest extends BaseTestCase {
             try {
                 cancelClientPstmt.execute();
             } catch (SQLException sqlEx) {
-                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+                assertTrue(System.currentTimeMillis() - begin < 30000, "Probably wasn't actually cancelled");
             }
 
             for (int i = 0; i < 1000; i++) {
@@ -701,7 +688,7 @@ public class StatementsTest extends BaseTestCase {
             try {
                 cancelClientPstmt.execute();
             } catch (SQLException sqlEx) {
-                assertTrue("Probably wasn't actually cancelled", System.currentTimeMillis() - begin < 30000);
+                assertTrue(System.currentTimeMillis() - begin < 30000, "Probably wasn't actually cancelled");
             }
 
             for (int i = 0; i < 1000; i++) {
@@ -764,6 +751,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testClose() throws SQLException {
         Statement closeStmt = null;
         boolean exceptionAfterClosed = false;
@@ -789,9 +777,10 @@ public class StatementsTest extends BaseTestCase {
             closeStmt = null;
         }
 
-        assertTrue("Operations not allowed on Statement after .close() is called!", exceptionAfterClosed);
+        assertTrue(exceptionAfterClosed, "Operations not allowed on Statement after .close() is called!");
     }
 
+    @Test
     public void testEnableStreamingResults() throws Exception {
         Statement streamStmt = this.conn.createStatement();
         ((com.mysql.cj.jdbc.JdbcStatement) streamStmt).enableStreamingResults();
@@ -799,6 +788,7 @@ public class StatementsTest extends BaseTestCase {
         assertEquals(streamStmt.getResultSetType(), ResultSet.TYPE_FORWARD_ONLY);
     }
 
+    @Test
     public void testHoldingResultSetsOverClose() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.holdResultsOpenOverStatementClose.getKeyName(), "true");
@@ -882,6 +872,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testInsert() throws SQLException {
         try {
             boolean autoCommit = this.conn.getAutoCommit();
@@ -891,7 +882,7 @@ public class StatementsTest extends BaseTestCase {
                 this.conn.setAutoCommit(false);
                 this.stmt.executeUpdate("SELECT * FROM statement_test");
             } catch (SQLException sqlEx) {
-                assertTrue("Exception thrown for unknown reason", sqlEx.getSQLState().equalsIgnoreCase("01S03"));
+                assertTrue(sqlEx.getSQLState().equalsIgnoreCase("01S03"), "Exception thrown for unknown reason");
             } finally {
                 this.conn.setAutoCommit(autoCommit);
             }
@@ -901,14 +892,14 @@ public class StatementsTest extends BaseTestCase {
                 this.conn.setAutoCommit(false);
                 this.stmt.execute("UPDATE statement_test SET strdata1='blah' WHERE 1=0");
             } catch (SQLException sqlEx) {
-                assertTrue("Exception thrown for unknown reason", sqlEx.getSQLState().equalsIgnoreCase(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT));
+                assertTrue(sqlEx.getSQLState().equalsIgnoreCase(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT), "Exception thrown for unknown reason");
             } finally {
                 this.conn.setAutoCommit(autoCommit);
             }
 
             for (int i = 0; i < 10; i++) {
                 int updateCount = this.stmt.executeUpdate("INSERT INTO statement_test (strdata1,strdata2) values ('abcdefg', 'poi')");
-                assertTrue("Update count must be '1', was '" + updateCount + "'", (updateCount == 1));
+                assertTrue((updateCount == 1), "Update count must be '1', was '" + updateCount + "'");
             }
 
             int insertIdFromGeneratedKeys = Integer.MIN_VALUE;
@@ -949,6 +940,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testMultiStatements() throws Exception {
         Connection multiStmtConn = null;
         Statement multiStmt = null;
@@ -978,7 +970,7 @@ public class StatementsTest extends BaseTestCase {
             // Next should be an update count...
             assertTrue(!multiStmt.getMoreResults());
 
-            assertTrue("Update count was " + multiStmt.getUpdateCount() + ", expected 1", multiStmt.getUpdateCount() == 1);
+            assertTrue(multiStmt.getUpdateCount() == 1, "Update count was " + multiStmt.getUpdateCount() + ", expected 1");
 
             assertTrue(multiStmt.getMoreResults());
 
@@ -1008,8 +1000,8 @@ public class StatementsTest extends BaseTestCase {
      * Tests that NULLs and '' work correctly.
      * 
      * @throws SQLException
-     *             if an error occurs
      */
+    @Test
     public void testNulls() throws SQLException {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS nullTest");
@@ -1020,11 +1012,11 @@ public class StatementsTest extends BaseTestCase {
 
             this.rs.next();
 
-            assertTrue("NULL field not returned as NULL", (this.rs.getString("field_1") == null) && this.rs.wasNull());
+            assertTrue((this.rs.getString("field_1") == null) && this.rs.wasNull(), "NULL field not returned as NULL");
 
             this.rs.next();
 
-            assertTrue("Empty field not returned as \"\"", this.rs.getString("field_1").equals("") && !this.rs.wasNull());
+            assertTrue(this.rs.getString("field_1").equals("") && !this.rs.wasNull(), "Empty field not returned as \"\"");
 
             this.rs.close();
         } finally {
@@ -1040,6 +1032,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testParsedConversionWarning() throws Exception {
         try {
             Properties props = new Properties();
@@ -1060,6 +1053,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testPreparedStatement() throws SQLException {
         this.stmt.executeUpdate("INSERT INTO statement_test (id, strdata1,strdata2) values (999,'abcdefg', 'poi')");
         this.pstmt = this.conn.prepareStatement("UPDATE statement_test SET strdata1=?, strdata2=? where id=999");
@@ -1067,7 +1061,7 @@ public class StatementsTest extends BaseTestCase {
         this.pstmt.setString(2, "higjklmn");
 
         int updateCount = this.pstmt.executeUpdate();
-        assertTrue("Update count must be '1', was '" + updateCount + "'", (updateCount == 1));
+        assertTrue((updateCount == 1), "Update count must be '1', was '" + updateCount + "'");
 
         this.pstmt.clearParameters();
 
@@ -1077,10 +1071,11 @@ public class StatementsTest extends BaseTestCase {
 
         assertTrue(this.rs.next());
         assertTrue(this.rs.getInt(1) == 999);
-        assertTrue("Expected 'iop', received '" + this.rs.getString(2) + "'", "iop".equals(this.rs.getString(2)));
-        assertTrue("Expected 'higjklmn', received '" + this.rs.getString(3) + "'", "higjklmn".equals(this.rs.getString(3)));
+        assertTrue("iop".equals(this.rs.getString(2)), "Expected 'iop', received '" + this.rs.getString(2) + "'");
+        assertTrue("higjklmn".equals(this.rs.getString(3)), "Expected 'higjklmn', received '" + this.rs.getString(3) + "'");
     }
 
+    @Test
     public void testPreparedStatementBatch() throws SQLException {
         this.pstmt = this.conn.prepareStatement("INSERT INTO statement_batch_test (strdata1, strdata2) VALUES (?,?)");
 
@@ -1093,10 +1088,11 @@ public class StatementsTest extends BaseTestCase {
         int[] updateCounts = this.pstmt.executeBatch();
 
         for (int i = 0; i < updateCounts.length; i++) {
-            assertTrue("Update count must be '1', was '" + updateCounts[i] + "'", (updateCounts[i] == 1));
+            assertTrue((updateCounts[i] == 1), "Update count must be '1', was '" + updateCounts[i] + "'");
         }
     }
 
+    @Test
     public void testRowFetch() throws Exception {
         createTable("testRowFetch", "(field1 int)");
 
@@ -1137,6 +1133,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testSelectColumns() throws SQLException {
         for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
             long start = System.currentTimeMillis();
@@ -1155,6 +1152,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testSetObject() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.noDatetimeStringSync.getKeyName(), "true"); // value=true for #5
@@ -1200,6 +1198,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testSetObjectWithMysqlType() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
@@ -1259,6 +1258,7 @@ public class StatementsTest extends BaseTestCase {
         assertEquals(null, this.rs.getString(7));
     }
 
+    @Test
     public void testStatementRewriteBatch() throws Exception {
         for (int j = 0; j < 2; j++) {
             Properties props = new Properties();
@@ -1444,8 +1444,8 @@ public class StatementsTest extends BaseTestCase {
             while (this.rs.next()) {
                 for (int k = 0; k < 14; k++) {
                     if (differentTypes[idx][k] == null) {
-                        assertTrue("On row " + idx + " expected NULL, found " + this.rs.getObject(k + 1) + " in column " + (k + 1),
-                                this.rs.getObject(k + 1) == null);
+                        assertTrue(this.rs.getObject(k + 1) == null,
+                                "On row " + idx + " expected NULL, found " + this.rs.getObject(k + 1) + " in column " + (k + 1));
                     } else {
                         String className = differentTypes[idx][k].getClass().getName();
 
@@ -1461,7 +1461,7 @@ public class StatementsTest extends BaseTestCase {
 
                             String asString = this.rs.getString(k + 1);
 
-                            assertEquals("On row " + idx + ", column " + (k + 1), buf.toString(), asString);
+                            assertEquals(buf.toString(), asString, "On row " + idx + ", column " + (k + 1));
 
                         } else if (differentTypes[idx][k] instanceof java.io.InputStream) {
                             ByteArrayOutputStream bOut = new ByteArrayOutputStream();
@@ -1478,31 +1478,31 @@ public class StatementsTest extends BaseTestCase {
                             byte[] expected = bOut.toByteArray();
                             byte[] actual = this.rs.getBytes(k + 1);
 
-                            assertEquals("On row " + idx + ", column " + (k + 1), StringUtils.dumpAsHex(expected, expected.length),
-                                    StringUtils.dumpAsHex(actual, actual.length));
+                            assertEquals(StringUtils.dumpAsHex(expected, expected.length), StringUtils.dumpAsHex(actual, actual.length),
+                                    "On row " + idx + ", column " + (k + 1));
                         } else if (differentTypes[idx][k] instanceof byte[]) {
                             byte[] expected = (byte[]) differentTypes[idx][k];
                             byte[] actual = this.rs.getBytes(k + 1);
-                            assertEquals("On row " + idx + ", column " + (k + 1), StringUtils.dumpAsHex(expected, expected.length),
-                                    StringUtils.dumpAsHex(actual, actual.length));
+                            assertEquals(StringUtils.dumpAsHex(expected, expected.length), StringUtils.dumpAsHex(actual, actual.length),
+                                    "On row " + idx + ", column " + (k + 1));
                         } else if (differentTypes[idx][k] instanceof Timestamp) {
-                            assertEquals("On row " + idx + ", column " + (k + 1), sdf.format(differentTypes[idx][k]), sdf.format(this.rs.getObject(k + 1)));
+                            assertEquals(sdf.format(differentTypes[idx][k]), sdf.format(this.rs.getObject(k + 1)), "On row " + idx + ", column " + (k + 1));
                         } else if (differentTypes[idx][k] instanceof Double) {
-                            assertEquals("On row " + idx + ", column " + (k + 1), ((Double) differentTypes[idx][k]).doubleValue(), this.rs.getDouble(k + 1),
-                                    .1);
+                            assertEquals(((Double) differentTypes[idx][k]).doubleValue(), this.rs.getDouble(k + 1), .1,
+                                    "On row " + idx + ", column " + (k + 1));
                         } else if (differentTypes[idx][k] instanceof Float) {
-                            assertEquals("On row " + idx + ", column " + (k + 1), ((Float) differentTypes[idx][k]).floatValue(), this.rs.getFloat(k + 1), .1);
+                            assertEquals(((Float) differentTypes[idx][k]).floatValue(), this.rs.getFloat(k + 1), .1, "On row " + idx + ", column " + (k + 1));
                         } else if (className.equals("java.lang.Byte")) {
                             // special mapping in JDBC for ResultSet.getObject()
-                            assertEquals("On row " + idx + ", column " + (k + 1), new Integer(((Byte) differentTypes[idx][k]).byteValue()),
-                                    this.rs.getObject(k + 1));
+                            assertEquals(new Integer(((Byte) differentTypes[idx][k]).byteValue()), this.rs.getObject(k + 1),
+                                    "On row " + idx + ", column " + (k + 1));
                         } else if (className.equals("java.lang.Short")) {
                             // special mapping in JDBC for ResultSet.getObject()
-                            assertEquals("On row " + idx + ", column " + (k + 1), new Integer(((Short) differentTypes[idx][k]).shortValue()),
-                                    this.rs.getObject(k + 1));
+                            assertEquals(new Integer(((Short) differentTypes[idx][k]).shortValue()), this.rs.getObject(k + 1),
+                                    "On row " + idx + ", column " + (k + 1));
                         } else {
-                            assertEquals("On row " + idx + ", column " + (k + 1) + " (" + differentTypes[idx][k].getClass() + "/"
-                                    + this.rs.getObject(k + 1).getClass(), differentTypes[idx][k].toString(), this.rs.getObject(k + 1).toString());
+                            assertEquals(differentTypes[idx][k].toString(), this.rs.getObject(k + 1).toString(), "On row " + idx + ", column " + (k + 1) + " ("
+                                    + differentTypes[idx][k].getClass() + "/" + this.rs.getObject(k + 1).getClass());
                         }
                     }
                 }
@@ -1512,6 +1512,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testBatchRewriteErrors() throws Exception {
         createTable("rewriteErrors", "(field1 int not null primary key) ENGINE=MyISAM");
 
@@ -1596,6 +1597,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testStreamChange() throws Exception {
         createTable("testStreamChange", "(field1 varchar(32), field2 int, field3 TEXT, field4 BLOB)");
         this.pstmt = this.conn.prepareStatement("INSERT INTO testStreamChange VALUES (?, ?, ?, ?)");
@@ -1644,6 +1646,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testStubbed() throws SQLException {
         try {
             this.stmt.getResultSetHoldability();
@@ -1651,6 +1654,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testTruncationOnRead() throws Exception {
         this.rs = this.stmt.executeQuery("SELECT '" + Long.MAX_VALUE + "'");
         this.rs.next();
@@ -1753,9 +1757,9 @@ public class StatementsTest extends BaseTestCase {
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testTruncationOnRead");
         }
-
     }
 
+    @Test
     public void testQueryInterceptors() throws Exception {
         Connection interceptedConn = null;
 
@@ -1790,6 +1794,7 @@ public class StatementsTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testParameterBindings() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
@@ -1834,17 +1839,18 @@ public class StatementsTest extends BaseTestCase {
                 Class<?> testObjectClass = valuesToTest[i].getClass();
 
                 if (boundObject instanceof Number) {
-                    assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, valuesToTest[i].toString(),
-                            boundObject.toString());
+                    assertEquals(valuesToTest[i].toString(), boundObject.toString(),
+                            "For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass);
                 } else if (boundObject instanceof Date) {
 
                 } else {
-                    assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, valuesToTest[i], boundObject);
+                    assertEquals(valuesToTest[i], boundObject, "For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass);
                 }
             }
         }
     }
 
+    @Test
     public void testLocalInfileHooked() throws Exception {
         createTable("localInfileHooked", "(field1 int, field2 varchar(255))");
         String streamData = "1\tabcd\n2\tefgh\n3\tijkl";
@@ -1879,6 +1885,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testGetNCharacterStream() throws Exception {
         createTable("testGetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10))");
         this.stmt.executeUpdate("INSERT INTO testGetNCharacterStream (c1, c2) VALUES (_utf8 'aaa', _utf8 'bbb')");
@@ -1898,6 +1905,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testGetNClob() throws Exception {
         createTable("testGetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10))");
         this.stmt.executeUpdate("INSERT INTO testGetNClob (c1, c2) VALUES (_utf8 'aaa', _utf8 'bbb')");
@@ -1931,6 +1939,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testGetNString() throws Exception {
         createTable("testGetNString", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10))");
         this.stmt.executeUpdate("INSERT INTO testGetNString (c1, c2) VALUES (_utf8 'aaa', _utf8 'bbb')");
@@ -1946,6 +1955,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testSetNCharacterStream() throws Exception {
         // suppose sql_mode don't include "NO_BACKSLASH_ESCAPES"
 
@@ -1993,6 +2003,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testSetNCharacterStreamServer() throws Exception {
         createTable("testSetNCharacterStreamServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
@@ -2031,6 +2042,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testSetNClob() throws Exception {
         // suppose sql_mode don't include "NO_BACKSLASH_ESCAPES"
 
@@ -2084,6 +2096,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testSetNClobServer() throws Exception {
         createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
@@ -2136,6 +2149,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testSetNString() throws Exception {
         // suppose sql_mode don't include "NO_BACKSLASH_ESCAPES"
 
@@ -2185,6 +2199,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testSetNStringServer() throws Exception {
         createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
@@ -2223,6 +2238,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testUpdateNCharacterStream() throws Exception {
         createTable("testUpdateNCharacterStream", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
@@ -2282,6 +2298,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testUpdateNClob() throws Exception {
         createTable("testUpdateNChlob", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
@@ -2349,6 +2366,7 @@ public class StatementsTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testUpdateNString() throws Exception {
         createTable("testUpdateNString", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
@@ -2403,6 +2421,7 @@ public class StatementsTest extends BaseTestCase {
         conn2.close();
     }
 
+    @Test
     public void testJdbc4LoadBalancing() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.ha_loadBalanceStrategy.getKeyName(), CountingReBalanceStrategy.class.getName());
@@ -2420,7 +2439,6 @@ public class StatementsTest extends BaseTestCase {
         } catch (SQLException e) {
             fail("Unable to call Connection.createNClob() in load-balanced connection");
         }
-
     }
 
     // Shared test data
@@ -2442,7 +2460,10 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test shared test data validity.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testSharedTestData() throws Exception {
         assertEquals(this.testSqlDate, Date.valueOf(this.testLocalDate));
         assertEquals(this.testSqlTime, Time.valueOf(this.testLocalTime));
@@ -2455,7 +2476,10 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for Statement.executeLargeBatch(). Validate update count returned and generated keys.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testStmtExecuteLargeBatch() throws Exception {
         /*
          * Fully working batch
@@ -2538,7 +2562,10 @@ public class StatementsTest extends BaseTestCase {
      * Test for Statement.executeLargeUpdate(String).
      * Validate update count returned and generated keys.
      * Case: without requesting generated keys.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testStmtExecuteLargeUpdateNoGeneratedKeys() throws Exception {
         createTable("testExecuteLargeUpdate", "(id BIGINT AUTO_INCREMENT PRIMARY KEY, n INT)");
 
@@ -2562,7 +2589,10 @@ public class StatementsTest extends BaseTestCase {
      * Case 1: explicitly requesting generated keys.
      * Case 2: requesting generated keys by defining column indexes.
      * Case 3: requesting generated keys by defining column names.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testStmtExecuteLargeUpdate() throws Exception {
         createTable("testExecuteLargeUpdate", "(id BIGINT AUTO_INCREMENT PRIMARY KEY, n INT)");
 
@@ -2582,21 +2612,21 @@ public class StatementsTest extends BaseTestCase {
                     count = this.stmt.executeLargeUpdate("INSERT INTO testExecuteLargeUpdate (n) VALUES (1), (2), (3), (4), (5)", new String[] { "id" });
                     break;
             }
-            assertEquals(tstCase, 5, count);
-            assertEquals(tstCase, 5, this.stmt.getLargeUpdateCount());
+            assertEquals(5, count, tstCase);
+            assertEquals(5, this.stmt.getLargeUpdateCount(), tstCase);
 
             this.rs = this.stmt.getGeneratedKeys();
 
             ResultSetMetaData rsmd = this.rs.getMetaData();
-            assertEquals(tstCase, 1, rsmd.getColumnCount());
-            assertEquals(tstCase, JDBCType.BIGINT.getVendorTypeNumber().intValue(), rsmd.getColumnType(1));
-            assertEquals(tstCase, 20, rsmd.getColumnDisplaySize(1));
+            assertEquals(1, rsmd.getColumnCount(), tstCase);
+            assertEquals(JDBCType.BIGINT.getVendorTypeNumber().intValue(), rsmd.getColumnType(1), tstCase);
+            assertEquals(20, rsmd.getColumnDisplaySize(1), tstCase);
 
             long generatedKey = 0;
             while (this.rs.next()) {
-                assertEquals(tstCase, ++generatedKey, this.rs.getLong(1));
+                assertEquals(++generatedKey, this.rs.getLong(1), tstCase);
             }
-            assertEquals(tstCase, 5, generatedKey);
+            assertEquals(5, generatedKey, tstCase);
             this.rs.close();
         }
     }
@@ -2604,7 +2634,10 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for PreparedStatement.executeLargeBatch().
      * Validate update count returned and generated keys.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testPrepStmtExecuteLargeBatch() throws Exception {
         /*
          * Fully working batch
@@ -2699,7 +2732,10 @@ public class StatementsTest extends BaseTestCase {
      * Test for PreparedStatement.executeLargeUpdate().
      * Validate update count returned and generated keys.
      * Case: without requesting generated keys.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testPrepStmtExecuteLargeUpdateNoGeneratedKeys() throws Exception {
         createTable("testExecuteLargeUpdate", "(id BIGINT AUTO_INCREMENT PRIMARY KEY, n INT)");
 
@@ -2728,7 +2764,10 @@ public class StatementsTest extends BaseTestCase {
      * Test for PreparedStatement.executeLargeUpdate().
      * Validate update count returned and generated keys.
      * Case: explicitly requesting generated keys.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testPrepStmtExecuteLargeUpdateExplicitGeneratedKeys() throws Exception {
         createTable("testExecuteLargeUpdate", "(id BIGINT AUTO_INCREMENT PRIMARY KEY, n INT)");
 
@@ -2761,7 +2800,10 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for CallableStatement.executeLargeBatch().
      * Validate update count returned and generated keys.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testCallStmtExecuteLargeBatch() throws Exception {
         /*
          * Fully working batch
@@ -2866,7 +2908,10 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for CallableStatement.executeLargeUpdate().
      * Validate update count returned and generated keys.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testCallStmtExecuteLargeUpdate() throws Exception {
         createTable("testExecuteLargeUpdate", "(id BIGINT AUTO_INCREMENT PRIMARY KEY, n INT)");
         createProcedure("testExecuteLargeUpdateProc", "(IN n1 INT, IN n2 INT, IN n3 INT, IN n4 INT, IN n5 INT) BEGIN "
@@ -2904,7 +2949,10 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for (Server)PreparedStatement.executeLargeBatch().
      * Validate update count returned and generated keys.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testServerPrepStmtExecuteLargeBatch() throws Exception {
         /*
          * Fully working batch
@@ -2999,7 +3047,10 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for Statement.[get/set]LargeMaxRows().
+     * 
+     * @throws Exception
      */
+    @Test
     public void testStmtGetSetLargeMaxRows() throws Exception {
         assertEquals(0, this.stmt.getMaxRows());
         assertEquals(0, this.stmt.getLargeMaxRows());
@@ -3038,7 +3089,10 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for PreparedStatement.setObject().
      * Validate new methods as well as support for the types java.time.Local[Date][Time] and java.time.Offset[Date]Time.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testPrepStmtSetObjectAndNewSupportedTypes() throws Exception {
         /*
          * Objects java.time.Local[Date][Time] are supported via conversion to/from java.sql.[Date|Time|Timestamp].
@@ -3059,7 +3113,10 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for PreparedStatement.setObject(), unsupported SQL types TIME_WITH_TIMEZONE, TIMESTAMP_WITH_TIMEZONE and REF_CURSOR.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testPrepStmtSetObjectAndNewUnsupportedTypes() throws Exception {
         checkUnsupportedTypesBehavior(this.conn.prepareStatement("SELECT ?"));
     }
@@ -3067,7 +3124,10 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for CallableStatement.setObject().
      * Validate new methods as well as support for the types java.time.Local[Date][Time] and java.time.Offset[Date]Time.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testCallStmtSetObjectAndNewSupportedTypes() throws Exception {
         /*
          * Objects java.time.Local[Date][Time] are supported via conversion to/from java.sql.[Date|Time|Timestamp].
@@ -3092,7 +3152,10 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for CallableStatement.setObject(), unsupported SQL types TIME_WITH_TIMEZONE, TIMESTAMP_WITH_TIMEZONE and REF_CURSOR.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testCallStmtSetObjectAndNewUnsupportedTypes() throws Exception {
         createProcedure("testUnsupportedTypesProc", "(OUT param VARCHAR(20)) BEGIN SELECT 1; END");
         checkUnsupportedTypesBehavior(this.conn.prepareCall("{CALL testUnsupportedTypesProc(?)}"));
@@ -3101,7 +3164,10 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for (Server)PreparedStatement.setObject().
      * Validate new methods as well as support for the types java.time.Local[Date][Time] and java.time.Offset[Date]Time.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testServPrepStmtSetObjectAndNewSupportedTypes() throws Exception {
         /*
          * Objects java.time.Local[Date][Time] are supported via conversion to/from java.sql.[Date|Time|Timestamp].
@@ -3124,7 +3190,10 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for (Server)PreparedStatement.setObject(), unsupported SQL types TIME_WITH_TIMEZONE, TIMESTAMP_WITH_TIMEZONE and REF_CURSOR.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testServPrepStmtSetObjectAndNewUnsupportedTypes() throws Exception {
         Connection testConn = getConnectionWithProps("useServerPrepStmts=true");
         checkUnsupportedTypesBehavior(testConn.prepareStatement("SELECT ?"));
@@ -3259,39 +3328,39 @@ public class StatementsTest extends BaseTestCase {
         int rowCount = 0;
         while (this.rs.next()) {
             String row = "Row " + this.rs.getInt(1);
-            assertEquals(row, ++rowCount, this.rs.getInt(1));
+            assertEquals(++rowCount, this.rs.getInt(1), row);
 
-            assertEquals(row, this.testDateString, this.rs.getString(2));
-            assertEquals(row, this.testTimeString, this.rs.getString(3));
-            assertEquals(row, this.testDateTimeString, this.rs.getString(4));
-            assertEquals(row, this.testDateTimeString, this.rs.getString(5));
+            assertEquals(this.testDateString, this.rs.getString(2), row);
+            assertEquals(this.testTimeString, this.rs.getString(3), row);
+            assertEquals(this.testDateTimeString, this.rs.getString(4), row);
+            assertEquals(this.testDateTimeString, this.rs.getString(5), row);
 
-            assertEquals(row, this.testSqlDate, this.rs.getDate(2));
-            assertEquals(row, this.testSqlTime, this.rs.getTime(3));
-            assertEquals(row, this.testSqlTimeStamp, this.rs.getTimestamp(4));
-            assertEquals(row, this.testSqlTimeStamp, this.rs.getTimestamp(5));
+            assertEquals(this.testSqlDate, this.rs.getDate(2), row);
+            assertEquals(this.testSqlTime, this.rs.getTime(3), row);
+            assertEquals(this.testSqlTimeStamp, this.rs.getTimestamp(4), row);
+            assertEquals(this.testSqlTimeStamp, this.rs.getTimestamp(5), row);
 
-            assertEquals(row, this.testLocalDate, this.rs.getObject(2, LocalDate.class));
-            assertEquals(row, this.testLocalTime, this.rs.getObject(3, LocalTime.class));
-            assertEquals(row, this.testLocalDateTime, this.rs.getObject(4, LocalDateTime.class));
-            assertEquals(row, this.testLocalDateTime, this.rs.getObject(5, LocalDateTime.class));
+            assertEquals(this.testLocalDate, this.rs.getObject(2, LocalDate.class), row);
+            assertEquals(this.testLocalTime, this.rs.getObject(3, LocalTime.class), row);
+            assertEquals(this.testLocalDateTime, this.rs.getObject(4, LocalDateTime.class), row);
+            assertEquals(this.testLocalDateTime, this.rs.getObject(5, LocalDateTime.class), row);
 
-            assertEquals(row, rowCount, this.rs.getInt("id"));
+            assertEquals(rowCount, this.rs.getInt("id"), row);
 
-            assertEquals(row, this.testDateString, this.rs.getString("d"));
-            assertEquals(row, this.testTimeString, this.rs.getString("t"));
-            assertEquals(row, this.testDateTimeString, this.rs.getString("dt"));
-            assertEquals(row, this.testDateTimeString, this.rs.getString("ts"));
+            assertEquals(this.testDateString, this.rs.getString("d"), row);
+            assertEquals(this.testTimeString, this.rs.getString("t"), row);
+            assertEquals(this.testDateTimeString, this.rs.getString("dt"), row);
+            assertEquals(this.testDateTimeString, this.rs.getString("ts"), row);
 
-            assertEquals(row, this.testSqlDate, this.rs.getDate("d"));
-            assertEquals(row, this.testSqlTime, this.rs.getTime("t"));
-            assertEquals(row, this.testSqlTimeStamp, this.rs.getTimestamp("dt"));
-            assertEquals(row, this.testSqlTimeStamp, this.rs.getTimestamp("ts"));
+            assertEquals(this.testSqlDate, this.rs.getDate("d"), row);
+            assertEquals(this.testSqlTime, this.rs.getTime("t"), row);
+            assertEquals(this.testSqlTimeStamp, this.rs.getTimestamp("dt"), row);
+            assertEquals(this.testSqlTimeStamp, this.rs.getTimestamp("ts"), row);
 
-            assertEquals(row, this.testLocalDate, this.rs.getObject("d", LocalDate.class));
-            assertEquals(row, this.testLocalTime, this.rs.getObject("t", LocalTime.class));
-            assertEquals(row, this.testLocalDateTime, this.rs.getObject("dt", LocalDateTime.class));
-            assertEquals(row, this.testLocalDateTime, this.rs.getObject("ts", LocalDateTime.class));
+            assertEquals(this.testLocalDate, this.rs.getObject("d", LocalDate.class), row);
+            assertEquals(this.testLocalTime, this.rs.getObject("t", LocalTime.class), row);
+            assertEquals(this.testLocalDateTime, this.rs.getObject("dt", LocalDateTime.class), row);
+            assertEquals(this.testLocalDateTime, this.rs.getObject("ts", LocalDateTime.class), row);
         }
         assertEquals(expectedRowCount, rowCount);
     }
@@ -3358,17 +3427,17 @@ public class StatementsTest extends BaseTestCase {
             String row = "Row " + this.rs.getInt(1);
             assertEquals(++rowCount, this.rs.getInt(1));
 
-            assertEquals(row, this.testOffsetTime, this.rs.getObject(2, OffsetTime.class));
-            assertEquals(row, this.testOffsetTime, this.rs.getObject(3, OffsetTime.class));
-            assertEquals(row, this.testOffsetDateTime, this.rs.getObject(4, OffsetDateTime.class));
-            assertEquals(row, this.testOffsetDateTime, this.rs.getObject(5, OffsetDateTime.class));
+            assertEquals(this.testOffsetTime, this.rs.getObject(2, OffsetTime.class), row);
+            assertEquals(this.testOffsetTime, this.rs.getObject(3, OffsetTime.class), row);
+            assertEquals(this.testOffsetDateTime, this.rs.getObject(4, OffsetDateTime.class), row);
+            assertEquals(this.testOffsetDateTime, this.rs.getObject(5, OffsetDateTime.class), row);
 
-            assertEquals(row, rowCount, this.rs.getInt("id"));
+            assertEquals(rowCount, this.rs.getInt("id"), row);
 
-            assertEquals(row, this.testOffsetTime, this.rs.getObject("ot1", OffsetTime.class));
-            assertEquals(row, this.testOffsetTime, this.rs.getObject("ot2", OffsetTime.class));
-            assertEquals(row, this.testOffsetDateTime, this.rs.getObject("odt1", OffsetDateTime.class));
-            assertEquals(row, this.testOffsetDateTime, this.rs.getObject("odt2", OffsetDateTime.class));
+            assertEquals(this.testOffsetTime, this.rs.getObject("ot1", OffsetTime.class), row);
+            assertEquals(this.testOffsetTime, this.rs.getObject("ot2", OffsetTime.class), row);
+            assertEquals(this.testOffsetDateTime, this.rs.getObject("odt1", OffsetDateTime.class), row);
+            assertEquals(this.testOffsetDateTime, this.rs.getObject("odt2", OffsetDateTime.class), row);
         }
         assertEquals(expectedRowCount, rowCount);
         testConn.close();
@@ -3440,7 +3509,10 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for CallableStatement.registerOutParameter().
+     * 
+     * @throws Exception
      */
+    @Test
     public void testCallStmtRegisterOutParameter() throws Exception {
         createProcedure("testRegisterOutParameterProc", "(OUT b BIT, OUT i INT, OUT c CHAR(10)) BEGIN SELECT 1, 1234, 'MySQL' INTO b, i, c; END");
         final CallableStatement testCstmt = this.conn.prepareCall("{CALL testRegisterOutParameterProc(?, ?, ?)}");
@@ -3504,7 +3576,10 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for CallableStatement.registerOutParameter(...MysqlType...).
+     * 
+     * @throws Exception
      */
+    @Test
     public void testCallStmtRegisterOutParameterWithMysqlType() throws Exception {
         createProcedure("testRegisterOutParameterProc", "(OUT b BIT, OUT i INT, OUT c CHAR(10)) BEGIN SELECT 1, 1234, 'MySQL' INTO b, i, c; END");
         final CallableStatement testCstmt = this.conn.prepareCall("{CALL testRegisterOutParameterProc(?, ?, ?)}");
@@ -3568,7 +3643,10 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for CallableStatement.registerOutParameter(), unsupported SQL types TIME_WITH_TIMEZONE, TIMESTAMP_WITH_TIMEZONE and REF_CURSOR.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testCallStmtRegisterOutParameterNewUnsupportedTypes() throws Exception {
         createProcedure("testUnsupportedTypesProc", "(OUT param VARCHAR(20)) BEGIN SELECT 1; END");
         final CallableStatement testCstmt = this.conn.prepareCall("{CALL testUnsupportedTypesProc(?)}");
@@ -3710,7 +3788,10 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * WL#11101 - Remove de-cache and close of SSPSs on double call to close()
+     * 
+     * @throws Exception
      */
+    @Test
     public void testServerPreparedStatementsCaching() throws Exception {
         // Non prepared statements must be non-poolable by default.
         assertFalse(this.stmt.isPoolable());

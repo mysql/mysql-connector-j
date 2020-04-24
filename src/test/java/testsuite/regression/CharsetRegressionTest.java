@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,10 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -36,6 +40,8 @@ import java.sql.Statement;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
+
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.MysqlConnection;
@@ -48,11 +54,6 @@ import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
 
 public class CharsetRegressionTest extends BaseTestCase {
-
-    public CharsetRegressionTest(String name) {
-        super(name);
-    }
-
     /**
      * Tests fix for Bug#73663 (19479242), utf8mb4 does not work for connector/j >=5.1.13
      * 
@@ -61,8 +62,8 @@ public class CharsetRegressionTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testBug73663() throws Exception {
-
         this.rs = this.stmt.executeQuery("show variables like 'collation_server'");
         this.rs.next();
         String collation = this.rs.getString(2);
@@ -100,14 +101,16 @@ public class CharsetRegressionTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testBug72630() throws Exception {
         // bug is related to authentication plugins, available only in 5.5.7+ 
         if (versionMeetsMinimum(5, 5, 7)) {
             try {
                 createUser("'Bug72630User'@'%'", "IDENTIFIED WITH mysql_native_password");
                 this.stmt.execute("GRANT ALL ON *.* TO 'Bug72630User'@'%'");
-                this.stmt.executeUpdate(((MysqlConnection) this.conn).getSession().versionMeetsMinimum(5, 7, 6)
-                        ? "ALTER USER 'Bug72630User'@'%' IDENTIFIED BY 'pwd'" : "set password for 'Bug72630User'@'%' = PASSWORD('pwd')");
+                this.stmt.executeUpdate(
+                        ((MysqlConnection) this.conn).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'Bug72630User'@'%' IDENTIFIED BY 'pwd'"
+                                : "set password for 'Bug72630User'@'%' = PASSWORD('pwd')");
 
                 final Properties props = new Properties();
                 props.setProperty(PropertyKey.USER.getKeyName(), "Bug72630User");
@@ -145,6 +148,7 @@ public class CharsetRegressionTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testBug25504578() throws Exception {
 
         Properties p = new Properties();
@@ -159,6 +163,7 @@ public class CharsetRegressionTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testBug81196() throws Exception {
         // utf8mb4 was added in MySQL 5.5.2
         if (versionMeetsMinimum(5, 5, 2)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,8 +29,13 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.util.StringUtils;
 
@@ -44,30 +49,11 @@ import testsuite.BaseTestCase;
  */
 public class SplitDBdotNameTest extends BaseTestCase {
     /**
-     * Constructor for SplitDBdotNameTest.
-     * 
-     * @param name
-     *            the name of the test to run.
-     */
-    public SplitDBdotNameTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(SplitDBdotNameTest.class);
-    }
-
-    /**
      * Tests sanitation and SplitDBdotName
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testSplit() throws Exception {
         String src = null;
         String resString = null;

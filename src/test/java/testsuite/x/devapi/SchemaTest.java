@@ -29,18 +29,18 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.ServerVersion;
@@ -61,12 +61,12 @@ import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.Table;
 
 public class SchemaTest extends DevApiBaseTestCase {
-    @Before
+    @BeforeEach
     public void setupCollectionTest() {
         setupTestSession();
     }
 
-    @After
+    @AfterEach
     public void teardownCollectionTest() {
         destroyTestSession();
     }
@@ -224,7 +224,6 @@ public class SchemaTest extends DevApiBaseTestCase {
             sqlUpdate("drop view if exists " + viewName);
             sqlUpdate("drop table if exists " + tableName);
         }
-
     }
 
     @Test
@@ -475,7 +474,5 @@ public class SchemaTest extends DevApiBaseTestCase {
             dropCollection(collName1);
             dropCollection(collName2);
         }
-
     }
-
 }

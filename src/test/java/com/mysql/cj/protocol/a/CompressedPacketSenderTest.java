@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,17 +29,17 @@
 
 package com.mysql.cj.protocol.a;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.zip.InflaterOutputStream;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.protocol.MessageSender;
 
@@ -91,7 +91,7 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
         }
     }
 
-    @After
+    @AfterEach
     public void cleanupByteArrayOutputStream() {
         this.outputStream.reset();
     }
@@ -125,6 +125,8 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
 
     /**
      * Test the situation where a single packet is split into two and the second part doesn't exceed the capacity of the second compressed packet.
+     * 
+     * @throws IOException
      */
     @Test
     public void basicTwoPartSplitPacketTest() throws IOException {
@@ -171,6 +173,8 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
     /**
      * Test the situation where a single packet is split into two and the second part exceeds the capacity of the second compressed packet requiring a third
      * compressed packet.
+     * 
+     * @throws IOException
      */
     @Test
     public void twoPacketToThreeCompressedPacketNoBoundary() throws IOException {
@@ -198,6 +202,8 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
 
     /**
      * This tests that the splitting of MySQL packets includes an additional empty packet to signal the end of the multi-packet sequence.
+     * 
+     * @throws IOException
      */
     @Test
     public void twoPacketToThreeWithEmptyUncompressedPacket() throws IOException {

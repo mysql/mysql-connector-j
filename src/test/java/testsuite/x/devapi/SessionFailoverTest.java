@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,8 +29,8 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,9 +40,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.PropertyDefinitions;
@@ -91,7 +91,7 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
         return url.toString();
     }
 
-    @Before
+    @BeforeEach
     public void setupFailoverTest() {
         if (this.isSetForXTests) {
             StringBuilder sb = new StringBuilder();
@@ -102,6 +102,8 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
 
     /**
      * Assures that failover support doesn't affect single host connections.
+     * 
+     * @throws Exception
      */
     @Test
     public void testGetSessionForSingleHost() throws Exception {
@@ -123,6 +125,8 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
 
     /**
      * Tests basic failover while getting a {@link Session} instance.
+     * 
+     * @throws Exception
      */
     @Test
     public void testGetSessionForMultipleHostsWithFailover() throws Exception {
@@ -212,9 +216,11 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
      * If default 10.77.77.77:37070 doesn't work in a particular testing setup (if the ip address is available)
      * please add this variable to ant call:
      * -Dcom.mysql.cj.testsuite.unavailable.host=unavailable_ip:port
+     * 
+     * @throws Exception
      */
     @Test
-    @Ignore // This test doesn't execute deterministically on some systems. It can be run manually in local systems when needed.
+    @Disabled("This test doesn't execute deterministically on some systems. It can be run manually in local systems when needed.")
     public void testConnectionTimeout() throws Exception {
         if (!this.isSetForXTests) {
             return;
@@ -258,7 +264,7 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
         Session sess = this.fact.getSession(buildConnectionString(this.testsHost) + "?" + makeParam(PropertyKey.xdevapiConnectTimeout, "3000", true));
         sess.sql("SELECT SLEEP(11)").execute();
         long end = System.currentTimeMillis() - begin;
-        assertTrue("Expected: " + 11000 + ".." + 12000 + ". Got " + end, end >= 11000 && end < 12000);
+        assertTrue(end >= 11000 && end < 12000, "Expected: " + 11000 + ".." + 12000 + ". Got " + end);
 
         // TS11_1 Set connection property xdevapi.connect-timeout=null, try to create Session, check that WrongArgumentException is thrown
         // with message "The connection property 'xdevapi.connect-timeout' only accepts integer values. The value 'null' can not be converted to an integer."
@@ -299,7 +305,7 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
         long begin = System.currentTimeMillis();
         assertThrows(throwable, () -> this.fact.getSession(url));
         long end = System.currentTimeMillis() - begin;
-        assertTrue("Expected: " + expLowLimit + ".." + expUpLimit + ". Got " + end, end >= expLowLimit && end < expUpLimit);
+        assertTrue(end >= expLowLimit && end < expUpLimit, "Expected: " + expLowLimit + ".." + expUpLimit + ". Got " + end);
     }
 
     private void testConnectionTimeout_assertFailureTimeout(String url, int expLowLimit, int expUpLimit) {
@@ -310,7 +316,6 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
         long begin = System.currentTimeMillis();
         this.fact.getSession(url);
         long end = System.currentTimeMillis() - begin;
-        assertTrue("Expected: " + expLowLimit + ".." + expUpLimit + ". Got " + end, end >= expLowLimit && end < expUpLimit);
+        assertTrue(end >= expLowLimit && end < expUpLimit, "Expected: " + expLowLimit + ".." + expUpLimit + ". Got " + end);
     }
-
 }

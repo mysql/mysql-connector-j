@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,13 +29,13 @@
 
 package testsuite.x.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.OkBuilder;
@@ -51,7 +51,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
     private static XProtocol protocol;
     private XMessageBuilder messageBuilder;
 
-    @Before
+    @BeforeEach
     public void setupTestProtocol() throws Exception {
         if (this.isSetForXTests) {
             protocol = createTestProtocol();
@@ -59,7 +59,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void destroyTestProtocol() throws Exception {
         if (this.isSetForXTests) {
             protocol.close();
@@ -69,6 +69,8 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
     /**
      * Test that we are disconnected with an error if we send a bad authentication message. The server responds by immediately closing the socket. The async
      * implementation may block indefinitely here and we need to prevent any regression.
+     * 
+     * @throws Exception
      */
     @Test
     public void testBadAuthMessage() throws Exception {
@@ -86,7 +88,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
     }
 
     @Test
-    @Ignore("PLAIN only supported over SSL")
+    @Disabled("PLAIN only supported over SSL")
     public void testBasicSaslPlainAuth() throws Exception {
         if (!this.isSetForXTests) {
             return;
@@ -120,7 +122,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
     }
 
     @Test
-    @Ignore("PLAIN only supported over SSL")
+    @Disabled("PLAIN only supported over SSL")
     public void testBasicSaslPlainAuthFailure() throws Exception {
         if (!this.isSetForXTests) {
             return;
@@ -166,7 +168,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
      * Bug#21680263 - NullPointerException When Try to connect without DB Name.
      */
     @Test
-    @Ignore("PLAIN only supported over SSL")
+    @Disabled("PLAIN only supported over SSL")
     public void testEmptyDatabasePLAIN() {
         if (!this.isSetForXTests) {
             return;

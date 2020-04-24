@@ -30,6 +30,11 @@
 package testsuite;
 
 import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -53,6 +58,10 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.Callable;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
+
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
@@ -65,13 +74,10 @@ import com.mysql.cj.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
 
-import junit.framework.TestCase;
-
 /**
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
  */
-public abstract class BaseTestCase extends TestCase {
-
+public abstract class BaseTestCase {
     // next variables disable some tests
     protected boolean DISABLED_testBug15121 = true; // TODO needs to be fixed on server
     protected boolean DISABLED_testBug7033 = true; // TODO disabled for unknown reason
@@ -143,12 +149,8 @@ public abstract class BaseTestCase extends TestCase {
 
     /**
      * Creates a new BaseTestCase object.
-     * 
-     * @param name
-     *            The name of the JUnit test case
      */
-    public BaseTestCase(String name) {
-        super(name);
+    public BaseTestCase() {
         this.myInstanceNumber = instanceCount++;
 
         String newDbUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url);
@@ -416,7 +418,6 @@ public abstract class BaseTestCase extends TestCase {
         }
 
         return null;
-
     }
 
     /**
@@ -646,14 +647,17 @@ public abstract class BaseTestCase extends TestCase {
     /**
      * Creates resources used by all tests.
      * 
+     * @param testInfo
+     * 
      * @throws Exception
      *             if an error occurs.
      */
-    @Override
-    public void setUp() throws Exception {
-        System.out.println("Running test " + getClass().getName() + "#" + getName());
-        System.out.println("################################################################################");
-        Class.forName(this.dbClass).newInstance();
+    @BeforeEach
+    public void setUpBase(TestInfo testInfo) throws Exception {
+        System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+        System.out.println("Running test " + testInfo.getTestClass().get().getName() + "#" + testInfo.getDisplayName());
+        System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+        Class.forName(this.dbClass);
         this.createdObjects = new ArrayList<>();
 
         Properties props = new Properties();
@@ -703,14 +707,15 @@ public abstract class BaseTestCase extends TestCase {
                 }
             }
         }
-
     }
 
     /**
      * Destroys resources created during the test case.
+     * 
+     * @throws Exception
      */
-    @Override
-    public void tearDown() throws Exception {
+    @AfterEach
+    public void tearDownBase() throws Exception {
         if (this.rs != null) {
             try {
                 this.rs.close();
@@ -816,6 +821,8 @@ public abstract class BaseTestCase extends TestCase {
      *            the major version to meet
      * @param minor
      *            the minor version to meet
+     * @param subminor
+     *            the subminor version to meet
      * 
      * @return boolean if the major/minor is met
      * 
@@ -828,6 +835,8 @@ public abstract class BaseTestCase extends TestCase {
 
     /**
      * Checks whether the server we're connected to is a MySQL Community edition
+     * 
+     * @return true if connected to a community/gpl server
      */
     protected boolean isCommunityEdition() {
         return Util.isCommunityEdition(((JdbcConnection) this.conn).getServerVersion().toString());
@@ -835,6 +844,8 @@ public abstract class BaseTestCase extends TestCase {
 
     /**
      * Checks whether the server we're connected to is an MySQL Enterprise edition
+     * 
+     * @return true if connected to an enterprise/commercial server
      */
     protected boolean isEnterpriseEdition() {
         return Util.isEnterpriseEdition(((JdbcConnection) this.conn).getServerVersion().toString());
@@ -892,7 +903,7 @@ public abstract class BaseTestCase extends TestCase {
     protected void assertResultSetLength(ResultSet rset, int len) throws Exception {
         int oldRowPos = rset.getRow();
         rset.last();
-        assertEquals("Result set length", len, rset.getRow());
+        assertEquals(len, rset.getRow(), "Result set length");
         if (oldRowPos > 0) {
             rset.absolute(oldRowPos);
         } else {
@@ -920,19 +931,19 @@ public abstract class BaseTestCase extends TestCase {
                 rsAsString.append(", ");
 
                 if (controlObj == null) {
-                    assertNull("Expected null, see last row: \n" + rsAsString.toString(), testObj);
+                    assertNull(testObj, "Expected null, see last row: \n" + rsAsString.toString());
                 } else {
-                    assertNotNull("Expected non-null, see last row: \n" + rsAsString.toString(), testObj);
+                    assertNotNull(testObj, "Expected non-null, see last row: \n" + rsAsString.toString());
                 }
 
                 if (controlObj instanceof Float) {
-                    assertEquals("Float comparison failed, see last row: \n" + rsAsString.toString(), ((Float) controlObj).floatValue(),
-                            ((Float) testObj).floatValue(), 0.1);
+                    assertEquals(((Float) controlObj).floatValue(), ((Float) testObj).floatValue(), 0.1,
+                            "Float comparison failed, see last row: \n" + rsAsString.toString());
                 } else if (controlObj instanceof Double) {
-                    assertEquals("Double comparison failed, see last row: \n" + rsAsString.toString(), ((Double) controlObj).doubleValue(),
-                            ((Double) testObj).doubleValue(), 0.1);
+                    assertEquals(((Double) controlObj).doubleValue(), ((Double) testObj).doubleValue(), 0.1,
+                            "Double comparison failed, see last row: \n" + rsAsString.toString());
                 } else {
-                    assertEquals("Value comparison failed, see last row: \n" + rsAsString.toString(), controlObj, testObj);
+                    assertEquals(controlObj, testObj, "Value comparison failed, see last row: \n" + rsAsString.toString());
                 }
             }
         }
@@ -949,7 +960,7 @@ public abstract class BaseTestCase extends TestCase {
             }
         }
 
-        assertTrue("Found " + howMuchMore + " extra rows in result set to be compared: ", howMuchMore == 0);
+        assertTrue(howMuchMore == 0, "Found " + howMuchMore + " extra rows in result set to be compared: ");
     }
 
     protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, Callable<?> testRoutine) {
@@ -989,9 +1000,9 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     protected void assertByteArrayEquals(String message, byte[] expected, byte[] actual) {
-        assertEquals(message + " - array lenght", expected.length, actual.length);
+        assertEquals(expected.length, actual.length, message + " - array lenght");
         for (int i = 0, s = expected.length; i < s; i++) {
-            assertEquals(message + " - element at " + i, expected[i], actual[i]);
+            assertEquals(expected[i], actual[i], message + " - element at " + i);
         }
     }
 
@@ -1021,7 +1032,7 @@ public abstract class BaseTestCase extends TestCase {
             delimiter = " ~ ";
         }
 
-        assertEquals("Connections history", expectedHist.toString(), actualHist.toString());
+        assertEquals(expectedHist.toString(), actualHist.toString(), "Connections history");
     }
 
     /*
@@ -1054,6 +1065,8 @@ public abstract class BaseTestCase extends TestCase {
     /**
      * Retrieve the current system time in milliseconds, using the nanosecond
      * time if possible.
+     * 
+     * @return current time in milliseconds
      */
     protected static final long currentTimeMillis() {
         try {

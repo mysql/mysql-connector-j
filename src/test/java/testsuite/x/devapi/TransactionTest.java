@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,15 +29,15 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.Callable;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.xdevapi.Collection;
@@ -46,7 +46,7 @@ import com.mysql.cj.xdevapi.XDevAPIError;
 public class TransactionTest extends DevApiBaseTestCase {
     protected Collection collection;
 
-    @Before
+    @BeforeEach
     public void setupCollectionTest() {
         if (setupTestSession()) {
             dropCollection("txTest");
@@ -54,7 +54,7 @@ public class TransactionTest extends DevApiBaseTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void teardownCollectionTest() {
         if (this.isSetForXTests) {
             dropCollection("txTest");
@@ -250,7 +250,7 @@ public class TransactionTest extends DevApiBaseTestCase {
             this.session.rollbackTo(sp2);
             fail("Error is expected here because 'sp2' savepoint should not exist at this point.");
         } catch (Exception e) {
-            assertTrue(e.getMessage(), e.getMessage().contains("SAVEPOINT sp2 does not exist"));
+            assertTrue(e.getMessage().contains("SAVEPOINT sp2 does not exist"), e.getMessage());
         }
 
         this.session.rollbackTo(sp1);

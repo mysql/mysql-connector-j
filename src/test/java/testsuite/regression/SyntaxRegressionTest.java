@@ -29,6 +29,13 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -49,6 +56,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
@@ -62,11 +71,6 @@ import testsuite.BaseTestCase;
  * Regression tests for syntax
  */
 public class SyntaxRegressionTest extends BaseTestCase {
-
-    public SyntaxRegressionTest(String name) {
-        super(name);
-    }
-
     /**
      * ALTER TABLE syntax changed in 5.6GA
      * 
@@ -85,6 +89,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * 
      * @throws SQLException
      */
+    @Test
     public void testAlterTableAlgorithmLock() throws SQLException {
         if (!versionMeetsMinimum(5, 6, 6)) {
             return;
@@ -145,6 +150,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * 
      * @throws SQLException
      */
+    @Test
     public void testCreateTableDataDirectory() throws SQLException {
         if (!versionMeetsMinimum(5, 6, 6)) {
             return;
@@ -215,7 +221,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
             dropTable("testCreateTableDataDirectoryc");
             dropTable("testCreateTableDataDirectoryd");
         }
-
     }
 
     /**
@@ -225,8 +230,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * ALTER TABLE ... DISCARD TABLESPACE
      * ALTER TABLE ... IMPORT TABLESPACE
      * 
-     * @throws SQLException
+     * @throws Exception
      */
+    @Test
     public void testTransportableTablespaces() throws Exception {
         if (!versionMeetsMinimum(5, 6, 8)) {
             return;
@@ -267,7 +273,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         Properties props = getPropertiesFromTestsuiteUrl();
         String dbname = props.getProperty(PropertyKey.DBNAME.getKeyName());
         if (dbname == null) {
-            assertTrue("No database selected", false);
+            assertTrue(false, "No database selected");
         }
 
         dropTable("testTransportableTablespaces1");
@@ -354,8 +360,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
     /**
      * Test case for ALTER [IGNORE] TABLE t1 EXCHANGE PARTITION p1 WITH TABLE t2 syntax
      * 
-     * @throws SQLException
+     * @throws Exception
      */
+    @Test
     public void testExchangePartition() throws Exception {
         if (!versionMeetsMinimum(5, 6, 6)) {
             return;
@@ -437,8 +444,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
     /**
      * Test for explicit partition selection syntax
      * 
-     * @throws SQLException
+     * @throws Exception
      */
+    @Test
     public void testExplicitPartitions() throws Exception {
         if (!versionMeetsMinimum(5, 6, 5)) {
             return;
@@ -708,8 +716,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * 
      * IPv6 functions added in 5.6GA: INET6_ATON(ip) and INET6_NTOA(ip).
      * 
-     * @throws SQLException
+     * @throws Exception
      */
+    @Test
     public void testIPv6Functions() throws Exception {
         if (!versionMeetsMinimum(5, 6, 11)) {
             // MySQL 5.6.11 includes a bug fix (Bug#68454) that is required to run this test successfully.
@@ -751,14 +760,14 @@ public class SyntaxRegressionTest extends BaseTestCase {
         for (int r : this.pstmt.executeBatch()) {
             c += r;
         }
-        assertEquals("Failed inserting data samples: wrong number of inserts.", dataSamples.length, c);
+        assertEquals(dataSamples.length, c, "Failed inserting data samples: wrong number of inserts.");
 
         this.rs = this.stmt.executeQuery("SELECT id, INET_NTOA(ipv4), INET6_NTOA(ipv6) FROM testWL5787");
         int i = 0;
         while (this.rs.next()) {
             i = this.rs.getInt(1);
-            assertEquals("Wrong IPv4 data in row [" + i + "].", dataExpected[i - 1][0], this.rs.getString(2));
-            assertEquals("Wrong IPv6 data in row [" + i + "].", dataExpected[i - 1][1], this.rs.getString(3));
+            assertEquals(dataExpected[i - 1][0], this.rs.getString(2), "Wrong IPv4 data in row [" + i + "].");
+            assertEquals(dataExpected[i - 1][1], this.rs.getString(3), "Wrong IPv6 data in row [" + i + "].");
         }
 
         this.pstmt.close();
@@ -773,8 +782,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * InnoDB engine accepts FULLTEXT indexes.
      * CREATE TABLE ... FULLTEXT(...) ... ENGINE=InnoDB
      * 
-     * @throws SQLException
+     * @throws Exception
      */
+    @Test
     public void testFULLTEXTSearchInnoDB() throws Exception {
         if (!versionMeetsMinimum(5, 6)) {
             return;
@@ -799,7 +809,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
         for (String query : querySamples) {
             this.rs = this.stmt.executeQuery(query);
-            assertTrue("Query [" + query + "] should return some rows.", this.rs.next());
+            assertTrue(this.rs.next(), "Query [" + query + "] should return some rows.");
             this.rs.close();
         }
     }
@@ -811,8 +821,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * 
      * Alter table allows to rename indexes. ALTER TABLE ... RENAME INDEX x TO y
      * 
-     * @throws SQLException
+     * @throws Exception
      */
+    @Test
     public void testRenameIndex() throws Exception {
         if (!versionMeetsMinimum(5, 7, 1)) {
             return;
@@ -824,21 +835,21 @@ public class SyntaxRegressionTest extends BaseTestCase {
         DatabaseMetaData dbmd = this.conn.getMetaData();
 
         this.rs = dbmd.getIndexInfo(this.dbName, null, "testRenameIndex", false, true);
-        assertTrue("Expected 1 (of 2) indexes.", this.rs.next());
-        assertEquals("Wrong index name for table 'testRenameIndex'.", "col1", this.rs.getString(6));
-        assertTrue("Expected 2 (of 2) indexes.", this.rs.next());
-        assertEquals("Wrong index name for table 'testRenameIndex'.", "testIdx", this.rs.getString(6));
-        assertFalse("No more indexes expected for table 'testRenameIndex'.", this.rs.next());
+        assertTrue(this.rs.next(), "Expected 1 (of 2) indexes.");
+        assertEquals("col1", this.rs.getString(6), "Wrong index name for table 'testRenameIndex'.");
+        assertTrue(this.rs.next(), "Expected 2 (of 2) indexes.");
+        assertEquals("testIdx", this.rs.getString(6), "Wrong index name for table 'testRenameIndex'.");
+        assertFalse(this.rs.next(), "No more indexes expected for table 'testRenameIndex'.");
 
         this.stmt.execute("ALTER TABLE testRenameIndex RENAME INDEX col1 TO col1Index");
         this.stmt.execute("ALTER TABLE testRenameIndex RENAME INDEX testIdx TO testIndex");
 
         this.rs = dbmd.getIndexInfo(this.dbName, null, "testRenameIndex", false, true);
-        assertTrue("Expected 1 (of 2) indexes.", this.rs.next());
-        assertEquals("Wrong index name for table 'testRenameIndex'.", "col1Index", this.rs.getString(6));
-        assertTrue("Expected 2 (of 2) indexes.", this.rs.next());
-        assertEquals("Wrong index name for table 'testRenameIndex'.", "testIndex", this.rs.getString(6));
-        assertFalse("No more indexes expected for table 'testRenameIndex'.", this.rs.next());
+        assertTrue(this.rs.next(), "Expected 1 (of 2) indexes.");
+        assertEquals("col1Index", this.rs.getString(6), "Wrong index name for table 'testRenameIndex'.");
+        assertTrue(this.rs.next(), "Expected 2 (of 2) indexes.");
+        assertEquals("testIndex", this.rs.getString(6), "Wrong index name for table 'testRenameIndex'.");
+        assertFalse(this.rs.next(), "No more indexes expected for table 'testRenameIndex'.");
     }
 
     /**
@@ -847,8 +858,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * "STACKED" in "GET [CURRENT | STACKED] DIAGNOSTICS" syntax was added in 5.7.0. Final behavior was implemented in
      * version 5.7.2, by WL#5928 - Most statements should clear the diagnostic area.
      * 
-     * @throws SQLException
+     * @throws Exception
      */
+    @Test
     public void testGetStackedDiagnostics() throws Exception {
         if (!versionMeetsMinimum(5, 7, 2)) {
             return;
@@ -939,9 +951,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * New syntax introduced in MySQL 5.7.4.
      * ALTER TABLE t DISCARD PARTITION {p[[,p1]..]|ALL} TABLESPACE;
      * ALTER TABLE t IMPORT PARTITION {p[[,p1]..]|ALL} TABLESPACE;
+     * 
+     * @throws Exception
      */
+    @Test
     public void testDiscardImportPartitions() throws Exception {
-
         if (!versionMeetsMinimum(5, 7, 4)) {
             return;
         }
@@ -1002,7 +1016,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * - JSON_TYPE(), Type of JSON value
      * - JSON_UNQUOTE(), Unquote JSON value
      * - JSON_VALID(), Whether JSON value is valid
+     * 
+     * @throws Exception
      */
+    @Test
     public void testJsonType() throws Exception {
         if (!versionMeetsMinimum(5, 7, 8)) {
             return;
@@ -1084,6 +1101,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         testJsonTypeCheckFunction("SELECT JSON_VALID('{\"a\": 1}')", "1");
     }
 
+    @Test
     private void testJsonTypeCheckFunction(String sql, String expectedResult) throws Exception {
         this.rs = this.stmt.executeQuery(sql);
         assertTrue(this.rs.next());
@@ -1111,7 +1129,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * In hintable statements prefaced by EXPLAIN. For example:
      * - EXPLAIN SELECT /*+ ... *&#47 ...
      * - EXPLAIN UPDATE ... WHERE x IN (SELECT /*+ ... *&#47 ...)
+     * 
+     * @throws Exception
      */
+    @Test
     public void testHints() throws Exception {
         if (!versionMeetsMinimum(5, 7, 7)) {
             return;
@@ -1251,6 +1272,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         }
     }
 
+    @Test
     private void testHintsSyntax(String query, boolean processesHint, boolean warningExpected) throws Exception {
         this.stmt.clearWarnings();
         this.rs = this.stmt.executeQuery(query);
@@ -1271,7 +1293,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * Tests support for new CREATE TABLESPACE syntax that extends this feature to InnoDB.
      * 
      * CREATE TABLESPACE tablespace_name ADD DATAFILE 'file_name' [FILE_BLOCK_SIZE = value] [ENGINE [=] engine_name]
+     * 
+     * @throws Exception
      */
+    @Test
     public void testCreateTablespace() throws Exception {
         if (!versionMeetsMinimum(5, 7, 6)) {
             return;
@@ -1315,6 +1340,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         }
     }
 
+    @Test
     private void testCreateTablespaceCheckTablespaces(int expectedTsCount) throws Exception {
         if (versionMeetsMinimum(8, 0, 3)) {
             this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_tablespaces WHERE name LIKE 'testTs_'");
@@ -1325,6 +1351,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         assertEquals(expectedTsCount, this.rs.getInt(1));
     }
 
+    @Test
     private void testCreateTablespaceCheckTables(String tablespace, int expectedTblCount) throws Exception {
         if (versionMeetsMinimum(8, 0, 3)) {
             this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_tables a, information_schema.innodb_tablespaces b "
@@ -1344,7 +1371,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * 
      * index_option:
      * COMMENT 'MERGE_THRESHOLD=n'
+     * 
+     * @throws Exception
      */
+    @Test
     public void testSetMergeThreshold() throws Exception {
         if (!versionMeetsMinimum(5, 7, 6)) {
             return;
@@ -1382,6 +1412,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         testSetMergeThresholdIndices(tableMergeThreshold, keyMergeThresholds);
     }
 
+    @Test
     private void testSetMergeThresholdIndices(int defaultMergeThreshold, Map<String, Integer> keyMergeThresholds) throws Exception {
         boolean dbMapsToSchema = ((JdbcConnection) this.conn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
                 .getValue() == DatabaseTerm.SCHEMA;
@@ -1397,7 +1428,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
         while (this.rs.next()) {
             int expected = keyMergeThresholds.containsKey(this.rs.getString(1)) ? keyMergeThresholds.get(this.rs.getString(1)) : defaultMergeThreshold;
-            assertEquals("MERGE_THRESHOLD for index " + this.rs.getString(1), expected, this.rs.getInt(2));
+            assertEquals(expected, this.rs.getInt(2), "MERGE_THRESHOLD for index " + this.rs.getString(1));
         }
         assertTrue(this.rs.last());
         assertTrue(this.rs.getRow() >= keyMergeThresholds.size());
@@ -1409,7 +1440,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * Tests COMPRESSION clause in CREATE|ALTER TABLE syntax.
      * 
      * table_option: (...) | COMPRESSION [=] {'ZLIB'|'LZ4'|'NONE'}
+     * 
+     * @throws Exception
      */
+    @Test
     public void testTableCompression() throws Exception {
         if (!versionMeetsMinimum(5, 7, 8)) {
             return;
@@ -1448,7 +1482,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * (...)
      * 
      * Test syntax for all GIS functions.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testGisFunctions() throws Exception {
         final String wktPoint = "'POINT(0 0)'";
         final String wktLineString = "'LINESTRING(0 0, 8 0, 4 6, 0 0)'";
@@ -1799,13 +1836,13 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 sql.append(")");
 
                 this.rs = this.stmt.executeQuery(sql.toString());
-                assertTrue("Query should return one row.", this.rs.next());
-                assertFalse("Query should return exactly one row.", this.rs.next());
+                assertTrue(this.rs.next(), "Query should return one row.");
+                assertFalse(this.rs.next(), "Query should return exactly one row.");
 
                 this.pstmt = this.conn.prepareStatement(sql.toString());
                 this.rs = this.pstmt.executeQuery();
-                assertTrue("Query should return one row.", this.rs.next());
-                assertFalse("Query should return exactly one row.", this.rs.next());
+                assertTrue(this.rs.next(), "Query should return one row.");
+                assertFalse(this.rs.next(), "Query should return exactly one row.");
             }
         }
     }
@@ -1816,7 +1853,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * Test syntax for GCS Replication commands:
      * - START GROUP_REPLICATION
      * - STOP GROUP_REPLICATION
+     * 
+     * @throws Exception
      */
+    @Test
     public void testGcsReplicationCmds() throws Exception {
         if (!versionMeetsMinimum(5, 7, 6)) {
             return;
@@ -1863,7 +1903,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * 
      * CREATE|ALTER USER (...)
      * - lock_option: { ACCOUNT LOCK | ACCOUNT UNLOCK }
+     * 
+     * @throws Exception
      */
+    @Test
     public void testUserAccountLocking() throws Exception {
         if (!versionMeetsMinimum(5, 7, 6)) {
             return;
@@ -1891,10 +1934,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
             }
 
             final Connection testConn1 = getConnectionWithProps(props);
-            assertTrue("Test case: " + accLock + ",", testConn1.createStatement().executeQuery("SELECT 1").next());
+            assertTrue(testConn1.createStatement().executeQuery("SELECT 1").next(), "Test case: " + accLock + ",");
 
             this.stmt.execute("ALTER USER '" + user + "'@'%' ACCOUNT LOCK");
-            assertTrue("Test case: " + accLock + ",", testConn1.createStatement().executeQuery("SELECT 1").next()); // Previous authentication still valid.
+            assertTrue(testConn1.createStatement().executeQuery("SELECT 1").next(), "Test case: " + accLock + ","); // Previous authentication still valid.
 
             assertThrows("Test case: " + accLock + ",", SQLException.class, "Access denied for user '" + user + "'@'.*'\\. Account is locked\\.",
                     new Callable<Void>() {
@@ -1903,18 +1946,18 @@ public class SyntaxRegressionTest extends BaseTestCase {
                             return null;
                         }
                     });
-            assertFalse("Test case: " + accLock + ",", testConn1.isClosed());
+            assertFalse(testConn1.isClosed(), "Test case: " + accLock + ",");
             assertThrows("Test case: " + accLock + ",", SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
                 public Void call() throws Exception {
                     testConn1.createStatement().executeQuery("SELECT 1");
                     return null;
                 }
             });
-            assertTrue("Test case: " + accLock + ",", testConn1.isClosed());
+            assertTrue(testConn1.isClosed(), "Test case: " + accLock + ",");
 
             this.stmt.execute("ALTER USER '" + user + "'@'%' ACCOUNT UNLOCK");
             Connection testConn2 = getConnectionWithProps(props);
-            assertTrue("Test case: " + accLock + ",", testConn2.createStatement().executeQuery("SELECT 1").next());
+            assertTrue(testConn2.createStatement().executeQuery("SELECT 1").next(), "Test case: " + accLock + ",");
             testConn2.close();
 
             dropUser("'" + user + "'@'%'");
@@ -1928,7 +1971,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * 
      * CREATE|ALTER USER (...)
      * - password_option: { PASSWORD EXPIRE | PASSWORD EXPIRE DEFAULT | PASSWORD EXPIRE NEVER | PASSWORD EXPIRE INTERVAL N DAY }
+     * 
+     * @throws Exception
      */
+    @Test
     public void testUserAccountPwdExpiration() throws Exception {
         if (!versionMeetsMinimum(5, 7, 6)) {
             return;
@@ -1956,7 +2002,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
                         });
             } else {
                 Connection testConn = getConnectionWithProps(props);
-                assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+                assertTrue(testConn.createStatement().executeQuery("SELECT 1").next(), "Test case: " + accPwdExp + ",");
                 testConn.close();
             }
 
@@ -1969,10 +2015,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
             this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
 
             final Connection testConn = getConnectionWithProps(props);
-            assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+            assertTrue(testConn.createStatement().executeQuery("SELECT 1").next(), "Test case: " + accPwdExp + ",");
 
             this.stmt.execute("ALTER USER '" + user + "'@'%' " + accPwdExp);
-            assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+            assertTrue(testConn.createStatement().executeQuery("SELECT 1").next(), "Test case: " + accPwdExp + ",");
 
             if (accPwdExp.equals("PASSWORD EXPIRE")) {
                 assertThrows(SQLException.class, "Your password has expired\\. To log in you must change it using a client that supports expired passwords\\.",
@@ -1984,7 +2030,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
                         });
             } else {
                 ((JdbcConnection) testConn).changeUser(user, pwd);
-                assertTrue("Test case: " + accPwdExp + ",", testConn.createStatement().executeQuery("SELECT 1").next());
+                assertTrue(testConn.createStatement().executeQuery("SELECT 1").next(), "Test case: " + accPwdExp + ",");
             }
 
             testConn.close();
@@ -1999,7 +2045,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * Test new syntax:
      * - CREATE|ALTER TABLE (...) ENCRYPTION [=] {'Y' | 'N'}
      * - ALTER INSTANCE ROTATE INNODB MASTER KEY
+     * 
+     * @throws Exception
      */
+    @Test
     public void testInnodbTablespaceEncryption() throws Exception {
         if (!versionMeetsMinimum(5, 7, 11)) {
             return;

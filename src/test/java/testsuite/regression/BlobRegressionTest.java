@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,11 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,6 +48,8 @@ import java.sql.Statement;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.util.StringUtils;
 
@@ -53,27 +60,9 @@ import testsuite.BaseTestCase;
  */
 public class BlobRegressionTest extends BaseTestCase {
     /**
-     * Creates a new BlobRegressionTest.
-     * 
-     * @param name
-     *            name of the test to run
-     */
-    public BlobRegressionTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(BlobRegressionTest.class);
-    }
-
-    /**
      * @throws Exception
      */
+    @Test
     public void testBug2670() throws Exception {
         byte[] blobData = new byte[32];
 
@@ -99,25 +88,24 @@ public class BlobRegressionTest extends BaseTestCase {
 
         byte[] newBlobData = blob.getBytes(1L, (int) blob.length());
 
-        assertTrue("Blob changed length", blob.length() == blobData.length);
+        assertTrue(blob.length() == blobData.length, "Blob changed length");
 
-        assertTrue("New data inserted wrongly", ((newBlobData[3] == 2) && (newBlobData[4] == 2) && (newBlobData[5] == 2) && (newBlobData[6] == 2)));
+        assertTrue(((newBlobData[3] == 2) && (newBlobData[4] == 2) && (newBlobData[5] == 2) && (newBlobData[6] == 2)), "New data inserted wrongly");
 
         //
         // Test end-point insertion
         //
         blob.setBytes(32, new byte[] { 2, 2, 2, 2 });
 
-        assertTrue("Blob length should be 3 larger", blob.length() == (blobData.length + 3));
-
+        assertTrue(blob.length() == (blobData.length + 3), "Blob length should be 3 larger");
     }
 
     /**
      * http://bugs.mysql.com/bug.php?id=22891
      * 
      * @throws Exception
-     *             ...
      */
+    @Test
     public void testUpdateLongBlobGT16M() throws Exception {
         byte[] blobData = new byte[18 * 1024 * 1024]; // 18M blob
 
@@ -138,6 +126,7 @@ public class BlobRegressionTest extends BaseTestCase {
     /**
      * @throws Exception
      */
+    @Test
     public void testUpdatableBlobsWithCharsets() throws Exception {
         byte[] smallBlob = new byte[32];
 
@@ -173,13 +162,13 @@ public class BlobRegressionTest extends BaseTestCase {
             byte origValue = smallBlob[i];
             byte newValue = updatedBlob[i];
 
-            assertTrue("Original byte at position " + i + ", " + origValue + " != new value, " + newValue, origValue == newValue);
+            assertTrue(origValue == newValue, "Original byte at position " + i + ", " + origValue + " != new value, " + newValue);
         }
 
     }
 
+    @Test
     public void testBug5490() throws Exception {
-
         createTable("testBug5490", "(pk INT NOT NULL PRIMARY KEY, blobField BLOB)");
         String sql = "insert into testBug5490 values(?,?)";
 
@@ -201,16 +190,14 @@ public class BlobRegressionTest extends BaseTestCase {
         byte[] returned = this.rs.getBytes(1);
 
         assertEquals(blobFileSize, returned.length);
-
     }
 
     /**
-     * Tests BUG#8096 where emulated locators corrupt binary data when using
-     * server-side prepared statements.
+     * Tests BUG#8096 where emulated locators corrupt binary data when using server-side prepared statements.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug8096() throws Exception {
         int dataSize = 256;
 
@@ -267,18 +254,17 @@ public class BlobRegressionTest extends BaseTestCase {
             // Will print out all of the values that don't match.
             // All negative values will instead be replaced with 63.
             if (result[i] != testData[i]) {
-                assertEquals("At position " + i, testData[i], result[i]);
+                assertEquals(testData[i], result[i], "At position " + i);
             }
         }
     }
 
     /**
-     * Tests fix for BUG#9040 - PreparedStatement.addBatch() doesn't work with
-     * server-side prepared statements and streaming BINARY data.
+     * Tests fix for BUG#9040 - PreparedStatement.addBatch() doesn't work with server-side prepared statements and streaming BINARY data.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug9040() throws Exception {
 
         createTable("testBug9040", "(primary_key int not null primary key, data mediumblob)");
@@ -298,9 +284,9 @@ public class BlobRegressionTest extends BaseTestCase {
         this.pstmt.addBatch();
 
         this.pstmt.executeBatch();
-
     }
 
+    @Test
     public void testBug10850() throws Exception {
         String tableName = "testBug10850";
 
@@ -321,9 +307,9 @@ public class BlobRegressionTest extends BaseTestCase {
 
         assertEquals("0", getSingleIndexedValueWithQuery(1, "SELECT LENGTH(field1) FROM " + tableName).toString());
         this.stmt.executeUpdate("TRUNCATE TABLE " + tableName);
-
     }
 
+    @Test
     public void testBug34677() throws Exception {
         createTable("testBug34677", "(field1 BLOB)");
         this.stmt.executeUpdate("INSERT INTO testBug34677 VALUES ('abc')");
@@ -334,15 +320,14 @@ public class BlobRegressionTest extends BaseTestCase {
         blob.truncate(0L);
         assertEquals(0, blob.length());
         assertEquals(-1, blob.getBinaryStream().read());
-
     }
 
     /**
      * Tests fix for BUG#20453671 - CLOB.POSITION() API CALL WITH CLOB INPUT RETURNS EXCEPTION
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug20453671() throws Exception {
         this.rs = this.stmt.executeQuery("select 'abcd', 'a', 'b', 'c', 'd', 'e'");
         this.rs.next();
@@ -374,8 +359,8 @@ public class BlobRegressionTest extends BaseTestCase {
      * server-side prepared statements and streaming BINARY data.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug20453712() throws Exception {
         final String s1 = "NewClobData";
         this.rs = this.stmt.executeQuery("select 'a'");
@@ -418,6 +403,7 @@ public class BlobRegressionTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testBug23535571() throws Exception {
 
         createTable("testBug23535571", "(blobField LONGBLOB)");
@@ -447,8 +433,8 @@ public class BlobRegressionTest extends BaseTestCase {
      * Tests BUG#95210, ClassCastException in BlobFromLocator when connecting as jdbc:mysql:replication.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug95210() throws Exception {
         createTable("testBug95210", "(ID VARCHAR(10) PRIMARY KEY, DATA LONGBLOB)");
         this.stmt.executeUpdate("INSERT INTO testBug95210 (ID, DATA) VALUES (1, '111')");
