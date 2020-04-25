@@ -3,6 +3,8 @@
 
 Version 8.0.21
 
+  - WL#14051, Upgrade Protocol Buffers dependency to protobuf-java-3.11.4.
+
   - WL#14042, Upgrade testsuite to JUnit 5.
 
   - Fix for Bug#98237 (30911870), PREPAREDSTATEMENT.SETOBJECT(I, "FALSE", TYPES.BOOLEAN) ALWAYS SETS TRUE OR 1.
