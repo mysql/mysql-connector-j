@@ -125,7 +125,7 @@ public class CollectionTest extends BaseCollectionTestCase {
     @Test
     public void getNonExistentCollectionWithRequireExistsShouldThrow() {
         if (!this.isSetForXTests) {
-            throw new WrongArgumentException("Throw WrongArgumentException as expected, but test was ignored because of missed configuration.");
+            return;
         }
         String collName = "testRequireExists";
         dropCollection(collName);
