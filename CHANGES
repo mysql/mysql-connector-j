@@ -3,6 +3,8 @@
 
 Version 8.0.22
 
+  - WL#14068, Remove legacy integration with JBoss.
+
 Version 8.0.21
 
   - WL#14051, Upgrade Protocol Buffers dependency to protobuf-java-3.11.4.

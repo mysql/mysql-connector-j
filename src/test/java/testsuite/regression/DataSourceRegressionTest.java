@@ -32,7 +32,6 @@ package testsuite.regression;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -81,7 +80,6 @@ import com.mysql.cj.jdbc.MysqlXADataSource;
 import com.mysql.cj.jdbc.MysqlXid;
 import com.mysql.cj.jdbc.PreparedStatementWrapper;
 import com.mysql.cj.jdbc.StatementWrapper;
-import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
 
 import testsuite.BaseTestCase;
 import testsuite.MockJndiContextFactory;
@@ -308,28 +306,6 @@ public class DataSourceRegressionTest extends BaseTestCase {
         assertEquals("test_lb_strategy", thawedDs.getStringProperty(PropertyKey.ha_loadBalanceStrategy).getValue());
         assertEquals(testBooleanFlag, thawedDs.getBooleanProperty(PropertyKey.allowLoadLocalInfile).getValue().booleanValue());
         assertEquals(testIntFlag, thawedDs.getMemorySizeProperty(PropertyKey.blobSendChunkSize).getValue().intValue());
-    }
-
-    /**
-     * Tests fix for BUG#20242 - MysqlValidConnectionChecker for JBoss doesn't work with MySQLXADataSources.
-     * 
-     * @throws Exception
-     */
-    @Test
-    public void testBug20242() throws Exception {
-        try {
-            Class.forName("org.jboss.resource.adapter.jdbc.ValidConnectionChecker");
-        } catch (Exception ex) {
-            System.out.println("The testBug20242() is ignored because required class isn't available:");
-            ex.printStackTrace();
-            return; // class not available for testing
-        }
-
-        MysqlXADataSource xaDs = new MysqlXADataSource();
-        xaDs.setUrl(dbUrl);
-
-        MysqlValidConnectionChecker checker = new MysqlValidConnectionChecker();
-        assertNull(checker.isValidConnection(xaDs.getXAConnection().getConnection()));
     }
 
     private void bindDataSource(String name, DataSource ds) throws Exception {

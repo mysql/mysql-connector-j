@@ -413,9 +413,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
              build to fail. -->
         <available property="com.mysql.cj.prebuiltDocsPresent" file="${com.mysql.cj.dist.dir.prebuilt.docs}" />
         <available property="com.mysql.cj.c3p0Present" classname="com.mchange.v2.c3p0.QueryConnectionTester" classpathref="com.mysql.cj.build.class.path" />
-        <available property="com.mysql.cj.jbossPresent"
-                   classname="org.jboss.resource.adapter.jdbc.ValidConnectionChecker"
-                   classpathref="com.mysql.cj.build.class.path" />
     </target>
 
     <!-- Load revision details either from git repository or from a revision-info.properties file. -->
@@ -763,7 +760,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <property name="com.mysql.cj.build.meta-inf.jee-imports" value="javax.sql;javax.naming;javax.naming.spi;javax.transaction.xa;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.jmx-imports" value="javax.management;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.integration-imports"
-                  value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2,1.0.0)&quot;;resolution:=optional,org.jboss.resource.adapter.jdbc;org.jboss.resource.adapter.jdbc.vendor;resolution:=optional" />
+                  value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2,1.0.0)&quot;;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.logging-imports" value="org.slf4j;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.xdevapi-imports"
                   value="com.google.protobuf;javax.security.auth.callback;javax.security.sasl;resolution:=optional" />
@@ -786,7 +783,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <property name="com.mysql.cj.build.meta-inf.interceptors-exports"
                   value="com.mysql.cj.jdbc.interceptors;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
         <property name="com.mysql.cj.build.meta-inf.integration-exports"
-                  value="com.mysql.cj.jdbc.integration.c3p0;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mchange.v2.c3p0&quot;,com.mysql.cj.jdbc.integration.jboss;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;org.jboss.resource.adapter.jdbc,org.jboss.resource.adapter.jdbc.vendor&quot;" />
+                  value="com.mysql.cj.jdbc.integration.c3p0;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;com.mchange.v2.c3p0&quot;" />
         <property name="com.mysql.cj.build.meta-inf.configs-exports"
                   value="com.mysql.cj.configurations;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.conf;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;,com.mysql.cj.conf.url;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;" />
         <property name="com.mysql.cj.build.meta-inf.legacy-exports"
@@ -1121,7 +1118,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- Compile the driver including JDBC implementation and integration 'helpers' for third-party software. -->
     <target name="compile-integration"
             description="Compiles driver including JDBC implementation and integration 'helpers' for third-party software."
-            depends="compile-driver, -compile-integration-c3p0, -compile-integration-jboss" />
+            depends="compile-driver, -compile-integration-c3p0" />
 
 
     <!-- Compile c3p0 integration. -->
@@ -1139,27 +1136,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                includeantruntime="false"
                encoding="UTF-8">
             <include name="com/mysql/cj/jdbc/integration/c3p0/**" />
-            <classpath refid="com.mysql.cj.build.class.path" />
-            <compilerarg line="${javac.compilerarg}" />
-        </javac>
-    </target>
-
-
-    <!-- Compile jBoss integration. -->
-    <target name="-compile-integration-jboss" depends="compile-driver" if="${com.mysql.cj.jbossPresent}">
-        <echo>Compiling MySQL Connector/J-jboss integration with '${com.mysql.cj.build.jdk}' to '${com.mysql.cj.build.compiler.output}'</echo>
-
-        <javac sourcepath=""
-               srcdir="${com.mysql.cj.build.dir.driver}"
-               destdir="${com.mysql.cj.build.compiler.output}"
-               deprecation="off"
-               debug="${com.mysql.cj.build.addDebugInfo}"
-               fork="yes"
-               executable="${com.mysql.cj.build.jdk.javac}"
-               compiler="modern"
-               includeantruntime="false"
-               encoding="UTF-8">
-            <include name="com/mysql/cj/jdbc/integration/jboss/**" />
             <classpath refid="com.mysql.cj.build.class.path" />
             <compilerarg line="${javac.compilerarg}" />
         </javac>
