@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.22
+
 Version 8.0.21
 
   - WL#14051, Upgrade Protocol Buffers dependency to protobuf-java-3.11.4.
