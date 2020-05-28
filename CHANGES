@@ -3,6 +3,8 @@
 
 Version 8.0.22
 
+  - WL#14017, XProtocol -- support for configurable compression algorithms.
+
   - Fix for Bug#92903 (28834903), MySQL Connector/j should support wildcard names or alternative names.
 
   - Fix for Bug#99767 (31443178), Contribution: Check SubjectAlternativeName for TLS instead of commonName.

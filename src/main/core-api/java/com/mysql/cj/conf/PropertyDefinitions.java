@@ -810,8 +810,10 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.xdevapiDnsSrv"), "8.0.19", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
                 new EnumPropertyDefinition<>(PropertyKey.xdevapiCompression, Compression.PREFERRED, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.xdevapiCompression"), "8.0.20", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
-                new StringPropertyDefinition(PropertyKey.xdevapiCompressionAlgorithm, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.xdevapiCompressionAlgorithm"), "8.0.20", CATEGORY_XDEVAPI, Integer.MIN_VALUE)
+                new StringPropertyDefinition(PropertyKey.xdevapiCompressionAlgorithms, "zstd_stream,lz4_message,deflate_stream", RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.xdevapiCompressionAlgorithms"), "8.0.22", CATEGORY_XDEVAPI, Integer.MIN_VALUE),
+                new StringPropertyDefinition(PropertyKey.xdevapiCompressionExtensions, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.xdevapiCompressionExtensions"), "8.0.22", CATEGORY_XDEVAPI, Integer.MIN_VALUE)
                 //
         };
 

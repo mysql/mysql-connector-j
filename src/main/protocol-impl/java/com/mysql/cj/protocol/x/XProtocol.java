@@ -116,8 +116,6 @@ import com.mysql.cj.xdevapi.PreparableStatement.PreparableStatementFinalizer;
  * Low-level interface to communications with X Plugin.
  */
 public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XMessage> {
-    private static final String[] SUPPORTED_COMPRESSION_ALGORITHMS_PRIORITY = new String[] { "zstd_stream", "lz4_message", "deflate_stream" };
-
     private static int RETRY_PREPARE_STATEMENT_COUNTDOWN = 100;
 
     private MessageReader<XMessageHeader, XMessage> reader;
@@ -258,13 +256,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
      */
     public void negotiateCompression() {
         Compression compression = this.propertySet.<Compression>getEnumProperty(PropertyKey.xdevapiCompression.getKeyName()).getValue();
-        String compressionAlgorithmsTriplets = this.propertySet.getStringProperty(PropertyKey.xdevapiCompressionAlgorithm.getKeyName()).getValue();
-        compressionAlgorithmsTriplets = compressionAlgorithmsTriplets == null ? "" : compressionAlgorithmsTriplets.trim();
-
         if (compression == Compression.DISABLED) {
-            if (!compressionAlgorithmsTriplets.isEmpty()) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.0"));
-            }
             return;
         }
 
@@ -272,23 +264,38 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         if (compressionCapabilities.isEmpty() || !compressionCapabilities.containsKey(XServerCapabilities.SUBKEY_COMPRESSION_ALGORITHM)
                 || compressionCapabilities.get(XServerCapabilities.SUBKEY_COMPRESSION_ALGORITHM).isEmpty()) {
             if (compression == Compression.REQUIRED) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.1"));
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.0"));
             } // TODO Log "Compression negotiation failed. Connection will proceed uncompressed."
             return;
         }
 
-        Map<String, CompressionAlgorithm> compressionAlgorithms = getCompressionAlgorithms(compressionAlgorithmsTriplets);
-        Optional<String> algorithmOpt = Arrays.stream(SUPPORTED_COMPRESSION_ALGORITHMS_PRIORITY).sequential()
+        RuntimeProperty<String> compressionAlgorithmsProp = this.propertySet.getStringProperty(PropertyKey.xdevapiCompressionAlgorithms.getKeyName());
+        String compressionAlgorithmsList = compressionAlgorithmsProp.getValue();
+        compressionAlgorithmsList = compressionAlgorithmsList == null ? "" : compressionAlgorithmsList.trim();
+        String[] compressionAlgorithmsOrder;
+        String[] compressionAlgsOrder = compressionAlgorithmsList.split("\\s*,\\s*");
+        compressionAlgorithmsOrder = Arrays.stream(compressionAlgsOrder).sequential().filter(n -> n != null && n.length() > 0).map(String::toLowerCase)
+                .map(CompressionAlgorithm::getNormalizedAlgorithmName).toArray(String[]::new);
+
+        String compressionExtensions = this.propertySet.getStringProperty(PropertyKey.xdevapiCompressionExtensions.getKeyName()).getValue();
+        compressionExtensions = compressionExtensions == null ? "" : compressionExtensions.trim();
+        Map<String, CompressionAlgorithm> compressionAlgorithms = getCompressionExtensions(compressionExtensions);
+
+        Optional<String> algorithmOpt = Arrays.stream(compressionAlgorithmsOrder).sequential()
                 .filter(compressionCapabilities.get(XServerCapabilities.SUBKEY_COMPRESSION_ALGORITHM)::contains).filter(compressionAlgorithms::containsKey)
                 .findFirst();
         if (!algorithmOpt.isPresent()) {
             if (compression == Compression.REQUIRED) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.4"));
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.2"));
             } // TODO Log "Compression negotiation failed. Connection will proceed uncompressed."
             return;
         }
         String algorithm = algorithmOpt.get();
         this.compressionAlgorithm = compressionAlgorithms.get(algorithm);
+
+        // Make sure the picked compression algorithm streams exist.
+        this.compressionAlgorithm.getInputStreamClass();
+        this.compressionAlgorithm.getOutputStreamClass();
 
         Map<String, Object> compressionCap = new HashMap<>();
         compressionCap.put(XServerCapabilities.SUBKEY_COMPRESSION_ALGORITHM, algorithm);
@@ -437,48 +444,35 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     }
 
     /**
-     * Parses and validates the connection option 'xdevapi.compress-algorithm' value given. With the information obtained, creates a map of supported
-     * compression algorithms.
+     * Parses and validates the value given for the connection option 'xdevapi.compression-extensions'. With the information obtained, creates a map of
+     * supported compression algorithms.
      * 
-     * @param compressionAlgorithmsTriplets
-     *            the value of the option 'xdevapi.compress-algorithm' containing a list of triplets with the format
-     *            "algorithm-name,inflater-InputStream-class-name,deflater-OutputStream-class-name".
+     * @param compressionExtensions
+     *            the value of the option 'xdevapi.compression-algorithm' containing a comma separated list of triplets with the format
+     *            "algorithm-name:inflater-InputStream-class-name:deflater-OutputStream-class-name".
      * @return
-     *         a map with all the supported compression algorithms, booth natively supported an user configures.
+     *         a map with all the supported compression algorithms, both natively supported and user configured.
      */
-    private Map<String, CompressionAlgorithm> getCompressionAlgorithms(String compressionAlgorithmsTriplets) {
-        Map<String, CompressionAlgorithm> compressionAlgorithms = CompressionAlgorithm.getDefaultInstances();
+    private Map<String, CompressionAlgorithm> getCompressionExtensions(String compressionExtensions) {
+        Map<String, CompressionAlgorithm> compressionExtensionsMap = CompressionAlgorithm.getDefaultInstances();
 
-        if (compressionAlgorithmsTriplets.length() == 0) {
-            return compressionAlgorithms;
+        if (compressionExtensions.length() == 0) {
+            return compressionExtensionsMap;
         }
 
-        String[] compressionAlgorithmsParts = compressionAlgorithmsTriplets.split(",");
-        if (compressionAlgorithmsParts.length % 3 != 0) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.3"));
-        }
-
-        for (int i = 0; i < compressionAlgorithmsParts.length; i += 3) {
-            String algorithmName = compressionAlgorithmsParts[i];
-            String inputStreamClassName = compressionAlgorithmsParts[i + 1];
-            Class<?> inputStreamClass = null;
-            try {
-                inputStreamClass = Class.forName(inputStreamClassName);
-            } catch (ClassNotFoundException e) {
-                throw ExceptionFactory.createException(WrongArgumentException.class,
-                        Messages.getString("Protocol.Compression.5", new Object[] { inputStreamClassName }), e);
+        String[] compressionExtAlgs = compressionExtensions.split(",");
+        for (String compressionExtAlg : compressionExtAlgs) {
+            String[] compressionExtAlgParts = compressionExtAlg.split(":");
+            if (compressionExtAlgParts.length != 3) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.1"));
             }
-            String outputStreamClassName = compressionAlgorithmsParts[i + 2];
-            Class<?> outputStreamClass = null;
-            try {
-                outputStreamClass = Class.forName(outputStreamClassName);
-            } catch (ClassNotFoundException e) {
-                throw ExceptionFactory.createException(WrongArgumentException.class,
-                        Messages.getString("Protocol.Compression.5", new Object[] { outputStreamClassName }), e);
-            }
-            compressionAlgorithms.put(algorithmName, new CompressionAlgorithm(algorithmName, inputStreamClass, outputStreamClass));
+            String algorithmName = compressionExtAlgParts[0].toLowerCase();
+            String inputStreamClassName = compressionExtAlgParts[1];
+            String outputStreamClassName = compressionExtAlgParts[2];
+            CompressionAlgorithm compressionAlg = new CompressionAlgorithm(algorithmName, inputStreamClassName, outputStreamClassName);
+            compressionExtensionsMap.put(compressionAlg.getAlgorithmIdentifier(), compressionAlg);
         }
-        return compressionAlgorithms;
+        return compressionExtensionsMap;
     }
 
     private String currUser = null, currPassword = null, currDatabase = null; // TODO remove these variables after implementing mysql_reset_connection() in reset() method
@@ -509,13 +503,13 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
                 this.reader = new SyncMessageReader(new FullReadInputStream(
                         new CompressionSplittedInputStream(this.socketConnection.getMysqlInput(), new CompressorStreamsFactory(this.compressionAlgorithm))));
             } catch (IOException e) {
-                ExceptionFactory.createException(Messages.getString("Protocol.Compression.8"), e);
+                ExceptionFactory.createException(Messages.getString("Protocol.Compression.6"), e);
             }
             try {
                 this.sender = new SyncMessageSender(
                         new CompressionSplittedOutputStream(this.socketConnection.getMysqlOutput(), new CompressorStreamsFactory(this.compressionAlgorithm)));
             } catch (IOException e) {
-                ExceptionFactory.createException(Messages.getString("Protocol.Compression.9"), e);
+                ExceptionFactory.createException(Messages.getString("Protocol.Compression.7"), e);
             }
         }
 

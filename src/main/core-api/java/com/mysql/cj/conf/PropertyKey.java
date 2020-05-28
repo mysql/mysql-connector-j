@@ -244,7 +244,8 @@ public enum PropertyKey {
     xdevapiConnectTimeout("xdevapi.connect-timeout", "xdevapiConnectTimeout", true), //
     xdevapiConnectionAttributes("xdevapi.connection-attributes", "xdevapiConnectionAttributes", true), //
     xdevapiCompression("xdevapi.compression", "xdevapiCompression", true), //
-    xdevapiCompressionAlgorithm("xdevapi.compression-algorithm", "xdevapiCompressionAlgorithm", true), //
+    xdevapiCompressionAlgorithms("xdevapi.compression-algorithms", "xdevapiCompressionAlgorithms", true), //
+    xdevapiCompressionExtensions("xdevapi.compression-extensions", "xdevapiCompressionExtensions", true), //
     xdevapiDnsSrv("xdevapi.dns-srv", "xdevapiDnsSrv", true), //
     xdevapiSSLMode("xdevapi.ssl-mode", "xdevapiSSLMode", true), //
     xdevapiTlsCiphersuites("xdevapi.tls-ciphersuites", "xdevapiTlsCiphersuites", true), //
