@@ -61,6 +61,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -410,23 +411,48 @@ public class ExportControlled {
 
                 // verify server certificate identity
                 if (this.hostName != null) {
-                    String dn = chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253);
-                    String cn = null;
-                    try {
-                        LdapName ldapDN = new LdapName(dn);
-                        for (Rdn rdn : ldapDN.getRdns()) {
-                            if (rdn.getType().equalsIgnoreCase("CN")) {
-                                cn = rdn.getValue().toString();
-                                break;
+
+                    // Check SubjectAlternativeName
+                    // See https://tools.ietf.org/html/rfc6125#section-6.4.4
+                    final Collection<List<?>> sans = chain[0].getSubjectAlternativeNames();
+                    if (sans != null) {
+                        String sanmatch = null;
+                        for (final List<?> san : sans) {
+                            Integer sanType = (Integer) san.get(0);
+                            String sanVal = (String) san.get(1);
+                            // 2 = dNSName
+                            // 7 = iPAddress
+                            if ((sanType == 2) || ( sanType == 7)) {
+                                if (this.hostName.equalsIgnoreCase(sanVal)) {
+                                    sanmatch = sanVal;
+                                    break;
+                                }
                             }
                         }
-                    } catch (InvalidNameException e) {
-                        throw new CertificateException("Failed to retrieve the Common Name (CN) from the server certificate.");
-                    }
+                        if (!this.hostName.equalsIgnoreCase(sanmatch)) {
+                            throw new CertificateException("None of the Subject Alternative Names matched the server hostname '"
+                                + this.hostName + "'.");
+                        }
+                    } else {
+                        // Check CommonName
+                        String dn = chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253);
+                        String cn = null;
+                        try {
+                            LdapName ldapDN = new LdapName(dn);
+                            for (Rdn rdn : ldapDN.getRdns()) {
+                                if (rdn.getType().equalsIgnoreCase("CN")) {
+                                    cn = rdn.getValue().toString();
+                                    break;
+                                }
+                            }
+                        } catch (InvalidNameException e) {
+                            throw new CertificateException("Failed to retrieve the Common Name (CN) from the server certificate.");
+                        }
 
-                    if (!this.hostName.equalsIgnoreCase(cn)) {
-                        throw new CertificateException("Server certificate identity check failed. The certificate Common Name '" + cn
-                                + "' does not match with '" + this.hostName + "'.");
+                        if (!this.hostName.equalsIgnoreCase(cn)) {
+                            throw new CertificateException("Server certificate identity check failed. The certificate Common Name '" + cn
+                                    + "' does not match with '" + this.hostName + "'.");
+                        }
                     }
                 }
             }
