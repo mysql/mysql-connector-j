@@ -419,10 +419,10 @@ public class ExportControlled {
                         String sanmatch = null;
                         for (final List<?> san : sans) {
                             Integer sanType = (Integer) san.get(0);
-                            String sanVal = (String) san.get(1);
                             // 2 = dNSName
                             // 7 = iPAddress
                             if ((sanType == 2) || ( sanType == 7)) {
+                                String sanVal = (String) san.get(1);
                                 if (this.hostName.equalsIgnoreCase(sanVal)) {
                                     sanmatch = sanVal;
                                     break;
