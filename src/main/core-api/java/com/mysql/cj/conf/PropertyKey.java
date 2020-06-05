@@ -120,6 +120,8 @@ public enum PropertyKey {
     exceptionInterceptors("exceptionInterceptors", true), //
     explainSlowQueries("explainSlowQueries", true), //
     failOverReadOnly("failOverReadOnly", true), //
+    fallbackToSystemKeyStore("fallbackToSystemKeyStore", true), //
+    fallbackToSystemTrustStore("fallbackToSystemTrustStore", true), //
     functionsNeverReturnBlobs("functionsNeverReturnBlobs", true), //
     gatherPerfMetrics("gatherPerfMetrics", true), //
     generateSimpleParameterMetadata("generateSimpleParameterMetadata", true), //
@@ -247,12 +249,17 @@ public enum PropertyKey {
     xdevapiCompressionAlgorithms("xdevapi.compression-algorithms", "xdevapiCompressionAlgorithms", true), //
     xdevapiCompressionExtensions("xdevapi.compression-extensions", "xdevapiCompressionExtensions", true), //
     xdevapiDnsSrv("xdevapi.dns-srv", "xdevapiDnsSrv", true), //
-    xdevapiSSLMode("xdevapi.ssl-mode", "xdevapiSSLMode", true), //
+    xdevapiFallbackToSystemKeyStore("xdevapi.fallback-to-system-keystore", "xdevapiFallbackToSystemKeyStore", true), //
+    xdevapiFallbackToSystemTrustStore("xdevapi.fallback-to-system-truststore", "xdevapiFallbackToSystemTrustStore", true), //
+    xdevapiSslKeyStorePassword("xdevapi.ssl-keystore-password", "xdevapiSslKeystorePassword", true), //
+    xdevapiSslKeyStoreType("xdevapi.ssl-keystore-type", "xdevapiSslKeystoreType", true), //
+    xdevapiSslKeyStoreUrl("xdevapi.ssl-keystore", "xdevapiSslKeystore", true), //
+    xdevapiSslMode("xdevapi.ssl-mode", "xdevapiSslMode", true), //
+    xdevapiSslTrustStorePassword("xdevapi.ssl-truststore-password", "xdevapiSslTruststorePassword", true), //
+    xdevapiSslTrustStoreType("xdevapi.ssl-truststore-type", "xdevapiSslTruststoreType", true), //
+    xdevapiSslTrustStoreUrl("xdevapi.ssl-truststore", "xdevapiSslTruststore", true), //
     xdevapiTlsCiphersuites("xdevapi.tls-ciphersuites", "xdevapiTlsCiphersuites", true), //
     xdevapiTlsVersions("xdevapi.tls-versions", "xdevapiTlsVersions", true), //
-    xdevapiSSLTrustStoreUrl("xdevapi.ssl-truststore", "xdevapiSSLTruststore", true), //
-    xdevapiSSLTrustStoreType("xdevapi.ssl-truststore-type", "xdevapiSSLTruststoreType", true), //
-    xdevapiSSLTrustStorePassword("xdevapi.ssl-truststore-password", "xdevapiSSLTruststorePassword", true), //
     xdevapiUseAsyncProtocol("xdevapi.useAsyncProtocol", "xdevapiUseAsyncProtocol", true), //
 
     yearIsDateType("yearIsDateType", true), //

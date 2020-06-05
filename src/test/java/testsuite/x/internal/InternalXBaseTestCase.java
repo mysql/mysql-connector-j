@@ -273,13 +273,13 @@ public class InternalXBaseTestCase {
         return false;
     }
 
-    protected void assertSessionStatusEquals(Session sess, String statusVariable, String expected) {
+    protected static void assertSessionStatusEquals(Session sess, String statusVariable, String expected) {
         SqlResult rs = sess.sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
         String actual = rs.fetchOne().getString(1);
         assertEquals(expected, actual);
     }
 
-    protected void assertSessionStatusNotEquals(Session sess, String statusVariable, String unexpected) {
+    protected static void assertSessionStatusNotEquals(Session sess, String statusVariable, String unexpected) {
         SqlResult rs = sess.sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
         String actual = rs.fetchOne().getString(1);
         assertNotEquals(unexpected, actual);

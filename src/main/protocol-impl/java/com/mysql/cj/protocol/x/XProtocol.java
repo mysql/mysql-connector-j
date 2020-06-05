@@ -325,35 +325,60 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             this.clientCapabilities.put(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS, attMap);
         }
 
-        // Override common SSL properties with xdevapi ones to provide unified logic in ExportControlled via common SSL properties
-        RuntimeProperty<XdevapiSslMode> xdevapiSslMode = this.propertySet.<XdevapiSslMode>getEnumProperty(PropertyKey.xdevapiSSLMode);
-        if (xdevapiSslMode.isExplicitlySet()) {
-            this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.valueOf(xdevapiSslMode.getValue().toString()));
+        // Override JDBC (global) SSL properties with xdevapi ones to provide unified logic in ExportControlled via common SSL properties.
+        RuntimeProperty<XdevapiSslMode> xdevapiSslMode = this.propertySet.<XdevapiSslMode>getEnumProperty(PropertyKey.xdevapiSslMode);
+        RuntimeProperty<SslMode> jdbcSslMode = this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode);
+        if (xdevapiSslMode.isExplicitlySet() || !jdbcSslMode.isExplicitlySet()) {
+            jdbcSslMode.setValue(SslMode.valueOf(xdevapiSslMode.getValue().toString()));
         }
-        RuntimeProperty<String> sslTrustStoreUrl = this.propertySet.getStringProperty(PropertyKey.xdevapiSSLTrustStoreUrl);
-        if (sslTrustStoreUrl.isExplicitlySet()) {
-            this.propertySet.getStringProperty(PropertyKey.trustCertificateKeyStoreUrl).setValue(sslTrustStoreUrl.getValue());
+        RuntimeProperty<String> xdevapiSslKeyStoreUrl = this.propertySet.getStringProperty(PropertyKey.xdevapiSslKeyStoreUrl);
+        RuntimeProperty<String> jdbcClientCertKeyStoreUrl = this.propertySet.getStringProperty(PropertyKey.clientCertificateKeyStoreUrl);
+        if (xdevapiSslKeyStoreUrl.isExplicitlySet() || !jdbcClientCertKeyStoreUrl.isExplicitlySet()) {
+            jdbcClientCertKeyStoreUrl.setValue(xdevapiSslKeyStoreUrl.getValue());
         }
-        RuntimeProperty<String> sslTrustStoreType = this.propertySet.getStringProperty(PropertyKey.xdevapiSSLTrustStoreType);
-        if (sslTrustStoreType.isExplicitlySet()) {
-            this.propertySet.getStringProperty(PropertyKey.trustCertificateKeyStoreType).setValue(sslTrustStoreType.getValue());
+        RuntimeProperty<String> xdevapiSslKeyStoreType = this.propertySet.getStringProperty(PropertyKey.xdevapiSslKeyStoreType);
+        RuntimeProperty<String> jdbcClientCertKeyStoreType = this.propertySet.getStringProperty(PropertyKey.clientCertificateKeyStoreType);
+        if (xdevapiSslKeyStoreType.isExplicitlySet() || !jdbcClientCertKeyStoreType.isExplicitlySet()) {
+            jdbcClientCertKeyStoreType.setValue(xdevapiSslKeyStoreType.getValue());
         }
-        RuntimeProperty<String> sslTrustStorePassword = this.propertySet.getStringProperty(PropertyKey.xdevapiSSLTrustStorePassword);
-        if (sslTrustStorePassword.isExplicitlySet()) {
-            this.propertySet.getStringProperty(PropertyKey.trustCertificateKeyStorePassword).setValue(sslTrustStorePassword.getValue());
+        RuntimeProperty<String> xdevapiSslKeyStorePassword = this.propertySet.getStringProperty(PropertyKey.xdevapiSslKeyStorePassword);
+        RuntimeProperty<String> jdbcClientCertKeyStorePassword = this.propertySet.getStringProperty(PropertyKey.clientCertificateKeyStorePassword);
+        if (xdevapiSslKeyStorePassword.isExplicitlySet() || !jdbcClientCertKeyStorePassword.isExplicitlySet()) {
+            jdbcClientCertKeyStorePassword.setValue(xdevapiSslKeyStorePassword.getValue());
+        }
+        RuntimeProperty<Boolean> xdevapiFallbackToSystemKeyStore = this.propertySet.getBooleanProperty(PropertyKey.xdevapiFallbackToSystemKeyStore);
+        RuntimeProperty<Boolean> jdbcFallbackToSystemKeyStore = this.propertySet.getBooleanProperty(PropertyKey.fallbackToSystemKeyStore);
+        if (xdevapiFallbackToSystemKeyStore.isExplicitlySet() || !jdbcFallbackToSystemKeyStore.isExplicitlySet()) {
+            jdbcFallbackToSystemKeyStore.setValue(xdevapiFallbackToSystemKeyStore.getValue());
+        }
+        RuntimeProperty<String> xdevapiSslTrustStoreUrl = this.propertySet.getStringProperty(PropertyKey.xdevapiSslTrustStoreUrl);
+        RuntimeProperty<String> jdbcTrustCertKeyStoreUrl = this.propertySet.getStringProperty(PropertyKey.trustCertificateKeyStoreUrl);
+        if (xdevapiSslTrustStoreUrl.isExplicitlySet() || !jdbcTrustCertKeyStoreUrl.isExplicitlySet()) {
+            jdbcTrustCertKeyStoreUrl.setValue(xdevapiSslTrustStoreUrl.getValue());
+        }
+        RuntimeProperty<String> xdevapiSslTrustStoreType = this.propertySet.getStringProperty(PropertyKey.xdevapiSslTrustStoreType);
+        RuntimeProperty<String> jdbcTrustCertKeyStoreType = this.propertySet.getStringProperty(PropertyKey.trustCertificateKeyStoreType);
+        if (xdevapiSslTrustStoreType.isExplicitlySet() || !jdbcTrustCertKeyStoreType.isExplicitlySet()) {
+            jdbcTrustCertKeyStoreType.setValue(xdevapiSslTrustStoreType.getValue());
+        }
+        RuntimeProperty<String> xdevapiSslTrustStorePassword = this.propertySet.getStringProperty(PropertyKey.xdevapiSslTrustStorePassword);
+        RuntimeProperty<String> jdbcTrustCertKeyStorePassword = this.propertySet.getStringProperty(PropertyKey.trustCertificateKeyStorePassword);
+        if (xdevapiSslTrustStorePassword.isExplicitlySet() || !jdbcTrustCertKeyStorePassword.isExplicitlySet()) {
+            jdbcTrustCertKeyStorePassword.setValue(xdevapiSslTrustStorePassword.getValue());
+        }
+        RuntimeProperty<Boolean> xdevapiFallbackToSystemTrustStore = this.propertySet.getBooleanProperty(PropertyKey.xdevapiFallbackToSystemTrustStore);
+        RuntimeProperty<Boolean> jdbcFallbackToSystemTrustStore = this.propertySet.getBooleanProperty(PropertyKey.fallbackToSystemTrustStore);
+        if (xdevapiFallbackToSystemTrustStore.isExplicitlySet() || !jdbcFallbackToSystemTrustStore.isExplicitlySet()) {
+            jdbcFallbackToSystemTrustStore.setValue(xdevapiFallbackToSystemTrustStore.getValue());
         }
 
-        // TODO WL#9925 will redefine other SSL connection properties for X Protocol
-
-        RuntimeProperty<SslMode> sslMode = this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode);
-        if (sslMode.getValue() == SslMode.PREFERRED) { // PREFERRED mode is not applicable to X Protocol
+        RuntimeProperty<SslMode> sslMode = jdbcSslMode; // JDBC (global) sslMode is used from now on.
+        if (sslMode.getValue() == SslMode.PREFERRED) { // PREFERRED mode is not applicable for X Protocol.
             sslMode.setValue(SslMode.REQUIRED);
         }
 
-        boolean verifyServerCert = sslMode.getValue() == SslMode.VERIFY_CA || sslMode.getValue() == SslMode.VERIFY_IDENTITY;
-        String trustStoreUrl = this.propertySet.getStringProperty(PropertyKey.trustCertificateKeyStoreUrl).getValue();
-
         RuntimeProperty<String> xdevapiTlsVersions = this.propertySet.getStringProperty(PropertyKey.xdevapiTlsVersions);
+        RuntimeProperty<String> jdbcEnabledTlsProtocols = this.propertySet.getStringProperty(PropertyKey.enabledTLSProtocols);
         if (xdevapiTlsVersions.isExplicitlySet()) {
             if (sslMode.getValue() == SslMode.DISABLED) {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
@@ -367,23 +392,32 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             String[] tlsVersions = xdevapiTlsVersions.getValue().split("\\s*,\\s*");
             List<String> tryProtocols = Arrays.asList(tlsVersions);
             ExportControlled.checkValidProtocols(tryProtocols);
-            this.propertySet.getStringProperty(PropertyKey.enabledTLSProtocols).setValue(xdevapiTlsVersions.getValue());
+            jdbcEnabledTlsProtocols.setValue(xdevapiTlsVersions.getValue());
+
+        } else if (!jdbcEnabledTlsProtocols.isExplicitlySet()) {
+            jdbcEnabledTlsProtocols.setValue(xdevapiTlsVersions.getValue());
         }
 
         RuntimeProperty<String> xdevapiTlsCiphersuites = this.propertySet.getStringProperty(PropertyKey.xdevapiTlsCiphersuites);
+        RuntimeProperty<String> jdbcEnabledSslCipherSuites = this.propertySet.getStringProperty(PropertyKey.enabledSSLCipherSuites);
         if (xdevapiTlsCiphersuites.isExplicitlySet()) {
             if (sslMode.getValue() == SslMode.DISABLED) {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
                         "Option '" + PropertyKey.xdevapiTlsCiphersuites.getKeyName() + "' can not be specified when SSL connections are disabled.");
             }
 
-            this.propertySet.getStringProperty(PropertyKey.enabledSSLCipherSuites).setValue(xdevapiTlsCiphersuites.getValue());
+            jdbcEnabledSslCipherSuites.setValue(xdevapiTlsCiphersuites.getValue());
+
+        } else if (!jdbcEnabledSslCipherSuites.isExplicitlySet()) {
+            jdbcEnabledSslCipherSuites.setValue(xdevapiTlsCiphersuites.getValue());
         }
 
+        boolean verifyServerCert = sslMode.getValue() == SslMode.VERIFY_CA || sslMode.getValue() == SslMode.VERIFY_IDENTITY;
+        String trustStoreUrl = jdbcTrustCertKeyStoreUrl.getValue();
         if (!verifyServerCert && !StringUtils.isNullOrEmpty(trustStoreUrl)) {
             StringBuilder msg = new StringBuilder("Incompatible security settings. The property '");
-            msg.append(PropertyKey.xdevapiSSLTrustStoreUrl.getKeyName()).append("' requires '");
-            msg.append(PropertyKey.xdevapiSSLMode.getKeyName()).append("' as '");
+            msg.append(PropertyKey.xdevapiSslTrustStoreUrl.getKeyName()).append("' requires '");
+            msg.append(PropertyKey.xdevapiSslMode.getKeyName()).append("' as '");
             msg.append(PropertyDefinitions.SslMode.VERIFY_CA).append("' or '");
             msg.append(PropertyDefinitions.SslMode.VERIFY_IDENTITY).append("'.");
             throw new CJCommunicationsException(msg.toString());

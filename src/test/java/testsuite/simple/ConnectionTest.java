@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -71,6 +72,8 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.CharsetMapping;
@@ -81,14 +84,17 @@ import com.mysql.cj.Query;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.JdbcPropertySet;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
+import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.protocol.MessageSender;
 import com.mysql.cj.protocol.Resultset;
@@ -116,6 +122,51 @@ import testsuite.TestUtils;
  * Tests java.sql.Connection functionality
  */
 public class ConnectionTest extends BaseTestCase {
+    private String sslFreeBaseUrl = "";
+
+    @BeforeEach
+    public void setupSecureSessionTest() {
+        System.clearProperty("javax.net.ssl.trustStore");
+        System.clearProperty("javax.net.ssl.trustStoreType");
+        System.clearProperty("javax.net.ssl.trustStorePassword");
+
+        this.sslFreeBaseUrl = dbUrl;
+        this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.sslMode.getKeyName() + "=", PropertyKey.sslMode.getKeyName() + "VOID=");
+        this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.trustCertificateKeyStoreUrl.getKeyName() + "=",
+                PropertyKey.trustCertificateKeyStoreUrl.getKeyName() + "VOID=");
+        this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.trustCertificateKeyStoreType.getKeyName() + "=",
+                PropertyKey.trustCertificateKeyStoreType.getKeyName() + "VOID=");
+        this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.trustCertificateKeyStorePassword.getKeyName() + "=",
+                PropertyKey.trustCertificateKeyStorePassword.getKeyName() + "VOID=");
+        this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.fallbackToSystemTrustStore.getKeyName() + "=",
+                PropertyKey.fallbackToSystemTrustStore.getKeyName() + "VOID=");
+        this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.clientCertificateKeyStoreUrl.getKeyName() + "=",
+                PropertyKey.clientCertificateKeyStoreUrl.getKeyName() + "VOID=");
+        this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.clientCertificateKeyStoreType.getKeyName() + "=",
+                PropertyKey.clientCertificateKeyStoreType.getKeyName() + "VOID=");
+        this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.clientCertificateKeyStorePassword.getKeyName() + "=",
+                PropertyKey.clientCertificateKeyStorePassword.getKeyName() + "VOID=");
+        this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.fallbackToSystemKeyStore.getKeyName() + "=",
+                PropertyKey.fallbackToSystemKeyStore.getKeyName() + "VOID=");
+        this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.xdevapiTlsCiphersuites.getKeyName() + "=",
+                PropertyKey.xdevapiTlsCiphersuites.getKeyName() + "VOID=");
+        this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.xdevapiTlsVersions.getKeyName() + "=",
+                PropertyKey.xdevapiTlsVersions.getKeyName() + "VOID=");
+        if (!this.sslFreeBaseUrl.contains("?")) {
+            this.sslFreeBaseUrl += "?";
+        }
+    }
+
+    @AfterEach
+    public void teardownConnectionTest() {
+        System.clearProperty("javax.net.ssl.trustStore");
+        System.clearProperty("javax.net.ssl.trustStoreType");
+        System.clearProperty("javax.net.ssl.trustStorePassword");
+        System.clearProperty("javax.net.ssl.keyStore");
+        System.clearProperty("javax.net.ssl.keyStoreType");
+        System.clearProperty("javax.net.ssl.keyStorePassword");
+    }
+
     /**
      * Tests catalog functionality
      * 
@@ -2329,6 +2380,244 @@ public class ConnectionTest extends BaseTestCase {
         this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
         assertTrue(this.rs.next());
         assertEquals(user, this.rs.getString(1).split("@")[0]);
+        testConn.close();
+    }
+
+    /**
+     * Tests that given SSL/TLS related connection properties values are processed as expected.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testSslConnectionOptions() throws Exception {
+        Connection testConn;
+        JdbcPropertySet propSet;
+
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, "");
+        propSet = ((JdbcConnection) testConn).getPropertySet();
+        assertEquals(SslMode.PREFERRED, propSet.getProperty(PropertyKey.sslMode).getValue());
+        assertNull(propSet.getProperty(PropertyKey.trustCertificateKeyStoreUrl).getValue());
+        assertEquals("JKS", propSet.getProperty(PropertyKey.trustCertificateKeyStoreType).getValue());
+        assertNull(propSet.getProperty(PropertyKey.trustCertificateKeyStorePassword).getValue());
+        assertTrue(propSet.getBooleanProperty(PropertyKey.fallbackToSystemTrustStore).getValue());
+        assertNull(propSet.getProperty(PropertyKey.clientCertificateKeyStoreUrl).getValue());
+        assertEquals("JKS", propSet.getProperty(PropertyKey.clientCertificateKeyStoreType).getValue());
+        assertNull(propSet.getProperty(PropertyKey.clientCertificateKeyStorePassword).getValue());
+        assertTrue(propSet.getBooleanProperty(PropertyKey.fallbackToSystemKeyStore).getValue());
+        testConn.close();
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.toString());
+        props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "trust-cert-keystore-url");
+        props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "trust-cert-keystore-type");
+        props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "trust-cert-keystore-pwd");
+        props.setProperty(PropertyKey.fallbackToSystemTrustStore.getKeyName(), "false");
+        props.setProperty(PropertyKey.clientCertificateKeyStoreUrl.getKeyName(), "client-cert-keystore-url");
+        props.setProperty(PropertyKey.clientCertificateKeyStoreType.getKeyName(), "client-cert-keystore-type");
+        props.setProperty(PropertyKey.clientCertificateKeyStorePassword.getKeyName(), "client-cert-keystore-pwd");
+        props.setProperty(PropertyKey.fallbackToSystemKeyStore.getKeyName(), "false");
+
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
+        propSet = ((JdbcConnection) testConn).getPropertySet();
+        assertEquals(SslMode.DISABLED, propSet.getProperty(PropertyKey.sslMode).getValue());
+        assertEquals("trust-cert-keystore-url", propSet.getProperty(PropertyKey.trustCertificateKeyStoreUrl).getValue());
+        assertEquals("trust-cert-keystore-type", propSet.getProperty(PropertyKey.trustCertificateKeyStoreType).getValue());
+        assertEquals("trust-cert-keystore-pwd", propSet.getProperty(PropertyKey.trustCertificateKeyStorePassword).getValue());
+        assertFalse(propSet.getBooleanProperty(PropertyKey.fallbackToSystemTrustStore).getValue());
+        assertEquals("client-cert-keystore-url", propSet.getProperty(PropertyKey.clientCertificateKeyStoreUrl).getValue());
+        assertEquals("client-cert-keystore-type", propSet.getProperty(PropertyKey.clientCertificateKeyStoreType).getValue());
+        assertEquals("client-cert-keystore-pwd", propSet.getProperty(PropertyKey.clientCertificateKeyStorePassword).getValue());
+        assertFalse(propSet.getBooleanProperty(PropertyKey.fallbackToSystemKeyStore).getValue());
+        testConn.close();
+
+        props.setProperty(PropertyKey.fallbackToSystemTrustStore.getKeyName(), "true");
+        props.setProperty(PropertyKey.fallbackToSystemKeyStore.getKeyName(), "true");
+
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
+        propSet = ((JdbcConnection) testConn).getPropertySet();
+        assertEquals(SslMode.DISABLED, propSet.getProperty(PropertyKey.sslMode).getValue());
+        assertEquals("trust-cert-keystore-url", propSet.getProperty(PropertyKey.trustCertificateKeyStoreUrl).getValue());
+        assertEquals("trust-cert-keystore-type", propSet.getProperty(PropertyKey.trustCertificateKeyStoreType).getValue());
+        assertEquals("trust-cert-keystore-pwd", propSet.getProperty(PropertyKey.trustCertificateKeyStorePassword).getValue());
+        assertTrue(propSet.getBooleanProperty(PropertyKey.fallbackToSystemTrustStore).getValue());
+        assertEquals("client-cert-keystore-url", propSet.getProperty(PropertyKey.clientCertificateKeyStoreUrl).getValue());
+        assertEquals("client-cert-keystore-type", propSet.getProperty(PropertyKey.clientCertificateKeyStoreType).getValue());
+        assertEquals("client-cert-keystore-pwd", propSet.getProperty(PropertyKey.clientCertificateKeyStorePassword).getValue());
+        assertTrue(propSet.getBooleanProperty(PropertyKey.fallbackToSystemKeyStore).getValue());
+        testConn.close();
+    }
+
+    /**
+     * Tests connection property 'testFallbackToSystemTrustStore' behavior.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testFallbackToSystemTrustStore() throws Exception {
+        Connection testConn;
+
+        /*
+         * Valid system-wide TrustStore.
+         */
+        System.setProperty("javax.net.ssl.trustStore", "file:src/test/config/ssl-test-certs/ca-truststore");
+        System.setProperty("javax.net.ssl.trustStoreType", "JKS");
+        System.setProperty("javax.net.ssl.trustStorePassword", "password");
+
+        // No connection-local TrustStore.
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, "sslMode=REQUIRED");
+        assertSecureConnection(testConn);
+        testConn.close();
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, "sslMode=VERIFY_CA");
+        assertSecureConnection(testConn);
+        testConn.close();
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, "sslMode=VERIFY_CA,fallbackToSystemTrustStore=true");
+        assertSecureConnection(testConn);
+        testConn.close();
+        assertThrows(CommunicationsException.class, () -> getConnectionWithProps(this.sslFreeBaseUrl, "sslMode=VERIFY_CA,fallbackToSystemTrustStore=false"));
+
+        // Invalid connection-local TrustStore:
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl,
+                "sslMode=REQUIRED,trustCertificateKeyStoreUrl=file:src/test/config/ssl-test-certs/ca-truststore-ext,"
+                        + "trustCertificateKeyStoreType=JKS,trustCertificateKeyStorePassword=password");
+        assertSecureConnection(testConn);
+        testConn.close();
+        assertThrows(CommunicationsException.class,
+                () -> getConnectionWithProps(this.sslFreeBaseUrl,
+                        "sslMode=VERIFY_CA,trustCertificateKeyStoreUrl=file:src/test/config/ssl-test-certs/ca-truststore-ext,"
+                                + "trustCertificateKeyStoreType=JKS,trustCertificateKeyStorePassword=password"));
+        assertThrows(CommunicationsException.class,
+                () -> getConnectionWithProps(this.sslFreeBaseUrl,
+                        "sslMode=VERIFY_CA,fallbackToSystemTrustStore=true,trustCertificateKeyStoreUrl=file:src/test/config/ssl-test-certs/ca-truststore-ext,"
+                                + "trustCertificateKeyStoreType=JKS,trustCertificateKeyStorePassword=password"));
+        assertThrows(CommunicationsException.class,
+                () -> getConnectionWithProps(this.sslFreeBaseUrl,
+                        "sslMode=VERIFY_CA,fallbackToSystemTrustStore=false,trustCertificateKeyStoreUrl=file:src/test/config/ssl-test-certs/ca-truststore-ext,"
+                                + "trustCertificateKeyStoreType=JKS,trustCertificateKeyStorePassword=password"));
+
+        /*
+         * Invalid system-wide TrustStore.
+         */
+        System.setProperty("javax.net.ssl.trustStore", "file:src/test/config/ssl-test-certs/ca-truststore-ext");
+        System.setProperty("javax.net.ssl.trustStoreType", "JKS");
+        System.setProperty("javax.net.ssl.trustStorePassword", "password");
+
+        // No connection-local TrustStore.
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, "sslMode=REQUIRED");
+        assertSecureConnection(testConn);
+        testConn.close();
+        assertThrows(CommunicationsException.class, () -> getConnectionWithProps(this.sslFreeBaseUrl, "sslMode=VERIFY_CA"));
+        assertThrows(CommunicationsException.class, () -> getConnectionWithProps(this.sslFreeBaseUrl, "sslMode=VERIFY_CA,fallbackToSystemTrustStore=true"));
+        assertThrows(CommunicationsException.class, () -> getConnectionWithProps(this.sslFreeBaseUrl, "sslMode=VERIFY_CA,fallbackToSystemTrustStore=false"));
+
+        // Valid connection-local TrustStore:
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, "sslMode=REQUIRED,trustCertificateKeyStoreUrl=file:src/test/config/ssl-test-certs/ca-truststore,"
+                + "trustCertificateKeyStoreType=JKS,trustCertificateKeyStorePassword=password");
+        assertSecureConnection(testConn);
+        testConn.close();
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl,
+                "sslMode=VERIFY_CA,trustCertificateKeyStoreUrl=file:src/test/config/ssl-test-certs/ca-truststore,"
+                        + "trustCertificateKeyStoreType=JKS,trustCertificateKeyStorePassword=password");
+        assertSecureConnection(testConn);
+        testConn.close();
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl,
+                "sslMode=VERIFY_CA,fallbackToSystemTrustStore=true,trustCertificateKeyStoreUrl=file:src/test/config/ssl-test-certs/ca-truststore,"
+                        + "trustCertificateKeyStoreType=JKS,trustCertificateKeyStorePassword=password");
+        assertSecureConnection(testConn);
+        testConn.close();
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl,
+                "sslMode=VERIFY_CA,fallbackToSystemTrustStore=false,trustCertificateKeyStoreUrl=file:src/test/config/ssl-test-certs/ca-truststore,"
+                        + "trustCertificateKeyStoreType=JKS,trustCertificateKeyStorePassword=password");
+        assertSecureConnection(testConn);
+        testConn.close();
+    }
+
+    /**
+     * Tests connection property 'testFallbackToSystemKeyStore' behavior.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testFallbackToSystemKeyStore() throws Exception {
+        if (!versionMeetsMinimum(5, 7, 6)) {
+            return;
+        }
+
+        final String user = "testFbToSysKS";
+        createUser(user, "IDENTIFIED BY 'password' REQUIRE X509");
+        this.stmt.execute("GRANT ALL ON *.* TO '" + user + "'@'%'");
+
+        final Properties props = new Properties();
+        props.setProperty(PropertyKey.USER.getKeyName(), user);
+        props.setProperty(PropertyKey.PASSWORD.getKeyName(), "password");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.toString());
+
+        Connection testConn;
+
+        /*
+         * Valid system-wide KeyStore.
+         */
+        System.setProperty("javax.net.ssl.keyStore", "file:src/test/config/ssl-test-certs/client-keystore");
+        System.setProperty("javax.net.ssl.keyStoreType", "JKS");
+        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+
+        // No connection-local KeyStore.
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
+        assertSecureConnection(testConn, user);
+        testConn.close();
+        props.setProperty(PropertyKey.fallbackToSystemKeyStore.getKeyName(), "true");
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
+        assertSecureConnection(testConn, user);
+        testConn.close();
+        props.setProperty(PropertyKey.fallbackToSystemKeyStore.getKeyName(), "false");
+        assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", () -> getConnectionWithProps(this.sslFreeBaseUrl, props));
+
+        props.remove(PropertyKey.fallbackToSystemKeyStore.getKeyName());
+
+        // Invalid connection-local KeyStore:
+        props.setProperty(PropertyKey.clientCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/client-keystore-ext");
+        props.setProperty(PropertyKey.clientCertificateKeyStoreType.getKeyName(), "JKS");
+        props.setProperty(PropertyKey.clientCertificateKeyStorePassword.getKeyName(), "password");
+        assertThrows(CommunicationsException.class, () -> getConnectionWithProps(this.sslFreeBaseUrl, props));
+        props.setProperty(PropertyKey.fallbackToSystemKeyStore.getKeyName(), "true");
+        assertThrows(CommunicationsException.class, () -> getConnectionWithProps(this.sslFreeBaseUrl, props));
+        props.setProperty(PropertyKey.fallbackToSystemKeyStore.getKeyName(), "false");
+        assertThrows(CommunicationsException.class, () -> getConnectionWithProps(this.sslFreeBaseUrl, props));
+
+        props.remove(PropertyKey.clientCertificateKeyStoreUrl.getKeyName());
+        props.remove(PropertyKey.clientCertificateKeyStoreType.getKeyName());
+        props.remove(PropertyKey.clientCertificateKeyStorePassword.getKeyName());
+        props.remove(PropertyKey.fallbackToSystemKeyStore.getKeyName());
+
+        /*
+         * Invalid system-wide KeyStore.
+         */
+        System.setProperty("javax.net.ssl.keyStore", "file:src/test/config/ssl-test-certs/client-keystore-ext");
+        System.setProperty("javax.net.ssl.keyStoreType", "JKS");
+        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+
+        // No connection-local KeyStore.
+        assertThrows(CommunicationsException.class, () -> getConnectionWithProps(this.sslFreeBaseUrl, props));
+        props.setProperty(PropertyKey.fallbackToSystemKeyStore.getKeyName(), "true");
+        assertThrows(CommunicationsException.class, () -> getConnectionWithProps(this.sslFreeBaseUrl, props));
+        props.setProperty(PropertyKey.fallbackToSystemKeyStore.getKeyName(), "false");
+        assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", () -> getConnectionWithProps(this.sslFreeBaseUrl, props));
+
+        props.remove(PropertyKey.fallbackToSystemKeyStore.getKeyName());
+
+        // Valid connection-local KeyStore:
+        props.setProperty(PropertyKey.clientCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/client-keystore");
+        props.setProperty(PropertyKey.clientCertificateKeyStoreType.getKeyName(), "JKS");
+        props.setProperty(PropertyKey.clientCertificateKeyStorePassword.getKeyName(), "password");
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
+        assertSecureConnection(testConn, user);
+        testConn.close();
+        props.setProperty(PropertyKey.fallbackToSystemKeyStore.getKeyName(), "true");
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
+        assertSecureConnection(testConn, user);
+        testConn.close();
+        props.setProperty(PropertyKey.fallbackToSystemKeyStore.getKeyName(), "false");
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
+        assertSecureConnection(testConn, user);
         testConn.close();
     }
 }

@@ -102,7 +102,6 @@ import com.mysql.cj.util.Util;
  * Holds functionality that falls under export-control regulations.
  */
 public class ExportControlled {
-
     private static final String TLSv1 = "TLSv1";
     private static final String TLSv1_1 = "TLSv1.1";
     private static final String TLSv1_2 = "TLSv1.2";
@@ -215,19 +214,18 @@ public class ExportControlled {
         }
     }
 
-    private static KeyStoreConf getTrustStoreConf(PropertySet propertySet, PropertyKey keyStoreUrlPropertyKey, PropertyKey keyStorePasswordPropertyKey,
-            PropertyKey keyStoreTypePropertyKey, boolean required) {
+    private static KeyStoreConf getTrustStoreConf(PropertySet propertySet, boolean required) {
+        String trustStoreUrl = propertySet.getStringProperty(PropertyKey.trustCertificateKeyStoreUrl).getValue();
+        String trustStorePassword = propertySet.getStringProperty(PropertyKey.trustCertificateKeyStorePassword).getValue();
+        String trustStoreType = propertySet.getStringProperty(PropertyKey.trustCertificateKeyStoreType).getValue();
+        boolean fallbackToSystemTrustStore = propertySet.getBooleanProperty(PropertyKey.fallbackToSystemTrustStore).getValue();
 
-        String trustStoreUrl = propertySet.getStringProperty(keyStoreUrlPropertyKey).getValue();
-        String trustStorePassword = propertySet.getStringProperty(keyStorePasswordPropertyKey).getValue();
-        String trustStoreType = propertySet.getStringProperty(keyStoreTypePropertyKey).getValue();
-
-        if (StringUtils.isNullOrEmpty(trustStoreUrl)) {
+        if (fallbackToSystemTrustStore && StringUtils.isNullOrEmpty(trustStoreUrl)) {
             trustStoreUrl = System.getProperty("javax.net.ssl.trustStore");
             trustStorePassword = System.getProperty("javax.net.ssl.trustStorePassword");
             trustStoreType = System.getProperty("javax.net.ssl.trustStoreType");
             if (StringUtils.isNullOrEmpty(trustStoreType)) {
-                trustStoreType = propertySet.getStringProperty(keyStoreTypePropertyKey).getInitialValue();
+                trustStoreType = propertySet.getStringProperty(PropertyKey.trustCertificateKeyStoreType).getInitialValue();
             }
             // check URL
             if (!StringUtils.isNullOrEmpty(trustStoreUrl)) {
@@ -246,19 +244,18 @@ public class ExportControlled {
         return new KeyStoreConf(trustStoreUrl, trustStorePassword, trustStoreType);
     }
 
-    private static KeyStoreConf getKeyStoreConf(PropertySet propertySet, PropertyKey keyStoreUrlPropertyKey, PropertyKey keyStorePasswordPropertyKey,
-            PropertyKey keyStoreTypePropertyKey) {
+    private static KeyStoreConf getKeyStoreConf(PropertySet propertySet) {
+        String keyStoreUrl = propertySet.getStringProperty(PropertyKey.clientCertificateKeyStoreUrl).getValue();
+        String keyStorePassword = propertySet.getStringProperty(PropertyKey.clientCertificateKeyStorePassword).getValue();
+        String keyStoreType = propertySet.getStringProperty(PropertyKey.clientCertificateKeyStoreType).getValue();
+        boolean fallbackToSystemKeyStore = propertySet.getBooleanProperty(PropertyKey.fallbackToSystemKeyStore).getValue();
 
-        String keyStoreUrl = propertySet.getStringProperty(keyStoreUrlPropertyKey).getValue();
-        String keyStorePassword = propertySet.getStringProperty(keyStorePasswordPropertyKey).getValue();
-        String keyStoreType = propertySet.getStringProperty(keyStoreTypePropertyKey).getValue();
-
-        if (StringUtils.isNullOrEmpty(keyStoreUrl)) {
+        if (fallbackToSystemKeyStore && StringUtils.isNullOrEmpty(keyStoreUrl)) {
             keyStoreUrl = System.getProperty("javax.net.ssl.keyStore");
             keyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
             keyStoreType = System.getProperty("javax.net.ssl.keyStoreType");
             if (StringUtils.isNullOrEmpty(keyStoreType)) {
-                keyStoreType = propertySet.getStringProperty(keyStoreTypePropertyKey).getInitialValue();
+                keyStoreType = propertySet.getStringProperty(PropertyKey.clientCertificateKeyStoreType).getInitialValue();
             }
             // check URL
             if (!StringUtils.isNullOrEmpty(keyStoreUrl)) {
@@ -274,43 +271,36 @@ public class ExportControlled {
     }
 
     /**
-     * Converts the socket being used in the given CoreIO to an SSLSocket by
-     * performing the SSL/TLS handshake.
+     * Converts the socket being used in the given SocketConnection to an SSLSocket by performing the SSL/TLS handshake.
      * 
      * @param rawSocket
      *            original non-SSL socket
      * @param socketConnection
-     *            the Protocol instance containing the socket to convert to an
-     *            SSLSocket.
+     *            the Protocol instance containing the socket to convert to an SSLSocket.
      * @param serverVersion
      *            ServerVersion object
      * @return SSL socket
      * @throws IOException
      *             if i/o exception occurs
      * @throws SSLParamsException
-     *             if the handshake fails, or if this distribution of
-     *             Connector/J doesn't contain the SSL crypto hooks needed to
-     *             perform the handshake.
+     *             if the handshake fails, or if this distribution of Connector/J doesn't contain the SSL crypto hooks needed to perform the handshake.
      * @throws FeatureNotAvailableException
      *             if TLS is not supported
      */
     public static Socket performTlsHandshake(Socket rawSocket, SocketConnection socketConnection, ServerVersion serverVersion)
             throws IOException, SSLParamsException, FeatureNotAvailableException {
-
         PropertySet pset = socketConnection.getPropertySet();
 
         SslMode sslMode = pset.<SslMode>getEnumProperty(PropertyKey.sslMode).getValue();
         boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
+        boolean fallbackToSystemTrustStore = pset.getBooleanProperty(PropertyKey.fallbackToSystemTrustStore).getValue();
 
+        // (serverVersion == null) means that it was called from the X DevAPI.
         KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf()
-                : getTrustStoreConf(pset, PropertyKey.trustCertificateKeyStoreUrl, PropertyKey.trustCertificateKeyStorePassword,
-                        PropertyKey.trustCertificateKeyStoreType, verifyServerCert && serverVersion == null);
+                : getTrustStoreConf(pset, serverVersion == null && verifyServerCert && !fallbackToSystemTrustStore);
+        KeyStoreConf keyStore = getKeyStoreConf(pset);
 
-        KeyStoreConf keyStore = getKeyStoreConf(pset, PropertyKey.clientCertificateKeyStoreUrl, PropertyKey.clientCertificateKeyStorePassword,
-                PropertyKey.clientCertificateKeyStoreType);
-
-        SSLSocketFactory socketFactory = getSSLContext(keyStore.keyStoreUrl, keyStore.keyStoreType, keyStore.keyStorePassword, trustStore.keyStoreUrl,
-                trustStore.keyStoreType, trustStore.keyStorePassword, serverVersion != null, verifyServerCert,
+        SSLSocketFactory socketFactory = getSSLContext(keyStore, trustStore, fallbackToSystemTrustStore, verifyServerCert,
                 sslMode == PropertyDefinitions.SslMode.VERIFY_IDENTITY ? socketConnection.getHost() : null, socketConnection.getExceptionInterceptor())
                         .getSocketFactory();
 
@@ -489,18 +479,10 @@ public class ExportControlled {
     /**
      * Configure the {@link SSLContext} based on the supplier property set.
      * 
-     * @param clientCertificateKeyStoreUrl
-     *            clientCertificateKeyStoreUrl
-     * @param clientCertificateKeyStoreType
-     *            clientCertificateKeyStoreType
-     * @param clientCertificateKeyStorePassword
-     *            clientCertificateKeyStorePassword
-     * @param trustCertificateKeyStoreUrl
-     *            trustCertificateKeyStoreUrl
-     * @param trustCertificateKeyStoreType
-     *            trustCertificateKeyStoreType
-     * @param trustCertificateKeyStorePassword
-     *            trustCertificateKeyStorePassword
+     * @param clientCertificateKeyStore
+     *            clientCertificateKeyStore
+     * @param trustCertificateKeyStore
+     *            trustCertificateKeyStore
      * @param fallbackToDefaultTrustStore
      *            fallbackToDefaultTrustStore
      * @param verifyServerCert
@@ -513,10 +495,15 @@ public class ExportControlled {
      * @throws SSLParamsException
      *             if an error occurs
      */
-    public static SSLContext getSSLContext(String clientCertificateKeyStoreUrl, String clientCertificateKeyStoreType, String clientCertificateKeyStorePassword,
-            String trustCertificateKeyStoreUrl, String trustCertificateKeyStoreType, String trustCertificateKeyStorePassword,
-            boolean fallbackToDefaultTrustStore, boolean verifyServerCert, String hostName, ExceptionInterceptor exceptionInterceptor)
-            throws SSLParamsException {
+    public static SSLContext getSSLContext(KeyStoreConf clientCertificateKeyStore, KeyStoreConf trustCertificateKeyStore, boolean fallbackToDefaultTrustStore,
+            boolean verifyServerCert, String hostName, ExceptionInterceptor exceptionInterceptor) throws SSLParamsException {
+        String clientCertificateKeyStoreUrl = clientCertificateKeyStore.keyStoreUrl;
+        String clientCertificateKeyStoreType = clientCertificateKeyStore.keyStoreType;
+        String clientCertificateKeyStorePassword = clientCertificateKeyStore.keyStorePassword;
+        String trustCertificateKeyStoreUrl = trustCertificateKeyStore.keyStoreUrl;
+        String trustCertificateKeyStoreType = trustCertificateKeyStore.keyStoreType;
+        String trustCertificateKeyStorePassword = trustCertificateKeyStore.keyStorePassword;
+
         TrustManagerFactory tmf = null;
         KeyManagerFactory kmf = null;
 
@@ -588,7 +575,7 @@ public class ExportControlled {
                 trustKeyStore.load(trustStoreIS, trustStorePassword);
             }
 
-            if (trustKeyStore != null || fallbackToDefaultTrustStore) {
+            if (trustKeyStore != null || verifyServerCert && fallbackToDefaultTrustStore) {
                 tmf.init(trustKeyStore); // (trustKeyStore == null) initializes the TrustManagerFactory with the default truststore.  
 
                 // building the customized list of TrustManagers from original one if it's available
@@ -599,7 +586,6 @@ public class ExportControlled {
                     tms.add(tm instanceof X509TrustManager ? new X509TrustManagerWrapper((X509TrustManager) tm, verifyServerCert, hostName) : tm);
                 }
             }
-
         } catch (MalformedURLException e) {
             throw ExceptionFactory.createException(SSLParamsException.class, trustCertificateKeyStoreUrl + " does not appear to be a valid URL.", e,
                     exceptionInterceptor);
@@ -648,7 +634,6 @@ public class ExportControlled {
     }
 
     public static RSAPublicKey decodeRSAPublicKey(String key) throws RSAException {
-
         if (key == null) {
             throw ExceptionFactory.createException(RSAException.class, "Key parameter is null");
         }
@@ -681,5 +666,4 @@ public class ExportControlled {
     public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key) throws RSAException {
         return encryptWithRSAPublicKey(source, key, "RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
     }
-
 }

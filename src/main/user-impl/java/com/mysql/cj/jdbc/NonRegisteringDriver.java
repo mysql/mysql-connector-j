@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,6 +34,7 @@ import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -276,14 +277,17 @@ public class NonRegisteringDriver implements java.sql.Driver {
         passwordProp.required = true;
         passwordProp.description = Messages.getString("NonRegisteringDriver.16");
 
-        DriverPropertyInfo[] dpi;
-        dpi = new JdbcPropertySetImpl().exposeAsDriverPropertyInfo(info, 5);
+        JdbcPropertySet propSet = new JdbcPropertySetImpl();
+        propSet.initializeProperties(info);
+        List<DriverPropertyInfo> driverPropInfo = propSet.exposeAsDriverPropertyInfo();
 
+        DriverPropertyInfo[] dpi = new DriverPropertyInfo[5 + driverPropInfo.size()];
         dpi[0] = hostProp;
         dpi[1] = portProp;
         dpi[2] = dbProp;
         dpi[3] = userProp;
         dpi[4] = passwordProp;
+        System.arraycopy(driverPropInfo.toArray(new DriverPropertyInfo[0]), 0, dpi, 5, driverPropInfo.size());
 
         return dpi;
     }

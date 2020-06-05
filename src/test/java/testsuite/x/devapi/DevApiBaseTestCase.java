@@ -203,4 +203,18 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
         } while (psCount != 0 && --countdown > 0);
         assertEquals(expectedCount, psCount);
     }
+
+    protected static void assertNonSecureSession(Session sess) {
+        assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "");
+    }
+
+    protected static void assertSecureSession(Session sess) {
+        assertSessionStatusNotEquals(sess, "mysqlx_ssl_cipher", "");
+    }
+
+    protected static void assertSecureSession(Session sess, String user) {
+        assertSecureSession(sess);
+        SqlResult res = sess.sql("SELECT CURRENT_USER()").execute();
+        assertEquals(user, res.fetchOne().getString(0).split("@")[0]);
+    }
 }

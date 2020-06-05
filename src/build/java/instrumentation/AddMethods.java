@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -75,6 +75,9 @@ public class AddMethods {
 
     private static void addPropertiesGettersSetters(CtClass clazz, Collection<PropertyDefinition<?>> propertyDefinitions) throws Exception {
         for (PropertyDefinition<?> def : propertyDefinitions) {
+            if (def.getCategory().equals(PropertyDefinitions.CATEGORY_XDEVAPI)) {
+                continue;
+            }
             String pname = def.hasCcAlias() ? def.getCcAlias() : def.getName();
 
             if (def instanceof StringPropertyDefinition) {

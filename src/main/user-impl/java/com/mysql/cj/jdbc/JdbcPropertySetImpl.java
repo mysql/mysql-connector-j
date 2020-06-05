@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,7 +31,9 @@ package com.mysql.cj.jdbc;
 
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
-import java.util.Properties;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyDefinition;
@@ -50,7 +52,7 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
         // Adjust max rows
         if (getIntegerProperty(PropertyKey.maxRows).getValue() == 0) {
             // adjust so that it will become MysqlDefs.MAX_ROWS in execSQL()
-            super.<Integer> getProperty(PropertyKey.maxRows).setValue(Integer.valueOf(-1), null);
+            super.<Integer>getProperty(PropertyKey.maxRows).setValue(Integer.valueOf(-1), null);
         }
 
         //
@@ -66,27 +68,15 @@ public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPrope
 
         if (getBooleanProperty(PropertyKey.useCursorFetch).getValue()) {
             // assume server-side prepared statements are wanted because they're required for this functionality
-            super.<Boolean> getProperty(PropertyKey.useServerPrepStmts).setValue(true);
+            super.<Boolean>getProperty(PropertyKey.useServerPrepStmts).setValue(true);
         }
     }
 
     @Override
-    public DriverPropertyInfo[] exposeAsDriverPropertyInfo(Properties info, int slotsToReserve) throws SQLException {
-        initializeProperties(info);
-
-        int numProperties = PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.size();
-
-        int listSize = numProperties + slotsToReserve;
-
-        DriverPropertyInfo[] driverProperties = new DriverPropertyInfo[listSize];
-
-        int i = slotsToReserve;
-
-        for (PropertyKey propKey : PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.keySet()) {
-            driverProperties[i++] = getAsDriverPropertyInfo(getProperty(propKey));
-        }
-
-        return driverProperties;
+    public List<DriverPropertyInfo> exposeAsDriverPropertyInfo() throws SQLException {
+        return PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.entrySet().stream()
+                .filter(e -> !e.getValue().getCategory().equals(PropertyDefinitions.CATEGORY_XDEVAPI)).map(Entry::getKey).map(this::getProperty)
+                .map(this::getAsDriverPropertyInfo).collect(Collectors.toList());
     }
 
     private DriverPropertyInfo getAsDriverPropertyInfo(RuntimeProperty<?> pr) {

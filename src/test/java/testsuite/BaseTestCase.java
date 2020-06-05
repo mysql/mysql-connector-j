@@ -31,6 +31,7 @@ package testsuite;
 
 import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -1033,6 +1034,21 @@ public abstract class BaseTestCase {
         }
 
         assertEquals(expectedHist.toString(), actualHist.toString(), "Connections history");
+    }
+
+    protected static void assertSecureConnection(Connection conn) throws Exception {
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SHOW STATUS LIKE 'Ssl_version'")) {
+            assertTrue(rs.next());
+            assertNotEquals("", rs.getString(1));
+        }
+    }
+
+    protected static void assertSecureConnection(Connection conn, String user) throws Exception {
+        assertSecureConnection(conn);
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT CURRENT_USER()")) {
+            assertTrue(rs.next());
+            assertEquals(user, rs.getString(1).split("@")[0]);
+        }
     }
 
     /*

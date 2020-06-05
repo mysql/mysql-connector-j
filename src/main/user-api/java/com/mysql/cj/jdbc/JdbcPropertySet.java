@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,26 +31,18 @@ package com.mysql.cj.jdbc;
 
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
-import java.util.Properties;
+import java.util.List;
 
 import com.mysql.cj.conf.PropertySet;
 
 public interface JdbcPropertySet extends PropertySet {
-
     /**
      * Exposes all ConnectionPropertyInfo instances as DriverPropertyInfo
      * 
-     * @param info
-     *            the properties to load into these ConnectionPropertyInfo
-     *            instances
-     * @param slotsToReserve
-     *            the number of DPI slots to reserve for 'standard' DPI
-     *            properties (user, host, password, etc)
-     * 
-     * @return a list of all ConnectionPropertyInfo instances, as DriverPropertyInfo
+     * @return a {@link List} of all ConnectionPropertyInfo instances, as DriverPropertyInfo
      * 
      * @throws SQLException
      *             if an error occurs
      */
-    DriverPropertyInfo[] exposeAsDriverPropertyInfo(Properties info, int slotsToReserve) throws SQLException;
+    List<DriverPropertyInfo> exposeAsDriverPropertyInfo() throws SQLException;
 }

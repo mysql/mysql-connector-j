@@ -244,6 +244,9 @@ public class DataSourceTest extends BaseTestCase {
 
         // instrumented properties
         for (PropertyDefinition<?> def : PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.values()) {
+            if (def.getCategory().equals(PropertyDefinitions.CATEGORY_XDEVAPI)) {
+                continue;
+            }
             String pname = def.hasCcAlias() ? def.getCcAlias() : def.getName();
             String gname = "get" + pname.substring(0, 1).toUpperCase() + pname.substring(1);
             String sname = "set" + pname.substring(0, 1).toUpperCase() + pname.substring(1);
