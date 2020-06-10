@@ -61,6 +61,7 @@ public enum PropertyKey {
     DBNAME("dbname", false), //
 
     allowLoadLocalInfile("allowLoadLocalInfile", true), //
+    allowLoadLocalInfileInPath("allowLoadLocalInfileInPath", true), //
     allowMasterDownConnections("allowMasterDownConnections", true), //
     allowMultiQueries("allowMultiQueries", true), //
     allowNanAndInf("allowNanAndInf", true), //

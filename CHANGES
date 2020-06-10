@@ -3,6 +3,8 @@
 
 Version 8.0.22
 
+  - WL#14096, Add option to specify LOAD DATA LOCAL allow list folder.
+
   - WL#13780, Skip system-wide trust and key stores (incl. X DevAPI client certs).
 
   - WL#14017, XProtocol -- support for configurable compression algorithms.

@@ -39,9 +39,15 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.lang.ref.SoftReference;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.UnknownHostException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.DataTruncation;
 import java.sql.SQLWarning;
 import java.util.ArrayList;
@@ -1713,17 +1719,13 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      * @return NativePacketPayload
      */
     public final NativePacketPayload sendFileToServer(String fileName) {
-
         NativePacketPayload filePacket = (this.loadFileBufRef == null) ? null : this.loadFileBufRef.get();
 
         int bigPacketLength = Math.min(this.maxAllowedPacket.getValue() - (NativeConstants.HEADER_LENGTH * 3),
                 alignPacketSize(this.maxAllowedPacket.getValue() - 16, 4096) - (NativeConstants.HEADER_LENGTH * 3));
-
         int oneMeg = 1024 * 1024;
-
         int smallerPacketSizeAligned = Math.min(oneMeg - (NativeConstants.HEADER_LENGTH * 3),
                 alignPacketSize(oneMeg - 16, 4096) - (NativeConstants.HEADER_LENGTH * 3));
-
         int packetLength = Math.min(smallerPacketSizeAligned, bigPacketLength);
 
         if (filePacket == null) {
@@ -1739,56 +1741,26 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         filePacket.setPosition(0);
 
         byte[] fileBuf = new byte[packetLength];
-
         BufferedInputStream fileIn = null;
-
         try {
-            if (!this.propertySet.getBooleanProperty(PropertyKey.allowLoadLocalInfile).getValue()) {
-                throw ExceptionFactory.createException(Messages.getString("MysqlIO.LoadDataLocalNotAllowed"), this.exceptionInterceptor);
-            }
-
-            InputStream hookedStream = null;
-
-            hookedStream = getLocalInfileInputStream();
-
-            if (hookedStream != null) {
-                fileIn = new BufferedInputStream(hookedStream);
-            } else if (!this.propertySet.getBooleanProperty(PropertyKey.allowUrlInLocalInfile).getValue()) {
-                fileIn = new BufferedInputStream(new FileInputStream(fileName));
-            } else {
-                // First look for ':'
-                if (fileName.indexOf(':') != -1) {
-                    try {
-                        URL urlFromFileName = new URL(fileName);
-                        fileIn = new BufferedInputStream(urlFromFileName.openStream());
-                    } catch (MalformedURLException badUrlEx) {
-                        // we fall back to trying this as a file input stream
-                        fileIn = new BufferedInputStream(new FileInputStream(fileName));
-                    }
-                } else {
-                    fileIn = new BufferedInputStream(new FileInputStream(fileName));
-                }
-            }
+            fileIn = getFileStream(fileName);
 
             int bytesRead = 0;
-
             while ((bytesRead = fileIn.read(fileBuf)) != -1) {
                 filePacket.setPosition(0);
                 filePacket.writeBytes(StringLengthDataType.STRING_FIXED, fileBuf, 0, bytesRead);
                 send(filePacket, filePacket.getPosition());
             }
         } catch (IOException ioEx) {
-            StringBuilder messageBuf = new StringBuilder(Messages.getString("MysqlIO.60"));
-
             boolean isParanoid = this.propertySet.getBooleanProperty(PropertyKey.paranoid).getValue();
+
+            StringBuilder messageBuf = new StringBuilder(Messages.getString("MysqlIO.62"));
             if (fileName != null && !isParanoid) {
                 messageBuf.append("'");
                 messageBuf.append(fileName);
                 messageBuf.append("'");
             }
-
             messageBuf.append(Messages.getString("MysqlIO.63"));
-
             if (!isParanoid) {
                 messageBuf.append(Messages.getString("MysqlIO.64"));
                 messageBuf.append(Util.stackTraceToString(ioEx));
@@ -1805,10 +1777,10 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
                 fileIn = null;
             } else {
-                // file open failed, but server needs one packet
+                // File open failed, but server needs one packet.
                 filePacket.setPosition(0);
                 send(filePacket, filePacket.getPosition());
-                checkErrorMessage(); // to clear response off of queue
+                checkErrorMessage(); // To clear response off of queue.
             }
         }
 
@@ -1817,6 +1789,100 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         send(filePacket, filePacket.getPosition());
 
         return checkErrorMessage();
+    }
+
+    private BufferedInputStream getFileStream(String fileName) throws IOException {
+        RuntimeProperty<Boolean> allowLoadLocalInfile = this.propertySet.getBooleanProperty(PropertyKey.allowLoadLocalInfile);
+        RuntimeProperty<String> allowLoadLocaInfileInPath = this.propertySet.getStringProperty(PropertyKey.allowLoadLocalInfileInPath);
+        RuntimeProperty<Boolean> allowUrlInLocalInfile = this.propertySet.getBooleanProperty(PropertyKey.allowUrlInLocalInfile);
+
+        if (!allowLoadLocalInfile.getValue() && !allowLoadLocaInfileInPath.isExplicitlySet()) {
+            throw ExceptionFactory.createException(Messages.getString("MysqlIO.LoadDataLocalNotAllowed"), this.exceptionInterceptor);
+        }
+
+        if (allowLoadLocalInfile.getValue()) {
+            // "LOAD DATA LOCAL INFILE" is enabled without restrictions.
+            InputStream hookedStream = getLocalInfileInputStream();
+            if (hookedStream != null) {
+                return new BufferedInputStream(hookedStream);
+            } else if (allowUrlInLocalInfile.getValue()) {
+                // Look for ':'.
+                if (fileName.indexOf(':') != -1) {
+                    try {
+                        URL urlFromFileName = new URL(fileName);
+                        return new BufferedInputStream(urlFromFileName.openStream());
+                    } catch (MalformedURLException e) {
+                        // Ignore and fall back to trying this as a file input stream.
+                    }
+                }
+            }
+            return new BufferedInputStream(new FileInputStream(fileName));
+        }
+
+        // Given the code paths above, allowLoadLocaInfileInPath.isExplicitlySet() must be true and restrictions to "LOAD DATA LOCAL INFILE" apply.
+        String safePathValue = allowLoadLocaInfileInPath.getValue();
+        Path safePath;
+        if (safePathValue.length() == 0) {
+            throw ExceptionFactory.createException(
+                    Messages.getString("MysqlIO.60", new Object[] { safePathValue, PropertyKey.allowLoadLocalInfileInPath.getKeyName() }),
+                    this.exceptionInterceptor);
+        }
+        try {
+            safePath = Paths.get(safePathValue).toRealPath();
+        } catch (IOException | InvalidPathException e) {
+            throw ExceptionFactory.createException(
+                    Messages.getString("MysqlIO.60", new Object[] { safePathValue, PropertyKey.allowLoadLocalInfileInPath.getKeyName() }), e,
+                    this.exceptionInterceptor);
+        }
+
+        if (allowUrlInLocalInfile.getValue()) {
+            try {
+                URL urlFromFileName = new URL(fileName);
+
+                if (!urlFromFileName.getProtocol().equalsIgnoreCase("file")) {
+                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.66", new Object[] { urlFromFileName.getProtocol() }),
+                            this.exceptionInterceptor);
+                }
+
+                try {
+                    InetAddress addr = InetAddress.getByName(urlFromFileName.getHost());
+                    if (!addr.isLoopbackAddress()) {
+                        throw ExceptionFactory.createException(Messages.getString("MysqlIO.67", new Object[] { urlFromFileName.getHost() }),
+                                this.exceptionInterceptor);
+                    }
+                } catch (UnknownHostException e) {
+                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.68", new Object[] { fileName }), e, this.exceptionInterceptor);
+                }
+
+                Path filePath = null;
+                try {
+                    filePath = Paths.get(urlFromFileName.toURI()).toRealPath();
+                } catch (InvalidPathException e) {
+                    // Windows paths often can't be extracted, but the URL is still valid.
+                    String pathString = urlFromFileName.getPath();
+                    if (pathString.indexOf(':') != -1 && (pathString.startsWith("/") || pathString.startsWith("\\"))) {
+                        pathString = pathString.replaceFirst("^[/\\\\]*", "");
+                    }
+                    filePath = Paths.get(pathString).toRealPath();
+                } catch (IllegalArgumentException e) {
+                    // Try the path directly.
+                    filePath = Paths.get(urlFromFileName.getPath()).toRealPath();
+                }
+                if (!filePath.startsWith(safePath)) {
+                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.61", new Object[] { filePath, safePath }), this.exceptionInterceptor);
+                }
+
+                return new BufferedInputStream(urlFromFileName.openStream());
+            } catch (MalformedURLException | URISyntaxException e) {
+                // Fall back to trying this as a file input stream.
+            }
+        }
+
+        Path filePath = Paths.get(fileName).toRealPath();
+        if (!filePath.startsWith(safePath)) {
+            throw ExceptionFactory.createException(Messages.getString("MysqlIO.61", new Object[] { filePath, safePath }), this.exceptionInterceptor);
+        }
+        return new BufferedInputStream(new FileInputStream(filePath.toFile()));
     }
 
     private int alignPacketSize(int a, int l) {

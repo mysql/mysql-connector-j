@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
@@ -50,6 +51,9 @@ import java.lang.reflect.Method;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -111,6 +115,7 @@ import com.mysql.cj.protocol.a.TimeTrackingPacketSender;
 import com.mysql.cj.protocol.a.TracingPacketReader;
 import com.mysql.cj.protocol.a.TracingPacketSender;
 import com.mysql.cj.util.TimeUtil;
+import com.mysql.cj.util.Util;
 import com.mysql.jdbc.Driver;
 
 import testsuite.BaseQueryInterceptor;
@@ -884,8 +889,10 @@ public class ConnectionTest extends BaseTestCase {
             // Must be set after connect, otherwise it's the server that's enforcing it.
             ((com.mysql.cj.jdbc.JdbcConnection) loadConn).getPropertySet().getProperty(PropertyKey.allowLoadLocalInfile).setValue(false);
 
-            assertThrows(SQLException.class, "Server asked for stream in response to LOAD DATA LOCAL INFILE but functionality is disabled at client by "
-                    + "'allowLoadLocalInfile' being set to 'false'\\.", () -> {
+            assertThrows(SQLException.class,
+                    "Server asked for stream in response to \"LOAD DATA LOCAL INFILE\" but functionality is not enabled at client by setting "
+                            + "\"allowLoadLocalInfile=true\" or specifying a path with 'allowLoadLocalInfileInPath'\\.",
+                    () -> {
                         loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
                         return null;
                     });
@@ -2619,5 +2626,301 @@ public class ConnectionTest extends BaseTestCase {
         testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
         assertSecureConnection(testConn, user);
         testConn.close();
+    }
+
+    /**
+     * Tests "LOAD DATA LOCAL INFILE" statements when enabled but restricted to a specific path, by specifying a path in the connection property
+     * 'allowLoadLocalInfileInPath'.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testAllowLoadLocalInfileInPath() throws Exception {
+        Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
+
+        /*
+         * Create the following directories structure:
+         * /tmp/
+         * ...ldli_1_[random]/
+         * ......sub_11/
+         * .........sub_111/
+         * ............testAllowLoadLocalInfileInPath_[random].txt
+         * ...ldli_2_[random]/
+         * ......lnk_21 --> /tmp/ldli_1_[random]/sub_1/
+         * ......testAllowLoadLocalInfileInPath_[random].txt
+         */
+        Path tmpDir1 = Files.createTempDirectory("ldli_1_");
+        tmpDir1.toFile().deleteOnExit();
+        Path tmpSDir1 = tmpDir1.resolve("sub_11");
+        tmpSDir1.toFile().deleteOnExit();
+        Path tmpSSDir1 = tmpSDir1.resolve("sub_111");
+        tmpSSDir1.toFile().deleteOnExit();
+        Files.createDirectories(tmpSSDir1);
+        Path tmpFile1 = Files.createTempFile(tmpSSDir1, "testAllowLoadLocalInfileInPath_", ".txt");
+        tmpFile1.toFile().deleteOnExit();
+        try (FileWriter output = new FileWriter(tmpFile1.toFile())) {
+            output.write("TEST DATA");
+            output.flush();
+        }
+        Path tmpDir2 = Files.createTempDirectory("ldli_2_");
+        tmpDir2.toFile().deleteOnExit();
+        Path tmpLink2 = tmpDir2.resolve("lnk_11");
+        tmpLink2.toFile().deleteOnExit();
+        boolean skipLinkCheck = false;
+        try {
+            Files.createSymbolicLink(tmpLink2, tmpSDir1);
+        } catch (IOException e) {
+            // Symbolic links fail to create if not using elevated user rights on Windows.
+            skipLinkCheck = true;
+        }
+        Path tmpFile2 = Files.createTempFile(tmpDir2, "testAllowLoadLocalInfileInPath_", ".txt");
+        tmpFile2.toFile().deleteOnExit();
+        try (FileWriter output = new FileWriter(tmpFile2.toFile())) {
+            output.write("TEST DATA");
+            output.flush();
+        }
+
+        String dataPath1 = tmpFile1.toString().replace("\\", "\\\\");
+        String dataUrl1 = tmpFile1.toUri().toURL().toExternalForm();
+        String dataPath2 = tmpFile2.toString().replace("\\", "\\\\");
+        String dataUrl2 = tmpFile2.toUri().toURL().toExternalForm();
+
+        createTable("testAllowLoadLocalInfileInPath", "(data VARCHAR(100))");
+        Properties props = new Properties();
+
+        // Default behavior: 'allowLoadLocalInfile' not set (false) & 'allowLoadLocalInfile' not set (NULL) & 'allowUrlInLocalInfile' not set (false).
+        try (Connection testConn = getConnectionWithProps(props)) {
+            Statement testStmt = testConn.createStatement();
+            assertThrows(SQLSyntaxErrorException.class,
+                    versionMeetsMinimum(8, 0, 19) ? "Loading local data is disabled; this must be enabled on both the client and server sides"
+                            : "The used command is not allowed with this MySQL version",
+                    () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + dataPath1 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+        }
+
+        // 'allowLoadLocalInfile=false' & 'allowLoadLocalInfile' not set (NULL) & 'allowUrlInLocalInfile' not set (false).
+        props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "false");
+        try (Connection testConn = getConnectionWithProps(props)) {
+            Statement testStmt = testConn.createStatement();
+            assertThrows(SQLSyntaxErrorException.class,
+                    versionMeetsMinimum(8, 0, 19) ? "Loading local data is disabled; this must be enabled on both the client and server sides"
+                            : "The used command is not allowed with this MySQL version",
+                    () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + dataPath1 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+        }
+
+        // 'allowLoadLocalInfile=true' & 'allowLoadLocalInfile' not set or set with any value & 'allowUrlInLocalInfile' not set (false).
+        // Load file from any path.
+        props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "true");
+        try (Connection testConn = getConnectionWithProps(props)) {
+            Statement testStmt = testConn.createStatement();
+            testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + dataPath1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+            testAllowLoadLocalInfileInPathCheckAndDelete();
+        }
+        props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), ""); // Empty dir name.
+        try (Connection testConn = getConnectionWithProps(props)) {
+            Statement testStmt = testConn.createStatement();
+            testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + dataPath1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+            testAllowLoadLocalInfileInPathCheckAndDelete();
+        }
+        props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), "   "); // Dir name with spaces.
+        try (Connection testConn = getConnectionWithProps(props)) {
+            Statement testStmt = testConn.createStatement();
+            testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + dataPath1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+            testAllowLoadLocalInfileInPathCheckAndDelete();
+        }
+        props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpDir1.toString() + File.separator + "sub_12"); // Non-existing dir.
+        try (Connection testConn = getConnectionWithProps(props)) {
+            Statement testStmt = testConn.createStatement();
+            testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + dataPath1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+            testAllowLoadLocalInfileInPathCheckAndDelete();
+        }
+        props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpDir2.toString()); // File not in the dir.
+        try (Connection testConn = getConnectionWithProps(props)) {
+            Statement testStmt = testConn.createStatement();
+            testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + dataPath1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+            testAllowLoadLocalInfileInPathCheckAndDelete();
+        }
+
+        boolean inclALLI = false;
+        boolean inclAUILI = false;
+        do {
+            if (inclALLI) {
+                props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "false");
+            } else {
+                props.remove(PropertyKey.allowLoadLocalInfile.getKeyName());
+            }
+
+            String fileRef1;
+            String fileRef2;
+            if (inclAUILI) {
+                props.setProperty(PropertyKey.allowUrlInLocalInfile.getKeyName(), "true");
+                fileRef1 = dataUrl1;
+                fileRef2 = dataUrl2;
+            } else {
+                props.remove(PropertyKey.allowUrlInLocalInfile.getKeyName());
+                fileRef1 = dataPath1;
+                fileRef2 = dataPath2;
+            }
+
+            // 'allowLoadLocalInfile' not set (rep w/ false) & 'allowLoadLocalInfile' set with matching paths & 'allowUrlInLocalInfile' not set (rep w/ true).
+            // Loading files from valid paths works as expected.
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpDir.toString());
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+                testAllowLoadLocalInfileInPathCheckAndDelete();
+            }
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef2 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+                testAllowLoadLocalInfileInPathCheckAndDelete();
+            }
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpDir1.toString());
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+                testAllowLoadLocalInfileInPathCheckAndDelete();
+            }
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpSDir1.toString());
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+                testAllowLoadLocalInfileInPathCheckAndDelete();
+            }
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpSSDir1.toString());
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+                testAllowLoadLocalInfileInPathCheckAndDelete();
+            }
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(),
+                    tmpDir2.toString() + File.separator + ".." + File.separator + tmpDir1.getFileName());
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+                testAllowLoadLocalInfileInPathCheckAndDelete();
+            }
+            if (!skipLinkCheck) {
+                props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpLink2.toString());
+                try (Connection testConn = getConnectionWithProps(props)) {
+                    Statement testStmt = testConn.createStatement();
+                    testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+                    testAllowLoadLocalInfileInPathCheckAndDelete();
+                }
+            }
+
+            // 'allowLoadLocalInfile' not set (rep w/ false) & 'allowLoadLocalInfile' set with unmatching paths & 'allowUrlInLocalInfile' not set (rep w/ true).
+            // Loading files from invalid paths fails with expected exception..
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpDir1.toString());
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                assertThrows(SQLException.class, "(?i)The file '" + dataPath2 + "' is not under the safe path '.*'\\.",
+                        () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef2 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+            }
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpSDir1.toString());
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                assertThrows(SQLException.class, "(?i)The file '" + dataPath2 + "' is not under the safe path '.*'\\.",
+                        () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef2 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+            }
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpSSDir1.toString());
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                assertThrows(SQLException.class, "(?i)The file '" + dataPath2 + "' is not under the safe path '.*'\\.",
+                        () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef2 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+            }
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(),
+                    tmpDir2.toString() + File.separator + ".." + File.separator + tmpDir1.getFileName());
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                assertThrows(SQLException.class, "(?i)The file '" + dataPath2 + "' is not under the safe path '.*'\\.",
+                        () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef2 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+            }
+            if (!skipLinkCheck) {
+                props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpLink2.toString());
+                try (Connection testConn = getConnectionWithProps(props)) {
+                    Statement testStmt = testConn.createStatement();
+                    assertThrows(SQLException.class, "(?i)The file '" + dataPath2 + "' is not under the safe path '.*'\\.",
+                            () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef2 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+                }
+            }
+
+            // 'allowLoadLocalInfile' not set (rep w/ false) & 'allowLoadLocalInfile' set with bad paths & 'allowUrlInLocalInfile' not set (rep w/ true).
+            // Loading files from any path fails with expected exception.
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), ""); // Empty dir name.
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                assertThrows(SQLException.class, "The path '' specified in 'allowLoadLocalInfileInPath' does not exist\\.",
+                        () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef1 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+            }
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                assertThrows(SQLException.class, "The path '' specified in 'allowLoadLocalInfileInPath' does not exist\\.",
+                        () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef2 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+            }
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), "   "); // Dir name with spaces.
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                assertThrows(SQLException.class, "The path '   ' specified in 'allowLoadLocalInfileInPath' does not exist\\.",
+                        () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef1 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+            }
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                assertThrows(SQLException.class, "The path '   ' specified in 'allowLoadLocalInfileInPath' does not exist\\.",
+                        () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef2 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+            }
+            props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpDir1.toString() + File.separator + "sub_12"); // Non-existing dir.
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                assertThrows(SQLException.class,
+                        "(?i)The path '" + (tmpDir1.toString() + File.separator + "sub_12").replace("\\", "\\\\")
+                                + "' specified in 'allowLoadLocalInfileInPath' does not exist\\.",
+                        () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef1 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+            }
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                assertThrows(SQLException.class,
+                        "(?i)The path '" + (tmpDir1.toString() + File.separator + "sub_12").replace("\\", "\\\\")
+                                + "' specified in 'allowLoadLocalInfileInPath' does not exist\\.",
+                        () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + fileRef2 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+            }
+        } while ((inclALLI = !inclALLI) || (inclAUILI = !inclAUILI));
+
+        // 'allowLoadLocalInfile' not set (false) & 'allowLoadLocalInfile' set with valid path & 'allowUrlInLocalInfile=true'.
+        // Loading files using different URL formats (2 valid + 2 invalid).
+        props.remove(PropertyKey.allowLoadLocalInfile.getKeyName());
+        props.setProperty(PropertyKey.allowLoadLocalInfileInPath.getKeyName(), tmpDir1.toString());
+        props.setProperty(PropertyKey.allowUrlInLocalInfile.getKeyName(), "true");
+        try (Connection testConn = getConnectionWithProps(props)) {
+            Statement testStmt = testConn.createStatement();
+            testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + dataPath1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+            testAllowLoadLocalInfileInPathCheckAndDelete();
+        }
+        try (Connection testConn = getConnectionWithProps(props)) {
+            String filePrefix = Util.isRunningOnWindows() ? "file://localhost/" : "file://localhost";
+            Statement testStmt = testConn.createStatement();
+            testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + filePrefix + dataPath1 + "' INTO TABLE testAllowLoadLocalInfileInPath");
+            testAllowLoadLocalInfileInPathCheckAndDelete();
+        }
+        try (Connection testConn = getConnectionWithProps(props)) {
+            String filePrefix = Util.isRunningOnWindows() ? "file://somehost/" : "file://somehost";
+            Statement testStmt = testConn.createStatement();
+            assertThrows(SQLException.class,
+                    "Cannot read from '.*'\\. Only local host names are supported when 'allowLoadLocalInfileInPath' is set\\. "
+                            + "Consider using the loopback network interface \\('localhost'\\)\\.",
+                    () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + filePrefix + dataPath1 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+        }
+        try (Connection testConn = getConnectionWithProps(props)) {
+            String ftpPrefix = Util.isRunningOnWindows() ? "ftp://localhost/" : "ftp://localhost";
+            Statement testStmt = testConn.createStatement();
+            assertThrows(SQLException.class, "Unsupported protocol 'ftp'\\. Only protocol 'file' is supported when 'allowLoadLocalInfileInPath' is set\\.",
+                    () -> testStmt.executeQuery("LOAD DATA LOCAL INFILE '" + ftpPrefix + dataPath1 + "' INTO TABLE testAllowLoadLocalInfileInPath"));
+        }
+    }
+
+    private void testAllowLoadLocalInfileInPathCheckAndDelete() throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT * FROM testAllowLoadLocalInfileInPath");
+        assertTrue(this.rs.next());
+        assertEquals("TEST DATA", this.rs.getString(1));
+        assertEquals(1, this.stmt.executeUpdate("DELETE FROM testAllowLoadLocalInfileInPath"));
     }
 }

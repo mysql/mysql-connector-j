@@ -4774,18 +4774,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         BufferedOutputStream bOut = new BufferedOutputStream(new FileOutputStream(testFile));
 
+        byte[] bytes1 = new byte[fieldLength];
+        Arrays.fill(bytes1, (byte) 'a');
+        byte[] bytes2 = new byte[fieldLength];
+        Arrays.fill(bytes2, (byte) 'b');
+        byte tab = '\t';
+        byte nl = '\n';
+
         for (int i = 0; i < loops; i++) {
-            for (int j = 0; j < fieldLength; j++) {
-                bOut.write("a".getBytes()[0]);
-            }
-            bOut.write("\t".getBytes()[0]);
-            for (int j = 0; j < fieldLength; j++) {
-                bOut.write("b".getBytes()[0]);
-            }
-            bOut.write("\n".getBytes()[0]);
+            bOut.write(bytes1);
+            bOut.write(tab);
+            bOut.write(bytes2);
+            bOut.write(nl);
+            bOut.flush();
         }
 
-        bOut.flush();
         bOut.close();
 
         createTable("testBug11237", "(field1 VARCHAR(1024), field2 VARCHAR(1024))");

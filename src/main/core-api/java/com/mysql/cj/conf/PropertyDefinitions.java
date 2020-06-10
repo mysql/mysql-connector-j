@@ -345,6 +345,9 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.allowLoadLocalInfile, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadDataLocal"), "3.0.3", CATEGORY_SECURITY, Integer.MAX_VALUE),
 
+                new StringPropertyDefinition(PropertyKey.allowLoadLocalInfileInPath, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.loadDataLocalInPath"), "8.0.22", CATEGORY_SECURITY, Integer.MAX_VALUE),
+
                 new BooleanPropertyDefinition(PropertyKey.allowMultiQueries, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.allowMultiQueries"), "3.1.1", CATEGORY_SECURITY, Integer.MAX_VALUE),
 
