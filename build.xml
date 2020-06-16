@@ -759,8 +759,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                   value="javax.xml.parsers;javax.xml.stream;javax.xml.transform;javax.xml.transform.dom;javax.xml.transform.sax;javax.xml.transform.stax;javax.xml.transform.stream;org.w3c.dom;org.xml.sax;org.xml.sax.helpers;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.jee-imports" value="javax.sql;javax.naming;javax.naming.spi;javax.transaction.xa;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.jmx-imports" value="javax.management;resolution:=optional" />
-        <property name="com.mysql.cj.build.meta-inf.integration-imports"
-                  value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2,1.0.0)&quot;;resolution:=optional" />
+        <property name="com.mysql.cj.build.meta-inf.integration-imports" value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2,1.0.0)&quot;;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.logging-imports" value="org.slf4j;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.xdevapi-imports"
                   value="com.google.protobuf;javax.security.auth.callback;javax.security.sasl;resolution:=optional" />
@@ -1528,10 +1527,11 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         </exec>
 
         <delete dir="build/deb" />
+        <property name="deb_version" value="-1${id_release}" />
 
         <local name="orig_package_name" />
         <property name="orig_package_name"
-                  value="${com.mysql.cj.build.driver.extendedName}_${com.mysql.cj.build.driver.version.full}${deb_version_suffix}${id_release}.orig.tar.gz" />
+                  value="${com.mysql.cj.build.driver.extendedName}_${com.mysql.cj.build.driver.version.full}${deb_version_suffix}.orig.tar.gz" />
         <tar destfile="build/deb/${orig_package_name}" basedir="." compression="gzip" excludes="${com.mysql.cj.dist.dir}/**, build/**" />
 
         <copy todir="build/deb/src" overwrite="true">
@@ -1549,7 +1549,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <filter token="PRODUCT" value="${com.mysql.cj.build.driver.displayName} ${com.mysql.cj.build.driver.version.series}" />
                 <filter token="WITH_JARDEPS" value="${com.mysql.cj.extra.libs}" />
                 <filter token="PACKAGE_TIMESTAMP" value="${time.deb.packageTimeStamp}" />
-                <filter token="ID_RELEASE" value="${id_release}" />
+                <filter token="ID_RELEASE" value="${deb_version}" />
                 <filter token="CODENAME" value="${codename}" />
                 <filter token="LIC_FILE" value="${lic_file}" />
                 <filter token="PRODUCT_NAME" value="${com.mysql.cj.build.driver.name}" />
