@@ -52,6 +52,7 @@ import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
+import com.mysql.cj.protocol.a.authentication.AuthenticationLdapSaslClientPlugin;
 import com.mysql.cj.protocol.a.authentication.CachingSha2PasswordPlugin;
 import com.mysql.cj.protocol.a.authentication.MysqlClearPasswordPlugin;
 import com.mysql.cj.protocol.a.authentication.MysqlNativePasswordPlugin;
@@ -242,6 +243,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         pluginsToInit.add(new Sha256PasswordPlugin());
         pluginsToInit.add(new CachingSha2PasswordPlugin());
         pluginsToInit.add(new MysqlOldPasswordPlugin());
+        pluginsToInit.add(new AuthenticationLdapSaslClientPlugin());
 
         // plugins from authenticationPluginClasses connection parameter
         String authenticationPluginClasses = this.propertySet.getStringProperty(PropertyKey.authenticationPlugins).getValue();
@@ -328,7 +330,6 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      */
     @SuppressWarnings("unchecked")
     private AuthenticationPlugin<NativePacketPayload> getAuthenticationPlugin(String pluginName) {
-
         AuthenticationPlugin<NativePacketPayload> plugin = this.authenticationPlugins.get(pluginName);
 
         if (plugin != null && !plugin.isReusable()) {
