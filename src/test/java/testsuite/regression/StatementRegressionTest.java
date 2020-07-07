@@ -11095,4 +11095,33 @@ public class StatementRegressionTest extends BaseTestCase {
             }
         } while (useSPS = !useSPS);
     }
+
+    /**
+     * Tests fix for Bug#Bug#99713 (31418928), NPE DURING COM.MYSQL.CJ.SERVERPREPAREDQUERYBINDVALUE.STOREDATE().
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug99713() throws Exception {
+        createTable("testBug99713", "(d1 DATE)");
+        Connection con = null;
+        Properties props = new Properties();
+        try {
+            for (boolean useSSPS : new boolean[] { false, true }) {
+                for (boolean cacheDefaultTimezone : new boolean[] { true, false }) {
+                    props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+                    props.put(PropertyKey.cacheDefaultTimezone.getKeyName(), "" + cacheDefaultTimezone);
+                    con = getConnectionWithProps(props);
+                    this.pstmt = con.prepareStatement("INSERT into testBug99713 VALUES (?)");
+                    this.pstmt.setDate(1, java.sql.Date.valueOf("1982-04-01"));
+                    this.pstmt.addBatch();
+                    assertEquals(1, this.pstmt.executeBatch()[0]);
+                }
+            }
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
 }

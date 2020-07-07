@@ -3,6 +3,8 @@
 
 Version 8.0.22
 
+  - Fix for Bug#99713 (31418928), NPE DURING COM.MYSQL.CJ.SERVERPREPAREDQUERYBINDVALUE.STOREDATE().
+
   - WL#14068, Remove legacy integration with JBoss.
 
 Version 8.0.21
