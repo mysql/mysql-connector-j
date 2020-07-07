@@ -55,6 +55,8 @@ import java.util.Optional;
 import java.util.TimeZone;
 import java.util.function.Supplier;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.Constants;
 import com.mysql.cj.MessageBuilder;
@@ -66,6 +68,7 @@ import com.mysql.cj.ServerPreparedQuery;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.Session;
 import com.mysql.cj.TransactionEventHandler;
+import com.mysql.cj.conf.ConnectionPropertyMaxResultBufferParser;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
@@ -79,6 +82,7 @@ import com.mysql.cj.exceptions.ClosedOnExpiredPasswordException;
 import com.mysql.cj.exceptions.DataTruncationException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.exceptions.MaxResultBufferException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.PasswordExpiredException;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -195,6 +199,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     private BaseMetricsHolder metricsHolder;
 
+    private ResultByteBufferCounter counter;
+
     /**
      * The comment (if any) that we'll prepend to all queries
      * sent to the server (to show up in "SHOW PROCESSLIST")
@@ -285,6 +291,20 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         protocolEntityClassToBinaryReader.put(Resultset.class, new BinaryResultsetReader(this));
         this.PROTOCOL_ENTITY_CLASS_TO_BINARY_READER = Collections.unmodifiableMap(protocolEntityClassToBinaryReader);
 
+        this.counter = getResultByteBufferCounter();
+
+    }
+
+    private ResultByteBufferCounter getResultByteBufferCounter() {
+        try {
+            long maxResultBuffer = ConnectionPropertyMaxResultBufferParser
+                    .parseProperty(this.propertySet.getStringProperty(PropertyKey.maxResultBuffer).getValue(), this.log);
+            return new ResultByteBufferCounter(maxResultBuffer);
+        } catch (ParserConfigurationException e) {
+            throw ExceptionFactory.createException(Messages.getString("PropertyDefinition.2",
+                    new Object[] { PropertyKey.maxResultBuffer, e.getMessage(), this.propertySet.getStringProperty(PropertyKey.maxResultBuffer).getValue() }),
+                    this.exceptionInterceptor);
+        }
     }
 
     @Override
@@ -1012,6 +1032,9 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             return rs;
 
+        } catch (MaxResultBufferException mrbEx) {
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder(),
+                    this.getPacketReceivedTimeHolder(), mrbEx, getExceptionInterceptor());
         } catch (CJException sqlEx) {
             if (this.queryInterceptors != null) {
                 // TODO why doing this?
@@ -1574,6 +1597,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         if (sr == null) {
             throw ExceptionFactory.createException(FeatureNotAvailableException.class, "ProtocolEntityReader isn't available for class " + requiredClass);
         }
+        setResultByteBufferCounterForResultRowsSet(requiredClass, sr);
         return sr.read(protocolEntityFactory);
     }
 
@@ -2165,6 +2189,24 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
                 blobSendChunkSize.setValue(allowedBlobSendChunkSize);
             }
+        }
+    }
+
+    public ResultByteBufferCounter getCounter() {
+        return this.counter;
+    }
+
+    /**
+     * Set ResultByteBufferCounter if requiredClass is ResultsetRow
+     * @param requiredClass
+     *              class
+     * @param sr
+     *         instance of ProtocolEntityReader
+     */
+    private <T extends ProtocolEntity> void setResultByteBufferCounterForResultRowsSet(Class<T> requiredClass,
+            ProtocolEntityReader<T, NativePacketPayload> sr) {
+        if (ResultsetRow.class.equals(requiredClass)) {
+            sr.setResultByteBufferCounterIfNoExist(this.counter);
         }
     }
 }

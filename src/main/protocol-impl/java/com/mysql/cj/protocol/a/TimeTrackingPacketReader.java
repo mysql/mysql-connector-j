@@ -54,7 +54,12 @@ public class TimeTrackingPacketReader implements MessageReader<NativePacketHeade
 
     @Override
     public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
-        NativePacketPayload buf = this.packetReader.readMessage(reuse, header);
+        return this.readMessage(reuse, header, false);
+    }
+
+    @Override
+    public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header, boolean isRowReading) throws IOException {
+        NativePacketPayload buf = this.packetReader.readMessage(reuse, header, isRowReading);
         this.lastPacketReceivedTimeMs = System.currentTimeMillis();
         return buf;
     }
@@ -84,4 +89,8 @@ public class TimeTrackingPacketReader implements MessageReader<NativePacketHeade
         return this.packetReader;
     }
 
+    @Override
+    public void setResultByteBufferCounterIfNoExist(ResultByteBufferCounter counter) {
+        this.packetReader.setResultByteBufferCounterIfNoExist(counter);
+    }
 }

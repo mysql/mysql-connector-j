@@ -34,6 +34,7 @@ import java.util.Optional;
 
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.protocol.a.ResultByteBufferCounter;
 
 public interface MessageReader<H extends MessageHeader, M extends Message> {
 
@@ -60,6 +61,25 @@ public interface MessageReader<H extends MessageHeader, M extends Message> {
      *             if an error occurs
      */
     M readMessage(Optional<M> reuse, H header) throws IOException;
+
+    /**
+     * Read message from server into to the given {@link Message} instance or into the new one if not present.
+     * For asynchronous channel it synchronously reads the next message in the stream, blocking until the message is read fully.
+     * Could throw CJCommunicationsException wrapping an {@link IOException} during read or parse
+     *
+     * @param reuse
+     *            {@link Message} object to reuse. May be ignored by implementation.
+     * @param header
+     *            {@link MessageHeader} instance
+     * @param isRowReading
+     *            row reading flag
+     * @return {@link Message} instance
+     * @throws IOException
+     *             if an error occurs
+     */
+    default M readMessage(Optional<M> reuse, H header, boolean isRowReading) throws IOException {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
 
     /**
      * Read message from server into to the given {@link Message} instance or into the new one if not present.
@@ -137,4 +157,13 @@ public interface MessageReader<H extends MessageHeader, M extends Message> {
         // no-op
     }
 
+    /**
+     * Set result byte buffer counter if it is null
+     * 
+     * @param counter
+     *            ResultByteBufferCounter object instance
+     */
+    default void setResultByteBufferCounterIfNoExist(ResultByteBufferCounter counter) {
+        // no-op
+    }
 }

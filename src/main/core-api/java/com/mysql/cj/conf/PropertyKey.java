@@ -154,6 +154,7 @@ public enum PropertyKey {
     maxAllowedPacket("maxAllowedPacket", true), //
     maxQuerySizeToLog("maxQuerySizeToLog", true), //
     maxReconnects("maxReconnects", true), //
+    maxResultBuffer("maxResultBuffer", true),
     maxRows("maxRows", true), //
     metadataCacheSize("metadataCacheSize", true), //
     netTimeoutForStreamingResults("netTimeoutForStreamingResults", true), //

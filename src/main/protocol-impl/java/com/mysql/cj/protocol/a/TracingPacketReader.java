@@ -71,8 +71,13 @@ public class TracingPacketReader implements MessageReader<NativePacketHeader, Na
 
     @Override
     public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
+        return this.readMessage(reuse, header, false);
+    }
+
+    @Override
+    public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header, boolean isRowReading) throws IOException {
         int packetLength = header.getMessageSize();
-        NativePacketPayload buf = this.packetReader.readMessage(reuse, header);
+        NativePacketPayload buf = this.packetReader.readMessage(reuse, header, isRowReading);
 
         StringBuilder traceMessageBuf = new StringBuilder();
 
@@ -108,6 +113,11 @@ public class TracingPacketReader implements MessageReader<NativePacketHeader, Na
     @Override
     public MessageReader<NativePacketHeader, NativePacketPayload> undecorate() {
         return this.packetReader;
+    }
+
+    @Override
+    public void setResultByteBufferCounterIfNoExist(ResultByteBufferCounter counter) {
+        this.packetReader.setResultByteBufferCounterIfNoExist(counter);
     }
 
 }

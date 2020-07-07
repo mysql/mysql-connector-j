@@ -47,6 +47,8 @@ public class ResultsetRowReader implements ProtocolEntityReader<ResultsetRow, Na
 
     protected RuntimeProperty<Integer> useBufferRowSizeThreshold;
 
+    private ResultByteBufferCounter counter;
+
     public ResultsetRowReader(NativeProtocol prot) {
         this.protocol = prot;
 
@@ -70,9 +72,11 @@ public class ResultsetRowReader implements ProtocolEntityReader<ResultsetRow, Na
         NativePacketPayload rowPacket = null;
         NativePacketHeader hdr = this.protocol.getPacketReader().readHeader();
 
+        this.protocol.getPacketReader().setResultByteBufferCounterIfNoExist(this.counter);
+
         // read the entire packet(s)
         rowPacket = this.protocol.getPacketReader()
-                .readMessage(rf.canReuseRowPacketForBufferRow() ? Optional.ofNullable(this.protocol.getReusablePacket()) : Optional.empty(), hdr);
+                .readMessage(rf.canReuseRowPacketForBufferRow() ? Optional.ofNullable(this.protocol.getReusablePacket()) : Optional.empty(), hdr, true);
         this.protocol.checkErrorMessage(rowPacket);
         // Didn't read an error, so re-position to beginning of packet in order to read result set data
         rowPacket.setPosition(rowPacket.getPosition() - 1);
@@ -81,10 +85,18 @@ public class ResultsetRowReader implements ProtocolEntityReader<ResultsetRow, Na
         if (!this.protocol.getServerSession().isEOFDeprecated() && rowPacket.isEOFPacket()
                 || this.protocol.getServerSession().isEOFDeprecated() && rowPacket.isResultSetOKPacket()) {
             this.protocol.readServerStatusForResultSets(rowPacket, true);
+            Optional.ofNullable(this.counter).ifPresent(ResultByteBufferCounter::resetCounter);
             return null;
         }
 
         return sf.createFromMessage(rowPacket);
+    }
+
+    @Override
+    public void setResultByteBufferCounterIfNoExist(ResultByteBufferCounter counter) {
+        if (this.counter == null) {
+            this.counter = counter;
+        }
     }
 
 }

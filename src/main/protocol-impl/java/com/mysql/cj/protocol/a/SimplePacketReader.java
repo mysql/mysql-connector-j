@@ -35,6 +35,7 @@ import java.util.Optional;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
+import com.mysql.cj.exceptions.MaxResultBufferException;
 import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.protocol.SocketConnection;
 
@@ -48,6 +49,7 @@ public class SimplePacketReader implements MessageReader<NativePacketHeader, Nat
     protected RuntimeProperty<Integer> maxAllowedPacket;
 
     private byte readPacketSequence = -1;
+    private ResultByteBufferCounter counter;
 
     public SimplePacketReader(SocketConnection socketConnection, RuntimeProperty<Integer> maxAllowedPacket) {
         this.socketConnection = socketConnection;
@@ -84,6 +86,11 @@ public class SimplePacketReader implements MessageReader<NativePacketHeader, Nat
 
     @Override
     public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
+        return this.readMessage(reuse, header, false);
+    }
+
+    @Override
+    public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header, boolean isRowReading) throws IOException {
         try {
             int packetLength = header.getMessageSize();
             NativePacketPayload buf;
@@ -103,6 +110,7 @@ public class SimplePacketReader implements MessageReader<NativePacketHeader, Nat
             } else {
                 buf = new NativePacketPayload(new byte[packetLength]);
             }
+            increaseResultBufferCounter(packetLength, isRowReading);
 
             // Read the data from the server
             int numBytesRead = this.socketConnection.getMysqlInput().readFully(buf.getByteBuffer(), 0, packetLength);
@@ -111,7 +119,7 @@ public class SimplePacketReader implements MessageReader<NativePacketHeader, Nat
             }
             return buf;
 
-        } catch (IOException e) {
+        } catch (IOException | MaxResultBufferException e) {
             try {
                 this.socketConnection.forceClose();
             } catch (Exception ex) {
@@ -131,4 +139,17 @@ public class SimplePacketReader implements MessageReader<NativePacketHeader, Nat
         this.readPacketSequence = 0;
     }
 
+    @Override
+    public void setResultByteBufferCounterIfNoExist(ResultByteBufferCounter counter) {
+        if (this.counter == null) {
+            this.counter = counter;
+        }
+    }
+
+    private void increaseResultBufferCounter(int packerLength, boolean isRowReading) throws IOException {
+        if (isRowReading) {
+            Optional.ofNullable(this.counter)
+                    .ifPresent(c -> c.increaseCounter(packerLength));
+        }
+    }
 }

@@ -56,9 +56,14 @@ public class MultiPacketReader implements MessageReader<NativePacketHeader, Nati
 
     @Override
     public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
+        return this.readMessage(reuse, header, false);
+    }
+
+    @Override
+    public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header, boolean isRowReading) throws IOException {
 
         int packetLength = header.getMessageSize();
-        NativePacketPayload buf = this.packetReader.readMessage(reuse, header);
+        NativePacketPayload buf = this.packetReader.readMessage(reuse, header, isRowReading);
 
         if (packetLength == NativeConstants.MAX_PACKET_SIZE) { // it's a multi-packet
 
@@ -81,7 +86,7 @@ public class MultiPacketReader implements MessageReader<NativePacketHeader, Nati
                     throw new IOException(Messages.getString("PacketReader.10"));
                 }
 
-                this.packetReader.readMessage(Optional.of(multiPacket), hdr);
+                this.packetReader.readMessage(Optional.of(multiPacket), hdr, isRowReading);
 
                 buf.writeBytes(StringLengthDataType.STRING_FIXED, multiPacket.getByteBuffer(), 0, multiPacketLength);
 
@@ -113,4 +118,8 @@ public class MultiPacketReader implements MessageReader<NativePacketHeader, Nati
         return this.packetReader;
     }
 
+    @Override
+    public void setResultByteBufferCounterIfNoExist(ResultByteBufferCounter counter) {
+        this.packetReader.setResultByteBufferCounterIfNoExist(counter);
+    }
 }

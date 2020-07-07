@@ -674,6 +674,8 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PropertyKey.enableEscapeProcessing, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enableEscapeProcessing"), "6.0.1", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
+                new StringPropertyDefinition(PropertyKey.maxResultBuffer, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.maxResultBuffer"), "8.0.21", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
                 //
                 // CATEGORY_DEBUGING_PROFILING

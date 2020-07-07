@@ -84,6 +84,7 @@ import javax.sql.rowset.CachedRowSet;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
+import com.mysql.cj.NativeSession;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
@@ -91,6 +92,7 @@ import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.ExceptionInterceptorChain;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import com.mysql.cj.exceptions.MaxResultBufferException;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.MysqlSQLXML;
 import com.mysql.cj.jdbc.ServerPreparedStatement;
@@ -102,6 +104,7 @@ import com.mysql.cj.jdbc.result.ResultSetImpl;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.protocol.InternalDate;
+import com.mysql.cj.protocol.a.ResultByteBufferCounter;
 import com.mysql.cj.protocol.a.result.NativeResultset;
 import com.mysql.cj.protocol.a.result.ResultsetRowsCursor;
 import com.mysql.cj.protocol.a.result.ResultsetRowsStreaming;
@@ -7344,5 +7347,52 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(3, this.rs.getInt(1));
         assertEquals(3.3d, this.rs.getDouble(1));
         assertFalse(this.rs.next());
+    }
+
+    public void testMaxResultBuffer() throws Exception {
+        createTable("testMaxResultBuffer", "(value VARCHAR(10))");
+        for (int i=0; i < 200; i++) {
+            this.stmt.execute("INSERT INTO testMaxResultBuffer(value) VALUES ('123456789X');");
+        }
+        Connection con = null;
+        Properties props = new Properties();
+        try {
+            props.setProperty(PropertyKey.maxResultBuffer.getKeyName(), "3000");
+            con = getConnectionWithProps(props);
+            Statement stm = con.createStatement();
+            stm.execute("SELECT * FROM testMaxResultBuffer");
+            ResultByteBufferCounter counter = ((NativeSession) ((JdbcConnection) con).getSession()).getProtocol().getCounter();
+            assertEquals("The result byte counter should be reset after the data has been successfully retrieved",0,counter.getResultByteBufferCounter());
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
+
+    public void testMaxResultBufferException() throws Exception {
+        createTable("testMaxResultBuffer", "(value VARCHAR(10))");
+        for (int i=0; i < 200; i++) {
+            this.stmt.execute("INSERT INTO testMaxResultBuffer(value) VALUES ('123456789X');");
+        }
+
+        CommunicationsException cExec = assertThrows("CommunicationsException should be thrown", CommunicationsException.class, () -> {
+            Connection con = null;
+            Properties props = new Properties();
+            try {
+                props.setProperty(PropertyKey.maxResultBuffer.getKeyName(), "1000");
+                con = getConnectionWithProps(props);
+                Statement stm = con.createStatement();
+                stm.execute("SELECT * FROM testMaxResultBuffer");
+            } finally {
+                if (con != null) {
+                    con.close();
+                }
+            }
+            return null;
+        });
+
+        assertTrue("Expected MaxResultBufferException",cExec.getCause().getCause() instanceof MaxResultBufferException);
+
     }
 }

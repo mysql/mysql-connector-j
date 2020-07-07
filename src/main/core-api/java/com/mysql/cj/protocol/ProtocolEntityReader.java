@@ -33,6 +33,7 @@ import java.io.IOException;
 
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.protocol.a.ResultByteBufferCounter;
 
 public interface ProtocolEntityReader<T extends ProtocolEntity, M extends Message> {
 
@@ -74,4 +75,13 @@ public interface ProtocolEntityReader<T extends ProtocolEntity, M extends Messag
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
     }
 
+    /**
+     * Set result byte buffer counter if it is null
+     * 
+     * @param counter
+     *            ResultByteBufferCounter object instance
+     */
+    default void setResultByteBufferCounterIfNoExist(ResultByteBufferCounter counter) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
+    }
 }

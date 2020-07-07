@@ -96,8 +96,13 @@ public class DebugBufferingPacketReader implements MessageReader<NativePacketHea
 
     @Override
     public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
+        return this.readMessage(reuse, header, false);
+    }
+
+    @Override
+    public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header, boolean isRowReading) throws IOException {
         int packetLength = header.getMessageSize();
-        NativePacketPayload buf = this.packetReader.readMessage(reuse, header);
+        NativePacketPayload buf = this.packetReader.readMessage(reuse, header, isRowReading);
 
         int bytesToDump = Math.min(MAX_PACKET_DUMP_LENGTH, packetLength);
         String PacketPayloadImpl = StringUtils.dumpAsHex(buf.getByteBuffer(), bytesToDump);
@@ -145,4 +150,8 @@ public class DebugBufferingPacketReader implements MessageReader<NativePacketHea
         return this.packetReader;
     }
 
+    @Override
+    public void setResultByteBufferCounterIfNoExist(ResultByteBufferCounter counter) {
+        this.packetReader.setResultByteBufferCounterIfNoExist(counter);
+    }
 }

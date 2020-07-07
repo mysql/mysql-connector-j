@@ -29,9 +29,7 @@
 
 package com.mysql.cj.protocol.a;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -45,12 +43,14 @@ import java.util.Random;
 
 import org.junit.Test;
 
+import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
+import com.mysql.cj.exceptions.MaxResultBufferException;
 import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.jdbc.JdbcPropertySetImpl;
 import com.mysql.cj.log.Log;
@@ -121,9 +121,7 @@ public class SimplePacketReaderTest {
     // trivial payload test
     @Test
     public void readBasicPayload() throws IOException {
-        RuntimeProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getProperty(PropertyKey.maxAllowedPacket);
-        SocketConnection connection = new FixedBufferSocketConnection(new byte[] { 3, 2, 1, 6, 5, 4 });
-        MessageReader<NativePacketHeader, NativePacketPayload> reader = new SimplePacketReader(connection, maxAllowedPacket);
+        MessageReader<NativePacketHeader, NativePacketPayload> reader = prepareSimpleSimplePacketReader();
         NativePacketPayload b = reader.readMessage(Optional.empty(), new NativePacketHeader(new byte[] { 3, 0, 0, 0 }));
         assertEquals(3, b.getByteBuffer()[0]);
         assertEquals(2, b.getByteBuffer()[1]);
@@ -218,6 +216,40 @@ public class SimplePacketReaderTest {
                 assertEquals(i, readBuffer.getByteBuffer()[j]);
             }
         }
+    }
+
+    //Test if ResultByteBufferCounter works properly
+    @Test
+    public void readLessOrEqualsDataThenMaxResultBufferTest() throws IOException {
+        MessageReader<NativePacketHeader, NativePacketPayload> reader = prepareSimpleSimplePacketReader();
+        ResultByteBufferCounter counter = new ResultByteBufferCounter(6);
+        reader.setResultByteBufferCounterIfNoExist(counter);
+        NativePacketPayload b1 = reader.readMessage(Optional.empty(), new NativePacketHeader(new byte[] { 3, 0, 0, 0 }), true);
+        assertEquals("Counter should be equals to count of read data", 3, counter.getResultByteBufferCounter());
+        NativePacketPayload b2 = reader.readMessage(Optional.empty(), new NativePacketHeader(new byte[] { 3, 0, 0, 0 }), true);
+        assertEquals("Counter should be equals to count of read data", 6, counter.getResultByteBufferCounter());
+    }
+
+    //Test if ResultByteBufferCounter throws correct exception, when trying to read more data than maxResultBuffer
+    @Test
+    public void maxResultBufferExceptionTest() {
+        MaxResultBufferException mrbExc = assertThrows(MaxResultBufferException.class, () -> {
+            MessageReader<NativePacketHeader, NativePacketPayload> reader = prepareSimpleSimplePacketReader();
+            ResultByteBufferCounter counter = new ResultByteBufferCounter(5);
+            reader.setResultByteBufferCounterIfNoExist(counter);
+            NativePacketPayload b = reader.readMessage(Optional.empty(), new NativePacketHeader(new byte[] { 6, 0, 0, 0 }), true);
+        });
+
+        String expectedMessage = Messages.getString("ConnectionString.27", new Object[] { 6, 5 });
+        String actualMessage = mrbExc.getMessage();
+
+        assertEquals("Exception message should looks like: " + expectedMessage, expectedMessage, actualMessage);
+    }
+
+    private MessageReader<NativePacketHeader, NativePacketPayload> prepareSimpleSimplePacketReader() {
+        RuntimeProperty<Integer> maxAllowedPacket = new JdbcPropertySetImpl().getProperty(PropertyKey.maxAllowedPacket);
+        SocketConnection connection = new FixedBufferSocketConnection(new byte[] { 3, 2, 1, 6, 5, 4 });
+        return new SimplePacketReader(connection, maxAllowedPacket);
     }
 
     // TODO any boundary conditions or large packet issues?
