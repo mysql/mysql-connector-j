@@ -11057,7 +11057,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         });
 
         // 7. Explicit sslMode=VERIFY_IDENTITY, explicit useSSL=false, verifyServerCertificate=false, with trust store
-        // The server certificate used in this test has "CN=MySQL Connector/J Server" thus expecting identity check failure
+        // The server certificate used in this test has "CN=MySQL Connector/J Server" and several SAN entries that don't match thus identity check failure
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_IDENTITY.toString());
         props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
@@ -11074,8 +11074,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 cause = cause.getCause();
             }
             assertTrue(cause != null && cause instanceof CertificateException, "CertificateException expected");
-            assertTrue(cause.getMessage()
-                    .contains("Server certificate identity check failed. The certificate Common Name 'MySQL Connector/J Server' does not match"));
+            String errMsg = cause.getMessage();
+            if (errMsg.startsWith("java.security.cert.CertificateException: ")) {
+                errMsg = errMsg.substring("java.security.cert.CertificateException: ".length());
+            }
+            assertEquals("Server identity verification failed. None of the DNS or IP Subject Alternative Name " + "entries matched the server hostname/IP '"
+                    + getHostFromTestsuiteUrl() + "'.", errMsg);
         }
     }
 
@@ -11735,5 +11739,86 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             testConn.close();
         } while (useSPS = !useSPS);
+    }
+
+    /**
+     * Tests fix for Bug#99767 (31443178), Contribution: Check SubjectAlternativeName for TLS instead of commonName.
+     * 
+     * This test requires a server X509 certificate that contains the following X509v3 extension:
+     * 
+     * <pre>
+     * X509v3 Subject Alternative Name:
+     *     DNS:bug99767.mysql.san1.tst,
+     *     DNS:*.mysql.san2.tst,
+     *     DNS:bug*.mysql.san3.tst,
+     *     DNS:*99767.mysql.san4.tst,
+     *     DNS:bug99767.*.san5.tst,
+     *     DNS:bug99767.*,
+     *     DNS:*,
+     *     IP Address:9.9.7.67,
+     *     IP Address:99.7.6.7
+     * </pre>
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug99767() throws Exception {
+        try {
+            final Properties props = getPropertiesFromTestsuiteUrl();
+            props.setProperty(PropertyKey.socketFactory.getKeyName(), "testsuite.UnreliableSocketFactory");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_IDENTITY.toString());
+            props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
+            props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
+            props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
+
+            final String host = props.getProperty(PropertyKey.HOST.getKeyName());
+            final String port = props.getProperty(PropertyKey.PORT.getKeyName());
+
+            props.remove(PropertyKey.HOST.getKeyName());
+
+            String[] okHosts = { "bug99767.mysql.san1.tst", "bug99767.mysql.san2.tst", "bug99767.mysql.san3.tst", "bug99767.mysql.san4.tst", "9.9.7.67",
+                    "99.7.6.7" };
+            String[] notOkHosts = { "bug31443178.mysql.san1.tst", "bug99767.cj.mysql.san2.tst", "bug99767.cj.mysql.san3.tst", "cj.bug99767.mysql.san4.tst",
+                    "bug99767.mysql.san5.tst", "bug99767.cj.mysql.san5.tst", "bug99767.tst", "bug99767", "31.44.31.78" };
+
+            UnreliableSocketFactory.flushAllStaticData();
+            Arrays.stream(okHosts).forEach(h -> UnreliableSocketFactory.mapHost(h, host));
+            Arrays.stream(notOkHosts).forEach(h -> UnreliableSocketFactory.mapHost(h, host));
+
+            // OK hosts that match one of the DNS/IP SANs.
+            for (String okHost : okHosts) {
+                try (Connection testConn = getConnectionWithProps("jdbc:mysql://" + okHost + ":" + port + "/", props)) {
+                    this.rs = testConn.createStatement().executeQuery("SELECT 1");
+                    assertTrue(this.rs.next());
+                    assertEquals(1, this.rs.getInt(1));
+                }
+            }
+
+            // Not OK hosts that don't match any of the DNS/IP SANs.
+            for (String notOkHost : notOkHosts) {
+                Exception e = assertThrows(CommunicationsException.class, () -> getConnectionWithProps("jdbc:mysql://" + notOkHost + ":" + port + "/", props));
+                assertNotNull(e.getCause());
+                assertNotNull(e.getCause().getCause());
+                String errMsg = e.getCause().getCause().getMessage();
+                if (errMsg.startsWith("java.security.cert.CertificateException: ")) {
+                    errMsg = errMsg.substring("java.security.cert.CertificateException: ".length());
+                }
+                assertEquals("Server identity verification failed. None of the DNS or IP Subject Alternative Name " + "entries matched the server hostname/IP '"
+                        + notOkHost + "'.", errMsg);
+            }
+
+            // Not OK hosts are OK if not verifying identity, though.
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_CA.toString());
+            for (String okHost : notOkHosts) {
+                try (Connection testConn = getConnectionWithProps("jdbc:mysql://" + okHost + ":" + port + "/", props)) {
+                    this.rs = testConn.createStatement().executeQuery("SELECT 1");
+                    assertTrue(this.rs.next());
+                    assertEquals(1, this.rs.getInt(1));
+                }
+            }
+
+        } finally {
+            UnreliableSocketFactory.flushAllStaticData();
+        }
     }
 }

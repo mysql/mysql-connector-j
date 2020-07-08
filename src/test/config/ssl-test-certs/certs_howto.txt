@@ -12,14 +12,14 @@ $ openssl genrsa -out ca-key.pem 2048
 
 (Generate a self-signed certificate for the CA)
 $ openssl req -new -x509 -nodes -sha256 -days 3650 -key ca-key.pem -out ca-cert.pem
-(...)
-Country Name (2 letter code) []:US
-State or Province Name (full name) []:California
-Locality Name (eg, city) []:Redwood Shores
-Organization Name (eg, company) []:Oracle
-Organizational Unit Name (eg, section) []:MySQL
-Common Name (e.g. server FQDN or YOUR name) []:MySQL Connector/J CA
-Email Address []:mysql@oracle.com
+  (...)
+  Country Name (2 letter code) []:US
+  State or Province Name (full name) []:California
+  Locality Name (eg, city) []:Redwood Shores
+  Organization Name (eg, company) []:Oracle
+  Organizational Unit Name (eg, section) []:MySQL
+  Common Name (e.g. server FQDN or YOUR name) []:MySQL Connector/J CA
+  Email Address []:mysql@oracle.com
 
 
 2. Server key and certificate
@@ -30,20 +30,27 @@ $ openssl genrsa -out server-key.pem 2048
 
 (Generate a certificate signing request for the server)
 $ openssl req -new -key server-key.pem -out server-csr.pem
-(...)
-Country Name (2 letter code) []:US
-State or Province Name (full name) []:California
-Locality Name (eg, city) []:Redwood Shores
-Organization Name (eg, company) []:Oracle
-Organizational Unit Name (eg, section) []:MySQL
-Common Name (e.g. server FQDN or YOUR name) []:MySQL Connector/J Server
-Email Address []:mysql@oracle.com
-(...)
-A challenge password []:
-An optional company name []:
+(Or, if the Subject Alternative Name field is required for testing - *used together with below sign command*)
+$ openssl req -new -key server-key.pem -out server-csr.pem \
+    -reqexts SAN \
+    -config <(cat /etc/ssl/openssl.cnf <(printf "\n[SAN]\n\nsubjectAltName=@alt_names\n\n[alt_names]\nDNS.1=bug99767.mysql.san1.tst\nDNS.2=*.mysql.san2.tst\nDNS.3=bug*.mysql.san3.tst\nDNS.4=*99767.mysql.san4.tst\nDNS.5=bug99767.*.san5.tst\nDNS.6=bug99767.*\nDNS.7=*\nIP.1=9.9.7.67\nIP.2=99.7.6.7"))
+  (...)
+  Country Name (2 letter code) []:US
+  State or Province Name (full name) []:California
+  Locality Name (eg, city) []:Redwood Shores
+  Organization Name (eg, company) []:Oracle
+  Organizational Unit Name (eg, section) []:MySQL
+  Common Name (e.g. server FQDN or YOUR name) []:MySQL Connector/J Server
+  Email Address []:mysql@oracle.com
+  (...)
+  A challenge password []:
+  An optional company name []:
 
 (Sign the server certificate signing request)
 $ openssl x509 -req -in server-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -set_serial 01 -days 3650 -sha256 -out server-cert.pem
+(Or, if the Subject Alternative Name field is required for testing - *used together with above request command*)
+$ openssl x509 -req -in server-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -set_serial 01 -days 3650 -sha256 -out server-cert.pem \
+-extfile <(printf "subjectAltName=@alt_names\n\n[alt_names]\nDNS.1=bug99767.mysql.san1.tst\nDNS.2=*.mysql.san2.tst\nDNS.3=bug*.mysql.san3.tst\nDNS.4=*99767.mysql.san4.tst\nDNS.5=bug99767.*.san5.tst\nDNS.6=bug99767.*\nDNS.7=*\nIP.1=9.9.7.67\nIP.2=99.7.6.7") 
 
 (OPTIONAL: Delete the certificate signing request file)
 $ rm server-csr.pem
@@ -60,17 +67,17 @@ $ openssl genrsa -out client-key.pem 2048
 
 (Generate a certificate signing request for the client)
 $ openssl req -new -key client-key.pem -out client-csr.pem
-(...)
-Country Name (2 letter code) []:US
-State or Province Name (full name) []:California
-Locality Name (eg, city) []:Redwood Shores
-Organization Name (eg, company) []:Oracle
-Organizational Unit Name (eg, section) []:MySQL
-Common Name (e.g. server FQDN or YOUR name) []:MySQL Connector/J Client
-Email Address []:mysql@oracle.com
-(...)
-A challenge password []:
-An optional company name []:
+  (...)
+  Country Name (2 letter code) []:US
+  State or Province Name (full name) []:California
+  Locality Name (eg, city) []:Redwood Shores
+  Organization Name (eg, company) []:Oracle
+  Organizational Unit Name (eg, section) []:MySQL
+  Common Name (e.g. server FQDN or YOUR name) []:MySQL Connector/J Client
+  Email Address []:mysql@oracle.com
+  (...)
+  A challenge password []:
+  An optional company name []:
 
 (Sign the client certificate signing request)
 $ openssl x509 -req -in client-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -set_serial 01 -days 3650 -sha256 -out client-cert.pem
@@ -87,7 +94,7 @@ $ openssl verify -CAfile ca-cert.pem client-cert.pem
 
 (Create a truststore containing the CA certificate)
 $ keytool -importcert -alias mysqlcacert -file ca-cert.pem -keystore ca-truststore -storepass password
-Trust this certificate? [no]:  yes
+  Trust this certificate? [no]:  yes
 
 (OPTIONAL: List the contents of the truststore)
 $ keytool -list -keystore ca-truststore -storepass password

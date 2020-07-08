@@ -3,6 +3,11 @@
 
 Version 8.0.22
 
+  - Fix for Bug#92903 (28834903), MySQL Connector/j should support wildcard names or alternative names.
+
+  - Fix for Bug#99767 (31443178), Contribution: Check SubjectAlternativeName for TLS instead of commonName.
+    Thanks to Daniël van Eeden for his contribution.
+
   - Fix for Bug#93444 (29015453), LOCALDATETIME PARAMETER VALUES ALTERED WHEN CLIENT AND SERVER TIMEZONES DIFFER.
     Thanks to Iwao Abe for his contribution.
 

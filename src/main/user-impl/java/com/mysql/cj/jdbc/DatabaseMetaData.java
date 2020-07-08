@@ -315,8 +315,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         this.columnSize = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), endParenIndex).trim());
 
                         // Adjust for pseudo-boolean
-                        if (DatabaseMetaData.this.tinyInt1isBit && this.columnSize.intValue() == 1
-                                && StringUtils.startsWithIgnoreCase(typeInfo, 0, "tinyint")) {
+                        if (DatabaseMetaData.this.tinyInt1isBit && this.columnSize.intValue() == 1 && StringUtils.startsWithIgnoreCase(typeInfo, "tinyint")) {
                             if (DatabaseMetaData.this.transformedBitIsBoolean) {
                                 this.mysqlType = MysqlType.BOOLEAN;
                             } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -918,8 +918,7 @@ public class StringUtils {
     }
 
     /**
-     * Determines whether or not the string 'searchIn' contains the string
-     * 'searchFor', dis-regarding case starting at 'startAt' Shorthand for a
+     * Determines whether or not the string 'searchIn' contains the string 'searchFor', dis-regarding case starting at 'startAt' Shorthand for a
      * String.regionMatch(...)
      * 
      * @param searchIn
@@ -936,8 +935,7 @@ public class StringUtils {
     }
 
     /**
-     * Determines whether or not the string 'searchIn' contains the string
-     * 'searchFor', dis-regarding case. Shorthand for a String.regionMatch(...)
+     * Determines whether or not the string 'searchIn' starts with the string 'searchFor', dis-regarding case. Shorthand for a String.regionMatch(...)
      * 
      * @param searchIn
      *            the string to search in
@@ -951,9 +949,7 @@ public class StringUtils {
     }
 
     /**
-     * Determines whether or not the string 'searchIn' contains the string
-     * 'searchFor', disregarding case,leading whitespace and non-alphanumeric
-     * characters.
+     * Determines whether or not the string 'searchIn' starts with the string 'searchFor', disregarding case,leading whitespace and non-alphanumeric characters.
      * 
      * @param searchIn
      *            the string to search in
@@ -981,8 +977,7 @@ public class StringUtils {
     }
 
     /**
-     * Determines whether or not the string 'searchIn' contains the string
-     * 'searchFor', disregarding case and leading whitespace
+     * Determines whether or not the string 'searchIn' starts with the string 'searchFor', disregarding case and leading whitespace
      * 
      * @param searchIn
      *            the string to search in
@@ -996,8 +991,7 @@ public class StringUtils {
     }
 
     /**
-     * Determines whether or not the string 'searchIn' contains the string
-     * 'searchFor', disregarding case and leading whitespace
+     * Determines whether or not the string 'searchIn' contains the string 'searchFor', disregarding case and leading whitespace
      * 
      * @param searchIn
      *            the string to search in
@@ -1026,8 +1020,7 @@ public class StringUtils {
     }
 
     /**
-     * Determines whether or not the string 'searchIn' starts with one of the strings in 'searchFor', disregarding case
-     * and leading whitespace
+     * Determines whether or not the string 'searchIn' starts with one of the strings in 'searchFor', disregarding case and leading whitespace
      * 
      * @param searchIn
      *            the string to search in
@@ -1043,6 +1036,24 @@ public class StringUtils {
             }
         }
         return -1;
+    }
+
+    /**
+     * Determines whether or not the string 'searchIn' ends with the string 'searchFor', dis-regarding case starting at 'startAt' Shorthand for a
+     * String.regionMatch(...)
+     * 
+     * @param searchIn
+     *            the string to search in
+     * @param startAt
+     *            the position to start at
+     * @param searchFor
+     *            the string to search for
+     * 
+     * @return whether searchIn ends with searchFor, ignoring case
+     */
+    public static boolean endsWithIgnoreCase(String searchIn, String searchFor) {
+        int len = searchFor.length();
+        return searchIn.regionMatches(true, searchIn.length() - len, searchFor, 0, len);
     }
 
     /**

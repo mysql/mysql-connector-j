@@ -58,6 +58,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -332,7 +333,6 @@ public class ExportControlled {
      * Implementation of X509TrustManager wrapping JVM X509TrustManagers to add expiration and identity check
      */
     public static class X509TrustManagerWrapper implements X509TrustManager {
-
         private X509TrustManager origTm = null;
         private boolean verifyServerCert = false;
         private String hostName = null;
@@ -379,11 +379,10 @@ public class ExportControlled {
 
                 try {
                     CertPath certPath = this.certFactory.generateCertPath(Arrays.asList(chain));
-                    // Validate against truststore
+                    // Validate against the truststore.
                     CertPathValidatorResult result = this.validator.validate(certPath, this.validatorParams);
-                    // Check expiration for the CA used to validate this path
+                    // Check expiration for the CA used to validate this path.
                     ((PKIXCertPathValidatorResult) result).getTrustAnchor().getTrustedCert().checkValidity();
-
                 } catch (InvalidAlgorithmParameterException e) {
                     throw new CertificateException(e);
                 } catch (CertPathValidatorException e) {
@@ -398,32 +397,92 @@ public class ExportControlled {
                     throw new CertificateException("Can't verify server certificate because no trust manager is found.");
                 }
 
-                // verify server certificate identity
+                // Validate server identity.
                 if (this.hostName != null) {
-                    String dn = chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253);
-                    String cn = null;
-                    try {
-                        LdapName ldapDN = new LdapName(dn);
-                        for (Rdn rdn : ldapDN.getRdns()) {
-                            if (rdn.getType().equalsIgnoreCase("CN")) {
-                                cn = rdn.getValue().toString();
-                                break;
+                    boolean hostNameVerified = false;
+
+                    // Check each one of the DNS-ID (or IP) entries from the certificate 'subjectAltName' field.
+                    // See https://tools.ietf.org/html/rfc6125#section-6.4 and https://tools.ietf.org/html/rfc2818#section-3.1
+                    final Collection<List<?>> subjectAltNames = chain[0].getSubjectAlternativeNames();
+                    if (subjectAltNames != null) {
+                        boolean sanVerification = false;
+                        for (final List<?> san : subjectAltNames) {
+                            final Integer nameType = (Integer) san.get(0);
+                            // dNSName   [2] IA5String
+                            // iPAddress [7] OCTET STRING
+                            if (nameType == 2) {
+                                sanVerification = true;
+                                if (verifyHostName((String) san.get(1))) {  // May contain a wildcard char.
+                                    // Host name is valid.
+                                    hostNameVerified = true;
+                                    break;
+                                }
+                            } else if (nameType == 7) {
+                                sanVerification = true;
+                                if (this.hostName.equalsIgnoreCase((String) san.get(1))) {
+                                    // Host name (IP) is valid.
+                                    hostNameVerified = true;
+                                    break;
+                                }
                             }
                         }
-                    } catch (InvalidNameException e) {
-                        throw new CertificateException("Failed to retrieve the Common Name (CN) from the server certificate.");
+                        if (sanVerification && !hostNameVerified) {
+                            throw new CertificateException("Server identity verification failed. "
+                                    + "None of the DNS or IP Subject Alternative Name entries matched the server hostname/IP '" + this.hostName + "'.");
+                        }
                     }
 
-                    if (!this.hostName.equalsIgnoreCase(cn)) {
-                        throw new CertificateException("Server certificate identity check failed. The certificate Common Name '" + cn
-                                + "' does not match with '" + this.hostName + "'.");
+                    if (!hostNameVerified) {
+                        // Fall-back to checking the Relative Distinguished Name CN-ID (Common Name/CN) from the certificate 'subject' field.   
+                        // https://tools.ietf.org/html/rfc6125#section-6.4.4
+                        final String dn = chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253);
+                        String cn = null;
+                        try {
+                            LdapName ldapDN = new LdapName(dn);
+                            for (Rdn rdn : ldapDN.getRdns()) {
+                                if (rdn.getType().equalsIgnoreCase("CN")) {
+                                    cn = rdn.getValue().toString();
+                                    break;
+                                }
+                            }
+                        } catch (InvalidNameException e) {
+                            throw new CertificateException("Failed to retrieve the Common Name (CN) from the server certificate.");
+                        }
+
+                        if (!verifyHostName(cn)) {
+                            throw new CertificateException(
+                                    "Server identity verification failed. The certificate Common Name '" + cn + "' does not match '" + this.hostName + "'.");
+                        }
                     }
                 }
             }
+
+            // Nothing else to validate.
         }
 
         public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
             this.origTm.checkClientTrusted(chain, authType);
+        }
+
+        /**
+         * Verify the host name against the given pattern, using the rules specified in <a href="https://tools.ietf.org/html/rfc6125#section-6.4.3">RFC 6125,
+         * Section 6.4.3</a>. Support wildcard character as defined in the RFC.
+         * 
+         * @param ptn
+         *            the pattern to match with the host name.
+         * @return
+         *         <code>true</code> if the host name matches the pattern, <code>false</code> otherwise.
+         */
+        private boolean verifyHostName(String ptn) {
+            final int indexOfStar = ptn.indexOf('*');
+            if (indexOfStar >= 0 && indexOfStar < ptn.indexOf('.')) {
+                final String head = ptn.substring(0, indexOfStar);
+                final String tail = ptn.substring(indexOfStar + 1);
+
+                return StringUtils.startsWithIgnoreCase(this.hostName, head) && StringUtils.endsWithIgnoreCase(this.hostName, tail)
+                        && this.hostName.substring(head.length(), this.hostName.length() - tail.length()).indexOf('.') == -1;
+            }
+            return this.hostName.equalsIgnoreCase(ptn);
         }
     }
 
@@ -574,6 +633,7 @@ public class ExportControlled {
         try {
             SSLContext sslContext = SSLContext.getInstance("TLS");
             sslContext.init(kms, tms.toArray(new TrustManager[tms.size()]), null);
+
             return sslContext;
 
         } catch (NoSuchAlgorithmException nsae) {
