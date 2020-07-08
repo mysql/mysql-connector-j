@@ -3,6 +3,9 @@
 
 Version 8.0.22
 
+  - Fix for Bug#93444 (29015453), LOCALDATETIME PARAMETER VALUES ALTERED WHEN CLIENT AND SERVER TIMEZONES DIFFER.
+    Thanks to Iwao Abe for his contribution.
+
   - WL#14052, Remove asynchronous variant of X Protocol.
 
   - Fix for Bug#99713 (31418928), NPE DURING COM.MYSQL.CJ.SERVERPREPAREDQUERYBINDVALUE.STOREDATE().

@@ -39,6 +39,9 @@ import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -368,6 +371,75 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
     }
 
     @Override
+    public void setLocalDate(int parameterIndex, LocalDate x, MysqlType targetMysqlType) {
+        ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
+        this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATE, this.numberOfExecutions));
+        binding.parameterType = targetMysqlType;
+        binding.value = x;
+    }
+
+    @Override
+    public void setLocalTime(int parameterIndex, LocalTime x, MysqlType targetMysqlType) {
+        ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
+        if (targetMysqlType == MysqlType.DATE) {
+            this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATE, this.numberOfExecutions));
+            binding.parameterType = targetMysqlType;
+            binding.value = DEFAULT_DATE;
+        } else {
+            int fractLen = 6; // max supported length (i.e. microsecond)
+            if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0) {
+                // use the column definition if available
+                fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+            }
+
+            if (!this.sendFractionalSeconds.getValue() || !this.session.getServerSession().getCapabilities().serverSupportsFracSecs()) {
+                x = x.withNano(0); // truncate nanoseconds
+            } else {
+                x = TimeUtil.adjustNanosPrecision(x, fractLen, !this.session.getServerSession().isServerTruncatesFracSecs());
+            }
+
+            if (targetMysqlType == MysqlType.TIME) {
+                this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_TIME, this.numberOfExecutions));
+            } else {
+                // DATETIME or TIMESTAMP
+                this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATETIME, this.numberOfExecutions));
+            }
+            binding.parameterType = targetMysqlType;
+            binding.value = x;
+        }
+    }
+
+    @Override
+    public void setLocalDateTime(int parameterIndex, LocalDateTime x, MysqlType targetMysqlType) {
+        ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
+        if (targetMysqlType == MysqlType.DATE) {
+            x = LocalDateTime.of(x.toLocalDate(), DEFAULT_TIME);
+            this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATE, this.numberOfExecutions));
+        } else {
+            int fractLen = 6; // max supported length (i.e. microsecond)
+            if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0) {
+                // use the column definition if available
+                fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+            }
+
+            if (!this.sendFractionalSeconds.getValue() || !this.session.getServerSession().getCapabilities().serverSupportsFracSecs()) {
+                x = x.withNano(0); // truncate nanoseconds
+            } else {
+                x = TimeUtil.adjustNanosPrecision(x, fractLen, !this.session.getServerSession().isServerTruncatesFracSecs());
+            }
+
+            if (targetMysqlType == MysqlType.TIME) {
+                this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_TIME, this.numberOfExecutions));
+            } else {
+                // DATETIME or TIMESTAMP
+                this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATETIME, this.numberOfExecutions));
+            }
+        }
+        binding.parameterType = targetMysqlType;
+        binding.value = x;
+    }
+
+    @Override
     public void setLong(int parameterIndex, long x) {
         ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
         this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_LONGLONG, this.numberOfExecutions));
@@ -506,8 +578,6 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
             ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
             this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATETIME, this.numberOfExecutions));
 
-            x = (Timestamp) x.clone();
-
             if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs()
                     || !this.sendFractionalSeconds.getValue() && fractionalLength == 0) {
                 x = TimeUtil.truncateFractionalSeconds(x);
@@ -518,7 +588,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
                 fractionalLength = 6;
             }
 
-            x = TimeUtil.adjustTimestampNanosPrecision(x, fractionalLength, !this.session.getServerSession().isServerTruncatesFracSecs());
+            x = TimeUtil.adjustNanosPrecision(x, fractionalLength, !this.session.getServerSession().isServerTruncatesFracSecs());
 
             binding.value = x;
             binding.calendar = targetCalendar == null ? null : (Calendar) targetCalendar.clone();

@@ -29,6 +29,9 @@
 
 package com.mysql.cj;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -266,52 +269,88 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
         }
     }
 
-    private void storeTime(NativePacketPayload intoPacket) {
-
-        intoPacket.ensureCapacity(9);
-        intoPacket.writeInteger(IntegerDataType.INT1, 8); // length
-        intoPacket.writeInteger(IntegerDataType.INT1, 0); // neg flag
-        intoPacket.writeInteger(IntegerDataType.INT4, 0); // tm->day, not used
-
-        if (this.calendar == null) {
-            this.calendar = Calendar.getInstance(this.serverTimeZone, Locale.US);
-        }
-
-        this.calendar.setTime((java.util.Date) this.value);
-        intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.HOUR_OF_DAY));
-        intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.MINUTE));
-        intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.SECOND));
-    }
-
     private void storeDate(NativePacketPayload intoPacket) {
         synchronized (this) {
+            int year, month, day;
+
+            if (this.value instanceof LocalDate) {
+                year = ((LocalDate) this.value).getYear();
+                month = ((LocalDate) this.value).getMonthValue();
+                day = ((LocalDate) this.value).getDayOfMonth();
+
+            } else if (this.value instanceof LocalTime) {
+                year = AbstractQueryBindings.DEFAULT_DATE.getYear();
+                month = AbstractQueryBindings.DEFAULT_DATE.getMonthValue();
+                day = AbstractQueryBindings.DEFAULT_DATE.getDayOfMonth();
+
+            } else if (this.value instanceof LocalDateTime) {
+                year = ((LocalDateTime) this.value).getYear();
+                month = ((LocalDateTime) this.value).getMonthValue();
+                day = ((LocalDateTime) this.value).getDayOfMonth();
+
+            } else {
+                if (this.calendar == null) {
+                    this.calendar = Calendar.getInstance(this.cacheDefaultTimezone.getValue() ? this.defaultTimeZone : TimeZone.getDefault(), Locale.US);
+                }
+
+                this.calendar.setTime((java.util.Date) this.value);
+
+                this.calendar.set(Calendar.HOUR_OF_DAY, 0);
+                this.calendar.set(Calendar.MINUTE, 0);
+                this.calendar.set(Calendar.SECOND, 0);
+
+                year = this.calendar.get(Calendar.YEAR);
+                month = this.calendar.get(Calendar.MONTH) + 1;
+                day = this.calendar.get(Calendar.DAY_OF_MONTH);
+            }
+
+            intoPacket.ensureCapacity(8);
+            intoPacket.writeInteger(IntegerDataType.INT1, 7); // length
+            intoPacket.writeInteger(IntegerDataType.INT2, year);
+            intoPacket.writeInteger(IntegerDataType.INT1, month);
+            intoPacket.writeInteger(IntegerDataType.INT1, day);
+            intoPacket.writeInteger(IntegerDataType.INT1, 0);
+            intoPacket.writeInteger(IntegerDataType.INT1, 0);
+            intoPacket.writeInteger(IntegerDataType.INT1, 0);
+        }
+    }
+
+    private void storeTime(NativePacketPayload intoPacket) {
+        int hours, minutes, seconds, microseconds;
+
+        if (this.value instanceof LocalDateTime) {
+            hours = ((LocalDateTime) this.value).getHour();
+            minutes = ((LocalDateTime) this.value).getMinute();
+            seconds = ((LocalDateTime) this.value).getSecond();
+            microseconds = ((LocalDateTime) this.value).getNano() / 1000;
+        } else if (this.value instanceof LocalTime) {
+            hours = ((LocalTime) this.value).getHour();
+            minutes = ((LocalTime) this.value).getMinute();
+            seconds = ((LocalTime) this.value).getSecond();
+            microseconds = ((LocalTime) this.value).getNano() / 1000;
+        } else {
             if (this.calendar == null) {
-                this.calendar = Calendar.getInstance(this.cacheDefaultTimezone.getValue() ? this.defaultTimeZone : TimeZone.getDefault(), Locale.US);
+                this.calendar = Calendar.getInstance(this.serverTimeZone, Locale.US);
             }
 
             this.calendar.setTime((java.util.Date) this.value);
 
-            this.calendar.set(Calendar.HOUR_OF_DAY, 0);
-            this.calendar.set(Calendar.MINUTE, 0);
-            this.calendar.set(Calendar.SECOND, 0);
+            hours = this.calendar.get(Calendar.HOUR_OF_DAY);
+            minutes = this.calendar.get(Calendar.MINUTE);
+            seconds = this.calendar.get(Calendar.SECOND);
+            microseconds = this.calendar.get(Calendar.MILLISECOND) * 1000;
 
-            byte length = (byte) 7;
+        }
 
-            intoPacket.ensureCapacity(length);
-
-            intoPacket.writeInteger(IntegerDataType.INT1, length); // length
-
-            int year = this.calendar.get(Calendar.YEAR);
-            int month = this.calendar.get(Calendar.MONTH) + 1;
-            int date = this.calendar.get(Calendar.DAY_OF_MONTH);
-
-            intoPacket.writeInteger(IntegerDataType.INT2, year);
-            intoPacket.writeInteger(IntegerDataType.INT1, month);
-            intoPacket.writeInteger(IntegerDataType.INT1, date);
-
-            intoPacket.writeInteger(IntegerDataType.INT1, 0);
-            intoPacket.writeInteger(IntegerDataType.INT1, 0);
-            intoPacket.writeInteger(IntegerDataType.INT1, 0);
+        intoPacket.ensureCapacity(microseconds > 0 ? 13 : 9);
+        intoPacket.writeInteger(IntegerDataType.INT1, microseconds > 0 ? 12 : 8); // length
+        intoPacket.writeInteger(IntegerDataType.INT1, 0); // neg flag
+        intoPacket.writeInteger(IntegerDataType.INT4, 0); // tm->day, not used
+        intoPacket.writeInteger(IntegerDataType.INT1, hours);
+        intoPacket.writeInteger(IntegerDataType.INT1, minutes);
+        intoPacket.writeInteger(IntegerDataType.INT1, seconds);
+        if (microseconds > 0) {
+            intoPacket.writeInteger(IntegerDataType.INT4, microseconds);
         }
     }
 
@@ -321,49 +360,69 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
      */
     private void storeDateTime(NativePacketPayload intoPacket) {
         synchronized (this) {
-            if (this.calendar == null) {
-                this.calendar = Calendar.getInstance(this.serverTimeZone, Locale.US);
+
+            int year = 0, month = 0, day = 0, hours = 0, minutes = 0, seconds = 0, microseconds = 0;
+
+            if (this.value instanceof LocalDate) {
+                year = ((LocalDate) this.value).getYear();
+                month = ((LocalDate) this.value).getMonthValue();
+                day = ((LocalDate) this.value).getDayOfMonth();
+
+            } else if (this.value instanceof LocalTime) {
+                year = AbstractQueryBindings.DEFAULT_DATE.getYear();
+                month = AbstractQueryBindings.DEFAULT_DATE.getMonthValue();
+                day = AbstractQueryBindings.DEFAULT_DATE.getDayOfMonth();
+                hours = ((LocalTime) this.value).getHour();
+                minutes = ((LocalTime) this.value).getMinute();
+                seconds = ((LocalTime) this.value).getSecond();
+                microseconds = ((LocalTime) this.value).getNano() / 1000;
+
+            } else if (this.value instanceof LocalDateTime) {
+                year = ((LocalDateTime) this.value).getYear();
+                month = ((LocalDateTime) this.value).getMonthValue();
+                day = ((LocalDateTime) this.value).getDayOfMonth();
+                hours = ((LocalDateTime) this.value).getHour();
+                minutes = ((LocalDateTime) this.value).getMinute();
+                seconds = ((LocalDateTime) this.value).getSecond();
+                microseconds = ((LocalDateTime) this.value).getNano() / 1000;
+
+            } else {
+                if (this.calendar == null) {
+                    this.calendar = Calendar.getInstance(this.serverTimeZone, Locale.US);
+                }
+
+                this.calendar.setTime((java.util.Date) this.value);
+
+                if (this.value instanceof java.sql.Date) {
+                    this.calendar.set(Calendar.HOUR_OF_DAY, 0);
+                    this.calendar.set(Calendar.MINUTE, 0);
+                    this.calendar.set(Calendar.SECOND, 0);
+                }
+
+                year = this.calendar.get(Calendar.YEAR);
+                month = this.calendar.get(Calendar.MONTH) + 1;
+                day = this.calendar.get(Calendar.DAY_OF_MONTH);
+                hours = this.calendar.get(Calendar.HOUR_OF_DAY);
+                minutes = this.calendar.get(Calendar.MINUTE);
+                seconds = this.calendar.get(Calendar.SECOND);
+
+                if (this.value instanceof java.sql.Timestamp) {
+                    microseconds = ((java.sql.Timestamp) this.value).getNanos() / 1000;
+                } else {
+                    microseconds = this.calendar.get(Calendar.MILLISECOND) * 1000;
+                }
             }
 
-            this.calendar.setTime((java.util.Date) this.value);
-
-            if (this.value instanceof java.sql.Date) {
-                this.calendar.set(Calendar.HOUR_OF_DAY, 0);
-                this.calendar.set(Calendar.MINUTE, 0);
-                this.calendar.set(Calendar.SECOND, 0);
-            }
-
-            byte length = (byte) 7;
-
-            if (this.value instanceof java.sql.Timestamp) {
-                length = (byte) 11;
-            }
-
-            intoPacket.ensureCapacity(length);
-
-            intoPacket.writeInteger(IntegerDataType.INT1, length); // length
-
-            int year = this.calendar.get(Calendar.YEAR);
-            int month = this.calendar.get(Calendar.MONTH) + 1;
-            int date = this.calendar.get(Calendar.DAY_OF_MONTH);
-
+            intoPacket.ensureCapacity(microseconds > 0 ? 12 : 8);
+            intoPacket.writeInteger(IntegerDataType.INT1, microseconds > 0 ? 11 : 7); // length
             intoPacket.writeInteger(IntegerDataType.INT2, year);
             intoPacket.writeInteger(IntegerDataType.INT1, month);
-            intoPacket.writeInteger(IntegerDataType.INT1, date);
-
-            if (this.value instanceof java.sql.Date) {
-                intoPacket.writeInteger(IntegerDataType.INT1, 0);
-                intoPacket.writeInteger(IntegerDataType.INT1, 0);
-                intoPacket.writeInteger(IntegerDataType.INT1, 0);
-            } else {
-                intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.HOUR_OF_DAY));
-                intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.MINUTE));
-                intoPacket.writeInteger(IntegerDataType.INT1, this.calendar.get(Calendar.SECOND));
-            }
-
-            if (length == 11) {
-                //  MySQL expects microseconds, not nanos
-                intoPacket.writeInteger(IntegerDataType.INT4, ((java.sql.Timestamp) this.value).getNanos() / 1000);
+            intoPacket.writeInteger(IntegerDataType.INT1, day);
+            intoPacket.writeInteger(IntegerDataType.INT1, hours);
+            intoPacket.writeInteger(IntegerDataType.INT1, minutes);
+            intoPacket.writeInteger(IntegerDataType.INT1, seconds);
+            if (microseconds > 0) {
+                intoPacket.writeInteger(IntegerDataType.INT4, microseconds);
             }
         }
     }

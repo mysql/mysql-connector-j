@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,6 +38,9 @@ import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Calendar;
 
 import com.mysql.cj.protocol.ColumnDefinition;
@@ -221,4 +224,11 @@ public interface QueryBindings<T extends BindValue> {
     byte[] getBytesRepresentation(int parameterIndex);
 
     byte[] getOrigBytes(int parameterIndex);
+
+    void setLocalDate(int parameterIndex, LocalDate x, MysqlType targetMysqlType);
+
+    void setLocalTime(int parameterIndex, LocalTime x, MysqlType targetMysqlType);
+
+    void setLocalDateTime(int parameterIndex, LocalDateTime x, MysqlType targetMysqlType);
+
 }

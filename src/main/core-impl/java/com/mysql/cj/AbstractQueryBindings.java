@@ -36,15 +36,14 @@ import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Date;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.text.ParsePosition;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
@@ -62,6 +61,9 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
 
     protected final static byte[] HEX_DIGITS = new byte[] { (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4', (byte) '5', (byte) '6', (byte) '7',
             (byte) '8', (byte) '9', (byte) 'A', (byte) 'B', (byte) 'C', (byte) 'D', (byte) 'E', (byte) 'F' };
+
+    protected final static LocalDate DEFAULT_DATE = LocalDate.of(1970, 1, 1);
+    protected final static LocalTime DEFAULT_TIME = LocalTime.of(0, 0);
 
     protected Session session;
 
@@ -193,77 +195,45 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
         }
     }
 
+    static Map<Class<?>, MysqlType> DEFAULT_MYSQL_TYPES = new HashMap<>();
+    static {
+        DEFAULT_MYSQL_TYPES.put(String.class, MysqlType.VARCHAR);
+        DEFAULT_MYSQL_TYPES.put(java.sql.Date.class, MysqlType.DATE);
+        DEFAULT_MYSQL_TYPES.put(java.sql.Time.class, MysqlType.TIME);
+        DEFAULT_MYSQL_TYPES.put(java.sql.Timestamp.class, MysqlType.TIMESTAMP);
+        DEFAULT_MYSQL_TYPES.put(Byte.class, MysqlType.INT);
+        DEFAULT_MYSQL_TYPES.put(BigDecimal.class, MysqlType.DECIMAL);
+        DEFAULT_MYSQL_TYPES.put(Short.class, MysqlType.SMALLINT);
+        DEFAULT_MYSQL_TYPES.put(Integer.class, MysqlType.INT);
+        DEFAULT_MYSQL_TYPES.put(Long.class, MysqlType.BIGINT);
+        DEFAULT_MYSQL_TYPES.put(Float.class, MysqlType.FLOAT); // TODO check; was Types.FLOAT but should be Types.REAL to map to SQL FLOAT
+        DEFAULT_MYSQL_TYPES.put(Double.class, MysqlType.DOUBLE);
+        DEFAULT_MYSQL_TYPES.put(byte[].class, MysqlType.BINARY);
+        DEFAULT_MYSQL_TYPES.put(Boolean.class, MysqlType.BOOLEAN);
+        DEFAULT_MYSQL_TYPES.put(Boolean.class, MysqlType.BOOLEAN);
+        DEFAULT_MYSQL_TYPES.put(LocalDate.class, MysqlType.DATE);
+        DEFAULT_MYSQL_TYPES.put(LocalTime.class, MysqlType.TIME);
+        DEFAULT_MYSQL_TYPES.put(LocalDateTime.class, MysqlType.DATETIME); // TODO default JDBC mapping is TIMESTAMP, see B-4
+        DEFAULT_MYSQL_TYPES.put(java.sql.Blob.class, MysqlType.BLOB);
+        DEFAULT_MYSQL_TYPES.put(java.sql.Clob.class, MysqlType.TEXT);
+        DEFAULT_MYSQL_TYPES.put(BigInteger.class, MysqlType.BIGINT);
+        DEFAULT_MYSQL_TYPES.put(java.util.Date.class, MysqlType.TIMESTAMP);
+        DEFAULT_MYSQL_TYPES.put(InputStream.class, MysqlType.BLOB);
+    }
+
     @Override
     public void setObject(int parameterIndex, Object parameterObj) {
         if (parameterObj == null) {
             setNull(parameterIndex);
+            return;
+        }
+        MysqlType defaultMysqlType = DEFAULT_MYSQL_TYPES.get(parameterObj.getClass());
+
+        if (defaultMysqlType != null) {
+            setObject(parameterIndex, parameterObj, defaultMysqlType);
+
         } else {
-            if (parameterObj instanceof Byte) {
-                setInt(parameterIndex, ((Byte) parameterObj).intValue());
-
-            } else if (parameterObj instanceof String) {
-                setString(parameterIndex, (String) parameterObj);
-
-            } else if (parameterObj instanceof BigDecimal) {
-                setBigDecimal(parameterIndex, (BigDecimal) parameterObj);
-
-            } else if (parameterObj instanceof Short) {
-                setShort(parameterIndex, ((Short) parameterObj).shortValue());
-
-            } else if (parameterObj instanceof Integer) {
-                setInt(parameterIndex, ((Integer) parameterObj).intValue());
-
-            } else if (parameterObj instanceof Long) {
-                setLong(parameterIndex, ((Long) parameterObj).longValue());
-
-            } else if (parameterObj instanceof Float) {
-                setFloat(parameterIndex, ((Float) parameterObj).floatValue());
-
-            } else if (parameterObj instanceof Double) {
-                setDouble(parameterIndex, ((Double) parameterObj).doubleValue());
-
-            } else if (parameterObj instanceof byte[]) {
-                setBytes(parameterIndex, (byte[]) parameterObj);
-
-            } else if (parameterObj instanceof java.sql.Date) {
-                setDate(parameterIndex, (java.sql.Date) parameterObj);
-
-            } else if (parameterObj instanceof Time) {
-                setTime(parameterIndex, (Time) parameterObj);
-
-            } else if (parameterObj instanceof Timestamp) {
-                setTimestamp(parameterIndex, (Timestamp) parameterObj);
-
-            } else if (parameterObj instanceof Boolean) {
-                setBoolean(parameterIndex, ((Boolean) parameterObj).booleanValue());
-
-            } else if (parameterObj instanceof InputStream) {
-                setBinaryStream(parameterIndex, (InputStream) parameterObj, -1);
-
-            } else if (parameterObj instanceof java.sql.Blob) {
-                setBlob(parameterIndex, (java.sql.Blob) parameterObj);
-
-            } else if (parameterObj instanceof java.sql.Clob) {
-                setClob(parameterIndex, (java.sql.Clob) parameterObj);
-
-            } else if (this.treatUtilDateAsTimestamp.getValue() && parameterObj instanceof java.util.Date) {
-                setTimestamp(parameterIndex, new Timestamp(((java.util.Date) parameterObj).getTime()));
-
-            } else if (parameterObj instanceof BigInteger) {
-                setString(parameterIndex, parameterObj.toString());
-
-            } else if (parameterObj instanceof LocalDate) {
-                setDate(parameterIndex, Date.valueOf((LocalDate) parameterObj));
-
-            } else if (parameterObj instanceof LocalDateTime) {
-                setTimestamp(parameterIndex, Timestamp.valueOf((LocalDateTime) parameterObj));
-
-            } else if (parameterObj instanceof LocalTime) {
-                setTime(parameterIndex, Time.valueOf((LocalTime) parameterObj));
-
-            } else {
-                setSerializableObject(parameterIndex, parameterObj);
-            }
+            setSerializableObject(parameterIndex, parameterObj); // TODO maybe default to error?
         }
     }
 
@@ -292,69 +262,460 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
     public void setObject(int parameterIndex, Object parameterObj, MysqlType targetMysqlType, int scaleOrLength) {
         if (parameterObj == null) {
             setNull(parameterIndex);
-        } else {
+            return;
+        }
+        /*
+         * According to Table-B5 in the JDBC Spec
+         */
+        try {
             if (parameterObj instanceof LocalDate) {
-                parameterObj = Date.valueOf((LocalDate) parameterObj);
-            } else if (parameterObj instanceof LocalDateTime) {
-                parameterObj = Timestamp.valueOf((LocalDateTime) parameterObj);
-            } else if (parameterObj instanceof LocalTime) {
-                parameterObj = Time.valueOf((LocalTime) parameterObj);
-            }
+                switch (targetMysqlType) {
+                    case DATE:
+                        setLocalDate(parameterIndex, (LocalDate) parameterObj, targetMysqlType);
+                        break;
+                    case DATETIME: // non-JDBC
+                    case TIMESTAMP: // non-JDBC
+                        setLocalDateTime(parameterIndex, LocalDateTime.of((LocalDate) parameterObj, DEFAULT_TIME), targetMysqlType);
+                        break;
+                    case YEAR: // non-JDBC
+                        setInt(parameterIndex, ((LocalDate) parameterObj).getYear());
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex, parameterObj.toString());
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
 
-            try {
-                /*
-                 * From Table-B5 in the JDBC Spec
-                 */
+            } else if (parameterObj instanceof LocalTime) {
+                switch (targetMysqlType) {
+                    case TIME:
+                        setLocalTime(parameterIndex, (LocalTime) parameterObj, targetMysqlType);
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex, parameterObj.toString());
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof LocalDateTime) {
+                switch (targetMysqlType) {
+                    case DATE:
+                    case DATETIME:
+                    case TIMESTAMP:
+                    case TIME:
+                        setLocalDateTime(parameterIndex, ((LocalDateTime) parameterObj), targetMysqlType);
+                        break;
+                    case YEAR:
+                        setInt(parameterIndex, ((LocalDateTime) parameterObj).getYear());
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex, parameterObj.toString().replace('T', ' '));
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof java.sql.Date) {
+                switch (targetMysqlType) {
+                    case DATE:
+                        setDate(parameterIndex, (java.sql.Date) parameterObj);
+                        break;
+                    case DATETIME:
+                    case TIMESTAMP:
+                        setTimestamp(parameterIndex, new java.sql.Timestamp(((java.util.Date) parameterObj).getTime()));
+                        break;
+                    case YEAR:
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime((java.util.Date) parameterObj);
+                        setInt(parameterIndex, cal.get(Calendar.YEAR));
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex, parameterObj.toString());
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof java.sql.Timestamp) {
+                switch (targetMysqlType) {
+                    case DATE:
+                        setDate(parameterIndex, new java.sql.Date(((java.util.Date) parameterObj).getTime()));
+                        break;
+                    case DATETIME:
+                    case TIMESTAMP:
+                        setTimestamp(parameterIndex, (java.sql.Timestamp) parameterObj);
+                        break;
+                    case YEAR:
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime((java.util.Date) parameterObj);
+                        setInt(parameterIndex, cal.get(Calendar.YEAR));
+                        break;
+                    case TIME:
+                        java.sql.Timestamp xT = (java.sql.Timestamp) parameterObj;
+                        setTime(parameterIndex, new java.sql.Time(xT.getTime()));
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex, parameterObj.toString());
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof java.sql.Time) {
+                switch (targetMysqlType) {
+                    case DATE:
+                        setDate(parameterIndex, new java.sql.Date(((java.util.Date) parameterObj).getTime()));
+                        break;
+                    case DATETIME:
+                    case TIMESTAMP:
+                        setTimestamp(parameterIndex, new java.sql.Timestamp(((java.util.Date) parameterObj).getTime()));
+                        break;
+                    case YEAR:
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime((java.util.Date) parameterObj);
+                        setInt(parameterIndex, cal.get(Calendar.YEAR));
+                        break;
+                    case TIME:
+                        setTime(parameterIndex, (java.sql.Time) parameterObj);
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex, parameterObj.toString());
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof java.util.Date) {
+                if (!this.treatUtilDateAsTimestamp.getValue()) { // TODO is it needed at all?
+                    setSerializableObject(parameterIndex, parameterObj);
+                    return;
+                }
+                switch (targetMysqlType) {
+                    case DATE:
+                        setDate(parameterIndex, new java.sql.Date(((java.util.Date) parameterObj).getTime()));
+                        break;
+                    case DATETIME:
+                    case TIMESTAMP:
+                        setTimestamp(parameterIndex, new java.sql.Timestamp(((java.util.Date) parameterObj).getTime()));
+                        break;
+                    case YEAR:
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime(((java.util.Date) parameterObj));
+                        setInt(parameterIndex, cal.get(Calendar.YEAR));
+                        break;
+                    // TODO
+                    //case TIME:
+                    //    setTime(parameterIndex, (java.sql.Time) parameterObj);
+                    //    break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex, parameterObj.toString());
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof String) {
                 switch (targetMysqlType) {
                     case BOOLEAN:
-                        if (parameterObj instanceof Boolean) {
-                            setBoolean(parameterIndex, ((Boolean) parameterObj).booleanValue());
-                            break;
-
-                        } else if (parameterObj instanceof String) {
-                            if ("true".equalsIgnoreCase((String) parameterObj) || "Y".equalsIgnoreCase((String) parameterObj)) {
-                                setBoolean(parameterIndex, true);
-                            } else if ("false".equalsIgnoreCase((String) parameterObj) || "N".equalsIgnoreCase((String) parameterObj)) {
-                                setBoolean(parameterIndex, false);
-                            } else if (((String) parameterObj).matches("-?\\d+\\.?\\d*")) {
-                                setBoolean(parameterIndex, !((String) parameterObj).matches("-?[0]+[.]*[0]*"));
-                            } else {
-                                throw ExceptionFactory.createException(WrongArgumentException.class,
-                                        Messages.getString("PreparedStatement.66", new Object[] { parameterObj }), this.session.getExceptionInterceptor());
-                            }
-                            break;
-
-                        } else if (parameterObj instanceof Number) {
-                            int intValue = ((Number) parameterObj).intValue();
-                            setBoolean(parameterIndex, intValue != 0);
-                            break;
-
+                        if ("true".equalsIgnoreCase((String) parameterObj) || "Y".equalsIgnoreCase((String) parameterObj)) {
+                            setBoolean(parameterIndex, true);
+                        } else if ("false".equalsIgnoreCase((String) parameterObj) || "N".equalsIgnoreCase((String) parameterObj)) {
+                            setBoolean(parameterIndex, false);
+                        } else if (((String) parameterObj).matches("-?\\d+\\.?\\d*")) {
+                            setBoolean(parameterIndex, !((String) parameterObj).matches("-?[0]+[.]*[0]*"));
                         } else {
                             throw ExceptionFactory.createException(WrongArgumentException.class,
-                                    Messages.getString("PreparedStatement.66", new Object[] { parameterObj.getClass().getName() }),
-                                    this.session.getExceptionInterceptor());
+                                    Messages.getString("PreparedStatement.66", new Object[] { parameterObj }), this.session.getExceptionInterceptor());
                         }
+                        break;
+                    case BIT:
+                        if ("1".equals(parameterObj) || "0".equals(parameterObj)) {
+                            setInt(parameterIndex, Integer.valueOf((String) parameterObj).intValue());
+                        } else {
+                            boolean parameterAsBoolean = "true".equalsIgnoreCase((String) parameterObj);
+                            setInt(parameterIndex, parameterAsBoolean ? 1 : 0);
+                        }
+                        break;
 
+                    case TINYINT:
+                    case TINYINT_UNSIGNED:
+                    case SMALLINT:
+                    case SMALLINT_UNSIGNED:
+                    case MEDIUMINT:
+                    case MEDIUMINT_UNSIGNED:
+                    case INT:
+                    case INT_UNSIGNED:
+                        //case YEAR:
+                        setInt(parameterIndex, Integer.valueOf((String) parameterObj).intValue());
+                        break;
+                    case BIGINT:
+                        setLong(parameterIndex, Long.valueOf((String) parameterObj).longValue());
+                        break;
+                    case BIGINT_UNSIGNED:
+                        setLong(parameterIndex, new BigInteger((String) parameterObj).longValue());
+                        break;
+                    case FLOAT:
+                    case FLOAT_UNSIGNED:
+                        setFloat(parameterIndex, Float.valueOf((String) parameterObj).floatValue());
+                        break;
+                    case DOUBLE:
+                    case DOUBLE_UNSIGNED:
+                        setDouble(parameterIndex, Double.valueOf((String) parameterObj).doubleValue());
+                        break;
+                    case DECIMAL:
+                    case DECIMAL_UNSIGNED:
+                        BigDecimal parameterAsNum = new BigDecimal((String) parameterObj);
+                        BigDecimal scaledBigDecimal = null;
+
+                        try {
+                            scaledBigDecimal = parameterAsNum.setScale(scaleOrLength);
+                        } catch (ArithmeticException ex) {
+                            try {
+                                scaledBigDecimal = parameterAsNum.setScale(scaleOrLength, BigDecimal.ROUND_HALF_UP);
+                            } catch (ArithmeticException arEx) {
+                                throw ExceptionFactory.createException(WrongArgumentException.class,
+                                        Messages.getString("PreparedStatement.65", new Object[] { scaleOrLength, parameterAsNum }),
+                                        this.session.getExceptionInterceptor());
+                            }
+                        }
+                        setBigDecimal(parameterIndex, scaledBigDecimal);
+                        break;
+
+                    case CHAR:
+                    case ENUM:
+                    case SET:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                    case JSON:
+                        setString(parameterIndex, parameterObj.toString());
+                        break;
+                    case BINARY:
+                    case GEOMETRY:
+                    case VARBINARY:
+                    case TINYBLOB:
+                    case BLOB:
+                    case MEDIUMBLOB:
+                    case LONGBLOB:
+                        setBytes(parameterIndex, StringUtils.getBytes(parameterObj.toString(), this.charEncoding));
+                        break;
+                    case DATE:
+                    case DATETIME:
+                    case TIMESTAMP:
+                    case YEAR:
+                        ParsePosition pp = new ParsePosition(0);
+                        java.text.DateFormat sdf = new java.text.SimpleDateFormat(TimeUtil.getDateTimePattern((String) parameterObj, false), Locale.US);
+                        setObject(parameterIndex, sdf.parse((String) parameterObj, pp), targetMysqlType, scaleOrLength);
+                        break;
+                    case TIME:
+                        sdf = new java.text.SimpleDateFormat(TimeUtil.getDateTimePattern((String) parameterObj, true), Locale.US);
+                        setTime(parameterIndex, new java.sql.Time(sdf.parse((String) parameterObj).getTime()));
+                        break;
+                    case UNKNOWN:
+                        setSerializableObject(parameterIndex, parameterObj);
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof InputStream) {
+                setBinaryStream(parameterIndex, (InputStream) parameterObj, -1);
+
+            } else if (parameterObj instanceof Boolean) {
+                switch (targetMysqlType) {
+                    case BOOLEAN:
+                        setBoolean(parameterIndex, ((Boolean) parameterObj).booleanValue());
+                        break;
                     case BIT:
                     case TINYINT:
                     case TINYINT_UNSIGNED:
                     case SMALLINT:
                     case SMALLINT_UNSIGNED:
-                    case INT:
-                    case INT_UNSIGNED:
                     case MEDIUMINT:
                     case MEDIUMINT_UNSIGNED:
+                    case INT:
+                    case INT_UNSIGNED:
+                    case YEAR:
+                        setInt(parameterIndex, ((Boolean) parameterObj).booleanValue() ? 1 : 0);
+                        break;
                     case BIGINT:
                     case BIGINT_UNSIGNED:
+                        setLong(parameterIndex, ((Boolean) parameterObj).booleanValue() ? 1L : 0L);
+                        break;
                     case FLOAT:
                     case FLOAT_UNSIGNED:
+                        setFloat(parameterIndex, ((Boolean) parameterObj).booleanValue() ? 1f : 0f);
+                        break;
                     case DOUBLE:
                     case DOUBLE_UNSIGNED:
+                        setDouble(parameterIndex, ((Boolean) parameterObj).booleanValue() ? 1d : 0d);
+                        break;
                     case DECIMAL:
                     case DECIMAL_UNSIGNED:
-                        setNumericObject(parameterIndex, parameterObj, targetMysqlType, scaleOrLength);
+                        setBigDecimal(parameterIndex, new java.math.BigDecimal(((Boolean) parameterObj).booleanValue() ? 1d : 0d));
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex, parameterObj.toString());
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof Number) {
+                Number parameterAsNum = (Number) parameterObj;
+                switch (targetMysqlType) {
+                    case BOOLEAN:
+                        setBoolean(parameterIndex, parameterAsNum.intValue() != 0);
+                        break;
+                    case BIT:
+                    case TINYINT:
+                    case TINYINT_UNSIGNED:
+                    case SMALLINT:
+                    case SMALLINT_UNSIGNED:
+                    case MEDIUMINT:
+                    case MEDIUMINT_UNSIGNED:
+                    case INT:
+                    case INT_UNSIGNED:
+                    case YEAR:
+                        setInt(parameterIndex, parameterAsNum.intValue());
+                        break;
+                    case BIGINT:
+                    case BIGINT_UNSIGNED:
+                        setLong(parameterIndex, parameterAsNum.longValue());
+                        break;
+                    case FLOAT:
+                    case FLOAT_UNSIGNED:
+                        setFloat(parameterIndex, parameterAsNum.floatValue());
+                        break;
+                    case DOUBLE:
+                    case DOUBLE_UNSIGNED:
+                        setDouble(parameterIndex, parameterAsNum.doubleValue());
+                        break;
+                    case DECIMAL:
+                    case DECIMAL_UNSIGNED:
+                        if (parameterAsNum instanceof BigDecimal) {
+                            BigDecimal scaledBigDecimal = null;
+
+                            try {
+                                scaledBigDecimal = ((BigDecimal) parameterAsNum).setScale(scaleOrLength);
+                            } catch (ArithmeticException ex) {
+                                try {
+                                    scaledBigDecimal = ((BigDecimal) parameterAsNum).setScale(scaleOrLength, BigDecimal.ROUND_HALF_UP);
+                                } catch (ArithmeticException arEx) {
+                                    throw ExceptionFactory.createException(WrongArgumentException.class,
+                                            Messages.getString("PreparedStatement.65", new Object[] { scaleOrLength, parameterAsNum }),
+                                            this.session.getExceptionInterceptor());
+                                }
+                            }
+
+                            setBigDecimal(parameterIndex, scaledBigDecimal);
+                        } else if (parameterAsNum instanceof java.math.BigInteger) {
+                            setBigDecimal(parameterIndex, new BigDecimal((java.math.BigInteger) parameterAsNum, scaleOrLength));
+                        } else {
+                            setBigDecimal(parameterIndex, new BigDecimal(parameterAsNum.doubleValue()));
+                        }
+
+                        break;
+                    case CHAR:
+                    case ENUM:
+                    case SET:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                    case JSON:
+                        if (parameterObj instanceof BigDecimal) {
+                            setString(parameterIndex, (StringUtils.fixDecimalExponent(((BigDecimal) parameterObj).toPlainString())));
+                        } else {
+                            setString(parameterIndex, parameterObj.toString());
+                        }
                         break;
 
+                    case BINARY:
+                    case GEOMETRY:
+                    case VARBINARY:
+                    case TINYBLOB:
+                    case BLOB:
+                    case MEDIUMBLOB:
+                    case LONGBLOB:
+                        setBytes(parameterIndex, StringUtils.getBytes(parameterObj.toString(), this.charEncoding));
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else {
+
+                switch (targetMysqlType) {
+                    case BOOLEAN:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.66", new Object[] { parameterObj.getClass().getName() }),
+                                this.session.getExceptionInterceptor());
                     case CHAR:
                     case ENUM:
                     case SET:
@@ -389,197 +750,21 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                         }
 
                         break;
-
-                    case DATE:
-                    case DATETIME:
-                    case TIMESTAMP:
-                    case YEAR:
-
-                        java.util.Date parameterAsDate;
-
-                        if (parameterObj instanceof String) {
-                            ParsePosition pp = new ParsePosition(0);
-                            java.text.DateFormat sdf = new java.text.SimpleDateFormat(TimeUtil.getDateTimePattern((String) parameterObj, false), Locale.US);
-                            parameterAsDate = sdf.parse((String) parameterObj, pp);
-                        } else {
-                            parameterAsDate = (java.util.Date) parameterObj;
-                        }
-
-                        switch (targetMysqlType) {
-                            case DATE:
-
-                                if (parameterAsDate instanceof java.sql.Date) {
-                                    setDate(parameterIndex, (java.sql.Date) parameterAsDate);
-                                } else {
-                                    setDate(parameterIndex, new java.sql.Date(parameterAsDate.getTime()));
-                                }
-
-                                break;
-
-                            case DATETIME:
-                            case TIMESTAMP:
-
-                                if (parameterAsDate instanceof java.sql.Timestamp) {
-                                    setTimestamp(parameterIndex, (java.sql.Timestamp) parameterAsDate);
-                                } else {
-                                    setTimestamp(parameterIndex, new java.sql.Timestamp(parameterAsDate.getTime()));
-                                }
-
-                                break;
-
-                            case YEAR:
-                                Calendar cal = Calendar.getInstance();
-                                cal.setTime(parameterAsDate);
-                                setNumericObject(parameterIndex, cal.get(Calendar.YEAR), targetMysqlType, scaleOrLength);
-                                break;
-
-                            default:
-                                break;
-                        }
-
-                        break;
-
-                    case TIME:
-                        if (parameterObj instanceof String) {
-                            java.text.DateFormat sdf = new java.text.SimpleDateFormat(TimeUtil.getDateTimePattern((String) parameterObj, true), Locale.US);
-                            setTime(parameterIndex, new java.sql.Time(sdf.parse((String) parameterObj).getTime()));
-                        } else if (parameterObj instanceof Timestamp) {
-                            Timestamp xT = (Timestamp) parameterObj;
-                            setTime(parameterIndex, new java.sql.Time(xT.getTime()));
-                        } else {
-                            setTime(parameterIndex, (java.sql.Time) parameterObj);
-                        }
-
-                        break;
-
                     case UNKNOWN:
                         setSerializableObject(parameterIndex, parameterObj);
                         break;
 
                     default:
-                        throw ExceptionFactory.createException(Messages.getString("PreparedStatement.16"), this.session.getExceptionInterceptor());
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
                 }
-            } catch (Exception ex) {
-                throw ExceptionFactory.createException(
-                        Messages.getString("PreparedStatement.17") + parameterObj.getClass().toString() + Messages.getString("PreparedStatement.18")
-                                + ex.getClass().getName() + Messages.getString("PreparedStatement.19") + ex.getMessage(),
-                        ex, this.session.getExceptionInterceptor());
             }
-        }
-    }
-
-    private void setNumericObject(int parameterIndex, Object parameterObj, MysqlType targetMysqlType, int scale) {
-        Number parameterAsNum;
-
-        if (parameterObj instanceof Boolean) {
-            parameterAsNum = ((Boolean) parameterObj).booleanValue() ? Integer.valueOf(1) : Integer.valueOf(0);
-        } else if (parameterObj instanceof String) {
-            switch (targetMysqlType) {
-                case BIT:
-                    if ("1".equals(parameterObj) || "0".equals(parameterObj)) {
-                        parameterAsNum = Integer.valueOf((String) parameterObj);
-                    } else {
-                        boolean parameterAsBoolean = "true".equalsIgnoreCase((String) parameterObj);
-
-                        parameterAsNum = parameterAsBoolean ? Integer.valueOf(1) : Integer.valueOf(0);
-                    }
-                    break;
-
-                case TINYINT:
-                case TINYINT_UNSIGNED:
-                case SMALLINT:
-                case SMALLINT_UNSIGNED:
-                case MEDIUMINT:
-                case MEDIUMINT_UNSIGNED:
-                case INT:
-                case INT_UNSIGNED:
-                case YEAR:
-                    parameterAsNum = Integer.valueOf((String) parameterObj);
-                    break;
-
-                case BIGINT:
-                    parameterAsNum = Long.valueOf((String) parameterObj);
-                    break;
-
-                case BIGINT_UNSIGNED:
-                    parameterAsNum = new BigInteger((String) parameterObj);
-                    break;
-
-                case FLOAT:
-                case FLOAT_UNSIGNED:
-                    parameterAsNum = Float.valueOf((String) parameterObj);
-
-                    break;
-
-                case DOUBLE:
-                case DOUBLE_UNSIGNED:
-                    parameterAsNum = Double.valueOf((String) parameterObj);
-                    break;
-
-                case DECIMAL:
-                case DECIMAL_UNSIGNED:
-                default:
-                    parameterAsNum = new java.math.BigDecimal((String) parameterObj);
-            }
-        } else {
-            parameterAsNum = (Number) parameterObj;
-        }
-
-        switch (targetMysqlType) {
-            case BIT:
-            case TINYINT:
-            case TINYINT_UNSIGNED:
-            case SMALLINT:
-            case SMALLINT_UNSIGNED:
-            case MEDIUMINT:
-            case MEDIUMINT_UNSIGNED:
-            case INT:
-            case INT_UNSIGNED:
-            case YEAR:
-                setInt(parameterIndex, parameterAsNum.intValue());
-                break;
-
-            case BIGINT:
-            case BIGINT_UNSIGNED:
-                setLong(parameterIndex, parameterAsNum.longValue());
-                break;
-
-            case FLOAT:
-            case FLOAT_UNSIGNED:
-                setFloat(parameterIndex, parameterAsNum.floatValue());
-                break;
-
-            case DOUBLE:
-            case DOUBLE_UNSIGNED:
-                setDouble(parameterIndex, parameterAsNum.doubleValue());
-                break;
-
-            case DECIMAL:
-            case DECIMAL_UNSIGNED:
-                if (parameterAsNum instanceof java.math.BigDecimal) {
-                    BigDecimal scaledBigDecimal = null;
-
-                    try {
-                        scaledBigDecimal = ((java.math.BigDecimal) parameterAsNum).setScale(scale);
-                    } catch (ArithmeticException ex) {
-                        try {
-                            scaledBigDecimal = ((java.math.BigDecimal) parameterAsNum).setScale(scale, BigDecimal.ROUND_HALF_UP);
-                        } catch (ArithmeticException arEx) {
-                            throw ExceptionFactory.createException(WrongArgumentException.class,
-                                    Messages.getString("PreparedStatement.65", new Object[] { scale, parameterAsNum }), this.session.getExceptionInterceptor());
-                        }
-                    }
-
-                    setBigDecimal(parameterIndex, scaledBigDecimal);
-                } else if (parameterAsNum instanceof java.math.BigInteger) {
-                    setBigDecimal(parameterIndex, new java.math.BigDecimal((java.math.BigInteger) parameterAsNum, scale));
-                } else {
-                    setBigDecimal(parameterIndex, new java.math.BigDecimal(parameterAsNum.doubleValue()));
-                }
-
-                break;
-            default:
-                break;
+        } catch (Exception ex) {
+            throw ExceptionFactory.createException(
+                    Messages.getString("PreparedStatement.17") + parameterObj.getClass().toString() + Messages.getString("PreparedStatement.18")
+                            + ex.getClass().getName() + Messages.getString("PreparedStatement.19") + ex.getMessage(),
+                    ex, this.session.getExceptionInterceptor());
         }
     }
 
@@ -616,9 +801,6 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
         return this.bindValues[parameterIndex].isNull();
     }
 
-    /**
-     * @return bytes
-     */
     public byte[] getBytesRepresentation(int parameterIndex) {
         if (this.bindValues[parameterIndex].isStream()) {
             return streamToBytes(parameterIndex, this.session.getPropertySet().getBooleanProperty(PropertyKey.useStreamLengthsInPrepStmts).getValue());

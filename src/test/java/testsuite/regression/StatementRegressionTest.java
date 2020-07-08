@@ -79,6 +79,8 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -8899,7 +8901,6 @@ public class StatementRegressionTest extends BaseTestCase {
         final TimeZone defaultTZ = TimeZone.getDefault();
 
         final Properties testConnProps = new Properties();
-        //testConnProps.setProperty("useTimezone", "true"); // TODO property was removed in 6.0
         testConnProps.setProperty(PropertyKey.cacheDefaultTimezone.getKeyName(), "false");
 
         Connection testConn = null;
@@ -9022,12 +9023,22 @@ public class StatementRegressionTest extends BaseTestCase {
         Timestamp originalTs = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.SSS", null).parse("2014-12-31 23:59:59.999").getTime());
         Timestamp roundedTs = new Timestamp(originalTs.getTime() + 1);
         Timestamp truncatedTs = new Timestamp(originalTs.getTime() - 999);
+        LocalDateTime originalLdt = LocalDateTime.of(2014, 12, 31, 23, 59, 59, 999000000);
+        LocalDateTime roundedLdt = LocalDateTime.of(2015, 1, 1, 0, 0);
+        LocalDateTime truncatedLdt = LocalDateTime.of(2014, 12, 31, 23, 59, 59);
+        // MySQL can store 24:00:00, but LocalTime cannot.
+        // ResultSet#getObject(i, LocalTime.class) might need some adjustment.
+        LocalTime originalLt = LocalTime.of(22, 59, 59, 999000000);
+        LocalTime roundedLt = LocalTime.of(23, 0, 0);
+        LocalTime truncatedLt = LocalTime.of(22, 59, 59);
 
         assertEquals("2014-12-31 23:59:59.999", originalTs.toString());
         assertEquals("2014-12-31 23:59:59.0", TimeUtil.truncateFractionalSeconds(originalTs).toString());
 
         createTable("testBug77449", "(id INT PRIMARY KEY, ts_short TIMESTAMP, ts_long TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6))");
         createProcedure("testBug77449", "(ts_short TIMESTAMP, ts_long TIMESTAMP(6)) BEGIN SELECT ts_short, ts_long; END");
+        createTable("testBug77449_time", "(id INT PRIMARY KEY, t_short TIME, t_long TIME(6))");
+        createProcedure("testBug77449_time", "(t_short TIME, t_long TIME(6)) BEGIN SELECT t_short, t_long; END");
 
         for (int tst = 0; tst < 8; tst++) {
             boolean useLegacyDatetimeCode = (tst & 0x1) != 0;
@@ -9070,6 +9081,27 @@ public class StatementRegressionTest extends BaseTestCase {
             this.rs.updateTimestamp("ts_long", originalTs);
             this.rs.insertRow();
 
+            // Send LocalDateTime using PreparedStatement -> truncation occurs according to 'sendFractionalSeconds' value.
+            testPStmt = testConn.prepareStatement("INSERT INTO testBug77449 VALUES (5, ?, ?)");
+            testPStmt.setObject(1, originalLdt);
+            testPStmt.setObject(2, originalLdt);
+            assertEquals(1, testPStmt.executeUpdate(), testCase);
+            testPStmt.close();
+
+            // Send LocalDateTime using UpdatableResultSet -> truncation occurs according to 'sendFractionalSeconds' value.
+            testStmt = testConn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+            testStmt.executeUpdate("INSERT INTO testBug77449 VALUES (6, NOW(), NOW())/* no_ts_trunk */"); // insert dummy row
+            this.rs = testStmt.executeQuery("SELECT * FROM testBug77449 WHERE id = 6");
+            assertTrue(this.rs.next(), testCase);
+            this.rs.updateObject("ts_short", originalLdt);
+            this.rs.updateObject("ts_long", originalLdt);
+            this.rs.updateRow();
+            this.rs.moveToInsertRow();
+            this.rs.updateInt("id", 7);
+            this.rs.updateObject("ts_short", originalLdt);
+            this.rs.updateObject("ts_long", originalLdt);
+            this.rs.insertRow();
+
             // Assert values from previous inserts/updates.
             // 1st row: from Statement sent as String, no subject to TZ conversions.
             this.rs = this.stmt.executeQuery("SELECT * FROM testBug77449 WHERE id = 1");
@@ -9085,13 +9117,74 @@ public class StatementRegressionTest extends BaseTestCase {
                 assertEquals(sendFractionalSeconds ? roundedTs : truncatedTs, this.rs.getTimestamp(2), testCase);
                 assertEquals(sendFractionalSeconds ? originalTs : truncatedTs, this.rs.getTimestamp(3), testCase);
             }
+            // 5th row: from PreparedStatement; 6th row: from UpdatableResultSet.updateRow(); 7th row: from UpdatableResultSet.insertRow()
+            for (int i = 5; i <= 7; i++) {
+                assertTrue(this.rs.next(), testCase);
+                assertEquals(i, this.rs.getInt(1), testCase);
+                assertEquals(sendFractionalSeconds ? roundedLdt : truncatedLdt, this.rs.getObject(2, LocalDateTime.class), testCase);
+                assertEquals(sendFractionalSeconds ? originalLdt : truncatedLdt, this.rs.getObject(3, LocalDateTime.class), testCase);
+            }
 
             this.stmt.execute("DELETE FROM testBug77449");
+
+            // Send LocalTime using PreparedStatement -> truncation occurs according to 'sendFractionalSeconds' value.
+            testPStmt = testConn.prepareStatement("INSERT INTO testBug77449_time VALUES (1, ?, ?)");
+            testPStmt.setObject(1, originalLt);
+            testPStmt.setObject(2, originalLt);
+            assertEquals(1, testPStmt.executeUpdate(), testCase);
+            testPStmt.close();
+            // Send LocalTime using UpdatableResultSet -> truncation occurs according to 'sendFractionalSeconds' value.
+            testStmt = testConn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+            testStmt.executeUpdate("INSERT INTO testBug77449_time VALUES (2, NOW(), NOW())/* no_ts_trunk */"); // insert dummy row
+            this.rs = testStmt.executeQuery("SELECT * FROM testBug77449_time WHERE id = 2");
+            assertTrue(this.rs.next(), testCase);
+            this.rs.updateObject("t_short", originalLt);
+            this.rs.updateObject("t_long", originalLt);
+            this.rs.updateRow();
+            this.rs.moveToInsertRow();
+            this.rs.updateInt("id", 3);
+            this.rs.updateObject("t_short", originalLt);
+            this.rs.updateObject("t_long", originalLt);
+            this.rs.insertRow();
+            // Assert previous LocalTime insertions
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug77449_time");
+            for (int i = 1; i <= 3; i++) {
+                assertTrue(this.rs.next(), testCase);
+                assertEquals(i, this.rs.getInt(1), testCase);
+                assertEquals(sendFractionalSeconds ? roundedLt : truncatedLt, this.rs.getObject(2, LocalTime.class), testCase);
+                assertEquals(sendFractionalSeconds ? originalLt : truncatedLt, this.rs.getObject(3, LocalTime.class), testCase);
+            }
+
+            this.stmt.execute("DELETE FROM testBug77449_time");
 
             // Compare Connector/J with client truncation -> truncation occurs according to 'sendFractionalSeconds' value.
             testPStmt = testConn.prepareStatement("SELECT ? = ?");
             testPStmt.setTimestamp(1, originalTs);
             testPStmt.setTimestamp(2, truncatedTs);
+            this.rs = testPStmt.executeQuery();
+            assertTrue(this.rs.next(), testCase);
+            if (sendFractionalSeconds) {
+                assertFalse(this.rs.getBoolean(1), testCase);
+            } else {
+                assertTrue(this.rs.getBoolean(1), testCase);
+            }
+            testPStmt.close();
+            // Same test with LocalDateTime
+            testPStmt = testConn.prepareStatement("SELECT ? = ?");
+            testPStmt.setObject(1, originalLdt);
+            testPStmt.setObject(2, truncatedLdt);
+            this.rs = testPStmt.executeQuery();
+            assertTrue(this.rs.next(), testCase);
+            if (sendFractionalSeconds) {
+                assertFalse(this.rs.getBoolean(1), testCase);
+            } else {
+                assertTrue(this.rs.getBoolean(1), testCase);
+            }
+            testPStmt.close();
+            // Same test with LocalTime
+            testPStmt = testConn.prepareStatement("SELECT ? = ?");
+            testPStmt.setObject(1, originalLt);
+            testPStmt.setObject(2, truncatedLt);
             this.rs = testPStmt.executeQuery();
             assertTrue(this.rs.next(), testCase);
             if (sendFractionalSeconds) {
@@ -9110,6 +9203,27 @@ public class StatementRegressionTest extends BaseTestCase {
             assertTrue(this.rs.next(), testCase);
             assertEquals(sendFractionalSeconds ? roundedTs : truncatedTs, this.rs.getTimestamp(1), testCase);
             assertEquals(sendFractionalSeconds ? originalTs : truncatedTs, this.rs.getTimestamp(2), testCase);
+            cstmt.close();
+            // Same test with LocalDateTime
+            cstmt = testConn.prepareCall("{call testBug77449(?, ?)}");
+            cstmt.setObject("ts_short", originalLdt);
+            cstmt.setObject("ts_long", originalLdt);
+            cstmt.execute();
+            this.rs = cstmt.getResultSet();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(sendFractionalSeconds ? roundedLdt : truncatedLdt, this.rs.getObject(1, LocalDateTime.class), testCase);
+            assertEquals(sendFractionalSeconds ? originalLdt : truncatedLdt, this.rs.getObject(2, LocalDateTime.class), testCase);
+            cstmt.close();
+            // Same test with LocalTime
+            cstmt = testConn.prepareCall("{call testBug77449_time(?, ?)}");
+            cstmt.setObject("t_short", originalLt);
+            cstmt.setObject("t_long", originalLt);
+            cstmt.execute();
+            this.rs = cstmt.getResultSet();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(sendFractionalSeconds ? roundedLt : truncatedLt, this.rs.getObject(1, LocalTime.class), testCase);
+            assertEquals(sendFractionalSeconds ? originalLt : truncatedLt, this.rs.getObject(2, LocalTime.class), testCase);
+            cstmt.close();
 
             testConn.close();
         }

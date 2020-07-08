@@ -47,6 +47,9 @@ import java.sql.NClob;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Calendar;
 
 import com.mysql.cj.conf.PropertyKey;
@@ -435,6 +438,105 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
     }
 
     @Override
+    public void setLocalDate(int parameterIndex, LocalDate x, MysqlType targetMysqlType) {
+        setValue(parameterIndex, "'" + x + "'", targetMysqlType);
+    }
+
+    @Override
+    public void setLocalTime(int parameterIndex, LocalTime x, MysqlType targetMysqlType) {
+        if (targetMysqlType == MysqlType.DATE) {
+            setValue(parameterIndex, "'" + DEFAULT_DATE + "'", MysqlType.DATE);
+        } else {
+            int fractLen = 6; // max supported length (i.e. microsecond)
+            if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0) {
+                // use the column definition if available
+                fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+            }
+
+            if (!this.sendFractionalSeconds.getValue() || !this.session.getServerSession().getCapabilities().serverSupportsFracSecs()) {
+                x = x.withNano(0); // truncate nanoseconds
+            } else {
+                x = TimeUtil.adjustNanosPrecision(x, fractLen, !this.session.getServerSession().isServerTruncatesFracSecs());
+            }
+
+            switch (targetMysqlType) {
+                case TIME:
+                    StringBuilder sb = new StringBuilder("'");
+                    sb.append(x.toString());
+                    if (sb.length() < 7) {
+                        // LocalTime.toString() omits zero parts, so we need to append zero minutes to be consistent with SSPS
+                        sb.append(":00");
+                    }
+                    sb.append("'");
+                    setValue(parameterIndex, sb.toString(), targetMysqlType);
+                    break;
+                case DATETIME:
+                case TIMESTAMP:
+                    sb = new StringBuilder("'");
+                    sb.append(DEFAULT_DATE);
+                    sb.append(" ");
+                    sb.append(x.toString());
+                    if (sb.length() < 18) {
+                        // LocalTime.toString() omits zero parts, so we need to append zero minutes to be consistent with SSPS
+                        sb.append(":00");
+                    }
+                    sb.append("'");
+                    setValue(parameterIndex, sb.toString(), targetMysqlType);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void setLocalDateTime(int parameterIndex, LocalDateTime x, MysqlType targetMysqlType) {
+        if (targetMysqlType == MysqlType.DATE) {
+            setValue(parameterIndex, "'" + x.toLocalDate() + "'", MysqlType.DATE);
+        } else {
+            int fractLen = 6; // max supported length (i.e. microsecond)
+            if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0) {
+                // use the column definition if available
+                fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+            }
+
+            if (!this.sendFractionalSeconds.getValue() || !this.session.getServerSession().getCapabilities().serverSupportsFracSecs()) {
+                x = x.withNano(0); // truncate nanoseconds
+            } else {
+                x = TimeUtil.adjustNanosPrecision(x, fractLen, !this.session.getServerSession().isServerTruncatesFracSecs());
+            }
+
+            switch (targetMysqlType) {
+                case TIME:
+                    StringBuilder sb = new StringBuilder("'");
+                    sb.append(x.toLocalTime().toString());
+                    if (sb.length() < 7) {
+                        // LocalTime.toString() omits zero parts, so we need to append zero minutes to be consistent with SSPS
+                        sb.append(":00");
+                    }
+                    sb.append("'");
+                    setValue(parameterIndex, sb.toString(), targetMysqlType);
+                    break;
+                case DATETIME:
+                case TIMESTAMP:
+                    sb = new StringBuilder("'");
+                    sb.append(x.toLocalDate());
+                    sb.append(" ");
+                    sb.append(x.toLocalTime().toString());
+                    if (sb.length() < 18) {
+                        // LocalTime.toString() omits zero parts, so we need to append zero minutes to be consistent with SSPS
+                        sb.append(":00");
+                    }
+                    sb.append("'");
+                    setValue(parameterIndex, sb.toString(), targetMysqlType);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    @Override
     public void setLong(int parameterIndex, long x) {
         setValue(parameterIndex, String.valueOf(x), MysqlType.BIGINT);
     }
@@ -771,9 +873,6 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
         if (x == null) {
             setNull(parameterIndex);
         } else {
-
-            x = (Timestamp) x.clone();
-
             if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs()
                     || !this.sendFractionalSeconds.getValue() && fractionalLength == 0) {
                 x = TimeUtil.truncateFractionalSeconds(x);
@@ -784,7 +883,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
                 fractionalLength = 6;
             }
 
-            x = TimeUtil.adjustTimestampNanosPrecision(x, fractionalLength, !this.session.getServerSession().isServerTruncatesFracSecs());
+            x = TimeUtil.adjustNanosPrecision(x, fractionalLength, !this.session.getServerSession().isServerTruncatesFracSecs());
 
             StringBuffer buf = new StringBuffer();
 

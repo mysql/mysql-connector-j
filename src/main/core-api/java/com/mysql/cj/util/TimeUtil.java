@@ -35,6 +35,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
@@ -144,29 +146,64 @@ public class TimeUtil {
      *            Flag indicating whether rounding or truncation occurs on server when inserting a TIME, DATE, or TIMESTAMP value with a fractional seconds part
      *            into a column having the same type but fewer fractional digits: true means rounding, false means truncation. The proper value should be
      *            detected by analyzing sql_mode server variable for TIME_TRUNCATE_FRACTIONAL presence.
-     * @return A new Timestamp object cloned from original ones and then rounded or truncated according to required fsp value
+     * @return A new Timestamp object cloned from the original one and then rounded or truncated according to required fsp value
      */
-    public static Timestamp adjustTimestampNanosPrecision(Timestamp ts, int fsp, boolean serverRoundFracSecs) {
+    public static Timestamp adjustNanosPrecision(Timestamp ts, int fsp, boolean serverRoundFracSecs) {
         if (fsp < 0 || fsp > 6) {
             throw ExceptionFactory.createException(WrongArgumentException.class, "fsp value must be in 0 to 6 range.");
         }
-
         Timestamp res = (Timestamp) ts.clone();
-        int nanos = res.getNanos();
         double tail = Math.pow(10, 9 - fsp);
-
-        if (serverRoundFracSecs) {
-            nanos = (int) Math.round(nanos / tail) * (int) tail;
-            if (nanos > 999999999) {
-                nanos %= 1000000000; // get only last 9 digits
-                res.setTime(res.getTime() + 1000); // increment seconds
-            }
-        } else {
-            nanos = (int) (nanos / tail) * (int) tail;
+        int nanos = serverRoundFracSecs ? (int) Math.round(res.getNanos() / tail) * (int) tail : (int) (res.getNanos() / tail) * (int) tail;
+        if (nanos > 999999999) { // if rounded up to the second then increment seconds
+            nanos %= 1000000000; // get last 9 digits
+            res.setTime(res.getTime() + 1000); // increment seconds
         }
         res.setNanos(nanos);
-
         return res;
+    }
+
+    /**
+     * Return a new LocalDateTime object which value is adjusted according to known DATE, DATETIME or TIMESTAMP field precision.
+     * 
+     * @param x
+     *            an original LocalDateTime object, not modified by this method
+     * @param fsp
+     *            value in the range from 0 to 6 specifying fractional seconds precision
+     * @param serverRoundFracSecs
+     *            Flag indicating whether rounding or truncation occurs on server when inserting a TIME, DATE, or TIMESTAMP value with a fractional seconds part
+     *            into a column having the same type but fewer fractional digits: true means rounding, false means truncation. The proper value should be
+     *            detected by analyzing sql_mode server variable for TIME_TRUNCATE_FRACTIONAL presence.
+     * @return A new LocalDateTime object cloned from the original one and then rounded or truncated according to required fsp value
+     */
+    public static LocalDateTime adjustNanosPrecision(LocalDateTime x, int fsp, boolean serverRoundFracSecs) {
+        if (fsp < 0 || fsp > 6) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, "fsp value must be in 0 to 6 range.");
+        }
+        int originalNano = x.getNano();
+        double tail = Math.pow(10, 9 - fsp);
+
+        int adjustedNano = serverRoundFracSecs ? (int) Math.round(originalNano / tail) * (int) tail : (int) (originalNano / tail) * (int) tail;
+        if (adjustedNano > 999999999) { // if rounded up to the second then increment seconds
+            adjustedNano %= 1000000000;
+            x = x.plusSeconds(1);
+        }
+        return x.withNano(adjustedNano);
+    }
+
+    public static LocalTime adjustNanosPrecision(LocalTime x, int fsp, boolean serverRoundFracSecs) {
+        if (fsp < 0 || fsp > 6) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, "fsp value must be in 0 to 6 range.");
+        }
+        int originalNano = x.getNano();
+        double tail = Math.pow(10, 9 - fsp);
+
+        int adjustedNano = serverRoundFracSecs ? (int) Math.round(originalNano / tail) * (int) tail : (int) (originalNano / tail) * (int) tail;
+        if (adjustedNano > 999999999) { // if rounded up to the second then increment seconds
+            adjustedNano %= 1000000000;
+            x = x.plusSeconds(1);
+        }
+        return x.withNano(adjustedNano);
     }
 
     /**
