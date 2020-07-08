@@ -157,8 +157,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             connectTimeout.setValue(xdevapiConnectTimeout.getValue());
         }
 
-        SocketConnection socketConn = propertySet.getBooleanProperty(PropertyKey.xdevapiUseAsyncProtocol).getValue() ? new XAsyncSocketConnection()
-                : new NativeSocketConnection();
+        SocketConnection socketConn = new NativeSocketConnection();
         socketConn.connect(host, port, propertySet, null, null, 0);
         init(null, socketConn, propertySet, null);
     }
@@ -181,8 +180,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             connectTimeout.setValue(xdevapiConnectTimeout.getValue());
         }
 
-        SocketConnection socketConn = propertySet.getBooleanProperty(PropertyKey.xdevapiUseAsyncProtocol).getValue() ? new XAsyncSocketConnection()
-                : new NativeSocketConnection();
+        SocketConnection socketConn = new NativeSocketConnection();
         socketConn.connect(host, port, propertySet, null, null, 0);
         init(null, socketConn, propertySet, null);
     }
@@ -247,15 +245,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
 
         try {
-            if (this.socketConnection.isSynchronous()) {
-                // i/o streams were replaced, build new packet sender/reader
-                this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
-                this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
-            } else {
-                // resume message processing
-                ((AsyncMessageSender) this.sender).setChannel(this.socketConnection.getAsynchronousSocketChannel());
-                this.reader.start();
-            }
+            this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
+            this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
         } catch (IOException e) {
             throw new XProtocolError(e.getMessage(), e);
         }
@@ -286,13 +277,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             return;
         }
 
-        if (!this.socketConnection.isSynchronous()) {
-            if (compression == Compression.REQUIRED) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.2"));
-            } // TODO Log "Compression negotiation failed. Connection will proceed uncompressed."
-            return;
-        }
-
         Map<String, CompressionAlgorithm> compressionAlgorithms = getCompressionAlgorithms(compressionAlgorithmsTriplets);
         Optional<String> algorithmOpt = Arrays.stream(SUPPORTED_COMPRESSION_ALGORITHMS_PRIORITY).sequential()
                 .filter(compressionCapabilities.get(XServerCapabilities.SUBKEY_COMPRESSION_ALGORITHM)::contains).filter(compressionAlgorithms::containsKey)
@@ -318,16 +302,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         this.serverSession = new XServerSession();
 
         try {
-            if (this.socketConnection.isSynchronous()) {
-                this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
-                this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
-                this.managedResource = this.socketConnection.getMysqlSocket();
-            } else {
-                this.sender = new AsyncMessageSender(this.socketConnection.getAsynchronousSocketChannel());
-                this.reader = new AsyncMessageReader(this.propertySet, this.socketConnection);
-                this.reader.start();
-                this.managedResource = this.socketConnection.getAsynchronousSocketChannel();
-            }
+            this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
+            this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
+            this.managedResource = this.socketConnection.getMysqlSocket();
         } catch (IOException e) {
             throw new XProtocolError(e.getMessage(), e);
         }

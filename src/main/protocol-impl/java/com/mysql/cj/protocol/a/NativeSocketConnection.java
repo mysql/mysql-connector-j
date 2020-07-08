@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,11 +33,9 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.AsynchronousSocketChannel;
 
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
@@ -98,16 +96,12 @@ public class NativeSocketConnection extends AbstractSocketConnection implements 
 
         this.mysqlSocket = this.socketFactory.performTlsHandshake(this, serverSession);
 
-        this.mysqlInput = new FullReadInputStream(this.propertySet.getBooleanProperty(PropertyKey.useUnbufferedInput).getValue()
-                ? getMysqlSocket().getInputStream() : new BufferedInputStream(getMysqlSocket().getInputStream(), 16384));
+        this.mysqlInput = new FullReadInputStream(
+                this.propertySet.getBooleanProperty(PropertyKey.useUnbufferedInput).getValue() ? getMysqlSocket().getInputStream()
+                        : new BufferedInputStream(getMysqlSocket().getInputStream(), 16384));
 
         this.mysqlOutput = new BufferedOutputStream(getMysqlSocket().getOutputStream(), 16384);
         this.mysqlOutput.flush();
 
-    }
-
-    @Override
-    public AsynchronousSocketChannel getAsynchronousSocketChannel() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 }

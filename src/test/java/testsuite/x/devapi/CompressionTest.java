@@ -457,10 +457,6 @@ public class CompressionTest extends DevApiBaseTestCase {
                 "The connection property 'xdevapi.compression' acceptable values are: 'DISABLED', 'PREFERRED' or 'REQUIRED'\\. The value '' is not acceptable\\.",
                 () -> this.fact.getSession(this.compressFreeBaseUrl + makeParam(PropertyKey.xdevapiCompression, "")));
 
-        assertThrows(WrongArgumentException.class, "Compression cannot be enabled with asynchronous variant of X Protocol\\.",
-                () -> this.fact.getSession(this.compressFreeBaseUrl + makeParam(PropertyKey.xdevapiCompression, Compression.REQUIRED)
-                        + makeParam(PropertyKey.xdevapiUseAsyncProtocol, "true")));
-
         assertThrows(WrongArgumentException.class, "Compression must be enabled in order to set any compression algorithms definition\\.",
                 () -> this.fact.getSession(this.compressFreeBaseUrl + makeParam(PropertyKey.xdevapiCompression, Compression.DISABLED)
                         + makeParam(PropertyKey.xdevapiCompressionAlgorithm, "test")));

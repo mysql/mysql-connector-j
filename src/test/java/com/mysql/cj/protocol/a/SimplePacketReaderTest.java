@@ -39,7 +39,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousSocketChannel;
 import java.util.Optional;
 import java.util.Random;
 
@@ -311,12 +310,6 @@ public class SimplePacketReaderTest {
         }
 
         public PropertySet getPropertySet() {
-            return null;
-        }
-
-        @Override
-        public AsynchronousSocketChannel getAsynchronousSocketChannel() {
-            // TODO Auto-generated method stub
             return null;
         }
     }

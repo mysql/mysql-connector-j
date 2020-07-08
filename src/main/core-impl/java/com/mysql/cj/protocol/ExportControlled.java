@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,9 +34,6 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.CompletionHandler;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
@@ -64,9 +61,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -80,10 +74,6 @@ import javax.naming.ldap.Rdn;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -630,185 +620,6 @@ public class ExportControlled {
 
     public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key) throws RSAException {
         return encryptWithRSAPublicKey(source, key, "RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
-    }
-
-    public static AsynchronousSocketChannel startTlsOnAsynchronousChannel(AsynchronousSocketChannel channel, SocketConnection socketConnection)
-            throws SSLException {
-
-        PropertySet propertySet = socketConnection.getPropertySet();
-
-        SslMode sslMode = propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode).getValue();
-
-        boolean verifyServerCert = sslMode == SslMode.VERIFY_CA || sslMode == SslMode.VERIFY_IDENTITY;
-        KeyStoreConf trustStore = !verifyServerCert ? new KeyStoreConf()
-                : getTrustStoreConf(propertySet, PropertyKey.trustCertificateKeyStoreUrl, PropertyKey.trustCertificateKeyStorePassword,
-                        PropertyKey.trustCertificateKeyStoreType, true);
-
-        KeyStoreConf keyStore = getKeyStoreConf(propertySet, PropertyKey.clientCertificateKeyStoreUrl, PropertyKey.clientCertificateKeyStorePassword,
-                PropertyKey.clientCertificateKeyStoreType);
-
-        SSLContext sslContext = ExportControlled.getSSLContext(keyStore.keyStoreUrl, keyStore.keyStoreType, keyStore.keyStorePassword, trustStore.keyStoreUrl,
-                trustStore.keyStoreType, trustStore.keyStorePassword, false, verifyServerCert,
-                sslMode == PropertyDefinitions.SslMode.VERIFY_IDENTITY ? socketConnection.getHost() : null, null);
-        SSLEngine sslEngine = sslContext.createSSLEngine();
-        sslEngine.setUseClientMode(true);
-
-        sslEngine.setEnabledProtocols(getAllowedProtocols(propertySet, null, sslEngine.getSupportedProtocols()));
-
-        String[] allowedCiphers = getAllowedCiphers(propertySet, Arrays.asList(sslEngine.getEnabledCipherSuites()));
-        if (allowedCiphers != null) {
-            sslEngine.setEnabledCipherSuites(allowedCiphers);
-        }
-
-        performTlsHandshake(sslEngine, channel);
-
-        return new TlsAsynchronousSocketChannel(channel, sslEngine);
-    }
-
-    /**
-     * Perform the handshaking step of the TLS connection. We use the `sslEngine' along with the `channel' to exchange messages with the server to setup an
-     * encrypted channel.
-     * 
-     * @param sslEngine
-     *            {@link SSLEngine}
-     * @param channel
-     *            {@link AsynchronousSocketChannel}
-     * @throws SSLException
-     *             in case of handshake error
-     */
-    private static void performTlsHandshake(SSLEngine sslEngine, AsynchronousSocketChannel channel) throws SSLException {
-        sslEngine.beginHandshake();
-        HandshakeStatus handshakeStatus = sslEngine.getHandshakeStatus();
-
-        // Create byte buffers to use for holding application data
-        int packetBufferSize = sslEngine.getSession().getPacketBufferSize();
-        ByteBuffer myNetData = ByteBuffer.allocate(packetBufferSize);
-        ByteBuffer peerNetData = ByteBuffer.allocate(packetBufferSize);
-        int appBufferSize = sslEngine.getSession().getApplicationBufferSize();
-        ByteBuffer myAppData = ByteBuffer.allocate(appBufferSize);
-        ByteBuffer peerAppData = ByteBuffer.allocate(appBufferSize);
-
-        SSLEngineResult res = null;
-
-        while (handshakeStatus != HandshakeStatus.FINISHED && handshakeStatus != HandshakeStatus.NOT_HANDSHAKING) {
-            switch (handshakeStatus) {
-                case NEED_WRAP:
-                    myNetData.clear();
-                    res = sslEngine.wrap(myAppData, myNetData);
-                    handshakeStatus = res.getHandshakeStatus();
-                    switch (res.getStatus()) {
-                        case OK:
-                            myNetData.flip();
-                            write(channel, myNetData);
-                            break;
-                        case BUFFER_OVERFLOW:
-                        case BUFFER_UNDERFLOW:
-                        case CLOSED:
-                            throw new CJCommunicationsException("Unacceptable SSLEngine result: " + res);
-                    }
-                    break;
-                case NEED_UNWRAP:
-                    peerNetData.flip(); // Process incoming handshaking data
-                    res = sslEngine.unwrap(peerNetData, peerAppData);
-                    handshakeStatus = res.getHandshakeStatus();
-                    switch (res.getStatus()) {
-                        case OK:
-                            peerNetData.compact();
-                            break;
-                        case BUFFER_OVERFLOW:
-                            // Check if we need to enlarge the peer application data buffer.
-                            final int newPeerAppDataSize = sslEngine.getSession().getApplicationBufferSize();
-                            if (newPeerAppDataSize > peerAppData.capacity()) {
-                                // enlarge the peer application data buffer
-                                ByteBuffer newPeerAppData = ByteBuffer.allocate(newPeerAppDataSize);
-                                newPeerAppData.put(peerAppData);
-                                newPeerAppData.flip();
-                                peerAppData = newPeerAppData;
-                            } else {
-                                peerAppData.compact();
-                            }
-                            break;
-                        case BUFFER_UNDERFLOW:
-                            // Check if we need to enlarge the peer network packet buffer
-                            final int newPeerNetDataSize = sslEngine.getSession().getPacketBufferSize();
-                            if (newPeerNetDataSize > peerNetData.capacity()) {
-                                // enlarge the peer network packet buffer
-                                ByteBuffer newPeerNetData = ByteBuffer.allocate(newPeerNetDataSize);
-                                newPeerNetData.put(peerNetData);
-                                newPeerNetData.flip();
-                                peerNetData = newPeerNetData;
-                            } else {
-                                peerNetData.compact();
-                            }
-                            // obtain more inbound network data and then retry the operation
-                            if (read(channel, peerNetData) < 0) {
-                                throw new CJCommunicationsException("Server does not provide enough data to proceed with SSL handshake.");
-                            }
-                            break;
-                        case CLOSED:
-                            throw new CJCommunicationsException("Unacceptable SSLEngine result: " + res);
-                    }
-                    break;
-
-                case NEED_TASK:
-                    sslEngine.getDelegatedTask().run();
-                    handshakeStatus = sslEngine.getHandshakeStatus();
-                    break;
-                case FINISHED:
-                case NOT_HANDSHAKING:
-                    break;
-            }
-        }
-    }
-
-    /**
-     * Synchronously send data to the server. (Needed here for TLS handshake)
-     * 
-     * @param channel
-     *            {@link AsynchronousSocketChannel}
-     * @param data
-     *            {@link ByteBuffer}
-     */
-    private static void write(AsynchronousSocketChannel channel, ByteBuffer data) {
-        CompletableFuture<Void> f = new CompletableFuture<>();
-        int bytesToWrite = data.limit();
-        CompletionHandler<Integer, Void> handler = new CompletionHandler<Integer, Void>() {
-            public void completed(Integer bytesWritten, Void nothing) {
-                if (bytesWritten < bytesToWrite) {
-                    channel.write(data, null, this);
-                } else {
-                    f.complete(null);
-                }
-            }
-
-            public void failed(Throwable exc, Void nothing) {
-                f.completeExceptionally(exc);
-            }
-        };
-        channel.write(data, null, handler);
-        try {
-            f.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            throw new CJCommunicationsException(ex);
-        }
-    }
-
-    /**
-     * Synchronously read data from the server. (Needed here for TLS handshake)
-     * 
-     * @param channel
-     *            {@link AsynchronousSocketChannel}
-     * @param data
-     *            {@link ByteBuffer}
-     * @return the number of bytes read
-     */
-    private static Integer read(AsynchronousSocketChannel channel, ByteBuffer data) {
-        Future<Integer> f = channel.read(data);
-        try {
-            return f.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            throw new CJCommunicationsException(ex);
-        }
     }
 
 }
