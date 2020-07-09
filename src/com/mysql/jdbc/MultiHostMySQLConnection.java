@@ -2495,6 +2495,14 @@ public class MultiHostMySQLConnection implements MySQLConnection {
         getActiveMySQLConnection().setEnableEscapeProcessing(flag);
     }
 
+    public String getMaxResultBuffer() {
+        return getActiveMySQLConnection().getMaxResultBuffer();
+    }
+
+    public void setMaxResultBuffer(String maxResultBuffer) {
+        getActiveMySQLConnection().setMaxResultBuffer(maxResultBuffer);
+    }
+
     public boolean isUseSSLExplicit() {
         return getActiveMySQLConnection().isUseSSLExplicit();
     }

@@ -2898,6 +2898,14 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
         this.mc.setEnableEscapeProcessing(flag);
     }
 
+    public String getMaxResultBuffer() {
+        return this.mc.getMaxResultBuffer();
+    }
+
+    public void setMaxResultBuffer(String maxResultBuffer) {
+        this.mc.setMaxResultBuffer(maxResultBuffer);
+    }
+
     public boolean isUseSSLExplicit() {
         return this.mc.isUseSSLExplicit();
     }

@@ -1433,4 +1433,8 @@ public interface ConnectionProperties {
     public boolean getEnableEscapeProcessing();
 
     public void setEnableEscapeProcessing(boolean flag);
+
+    public String getMaxResultBuffer();
+
+    public void setMaxResultBuffer(String maxResultBuffer);
 }

@@ -1340,6 +1340,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     private BooleanConnectionProperty enableEscapeProcessing = new BooleanConnectionProperty("enableEscapeProcessing", true,
             Messages.getString("ConnectionProperties.enableEscapeProcessing"), "5.1.37", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 
+    private StringConnectionProperty maxResultBuffer = new StringConnectionProperty("maxResultBuffer", null,
+            Messages.getString("ConnectionProperties.maxResultBuffer"), "5.1.50", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+
     protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(Properties info, int slotsToReserve) throws SQLException {
         initializeProperties(info);
 
@@ -4991,5 +4994,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
     public void setEnableEscapeProcessing(boolean flag) {
         this.enableEscapeProcessing.setValue(flag);
+    }
+
+    public String getMaxResultBuffer() {
+        return this.maxResultBuffer.getValueAsString();
+    }
+
+    public void setMaxResultBuffer(String maxResultBuffer) {
+        this.maxResultBuffer.setValue(maxResultBuffer);
     }
 }

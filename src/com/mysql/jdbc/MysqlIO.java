@@ -59,11 +59,16 @@ import com.mysql.jdbc.authentication.MysqlClearPasswordPlugin;
 import com.mysql.jdbc.authentication.MysqlNativePasswordPlugin;
 import com.mysql.jdbc.authentication.MysqlOldPasswordPlugin;
 import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
+import com.mysql.jdbc.counters.Counter;
+import com.mysql.jdbc.counters.ResultByteBufferCounter;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
+import com.mysql.jdbc.util.ConnectionPropertyMaxResultBufferParser;
 import com.mysql.jdbc.util.ReadAheadInputStream;
 import com.mysql.jdbc.util.ResultSetUtil;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * This class is used by Connection for communicating with the MySQL server.
@@ -247,6 +252,8 @@ public class MysqlIO {
     private ExceptionInterceptor exceptionInterceptor;
     private int authPluginDataLength = 0;
 
+    private final Counter resultByteCounter;
+
     /**
      * Constructor: Connect to the MySQL server and setup a stream connection.
      * 
@@ -331,8 +338,17 @@ public class MysqlIO {
             if (this.connection.getLogSlowQueries()) {
                 calculateSlowQueryThreshold();
             }
+
+            //set up threshold for query result buffer
+            long maxResultBuffer = ConnectionPropertyMaxResultBufferParser
+                    .parseProperty(props.getProperty("maxResultBuffer"));
+
+            this.resultByteCounter = new ResultByteBufferCounter(maxResultBuffer);
+
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection, 0, 0, ioEx, getExceptionInterceptor());
+        } catch (ParserConfigurationException e) {
+            throw SQLError.createSQLException(e.getMessage(), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
         }
     }
 
@@ -862,6 +878,11 @@ public class MysqlIO {
      */
     protected Buffer checkErrorPacket() throws SQLException {
         return checkErrorPacket(-1);
+    }
+
+
+    private Buffer checkErrorPacket(boolean isDataLoading) throws SQLException {
+        return checkErrorPacket(-1, isDataLoading);
     }
 
     /**
@@ -1989,7 +2010,7 @@ public class MysqlIO {
         Buffer rowPacket = null;
 
         if (existingRowPacket == null) {
-            rowPacket = checkErrorPacket();
+            rowPacket = checkErrorPacket(true);
 
             if (!useBufferRowExplicit && useBufferRowIfPossible) {
                 if (rowPacket.getBufLength() > this.useBufferRowSizeThreshold) {
@@ -2030,6 +2051,8 @@ public class MysqlIO {
 
             readServerStatusForResultSets(rowPacket);
 
+            resultByteCounter.resetCounter();
+
             return null;
         }
 
@@ -2051,6 +2074,8 @@ public class MysqlIO {
         rowPacket.setPosition(rowPacket.getPosition() - 1);
         readServerStatusForResultSets(rowPacket);
 
+        resultByteCounter.resetCounter();
+
         return null;
     }
 
@@ -2068,7 +2093,7 @@ public class MysqlIO {
 
             // Have we stumbled upon a multi-packet?
             if (packetLength == this.maxThreeBytes) {
-                reuseAndReadPacket(this.reusablePacket, packetLength);
+                reuseAndReadPacket(this.reusablePacket, packetLength, true);
 
                 // Go back to "old" way which uses packets
                 return nextRow(fields, columnCount, isBinaryEncoded, resultSetConcurrency, useBufferRowIfPossible, useBufferRowExplicit, canReuseRowPacket,
@@ -2078,7 +2103,7 @@ public class MysqlIO {
             // Does this go over the threshold where we should use a BufferRow?
 
             if (packetLength > this.useBufferRowSizeThreshold) {
-                reuseAndReadPacket(this.reusablePacket, packetLength);
+                reuseAndReadPacket(this.reusablePacket, packetLength, true);
 
                 // Go back to "old" way which uses packets
                 return nextRow(fields, columnCount, isBinaryEncoded, resultSetConcurrency, true, true, false, this.reusablePacket);
@@ -2160,6 +2185,8 @@ public class MysqlIO {
                             }
                         }
 
+                        this.resultByteCounter.resetCounter();
+
                         return null; // last data packet
                     }
 
@@ -2203,6 +2230,7 @@ public class MysqlIO {
                 } else if (len == 0) {
                     rowData[i] = Constants.EMPTY_BYTE_ARRAY;
                 } else {
+                    this.resultByteCounter.increaseCounter(len);
                     rowData[i] = new byte[len];
 
                     int bytesRead = readFully(this.mysqlInput, rowData[i], 0, len);
@@ -3414,10 +3442,14 @@ public class MysqlIO {
      * @throws SQLException
      */
     private final Buffer reuseAndReadPacket(Buffer reuse) throws SQLException {
-        return reuseAndReadPacket(reuse, -1);
+        return reuseAndReadPacket(reuse, -1, false);
     }
 
-    private final Buffer reuseAndReadPacket(Buffer reuse, int existingPacketLength) throws SQLException {
+    private final Buffer reuseAndReadPacket(Buffer reuse, boolean isDataLoading) throws SQLException {
+        return reuseAndReadPacket(reuse, -1, isDataLoading);
+    }
+
+    private final Buffer reuseAndReadPacket(Buffer reuse, int existingPacketLength, boolean isDataLoading) throws SQLException {
 
         try {
             reuse.setWasMultiPacket(false);
@@ -3435,6 +3467,8 @@ public class MysqlIO {
             } else {
                 packetLength = existingPacketLength;
             }
+
+            increaseCounterIfReadingData(isDataLoading, packetLength);
 
             if (this.traceProtocol) {
                 StringBuilder traceMessageBuf = new StringBuilder();
@@ -3501,7 +3535,7 @@ public class MysqlIO {
                 // it's multi-packet
                 isMultiPacket = true;
 
-                packetLength = readRemainingMultiPackets(reuse, multiPacketSeq);
+                packetLength = readRemainingMultiPackets(reuse, multiPacketSeq, isDataLoading);
             }
 
             if (!isMultiPacket) {
@@ -3531,7 +3565,7 @@ public class MysqlIO {
 
     }
 
-    private int readRemainingMultiPackets(Buffer reuse, byte multiPacketSeq) throws IOException, SQLException {
+    private int readRemainingMultiPackets(Buffer reuse, byte multiPacketSeq, boolean isDataLoading) throws IOException, SQLException {
         int packetLength = -1;
         Buffer multiPacket = null;
 
@@ -3543,6 +3577,9 @@ public class MysqlIO {
             }
 
             packetLength = (this.packetHeaderBuf[0] & 0xff) + ((this.packetHeaderBuf[1] & 0xff) << 8) + ((this.packetHeaderBuf[2] & 0xff) << 16);
+
+            increaseCounterIfReadingData(isDataLoading, packetLength);
+
             if (multiPacket == null) {
                 multiPacket = new Buffer(packetLength);
             }
@@ -3582,6 +3619,12 @@ public class MysqlIO {
         reuse.setPosition(0);
         reuse.setWasMultiPacket(true);
         return packetLength;
+    }
+
+    private void increaseCounterIfReadingData(boolean isDataLoading, int packetLength) throws IOException {
+        if (isDataLoading) {
+            resultByteCounter.increaseCounter(packetLength);
+        }
     }
 
     /**
@@ -3850,6 +3893,23 @@ public class MysqlIO {
      * @throws CommunicationsException
      */
     private Buffer checkErrorPacket(int command) throws SQLException {
+        return checkErrorPacket(command, false);
+    }
+
+    /**
+     * Checks for errors in the reply packet, and if none, returns the reply
+     * packet, ready for reading
+     *
+     * @param command
+     *            the command being issued (if used)
+     * @param isDataLoading
+     *            flag if result data is reading
+     *
+     * @throws SQLException
+     *             if an error packet was received
+     * @throws CommunicationsException
+     */
+    private Buffer checkErrorPacket(int command, boolean isDataLoading) throws SQLException {
         //int statusCode = 0;
         Buffer resultPacket = null;
         this.serverStatus = 0;
@@ -3857,7 +3917,7 @@ public class MysqlIO {
         try {
             // Check return value, if we get a java.io.EOFException, the server has gone away. We'll pass it on up the exception chain and let someone higher up
             // decide what to do (barf, reconnect, etc).
-            resultPacket = reuseAndReadPacket(this.reusablePacket);
+            resultPacket = reuseAndReadPacket(this.reusablePacket, isDataLoading);
         } catch (SQLException sqlEx) {
             // Don't wrap SQL Exceptions
             throw sqlEx;
@@ -5012,5 +5072,9 @@ public class MysqlIO {
 
     public boolean isEOFDeprecated() {
         return (this.clientParam & CLIENT_DEPRECATE_EOF) != 0;
+    }
+
+    public Counter getResultByteCounter() {
+        return this.resultByteCounter;
     }
 }

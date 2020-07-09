@@ -73,6 +73,7 @@ import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.Util;
 
+import com.mysql.jdbc.counters.ResultByteBufferCounter;
 import testsuite.BaseTestCase;
 import testsuite.BufferingLogger;
 
@@ -6020,4 +6021,67 @@ public class ResultSetRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Verify if ResultByteBufferCounter works properly.
+     * @throws Exception
+     */
+    public void testMaxResultBuffer() throws Exception {
+        createTable("testMaxResultBuffer", "(value VARCHAR(10))");
+        for (int i=0; i < 200; i++) {
+            this.stmt.execute("INSERT INTO testMaxResultBuffer(value) VALUES ('123456789X');");
+        }
+        Connection con = null;
+        Properties props = new Properties();
+        try {
+            props.setProperty("maxResultBuffer", "3000");
+            con = getConnectionWithProps(props);
+            Statement stm = con.createStatement();
+            stm.execute("SELECT * FROM testMaxResultBuffer");
+            ResultByteBufferCounter counter = (ResultByteBufferCounter)((MySQLConnection)con).getIO().getResultByteCounter();
+            assertEquals("The result byte counter should be reset after the data has been successfully retrieved",0,counter.getResultByteBufferCounter());
+        } finally {
+            this.stmt.execute("TRUNCATE TABLE testMaxResultBuffer");
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
+
+    /**
+     * Verify if ResultByteBufferCounter throws proper exception
+     * when reading result larger than maxResultBuffer property value.
+     * @throws Exception
+     */
+    public void testMaxResultBufferException() throws Exception {
+        createTable("testMaxResultBuffer", "(value VARCHAR(10))");
+        for (int i=0; i < 200; i++) {
+            this.stmt.execute("INSERT INTO testMaxResultBuffer(value) VALUES ('123456789X');");
+        }
+
+        try {
+            assertThrows("CommunicationsException should be thrown", CommunicationsException.class,
+                    new Callable<Void>() {
+                public Void call() throws Exception {
+                    Connection con = null;
+                    Properties props = new Properties();
+                    try {
+                        props.setProperty("maxResultBuffer", "1000");
+                        con = getConnectionWithProps(props);
+                        Statement stm = con.createStatement();
+                        stm.execute("SELECT * FROM testMaxResultBuffer");
+                    } finally {
+                        if (con != null) {
+                            con.close();
+                        }
+                    }
+                    return null;
+                }
+            });
+        } finally {
+            this.stmt.execute("TRUNCATE TABLE testMaxResultBuffer");
+        }
+
+    }
+
 }
