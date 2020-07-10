@@ -362,33 +362,6 @@ public class ScramSha1SaslClient implements SaslClient {
         }
     }
 
-    //    /*
-    //     * Alternative implementation.
-    //     */
-    //    private static final byte[] INT_1 = new byte[] { 0, 0, 0, 1 };
-    //    private static byte[] hi(byte[] str, byte[] salt, int iterations) {
-    //        try {
-    //            Mac hmacSha1 = Mac.getInstance(HMAC_SHA1_ALGORITHM);
-    //            hmacSha1.init(new SecretKeySpec(str, HMAC_SHA1_ALGORITHM));
-    //
-    //            // U1 := HMAC(str, salt + INT(1))
-    //            hmacSha1.update(salt);
-    //            hmacSha1.update(INT_1);
-    //            byte[] u1 = hmacSha1.doFinal();
-    //            // Ui := HMAC(str, Ui-1)
-    //            byte[] uPrev = u1;
-    //            byte[] result = u1;
-    //            for (int i = 1; i < iterations; i++) {
-    //                byte[] ui = hmacSha1.doFinal(uPrev);
-    //                uPrev = ui;
-    //                xorInPlace(result, ui);
-    //            }
-    //            return result;
-    //        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-    //            throw ExceptionFactory.createException("Failed computing authentication hashes", e.getCause());
-    //        }
-    //    }
-
     /**
      * Combines the two byte arrays in a XOR operation, changing the contents of the first.
      * 
