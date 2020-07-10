@@ -805,7 +805,8 @@ jboss-common-jdbc-wrapper.jar
    not operate properly or at all without the library.
 
    This component is licensed under GNU Lesser General Public License
-   Version 2.1, February 1999.
+   Version 2.1, February 1999. See the 'Standard Licenses' section for
+   license text.
 
    ======================================================================
    ======================================================================
