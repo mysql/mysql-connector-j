@@ -4,6 +4,6 @@ Upstream-Contact: MySQL Release Engineering <mysql-build@oss.oracle.com>
 Source: http://dev.mysql.com/
 
 Files: *
-Copyright: 2002, 2020, Oracle and/or its affiliates. All rights reserved.
+Copyright: 2002, 2020, Oracle and/or its affiliates.
 License:
  For licensing information see the LICENSE file in this distribution.

@@ -1,6 +1,6 @@
-<?xml version='1.0'?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!--
-  Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2020, Oracle and/or its affiliates.
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License, version 2.0, as published by the
@@ -1196,7 +1196,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                  overview="src/main/doc/mysqlx-overview.html"
                  windowtitle="MySQL Connector/J X DevAPI Reference"
                  header="&lt;b&gt;MySQL Connector/J X DevAPI Reference&lt;br&gt;v1&lt;/b&gt;"
-                 bottom="&lt;center&gt;Copyright &amp;copy; 2016, 2020, Oracle and/or its affiliates. All rights reserved.&lt;/center&gt;"
+                 bottom="&lt;center&gt;Copyright &amp;copy; 2016, 2020, Oracle and/or its affiliates.&lt;/center&gt;"
                  linkoffline="https://docs.oracle.com/javase/8/docs/api ${com.mysql.cj.docs.jdk8pkg}">
             <sourcepath>
                 <pathelement path="src/main/user-api/java" />
