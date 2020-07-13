@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,9 @@
 
 package testsuite.x.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,9 +41,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.MysqlxSession;
 import com.mysql.cj.conf.DefaultPropertySet;
@@ -68,14 +68,14 @@ import com.mysql.cj.xdevapi.UpdateResultBuilder;
 public class MysqlxSessionTest extends InternalXBaseTestCase {
     private MysqlxSession session;
 
-    @Before
+    @BeforeEach
     public void setupTestSession() {
         if (this.isSetForXTests) {
             this.session = createTestSession();
         }
     }
 
-    @After
+    @AfterEach
     public void destroyTestSession() {
         if (this.isSetForXTests && this.session != null) {
             this.session.quit();

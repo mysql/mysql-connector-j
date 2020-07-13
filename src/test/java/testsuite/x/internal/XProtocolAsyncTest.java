@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,9 @@
 
 package testsuite.x.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,10 +39,10 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ProtocolEntity;
@@ -60,12 +60,12 @@ import com.mysql.cj.xdevapi.RowResult;
 /**
  * Tests for protocol-level <b>async</b> APIs against X Plugin via X Protocol.
  */
-@Category(testsuite.x.AsyncTests.class)
+@Tag("Async")
 public class XProtocolAsyncTest extends InternalXBaseTestCase {
     private XProtocol protocol;
     private XMessageBuilder messageBuilder;
 
-    @Before
+    @BeforeEach
     public void setupTestProtocol() {
         if (this.isSetForXTests) {
             this.protocol = createAuthenticatedTestProtocol();
@@ -73,7 +73,7 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void destroyTestProtocol() throws IOException {
         if (this.isSetForXTests) {
             this.protocol.close();
@@ -82,6 +82,8 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
 
     /**
      * Helper class to hold values across threads and closures.
+     * 
+     * @param <T>
      */
     public static class ValueHolder<T> implements Consumer<T>, Supplier<T> {
         T val;

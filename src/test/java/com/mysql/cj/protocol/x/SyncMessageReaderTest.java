@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,10 +29,10 @@
 
 package com.mysql.cj.protocol.x;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -41,8 +41,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -63,12 +62,12 @@ public class SyncMessageReaderTest {
     private static final byte[] errMsgPacket = serializeMessage(
             Error.newBuilder().setMsg("oops").setCode(5432).setSqlState("12S34").setSeverity(Error.Severity.FATAL).build(), ServerMessages.Type.ERROR_VALUE);
 
-    @Before
-    public void setUp() {
-    }
-
     /**
      * Serialize a message for testing.
+     * 
+     * @param msg
+     * @param type
+     * @return a byte array
      */
     private static byte[] serializeMessage(GeneratedMessageV3 msg, int type) {
         int packetLen = msg.getSerializedSize() + 1;
@@ -128,6 +127,8 @@ public class SyncMessageReaderTest {
 
     /**
      * This is a 'mini'-stress test that encompasses the check of <i>clearHeader()</i> being called correctly.
+     * 
+     * @throws IOException
      */
     @Test
     public void testSeveralMessages() throws IOException {
@@ -170,6 +171,8 @@ public class SyncMessageReaderTest {
     /**
      * Verification test to help prevent bugs in the typecode/class/parser mapping tables. We check that all classes that are mapped have a parser.
      * 
+     * @throws InvalidProtocolBufferException
+     * 
      * @todo Test in the other direction also
      */
     @Test
@@ -180,7 +183,7 @@ public class SyncMessageReaderTest {
             Parser<? extends GeneratedMessageV3> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
             assertNotNull(parser);
             GeneratedMessageV3 partiallyParsed = parser.parsePartialFrom(new byte[] {});
-            assertEquals("Parsed class should equal the class that mapped to it via type tag", messageClass, partiallyParsed.getClass());
+            assertEquals(messageClass, partiallyParsed.getClass(), "Parsed class should equal the class that mapped to it via type tag");
         }
     }
 }

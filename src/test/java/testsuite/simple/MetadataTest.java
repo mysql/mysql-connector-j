@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,13 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -47,6 +54,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.Query;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions;
@@ -64,29 +73,7 @@ import testsuite.BaseTestCase;
  * Tests DatabaseMetaData methods.
  */
 public class MetadataTest extends BaseTestCase {
-    /**
-     * Creates a new MetadataTest object.
-     * 
-     * @param name
-     */
-    public MetadataTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(MetadataTest.class);
-    }
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-    }
-
+    @Test
     public void testSupports() throws SQLException {
         Properties props = new Properties();
         for (boolean useIS : new boolean[] { false, true }) {
@@ -125,6 +112,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testGetCatalogVsGetSchemas() throws SQLException {
         Properties props = new Properties();
         for (boolean useIS : new boolean[] { false, true }) {
@@ -189,6 +177,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testForeignKeys() throws SQLException {
         String refDb = "test_cross_reference_db";
         try {
@@ -255,12 +244,12 @@ public class MetadataTest extends BaseTestCase {
                             this.rs = dbmd.getImportedKeys(null, this.dbName, "child");
                             assertTrue(this.rs.next());
                             this.rs = dbmd.getImportedKeys(null, dbNamePattern, "child");
-                            assertFalse("Schema pattern " + dbNamePattern + " should not be recognized.", this.rs.next());
+                            assertFalse(this.rs.next(), "Schema pattern " + dbNamePattern + " should not be recognized.");
                         } else {
                             this.rs = dbmd.getImportedKeys(this.dbName, null, "child");
                             assertTrue(this.rs.next());
                             this.rs = dbmd.getImportedKeys(dbNamePattern, null, "child");
-                            assertFalse("Catalog pattern " + dbNamePattern + " should not be recognized.", this.rs.next());
+                            assertFalse(this.rs.next(), "Catalog pattern " + dbNamePattern + " should not be recognized.");
                         }
 
                         this.rs = dbmd.getImportedKeys(null, null, "child");
@@ -295,12 +284,12 @@ public class MetadataTest extends BaseTestCase {
                             this.rs = dbmd.getExportedKeys(null, this.dbName, "parent");
                             assertTrue(this.rs.next());
                             this.rs = dbmd.getExportedKeys(null, dbNamePattern, "parent");
-                            assertFalse("Schema pattern " + dbNamePattern + " should not be recognized.", this.rs.next());
+                            assertFalse(this.rs.next(), "Schema pattern " + dbNamePattern + " should not be recognized.");
                         } else {
                             this.rs = dbmd.getExportedKeys(this.dbName, null, "parent");
                             assertTrue(this.rs.next());
                             this.rs = dbmd.getExportedKeys(dbNamePattern, null, "parent");
-                            assertFalse("Catalog pattern " + dbNamePattern + " should not be recognized.", this.rs.next());
+                            assertFalse(this.rs.next(), "Catalog pattern " + dbNamePattern + " should not be recognized.");
                         }
 
                         this.rs = dbmd.getExportedKeys(null, null, "parent");
@@ -337,12 +326,12 @@ public class MetadataTest extends BaseTestCase {
                             this.rs = dbmd.getCrossReference(null, refDb, "cpd_foreign_3", null, this.dbName, "cpd_foreign_4");
                             assertTrue(this.rs.next());
                             this.rs = dbmd.getCrossReference(null, refDbPattern, "cpd_foreign_3", null, dbNamePattern, "cpd_foreign_4");
-                            assertFalse("Schema patterns " + refDbPattern + " and " + dbNamePattern + " should not be recognized.", this.rs.next());
+                            assertFalse(this.rs.next(), "Schema patterns " + refDbPattern + " and " + dbNamePattern + " should not be recognized.");
                         } else {
                             this.rs = dbmd.getCrossReference(refDb, null, "cpd_foreign_3", this.dbName, null, "cpd_foreign_4");
                             assertTrue(this.rs.next());
                             this.rs = dbmd.getCrossReference(refDbPattern, null, "cpd_foreign_3", dbNamePattern, null, "cpd_foreign_4");
-                            assertFalse("Catalog patterns " + refDbPattern + " and " + dbNamePattern + " should not be recognized.", this.rs.next());
+                            assertFalse(this.rs.next(), "Catalog patterns " + refDbPattern + " and " + dbNamePattern + " should not be recognized.");
                         }
 
                         this.rs = dbmd.getCrossReference(null, null, "cpd_foreign_3", null, null, "cpd_foreign_4");
@@ -420,9 +409,9 @@ public class MetadataTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS fktable2");
             this.stmt.executeUpdate("DROP TABLE IF EXISTS fktable1");
         }
-
     }
 
+    @Test
     public void testGetPrimaryKeys() throws SQLException {
         createTable("multikey", "(d INT NOT NULL, b INT NOT NULL, a INT NOT NULL, c INT NOT NULL, PRIMARY KEY (d, b, a, c))");
 
@@ -442,11 +431,11 @@ public class MetadataTest extends BaseTestCase {
                     if (dbMapsToSchema) {
                         String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
                         this.rs = dbmd.getPrimaryKeys("", dbPattern, "multikey"); //metaData.getIndexInfo(null, dbPattern, "t1", false, true);
-                        assertFalse("Schema pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Schema pattern " + dbPattern + " should not be recognized.");
                     } else {
                         String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
                         this.rs = dbmd.getPrimaryKeys(dbPattern, null, "multikey"); //metaData.getIndexInfo(dbPattern, null, "t1", false, true);
-                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
                     }
 
                     this.rs = dbMapsToSchema ? dbmd.getPrimaryKeys("", conn1.getSchema(), "multikey") : dbmd.getPrimaryKeys(conn1.getCatalog(), "", "multikey");
@@ -485,12 +474,11 @@ public class MetadataTest extends BaseTestCase {
     /**
      * Tests the implementation of metadata for views.
      * 
-     * This test automatically detects whether or not the server it is running
-     * against supports the creation of views.
+     * This test automatically detects whether or not the server it is running against supports the creation of views.
      * 
      * @throws SQLException
-     *             if the test fails.
      */
+    @Test
     public void testViewMetaData() throws SQLException {
         try {
             this.rs = this.conn.getMetaData().getTableTypes();
@@ -543,8 +531,8 @@ public class MetadataTest extends BaseTestCase {
      * Tests detection of read-only fields.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testRSMDIsReadOnly() throws Exception {
         try {
             this.rs = this.stmt.executeQuery("SELECT 1");
@@ -572,6 +560,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testBitType() throws Exception {
         try {
             createTable("testBitType", "(field1 BIT, field2 BIT, field3 BIT)");
@@ -607,12 +596,14 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testSupportsSelectForUpdate() throws Exception {
         boolean supportsForUpdate = this.conn.getMetaData().supportsSelectForUpdate();
 
         assertTrue(supportsForUpdate);
     }
 
+    @Test
     public void testTinyint1IsBit() throws Exception {
         String tableName = "testTinyint1IsBit";
         // Can't use 'BIT' or boolean
@@ -645,6 +636,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     private void checkBitOrBooleanType(boolean usingBit) throws SQLException {
 
         assertTrue(this.rs.next());
@@ -658,6 +650,7 @@ public class MetadataTest extends BaseTestCase {
         assertEquals("java.lang.Boolean", this.rs.getMetaData().getColumnClassName(1));
     }
 
+    @Test
     public void testResultSetMetaDataMethods() throws Exception {
         createTable("t1",
                 "(c1 char(1) CHARACTER SET latin7 COLLATE latin7_general_cs, c2 char(10) CHARACTER SET latin7 COLLATE latin7_general_ci, g1 GEOMETRY)");
@@ -701,12 +694,14 @@ public class MetadataTest extends BaseTestCase {
         this.rs = con.createStatement().executeQuery("SELECT c1 as QQQ, g1 FROM t1");
         assertEquals("QQQ", this.rs.getMetaData().getColumnLabel(1));
         assertEquals("QQQ", this.rs.getMetaData().getColumnName(1));
-
     }
 
     /**
      * Tests the implementation of Information Schema for primary keys.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testGetPrimaryKeysUsingInfoShcema() throws Exception {
         createTable("t1", "(c1 int(1) primary key)");
         Properties props = new Properties();
@@ -726,6 +721,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testGetIndexInfo() throws Exception {
         createTable("t1", "(c1 int(1))");
         this.stmt.executeUpdate("CREATE INDEX index1 ON t1 (c1)");
@@ -746,11 +742,11 @@ public class MetadataTest extends BaseTestCase {
                     if (dbMapsToSchema) {
                         String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
                         this.rs = metaData.getIndexInfo(null, dbPattern, "t1", false, true);
-                        assertFalse("Schema pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Schema pattern " + dbPattern + " should not be recognized.");
                     } else {
                         String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
                         this.rs = metaData.getIndexInfo(dbPattern, null, "t1", false, true);
-                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
                     }
 
                     this.rs = dbMapsToSchema ? metaData.getIndexInfo(null, conn1.getCatalog(), "t1", false, true)
@@ -782,12 +778,14 @@ public class MetadataTest extends BaseTestCase {
                 }
             }
         }
-
     }
 
     /**
      * Tests the implementation of getColumns.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testGetColumns() throws Exception {
         createTable("t1", "(c1 char(1))");
         Properties props = new Properties();
@@ -820,11 +818,11 @@ public class MetadataTest extends BaseTestCase {
                     if (dbMapsToSchema) {
                         String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
                         this.rs = metaData.getColumns(null, dbPattern, "t1", null);
-                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                        assertTrue(this.rs.next(), "Schema pattern " + dbPattern + " should be recognized.");
                     } else {
                         String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
                         this.rs = metaData.getColumns(dbPattern, null, "t1", null);
-                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
                     }
 
                 } finally {
@@ -838,7 +836,10 @@ public class MetadataTest extends BaseTestCase {
 
     /**
      * Tests the implementation of Information Schema for tables.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testGetTablesUsingInfoSchema() throws Exception {
         createTable("`t1-1`", "(c1 char(1))");
         createTable("`t1-2`", "(c1 char(1))");
@@ -865,6 +866,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testGetTables() throws Exception {
         createTable("`t1-1`", "(c1 char(1)) COMMENT 'table1'");
         createTable("`t1-2`", "(c1 char(1))");
@@ -896,11 +898,11 @@ public class MetadataTest extends BaseTestCase {
                     if (dbMapsToSchema) {
                         String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
                         this.rs = metaData.getTables(null, dbPattern, "t1-_", null);
-                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                        assertTrue(this.rs.next(), "Schema pattern " + dbPattern + " should be recognized.");
                     } else {
                         String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
                         this.rs = metaData.getTables(dbPattern, null, "t1-_", null);
-                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
                     }
 
                 } finally {
@@ -912,6 +914,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     private void testGetTables_checkResult(boolean useIS, boolean dbMapsToSchema) throws Exception {
         assertTrue(this.rs.next());
         if (dbMapsToSchema) {
@@ -952,7 +955,10 @@ public class MetadataTest extends BaseTestCase {
 
     /**
      * Tests the implementation of column privileges metadata.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testGetColumnPrivileges() throws Exception {
 
         if (!runTestIfSysPropDefined(PropertyDefinitions.SYSP_testsuite_cantGrant)) {
@@ -1014,11 +1020,11 @@ public class MetadataTest extends BaseTestCase {
                             if (dbMapsToSchema) {
                                 String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
                                 this.rs = metaData.getColumnPrivileges(null, dbPattern, "t1", null);
-                                assertFalse("Schema pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                                assertFalse(this.rs.next(), "Schema pattern " + dbPattern + " should not be recognized.");
                             } else {
                                 String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
                                 this.rs = metaData.getColumnPrivileges(dbPattern, null, "t1", null);
-                                assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                                assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
                             }
 
                         }
@@ -1041,6 +1047,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testGetProcedures() throws Exception {
         createProcedure("sp1", "() COMMENT 'testGetProcedures comment1' \n BEGIN\nSELECT 1;end\n");
 
@@ -1061,11 +1068,11 @@ public class MetadataTest extends BaseTestCase {
                     if (dbMapsToSchema) {
                         String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
                         this.rs = metaData.getProcedures(null, dbPattern, "sp1");
-                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                        assertTrue(this.rs.next(), "Schema pattern " + dbPattern + " should be recognized.");
                     } else {
                         String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
                         this.rs = metaData.getProcedures(dbPattern, null, "sp1");
-                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
                     }
 
                     this.rs = metaData.getProcedures(null, null, "sp1");
@@ -1104,6 +1111,7 @@ public class MetadataTest extends BaseTestCase {
         assertEquals("sp1", this.rs.getString("SPECIFIC_NAME"));
     }
 
+    @Test
     public void testGetFunctions() throws Exception {
         createFunction("testGetFunctionsF", "(d INT) RETURNS INT DETERMINISTIC COMMENT 'testGetFunctions comment1' BEGIN RETURN d; END");
 
@@ -1133,11 +1141,11 @@ public class MetadataTest extends BaseTestCase {
                     if (dbMapsToSchema) {
                         String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
                         this.rs = metaData.getFunctions(null, dbPattern, "testGetFunctionsF");
-                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                        assertTrue(this.rs.next(), "Schema pattern " + dbPattern + " should be recognized.");
                     } else {
                         String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
                         this.rs = metaData.getFunctions(dbPattern, null, "testGetFunctionsF");
-                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
                     }
 
                 } finally {
@@ -1164,6 +1172,7 @@ public class MetadataTest extends BaseTestCase {
         assertEquals("testGetFunctionsF", this.rs.getString("SPECIFIC_NAME"));
     }
 
+    @Test
     public void testGetProcedureColumns() throws Exception {
         createProcedure("testGetProcedureColumnsP", "(d INT) COMMENT 'testGetProcedureColumns comment1' \n BEGIN\nSELECT 1;end\n");
 
@@ -1184,11 +1193,11 @@ public class MetadataTest extends BaseTestCase {
                     if (dbMapsToSchema) {
                         String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
                         this.rs = metaData.getProcedureColumns(null, dbPattern, "testGetProcedureColumnsP", "%");
-                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                        assertTrue(this.rs.next(), "Schema pattern " + dbPattern + " should be recognized.");
                     } else {
                         String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
                         this.rs = metaData.getProcedureColumns(dbPattern, null, "testGetProcedureColumnsP", "%");
-                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
                     }
 
                     this.rs = metaData.getProcedureColumns(null, null, "testGetProcedureColumnsP", "%");
@@ -1239,6 +1248,7 @@ public class MetadataTest extends BaseTestCase {
         assertFalse(this.rs.next());
     }
 
+    @Test
     public void testGetFunctionColumns() throws Exception {
         createFunction("testGetFunctionColumnsF", "(d INT) RETURNS INT DETERMINISTIC COMMENT 'testGetFunctionColumnsF comment1' BEGIN RETURN d; END");
 
@@ -1268,11 +1278,11 @@ public class MetadataTest extends BaseTestCase {
                     if (dbMapsToSchema) {
                         String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
                         this.rs = metaData.getFunctionColumns(null, dbPattern, "testGetFunctionColumnsF", "%");
-                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                        assertTrue(this.rs.next(), "Schema pattern " + dbPattern + " should be recognized.");
                     } else {
                         String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
                         this.rs = metaData.getFunctionColumns(dbPattern, null, "testGetFunctionColumnsF", "%");
-                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
                     }
 
                 } finally {
@@ -1338,7 +1348,10 @@ public class MetadataTest extends BaseTestCase {
 
     /**
      * Tests the implementation of Information Schema for foreign key.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testGetCrossReferenceUsingInfoSchema() throws Exception {
         this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
         this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
@@ -1366,6 +1379,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testGetExportedKeys() throws Exception {
         this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
         this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
@@ -1431,6 +1445,7 @@ public class MetadataTest extends BaseTestCase {
         assertEquals(DatabaseMetaData.importedKeyNotDeferrable, this.rs.getShort("DEFERRABILITY"));
     }
 
+    @Test
     public void testGetImportedKeys() throws Exception {
         createTable("parent", "(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
         createTable("child", "(id INT, parent_id INT, FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE SET NULL) ENGINE=INNODB");
@@ -1498,8 +1513,11 @@ public class MetadataTest extends BaseTestCase {
      * Test for new syntax and support in DatabaseMetaData.getColumns().
      * 
      * New syntax for CREATE TABLE, introduced in MySQL 5.7.6:
-     * -col_name data_type [GENERATED ALWAYS] AS (expression) [VIRTUAL | STORED] [UNIQUE [KEY]] [COMMENT comment] [[NOT] NULL] [[PRIMARY] KEY]
+     * - col_name data_type [GENERATED ALWAYS] AS (expression) [VIRTUAL | STORED] [UNIQUE [KEY]] [COMMENT comment] [[NOT] NULL] [[PRIMARY] KEY]
+     * 
+     * @throws Exception
      */
+    @Test
     public void testGeneratedColumns() throws Exception {
         if (!versionMeetsMinimum(5, 7, 6)) {
             return;
@@ -1539,47 +1557,47 @@ public class MetadataTest extends BaseTestCase {
 
             // Test columns metadata.
             this.rs = dbmd.getColumns(null, null, "pythagorean_triple", "%");
-            assertTrue(test, this.rs.next());
-            assertEquals(test, "side_a", this.rs.getString("COLUMN_NAME"));
-            assertEquals(test, "YES", this.rs.getString("IS_NULLABLE"));
-            assertEquals(test, "NO", this.rs.getString("IS_AUTOINCREMENT"));
-            assertEquals(test, "NO", this.rs.getString("IS_GENERATEDCOLUMN"));
-            assertTrue(test, this.rs.next());
-            assertEquals(test, "side_b", this.rs.getString("COLUMN_NAME"));
-            assertEquals(test, "YES", this.rs.getString("IS_NULLABLE"));
-            assertEquals(test, "NO", this.rs.getString("IS_AUTOINCREMENT"));
-            assertEquals(test, "NO", this.rs.getString("IS_GENERATEDCOLUMN"));
-            assertTrue(test, this.rs.next());
-            assertEquals(test, "side_c_vir", this.rs.getString("COLUMN_NAME"));
-            assertEquals(test, "YES", this.rs.getString("IS_NULLABLE"));
-            assertEquals(test, "NO", this.rs.getString("IS_AUTOINCREMENT"));
-            assertEquals(test, "YES", this.rs.getString("IS_GENERATEDCOLUMN"));
-            assertTrue(test, this.rs.next());
-            assertEquals(test, "side_c_sto", this.rs.getString("COLUMN_NAME"));
-            assertEquals(test, "NO", this.rs.getString("IS_NULLABLE"));
-            assertEquals(test, "NO", this.rs.getString("IS_AUTOINCREMENT"));
-            assertEquals(test, "YES", this.rs.getString("IS_GENERATEDCOLUMN"));
-            assertFalse(test, this.rs.next());
+            assertTrue(this.rs.next(), test);
+            assertEquals("side_a", this.rs.getString("COLUMN_NAME"), test);
+            assertEquals("YES", this.rs.getString("IS_NULLABLE"), test);
+            assertEquals("NO", this.rs.getString("IS_AUTOINCREMENT"), test);
+            assertEquals("NO", this.rs.getString("IS_GENERATEDCOLUMN"), test);
+            assertTrue(this.rs.next(), test);
+            assertEquals("side_b", this.rs.getString("COLUMN_NAME"), test);
+            assertEquals("YES", this.rs.getString("IS_NULLABLE"), test);
+            assertEquals("NO", this.rs.getString("IS_AUTOINCREMENT"), test);
+            assertEquals("NO", this.rs.getString("IS_GENERATEDCOLUMN"), test);
+            assertTrue(this.rs.next(), test);
+            assertEquals("side_c_vir", this.rs.getString("COLUMN_NAME"), test);
+            assertEquals("YES", this.rs.getString("IS_NULLABLE"), test);
+            assertEquals("NO", this.rs.getString("IS_AUTOINCREMENT"), test);
+            assertEquals("YES", this.rs.getString("IS_GENERATEDCOLUMN"), test);
+            assertTrue(this.rs.next(), test);
+            assertEquals("side_c_sto", this.rs.getString("COLUMN_NAME"), test);
+            assertEquals("NO", this.rs.getString("IS_NULLABLE"), test);
+            assertEquals("NO", this.rs.getString("IS_AUTOINCREMENT"), test);
+            assertEquals("YES", this.rs.getString("IS_GENERATEDCOLUMN"), test);
+            assertFalse(this.rs.next(), test);
 
             // Test primary keys metadata.
             this.rs = dbmd.getPrimaryKeys(null, null, "pythagorean_triple");
-            assertTrue(test, this.rs.next());
-            assertEquals(test, "side_c_sto", this.rs.getString("COLUMN_NAME"));
-            assertEquals(test, "PRIMARY", this.rs.getString("PK_NAME"));
-            assertFalse(test, this.rs.next());
+            assertTrue(this.rs.next(), test);
+            assertEquals("side_c_sto", this.rs.getString("COLUMN_NAME"), test);
+            assertEquals("PRIMARY", this.rs.getString("PK_NAME"), test);
+            assertFalse(this.rs.next(), test);
 
             // Test indexes metadata.
             this.rs = dbmd.getIndexInfo(null, null, "pythagorean_triple", false, true);
-            assertTrue(test, this.rs.next());
-            assertEquals(test, "PRIMARY", this.rs.getString("INDEX_NAME"));
-            assertEquals(test, "side_c_sto", this.rs.getString("COLUMN_NAME"));
-            assertTrue(test, this.rs.next());
-            assertEquals(test, "side_c_sto", this.rs.getString("INDEX_NAME"));
-            assertEquals(test, "side_c_sto", this.rs.getString("COLUMN_NAME"));
-            assertTrue(test, this.rs.next());
-            assertEquals(test, "side_c_vir", this.rs.getString("INDEX_NAME"));
-            assertEquals(test, "side_c_vir", this.rs.getString("COLUMN_NAME"));
-            assertFalse(test, this.rs.next());
+            assertTrue(this.rs.next(), test);
+            assertEquals("PRIMARY", this.rs.getString("INDEX_NAME"), test);
+            assertEquals("side_c_sto", this.rs.getString("COLUMN_NAME"), test);
+            assertTrue(this.rs.next(), test);
+            assertEquals("side_c_sto", this.rs.getString("INDEX_NAME"), test);
+            assertEquals("side_c_sto", this.rs.getString("COLUMN_NAME"), test);
+            assertTrue(this.rs.next(), test);
+            assertEquals("side_c_vir", this.rs.getString("INDEX_NAME"), test);
+            assertEquals("side_c_vir", this.rs.getString("COLUMN_NAME"), test);
+            assertFalse(this.rs.next(), test);
 
             testConn.close();
         }
@@ -1590,7 +1608,10 @@ public class MetadataTest extends BaseTestCase {
      * (Related to BUG#70701 - DatabaseMetaData.getSQLKeywords() doesn't match MySQL 5.6 reserved words)
      * 
      * This test checks the statically maintained keywords list.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testGetSqlKeywordsStatic() throws Exception {
         final String mysqlKeywords = "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,"
                 + "DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,"
@@ -1604,12 +1625,12 @@ public class MetadataTest extends BaseTestCase {
 
         if (!versionMeetsMinimum(8, 0, 11)) {
             Connection testConn = getConnectionWithProps("useInformationSchema=true");
-            assertEquals("MySQL keywords don't match expected.", mysqlKeywords, testConn.getMetaData().getSQLKeywords());
+            assertEquals(mysqlKeywords, testConn.getMetaData().getSQLKeywords(), "MySQL keywords don't match expected.");
             testConn.close();
         }
 
         Connection testConn = getConnectionWithProps("useInformationSchema=false"); // Required for MySQL 8.0.11 and above, otherwise returns dynamic keywords.
-        assertEquals("MySQL keywords don't match expected.", mysqlKeywords, testConn.getMetaData().getSQLKeywords());
+        assertEquals(mysqlKeywords, testConn.getMetaData().getSQLKeywords(), "MySQL keywords don't match expected.");
         testConn.close();
     }
 
@@ -1618,7 +1639,10 @@ public class MetadataTest extends BaseTestCase {
      * WL#10544, Update MySQL 8.0 keywords list.
      * 
      * This test checks the dynamically maintained keywords lists.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testGetSqlKeywordsDynamic() throws Exception {
         if (!versionMeetsMinimum(8, 0, 11)) {
             // Tested in testGetSqlKeywordsStatic();
@@ -1633,8 +1657,8 @@ public class MetadataTest extends BaseTestCase {
         dbmdSql2003Keywords.setAccessible(true);
         @SuppressWarnings("unchecked")
         List<String> sql2003ReservedWords = Collections.unmodifiableList((List<String>) dbmdSql2003Keywords.get(null));
-        assertTrue("Failed to get field SQL2003_KEYWORDS from com.mysql.cj.jdbc.DatabaseMetaData",
-                sql2003ReservedWords != null && !sql2003ReservedWords.isEmpty());
+        assertTrue(sql2003ReservedWords != null && !sql2003ReservedWords.isEmpty(),
+                "Failed to get field SQL2003_KEYWORDS from com.mysql.cj.jdbc.DatabaseMetaData");
 
         // 2. Retrieve list of reserved words from server.
         final String keywordsQuery = "SELECT WORD FROM INFORMATION_SCHEMA.KEYWORDS WHERE RESERVED=1 ORDER BY WORD";
@@ -1643,7 +1667,7 @@ public class MetadataTest extends BaseTestCase {
         while (this.rs.next()) {
             mysqlReservedWords.add(this.rs.getString(1));
         }
-        assertTrue("Failed to retrieve reserved words from server.", !mysqlReservedWords.isEmpty());
+        assertTrue(!mysqlReservedWords.isEmpty(), "Failed to retrieve reserved words from server.");
 
         // 3. Find the difference mysqlReservedWords - sql2003ReservedWords and prepare the expected result.
         mysqlReservedWords.removeAll(sql2003ReservedWords);
@@ -1654,9 +1678,9 @@ public class MetadataTest extends BaseTestCase {
         dbmduisKeywordsCacheField.setAccessible(true);
         @SuppressWarnings("unchecked")
         Map<ServerVersion, String> dbmduisKeywordsCache = (Map<ServerVersion, String>) dbmduisKeywordsCacheField.get(null);
-        assertNotNull("Failed to retrieve the field keywordsCache from com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema.", dbmduisKeywordsCache);
+        assertNotNull(dbmduisKeywordsCache, "Failed to retrieve the field keywordsCache from com.mysql.cj.jdbc.DatabaseMetaDataUsingInfoSchema.");
         dbmduisKeywordsCache.clear();
-        assertTrue("Failed to clear the DatabaseMetaDataUsingInfoSchema keywords cache.", dbmduisKeywordsCache.isEmpty());
+        assertTrue(dbmduisKeywordsCache.isEmpty(), "Failed to clear the DatabaseMetaDataUsingInfoSchema keywords cache.");
 
         /*
          * Check that keywords are retrieved from database and cached.
@@ -1667,25 +1691,25 @@ public class MetadataTest extends BaseTestCase {
 
         // First call to DatabaseMetaData.getSQLKeywords() -> keywords are retrieved from database.
         Connection testConn = getConnectionWithProps(props);
-        assertEquals("MySQL keywords don't match expected.", expectedSqlKeywords, testConn.getMetaData().getSQLKeywords());
-        assertTrue("MySQL keywords weren't obtained from database.", TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.contains(keywordsQuery));
-        assertTrue("Keywords for current server weren't properly cached.", dbmduisKeywordsCache.containsKey(((JdbcConnection) testConn).getServerVersion()));
+        assertEquals(expectedSqlKeywords, testConn.getMetaData().getSQLKeywords(), "MySQL keywords don't match expected.");
+        assertTrue(TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.contains(keywordsQuery), "MySQL keywords weren't obtained from database.");
+        assertTrue(dbmduisKeywordsCache.containsKey(((JdbcConnection) testConn).getServerVersion()), "Keywords for current server weren't properly cached.");
 
         TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.clear();
 
         // Second call to DatabaseMetaData.getSQLKeywords(), using same connection -> keywords are retrieved from internal cache.
-        assertEquals("MySQL keywords don't match expected.", expectedSqlKeywords, testConn.getMetaData().getSQLKeywords());
-        assertFalse("MySQL keywords weren't obtained from cache.", TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.contains(keywordsQuery));
-        assertTrue("Keywords for current server weren't properly cached.", dbmduisKeywordsCache.containsKey(((JdbcConnection) testConn).getServerVersion()));
+        assertEquals(expectedSqlKeywords, testConn.getMetaData().getSQLKeywords(), "MySQL keywords don't match expected.");
+        assertFalse(TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.contains(keywordsQuery), "MySQL keywords weren't obtained from cache.");
+        assertTrue(dbmduisKeywordsCache.containsKey(((JdbcConnection) testConn).getServerVersion()), "Keywords for current server weren't properly cached.");
         testConn.close();
 
         TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.clear();
 
         // Third call to DatabaseMetaData.getSQLKeywords(), using different connection -> keywords are retrieved from internal cache.
         testConn = getConnectionWithProps(props);
-        assertEquals("MySQL keywords don't match expected.", expectedSqlKeywords, testConn.getMetaData().getSQLKeywords());
-        assertFalse("MySQL keywords weren't obtained from cache.", TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.contains(keywordsQuery));
-        assertTrue("Keywords for current server weren't properly cached.", dbmduisKeywordsCache.containsKey(((JdbcConnection) testConn).getServerVersion()));
+        assertEquals(expectedSqlKeywords, testConn.getMetaData().getSQLKeywords(), "MySQL keywords don't match expected.");
+        assertFalse(TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.contains(keywordsQuery), "MySQL keywords weren't obtained from cache.");
+        assertTrue(dbmduisKeywordsCache.containsKey(((JdbcConnection) testConn).getServerVersion()), "Keywords for current server weren't properly cached.");
         testConn.close();
 
         TestGetSqlKeywordsDynamicQueryInterceptor.interceptedQueries.clear();
@@ -1701,6 +1725,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testGetTablePrivileges() throws Exception {
         String tableName = "testGetTablePrivileges";
         createTable(tableName, "(id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB");
@@ -1739,11 +1764,11 @@ public class MetadataTest extends BaseTestCase {
                     if (dbMapsToSchema) {
                         String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
                         this.rs = metaData.getTablePrivileges(null, dbPattern, tablePattern);
-                        assertTrue("Schema pattern " + dbPattern + " should be recognized.", this.rs.next());
+                        assertTrue(this.rs.next(), "Schema pattern " + dbPattern + " should be recognized.");
                     } else {
                         String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
                         this.rs = metaData.getTablePrivileges(dbPattern, null, tablePattern);
-                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
                     }
 
                 } finally {
@@ -1772,6 +1797,7 @@ public class MetadataTest extends BaseTestCase {
         assertFalse(this.rs.next());
     }
 
+    @Test
     public void testGetBestRowIdentifier() throws Exception {
         String tableName = "testGetBestRowIdentifier";
         createTable(tableName, "(field1 INT NOT NULL PRIMARY KEY)");
@@ -1802,11 +1828,11 @@ public class MetadataTest extends BaseTestCase {
                     if (dbMapsToSchema) {
                         String dbPattern = conn1.getSchema().substring(0, conn1.getSchema().length() - 1) + "%";
                         this.rs = metaData.getBestRowIdentifier(null, dbPattern, tableName, DatabaseMetaData.bestRowNotPseudo, true);
-                        assertFalse("Schema pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Schema pattern " + dbPattern + " should not be recognized.");
                     } else {
                         String dbPattern = conn1.getCatalog().substring(0, conn1.getCatalog().length() - 1) + "%";
                         this.rs = metaData.getBestRowIdentifier(dbPattern, null, tableName, DatabaseMetaData.bestRowNotPseudo, true);
-                        assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+                        assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
                     }
 
                 } finally {
@@ -1818,6 +1844,7 @@ public class MetadataTest extends BaseTestCase {
         }
     }
 
+    @Test
     private void testGetBestRowIdentifier_checkResult(ResultSet rs1) throws Exception {
         assertTrue(rs1.next());
         assertEquals(DatabaseMetaData.bestRowSession, rs1.getShort("SCOPE"));
@@ -1830,5 +1857,4 @@ public class MetadataTest extends BaseTestCase {
         assertEquals(DatabaseMetaData.bestRowNotPseudo, rs1.getShort("PSEUDO_COLUMN"));
         assertFalse(rs1.next());
     }
-
 }

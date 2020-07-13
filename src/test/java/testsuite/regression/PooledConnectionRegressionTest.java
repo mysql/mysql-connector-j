@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,12 @@
 
 package testsuite.regression;
 
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -47,6 +52,10 @@ import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
 import javax.sql.ConnectionPoolDataSource;
 import javax.sql.PooledConnection;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.NativeSession;
 import com.mysql.cj.ServerVersion;
@@ -72,9 +81,6 @@ import com.mysql.cj.jdbc.exceptions.PacketTooBigException;
 
 import testsuite.BaseTestCase;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
 /**
  * Tests a PooledConnection implementation provided by a JDBC driver. Test case provided by Johnny Macchione from bug database record BUG#884. According to
  * the JDBC 2.0 specification:
@@ -83,7 +89,7 @@ import junit.framework.TestSuite;
  * "Each call to PooledConnection.getConnection() must return a newly constructed Connection object that exhibits the default Connection behavior. Only the most
  * recent Connection object produced from a particular PooledConnection is open. An existing Connection object is automatically closed, if the getConnection()
  * method of its associated Pooled-Connection is called again, before it has been explicitly closed by the application. This gives the application server a way
- * to �take away� a Connection from the application if it wishes, and give it out to someone else. This capability will not likely be used frequently in
+ * to 'take away' a Connection from the application if it wishes, and give it out to someone else. This capability will not likely be used frequently in
  * practice."
  * </p>
  * 
@@ -119,10 +125,8 @@ import junit.framework.TestSuite;
  * circumstances: when the application server is undergoing an orderly shutdown, when the connection cache is being reinitialized, or when the application
  * server receives an event indicating that an unrecoverable error has occurred on the connection."
  * </p>
- * Even though the specification isn't clear about it, I think it is no use
- * generating a close event when calling the method PooledConnection.close(),
- * even if a logical Connection is open for this PooledConnection, bc the
- * PooledConnection will obviously not be returned to the pool.
+ * Even though the specification isn't clear about it, I think it is no use generating a close event when calling the method PooledConnection.close(), even if a
+ * logical Connection is open for this PooledConnection, bc the PooledConnection will obviously not be returned to the pool.
  */
 public final class PooledConnectionRegressionTest extends BaseTestCase {
     private ConnectionPoolDataSource cpds;
@@ -134,23 +138,12 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
     protected int connectionErrorEventCount;
 
     /**
-     * Creates a new instance of ProgressPooledConnectionTest
-     * 
-     * @param testname
-     */
-    public PooledConnectionRegressionTest(String testname) {
-        super(testname);
-    }
-
-    /**
      * Set up test case before a test is run.
      * 
      * @throws Exception
      */
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
-
         // Reset event count.
         this.closeEventCount = 0;
         this.connectionErrorEventCount = 0;
@@ -163,36 +156,19 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(PooledConnectionRegressionTest.class);
-    }
-
-    /**
-     * @return a test suite composed of this test case.
-     */
-    public static Test suite() {
-        TestSuite suite = new TestSuite(PooledConnectionRegressionTest.class);
-
-        return suite;
-    }
-
-    /**
      * After the test is run.
+     * 
+     * @throws Exception
      */
-    @Override
+    @AfterEach
     public void tearDown() throws Exception {
         this.cpds = null;
-        super.tearDown();
     }
 
     /**
-     * Tests fix for BUG#7136 ... Statement.getConnection() returning physical
-     * connection instead of logical connection.
+     * Tests fix for BUG#7136 ... Statement.getConnection() returning physical connection instead of logical connection.
      */
+    @Test
     public void testBug7136() {
         final ConnectionEventListener conListener = new ConnectionListener();
         PooledConnection pc = null;
@@ -211,7 +187,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 
             connFromStatement.close();
 
-            assertEquals("One close event should've been registered", 1, this.closeEventCount);
+            assertEquals(1, this.closeEventCount, "One close event should've been registered");
 
             this.closeEventCount = 0;
 
@@ -223,7 +199,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 
             connFromPreparedStatement.close();
 
-            assertEquals("One close event should've been registered", 1, this.closeEventCount);
+            assertEquals(1, this.closeEventCount, "One close event should've been registered");
 
         } catch (SQLException ex) {
             fail(ex.toString());
@@ -239,9 +215,9 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test the nb of closeEvents generated when a Connection is reclaimed. No
-     * event should be generated in that case.
+     * Test the nb of closeEvents generated when a Connection is reclaimed. No event should be generated in that case.
      */
+    @Test
     public void testConnectionReclaim() {
         final ConnectionEventListener conListener = new ConnectionListener();
         PooledConnection pc = null;
@@ -292,15 +268,15 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
             }
         }
 
-        assertEquals("Wrong nb of CloseEvents: ", NB_TESTS, this.closeEventCount);
+        assertEquals(NB_TESTS, this.closeEventCount, "Wrong nb of CloseEvents: ");
     }
 
     /**
      * Tests that PacketTooLargeException doesn't clober the connection.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testPacketTooLargeException() throws Exception {
         final ConnectionEventListener conListener = new ConnectionListener();
         PooledConnection pc = null;
@@ -333,15 +309,15 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         // This should still work okay, even though the last query on the same connection didn't...
         this.rs = connFromPool.createStatement().executeQuery("SELECT 1");
 
-        assertTrue(this.connectionErrorEventCount == 0);
-        assertTrue(this.closeEventCount == 0);
+        assertEquals(0, this.connectionErrorEventCount);
+        assertEquals(0, this.closeEventCount);
     }
 
     /**
-     * Test the nb of closeEvents generated by a PooledConnection. A
-     * JDBC-compliant driver should only generate 1 closeEvent each time
-     * connection.close() is called.
+     * Test the nb of closeEvents generated by a PooledConnection. A JDBC-compliant driver should only generate 1 closeEvent each time connection.close() is
+     * called.
      */
+    @Test
     public void testCloseEvent() {
         final ConnectionEventListener conListener = new ConnectionListener();
         PooledConnection pc = null;
@@ -378,20 +354,18 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
                 }
             }
         }
-        assertEquals("Wrong nb of CloseEvents: ", NB_TESTS, this.closeEventCount);
+        assertEquals(NB_TESTS, this.closeEventCount, "Wrong nb of CloseEvents: ");
     }
 
     /**
      * Listener for PooledConnection events.
      */
     protected final class ConnectionListener implements ConnectionEventListener {
-        /** */
         public void connectionClosed(ConnectionEvent event) {
             PooledConnectionRegressionTest.this.closeEventCount++;
             System.out.println(PooledConnectionRegressionTest.this.closeEventCount + " - Connection closed.");
         }
 
-        /** */
         public void connectionErrorOccurred(ConnectionEvent event) {
             PooledConnectionRegressionTest.this.connectionErrorEventCount++;
             System.out.println("Connection error: " + event.getSQLException());
@@ -399,12 +373,11 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#35489 - Prepared statements from pooled connections
-     * cause NPE when closed() under JDBC4
+     * Tests fix for BUG#35489 - Prepared statements from pooled connections cause NPE when closed() under JDBC4
      * 
      * @throws Exception
-     *             if the test fails
      */
+    @Test
     public void testBug35489() throws Exception {
         MysqlConnectionPoolDataSource pds = new MysqlConnectionPoolDataSource();
         pds.setUrl(dbUrl);
@@ -427,6 +400,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
     }
 
     @SuppressWarnings("deprecation")
+    @Test
     public void testConnectionWrapperMethods() throws Exception {
         PooledConnection pc = null;
         pc = this.cpds.getPooledConnection();
@@ -620,7 +594,6 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         //        cw.cleanup(whyCleanedUp);
         //        cw.abort(executor);
         //        cw.abortInternal();
-
     }
 
     @SuppressWarnings("deprecation")

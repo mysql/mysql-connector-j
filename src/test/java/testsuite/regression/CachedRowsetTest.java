@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,10 +29,16 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
 
 import javax.sql.RowSet;
+
+import org.junit.jupiter.api.Test;
 
 import testsuite.BaseTestCase;
 
@@ -41,30 +47,11 @@ import testsuite.BaseTestCase;
  */
 public class CachedRowsetTest extends BaseTestCase {
     /**
-     * Creates a new CachedRowsetTest
-     * 
-     * @param name
-     *            the name of the test to run
-     */
-    public CachedRowsetTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(CachedRowsetTest.class);
-    }
-
-    /**
-     * Tests fix for BUG#5188, CachedRowSet errors using PreparedStatement. Uses
-     * Sun's "com.sun.rowset.CachedRowSetImpl"
+     * Tests fix for BUG#5188, CachedRowSet errors using PreparedStatement. Uses Sun's "com.sun.rowset.CachedRowSetImpl"
      * 
      * @throws Exception
      */
+    @Test
     public void testBug5188() throws Exception {
         String implClass = "com.sun.rowset.CachedRowSetImpl";
         Class<?> c;
@@ -96,6 +83,5 @@ public class CachedRowsetTest extends BaseTestCase {
         assertEquals("1", cachedRowSet.getString("ID"));
         assertEquals("test data stuff !", cachedRowSet.getString("datafield"));
         assertFalse(cachedRowSet.next());
-
     }
 }

@@ -246,6 +246,9 @@ public class CompressionSplittedInputStream extends FilterInputStream {
      * 
      * @return
      *         <code>true</code> if this frame's bytes weren't all consumed yet, <code>false</code> otherwise.
+     *
+     * @throws IOException
+     *             if any of the underlying I/O operations fail.
      */
     private boolean isDataAvailable() throws IOException {
         return isCompressedDataAvailable() || this.frameHeaderConsumed > 0 && this.frameHeaderConsumed < HEADER_LENGTH
@@ -257,6 +260,9 @@ public class CompressionSplittedInputStream extends FilterInputStream {
      * 
      * @return
      *         <code>true</code> if there is compressed data available, <code>false</code> otherwise.
+     *
+     * @throws IOException
+     *             if any of the underlying I/O operations fail.
      */
     private boolean isCompressedDataAvailable() throws IOException {
         return this.compressorIn != null && this.compressorIn.available() > 0;
@@ -267,6 +273,9 @@ public class CompressionSplittedInputStream extends FilterInputStream {
      * 
      * @return
      *         <code>true</code> if all compressed data was consumed, <code>false</code> otherwise.
+     *
+     * @throws IOException
+     *             if any of the underlying I/O operations fail.
      */
     private boolean isCompressedDataReadComplete() throws IOException {
         return this.compressorIn != null && this.compressorIn.available() == 0;
@@ -315,6 +324,8 @@ public class CompressionSplittedInputStream extends FilterInputStream {
     /**
      * Reads the exact number of requested bytes from the given {@link InputStream}, blocking if needed.
      * 
+     * @param inStream
+     *            input stream to read from
      * @param b
      *            the buffer into which the data is read.
      * @param off
@@ -322,8 +333,9 @@ public class CompressionSplittedInputStream extends FilterInputStream {
      * @param len
      *            the maximum number of bytes read.
      * @return the total number of bytes read into the buffer, or <code>-1</code> if there is no more data because the end of the stream has been reached.
-     * @exception IOException
-     *                if any of the underlying I/O operations fail.
+     *
+     * @throws IOException
+     *             if any of the underlying I/O operations fail.
      */
     private final int readFully(InputStream inStream, byte[] b, int off, int len) throws IOException {
         if (len < 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,9 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -45,6 +48,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import org.junit.jupiter.api.Test;
+
 import testsuite.BaseTestCase;
 
 /**
@@ -53,28 +58,7 @@ import testsuite.BaseTestCase;
 public class StressRegressionTest extends BaseTestCase {
     private int numThreadsStarted;
 
-    /**
-     * Creates a new StressRegressionTest
-     * 
-     * @param name
-     *            the name of the test.
-     */
-    public StressRegressionTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(StressRegressionTest.class);
-    }
-
-    /**
-     * @throws Exception
-     */
+    @Test
     public synchronized void testContention() throws Exception {
         if (!this.DISABLED_testContention) {
             System.out.println("Calculating baseline elapsed time...");
@@ -117,7 +101,7 @@ public class StressRegressionTest extends BaseTestCase {
 
             double avgElapsedTimeMillis = 0;
 
-            List<Long> elapsedTimes = new ArrayList<Long>();
+            List<Long> elapsedTimes = new ArrayList<>();
 
             for (int i = 0; i < numThreadsToStart; i++) {
                 elapsedTimes.add(new Long(threads[i].elapsedTimeMillis));
@@ -134,18 +118,14 @@ public class StressRegressionTest extends BaseTestCase {
         }
     }
 
-    /**
-     * @throws Exception
-     */
+    @Test
     public void testCreateConnections() throws Exception {
         Thread t = new CreateThread();
         t.start();
         t.join();
     }
 
-    /**
-     * @throws Exception
-     */
+    @Test
     public void testCreateConnectionsUnderLoad() throws Exception {
         Thread t = new CreateThread(new BusyThread());
         t.start();
@@ -326,8 +306,8 @@ public class StressRegressionTest extends BaseTestCase {
      * passes to ensure other tests results.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug67760() throws Exception {
         /*
          * Use a brand new Connection not shared by anyone else, otherwise it may block later on test teardown.
@@ -459,8 +439,8 @@ public class StressRegressionTest extends BaseTestCase {
         elapsedTime = System.currentTimeMillis() - startTime;
         System.out.println("The test ended gracefully after " + elapsedTime + " milliseconds.");
 
-        assertTrue("Test expected to run at least for " + (recheckWaitTimeUnit * recheckWaitTimeCountdown) + " milliseconds.",
-                elapsedTime >= recheckWaitTimeUnit * recheckWaitTimeCountdown);
+        assertTrue(elapsedTime >= recheckWaitTimeUnit * recheckWaitTimeCountdown,
+                "Test expected to run at least for " + (recheckWaitTimeUnit * recheckWaitTimeCountdown) + " milliseconds.");
 
         testConn.close();
     }

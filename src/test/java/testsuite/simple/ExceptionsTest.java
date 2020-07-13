@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,6 +32,8 @@ package testsuite.simple;
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
 
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
@@ -54,12 +56,8 @@ public class ExceptionsTest extends BaseTestCase {
     static String TEST_MESSAGE = "Test message";
     static String TEST_SQL_STATE = "Test SQLState";
 
-    public ExceptionsTest(String name) {
-        super(name);
-    }
-
+    @Test
     public void testExceptionsTranslation() throws Exception {
-
         // java.sql.Driver methods
         assertThrows(SQLException.class,
                 "Communications link failure\n\nThe last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.",
@@ -83,9 +81,9 @@ public class ExceptionsTest extends BaseTestCase {
                         return null;
                     }
                 });
-
     }
 
+    @Test
     public void testConstructors() {
         new CommunicationsException(TEST_MESSAGE, new Throwable());
         new CommunicationsException((JdbcConnection) this.conn, new PacketSentTimeHolder() {
@@ -128,5 +126,4 @@ public class ExceptionsTest extends BaseTestCase {
 
         new SQLError();
     }
-
 }

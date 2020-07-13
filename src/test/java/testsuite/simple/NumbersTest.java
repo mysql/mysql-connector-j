@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,37 +29,24 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.SQLException;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import testsuite.BaseTestCase;
 
 public class NumbersTest extends BaseTestCase {
     private static final long TEST_BIGINT_VALUE = 6147483647L;
 
-    /**
-     * Creates a new NumbersTest object.
-     * 
-     * @param name
-     */
-    public NumbersTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(NumbersTest.class);
-    }
-
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
         createTestTable();
     }
 
+    @Test
     public void testNumbers() throws SQLException {
         this.rs = this.stmt.executeQuery("SELECT * from number_test");
 
@@ -67,9 +54,9 @@ public class NumbersTest extends BaseTestCase {
             long minBigInt = this.rs.getLong(1);
             long maxBigInt = this.rs.getLong(2);
             long testBigInt = this.rs.getLong(3);
-            assertTrue("Minimum bigint not stored correctly", (minBigInt == Long.MIN_VALUE));
-            assertTrue("Maximum bigint not stored correctly", (maxBigInt == Long.MAX_VALUE));
-            assertTrue("Test bigint not stored correctly", (TEST_BIGINT_VALUE == testBigInt));
+            assertTrue(minBigInt == Long.MIN_VALUE, "Minimum bigint not stored correctly");
+            assertTrue(maxBigInt == Long.MAX_VALUE, "Maximum bigint not stored correctly");
+            assertTrue(TEST_BIGINT_VALUE == testBigInt, "Test bigint not stored correctly");
         }
     }
 

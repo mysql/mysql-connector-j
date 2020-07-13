@@ -29,12 +29,12 @@
 
 package testsuite.x.internal;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Properties;
 import java.util.concurrent.Callable;
-
-import org.junit.Assert;
 
 import com.mysql.cj.MysqlxSession;
 import com.mysql.cj.ServerVersion;
@@ -119,6 +119,8 @@ public class InternalXBaseTestCase {
 
     /**
      * Create a new {@link XProtocol} instance for testing.
+     * 
+     * @return an XProtocol instance
      */
     public XProtocol createTestProtocol() {
         // TODO pass prop. set
@@ -129,6 +131,8 @@ public class InternalXBaseTestCase {
 
     /**
      * Create a new {@link XProtocol} that is part of an authenticated session.
+     * 
+     * @return an X Protocol instance
      */
     public XProtocol createAuthenticatedTestProtocol() {
         XProtocol protocol = createTestProtocol();
@@ -193,6 +197,8 @@ public class InternalXBaseTestCase {
 
     /**
      * Create a temporary collection for testing.
+     * 
+     * @param protocol
      *
      * @return the temporary collection name
      */
@@ -270,12 +276,12 @@ public class InternalXBaseTestCase {
     protected void assertSessionStatusEquals(Session sess, String statusVariable, String expected) {
         SqlResult rs = sess.sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
         String actual = rs.fetchOne().getString(1);
-        Assert.assertEquals(expected, actual);
+        assertEquals(expected, actual);
     }
 
     protected void assertSessionStatusNotEquals(Session sess, String statusVariable, String unexpected) {
         SqlResult rs = sess.sql("SHOW SESSION STATUS LIKE '" + statusVariable + "'").execute();
         String actual = rs.fetchOne().getString(1);
-        Assert.assertNotEquals(unexpected, actual);
+        assertNotEquals(unexpected, actual);
     }
 }

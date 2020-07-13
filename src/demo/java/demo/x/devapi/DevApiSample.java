@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -54,7 +54,7 @@ public class DevApiSample {
 
     public static void documentWalkthrough(Schema schema) {
         // document walthrough
-        Collection coll = schema.createCollection("myBooks", /* reuseExistingObject? */ true);
+        Collection coll = schema.createCollection("myBooks", /* reuseExisting? */ true);
         DbDoc newDoc = new DbDocImpl().add("isbn", new JsonString().setValue("12345"));
         newDoc.add("title", new JsonString().setValue("Effi Briest"));
         newDoc.add("author", new JsonString().setValue("Theodor Fontane"));

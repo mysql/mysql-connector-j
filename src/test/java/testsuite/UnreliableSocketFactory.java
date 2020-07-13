@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -131,7 +131,6 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
     public static void downHost(String hostname) {
         IMMEDIATELY_DOWNED_HOSTS.add(hostname);
-
     }
 
     public static void dontDownHost(String hostname) {
@@ -561,6 +560,5 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
                 throw new SocketTimeoutException();
             }
         }
-
     }
 }

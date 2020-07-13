@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,9 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -55,6 +58,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -70,17 +75,12 @@ import testsuite.BufferingLogger;
  * Tests callable statement functionality.
  */
 public class CallableStatementTest extends BaseTestCase {
-    public CallableStatementTest(String name) {
-        super(name);
-    }
-
     /**
      * Tests functioning of inout parameters
      * 
      * @throws Exception
-     *             if the test fails
      */
-
+    @Test
     public void testInOutParams() throws Exception {
         CallableStatement storedProc = null;
 
@@ -98,6 +98,7 @@ public class CallableStatementTest extends BaseTestCase {
         assertEquals(5, storedProc.getInt(2));
     }
 
+    @Test
     public void testBatch() throws Exception {
         Connection batchedConn = null;
 
@@ -161,8 +162,8 @@ public class CallableStatementTest extends BaseTestCase {
      * Tests functioning of output parameters.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testOutParams() throws Exception {
         CallableStatement storedProc = null;
 
@@ -181,8 +182,8 @@ public class CallableStatementTest extends BaseTestCase {
 
         int namedOutParamToTest = storedProc.getInt("y");
 
-        assertTrue("Named and indexed parameter are not the same", indexedOutParamToTest == namedOutParamToTest);
-        assertTrue("Output value not returned correctly", indexedOutParamToTest == 6);
+        assertTrue(indexedOutParamToTest == namedOutParamToTest, "Named and indexed parameter are not the same");
+        assertTrue(indexedOutParamToTest == 6, "Output value not returned correctly");
 
         // Start over, using named parameters, this time
         storedProc.clearParameters();
@@ -194,12 +195,12 @@ public class CallableStatementTest extends BaseTestCase {
         indexedOutParamToTest = storedProc.getInt(2);
         namedOutParamToTest = storedProc.getInt("y");
 
-        assertTrue("Named and indexed parameter are not the same", indexedOutParamToTest == namedOutParamToTest);
-        assertTrue("Output value not returned correctly", indexedOutParamToTest == 33);
+        assertTrue(indexedOutParamToTest == namedOutParamToTest, "Named and indexed parameter are not the same");
+        assertTrue(indexedOutParamToTest == 33, "Output value not returned correctly");
 
         try {
             storedProc.registerOutParameter("x", Types.INTEGER);
-            assertTrue("Should not be able to register an out parameter on a non-out parameter", true);
+            assertTrue(true, "Should not be able to register an out parameter on a non-out parameter");
         } catch (SQLException sqlEx) {
             if (!MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState())) {
                 throw sqlEx;
@@ -208,7 +209,7 @@ public class CallableStatementTest extends BaseTestCase {
 
         try {
             storedProc.getInt("x");
-            assertTrue("Should not be able to retreive an out parameter on a non-out parameter", true);
+            assertTrue(true, "Should not be able to retreive an out parameter on a non-out parameter");
         } catch (SQLException sqlEx) {
             if (!MysqlErrorNumbers.SQL_STATE_COLUMN_NOT_FOUND.equals(sqlEx.getSQLState())) {
                 throw sqlEx;
@@ -217,7 +218,7 @@ public class CallableStatementTest extends BaseTestCase {
 
         try {
             storedProc.registerOutParameter(1, Types.INTEGER);
-            assertTrue("Should not be able to register an out parameter on a non-out parameter", true);
+            assertTrue(true, "Should not be able to register an out parameter on a non-out parameter");
         } catch (SQLException sqlEx) {
             if (!MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState())) {
                 throw sqlEx;
@@ -229,8 +230,8 @@ public class CallableStatementTest extends BaseTestCase {
      * Tests functioning of output parameters.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testResultSet() throws Exception {
         CallableStatement storedProc = null;
 
@@ -286,10 +287,9 @@ public class CallableStatementTest extends BaseTestCase {
      * Tests parsing of stored procedures
      * 
      * @throws Exception
-     *             if an error occurs.
      */
+    @Test
     public void testSPParse() throws Exception {
-
         CallableStatement storedProc = null;
 
         createProcedure("testSpParse", "(IN FOO VARCHAR(15))\nBEGIN\nSELECT 1;\nend\n");
@@ -302,8 +302,8 @@ public class CallableStatementTest extends BaseTestCase {
      * Tests parsing/execution of stored procedures with no parameters...
      * 
      * @throws Exception
-     *             if an error occurs.
      */
+    @Test
     public void testSPNoParams() throws Exception {
 
         CallableStatement storedProc = null;
@@ -318,8 +318,8 @@ public class CallableStatementTest extends BaseTestCase {
      * Tests parsing of stored procedures
      * 
      * @throws Exception
-     *             if an error occurs.
      */
+    @Test
     public void testSPCache() throws Exception {
         CallableStatement storedProc = null;
 
@@ -369,6 +369,7 @@ public class CallableStatementTest extends BaseTestCase {
         assertTrue(this.rs.getInt(1) == 1);
     }
 
+    @Test
     public void testOutParamsNoBodies() throws Exception {
         CallableStatement storedProc = null;
 
@@ -388,7 +389,7 @@ public class CallableStatementTest extends BaseTestCase {
 
         int indexedOutParamToTest = storedProc.getInt(2);
 
-        assertTrue("Output value not returned correctly", indexedOutParamToTest == 6);
+        assertTrue(indexedOutParamToTest == 6, "Output value not returned correctly");
 
         storedProc.clearParameters();
         storedProc.setInt(1, 32);
@@ -398,16 +399,7 @@ public class CallableStatementTest extends BaseTestCase {
 
         indexedOutParamToTest = storedProc.getInt(2);
 
-        assertTrue("Output value not returned correctly", indexedOutParamToTest == 33);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(CallableStatementTest.class);
+        assertTrue(indexedOutParamToTest == 33, "Output value not returned correctly");
     }
 
     /**
@@ -416,6 +408,7 @@ public class CallableStatementTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testParameterParser() throws Exception {
         CallableStatement cstmt = null;
 
@@ -455,6 +448,7 @@ public class CallableStatementTest extends BaseTestCase {
     }
 
     @SuppressWarnings("deprecation")
+    @Test
     public void testClosedWrapper() throws Exception {
         String sql = "SELECT 1";
         int autoGeneratedKeys = 0;

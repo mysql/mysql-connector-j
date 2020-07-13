@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,10 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -38,6 +42,8 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
@@ -68,25 +74,6 @@ public class MultiHostConnectionTest extends BaseTestCase {
     private static final String COMM_LINK_ERR_PATTERN = "(?s)Communications link failure.*";
 
     /**
-     * Creates a new MultiHostConnectionTest.
-     * 
-     * @param name
-     *            the name of the test
-     */
-    public MultiHostConnectionTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(MultiHostConnectionTest.class);
-    }
-
-    /**
      * Asserts the execution and return for a simple single value query.
      * 
      * @param testStmt
@@ -95,6 +82,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      *            The query.
      * @param result
      *            The expected result.
+     * @throws Exception
      */
     private static void assertSingleValueQuery(Statement testStmt, String query, Object result) throws Exception {
         ResultSet testRs = testStmt.executeQuery(query);
@@ -148,7 +136,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
 
     /**
      * Tests failover connection establishing with multiple up/down combinations of 3 hosts.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testFailoverConnection() throws Exception {
         String hostPortPair = getEncodedHostPortPairFromTestsuiteUrl();
         String noHost = "testfoconn-nohost:12345";
@@ -193,7 +184,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
 
     /**
      * Tests failover transitions in a default failover connection using three hosts.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testFailoverTransitions() throws Exception {
         Set<String> downedHosts = new HashSet<>();
 
@@ -244,7 +238,9 @@ public class MultiHostConnectionTest extends BaseTestCase {
      *            The host that recovers after first connection.
      * @param expectedConnectionsHistory
      *            The expected connection attempts sequence.
+     * @throws Exception
      */
+    @Test
     private void testFailoverTransition(String fromHost, String toHost, Set<String> downedHosts, String recoverHost, String... expectedConnectionsHistory)
             throws Exception {
         Properties props = new Properties();
@@ -311,7 +307,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * - [/HOST_1 : \HOST_2 : \HOST_3] --> HOST_1
      * 
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
+     * 
+     * @throws Exception
      */
+    @Test
     public void testFailoverDefaultSettings() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
@@ -438,7 +437,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * - [/HOST_1 : \HOST_2 : \HOST_3] --> HOST_1
      * 
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
+     * 
+     * @throws Exception
      */
+    @Test
     public void testFailoverCombinations() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
@@ -590,7 +592,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * - [\HOST_1 : \HOST_2 : /HOST_3] --> HOST_3
      * 
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
+     * 
+     * @throws Exception
      */
+    @Test
     public void testFailoverReadOnly() throws Exception {
         Set<String> downedHosts = new HashSet<>();
         downedHosts.add(HOST_1);
@@ -692,7 +697,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * - [/HOST_1 : /HOST_2 : \HOST_3] --> HOST_1 vs HOST_2
      * 
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
+     * 
+     * @throws Exception
      */
+    @Test
     public void testFailoverQueriesBeforeRetryMaster() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
@@ -776,7 +784,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * - [/HOST_1 : /HOST_2 : \HOST_3] --> HOST_1 vs HOST_2
      * 
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
+     * 
+     * @throws Exception
      */
+    @Test
     public void testFailoverSecondsBeforeRetryMaster() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
@@ -873,7 +884,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * 
      * The automatic fall back only happens at transaction boundaries and at least 'queriesBeforeRetryMaster' or 'secondsBeforeRetryMaster' is greater than 0.
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
+     * 
+     * @throws Exception
      */
+    @Test
     public void testFailoverAutoFallBack() throws Exception {
         Set<String> downedHosts = new HashSet<>();
         downedHosts.add(HOST_1);
@@ -1032,7 +1046,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * - [\HOST_1 : \HOST_2 : /HOST_3] --> HOST_3
      * 
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
+     * 
+     * @throws Exception
      */
+    @Test
     public void testFailoverAutoReconnect() throws Exception {
         Set<String> downedHosts = new HashSet<>();
         downedHosts.add(HOST_1);
@@ -1162,7 +1179,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * - [\HOST_1 : \HOST_2 : /HOST_3] --> HOST_3
      * 
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
+     * 
+     * @throws Exception
      */
+    @Test
     public void testFailoverConnectionSynchronization() throws Exception {
         Set<String> downedHosts = new HashSet<>();
         downedHosts.add(HOST_1);
@@ -1289,7 +1309,10 @@ public class MultiHostConnectionTest extends BaseTestCase {
 
     /**
      * Tests "serverAffinity" load-balancing strategy.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testLoadBalanceServerAffinityStrategy() throws Exception {
         final String port = mainConnectionUrl.getMainHost().getPort() + "";
 

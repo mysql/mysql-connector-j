@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,11 +29,18 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -47,32 +54,13 @@ import testsuite.BaseTestCase;
  * Regression tests for utility classes.
  */
 public class UtilsRegressionTest extends BaseTestCase {
-
-    /**
-     * Creates a new UtilsRegressionTest.
-     * 
-     * @param name
-     *            the name of the test
-     */
-    public UtilsRegressionTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(UtilsRegressionTest.class);
-    }
-
     /**
      * Tests all TimeZone mappings supported.
      * 
      * @throws Exception
      *             if the test fails.
      */
+    @Test
     public void testTimeZones() throws Exception {
         /*
          * Time Zones can be identified by many different ways according to Unicode CLDR database. The following map contain the correspondence between
@@ -81,7 +69,6 @@ public class UtilsRegressionTest extends BaseTestCase {
          * 
          * Both the file com/mysql/cj/core/TimeZoneMapping.properties and the following data are generated from a MySQL Connector/J internal utility.
          */
-
         Map<String, String> tzMap = new HashMap<>();
 
         // GENERATED CODE STARTS HERE
@@ -564,7 +551,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         // GENERATED CODE ENDS HERE
 
         for (String key : tzMap.keySet()) {
-            assertEquals("Custom time Zone '" + key + "' mapping", tzMap.get(key), TimeUtil.getCanonicalTimezone(key, null));
+            assertEquals(tzMap.get(key), TimeUtil.getCanonicalTimezone(key, null), "Custom time Zone '" + key + "' mapping");
         }
 
         for (String tz : TimeZone.getAvailableIDs()) {
@@ -574,7 +561,7 @@ public class UtilsRegressionTest extends BaseTestCase {
             } catch (CJException e) {
                 canonicalTZ = null;
             }
-            assertNotNull("System Time Zone '" + tz + "' mapping missing", canonicalTZ);
+            assertNotNull(canonicalTZ, "System Time Zone '" + tz + "' mapping missing");
         }
     }
 
@@ -582,8 +569,8 @@ public class UtilsRegressionTest extends BaseTestCase {
      * Tests fix for BUG#70436 - Incorrect mapping of windows timezone to Olson timezone.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug70436() throws Exception {
         assertEquals("Asia/Yerevan", TimeUtil.getCanonicalTimezone("Caucasus Standard Time", null));
         assertEquals("Asia/Tbilisi", TimeUtil.getCanonicalTimezone("Georgian Standard Time", null));
@@ -591,7 +578,10 @@ public class UtilsRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#82115 - Some exceptions are intercepted twice or fail to set the init cause.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testBug82115() throws Exception {
         Exception ex = SQLError.createSQLException("ORIGINAL_EXCEPTION", "0", new Exception("ORIGINAL_CAUSE"), null);
         assertEquals("ORIGINAL_EXCEPTION", ex.getMessage());

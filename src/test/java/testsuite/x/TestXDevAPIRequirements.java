@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,15 +29,15 @@
 
 package testsuite.x;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Properties;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.PropertyKey;
@@ -51,7 +51,6 @@ import com.mysql.cj.xdevapi.Table;
  * Tests for X DevAPI requirements.
  */
 public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
-
     /**
      * Session [11]
      * Session.Connect.Single [6]
@@ -80,16 +79,18 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
         sess.close();
 
         // test connection without port specification
-        props.remove(PropertyKey.PORT.getKeyName());
-        sess = getSession(props);
-        ConnectionUrl conUrl1 = ConnectionUrl.getConnectionUrlInstance(sess.getUri(), null);
-        assertEquals("33060", conUrl1.getMainHost().exposeAsProperties().getProperty(PropertyKey.PORT.getKeyName()));
-        sess.close();
-
+        if (props.getProperty(PropertyKey.PORT.getKeyName()).equals("33060")) {
+            props.remove(PropertyKey.PORT.getKeyName());
+            sess = getSession(props);
+            ConnectionUrl conUrl1 = ConnectionUrl.getConnectionUrlInstance(sess.getUri(), null);
+            assertEquals("33060", conUrl1.getMainHost().exposeAsProperties().getProperty(PropertyKey.PORT.getKeyName()));
+            sess.close();
+        }
         // TODO test different properties
     }
 
     /**
+     * Test session methods.
      * 
      * @throws Exception
      */
@@ -134,7 +135,7 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
      * @throws Exception
      */
     @Test
-    @Ignore("needs implemented")
+    @Disabled("needs implemented")
     public void testSchemaMethods() throws Exception {
         if (!this.isSetForXTests) {
             return;
@@ -171,7 +172,6 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
         // inherited
         schema.getSchema(); // "this" ???
         schema.getSession(); // ???
-
     }
 
     /**
@@ -191,7 +191,7 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
      * @throws Exception
      */
     @Test
-    @Ignore("needs implemented")
+    @Disabled("needs implemented")
     public void testCollectionMethods() throws Exception {
         if (!this.isSetForXTests) {
             return;
@@ -239,7 +239,6 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
 
         // poor spec
         collection.newDoc();
-
     }
 
     /**
@@ -260,7 +259,7 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
      * @throws Exception
      */
     @Test
-    @Ignore("needs implemented")
+    @Disabled("needs implemented")
     public void testTableMethods() throws Exception {
         if (!this.isSetForXTests) {
             return;
@@ -299,7 +298,6 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
         // inherited
         table.getSchema();
         table.getSession();
-
     }
 
     /**
@@ -312,7 +310,7 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
      * @throws Exception
      */
     @Test
-    @Ignore("needs implemented")
+    @Disabled("needs implemented")
     public void testViewMethods() throws Exception {
         if (!this.isSetForXTests) {
             return;
@@ -339,7 +337,6 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
         // inherited
         view.getSchema();
         view.getSession();
-
     }
 
     /**
@@ -356,12 +353,11 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
      * @throws Exception
      */
     @Test
-    @Ignore("needs implemented")
+    @Disabled("needs implemented")
     public void testExecutionContext() throws Exception {
         if (!this.isSetForXTests) {
             return;
         }
-
     }
 
     /**
@@ -372,12 +368,11 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
      * @throws Exception
      */
     @Test
-    @Ignore("needs implemented")
+    @Disabled("needs implemented")
     public void testResultMethods() throws Exception {
         if (!this.isSetForXTests) {
             return;
         }
-
     }
 
     /**
@@ -390,12 +385,10 @@ public class TestXDevAPIRequirements extends BaseXDevAPITestCase {
      * @throws Exception
      */
     @Test
-    @Ignore("needs implemented")
+    @Disabled("needs implemented")
     public void testExecution() throws Exception {
         if (!this.isSetForXTests) {
             return;
         }
-
     }
-
 }

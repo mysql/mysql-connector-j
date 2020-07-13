@@ -56,7 +56,7 @@ Coverage and instrumentation
 ============================
 
 This file ships with target "test-coverage" for collecting coverage results and "report-coverage" for creating the HTML coverage report.
-The JaCoCo library needed to run these targets can be found at https://github.com/jacoco/jacoco, it's JARs should be placed
+The JaCoCo library needed to run these targets can be found at https://github.com/jacoco/jacoco, its JARs should be placed
 into ${com.mysql.cj.extra.libs}/jacoco directory.
 The "test-coverage" target enables tests execution-time JaCoCo instrumentation, runs tests collecting coverage info into result file
 which path is set as ${com.mysql.cj.coverage.result.dir}/${com.mysql.cj.coverage.result.name}.
@@ -204,7 +204,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <property name="com.mysql.cj.build.driver.version.major" value="8" />
     <property name="com.mysql.cj.build.driver.version.minor" value="0" />
-    <property name="com.mysql.cj.build.driver.version.subminor" value="20" />
+    <property name="com.mysql.cj.build.driver.version.subminor" value="21" />
     <property name="com.mysql.cj.build.driver.version.status" value="" />
 
     <property name="com.mysql.cj.build.driver.version.series" value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}" />
@@ -263,7 +263,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- Generate debugging info in compiled code. -->
     <property name="com.mysql.cj.build.addDebugInfo" value="yes" />
 
-    <!-- Location of third-party libraries we don't distribute. -->
+    <!-- Location of third-party libraries we don't distribute and extra source files. -->
     <property name="com.mysql.cj.extra.libs" value="lib" />
 
     <!-- JVM used to execute the tests. -->
@@ -278,42 +278,35 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     </propertyset>
 
     <!-- Java compiler arguments to widen warnings detection and fail on warnings. -->
-    <condition property="javac.compilerarg" value="-Xlint:all -Werror" else="">
+    <condition property="javac.compilerarg" value="-Xlint:all,-path -Werror" else="">
         <istrue value="${com.mysql.cj.build.failOnWarnings}" />
     </condition>
 
-    <!-- Classpaths settings. -->
-    <path id="built.driver.only.classpath">
-        <pathelement location="${com.mysql.cj.build.dir.driver}" />
-    </path>
-
-    <path id="project.build.classpath">
+    <!-- Path settings. -->
+    <path id="com.mysql.cj.extra.libs.class.path" cache="true">
         <fileset dir="${com.mysql.cj.extra.libs}">
             <include name="**/*.jar" />
-            <exclude name="**/javassist-3.15.0-GA.jar" />
-            <exclude name="**/protobuf-java-2.6.0.jar" />
+            <exclude name="ant/**" />
+            <exclude name="jacoco/**" />
+            <exclude name="src/**" />
         </fileset>
+    </path>
 
+    <path id="com.mysql.cj.build.class.path">
+        <path refid="com.mysql.cj.extra.libs.class.path" />
         <pathelement location="${com.mysql.cj.build.dir.driver}" />
     </path>
 
-    <path id="instrumentation.classpath">
-        <path refid="project.build.classpath" />
-
+    <path id="com.mysql.cj.build.instrumentation.class.path">
+        <path refid="com.mysql.cj.build.class.path" />
         <pathelement location="${com.mysql.cj.build.compiler.output}" />
     </path>
 
     <path id="com.mysql.cj.testsuite.build.classpath">
-        <fileset dir="${com.mysql.cj.extra.libs}">
-            <include name="**/*.jar" />
-            <exclude name="**/javassist-3.15.0-GA.jar" />
-            <exclude name="**/protobuf-java-2.6.0.jar" />
-        </fileset>
-
+        <path refid="com.mysql.cj.extra.libs.class.path" />
         <fileset dir="${com.mysql.cj.build.dir.driver}">
             <include name="**/*.jar" />
         </fileset>
-
         <pathelement location="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}" />
     </path>
 
@@ -330,10 +323,9 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <not>
                     <and>
                         <available file="${com.mysql.cj.extra.libs}" type="dir" />
-                        <or>
-                            <available file="${com.mysql.cj.extra.libs}/8.0/javassist.jar" type="file" />
-                            <available file="${com.mysql.cj.extra.libs}/javassist.jar" type="file" />
-                        </or>
+                        <available classname="javassist.CtClass" ignoresystemclasses="true">
+                            <classpath refid="com.mysql.cj.extra.libs.class.path" />
+                        </available>
                     </and>
                 </not>
             </condition>
@@ -420,10 +412,10 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <!-- The following is needed for source distributions as the classpath can't be dynamically altered, and not having this directory present causes the
              build to fail. -->
         <available property="com.mysql.cj.prebuiltDocsPresent" file="${com.mysql.cj.dist.dir.prebuilt.docs}" />
-        <available property="com.mysql.cj.c3p0Present" classname="com.mchange.v2.c3p0.QueryConnectionTester" classpathref="project.build.classpath" />
+        <available property="com.mysql.cj.c3p0Present" classname="com.mchange.v2.c3p0.QueryConnectionTester" classpathref="com.mysql.cj.build.class.path" />
         <available property="com.mysql.cj.jbossPresent"
                    classname="org.jboss.resource.adapter.jdbc.ValidConnectionChecker"
-                   classpathref="project.build.classpath" />
+                   classpathref="com.mysql.cj.build.class.path" />
     </target>
 
     <!-- Load revision details either from git repository or from a revision-info.properties file. -->
@@ -632,7 +624,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <!-- Add commercial license configuration class (Build). -->
     <target name="-init-filter-license" if="${com.mysql.cj.build.filterLicense}">
-        <copy file="${com.mysql.cj.extra.libs}/8.0/CommercialLicenseConfiguration.notjava"
+        <copy file="${com.mysql.cj.extra.libs}/src/CommercialLicenseConfiguration.notjava"
               tofile="${com.mysql.cj.build.dir.driver}/com/mysql/cj/LicenseConfiguration.java"
               overwrite="true" />
     </target>
@@ -640,7 +632,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <!-- Add no-crypto export control class (Build). -->
     <target name="-init-no-crypto" if="${com.mysql.cj.build.noCrypto}">
-        <copy file="${com.mysql.cj.extra.libs}/8.0/ExportControlledNoCrypto.notjava"
+        <copy file="${com.mysql.cj.extra.libs}/src/ExportControlledNoCrypto.notjava"
               tofile="${com.mysql.cj.build.dir.driver}/com/mysql/cj/protocol/ExportControlled.java"
               overwrite="true" />
     </target>
@@ -648,7 +640,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <!-- Copy commercial license configuration class (Package). -->
     <target name="-copy-filter-license" if="${com.mysql.cj.build.filterLicense}">
-        <copy file="${com.mysql.cj.extra.libs}/8.0/CommercialLicenseConfiguration.notjava"
+        <copy file="${com.mysql.cj.extra.libs}/src/CommercialLicenseConfiguration.notjava"
               tofile="${com.mysql.cj.dist.dir.package}/src/main/core-impl/java/com/mysql/cj/LicenseConfiguration.java"
               overwrite="true" />
     </target>
@@ -656,7 +648,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <!-- Copy no-crypto export control class (Package). -->
     <target name="-copy-no-crypto" if="${com.mysql.cj.build.noCrypto}">
-        <copy file="${com.mysql.cj.extra.libs}/8.0/ExportControlledNoCrypto.notjava"
+        <copy file="${com.mysql.cj.extra.libs}/src/ExportControlledNoCrypto.notjava"
               tofile="${com.mysql.cj.dist.dir.package}/src/main/core-impl/java/com/mysql/cj/protocol/ExportControlled.java"
               overwrite="true" />
     </target>
@@ -694,7 +686,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <get src="${com.mysql.cj.dist.licenseUrl}" dest="${com.mysql.cj.build.dir.driver}/LICENSE" verbose="true" />
         <fixcrlf file="${com.mysql.cj.build.dir.driver}/LICENSE" tab="remove" tablength="8" eol="lf" />
 
-        <copy file="${com.mysql.cj.extra.libs}/8.0/README-commercial" tofile="${com.mysql.cj.build.dir.driver}/README" overwrite="true" />
+        <copy file="${com.mysql.cj.extra.libs}/README-commercial" tofile="${com.mysql.cj.build.dir.driver}/README" overwrite="true" />
     </target>
 
 
@@ -1076,13 +1068,12 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <include name="**/*.java" />
             <exclude name="testsuite/**" />
             <exclude name="com/mysql/cj/jdbc/integration/**" />
-            <exclude name="com/mysql/cj/jdbc/log/Log4JLogger.java" />
-            <classpath refid="project.build.classpath" />
+            <classpath refid="com.mysql.cj.build.class.path" />
             <compilerarg line="${javac.compilerarg}" />
         </javac>
         <java jvm="${com.mysql.cj.build.jdk.java}"
               classname="instrumentation.CommonChecks"
-              classpathref="instrumentation.classpath"
+              classpathref="com.mysql.cj.build.instrumentation.class.path"
               fork="yes"
               failonerror="true">
             <arg value="${com.mysql.cj.build.compiler.output}" />
@@ -1090,7 +1081,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         </java>
         <java jvm="${com.mysql.cj.build.jdk.java}"
               classname="instrumentation.TranslateExceptions"
-              classpathref="instrumentation.classpath"
+              classpathref="com.mysql.cj.build.instrumentation.class.path"
               fork="yes"
               failonerror="true">
             <arg value="${com.mysql.cj.build.compiler.output}" />
@@ -1098,7 +1089,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         </java>
         <java jvm="${com.mysql.cj.build.jdk.java}"
               classname="instrumentation.AddMethods"
-              classpathref="instrumentation.classpath"
+              classpathref="com.mysql.cj.build.instrumentation.class.path"
               fork="yes"
               failonerror="true">
             <arg value="${com.mysql.cj.build.compiler.output}" />
@@ -1148,7 +1139,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                includeantruntime="false"
                encoding="UTF-8">
             <include name="com/mysql/cj/jdbc/integration/c3p0/**" />
-            <classpath refid="project.build.classpath" />
+            <classpath refid="com.mysql.cj.build.class.path" />
             <compilerarg line="${javac.compilerarg}" />
         </javac>
     </target>
@@ -1169,7 +1160,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                includeantruntime="false"
                encoding="UTF-8">
             <include name="com/mysql/cj/jdbc/integration/jboss/**" />
-            <classpath refid="project.build.classpath" />
+            <classpath refid="com.mysql.cj.build.class.path" />
             <compilerarg line="${javac.compilerarg}" />
         </javac>
     </target>
@@ -1312,50 +1303,66 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <isset property="com.mysql.cj.coverage.result.dir.final" />
         </condition>
 
-        <jacoco:coverage destfile="${com.mysql.cj.coverage.result.dir.final}/${com.mysql.cj.coverage.result.name.final}"
-                         enabled="${com.mysql.cj.testsuite.test.coverage}">
-            <junit printsummary="yes"
-                   fork="on"
-                   forkmode="once"
-                   jvm="${com.mysql.cj.testsuite.jvm.java}"
-                   errorproperty="com.mysql.cj.testsuite.junit.fail"
-                   failureproperty="com.mysql.cj.testsuite.junit.fail">
-                <jvmarg value="-Xmx1024m" />
+        <local name="com.mysql.cj.testsuite.test.coverage.jvmarg" />
+        <jacoco:agent destfile="${com.mysql.cj.coverage.result.dir.final}/${com.mysql.cj.coverage.result.name.final}"
+                      enabled="${com.mysql.cj.testsuite.test.coverage}"
+                      property="com.mysql.cj.testsuite.test.coverage.jvmarg" />
 
-                <syspropertyset refid="junit.system.properties" />
-                <sysproperty key="com.mysql.cj.testsuite.url" value="${com.mysql.cj.testsuite.url}" />
+        <local name="com.mysql.cj.testsuite.test.coverage.jvmargfinal" />
+        <condition property="com.mysql.cj.testsuite.test.coverage.jvmargfinal"
+                   value="${com.mysql.cj.testsuite.test.coverage.jvmarg}"
+                   else="-Dcoverage=disabled">
+            <and>
+                <isset property="com.mysql.cj.testsuite.test.coverage.jvmarg" />
+                <not>
+                    <equals arg1="${com.mysql.cj.testsuite.test.coverage.jvmarg}" arg2="" />
+                </not>
+            </and>
+        </condition>
 
-                <classpath>
-                    <fileset dir="${com.mysql.cj.extra.libs}">
-                        <include name="**/*.jar" />
-                        <exclude name="**/protobuf-java-2.6.0.jar" />
-                    </fileset>
-                    <pathelement location="${com.mysql.cj.build.dir.driver}" />
-                    <pathelement location="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}" />
-                    <pathelement path="${com.mysql.cj.testsuite.build.classpath}" />
-                    <pathelement path="${java.class.path}" />
-                </classpath>
+        <junitlauncher haltOnFailure="false" printSummary="true" failureProperty="com.mysql.cj.testsuite.junit.fail">
+            <classpath refid="com.mysql.cj.testsuite.build.classpath" />
 
-                <formatter type="xml" />
+            <test if="${com.mysql.cj.testsuite.test.methods.enabled}"
+                  name="${com.mysql.cj.testsuite.test.class}"
+                  methods="${com.mysql.cj.testsuite.test.methods}"
+                  outputdir="${com.mysql.cj.testsuite.junit.results}">
+                <fork>
+                    <jvmarg value="-Xmx1024m" />
+                    <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
+                    <syspropertyset refid="junit.system.properties" />
+                </fork>
+                <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
+                <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
+            </test>
 
-                <test if="${com.mysql.cj.testsuite.test.methods.enabled}"
-                      name="${com.mysql.cj.testsuite.test.class}"
-                      methods="${com.mysql.cj.testsuite.test.methods}"
-                      todir="${com.mysql.cj.testsuite.junit.results}" />
+            <test if="com.mysql.cj.testsuite.test.class"
+                  unless="com.mysql.cj.testsuite.test.methods"
+                  name="${com.mysql.cj.testsuite.test.class}"
+                  outputdir="${com.mysql.cj.testsuite.junit.results}">
+                <fork>
+                    <jvmarg value="-Xmx1024m" />
+                    <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
+                    <syspropertyset refid="junit.system.properties" />
+                </fork>
+                <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
+                <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
+            </test>
 
-                <test if="com.mysql.cj.testsuite.test.class"
-                      unless="com.mysql.cj.testsuite.test.methods"
-                      name="${com.mysql.cj.testsuite.test.class}"
-                      todir="${com.mysql.cj.testsuite.junit.results}" />
-
-                <batchtest unless="com.mysql.cj.testsuite.test.class" todir="${com.mysql.cj.testsuite.junit.results}">
-                    <fileset dir="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}">
-                        <include name="**/*Test.java" />
-                        <exclude name="**/perf/*.java" />
-                    </fileset>
-                </batchtest>
-            </junit>
-        </jacoco:coverage>
+            <testclasses unless="com.mysql.cj.testsuite.test.class" outputdir="${com.mysql.cj.testsuite.junit.results}">
+                <fileset dir="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}">
+                    <include name="**/*Test.class" />
+                    <exclude name="**/perf/*.class" />
+                </fileset>
+                <fork>
+                    <jvmarg value="-Xmx1024m" />
+                    <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
+                    <syspropertyset refid="junit.system.properties" />
+                </fork>
+                <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
+                <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
+            </testclasses>
+        </junitlauncher>
 
         <junitreport todir="${com.mysql.cj.testsuite.junit.results}/report">
             <fileset dir="${com.mysql.cj.testsuite.junit.results}">
@@ -1424,7 +1431,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             </structure>
 
             <html destdir="${com.mysql.cj.coverage.report.dir.final}" />
-
         </jacoco:report>
     </target>
 

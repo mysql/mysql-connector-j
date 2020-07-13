@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,16 +29,16 @@
 
 package com.mysql.cj.protocol.x;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.google.protobuf.ByteString;
 import com.mysql.cj.exceptions.WrongArgumentException;
@@ -51,7 +51,7 @@ public class SyncMessageWriterTest {
     private ByteArrayOutputStream outputStream;
     private SyncMessageSender writer;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         this.outputStream = new ByteArrayOutputStream();
         this.writer = new SyncMessageSender(new BufferedOutputStream(this.outputStream));
@@ -59,6 +59,8 @@ public class SyncMessageWriterTest {
 
     /**
      * Test that we can (properly) write a complete message.
+     * 
+     * @throws IOException
      */
     @Test
     public void testCompleteWriteMessage() throws IOException {
@@ -72,15 +74,15 @@ public class SyncMessageWriterTest {
         // verify the written packet
         byte[] sentBytes = this.outputStream.toByteArray();
         int msgSize = msg.getSerializedSize();
-        assertTrue("Required for rest of test, should never fail", msgSize < Byte.MAX_VALUE);
+        assertTrue(msgSize < Byte.MAX_VALUE, "Required for rest of test, should never fail");
         int payloadSize = msgSize + 1;
         // message size (4 bytes little endian)
         assertEquals(payloadSize, sentBytes[0]);
         assertEquals(0, sentBytes[1]);
         assertEquals(0, sentBytes[2]);
         assertEquals(0, sentBytes[3]);
-        assertEquals("Type tag", ClientMessages.Type.SESS_AUTHENTICATE_START_VALUE, sentBytes[4]);
-        assertEquals("Entire packet size should be header bytes + serialized message", payloadSize + 4, sentBytes.length);
+        assertEquals(ClientMessages.Type.SESS_AUTHENTICATE_START_VALUE, sentBytes[4], "Type tag");
+        assertEquals(payloadSize + 4, sentBytes.length, "Entire packet size should be header bytes + serialized message");
     }
 
     @Test

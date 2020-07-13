@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,50 +29,41 @@
 
 package testsuite.simple;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import testsuite.BaseTestCase;
 
 /**
  * Tests SSL functionality in the driver.
  */
 public class SSLTest extends BaseTestCase {
-    /**
-     * Constructor for SSLTest.
-     * 
-     * @param name
-     *            the name of the test to run.
-     */
-    public SSLTest(String name) {
-        super(name);
-
-        System.setProperty("javax.net.debug", "all");
-
-        StringBuilder sslUrl = new StringBuilder(dbUrl);
-
-        if (dbUrl.indexOf("?") == -1) {
-            sslUrl.append("?");
-        } else {
-            sslUrl.append("&");
-        }
-
-        sslUrl.append("useSSL=true");
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(SSLTest.class);
+    @BeforeEach
+    public void setUp() {
     }
 
     /**
      * Tests SSL Connection
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testConnect() throws Exception {
+        System.setProperty("javax.net.debug", "all");
+
+        String dbUrlLocal = dbUrl;
+        dbUrlLocal = dbUrlLocal.replaceAll("(?i)useSSL", "deletedProp");
+        dbUrlLocal = dbUrlLocal.replaceAll("(?i)sslMode", "deletedProp");
+        StringBuilder sslUrl = new StringBuilder(dbUrlLocal);
+        if (dbUrl.indexOf("?") == -1) {
+            sslUrl.append("?");
+        } else {
+            sslUrl.append("&");
+        }
+        sslUrl.append("sslMode=REQUIRED");
+
+        getConnectionWithProps(sslUrl.toString(), "");
+
         System.out.println("<<<<<<<<<<< Look for SSL debug output >>>>>>>>>>>");
     }
 }

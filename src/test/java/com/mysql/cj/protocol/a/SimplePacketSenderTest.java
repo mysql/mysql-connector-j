@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,14 +29,14 @@
 
 package com.mysql.cj.protocol.a;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for simple/direct packet sender.
@@ -45,7 +45,7 @@ public class SimplePacketSenderTest extends PacketSenderTestBase {
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     private SimplePacketSender sender = new SimplePacketSender(new BufferedOutputStream(this.outputStream));
 
-    @After
+    @AfterEach
     public void cleanupByteArrayOutputStream() {
         this.outputStream.reset();
     }
@@ -122,6 +122,8 @@ public class SimplePacketSenderTest extends PacketSenderTestBase {
 
     /**
      * Test the case where the packet size is a multiple of the max packet size. We need to send an extra empty packet to signal that the payload is complete.
+     * 
+     * @throws IOException
      */
     @Test
     public void packetSizeMultipleOfMaxTest() throws IOException {

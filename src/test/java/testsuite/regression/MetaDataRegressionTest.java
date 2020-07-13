@@ -29,6 +29,14 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.sql.CallableStatement;
@@ -53,6 +61,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 
+import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
+
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlConnection;
@@ -70,31 +81,11 @@ import com.mysql.cj.util.StringUtils;
 import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
 
-import junit.framework.ComparisonFailure;
-
 /**
  * Regression tests for DatabaseMetaData
  */
 public class MetaDataRegressionTest extends BaseTestCase {
-    /**
-     * Creates a new MetaDataRegressionTest.
-     * 
-     * @param name
-     *            the name of the test
-     */
-    public MetaDataRegressionTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(MetaDataRegressionTest.class);
-    }
-
+    @Test
     public void testBug2607() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug2607");
@@ -111,12 +102,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#2852, where RSMD is not returning correct (or matching)
-     * types for TINYINT and SMALLINT.
+     * Tests fix for BUG#2852, where RSMD is not returning correct (or matching) types for TINYINT and SMALLINT.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug2852() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug2852");
@@ -140,12 +130,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#2855, where RSMD is not returning correct (or matching)
-     * types for FLOAT.
+     * Tests fix for BUG#2855, where RSMD is not returning correct (or matching) types for FLOAT.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug2855() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug2855");
@@ -169,8 +158,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests fix for BUG#3570 -- inconsistent reporting of column type
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testBug3570() throws Exception {
         String createTableQuery = " CREATE TABLE testBug3570(field_tinyint TINYINT,field_smallint SMALLINT,field_mediumint MEDIUMINT"
                 + ",field_int INT,field_integer INTEGER,field_bigint BIGINT,field_real REAL,field_float FLOAT,field_decimal DECIMAL"
@@ -198,8 +187,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 // TODO: Server needs to send these types correctly....
                 //
                 if (!"field_tinyblob".equals(columnName) && !"field_tinytext".equals(columnName)) {
-                    assertTrue(columnName + " -> type from DBMD.getColumns(" + typeFromGetColumns + ") != type from RSMD.getColumnType(" + typeFromRSMD + ")",
-                            typeFromGetColumns == typeFromRSMD);
+                    assertTrue(typeFromGetColumns == typeFromRSMD,
+                            columnName + " -> type from DBMD.getColumns(" + typeFromGetColumns + ") != type from RSMD.getColumnType(" + typeFromRSMD + ")");
                 }
             }
         } finally {
@@ -211,8 +200,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests char/varchar bug
      * 
      * @throws Exception
-     *             if any errors occur
      */
+    @Test
     public void testCharVarchar() throws Exception {
         try {
             this.stmt.execute("DROP TABLE IF EXISTS charVarCharTest");
@@ -235,12 +224,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#1673, where DatabaseMetaData.getColumns() is not
-     * returning correct column ordinal info for non '%' column name patterns.
+     * Tests fix for BUG#1673, where DatabaseMetaData.getColumns() is not returning correct column ordinal info for non '%' column name patterns.
      * 
      * @throws Exception
-     *             if the test fails for any reason
      */
+    @Test
     public void testFixForBug1673() throws Exception {
 
         createTable("testBug1673", "(field_1 INT, field_2 INT)");
@@ -271,9 +259,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 }
             }
 
-            assertTrue("Ordinal position in full column list of '" + ordinalPosOfCol2Full + "' != ordinal position in pattern search, '"
-                    + ordinalPosOfCol2Scoped + "'.",
-                    (ordinalPosOfCol2Full != 0) && (ordinalPosOfCol2Scoped != 0) && (ordinalPosOfCol2Scoped == ordinalPosOfCol2Full));
+            assertTrue((ordinalPosOfCol2Full != 0) && (ordinalPosOfCol2Scoped != 0) && (ordinalPosOfCol2Scoped == ordinalPosOfCol2Full),
+                    "Ordinal position in full column list of '" + ordinalPosOfCol2Full + "' != ordinal position in pattern search, '" + ordinalPosOfCol2Scoped
+                            + "'.");
 
         } finally {
             if (con != null) {
@@ -286,8 +274,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests bug reported by OpenOffice team with getColumns and LONGBLOB
      * 
      * @throws Exception
-     *             if any errors occur
      */
+    @Test
     public void testGetColumns() throws Exception {
         try {
             this.stmt.execute("CREATE TABLE IF NOT EXISTS longblob_regress(field_1 longblob)");
@@ -315,11 +303,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for Bug#
+     * Tests fix for Bug#1099
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testGetColumnsBug1099() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testGetColumnsBug1099");
@@ -379,11 +367,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests whether or not unsigned columns are reported correctly in
-     * DBMD.getColumns
+     * Tests whether or not unsigned columns are reported correctly in DBMD.getColumns
      * 
      * @throws Exception
      */
+    @Test
     public void testGetColumnsUnsigned() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testGetUnsignedCols");
@@ -406,19 +394,18 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests whether bogus parameters break Driver.getPropertyInfo().
      * 
      * @throws Exception
-     *             if an error occurs.
      */
+    @Test
     public void testGetPropertyInfo() throws Exception {
         new Driver().getPropertyInfo("", null);
     }
 
     /**
-     * Tests whether ResultSetMetaData returns correct info for CHAR/VARCHAR
-     * columns.
+     * Tests whether ResultSetMetaData returns correct info for CHAR/VARCHAR columns.
      * 
      * @throws Exception
-     *             if the test fails
      */
+    @Test
     public void testIsCaseSensitive() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testIsCaseSensitive");
@@ -472,12 +459,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests whether or not DatabaseMetaData.getColumns() returns the correct
-     * java.sql.Types info.
+     * Tests whether or not DatabaseMetaData.getColumns() returns the correct java.sql.Types info.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testLongText() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testLongText");
@@ -497,8 +483,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests for types being returned correctly
      * 
      * @throws Exception
-     *             if an error occurs.
      */
+    @Test
     public void testTypes() throws Exception {
         try {
             this.stmt.execute("DROP TABLE IF EXISTS typesRegressTest");
@@ -525,8 +511,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests fix for BUG#4742, 'DOUBLE' mapped twice in getTypeInfo().
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug4742() throws Exception {
         HashMap<String, String> clashMap = new HashMap<>();
 
@@ -534,18 +520,17 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         while (this.rs.next()) {
             String name = this.rs.getString(1);
-            assertTrue("Type represented twice in type info, '" + name + "'.", !clashMap.containsKey(name));
+            assertTrue(!clashMap.containsKey(name), "Type represented twice in type info, '" + name + "'.");
             clashMap.put(name, name);
         }
     }
 
     /**
-     * Tests fix for BUG#4138, getColumns() returns incorrect JDBC type for
-     * unsigned columns.
+     * Tests fix for BUG#4138, getColumns() returns incorrect JDBC type for unsigned columns.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug4138() throws Exception {
         try {
             String[] typesToTest = new String[] { "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL" };
@@ -583,10 +568,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             assertTrue(this.rs.next());
 
             for (int i = 0; i < typesToTest.length; i++) {
-                assertTrue(
-                        "JDBC Data Type of " + this.rs.getShort("DATA_TYPE") + " for MySQL type '" + this.rs.getString("TYPE_NAME")
-                                + "' from 'DATA_TYPE' column does not match expected value of " + jdbcMapping[i] + ".",
-                        jdbcMapping[i] == this.rs.getShort("DATA_TYPE"));
+                assertTrue(jdbcMapping[i] == this.rs.getShort("DATA_TYPE"), "JDBC Data Type of " + this.rs.getShort("DATA_TYPE") + " for MySQL type '"
+                        + this.rs.getString("TYPE_NAME") + "' from 'DATA_TYPE' column does not match expected value of " + jdbcMapping[i] + ".");
                 this.rs.next();
             }
 
@@ -617,7 +600,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 assertTrue(jdbcMapping[i] == rsmd.getColumnType(i + 1));
                 String desiredTypeName = typesToTest[i] + " unsigned";
 
-                assertTrue(rsmd.getColumnTypeName((i + 1)) + " != " + desiredTypeName, desiredTypeName.equalsIgnoreCase(rsmd.getColumnTypeName(i + 1)));
+                assertTrue(desiredTypeName.equalsIgnoreCase(rsmd.getColumnTypeName(i + 1)), rsmd.getColumnTypeName((i + 1)) + " != " + desiredTypeName);
             }
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4138");
@@ -628,33 +611,27 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Here for housekeeping only, the test is actually in testBug4138().
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug4860() throws Exception {
         testBug4138();
     }
 
     /**
-     * Tests fix for BUG#4880 - RSMD.getPrecision() returns '0' for non-numeric
-     * types.
+     * Tests fix for BUG#4880 - RSMD.getPrecision() returns '0' for non-numeric types.
      * 
-     * Why-oh-why is this not in the spec, nor the api-docs, but in some
-     * 'optional' book, _and_ it is a variance from both ODBC and the ANSI SQL
-     * standard :p
+     * Why-oh-why is this not in the spec, nor the api-docs, but in some 'optional' book, _and_ it is a variance from both ODBC and the ANSI SQL standard :p
      * 
      * (from the CTS testsuite)....
      * 
-     * The getPrecision(int colindex) method returns an integer value
-     * representing the number of decimal digits for number types,maximum length
-     * in characters for character types,maximum length in bytes for JDBC binary
-     * datatypes.
+     * The getPrecision(int colindex) method returns an integer value representing the number of decimal digits for number types,maximum length in characters
+     * for character types,maximum length in bytes for JDBC binary datatypes.
      * 
      * (See Section 27.3 of JDBC 2.0 API Reference & Tutorial 2nd edition)
      * 
      * @throws Exception
-     *             if the test fails.
      */
-
+    @Test
     public void testBug4880() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4880");
@@ -693,12 +670,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#6399, ResultSetMetaData.getDisplaySize() is wrong for
-     * multi-byte charsets.
+     * Tests fix for BUG#6399, ResultSetMetaData.getDisplaySize() is wrong for multi-byte charsets.
      * 
      * @throws Exception
-     *             if the test fails
      */
+    @Test
     public void testBug6399() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug6399");
@@ -718,12 +694,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#7081, DatabaseMetaData.getIndexInfo() ignoring 'unique'
-     * parameters.
+     * Tests fix for BUG#7081, DatabaseMetaData.getIndexInfo() ignoring 'unique' parameters.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug7081() throws Exception {
         String tableName = "testBug7081";
 
@@ -744,12 +719,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#7033 - PreparedStatements don't encode Big5 (and other
-     * multibyte) character sets correctly in static SQL strings.
+     * Tests fix for BUG#7033 - PreparedStatements don't encode Big5 (and other multibyte) character sets correctly in static SQL strings.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug7033() throws Exception {
         if (!this.DISABLED_testBug7033) { // disabled for now
             Connection big5Conn = null;
@@ -799,12 +773,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for Bug#8812, DBMD.getIndexInfo() returning inverted values for
-     * 'NON_UNIQUE' column.
+     * Tests fix for Bug#8812, DBMD.getIndexInfo() returning inverted values for 'NON_UNIQUE' column.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug8812() throws Exception {
         String tableName = "testBug8812";
 
@@ -828,10 +801,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#8800 - supportsMixedCase*Identifiers() returns wrong
-     * value on servers running on case-sensitive filesystems.
+     * Tests fix for BUG#8800 - supportsMixedCase*Identifiers() returns wrong value on servers running on case-sensitive filesystems.
+     * 
+     * @throws Exception
      */
-
+    @Test
     public void testBug8800() throws Exception {
         assertEquals(((com.mysql.cj.jdbc.JdbcConnection) this.conn).lowerCaseTableNames(), !this.conn.getMetaData().supportsMixedCaseIdentifiers());
         assertEquals(((com.mysql.cj.jdbc.JdbcConnection) this.conn).lowerCaseTableNames(), !this.conn.getMetaData().supportsMixedCaseQuotedIdentifiers());
@@ -839,13 +813,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#8792 - DBMD.supportsResultSetConcurrency() not
-     * returning true for forward-only/read-only result sets (we obviously
-     * support this).
+     * Tests fix for BUG#8792 - DBMD.supportsResultSetConcurrency() not returning true for forward-only/read-only result sets (we obviously support this).
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug8792() throws Exception {
         DatabaseMetaData dbmd = this.conn.getMetaData();
 
@@ -885,13 +857,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#8803, 'DATA_TYPE' column from
-     * DBMD.getBestRowIdentifier() causes ArrayIndexOutOfBoundsException when
-     * accessed (and in fact, didn't return any value).
+     * Tests fix for BUG#8803, 'DATA_TYPE' column from DBMD.getBestRowIdentifier() causes ArrayIndexOutOfBoundsException when accessed (and in fact, didn't
+     * return any value).
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug8803() throws Exception {
         String tableName = "testBug8803";
         createTable(tableName, "(field1 INT NOT NULL PRIMARY KEY)");
@@ -913,13 +884,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#9320 - PreparedStatement.getMetaData() inserts blank
-     * row in database under certain conditions when not using server-side
-     * prepared statements.
+     * Tests fix for BUG#9320 - PreparedStatement.getMetaData() inserts blank row in database under certain conditions when not using server-side prepared
+     * statements.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug9320() throws Exception {
         createTable("testBug9320", "(field1 int)");
 
@@ -929,12 +899,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#9778, DBMD.getTables() shouldn't return tables if views
-     * are asked for, even if the database version doesn't support views.
+     * Tests fix for BUG#9778, DBMD.getTables() shouldn't return tables if views are asked for, even if the database version doesn't support views.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug9778() throws Exception {
         String tableName = "testBug9778";
 
@@ -954,12 +923,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#9769 - Should accept null for procedureNamePattern,
-     * even though it isn't JDBC compliant, for legacy's sake.
+     * Tests fix for BUG#9769 - Should accept null for procedureNamePattern, even though it isn't JDBC compliant, for legacy's sake.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug9769() throws Exception {
         Properties props = new Properties();
         Connection con = getConnectionWithProps(props);
@@ -983,12 +951,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#9917 - Should accept null for catalog in DBMD methods,
-     * even though it's not JDBC-compliant for legacy's sake.
+     * Tests fix for BUG#9917 - Should accept null for catalog in DBMD methods, even though it's not JDBC-compliant for legacy's sake.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug9917() throws Exception {
         String dbname = "testBug9917db";
         String tableName = "testBug9917table";
@@ -1057,12 +1024,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#11575 -- DBMD.storesLower/Mixed/UpperIdentifiers()
-     * reports incorrect values for servers deployed on Windows.
+     * Tests fix for BUG#11575 -- DBMD.storesLower/Mixed/UpperIdentifiers() reports incorrect values for servers deployed on Windows.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug11575() throws Exception {
         DatabaseMetaData dbmd = this.conn.getMetaData();
 
@@ -1084,11 +1050,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#11781, foreign key information that is quoted is parsed
-     * incorrectly.
+     * Tests fix for BUG#11781, foreign key information that is quoted is parsed incorrectly.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testBug11781() throws Exception {
-
         createTable("`app tab`", "( C1 int(11) NULL, C2 int(11) NULL, INDEX NEWINX (C1), INDEX NEWINX2 (C1, C2))", "InnoDB");
 
         this.stmt.executeUpdate("ALTER TABLE `app tab` ADD CONSTRAINT APPFK FOREIGN KEY (C1) REFERENCES `app tab` (C1)");
@@ -1102,7 +1069,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 ? this.conn.getSchema()
                 : this.conn.getCatalog();
         this.rs = ((com.mysql.cj.jdbc.DatabaseMetaData) this.conn.getMetaData()).extractForeignKeyFromCreateTable(db, "app tab");
-        assertTrue("must return a row", this.rs.next());
+        assertTrue(this.rs.next(), "must return a row");
 
         assertEquals(("comment; APPFK(`C1`) REFER `" + db + "`/ `app tab` (`C1`)").toUpperCase(), this.rs.getString(3).toUpperCase());
 
@@ -1122,9 +1089,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#12970 - java.sql.Types.OTHER returned for binary and
-     * varbinary columns.
+     * Tests fix for BUG#12970 - java.sql.Types.OTHER returned for binary and varbinary columns.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testBug12970() throws Exception {
         String tableName = "testBug12970";
 
@@ -1155,14 +1124,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#12975 - OpenOffice expects DBMD.supportsIEF() to return
-     * "true" if foreign keys are supported by the datasource, even though this
-     * method also covers support for check constraints, which MySQL _doesn't_
-     * have.
+     * Tests fix for BUG#12975 - OpenOffice expects DBMD.supportsIEF() to return "true" if foreign keys are supported by the datasource, even though this method
+     * also covers support for check constraints, which MySQL _doesn't_ have.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug12975() throws Exception {
         assertEquals(false, this.conn.getMetaData().supportsIntegrityEnhancementFacility());
 
@@ -1183,11 +1150,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#13277 - RSMD for generated keys has NPEs when a
-     * connection is referenced.
+     * Tests fix for BUG#13277 - RSMD for generated keys has NPEs when a connection is referenced.
      * 
      * @throws Exception
      */
+    @Test
     public void testBug13277() throws Exception {
         createTable("testBug13277", "(field1 INT NOT NULL PRIMARY KEY AUTO_INCREMENT, field2 VARCHAR(32))");
 
@@ -1246,12 +1213,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests BUG13601 (which doesn't seem to be present in 3.1.11, but we'll
-     * leave it in here for regression's-sake).
+     * Tests BUG13601 (which doesn't seem to be present in 3.1.11, but we'll leave it in here for regression's-sake).
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug13601() throws Exception {
 
         createTable("testBug13601", "(field1 BIGINT NOT NULL, field2 BIT default 0 NOT NULL) ENGINE=MyISAM");
@@ -1268,12 +1234,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#14815 - DBMD.getColumns() doesn't return TABLE_NAME
-     * correctly.
+     * Tests fix for BUG#14815 - DBMD.getColumns() doesn't return TABLE_NAME correctly.
      * 
      * @throws Exception
-     *             if the test fails
      */
+    @Test
     public void testBug14815() throws Exception {
         try {
             createTable("testBug14815_1", "(field_1_1 int)");
@@ -1306,8 +1271,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests fix for BUG#15854 - DBMD.getColumns() returns wrong type for BIT.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug15854() throws Exception {
         createTable("testBug15854", "(field1 BIT)");
         try {
@@ -1324,12 +1289,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#16277 - Invalid classname returned for
-     * RSMD.getColumnClassName() for BIGINT type.
+     * Tests fix for BUG#16277 - Invalid classname returned for RSMD.getColumnClassName() for BIGINT type.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug16277() throws Exception {
         createTable("testBug16277", "(field1 BIGINT, field2 BIGINT UNSIGNED)");
         ResultSetMetaData rsmd = this.stmt.executeQuery("SELECT field1, field2 FROM testBug16277").getMetaData();
@@ -1338,12 +1302,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#18554 - Aliased column names where length of name > 251
-     * are corrupted.
+     * Tests fix for BUG#18554 - Aliased column names where length of name > 251 are corrupted.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug18554() throws Exception {
         testBug18554(249);
         testBug18554(250);
@@ -1366,11 +1329,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
         ResultSetMetaData meta = this.rs.getMetaData();
 
         assertEquals(colName, meta.getColumnLabel(1));
-
     }
 
     private void checkRsmdForBug13277(ResultSetMetaData rsmd) throws SQLException {
-
         int i = ((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getSession().getServerSession().getMaxBytesPerChar(CharsetMapping
                 .getJavaEncodingForMysqlCharset(((com.mysql.cj.jdbc.JdbcConnection) this.conn).getSession().getServerSession().getServerDefaultCharset()));
         if (i == 1) {
@@ -1384,12 +1345,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
         assertEquals(false, rsmd.isWritable(1));
     }
 
+    @Test
     public void testSupportsCorrelatedSubqueries() throws Exception {
         DatabaseMetaData dbmd = this.conn.getMetaData();
 
         assertEquals(true, dbmd.supportsCorrelatedSubqueries());
     }
 
+    @Test
     public void testSupportesGroupByUnrelated() throws Exception {
         DatabaseMetaData dbmd = this.conn.getMetaData();
 
@@ -1397,11 +1360,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#21267, ParameterMetaData throws NullPointerException
-     * when prepared SQL actually has a syntax error
+     * Tests fix for BUG#21267, ParameterMetaData throws NullPointerException when prepared SQL actually has a syntax error
      * 
      * @throws Exception
      */
+    @Test
     public void testBug21267() throws Exception {
         createTable("bug21267", "(`Col1` int(11) NOT NULL,`Col2` varchar(45) default NULL,`Col3` varchar(45) default NULL,PRIMARY KEY  (`Col1`))");
 
@@ -1429,17 +1392,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#21544 - When using information_schema for metadata,
-     * COLUMN_SIZE for getColumns() is not clamped to range of java.lang.Integer
-     * as is the case when not using information_schema, thus leading to a
-     * truncation exception that isn't present when not using
-     * information_schema.
+     * Tests fix for BUG#21544 - When using information_schema for metadata, COLUMN_SIZE for getColumns() is not clamped to range of java.lang.Integer as is the
+     * case when not using information_schema, thus leading to a truncation exception that isn't present when not using information_schema.
      * 
      * @throws Exception
-     *             if the test fails
      */
+    @Test
     public void testBug21544() throws Exception {
-
         createTable("testBug21544", "(foo_id INT NOT NULL, stuff LONGTEXT, PRIMARY KEY (foo_id))", "INNODB");
 
         Connection infoSchemConn = null;
@@ -1465,15 +1424,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#22613 - DBMD.getColumns() does not return expected
-     * COLUMN_SIZE for the SET type (fixed to be consistent with the ODBC
-     * driver)
+     * Tests fix for BUG#22613 - DBMD.getColumns() does not return expected COLUMN_SIZE for the SET type (fixed to be consistent with the ODBC driver)
      * 
      * @throws Exception
-     *             if the test fails
      */
+    @Test
     public void testBug22613() throws Exception {
-
         createTable("bug22613",
                 "( s set('a','bc','def','ghij') default NULL, t enum('a', 'ab', 'cdef'), s2 SET('1','2','3','4','1585','ONE','TWO','Y','N','THREE'))");
 
@@ -1517,12 +1473,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Fix for BUG#22628 - Driver.getPropertyInfo() throws NullPointerException
-     * for URL that only specifies host and/or port.
+     * Fix for BUG#22628 - Driver.getPropertyInfo() throws NullPointerException for URL that only specifies host and/or port.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug22628() throws Exception {
         DriverPropertyInfo[] dpi = new NonRegisteringDriver().getPropertyInfo("jdbc:mysql://bogus:9999", new Properties());
 
@@ -1560,14 +1515,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testRSMDToStringFromDBMD() throws Exception {
-
         this.rs = this.conn.getMetaData().getTypeInfo();
 
         this.rs.getMetaData().toString(); // used to cause NPE
-
     }
 
+    @Test
     public void testCharacterSetForDBMD() throws Exception {
         System.out.println("testCharacterSetForDBMD:");
         String quoteChar = this.conn.getMetaData().getIdentifierQuoteString();
@@ -1585,12 +1540,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#18258 - Nonexistent catalog/database causes
-     * SQLException to be raised, rather than returning empty result set.
+     * Tests fix for BUG#18258 - Nonexistent catalog/database causes SQLException to be raised, rather than returning empty result set.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug18258() throws Exception {
         String bogusDatabaseName = "abcdefghijklmnopqrstuvwxyz";
         this.conn.getMetaData().getTables(bogusDatabaseName, "%", "%", new String[] { "TABLE", "VIEW" });
@@ -1599,33 +1553,27 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#23303 - DBMD.getSchemas() doesn't return a
-     * TABLE_CATALOG column.
+     * Tests fix for BUG#23303 - DBMD.getSchemas() doesn't return a TABLE_CATALOG column.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug23303() throws Exception {
-
         this.rs = this.conn.getMetaData().getSchemas();
         this.rs.findColumn("TABLE_CATALOG");
-
     }
 
     /**
-     * Tests fix for BUG#23304 - DBMD using "show" and DBMD using
-     * information_schema do not return results consistent with each other.
+     * Tests fix for BUG#23304 - DBMD using "show" and DBMD using information_schema do not return results consistent with each other.
      * 
-     * (note this fix only addresses the inconsistencies, not the issue that the
-     * driver is treating schemas differently than some users expect.
+     * (note this fix only addresses the inconsistencies, not the issue that the driver is treating schemas differently than some users expect.
      * 
-     * We will revisit this behavior when there is full support for schemas in
-     * MySQL).
+     * We will revisit this behavior when there is full support for schemas in MySQL).
      * 
      * @throws Exception
      */
+    @Test
     public void testBug23304() throws Exception {
-
         Connection connShow = null;
         Connection connInfoSchema = null;
 
@@ -1828,12 +1776,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#25624 - Whitespace surrounding storage/size specifiers
-     * in stored procedure declaration causes NumberFormatException to be thrown
-     * when calling stored procedure.
+     * Tests fix for BUG#25624 - Whitespace surrounding storage/size specifiers in stored procedure declaration causes NumberFormatException to be thrown when
+     * calling stored procedure.
      * 
      * @throws Exception
      */
+    @Test
     public void testBug25624() throws Exception {
         //
         // we changed up the parameters to get coverage of the fixes,
@@ -1845,12 +1793,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#27867 - Schema objects with identifiers other than the
-     * connection character aren't retrieved correctly in ResultSetMetadata.
+     * Tests fix for BUG#27867 - Schema objects with identifiers other than the connection character aren't retrieved correctly in ResultSetMetadata.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug27867() throws Exception {
         String gbkColumnName = "\u00e4\u00b8\u00ad\u00e6\u2013\u2021\u00e6\u00b5\u2039\u00e8\u00af\u2022";
         createTable("ColumnNameEncoding",
@@ -1864,11 +1811,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Fixed BUG#27915 - DatabaseMetaData.getColumns() doesn't contain SCOPE_*
-     * or IS_AUTOINCREMENT columns.
+     * Fixed BUG#27915 - DatabaseMetaData.getColumns() doesn't contain SCOPE_* or IS_AUTOINCREMENT columns.
      * 
      * @throws Exception
      */
+    @Test
     public void testBug27915() throws Exception {
         createTable("testBug27915", "(field1 int not null primary key auto_increment, field2 int)");
         DatabaseMetaData dbmd = this.conn.getMetaData();
@@ -1901,18 +1848,16 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#27916 - UNSIGNED types not reported via
-     * DBMD.getTypeInfo(), and capitalization of types is not consistent between
-     * DBMD.getColumns(), RSMD.getColumnTypeName() and DBMD.getTypeInfo().
+     * Tests fix for BUG#27916 - UNSIGNED types not reported via DBMD.getTypeInfo(), and capitalization of types is not consistent between DBMD.getColumns(),
+     * RSMD.getColumnTypeName() and DBMD.getTypeInfo().
      * 
-     * This fix also ensures that the precision of UNSIGNED MEDIUMINT and
-     * UNSIGNED BIGINT is reported correctly via DBMD.getColumns().
+     * This fix also ensures that the precision of UNSIGNED MEDIUMINT and UNSIGNED BIGINT is reported correctly via DBMD.getColumns().
      * 
-     * Second fix ensures that list values of ENUM and SET types containing
-     * 'unsigned' are not taken in account.
+     * Second fix ensures that list values of ENUM and SET types containing 'unsigned' are not taken in account.
      * 
      * @throws Exception
      */
+    @Test
     public void testBug27916() throws Exception {
         createTable("testBug27916",
                 "(field1 TINYINT UNSIGNED, field2 SMALLINT UNSIGNED, field3 INT UNSIGNED, field4 INTEGER UNSIGNED, field5 MEDIUMINT UNSIGNED, field6 BIGINT UNSIGNED)");
@@ -1933,8 +1878,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             String typeName = this.rs.getString("TYPE_NAME");
 
             assertEquals(typeName, rsmd.getColumnTypeName(i + 1));
-            assertEquals(typeName, this.rs.getInt("COLUMN_SIZE"), rsmd.getPrecision(i + 1));
-            assertEquals(typeName, new Integer(rsmd.getPrecision(i + 1)), typeNameToPrecision.get(typeName));
+            assertEquals(this.rs.getInt("COLUMN_SIZE"), rsmd.getPrecision(i + 1), typeName);
+            assertEquals(new Integer(rsmd.getPrecision(i + 1)), typeNameToPrecision.get(typeName), typeName);
         }
 
         Properties props = new Properties();
@@ -1952,13 +1897,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
             this.rs = dbmd.getColumns("mysql", null, "time_zone_transition", "%");
             while (this.rs.next()) {
                 String typeName = this.rs.getString("TYPE_NAME");
-                assertTrue(typeName, types.contains(typeName));
+                assertTrue(types.contains(typeName), typeName);
             }
             this.rs.close();
             this.rs = dbmd.getColumns("mysql", null, "proc", "%");
             while (this.rs.next()) {
                 String typeName = this.rs.getString("TYPE_NAME");
-                assertTrue(typeName, types.contains(typeName));
+                assertTrue(types.contains(typeName), typeName);
             }
             this.rs.close();
             PropConn.close();
@@ -1971,13 +1916,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
             this.rs = dbmd.getColumns("mysql", null, "time_zone_transition", "%");
             while (this.rs.next()) {
                 String typeName = this.rs.getString("TYPE_NAME");
-                assertTrue(typeName, types.contains(typeName));
+                assertTrue(types.contains(typeName), typeName);
             }
             this.rs.close();
             this.rs = dbmd.getColumns("mysql", null, "proc", "%");
             while (this.rs.next()) {
                 String typeName = this.rs.getString("TYPE_NAME");
-                assertTrue(typeName, types.contains(typeName));
+                assertTrue(types.contains(typeName), typeName);
             }
             this.rs.close();
             PropConn.close();
@@ -1989,8 +1934,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testBug20491() throws Exception {
-        System.out.println("testBug20491:");
         this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE '%char%'");
         while (this.rs.next()) {
             System.out.println(this.rs.getString(1) + " = " + this.rs.getString(2));
@@ -2007,13 +1952,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
         for (int i = 0; i < fields.length; i++) {
             try {
                 assertEquals(fields[i], new String(fields[i].getBytes("Cp1252"), "Cp1252"));
-            } catch (ComparisonFailure cfEx) {
+            } catch (AssertionFailedError afEr) {
                 if (i == 3) {
-                    // If we're on a mac, we're out of luck
-                    // we can't store this in the filesystem...
+                    // If we're on a mac, we're out of luck swe can't store this in the filesystem...
 
                     if (!Constants.OS_NAME.startsWith("Mac")) {
-                        throw cfEx;
+                        throw afEr;
                     }
                 }
             }
@@ -2030,14 +1974,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         while (this.rs.next()) {
             try {
-                assertEquals("Wrong column name:" + this.rs.getString(4), fields[j++], this.rs.getString(4));
-            } catch (ComparisonFailure cfEx) {
+                assertEquals(fields[j++], this.rs.getString(4), "Wrong column name:" + this.rs.getString(4));
+            } catch (AssertionFailedError afEr) {
                 if (j == 3) {
-                    // If we're on a mac, we're out of luck
-                    // we can't store this in the filesystem...
+                    // If we're on a mac, we're out of luck we can't store this in the filesystem...
 
                     if (!Constants.OS_NAME.startsWith("Mac")) {
-                        throw cfEx;
+                        throw afEr;
                     }
                 }
             }
@@ -2051,14 +1994,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         for (int i = 1; i <= rsmd.getColumnCount(); i++) {
             try {
-                assertEquals("Wrong column name:" + rsmd.getColumnName(i), fields[i - 1], rsmd.getColumnName(i));
-            } catch (ComparisonFailure cfEx) {
+                assertEquals(fields[i - 1], rsmd.getColumnName(i), "Wrong column name:" + rsmd.getColumnName(i));
+            } catch (AssertionFailedError afEr) {
                 if (i - 1 == 3) {
-                    // If we're on a mac, we're out of luck
-                    // we can't store this in the filesystem...
+                    // If we're on a mac, we're out of luck we can't store this in the filesystem...
 
                     if (!Constants.OS_NAME.startsWith("Mac")) {
-                        throw cfEx;
+                        throw afEr;
                     }
                 }
             }
@@ -2066,19 +2008,18 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for Bug#33594 - When cursor fetch is enabled, wrong metadata is
-     * returned from DBMD.
+     * Tests fix for Bug#33594 - When cursor fetch is enabled, wrong metadata is returned from DBMD.
      * 
      * The fix is two parts.
      * 
-     * First, when asking for the first column value twice from a cursor-fetched
-     * row, the driver didn't re-position, and thus the "next" column was
-     * returned.
+     * First, when asking for the first column value twice from a cursor-fetched row, the driver didn't re-position, and thus the "next" column was returned.
      * 
-     * Second, metadata statements and internal statements the driver uses
-     * shouldn't use cursor-based fetching at all, so we've ensured that
-     * internal statements have their fetch size set to "0".
+     * Second, metadata statements and internal statements the driver uses shouldn't use cursor-based fetching at all, so we've ensured that internal statements
+     * have their fetch size set to "0".
+     * 
+     * @throws Exception
      */
+    @Test
     public void testBug33594() throws Exception {
         boolean max_key_l_bug = false;
 
@@ -2147,9 +2088,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 conn1.close();
             }
         }
-
     }
 
+    @Test
     public void testBug34194() throws Exception {
         createTable("bug34194", "(id integer,geom geometry)");
 
@@ -2163,6 +2104,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         assertEquals("GEOMETRY", RSMD.getColumnTypeName(2));
     }
 
+    @Test
     public void testNoSystemTablesReturned() throws Exception {
         Properties props = new Properties();
         for (boolean useIS : new boolean[] { false, true }) {
@@ -2209,13 +2151,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testABunchOfReturnTypes() throws Exception {
         checkABunchOfReturnTypesForConnection(this.conn);
         checkABunchOfReturnTypesForConnection(getConnectionWithProps("useInformationSchema=true"));
     }
 
     private void checkABunchOfReturnTypesForConnection(Connection mdConn) throws Exception {
-
         DatabaseMetaData md = mdConn.getMetaData();
 
         // Bug#44862 - getBestRowIdentifier does not return resultset as per JDBC API specifications
@@ -2420,14 +2362,16 @@ public class MetaDataRegressionTest extends BaseTestCase {
             String actualType = TYPES_MAP.get(new Integer(rsmd.getColumnType(i + 1)));
             assertNotNull(expectedType);
             assertNotNull(actualType);
-            assertEquals("Unexpected type in column " + (i + 1), expectedType, actualType);
+            assertEquals(expectedType, actualType, "Unexpected type in column " + (i + 1));
         }
     }
 
     /**
-     * Bug #43714 - useInformationSchema with DatabaseMetaData.getExportedKeys()
-     * throws exception
+     * Bug #43714 - useInformationSchema with DatabaseMetaData.getExportedKeys() throws exception
+     * 
+     * @throws Exception
      */
+    @Test
     public void testBug43714() throws Exception {
         Connection c_IS = null;
         try {
@@ -2445,9 +2389,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Bug #41269 - DatabaseMetadata.getProcedureColumns() returns wrong value
-     * for column length
+     * Bug #41269 - DatabaseMetadata.getProcedureColumns() returns wrong value for column length
+     * 
+     * @throws Exception
      */
+    @Test
     public void testBug41269() throws Exception {
         createProcedure("bug41269", "(in param1 int, out result varchar(197)) BEGIN select 1, ''; END");
 
@@ -2455,18 +2401,18 @@ public class MetaDataRegressionTest extends BaseTestCase {
         try {
             ResultSet procMD = con.getMetaData().getProcedureColumns(null, null, "bug41269", "%");
             assertTrue(procMD.next());
-            assertEquals("Int param length", 10, procMD.getInt(9));
+            assertEquals(10, procMD.getInt(9), "Int param length");
             assertTrue(procMD.next());
-            assertEquals("String param length", 197, procMD.getInt(9));
+            assertEquals(197, procMD.getInt(9), "String param length");
             assertFalse(procMD.next());
         } finally {
             if (con != null) {
                 con.close();
             }
         }
-
     }
 
+    @Test
     public void testBug31187() throws Exception {
         createTable("testBug31187", "(field1 int)");
 
@@ -2489,9 +2435,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
         }
 
-        assertTrue("Didn't find any columns for table named 'testBug31187' in database " + this.conn.getCatalog(), found);
+        assertTrue(found, "Didn't find any columns for table named 'testBug31187' in database " + this.conn.getCatalog());
     }
 
+    @Test
     public void testBug44508() throws Exception {
         DatabaseMetaData dbmd = this.conn.getMetaData();
 
@@ -2503,11 +2450,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#52167 - Can't parse parameter list with special
-     * characters inside
+     * Tests fix for BUG#52167 - Can't parse parameter list with special characters inside
      * 
      * @throws Exception
      */
+    @Test
     public void testBug52167() throws Exception {
         // DatabaseMetaData.java (~LN 1730)
         // + //Bug#52167, tokenizer will break if declaration contains special
@@ -2521,12 +2468,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#51912 - Passing NULL as cat. param to
-     * getProcedureColumns with nullCatalogMeansCurrent = false
+     * Tests fix for BUG#51912 - Passing NULL as cat. param to getProcedureColumns with nullCatalogMeansCurrent = false
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug51912() throws Exception {
         Connection overrideConn = null;
         try {
@@ -2555,9 +2501,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * was failing for no good reason.
      * 
      * @throws Exception
-     *             if the test fails.
      */
-
+    @Test
     public void testBug38367() throws Exception {
         createProcedure("sptestBug38367",
                 "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100),\nOUT ffact VARCHAR(100),\nOUT fdoc VARCHAR(100))" + "\nBEGIN\nEND");
@@ -2570,8 +2515,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             while (this.rs.next()) {
                 String columnName = this.rs.getString(4);
                 Short columnNullable = new Short(this.rs.getShort(12));
-                assertTrue("Parameter " + columnName + " is not java.sql.DatabaseMetaData.procedureNullable.",
-                        columnNullable.intValue() == java.sql.DatabaseMetaData.procedureNullable);
+                assertTrue(columnNullable.intValue() == java.sql.DatabaseMetaData.procedureNullable,
+                        "Parameter " + columnName + " is not java.sql.DatabaseMetaData.procedureNullable.");
             }
         } finally {
             if (con != null) {
@@ -2581,14 +2526,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#57808 - wasNull not set
-     * for DATE field with value 0000-00-00
-     * in getDate() although
-     * zeroDateTimeBehavior is CONVERT_TO_NULL.
+     * Tests fix for BUG#57808 - wasNull not set for DATE field with value 0000-00-00 in getDate() although zeroDateTimeBehavior is CONVERT_TO_NULL.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug57808() throws Exception {
         try {
             createTable("bug57808", "(ID INT(3) NOT NULL PRIMARY KEY, ADate DATE NOT NULL)");
@@ -2614,7 +2556,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             if (this.rs.first()) {
                 Date theDate = this.rs.getDate("ADate");
                 if (theDate == null) {
-                    assertTrue("wasNull is FALSE", this.rs.wasNull());
+                    assertTrue(this.rs.wasNull(), "wasNull is FALSE");
                 } else {
                     fail("Original date was not NULL!");
                 }
@@ -2624,16 +2566,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#61150 - First call to SP
-     * fails with "No Database Selected"
-     * The workaround introduced in DatabaseMetaData.getCallStmtParameterTypes
-     * to fix the bug in server where SHOW CREATE PROCEDURE was not respecting
-     * lower-case table names is misbehaving when connection is not attached to
-     * database and on non-casesensitive OS.
+     * Tests fix for BUG#61150 - First call to SP fails with "No Database Selected"
+     * The workaround introduced in DatabaseMetaData.getCallStmtParameterTypes to fix the bug in server where SHOW CREATE PROCEDURE was not respecting
+     * lower-case table names is misbehaving when connection is not attached to database and on non-casesensitive OS.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug61150() throws Exception {
         StringBuilder newUrlToTestNoDB = new StringBuilder("jdbc:mysql://");
         newUrlToTestNoDB.append(getEncodedHostPortPairFromTestsuiteUrl()).append("/");
@@ -2684,13 +2623,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#61332 - Check if "LIKE" or "=" is sent
-     * to server in I__S query when no wildcards are supplied
-     * for schema parameter.
+     * Tests fix for BUG#61332 - Check if "LIKE" or "=" is sent to server in I__S query when no wildcards are supplied for schema parameter.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug61332() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
@@ -2717,12 +2654,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
             String sql = str.get();
             if (interceptedQuery instanceof ClientPreparedStatement) {
                 sql = ((ClientPreparedStatement) interceptedQuery).getPreparedSql();
-                assertTrue("Assereet failed on: " + sql, StringUtils.indexOfIgnoreCase(0, sql, "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?") > -1);
+                assertTrue(StringUtils.indexOfIgnoreCase(0, sql, "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?") > -1, "Assereet failed on: " + sql);
             }
             return null;
         }
     }
 
+    @Test
     public void testQuotedGunk() throws Exception {
         createTable("testQuotedGunk", "(field1 int)");
 
@@ -2738,15 +2676,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
         assertTrue(this.rs.next());
         this.rs = dbmd.getColumns(unquotedCatalog, null, "testQuotedGunk", "field1");
         assertTrue(this.rs.next());
-
     }
 
     /**
      * Tests fix for BUG#61203 - noAccessToProcedureBodies does not work anymore.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug61203() throws Exception {
         Connection rootConn = null;
         Connection userConn = null;
@@ -2756,7 +2693,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             Properties props = getPropertiesFromTestsuiteUrl();
             String dbname = props.getProperty(PropertyKey.DBNAME.getKeyName());
             if (dbname == null) {
-                assertTrue("No database selected", false);
+                assertTrue(false, "No database selected");
             }
 
             createUser("'bug61203user'@'%'", "identified by 'foo'");
@@ -2831,7 +2768,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         cStmt.registerOutParameter(1, Types.INTEGER);
         cStmt.setFloat(2, 2);
         cStmt.execute();
-        assertEquals(2f, cStmt.getInt(1), .001);
+        assertEquals(cStmt.getInt(1), .001, 2f);
     }
 
     private void callProcedure(CallableStatement cStmt, Connection c) throws SQLException {
@@ -2841,17 +2778,16 @@ public class MetaDataRegressionTest extends BaseTestCase {
         cStmt.setInt(3, 1);
         cStmt.registerOutParameter(1, Types.INTEGER);
         cStmt.execute();
-        assertEquals(2f, cStmt.getInt(1), .001);
+        assertEquals(cStmt.getInt(1), .001, 2f);
     }
 
     /**
      * Tests fix for BUG#63456 - MetaData precision is different when using UTF8 or Latin1 tables
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug63456() throws Exception {
-
         //createTable("testBug63456_custom1", "(TEST VARCHAR(10)) ENGINE = MyISAM CHARACTER SET custom1 COLLATE custom1_general_ci");
         createTable("testBug63456_latin1", "(TEST VARCHAR(10)) DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci");
         createTable("testBug63456_utf8", "(TEST VARCHAR(10)) DEFAULT CHARACTER SET utf8");
@@ -2872,20 +2808,19 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         assertEquals(precision_latin1, precision_utf8);
         assertEquals(precision_utf8, precision_utf8bin);
-
     }
 
     /**
      * Tests fix for BUG#63800 - getVersionColumns() does not return timestamp fields; always empty.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug63800() throws Exception {
         try {
             Properties props = getPropertiesFromTestsuiteUrl();
             String dbname = props.getProperty(PropertyKey.DBNAME.getKeyName());
-            assertFalse("No database selected", StringUtils.isNullOrEmpty(dbname));
+            assertFalse(StringUtils.isNullOrEmpty(dbname), "No database selected");
 
             for (boolean useIS : new boolean[] { false, true }) {
                 for (boolean dbMapsToSchema : new boolean[] { false, true }) {
@@ -2936,16 +2871,16 @@ public class MetaDataRegressionTest extends BaseTestCase {
         if (((JdbcConnection) con).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA) {
             String dbPattern = con.getSchema().substring(0, con.getSchema().length() - 1) + "%";
             this.rs = dmd.getVersionColumns(null, dbPattern, "testBug63800");
-            assertFalse("Schema pattern " + dbPattern + " should not be recognized.", this.rs.next());
+            assertFalse(this.rs.next(), "Schema pattern " + dbPattern + " should not be recognized.");
         } else {
             String dbPattern = con.getCatalog().substring(0, con.getCatalog().length() - 1) + "%";
             this.rs = dmd.getVersionColumns(dbPattern, null, "testBug63800");
-            assertFalse("Catalog pattern " + dbPattern + " should not be recognized.", this.rs.next());
+            assertFalse(this.rs.next(), "Catalog pattern " + dbPattern + " should not be recognized.");
         }
 
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+        assertTrue(this.rs.next(), "1 column must be found");
+        assertEquals("f1", this.rs.getString(2), "Wrong column or single column not found");
         assertEquals(19, this.rs.getInt("COLUMN_SIZE"));
 
         if (versionMeetsMinimum(5, 6, 4)) {
@@ -2954,8 +2889,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3))");
             dmd = con.getMetaData();
             this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-            assertTrue("1 column must be found", this.rs.next());
-            assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+            assertTrue(this.rs.next(), "1 column must be found");
+            assertEquals("f1", this.rs.getString(2), "Wrong column or single column not found");
             assertEquals(23, this.rs.getInt("COLUMN_SIZE"));
         }
 
@@ -2964,52 +2899,52 @@ public class MetaDataRegressionTest extends BaseTestCase {
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
         if ("ON".equals(getMysqlVariable("explicit_defaults_for_timestamp"))) {
-            assertFalse("0 column must be found", this.rs.next());
+            assertFalse(this.rs.next(), "0 column must be found");
         } else {
-            assertTrue("1 column must be found", this.rs.next());
-            assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+            assertTrue(this.rs.next(), "1 column must be found");
+            assertEquals("f1", this.rs.getString(2), "Wrong column or single column not found");
         }
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertFalse("0 column must be found", this.rs.next());
+        assertFalse(this.rs.next(), "0 column must be found");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP DEFAULT 0)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertFalse("0 column must be found", this.rs.next());
+        assertFalse(this.rs.next(), "0 column must be found");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+        assertTrue(this.rs.next(), "1 column must be found");
+        assertEquals("f1", this.rs.getString(2), "Wrong column or single column not found");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+        assertTrue(this.rs.next(), "1 column must be found");
+        assertEquals("f1", this.rs.getString(2), "Wrong column or single column not found");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP NULL, f2 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", "f2", this.rs.getString(2));
+        assertTrue(this.rs.next(), "1 column must be found");
+        assertEquals("f2", this.rs.getString(2), "Wrong column or single column not found");
 
         // ALTER test
         st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
                 + "ADD COLUMN `f3` TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP  AFTER `f2`");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", "f3", this.rs.getString(2));
+        assertTrue(this.rs.next(), "1 column must be found");
+        assertEquals("f3", this.rs.getString(2), "Wrong column or single column not found");
     }
 
     private void testDatetime(Connection con, Statement st, String dbname) throws SQLException {
@@ -3017,8 +2952,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         st.execute("CREATE TABLE testBug63800(f1 DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
         DatabaseMetaData dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+        assertTrue(this.rs.next(), "1 column must be found");
+        assertEquals("f1", this.rs.getString(2), "Wrong column or single column not found");
         assertEquals(19, this.rs.getInt("COLUMN_SIZE"));
 
         if (versionMeetsMinimum(5, 6, 4)) {
@@ -3027,8 +2962,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             st.execute("CREATE TABLE testBug63800(f1 DATETIME(4) DEFAULT CURRENT_TIMESTAMP(4) ON UPDATE CURRENT_TIMESTAMP(4))");
             dmd = con.getMetaData();
             this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-            assertTrue("1 column must be found", this.rs.next());
-            assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+            assertTrue(this.rs.next(), "1 column must be found");
+            assertEquals("f1", this.rs.getString(2), "Wrong column or single column not found");
             assertEquals(24, this.rs.getInt("COLUMN_SIZE"));
         }
 
@@ -3036,33 +2971,33 @@ public class MetaDataRegressionTest extends BaseTestCase {
         st.execute("CREATE TABLE testBug63800(f1 DATETIME)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertFalse("0 column must be found", this.rs.next());
+        assertFalse(this.rs.next(), "0 column must be found");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 DATETIME DEFAULT CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertFalse("0 column must be found", this.rs.next());
+        assertFalse(this.rs.next(), "0 column must be found");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 DATETIME DEFAULT 0)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertFalse("0 column must be found", this.rs.next());
+        assertFalse(this.rs.next(), "0 column must be found");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 DATETIME DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+        assertTrue(this.rs.next(), "1 column must be found");
+        assertEquals("f1", this.rs.getString(2), "Wrong column or single column not found");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 DATETIME ON UPDATE CURRENT_TIMESTAMP)");
         dmd = con.getMetaData();
         this.rs = dmd.getVersionColumns(dbname, dbname, "testBug63800");
-        assertTrue("1 column must be found", this.rs.next());
-        assertEquals("Wrong column or single column not found", "f1", this.rs.getString(2));
+        assertTrue(this.rs.next(), "1 column must be found");
+        assertEquals("f1", this.rs.getString(2), "Wrong column or single column not found");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 DATETIME NULL, f2 DATETIME ON UPDATE CURRENT_TIMESTAMP)");
@@ -3071,8 +3006,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         int cnt = 0;
         while (this.rs.next()) {
             cnt++;
-            assertEquals("1 column must be found", 1, cnt);
-            assertEquals("Wrong column or single column not found", "f2", this.rs.getString(2));
+            assertEquals(1, cnt, "1 column must be found");
+            assertEquals("f2", this.rs.getString(2), "Wrong column or single column not found");
         }
 
         // ALTER 1 test
@@ -3083,8 +3018,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         cnt = 0;
         while (this.rs.next()) {
             cnt++;
-            assertEquals("1 column must be found", 1, cnt);
-            assertEquals("Wrong column or single column not found", "f3", this.rs.getString(2));
+            assertEquals(1, cnt, "1 column must be found");
+            assertEquals("f3", this.rs.getString(2), "Wrong column or single column not found");
         }
 
         // ALTER 2 test
@@ -3095,7 +3030,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         while (this.rs.next()) {
             cnt++;
         }
-        assertEquals("2 column must be found", 2, cnt);
+        assertEquals(2, cnt, "2 column must be found");
 
         st.execute("DROP  TABLE IF EXISTS testBug63800");
         st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP, f2 DATETIME ON UPDATE CURRENT_TIMESTAMP, f3 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)");
@@ -3106,19 +3041,18 @@ public class MetaDataRegressionTest extends BaseTestCase {
             cnt++;
         }
         if ("ON".equals(getMysqlVariable("explicit_defaults_for_timestamp"))) {
-            assertEquals("2 column must be found", 2, cnt);
+            assertEquals(2, cnt, "2 column must be found");
         } else {
-            assertEquals("3 column must be found", 3, cnt);
+            assertEquals(3, cnt, "3 column must be found");
         }
-
     }
 
     /**
      * Tests fix for BUG#16436511 - getDriverName() returns a string with company name "MySQL-AB"
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug16436511() throws Exception {
         DatabaseMetaData dbmd = this.conn.getMetaData();
         assertEquals("MySQL Connector/J", dbmd.getDriverName());
@@ -3128,8 +3062,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Test fix for BUG#68098 - DatabaseMetaData.getIndexInfo sorts results incorrectly.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug68098() throws Exception {
         String[] testStepDescription = new String[] { "MySQL MetaData", "I__S MetaData" };
         Connection connUseIS = getConnectionWithProps("useInformationSchema=true");
@@ -3150,7 +3084,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             this.rs = testDbMetaData.getIndexInfo(this.dbName, null, "testBug68098", false, false);
             int ind = 0;
             while (this.rs.next()) {
-                assertEquals(testStepDescription[i] + ", sort order is wrong", expectedIndexesOrder[ind++], this.rs.getString("INDEX_NAME"));
+                assertEquals(expectedIndexesOrder[ind++], this.rs.getString("INDEX_NAME"), testStepDescription[i] + ", sort order is wrong");
             }
             this.rs.close();
         }
@@ -3160,17 +3094,15 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#65871 - DatabaseMetaData.getColumns() throws an MySQLSyntaxErrorException.
-     * Delimited names of databases and tables are handled correctly now. The edge case is ANSI quoted
-     * identifiers with leading and trailing "`" symbols, for example CREATE DATABASE "`dbname`". Methods
-     * like DatabaseMetaData.getColumns() allow parameters passed both in unquoted and quoted form,
-     * quoted form is not JDBC-compliant but used by third party tools. So when you pass the identifier
-     * "`dbname`" in unquoted form (`dbname`) driver handles it as quoted by "`" symbol. To handle such
-     * identifiers correctly a new behavior was added to pedantic mode (connection property pedantic=true),
-     * now if it set to true methods like DatabaseMetaData.getColumns() treat all parameters as unquoted.
+     * Delimited names of databases and tables are handled correctly now. The edge case is ANSI quoted identifiers with leading and trailing "`" symbols, for
+     * example CREATE DATABASE "`dbname`". Methods like DatabaseMetaData.getColumns() allow parameters passed both in unquoted and quoted form, quoted form is
+     * not JDBC-compliant but used by third party tools. So when you pass the identifier "`dbname`" in unquoted form (`dbname`) driver handles it as quoted by
+     * "`" symbol. To handle such identifiers correctly a new behavior was added to pedantic mode (connection property pedantic=true), now if it set to true
+     * methods like DatabaseMetaData.getColumns() treat all parameters as unquoted.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug65871() throws Exception {
         createTable("testbug65871_foreign",
                 "(cpd_foreign_1_id int(8) not null, cpd_foreign_2_id int(8) not null," + "primary key (cpd_foreign_1_id, cpd_foreign_2_id)) ", "InnoDB");
@@ -3227,7 +3159,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     private void testBug65871_testCatalog(String unquotedDbName, String quotedDbName, Connection conn1) throws Exception {
-
         Statement st1 = null;
 
         try {
@@ -3263,12 +3194,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 st1.close();
             }
         }
-
     }
 
     private void testBug65871_testTable(String unquotedDbName, String quotedDbName, String unquotedTableName, String quotedTableName, Connection conn1,
             Statement st1) throws Exception {
-
         StringBuilder failedTests = new StringBuilder();
         try {
 
@@ -3439,8 +3368,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests fix for BUG#69298 - Different outcome from DatabaseMetaData.getFunctions() when using I__S.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug69298() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.nullDatabaseMeansCurrent.getKeyName(), "true");
@@ -3453,10 +3382,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
         // test with property useInformationSchema=false
         props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "false");
         testConn = getConnectionWithProps(props);
-        assertFalse("Property useInformationSchema should be false",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue());
-        assertTrue("Property getProceduresReturnsFunctions should be true",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
+        assertFalse(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue(),
+                "Property useInformationSchema should be false");
+        assertTrue(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue(),
+                "Property getProceduresReturnsFunctions should be true");
         checkGetFunctionsForBug69298("Std. Connection MetaData", testConn);
         checkGetFunctionColumnsForBug69298("Std. Connection MetaData", testConn);
         checkGetProceduresForBug69298("Std. Connection MetaData", testConn);
@@ -3466,10 +3395,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
         // test with property useInformationSchema=true
         props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
         testConn = getConnectionWithProps(props);
-        assertTrue("Property useInformationSchema should be true",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue());
-        assertTrue("Property getProceduresReturnsFunctions should be true",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
+        assertTrue(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue(),
+                "Property useInformationSchema should be true");
+        assertTrue(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue(),
+                "Property getProceduresReturnsFunctions should be true");
         checkGetFunctionsForBug69298("Prop. useInfoSchema(1) MetaData", testConn);
         checkGetFunctionColumnsForBug69298("Prop. useInfoSchema(1) MetaData", testConn);
         checkGetProceduresForBug69298("Prop. useInfoSchema(1) MetaData", testConn);
@@ -3480,10 +3409,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "false");
         props.setProperty(PropertyKey.getProceduresReturnsFunctions.getKeyName(), "false");
         testConn = getConnectionWithProps(props);
-        assertFalse("Property useInformationSchema should be false",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue());
-        assertFalse("Property getProceduresReturnsFunctions should be false",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
+        assertFalse(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue(),
+                "Property useInformationSchema should be false");
+        assertFalse(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue(),
+                "Property getProceduresReturnsFunctions should be false");
         checkGetFunctionsForBug69298("Prop. getProcRetFunc(0) MetaData", testConn);
         checkGetFunctionColumnsForBug69298("Prop. getProcRetFunc(0) MetaData", testConn);
         checkGetProceduresForBug69298("Prop. getProcRetFunc(0) MetaData", testConn);
@@ -3494,10 +3423,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
         props.setProperty(PropertyKey.getProceduresReturnsFunctions.getKeyName(), "false");
         testConn = getConnectionWithProps(props);
-        assertTrue("Property useInformationSchema should be true",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue());
-        assertFalse("Property getProceduresReturnsFunctions should be false",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
+        assertTrue(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue(),
+                "Property useInformationSchema should be true");
+        assertFalse(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue(),
+                "Property getProceduresReturnsFunctions should be false");
         checkGetFunctionsForBug69298("Prop. useInfoSchema(1) + getProcRetFunc(0) MetaData", testConn);
         checkGetFunctionColumnsForBug69298("Prop. useInfoSchema(1) + getProcRetFunc(0) MetaData", testConn);
         checkGetProceduresForBug69298("Prop. useInfoSchema(1) + getProcRetFunc(0) MetaData", testConn);
@@ -3512,18 +3441,18 @@ public class MetaDataRegressionTest extends BaseTestCase {
         ResultSet functionsMD = testDbMetaData.getFunctions(null, null, "testBug69298_%");
         String sd = stepDescription + " getFunctions() ";
 
-        assertTrue(sd + "one row expected.", functionsMD.next());
+        assertTrue(functionsMD.next(), sd + "one row expected.");
 
         // function: testBug69298_func
 
-        assertEquals(sd + "-> FUNCTION_CAT", dbMapsToSchema ? "def" : testConn.getCatalog(), functionsMD.getString("FUNCTION_CAT"));
-        assertEquals(sd + "-> FUNCTION_SCHEM", dbMapsToSchema ? testConn.getSchema() : null, functionsMD.getString("FUNCTION_SCHEM"));
-        assertEquals(sd + "-> FUNCTION_NAME", "testBug69298_func", functionsMD.getString("FUNCTION_NAME"));
-        assertEquals(sd + "-> REMARKS", "testBug69298_func comment", functionsMD.getString("REMARKS"));
-        assertEquals(sd + "-> FUNCTION_TYPE", DatabaseMetaData.functionNoTable, functionsMD.getShort("FUNCTION_TYPE"));
-        assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", functionsMD.getString("SPECIFIC_NAME"));
+        assertEquals(dbMapsToSchema ? "def" : testConn.getCatalog(), functionsMD.getString("FUNCTION_CAT"), sd + "-> FUNCTION_CAT");
+        assertEquals(dbMapsToSchema ? testConn.getSchema() : null, functionsMD.getString("FUNCTION_SCHEM"), sd + "-> FUNCTION_SCHEM");
+        assertEquals("testBug69298_func", functionsMD.getString("FUNCTION_NAME"), sd + "-> FUNCTION_NAME");
+        assertEquals("testBug69298_func comment", functionsMD.getString("REMARKS"), sd + "-> REMARKS");
+        assertEquals(DatabaseMetaData.functionNoTable, functionsMD.getShort("FUNCTION_TYPE"), sd + "-> FUNCTION_TYPE");
+        assertEquals("testBug69298_func", functionsMD.getString("SPECIFIC_NAME"), sd + "-> SPECIFIC_NAME");
 
-        assertFalse(stepDescription + "no more rows expected.", functionsMD.next());
+        assertFalse(functionsMD.next(), stepDescription + "no more rows expected.");
     }
 
     private void checkGetFunctionColumnsForBug69298(String stepDescription, Connection testConn) throws Exception {
@@ -3533,49 +3462,49 @@ public class MetaDataRegressionTest extends BaseTestCase {
         ResultSet funcColsMD = testDbMetaData.getFunctionColumns(null, null, "testBug69298_%", "%");
         String sd = stepDescription + " getFunctionColumns() ";
 
-        assertTrue(sd + "1st of 2 rows expected.", funcColsMD.next());
+        assertTrue(funcColsMD.next(), sd + "1st of 2 rows expected.");
 
         // function column: testBug69298_func return
-        assertEquals(sd + "-> FUNCTION_CAT", dbMapsToSchema ? "def" : testConn.getCatalog(), funcColsMD.getString("FUNCTION_CAT"));
-        assertEquals(sd + "-> FUNCTION_SCHEM", dbMapsToSchema ? testConn.getSchema() : null, funcColsMD.getString("FUNCTION_SCHEM"));
-        assertEquals(sd + "-> FUNCTION_NAME", "testBug69298_func", funcColsMD.getString("FUNCTION_NAME"));
-        assertEquals(sd + "-> COLUMN_NAME", "", funcColsMD.getString("COLUMN_NAME"));
-        assertEquals(sd + "-> COLUMN_TYPE", DatabaseMetaData.functionReturn, funcColsMD.getShort("COLUMN_TYPE"));
-        assertEquals(sd + "-> DATA_TYPE", Types.INTEGER, funcColsMD.getInt("DATA_TYPE"));
-        assertEquals(sd + "-> TYPE_NAME", "INT", funcColsMD.getString("TYPE_NAME"));
-        assertEquals(sd + "-> PRECISION", 10, funcColsMD.getInt("PRECISION"));
-        assertEquals(sd + "-> LENGTH", 10, funcColsMD.getInt("LENGTH"));
-        assertEquals(sd + "-> SCALE", 0, funcColsMD.getShort("SCALE"));
-        assertEquals(sd + "-> RADIX", 10, funcColsMD.getShort("RADIX"));
-        assertEquals(sd + "-> NULLABLE", DatabaseMetaData.functionNullable, funcColsMD.getShort("NULLABLE"));
-        assertEquals(sd + "-> REMARKS", null, funcColsMD.getString("REMARKS"));
-        assertEquals(sd + "-> CHAR_OCTET_LENGTH", 0, funcColsMD.getInt("CHAR_OCTET_LENGTH"));
-        assertEquals(sd + "-> ORDINAL_POSITION", 0, funcColsMD.getInt("ORDINAL_POSITION"));
-        assertEquals(sd + "-> IS_NULLABLE", "YES", funcColsMD.getString("IS_NULLABLE"));
-        assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", funcColsMD.getString("SPECIFIC_NAME"));
+        assertEquals(dbMapsToSchema ? "def" : testConn.getCatalog(), funcColsMD.getString("FUNCTION_CAT"), sd + "-> FUNCTION_CAT");
+        assertEquals(dbMapsToSchema ? testConn.getSchema() : null, funcColsMD.getString("FUNCTION_SCHEM"), sd + "-> FUNCTION_SCHEM");
+        assertEquals("testBug69298_func", funcColsMD.getString("FUNCTION_NAME"), sd + "-> FUNCTION_NAME");
+        assertEquals("", funcColsMD.getString("COLUMN_NAME"), sd + "-> COLUMN_NAME");
+        assertEquals(DatabaseMetaData.functionReturn, funcColsMD.getShort("COLUMN_TYPE"), sd + "-> COLUMN_TYPE");
+        assertEquals(Types.INTEGER, funcColsMD.getInt("DATA_TYPE"), sd + "-> DATA_TYPE");
+        assertEquals("INT", funcColsMD.getString("TYPE_NAME"), sd + "-> TYPE_NAME");
+        assertEquals(10, funcColsMD.getInt("PRECISION"), sd + "-> PRECISION");
+        assertEquals(10, funcColsMD.getInt("LENGTH"), sd + "-> LENGTH");
+        assertEquals(0, funcColsMD.getShort("SCALE"), sd + "-> SCALE");
+        assertEquals(10, funcColsMD.getShort("RADIX"), sd + "-> RADIX");
+        assertEquals(DatabaseMetaData.functionNullable, funcColsMD.getShort("NULLABLE"), sd + "-> NULLABLE");
+        assertEquals(null, funcColsMD.getString("REMARKS"), sd + "-> REMARKS");
+        assertEquals(0, funcColsMD.getInt("CHAR_OCTET_LENGTH"), sd + "-> CHAR_OCTET_LENGTH");
+        assertEquals(0, funcColsMD.getInt("ORDINAL_POSITION"), sd + "-> ORDINAL_POSITION");
+        assertEquals("YES", funcColsMD.getString("IS_NULLABLE"), sd + "-> IS_NULLABLE");
+        assertEquals("testBug69298_func", funcColsMD.getString("SPECIFIC_NAME"), sd + "-> SPECIFIC_NAME");
 
-        assertTrue(sd + "2nd of 2 rows expected.", funcColsMD.next());
+        assertTrue(funcColsMD.next(), sd + "2nd of 2 rows expected.");
 
         // function column: testBug69298_func.param_func
-        assertEquals(sd + "-> FUNCTION_CAT", dbMapsToSchema ? "def" : testConn.getCatalog(), funcColsMD.getString("FUNCTION_CAT"));
-        assertEquals(sd + "-> FUNCTION_SCHEM", dbMapsToSchema ? testConn.getSchema() : null, funcColsMD.getString("FUNCTION_SCHEM"));
-        assertEquals(sd + "-> FUNCTION_NAME", "testBug69298_func", funcColsMD.getString("FUNCTION_NAME"));
-        assertEquals(sd + "-> COLUMN_NAME", "param_func", funcColsMD.getString("COLUMN_NAME"));
-        assertEquals(sd + "-> COLUMN_TYPE", DatabaseMetaData.functionColumnIn, funcColsMD.getShort("COLUMN_TYPE"));
-        assertEquals(sd + "-> DATA_TYPE", Types.INTEGER, funcColsMD.getInt("DATA_TYPE"));
-        assertEquals(sd + "-> TYPE_NAME", "INT", funcColsMD.getString("TYPE_NAME"));
-        assertEquals(sd + "-> PRECISION", 10, funcColsMD.getInt("PRECISION"));
-        assertEquals(sd + "-> LENGTH", 10, funcColsMD.getInt("LENGTH"));
-        assertEquals(sd + "-> SCALE", 0, funcColsMD.getShort("SCALE"));
-        assertEquals(sd + "-> RADIX", 10, funcColsMD.getShort("RADIX"));
-        assertEquals(sd + "-> NULLABLE", DatabaseMetaData.functionNullable, funcColsMD.getShort("NULLABLE"));
-        assertEquals(sd + "-> REMARKS", null, funcColsMD.getString("REMARKS"));
-        assertEquals(sd + "-> CHAR_OCTET_LENGTH", 0, funcColsMD.getInt("CHAR_OCTET_LENGTH"));
-        assertEquals(sd + "-> ORDINAL_POSITION", 1, funcColsMD.getInt("ORDINAL_POSITION"));
-        assertEquals(sd + "-> IS_NULLABLE", "YES", funcColsMD.getString("IS_NULLABLE"));
-        assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", funcColsMD.getString("SPECIFIC_NAME"));
+        assertEquals(dbMapsToSchema ? "def" : testConn.getCatalog(), funcColsMD.getString("FUNCTION_CAT"), sd + "-> FUNCTION_CAT");
+        assertEquals(dbMapsToSchema ? testConn.getSchema() : null, funcColsMD.getString("FUNCTION_SCHEM"), sd + "-> FUNCTION_SCHEM");
+        assertEquals("testBug69298_func", funcColsMD.getString("FUNCTION_NAME"), sd + "-> FUNCTION_NAME");
+        assertEquals("param_func", funcColsMD.getString("COLUMN_NAME"), sd + "-> COLUMN_NAME");
+        assertEquals(DatabaseMetaData.functionColumnIn, funcColsMD.getShort("COLUMN_TYPE"), sd + "-> COLUMN_TYPE");
+        assertEquals(Types.INTEGER, funcColsMD.getInt("DATA_TYPE"), sd + "-> DATA_TYPE");
+        assertEquals("INT", funcColsMD.getString("TYPE_NAME"), sd + "-> TYPE_NAME");
+        assertEquals(10, funcColsMD.getInt("PRECISION"), sd + "-> PRECISION");
+        assertEquals(10, funcColsMD.getInt("LENGTH"), sd + "-> LENGTH");
+        assertEquals(0, funcColsMD.getShort("SCALE"), sd + "-> SCALE");
+        assertEquals(10, funcColsMD.getShort("RADIX"), sd + "-> RADIX");
+        assertEquals(DatabaseMetaData.functionNullable, funcColsMD.getShort("NULLABLE"), sd + "-> NULLABLE");
+        assertEquals(null, funcColsMD.getString("REMARKS"), sd + "-> REMARKS");
+        assertEquals(0, funcColsMD.getInt("CHAR_OCTET_LENGTH"), sd + "-> CHAR_OCTET_LENGTH");
+        assertEquals(1, funcColsMD.getInt("ORDINAL_POSITION"), sd + "-> ORDINAL_POSITION");
+        assertEquals("YES", funcColsMD.getString("IS_NULLABLE"), sd + "-> IS_NULLABLE");
+        assertEquals("testBug69298_func", funcColsMD.getString("SPECIFIC_NAME"), sd + "-> SPECIFIC_NAME");
 
-        assertFalse(sd + "no more rows expected.", funcColsMD.next());
+        assertFalse(funcColsMD.next(), sd + "no more rows expected.");
     }
 
     private void checkGetProceduresForBug69298(String stepDescription, Connection testConn) throws Exception {
@@ -3588,30 +3517,30 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 .getValue();
 
         if (isGetProceduresReturnsFunctions) {
-            assertTrue(sd + "1st of 2 rows expected.", proceduresMD.next());
+            assertTrue(proceduresMD.next(), sd + "1st of 2 rows expected.");
 
             // function: testBug69298_func
-            assertEquals(sd + "-> PROCEDURE_CAT", dbMapsToSchema ? "def" : testConn.getCatalog(), proceduresMD.getString("PROCEDURE_CAT"));
-            assertEquals(sd + "-> PROCEDURE_SCHEM", dbMapsToSchema ? testConn.getSchema() : null, proceduresMD.getString("PROCEDURE_SCHEM"));
-            assertEquals(sd + "-> PROCEDURE_NAME", "testBug69298_func", proceduresMD.getString("PROCEDURE_NAME"));
-            assertEquals(sd + "-> REMARKS", "testBug69298_func comment", proceduresMD.getString("REMARKS"));
-            assertEquals(sd + "-> PROCEDURE_TYPE", DatabaseMetaData.procedureReturnsResult, proceduresMD.getShort("PROCEDURE_TYPE"));
-            assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", proceduresMD.getString("SPECIFIC_NAME"));
+            assertEquals(dbMapsToSchema ? "def" : testConn.getCatalog(), proceduresMD.getString("PROCEDURE_CAT"), sd + "-> PROCEDURE_CAT");
+            assertEquals(dbMapsToSchema ? testConn.getSchema() : null, proceduresMD.getString("PROCEDURE_SCHEM"), sd + "-> PROCEDURE_SCHEM");
+            assertEquals("testBug69298_func", proceduresMD.getString("PROCEDURE_NAME"), sd + "-> PROCEDURE_NAME");
+            assertEquals("testBug69298_func comment", proceduresMD.getString("REMARKS"), sd + "-> REMARKS");
+            assertEquals(DatabaseMetaData.procedureReturnsResult, proceduresMD.getShort("PROCEDURE_TYPE"), sd + "-> PROCEDURE_TYPE");
+            assertEquals("testBug69298_func", proceduresMD.getString("SPECIFIC_NAME"), sd + "-> SPECIFIC_NAME");
 
-            assertTrue(sd + "2nd of 2 rows expected.", proceduresMD.next());
+            assertTrue(proceduresMD.next(), sd + "2nd of 2 rows expected.");
         } else {
-            assertTrue(sd + "one row expected.", proceduresMD.next());
+            assertTrue(proceduresMD.next(), sd + "one row expected.");
         }
 
         // procedure: testBug69298_proc
-        assertEquals(sd + "-> PROCEDURE_CAT", dbMapsToSchema ? "def" : testConn.getCatalog(), proceduresMD.getString("PROCEDURE_CAT"));
-        assertEquals(sd + "-> PROCEDURE_SCHEM", dbMapsToSchema ? testConn.getSchema() : null, proceduresMD.getString("PROCEDURE_SCHEM"));
-        assertEquals(sd + "-> PROCEDURE_NAME", "testBug69298_proc", proceduresMD.getString("PROCEDURE_NAME"));
-        assertEquals(sd + "-> REMARKS", "testBug69298_proc comment", proceduresMD.getString("REMARKS"));
-        assertEquals(sd + "-> PROCEDURE_TYPE", DatabaseMetaData.procedureNoResult, proceduresMD.getShort("PROCEDURE_TYPE"));
-        assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_proc", proceduresMD.getString("SPECIFIC_NAME"));
+        assertEquals(dbMapsToSchema ? "def" : testConn.getCatalog(), proceduresMD.getString("PROCEDURE_CAT"), sd + "-> PROCEDURE_CAT");
+        assertEquals(dbMapsToSchema ? testConn.getSchema() : null, proceduresMD.getString("PROCEDURE_SCHEM"), sd + "-> PROCEDURE_SCHEM");
+        assertEquals("testBug69298_proc", proceduresMD.getString("PROCEDURE_NAME"), sd + "-> PROCEDURE_NAME");
+        assertEquals("testBug69298_proc comment", proceduresMD.getString("REMARKS"), sd + "-> REMARKS");
+        assertEquals(DatabaseMetaData.procedureNoResult, proceduresMD.getShort("PROCEDURE_TYPE"), sd + "-> PROCEDURE_TYPE");
+        assertEquals("testBug69298_proc", proceduresMD.getString("SPECIFIC_NAME"), sd + "-> SPECIFIC_NAME");
 
-        assertFalse(stepDescription + "no more rows expected.", proceduresMD.next());
+        assertFalse(proceduresMD.next(), stepDescription + "no more rows expected.");
     }
 
     private void checkGetProcedureColumnsForBug69298(String stepDescription, Connection testConn) throws Exception {
@@ -3624,91 +3553,90 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 .getValue();
 
         if (isGetProceduresReturnsFunctions) {
-            assertTrue(sd + "1st of 3 rows expected.", procColsMD.next());
+            assertTrue(procColsMD.next(), sd + "1st of 3 rows expected.");
 
             // function column: testBug69298_func return
-            assertEquals(sd + "-> PROCEDURE_CAT", dbMapsToSchema ? "def" : testConn.getCatalog(), procColsMD.getString("PROCEDURE_CAT"));
-            assertEquals(sd + "-> PROCEDURE_SCHEM", dbMapsToSchema ? testConn.getSchema() : null, procColsMD.getString("PROCEDURE_SCHEM"));
-            assertEquals(sd + "-> PROCEDURE_NAME", "testBug69298_func", procColsMD.getString("PROCEDURE_NAME"));
-            assertEquals(sd + "-> COLUMN_NAME", "", procColsMD.getString("COLUMN_NAME"));
-            assertEquals(sd + "-> COLUMN_TYPE", DatabaseMetaData.procedureColumnReturn, procColsMD.getShort("COLUMN_TYPE"));
-            assertEquals(sd + "-> DATA_TYPE", Types.INTEGER, procColsMD.getInt("DATA_TYPE"));
-            assertEquals(sd + "-> TYPE_NAME", "INT", procColsMD.getString("TYPE_NAME"));
-            assertEquals(sd + "-> PRECISION", 10, procColsMD.getInt("PRECISION"));
-            assertEquals(sd + "-> LENGTH", 10, procColsMD.getInt("LENGTH"));
-            assertEquals(sd + "-> SCALE", 0, procColsMD.getShort("SCALE"));
-            assertEquals(sd + "-> RADIX", 10, procColsMD.getShort("RADIX"));
-            assertEquals(sd + "-> NULLABLE", DatabaseMetaData.procedureNullable, procColsMD.getShort("NULLABLE"));
-            assertEquals(sd + "-> REMARKS", null, procColsMD.getString("REMARKS"));
-            assertEquals(sd + "-> COLUMN_DEF", null, procColsMD.getString("COLUMN_DEF"));
-            assertEquals(sd + "-> SQL_DATA_TYPE", 0, procColsMD.getInt("SQL_DATA_TYPE"));
-            assertEquals(sd + "-> SQL_DATETIME_SUB", 0, procColsMD.getInt("SQL_DATETIME_SUB"));
-            assertEquals(sd + "-> CHAR_OCTET_LENGTH", 0, procColsMD.getInt("CHAR_OCTET_LENGTH"));
-            assertEquals(sd + "-> ORDINAL_POSITION", 0, procColsMD.getInt("ORDINAL_POSITION"));
-            assertEquals(sd + "-> IS_NULLABLE", "YES", procColsMD.getString("IS_NULLABLE"));
-            assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", procColsMD.getString("SPECIFIC_NAME"));
+            assertEquals(dbMapsToSchema ? "def" : testConn.getCatalog(), procColsMD.getString("PROCEDURE_CAT"), sd + "-> PROCEDURE_CAT");
+            assertEquals(dbMapsToSchema ? testConn.getSchema() : null, procColsMD.getString("PROCEDURE_SCHEM"), sd + "-> PROCEDURE_SCHEM");
+            assertEquals("testBug69298_func", procColsMD.getString("PROCEDURE_NAME"), sd + "-> PROCEDURE_NAME");
+            assertEquals("", procColsMD.getString("COLUMN_NAME"), sd + "-> COLUMN_NAME");
+            assertEquals(DatabaseMetaData.procedureColumnReturn, procColsMD.getShort("COLUMN_TYPE"), sd + "-> COLUMN_TYPE");
+            assertEquals(Types.INTEGER, procColsMD.getInt("DATA_TYPE"), sd + "-> DATA_TYPE");
+            assertEquals("INT", procColsMD.getString("TYPE_NAME"), sd + "-> TYPE_NAME");
+            assertEquals(10, procColsMD.getInt("PRECISION"), sd + "-> PRECISION");
+            assertEquals(10, procColsMD.getInt("LENGTH"), sd + "-> LENGTH");
+            assertEquals(0, procColsMD.getShort("SCALE"), sd + "-> SCALE");
+            assertEquals(10, procColsMD.getShort("RADIX"), sd + "-> RADIX");
+            assertEquals(DatabaseMetaData.procedureNullable, procColsMD.getShort("NULLABLE"), sd + "-> NULLABLE");
+            assertEquals(null, procColsMD.getString("REMARKS"), sd + "-> REMARKS");
+            assertEquals(null, procColsMD.getString("COLUMN_DEF"), sd + "-> COLUMN_DEF");
+            assertEquals(0, procColsMD.getInt("SQL_DATA_TYPE"), sd + "-> SQL_DATA_TYPE");
+            assertEquals(0, procColsMD.getInt("SQL_DATETIME_SUB"), sd + "-> SQL_DATETIME_SUB");
+            assertEquals(0, procColsMD.getInt("CHAR_OCTET_LENGTH"), sd + "-> CHAR_OCTET_LENGTH");
+            assertEquals(0, procColsMD.getInt("ORDINAL_POSITION"), sd + "-> ORDINAL_POSITION");
+            assertEquals("YES", procColsMD.getString("IS_NULLABLE"), sd + "-> IS_NULLABLE");
+            assertEquals("testBug69298_func", procColsMD.getString("SPECIFIC_NAME"), sd + "-> SPECIFIC_NAME");
 
-            assertTrue(sd + "2nd of 3 rows expected.", procColsMD.next());
+            assertTrue(procColsMD.next(), sd + "2nd of 3 rows expected.");
 
             // function column: testBug69298_func.param_func
-            assertEquals(sd + "-> PROCEDURE_CAT", dbMapsToSchema ? "def" : testConn.getCatalog(), procColsMD.getString("PROCEDURE_CAT"));
-            assertEquals(sd + "-> PROCEDURE_SCHEM", dbMapsToSchema ? testConn.getSchema() : null, procColsMD.getString("PROCEDURE_SCHEM"));
-            assertEquals(sd + "-> PROCEDURE_NAME", "testBug69298_func", procColsMD.getString("PROCEDURE_NAME"));
-            assertEquals(sd + "-> COLUMN_NAME", "param_func", procColsMD.getString("COLUMN_NAME"));
-            assertEquals(sd + "-> COLUMN_TYPE", DatabaseMetaData.procedureColumnIn, procColsMD.getShort("COLUMN_TYPE"));
-            assertEquals(sd + "-> DATA_TYPE", Types.INTEGER, procColsMD.getInt("DATA_TYPE"));
-            assertEquals(sd + "-> TYPE_NAME", "INT", procColsMD.getString("TYPE_NAME"));
-            assertEquals(sd + "-> PRECISION", 10, procColsMD.getInt("PRECISION"));
-            assertEquals(sd + "-> LENGTH", 10, procColsMD.getInt("LENGTH"));
-            assertEquals(sd + "-> SCALE", 0, procColsMD.getShort("SCALE"));
-            assertEquals(sd + "-> RADIX", 10, procColsMD.getShort("RADIX"));
-            assertEquals(sd + "-> NULLABLE", DatabaseMetaData.procedureNullable, procColsMD.getShort("NULLABLE"));
-            assertEquals(sd + "-> REMARKS", null, procColsMD.getString("REMARKS"));
-            assertEquals(sd + "-> COLUMN_DEF", null, procColsMD.getString("COLUMN_DEF"));
-            assertEquals(sd + "-> SQL_DATA_TYPE", 0, procColsMD.getInt("SQL_DATA_TYPE"));
-            assertEquals(sd + "-> SQL_DATETIME_SUB", 0, procColsMD.getInt("SQL_DATETIME_SUB"));
-            assertEquals(sd + "-> CHAR_OCTET_LENGTH", 0, procColsMD.getInt("CHAR_OCTET_LENGTH"));
-            assertEquals(sd + "-> ORDINAL_POSITION", 1, procColsMD.getInt("ORDINAL_POSITION"));
-            assertEquals(sd + "-> IS_NULLABLE", "YES", procColsMD.getString("IS_NULLABLE"));
-            assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", procColsMD.getString("SPECIFIC_NAME"));
+            assertEquals(dbMapsToSchema ? "def" : testConn.getCatalog(), procColsMD.getString("PROCEDURE_CAT"), sd + "-> PROCEDURE_CAT");
+            assertEquals(dbMapsToSchema ? testConn.getSchema() : null, procColsMD.getString("PROCEDURE_SCHEM"), sd + "-> PROCEDURE_SCHEM");
+            assertEquals("testBug69298_func", procColsMD.getString("PROCEDURE_NAME"), sd + "-> PROCEDURE_NAME");
+            assertEquals("param_func", procColsMD.getString("COLUMN_NAME"), sd + "-> COLUMN_NAME");
+            assertEquals(DatabaseMetaData.procedureColumnIn, procColsMD.getShort("COLUMN_TYPE"), sd + "-> COLUMN_TYPE");
+            assertEquals(Types.INTEGER, procColsMD.getInt("DATA_TYPE"), sd + "-> DATA_TYPE");
+            assertEquals("INT", procColsMD.getString("TYPE_NAME"), sd + "-> TYPE_NAME");
+            assertEquals(10, procColsMD.getInt("PRECISION"), sd + "-> PRECISION");
+            assertEquals(10, procColsMD.getInt("LENGTH"), sd + "-> LENGTH");
+            assertEquals(0, procColsMD.getShort("SCALE"), sd + "-> SCALE");
+            assertEquals(10, procColsMD.getShort("RADIX"), sd + "-> RADIX");
+            assertEquals(DatabaseMetaData.procedureNullable, procColsMD.getShort("NULLABLE"), sd + "-> NULLABLE");
+            assertEquals(null, procColsMD.getString("REMARKS"), sd + "-> REMARKS");
+            assertEquals(null, procColsMD.getString("COLUMN_DEF"), sd + "-> COLUMN_DEF");
+            assertEquals(0, procColsMD.getInt("SQL_DATA_TYPE"), sd + "-> SQL_DATA_TYPE");
+            assertEquals(0, procColsMD.getInt("SQL_DATETIME_SUB"), sd + "-> SQL_DATETIME_SUB");
+            assertEquals(0, procColsMD.getInt("CHAR_OCTET_LENGTH"), sd + "-> CHAR_OCTET_LENGTH");
+            assertEquals(1, procColsMD.getInt("ORDINAL_POSITION"), sd + "-> ORDINAL_POSITION");
+            assertEquals("YES", procColsMD.getString("IS_NULLABLE"), sd + "-> IS_NULLABLE");
+            assertEquals("testBug69298_func", procColsMD.getString("SPECIFIC_NAME"), sd + "-> SPECIFIC_NAME");
 
-            assertTrue(sd + "3rd of 3 rows expected.", procColsMD.next());
+            assertTrue(procColsMD.next(), sd + "3rd of 3 rows expected.");
         } else {
-            assertTrue(sd + "one row expected.", procColsMD.next());
+            assertTrue(procColsMD.next(), sd + "one row expected.");
         }
 
         // procedure column: testBug69298_proc.param_proc
-        assertEquals(sd + "-> PROCEDURE_CAT", dbMapsToSchema ? "def" : testConn.getCatalog(), procColsMD.getString("PROCEDURE_CAT"));
-        assertEquals(sd + "-> PROCEDURE_SCHEM", dbMapsToSchema ? testConn.getSchema() : null, procColsMD.getString("PROCEDURE_SCHEM"));
-        assertEquals(sd + "-> PROCEDURE_NAME", "testBug69298_proc", procColsMD.getString("PROCEDURE_NAME"));
-        assertEquals(sd + "-> COLUMN_NAME", "param_proc", procColsMD.getString("COLUMN_NAME"));
-        assertEquals(sd + "-> COLUMN_TYPE", DatabaseMetaData.procedureColumnIn, procColsMD.getShort("COLUMN_TYPE"));
-        assertEquals(sd + "-> DATA_TYPE", Types.INTEGER, procColsMD.getInt("DATA_TYPE"));
-        assertEquals(sd + "-> TYPE_NAME", "INT", procColsMD.getString("TYPE_NAME"));
-        assertEquals(sd + "-> PRECISION", 10, procColsMD.getInt("PRECISION"));
-        assertEquals(sd + "-> LENGTH", 10, procColsMD.getInt("LENGTH"));
-        assertEquals(sd + "-> SCALE", 0, procColsMD.getShort("SCALE"));
-        assertEquals(sd + "-> RADIX", 10, procColsMD.getShort("RADIX"));
-        assertEquals(sd + "-> NULLABLE", DatabaseMetaData.procedureNullable, procColsMD.getShort("NULLABLE"));
-        assertEquals(sd + "-> REMARKS", null, procColsMD.getString("REMARKS"));
-        assertEquals(sd + "-> COLUMN_DEF", null, procColsMD.getString("COLUMN_DEF"));
-        assertEquals(sd + "-> SQL_DATA_TYPE", 0, procColsMD.getInt("SQL_DATA_TYPE"));
-        assertEquals(sd + "-> SQL_DATETIME_SUB", 0, procColsMD.getInt("SQL_DATETIME_SUB"));
-        assertEquals(sd + "-> CHAR_OCTET_LENGTH", 0, procColsMD.getInt("CHAR_OCTET_LENGTH"));
-        assertEquals(sd + "-> ORDINAL_POSITION", 1, procColsMD.getInt("ORDINAL_POSITION"));
-        assertEquals(sd + "-> IS_NULLABLE", "YES", procColsMD.getString("IS_NULLABLE"));
-        assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_proc", procColsMD.getString("SPECIFIC_NAME"));
+        assertEquals(dbMapsToSchema ? "def" : testConn.getCatalog(), procColsMD.getString("PROCEDURE_CAT"), sd + "-> PROCEDURE_CAT");
+        assertEquals(dbMapsToSchema ? testConn.getSchema() : null, procColsMD.getString("PROCEDURE_SCHEM"), sd + "-> PROCEDURE_SCHEM");
+        assertEquals("testBug69298_proc", procColsMD.getString("PROCEDURE_NAME"), sd + "-> PROCEDURE_NAME");
+        assertEquals("param_proc", procColsMD.getString("COLUMN_NAME"), sd + "-> COLUMN_NAME");
+        assertEquals(DatabaseMetaData.procedureColumnIn, procColsMD.getShort("COLUMN_TYPE"), sd + "-> COLUMN_TYPE");
+        assertEquals(Types.INTEGER, procColsMD.getInt("DATA_TYPE"), sd + "-> DATA_TYPE");
+        assertEquals("INT", procColsMD.getString("TYPE_NAME"), sd + "-> TYPE_NAME");
+        assertEquals(10, procColsMD.getInt("PRECISION"), sd + "-> PRECISION");
+        assertEquals(10, procColsMD.getInt("LENGTH"), sd + "-> LENGTH");
+        assertEquals(0, procColsMD.getShort("SCALE"), sd + "-> SCALE");
+        assertEquals(10, procColsMD.getShort("RADIX"), sd + "-> RADIX");
+        assertEquals(DatabaseMetaData.procedureNullable, procColsMD.getShort("NULLABLE"), sd + "-> NULLABLE");
+        assertEquals(null, procColsMD.getString("REMARKS"), sd + "-> REMARKS");
+        assertEquals(null, procColsMD.getString("COLUMN_DEF"), sd + "-> COLUMN_DEF");
+        assertEquals(0, procColsMD.getInt("SQL_DATA_TYPE"), sd + "-> SQL_DATA_TYPE");
+        assertEquals(0, procColsMD.getInt("SQL_DATETIME_SUB"), sd + "-> SQL_DATETIME_SUB");
+        assertEquals(0, procColsMD.getInt("CHAR_OCTET_LENGTH"), sd + "-> CHAR_OCTET_LENGTH");
+        assertEquals(1, procColsMD.getInt("ORDINAL_POSITION"), sd + "-> ORDINAL_POSITION");
+        assertEquals("YES", procColsMD.getString("IS_NULLABLE"), sd + "-> IS_NULLABLE");
+        assertEquals("testBug69298_proc", procColsMD.getString("SPECIFIC_NAME"), sd + "-> SPECIFIC_NAME");
 
-        assertFalse(sd + "no more rows expected.", procColsMD.next());
+        assertFalse(procColsMD.next(), sd + "no more rows expected.");
     }
 
     /**
-     * Tests fix for BUG#17248345 - GETFUNCTIONCOLUMNS() METHOD RETURNS COLUMNS OF PROCEDURE. (this happens when
-     * functions and procedures have a common name)
+     * Tests fix for BUG#17248345 - GETFUNCTIONCOLUMNS() METHOD RETURNS COLUMNS OF PROCEDURE. (this happens when functions and procedures have a common name)
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug17248345() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.nullDatabaseMeansCurrent.getKeyName(), "true");
@@ -3722,20 +3650,20 @@ public class MetaDataRegressionTest extends BaseTestCase {
         // test with standard connection (getProceduresReturnsFunctions=true & useInformationSchema=false)
         props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "false");
         testConn = getConnectionWithProps(props);
-        assertFalse("Property useInformationSchema should be false",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue());
-        assertTrue("Property getProceduresReturnsFunctions should be true",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
+        assertFalse(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue(),
+                "Property useInformationSchema should be false");
+        assertTrue(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue(),
+                "Property getProceduresReturnsFunctions should be true");
         checkMetaDataInfoForBug17248345(testConn);
         testConn.close();
 
         // test with property useInformationSchema=true (getProceduresReturnsFunctions=true)
         props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
         testConn = getConnectionWithProps(props);
-        assertTrue("Property useInformationSchema should be true",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue());
-        assertTrue("Property getProceduresReturnsFunctions should be true",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
+        assertTrue(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue(),
+                "Property useInformationSchema should be true");
+        assertTrue(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue(),
+                "Property getProceduresReturnsFunctions should be true");
         checkMetaDataInfoForBug17248345(testConn);
         testConn.close();
 
@@ -3743,10 +3671,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "false");
         props.setProperty(PropertyKey.getProceduresReturnsFunctions.getKeyName(), "false");
         testConn = getConnectionWithProps(props);
-        assertFalse("Property useInformationSchema should be false",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue());
-        assertFalse("Property getProceduresReturnsFunctions should be false",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
+        assertFalse(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue(),
+                "Property useInformationSchema should be false");
+        assertFalse(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue(),
+                "Property getProceduresReturnsFunctions should be false");
         checkMetaDataInfoForBug17248345(testConn);
         testConn.close();
 
@@ -3754,10 +3682,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
         props.setProperty(PropertyKey.getProceduresReturnsFunctions.getKeyName(), "false");
         testConn = getConnectionWithProps(props);
-        assertTrue("Property useInformationSchema should be true",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue());
-        assertFalse("Property getProceduresReturnsFunctions should be false",
-                ((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue());
+        assertTrue(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.useInformationSchema).getValue(),
+                "Property useInformationSchema should be true");
+        assertFalse(((JdbcConnection) testConn).getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions).getValue(),
+                "Property getProceduresReturnsFunctions should be false");
         checkMetaDataInfoForBug17248345(testConn);
         testConn.close();
     }
@@ -3773,64 +3701,63 @@ public class MetaDataRegressionTest extends BaseTestCase {
         // getFunctions() must return 1 record.
         sd = stepDescription + " getFunctions() ";
         rsMD = testDbMetaData.getFunctions(null, null, "testBug17248345");
-        assertTrue(sd + "one row expected.", rsMD.next());
-        assertEquals(sd + " -> FUNCTION_NAME", "testBug17248345", rsMD.getString("FUNCTION_NAME"));
-        assertFalse(sd + "no more rows expected.", rsMD.next());
+        assertTrue(rsMD.next(), sd + "one row expected.");
+        assertEquals("testBug17248345", rsMD.getString("FUNCTION_NAME"), sd + " -> FUNCTION_NAME");
+        assertFalse(rsMD.next(), sd + "no more rows expected.");
 
         // getFunctionColumns() must return 2 records (func return + func param).
         sd = stepDescription + " getFunctionColumns() ";
         rsMD = testDbMetaData.getFunctionColumns(null, null, "testBug17248345", "%");
-        assertTrue(sd + "1st of 2 rows expected.", rsMD.next());
-        assertEquals(sd + " -> FUNCTION_NAME", "testBug17248345", rsMD.getString("FUNCTION_NAME"));
-        assertEquals(sd + " -> COLUMN_NAME", "", rsMD.getString("COLUMN_NAME"));
-        assertTrue(sd + "2nd of 2 rows expected.", rsMD.next());
-        assertEquals(sd + " -> FUNCTION_NAME", "testBug17248345", rsMD.getString("FUNCTION_NAME"));
-        assertEquals(sd + " -> COLUMN_NAME", "funccol", rsMD.getString("COLUMN_NAME"));
-        assertFalse(sd + "no more rows expected.", rsMD.next());
+        assertTrue(rsMD.next(), sd + "1st of 2 rows expected.");
+        assertEquals("testBug17248345", rsMD.getString("FUNCTION_NAME"), sd + " -> FUNCTION_NAME");
+        assertEquals("", rsMD.getString("COLUMN_NAME"), sd + " -> COLUMN_NAME");
+        assertTrue(rsMD.next(), sd + "2nd of 2 rows expected.");
+        assertEquals("testBug17248345", rsMD.getString("FUNCTION_NAME"), sd + " -> FUNCTION_NAME");
+        assertEquals("funccol", rsMD.getString("COLUMN_NAME"), sd + " -> COLUMN_NAME");
+        assertFalse(rsMD.next(), sd + "no more rows expected.");
 
         // getProcedures() must return 1 or 2 records, depending on if getProceduresReturnsFunctions is false or true
         // respectively. When exists a procedure and a function with same name, function is returned first.
         sd = stepDescription + " getProcedures() ";
         rsMD = testDbMetaData.getProcedures(null, null, "testBug17248345");
         if (getProcRetFunc) {
-            assertTrue(sd + "1st of 2 rows expected.", rsMD.next());
-            assertEquals(sd + " -> PROCEDURE_NAME", "testBug17248345", rsMD.getString("PROCEDURE_NAME"));
-            assertTrue(sd + "2nd of 2 rows expected.", rsMD.next());
+            assertTrue(rsMD.next(), sd + "1st of 2 rows expected.");
+            assertEquals("testBug17248345", rsMD.getString("PROCEDURE_NAME"), sd + " -> PROCEDURE_NAME");
+            assertTrue(rsMD.next(), sd + "2nd of 2 rows expected.");
         } else {
-            assertTrue(sd + "one row expected.", rsMD.next());
+            assertTrue(rsMD.next(), sd + "one row expected.");
         }
-        assertEquals(sd + " -> PROCEDURE_NAME", "testBug17248345", rsMD.getString("PROCEDURE_NAME"));
-        assertFalse(sd + "no more rows expected.", rsMD.next());
+        assertEquals("testBug17248345", rsMD.getString("PROCEDURE_NAME"), sd + " -> PROCEDURE_NAME");
+        assertFalse(rsMD.next(), sd + "no more rows expected.");
 
         // getProcedureColumns() must return 1 or 3 records, depending on if getProceduresReturnsFunctions is false or
         // true respectively. When exists a procedure and a function with same name, function is returned first.
         sd = stepDescription + " getProcedureColumns() ";
         rsMD = testDbMetaData.getProcedureColumns(null, null, "testBug17248345", "%");
         if (getProcRetFunc) {
-            assertTrue(sd + "1st of 3 rows expected.", rsMD.next());
-            assertEquals(sd + " -> PROCEDURE_NAME", "testBug17248345", rsMD.getString("PROCEDURE_NAME"));
-            assertEquals(sd + " -> COLUMN_NAME", "", rsMD.getString("COLUMN_NAME"));
-            assertTrue(sd + "2nd of 3 rows expected.", rsMD.next());
-            assertEquals(sd + " -> PROCEDURE_NAME", "testBug17248345", rsMD.getString("PROCEDURE_NAME"));
-            assertEquals(sd + " -> COLUMN_NAME", "funccol", rsMD.getString("COLUMN_NAME"));
-            assertTrue(sd + "3rd of 3 rows expected.", rsMD.next());
+            assertTrue(rsMD.next(), sd + "1st of 3 rows expected.");
+            assertEquals("testBug17248345", rsMD.getString("PROCEDURE_NAME"), sd + " -> PROCEDURE_NAME");
+            assertEquals("", rsMD.getString("COLUMN_NAME"), sd + " -> COLUMN_NAME");
+            assertTrue(rsMD.next(), sd + "2nd of 3 rows expected.");
+            assertEquals("testBug17248345", rsMD.getString("PROCEDURE_NAME"), sd + " -> PROCEDURE_NAME");
+            assertEquals("funccol", rsMD.getString("COLUMN_NAME"), sd + " -> COLUMN_NAME");
+            assertTrue(rsMD.next(), sd + "3rd of 3 rows expected.");
         } else {
-            assertTrue(sd + "one row expected.", rsMD.next());
+            assertTrue(rsMD.next(), sd + "one row expected.");
         }
-        assertEquals(sd + " -> PROCEDURE_NAME", "testBug17248345", rsMD.getString("PROCEDURE_NAME"));
-        assertEquals(sd + " -> COLUMN_NAME", "proccol", rsMD.getString("COLUMN_NAME"));
-        assertFalse(sd + "no more rows expected.", rsMD.next());
+        assertEquals("testBug17248345", rsMD.getString("PROCEDURE_NAME"), sd + " -> PROCEDURE_NAME");
+        assertEquals("proccol", rsMD.getString("COLUMN_NAME"), sd + " -> COLUMN_NAME");
+        assertFalse(rsMD.next(), sd + "no more rows expected.");
     }
 
     /**
      * Tests fix for BUG#69290 - JDBC Table type "SYSTEM TABLE" is used inconsistently.
      * 
-     * Tests DatabaseMetaData.getTableTypes() and DatabaseMetaData.getTables() against schemas: mysql,
-     * information_schema, performance_schema, test.
+     * Tests DatabaseMetaData.getTableTypes() and DatabaseMetaData.getTables() against schemas: mysql, information_schema, performance_schema, test.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug69290() throws Exception {
         String[] testStepDescription = new String[] { "MySQL MetaData", "I__S MetaData" };
         Connection connUseIS = getConnectionWithProps("useInformationSchema=true");
@@ -3856,7 +3783,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 if (idx >= tableTypes.size()) {
                     fail(message + " not expected.");
                 }
-                assertEquals(message, tableTypes.get(idx++), this.rs.getString("TABLE_TYPE"));
+                assertEquals(tableTypes.get(idx++), this.rs.getString("TABLE_TYPE"), message);
             }
         }
 
@@ -3874,16 +3801,16 @@ public class MetaDataRegressionTest extends BaseTestCase {
             this.rs = dbMapsToSchema ? testDbMetaData.getTables(null, "information_schema", "%", null)
                     : testDbMetaData.getTables("information_schema", null, "%", null);
             while (this.rs.next()) {
-                assertEquals(testStepDescription[i] + ", 'information_schema' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.",
-                        "SYSTEM VIEW", this.rs.getString("TABLE_TYPE"));
+                assertEquals("SYSTEM VIEW", this.rs.getString("TABLE_TYPE"),
+                        testStepDescription[i] + ", 'information_schema' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.");
                 countResults[i][0]++;
             }
 
             // check catalog/schema 'mysql'
             this.rs = dbMapsToSchema ? testDbMetaData.getTables(null, "mysql", "%", null) : testDbMetaData.getTables("mysql", null, "%", null);
             while (this.rs.next()) {
-                assertEquals(testStepDescription[i] + ", 'mysql' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.",
-                        "SYSTEM TABLE", this.rs.getString("TABLE_TYPE"));
+                assertEquals("SYSTEM TABLE", this.rs.getString("TABLE_TYPE"),
+                        testStepDescription[i] + ", 'mysql' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.");
                 countResults[i][1]++;
             }
 
@@ -3891,29 +3818,29 @@ public class MetaDataRegressionTest extends BaseTestCase {
             this.rs = dbMapsToSchema ? testDbMetaData.getTables(null, "performance_schema", "%", null)
                     : testDbMetaData.getTables("performance_schema", null, "%", null);
             while (this.rs.next()) {
-                assertEquals(testStepDescription[i] + ", 'performance_schema' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.",
-                        "SYSTEM TABLE", this.rs.getString("TABLE_TYPE"));
+                assertEquals("SYSTEM TABLE", this.rs.getString("TABLE_TYPE"),
+                        testStepDescription[i] + ", 'performance_schema' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.");
                 countResults[i][2]++;
             }
 
             // check catalog/schema '(test)'
             this.rs = dbMapsToSchema ? testDbMetaData.getTables(null, testDb, "testBug69290_%", null)
                     : testDbMetaData.getTables(testDb, null, "testBug69290_%", null);
-            assertTrue(testStepDescription[i] + ", '" + testDb + "' catalog/schema, expected row from getTables().", this.rs.next());
-            assertEquals(testStepDescription[i] + ", '" + testDb + "' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.", "TABLE",
-                    this.rs.getString("TABLE_TYPE"));
-            assertTrue(testStepDescription[i] + ", '" + testDb + "' catalog/schema, expected row from getTables().", this.rs.next());
-            assertEquals(testStepDescription[i] + ", '" + testDb + "' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.", "VIEW",
-                    this.rs.getString("TABLE_TYPE"));
+            assertTrue(this.rs.next(), testStepDescription[i] + ", '" + testDb + "' catalog/schema, expected row from getTables().");
+            assertEquals("TABLE", this.rs.getString("TABLE_TYPE"),
+                    testStepDescription[i] + ", '" + testDb + "' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.");
+            assertTrue(this.rs.next(), testStepDescription[i] + ", '" + testDb + "' catalog/schema, expected row from getTables().");
+            assertEquals("VIEW", this.rs.getString("TABLE_TYPE"),
+                    testStepDescription[i] + ", '" + testDb + "' catalog/schema, wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.");
         }
 
         // compare results count
-        assertTrue("The number of results from getTables() MySQl(" + countResults[0][0] + ") and I__S(" + countResults[1][0]
-                + ") should be the same for 'information_schema' catalog/schema.", countResults[0][0] == countResults[1][0]);
-        assertTrue("The number of results from getTables() MySQl(" + countResults[0][1] + ") and I__S(" + countResults[1][1]
-                + ") should be the same for 'mysql' catalog/schema.", countResults[0][1] == countResults[1][1]);
-        assertTrue("The number of results from getTables() MySQl(" + countResults[0][2] + ") and I__S(" + countResults[1][2]
-                + ") should be the same for 'performance_schema' catalog/schema.", countResults[0][2] == countResults[1][2]);
+        assertTrue(countResults[0][0] == countResults[1][0], "The number of results from getTables() MySQl(" + countResults[0][0] + ") and I__S("
+                + countResults[1][0] + ") should be the same for 'information_schema' catalog/schema.");
+        assertTrue(countResults[0][1] == countResults[1][1], "The number of results from getTables() MySQl(" + countResults[0][1] + ") and I__S("
+                + countResults[1][1] + ") should be the same for 'mysql' catalog/schema.");
+        assertTrue(countResults[0][2] == countResults[1][2], "The number of results from getTables() MySQl(" + countResults[0][2] + ") and I__S("
+                + countResults[1][2] + ") should be the same for 'performance_schema' catalog/schema.");
 
         testConnections = new Connection[] { connNullAll, connUseISAndNullAll };
         countResults = new int[][] { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } };
@@ -3927,9 +3854,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
             for (String tableType : tableTypes) {
                 this.rs = testDbMetaData.getTables(null, null, "%", new String[] { tableType });
                 while (this.rs.next()) {
-                    assertEquals(
-                            testStepDescription[i] + ", table type filter '" + tableType + "', wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.",
-                            tableType, this.rs.getString("TABLE_TYPE"));
+                    assertEquals(tableType, this.rs.getString("TABLE_TYPE"), testStepDescription[i] + ", table type filter '" + tableType
+                            + "', wrong table type for '" + this.rs.getString("TABLE_NAME") + "'.");
                     countResults[i][j]++;
                 }
                 j++;
@@ -3939,8 +3865,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         // compare results count
         int i = 0;
         for (String tableType : tableTypes) {
-            assertTrue("The number of results from getTables() MySQl(" + countResults[0][i] + ") and I__S(" + countResults[1][i] + ") should be the same for '"
-                    + tableType + "' table type filter.", countResults[0][i] == countResults[1][i]);
+            assertTrue(countResults[0][i] == countResults[1][i], "The number of results from getTables() MySQl(" + countResults[0][i] + ") and I__S("
+                    + countResults[1][i] + ") should be the same for '" + tableType + "' table type filter.");
             i++;
         }
     }
@@ -3949,8 +3875,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests fix for BUG#35115 - yearIsDateType=false has no effect on result's column type and class.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug35115() throws Exception {
         Connection testConnection = null;
         ResultSetMetaData rsMetaData = null;
@@ -3967,10 +3893,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
         rsMetaData = this.rs.getMetaData();
 
         assertTrue(this.rs.next());
-        assertEquals("YEAR columns should be treated as java.sql.Types.DATE", Types.DATE, rsMetaData.getColumnType(1));
-        assertEquals("YEAR columns should be identified as 'YEAR'", "YEAR", rsMetaData.getColumnTypeName(1));
-        assertEquals("YEAR columns should be mapped to java.lang.Short", java.lang.Short.class.getName(), rsMetaData.getColumnClassName(1));
-        assertEquals("YEAR columns should be returned as java.lang.Short", java.lang.Short.class.getName(), this.rs.getObject(1).getClass().getName());
+        assertEquals(Types.DATE, rsMetaData.getColumnType(1), "YEAR columns should be treated as java.sql.Types.DATE");
+        assertEquals("YEAR", rsMetaData.getColumnTypeName(1), "YEAR columns should be identified as 'YEAR'");
+        assertEquals(java.lang.Short.class.getName(), rsMetaData.getColumnClassName(1), "YEAR columns should be mapped to java.lang.Short");
+        assertEquals(java.lang.Short.class.getName(), this.rs.getObject(1).getClass().getName(), "YEAR columns should be returned as java.lang.Short");
 
         testConnection.close();
 
@@ -3983,21 +3909,20 @@ public class MetaDataRegressionTest extends BaseTestCase {
         rsMetaData = this.rs.getMetaData();
 
         assertTrue(this.rs.next());
-        assertEquals("YEAR columns should be treated as java.sql.Types.DATE", Types.DATE, rsMetaData.getColumnType(1));
-        assertEquals("YEAR columns should be identified as 'YEAR'", "YEAR", rsMetaData.getColumnTypeName(1));
-        assertEquals("YEAR columns should be mapped to java.sql.Date", java.sql.Date.class.getName(), rsMetaData.getColumnClassName(1));
-        assertEquals("YEAR columns should be returned as java.sql.Date", java.sql.Date.class.getName(), this.rs.getObject(1).getClass().getName());
+        assertEquals(Types.DATE, rsMetaData.getColumnType(1), "YEAR columns should be treated as java.sql.Types.DATE");
+        assertEquals("YEAR", rsMetaData.getColumnTypeName(1), "YEAR columns should be identified as 'YEAR'");
+        assertEquals(java.sql.Date.class.getName(), rsMetaData.getColumnClassName(1), "YEAR columns should be mapped to java.sql.Date");
+        assertEquals(java.sql.Date.class.getName(), this.rs.getObject(1).getClass().getName(), "YEAR columns should be returned as java.sql.Date");
 
         testConnection.close();
     }
 
     /**
-     * Tests fix for BUG#68307 - getFunctionColumns() returns incorrect "COLUMN_TYPE" information. This is a JDBC4
-     * feature.
+     * Tests fix for BUG#68307 - getFunctionColumns() returns incorrect "COLUMN_TYPE" information. This is a JDBC4 feature.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug68307() throws Exception {
         createFunction("testBug68307_func", "(func_param_in INT) RETURNS INT DETERMINISTIC RETURN 1");
 
@@ -4022,13 +3947,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
         while (this.rs.next()) {
             String message = testAgainst + ", function <" + this.rs.getString("FUNCTION_NAME") + "." + this.rs.getString("COLUMN_NAME") + ">";
             if (this.rs.getString("COLUMN_NAME") == null || this.rs.getString("COLUMN_NAME").length() == 0) {
-                assertEquals(message, DatabaseMetaData.functionReturn, this.rs.getShort("COLUMN_TYPE"));
+                assertEquals(DatabaseMetaData.functionReturn, this.rs.getShort("COLUMN_TYPE"), message);
             } else if (this.rs.getString("COLUMN_NAME").endsWith("_in")) {
-                assertEquals(message, DatabaseMetaData.functionColumnIn, this.rs.getShort("COLUMN_TYPE"));
+                assertEquals(DatabaseMetaData.functionColumnIn, this.rs.getShort("COLUMN_TYPE"), message);
             } else if (this.rs.getString("COLUMN_NAME").endsWith("_inout")) {
-                assertEquals(message, DatabaseMetaData.functionColumnInOut, this.rs.getShort("COLUMN_TYPE"));
+                assertEquals(DatabaseMetaData.functionColumnInOut, this.rs.getShort("COLUMN_TYPE"), message);
             } else if (this.rs.getString("COLUMN_NAME").endsWith("_out")) {
-                assertEquals(message, DatabaseMetaData.functionColumnOut, this.rs.getShort("COLUMN_TYPE"));
+                assertEquals(DatabaseMetaData.functionColumnOut, this.rs.getShort("COLUMN_TYPE"), message);
             } else {
                 fail("Column '" + this.rs.getString("FUNCTION_NAME") + "." + this.rs.getString("COLUMN_NAME") + "' not expected within test case.");
             }
@@ -4041,13 +3966,13 @@ public class MetaDataRegressionTest extends BaseTestCase {
         while (this.rs.next()) {
             String message = testAgainst + ", procedure <" + this.rs.getString("PROCEDURE_NAME") + "." + this.rs.getString("COLUMN_NAME") + ">";
             if (this.rs.getString("COLUMN_NAME") == null || this.rs.getString("COLUMN_NAME").length() == 0) {
-                assertEquals(message, DatabaseMetaData.procedureColumnReturn, this.rs.getShort("COLUMN_TYPE"));
+                assertEquals(DatabaseMetaData.procedureColumnReturn, this.rs.getShort("COLUMN_TYPE"), message);
             } else if (this.rs.getString("COLUMN_NAME").endsWith("_in")) {
-                assertEquals(message, DatabaseMetaData.procedureColumnIn, this.rs.getShort("COLUMN_TYPE"));
+                assertEquals(DatabaseMetaData.procedureColumnIn, this.rs.getShort("COLUMN_TYPE"), message);
             } else if (this.rs.getString("COLUMN_NAME").endsWith("_inout")) {
-                assertEquals(message, DatabaseMetaData.procedureColumnInOut, this.rs.getShort("COLUMN_TYPE"));
+                assertEquals(DatabaseMetaData.procedureColumnInOut, this.rs.getShort("COLUMN_TYPE"), message);
             } else if (this.rs.getString("COLUMN_NAME").endsWith("_out")) {
-                assertEquals(message, DatabaseMetaData.procedureColumnOut, this.rs.getShort("COLUMN_TYPE"));
+                assertEquals(DatabaseMetaData.procedureColumnOut, this.rs.getShort("COLUMN_TYPE"), message);
             } else {
                 fail("Column '" + this.rs.getString("FUNCTION_NAME") + "." + this.rs.getString("COLUMN_NAME") + "' not expected within test case.");
             }
@@ -4058,8 +3983,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests fix for BUG#44451 - getTables does not return resultset with expected columns.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug44451() throws Exception {
         String methodName;
         List<String> expectedFields;
@@ -4093,11 +4018,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
         ResultSetMetaData rsMetaData = resultSetToCheck.getMetaData();
         int numberOfColumns = rsMetaData.getColumnCount();
 
-        assertEquals(stepDescription + ", wrong column count in method '" + methodName + "'.", expectedFields.size(), numberOfColumns);
+        assertEquals(expectedFields.size(), numberOfColumns, stepDescription + ", wrong column count in method '" + methodName + "'.");
         for (int i = 0; i < numberOfColumns; i++) {
             int position = i + 1;
-            assertEquals(stepDescription + ", wrong column at position '" + position + "' in method '" + methodName + "'.", expectedFields.get(i),
-                    rsMetaData.getColumnName(position));
+            assertEquals(expectedFields.get(i), rsMetaData.getColumnName(position),
+                    stepDescription + ", wrong column at position '" + position + "' in method '" + methodName + "'.");
         }
         this.rs.close();
     }
@@ -4106,8 +4031,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests fix for BUG#20504139 - GETFUNCTIONCOLUMNS() AND GETPROCEDURECOLUMNS() RETURNS ERROR FOR VALID INPUTS.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug20504139() throws Exception {
         createFunction("testBug20504139f", "(namef CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ', namef, '!')");
         createFunction("`testBug20504139``f`", "(namef CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ', namef, '!')");
@@ -4141,12 +4066,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
                         if (useFuncsInProcs) {
                             assertTrue(testRs.next());
-                            assertEquals(testCase + "." + i + ". expected function column name (empty)", "", testRs.getString(4));
-                            assertEquals(testCase + "." + i + ". expected function column type (empty)", DatabaseMetaData.procedureColumnReturn,
-                                    testRs.getInt(5));
+                            assertEquals("", testRs.getString(4), testCase + "." + i + ". expected function column name (empty)");
+                            assertEquals(DatabaseMetaData.procedureColumnReturn, testRs.getInt(5),
+                                    testCase + "." + i + ". expected function column type (empty)");
                             assertTrue(testRs.next());
-                            assertEquals(testCase + "." + i + ". expected function column name", "namef", testRs.getString(4));
-                            assertEquals(testCase + "." + i + ". expected function column type (empty)", DatabaseMetaData.procedureColumnIn, testRs.getInt(5));
+                            assertEquals("namef", testRs.getString(4), testCase + "." + i + ". expected function column name");
+                            assertEquals(DatabaseMetaData.procedureColumnIn, testRs.getInt(5), testCase + "." + i + ". expected function column type (empty)");
                             assertFalse(testRs.next());
                         } else {
                             assertFalse(testRs.next());
@@ -4171,8 +4096,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
                         testRs = dbMapsToSchema ? dbmd.getProcedureColumns("", this.dbName, name, "%") : dbmd.getProcedureColumns(this.dbName, "", name, "%");
 
                         assertTrue(testRs.next());
-                        assertEquals(testCase + ". expected procedure column name", "namep", testRs.getString(4));
-                        assertEquals(testCase + ". expected procedure column type (empty)", DatabaseMetaData.procedureColumnInOut, testRs.getInt(5));
+                        assertEquals("namep", testRs.getString(4), testCase + ". expected procedure column name");
+                        assertEquals(DatabaseMetaData.procedureColumnInOut, testRs.getInt(5), testCase + ". expected procedure column type (empty)");
                         assertFalse(testRs.next());
 
                         testRs.close();
@@ -4194,11 +4119,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
                         testRs = dbMapsToSchema ? dbmd.getFunctionColumns("", this.dbName, name, "%") : dbmd.getFunctionColumns(this.dbName, "", name, "%");
 
                         assertTrue(testRs.next());
-                        assertEquals(testCase + ". expected function column name (empty)", "", testRs.getString(4));
-                        assertEquals(testCase + ". expected function column type (empty)", DatabaseMetaData.functionReturn, testRs.getInt(5));
+                        assertEquals("", testRs.getString(4), testCase + ". expected function column name (empty)");
+                        assertEquals(DatabaseMetaData.functionReturn, testRs.getInt(5), testCase + ". expected function column type (empty)");
                         assertTrue(testRs.next());
-                        assertEquals(testCase + ". expected function column name", "namef", testRs.getString(4));
-                        assertEquals(testCase + ". expected function column type (empty)", DatabaseMetaData.functionColumnIn, testRs.getInt(5));
+                        assertEquals("namef", testRs.getString(4), testCase + ". expected function column name");
+                        assertEquals(DatabaseMetaData.functionColumnIn, testRs.getInt(5), testCase + ". expected function column type (empty)");
                         assertFalse(testRs.next());
 
                         testRs.close();
@@ -4244,8 +4169,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * This test creates set of databases around the relative position of 'information_schema' and checks the ordering of the final ResultSet.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug21215151() throws Exception {
         createDatabase("z_testBug21215151");
         createDatabase("j_testBug21215151");
@@ -4266,8 +4191,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
         // check the relative position of each element in the result set compared to the previous element.
         String previousDb = "";
         while (this.rs.next()) {
-            assertTrue("'" + this.rs.getString(1) + "' is lexicographically lower than the previous catalog. Check the system output to see the catalogs list.",
-                    previousDb.compareTo(this.rs.getString(1)) < 0);
+            assertTrue(previousDb.compareTo(this.rs.getString(1)) < 0,
+                    "'" + this.rs.getString(1) + "' is lexicographically lower than the previous catalog. Check the system output to see the catalogs list.");
             previousDb = this.rs.getString(1);
         }
     }
@@ -4280,8 +4205,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * 2. Confirm that the results from getProcedures() and getProcedureColumns() are in the right order (secondary bug).
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug19803348() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.getProceduresReturnsFunctions.getKeyName(), "false");
@@ -4408,15 +4333,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 }
             }
         }
-
     }
 
     /**
      * Tests fix for BUG#20727196 - GETPROCEDURECOLUMNS() RETURNS EXCEPTION FOR FUNCTION WHICH RETURNS ENUM/SET TYPE.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug20727196() throws Exception {
         createFunction("testBug20727196_f1",
                 "(p ENUM ('Yes', 'No')) RETURNS VARCHAR(10) DETERMINISTIC BEGIN RETURN IF(p='Yes', 'Yay!', if(p='No', 'Ney!', 'What?')); END");
@@ -4488,10 +4412,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests fix for BUG#76187 (20675539), getTypeInfo report maximum precision of 255 for varchar.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug76187() throws Exception {
-
         DatabaseMetaData meta = this.conn.getMetaData();
         this.rs = meta.getTypeInfo();
         while (this.rs.next()) {
@@ -4503,17 +4426,15 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 }
             }
         }
-
     }
 
     /**
      * Tests fix for BUG#21978216, GETTYPEINFO REPORT MAXIMUM PRECISION OF 255 FOR VARBINARY
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug21978216() throws Exception {
-
         DatabaseMetaData meta = this.conn.getMetaData();
         this.rs = meta.getTypeInfo();
         while (this.rs.next()) {
@@ -4525,12 +4446,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 }
             }
         }
-
     }
 
     /**
      * Tests fix for Bug#23212347, ALL API CALLS ON RESULTSET METADATA RESULTS IN NPE WHEN USESERVERPREPSTMTS=TRUE.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testBug23212347() throws Exception {
         boolean useSPS = false;
         do {
@@ -4548,27 +4471,29 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             this.pstmt = testConn.prepareStatement("SELECT * FROM testBug23212347 WHERE id = 1");
             this.rs = this.pstmt.executeQuery();
-            assertTrue(testCase, this.rs.next());
-            assertEquals(testCase, 1, this.rs.getInt(1));
-            assertFalse(testCase, this.rs.next());
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            assertFalse(this.rs.next(), testCase);
             ResultSetMetaData rsmd = this.pstmt.getMetaData();
-            assertEquals(testCase, "id", rsmd.getColumnName(1));
+            assertEquals("id", rsmd.getColumnName(1), testCase);
 
             this.pstmt = testConn.prepareStatement("SELECT * FROM testBug23212347 WHERE id = ?");
             this.pstmt.setInt(1, 1);
             this.rs = this.pstmt.executeQuery();
-            assertTrue(testCase, this.rs.next());
-            assertEquals(testCase, 1, this.rs.getInt(1));
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
             assertFalse(this.rs.next());
             rsmd = this.pstmt.getMetaData();
-            assertEquals(testCase, "id", rsmd.getColumnName(1));
+            assertEquals("id", rsmd.getColumnName(1), testCase);
         } while (useSPS = !useSPS);
     }
 
     /**
      * Tests fix for Bug#73775 - DBMD.getProcedureColumns()/.getFunctionColumns() fail to filter by columnPattern
      * 
+     * @throws Exception
      */
+    @Test
     public void testBug73775() throws Exception {
         createFunction("testBug73775f", "(param1 CHAR(20), param2 CHAR(20)) RETURNS CHAR(40) DETERMINISTIC RETURN CONCAT(param1, param2)");
         createProcedure("testBug73775p", "(INOUT param1 CHAR(20), IN param2 CHAR(20)) BEGIN  SELECT CONCAT(param1, param2) INTO param1; END");
@@ -4592,114 +4517,114 @@ public class MetaDataRegressionTest extends BaseTestCase {
              */
             this.rs = dbMapsToSchema ? dbmd.getProcedureColumns("", null, "testBug73775%", "%") : dbmd.getProcedureColumns(null, "", "testBug73775%", "%");
             if (inclFuncs) {
-                assertTrue(testCase, this.rs.next());
-                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+                assertTrue(this.rs.next(), testCase);
+                assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                assertEquals("", this.rs.getString(4), testCase); // Function return param is always returned.
                 assertEquals(DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
-                assertTrue(testCase, this.rs.next());
-                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                assertEquals(testCase, "param1", this.rs.getString(4));
-                assertTrue(testCase, this.rs.next());
-                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                assertEquals(testCase, "param2", this.rs.getString(4));
+                assertTrue(this.rs.next(), testCase);
+                assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                assertEquals("param1", this.rs.getString(4), testCase);
+                assertTrue(this.rs.next(), testCase);
+                assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                assertEquals("param2", this.rs.getString(4), testCase);
             }
-            assertTrue(testCase, this.rs.next());
-            assertEquals(testCase, "testBug73775p", this.rs.getString(3));
-            assertEquals(testCase, "param1", this.rs.getString(4));
-            assertTrue(testCase, this.rs.next());
-            assertEquals(testCase, "testBug73775p", this.rs.getString(3));
-            assertEquals(testCase, "param2", this.rs.getString(4));
-            assertFalse(testCase, this.rs.next());
+            assertTrue(this.rs.next(), testCase);
+            assertEquals("testBug73775p", this.rs.getString(3), testCase);
+            assertEquals("param1", this.rs.getString(4), testCase);
+            assertTrue(this.rs.next(), testCase);
+            assertEquals("testBug73775p", this.rs.getString(3), testCase);
+            assertEquals("param2", this.rs.getString(4), testCase);
+            assertFalse(this.rs.next(), testCase);
 
             for (String ptn : new String[] { "param1", "_____1", "%1", "p_r_m%1" }) {
                 this.rs = dbMapsToSchema ? dbmd.getProcedureColumns("", null, "testBug73775%", ptn) : dbmd.getProcedureColumns(null, "", "testBug73775%", ptn);
                 if (inclFuncs) {
                     assertTrue(this.rs.next());
-                    assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                    assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+                    assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                    assertEquals("", this.rs.getString(4), testCase); // Function return param is always returned.
                     assertEquals(DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
-                    assertTrue(testCase, this.rs.next());
-                    assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                    assertEquals(testCase, "param1", this.rs.getString(4));
+                    assertTrue(this.rs.next(), testCase);
+                    assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                    assertEquals("param1", this.rs.getString(4), testCase);
                 }
-                assertTrue(testCase, this.rs.next());
-                assertEquals(testCase, "testBug73775p", this.rs.getString(3));
-                assertEquals(testCase, "param1", this.rs.getString(4));
-                assertFalse(testCase, this.rs.next());
+                assertTrue(this.rs.next(), testCase);
+                assertEquals("testBug73775p", this.rs.getString(3), testCase);
+                assertEquals("param1", this.rs.getString(4), testCase);
+                assertFalse(this.rs.next(), testCase);
             }
 
             for (String ptn : new String[] { "param2", "_____2", "%2", "p_r_m%2" }) {
                 this.rs = dbMapsToSchema ? dbmd.getProcedureColumns("", null, "testBug73775%", ptn) : dbmd.getProcedureColumns(null, "", "testBug73775%", ptn);
                 if (inclFuncs) {
                     assertTrue(this.rs.next());
-                    assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                    assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
+                    assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                    assertEquals("", this.rs.getString(4), testCase); // Function return param is always returned.
                     assertEquals(DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
-                    assertTrue(testCase, this.rs.next());
-                    assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                    assertEquals(testCase, "param2", this.rs.getString(4));
+                    assertTrue(this.rs.next(), testCase);
+                    assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                    assertEquals("param2", this.rs.getString(4), testCase);
                 }
-                assertTrue(testCase, this.rs.next());
-                assertEquals(testCase, "testBug73775p", this.rs.getString(3));
-                assertEquals(testCase, "param2", this.rs.getString(4));
-                assertFalse(testCase, this.rs.next());
+                assertTrue(this.rs.next(), testCase);
+                assertEquals("testBug73775p", this.rs.getString(3), testCase);
+                assertEquals("param2", this.rs.getString(4), testCase);
+                assertFalse(this.rs.next(), testCase);
             }
 
             this.rs = dbMapsToSchema ? dbmd.getProcedureColumns("", null, "testBug73775%", "") : dbmd.getProcedureColumns(null, "", "testBug73775%", "");
             if (inclFuncs) {
-                assertTrue(testCase, this.rs.next());
-                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
-                assertEquals(testCase, DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5));
+                assertTrue(this.rs.next(), testCase);
+                assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                assertEquals("", this.rs.getString(4), testCase); // Function return param is always returned.
+                assertEquals(DatabaseMetaData.procedureColumnReturn, this.rs.getInt(5), testCase);
             }
-            assertFalse(testCase, this.rs.next());
+            assertFalse(this.rs.next(), testCase);
 
             /*
              * Test getFunctionColumns()
              */
             this.rs = dbMapsToSchema ? dbmd.getFunctionColumns("", null, "testBug73775%", "%") : dbmd.getFunctionColumns(null, "", "testBug73775%", "%");
-            assertTrue(testCase, this.rs.next());
-            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-            assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
-            assertEquals(testCase, DatabaseMetaData.functionReturn, this.rs.getInt(5));
-            assertTrue(testCase, this.rs.next());
-            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-            assertEquals(testCase, "param1", this.rs.getString(4));
-            assertTrue(testCase, this.rs.next());
-            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-            assertEquals(testCase, "param2", this.rs.getString(4));
-            assertFalse(testCase, this.rs.next());
+            assertTrue(this.rs.next(), testCase);
+            assertEquals("testBug73775f", this.rs.getString(3), testCase);
+            assertEquals("", this.rs.getString(4), testCase); // Function return param is always returned.
+            assertEquals(DatabaseMetaData.functionReturn, this.rs.getInt(5), testCase);
+            assertTrue(this.rs.next(), testCase);
+            assertEquals("testBug73775f", this.rs.getString(3), testCase);
+            assertEquals("param1", this.rs.getString(4), testCase);
+            assertTrue(this.rs.next(), testCase);
+            assertEquals("testBug73775f", this.rs.getString(3), testCase);
+            assertEquals("param2", this.rs.getString(4), testCase);
+            assertFalse(this.rs.next(), testCase);
 
             for (String ptn : new String[] { "param1", "_____1", "%1", "p_r_m%1" }) {
                 this.rs = dbMapsToSchema ? dbmd.getFunctionColumns("", null, "testBug73775%", ptn) : dbmd.getFunctionColumns(null, "", "testBug73775%", ptn);
                 assertTrue(this.rs.next());
-                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
-                assertEquals(testCase, DatabaseMetaData.functionReturn, this.rs.getInt(5));
-                assertTrue(testCase, this.rs.next());
-                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                assertEquals(testCase, "param1", this.rs.getString(4));
-                assertFalse(testCase, this.rs.next());
+                assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                assertEquals("", this.rs.getString(4), testCase); // Function return param is always returned.
+                assertEquals(DatabaseMetaData.functionReturn, this.rs.getInt(5), testCase);
+                assertTrue(this.rs.next(), testCase);
+                assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                assertEquals("param1", this.rs.getString(4), testCase);
+                assertFalse(this.rs.next(), testCase);
             }
 
             for (String ptn : new String[] { "param2", "_____2", "%2", "p_r_m%2" }) {
                 this.rs = dbMapsToSchema ? dbmd.getFunctionColumns("", null, "testBug73775%", ptn) : dbmd.getFunctionColumns(null, "", "testBug73775%", ptn);
                 assertTrue(this.rs.next());
-                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
-                assertEquals(testCase, DatabaseMetaData.functionReturn, this.rs.getInt(5));
-                assertTrue(testCase, this.rs.next());
-                assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-                assertEquals(testCase, "param2", this.rs.getString(4));
-                assertFalse(testCase, this.rs.next());
+                assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                assertEquals("", this.rs.getString(4), testCase); // Function return param is always returned.
+                assertEquals(DatabaseMetaData.functionReturn, this.rs.getInt(5), testCase);
+                assertTrue(this.rs.next(), testCase);
+                assertEquals("testBug73775f", this.rs.getString(3), testCase);
+                assertEquals("param2", this.rs.getString(4), testCase);
+                assertFalse(this.rs.next(), testCase);
             }
 
             this.rs = dbMapsToSchema ? dbmd.getFunctionColumns("", null, "testBug73775%", "") : dbmd.getFunctionColumns(null, "", "testBug73775%", "");
-            assertTrue(testCase, this.rs.next());
-            assertEquals(testCase, "testBug73775f", this.rs.getString(3));
-            assertEquals(testCase, "", this.rs.getString(4)); // Function return param is always returned.
-            assertEquals(testCase, DatabaseMetaData.functionReturn, this.rs.getInt(5));
-            assertFalse(testCase, this.rs.next());
+            assertTrue(this.rs.next(), testCase);
+            assertEquals("testBug73775f", this.rs.getString(3), testCase);
+            assertEquals("", this.rs.getString(4), testCase); // Function return param is always returned.
+            assertEquals(DatabaseMetaData.functionReturn, this.rs.getInt(5), testCase);
+            assertFalse(this.rs.next(), testCase);
 
             testConn.close();
         } while ((useIS = !useIS) || (inclFuncs = !inclFuncs) || (dbMapsToSchema = !dbMapsToSchema));
@@ -4709,8 +4634,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
      * Tests fix for BUG#87826 (26846249), MYSQL JDBC CONNECTOR/J DATABASEMETADATA NULL PATTERN HANDLING IS NON-COMPLIANT.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug87826() throws Exception {
         createTable("testBug87826", "(id INT)");
         createProcedure("bug87826", "(in param1 int, out result varchar(197)) BEGIN select 1, ''; END");
@@ -4727,9 +4652,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
                 ResultSet procMD = md.getProcedureColumns(null, null, "bug87826", null);
                 assertTrue(procMD.next());
-                assertEquals("Int param length", 10, procMD.getInt(9));
+                assertEquals(10, procMD.getInt(9), "Int param length");
                 assertTrue(procMD.next());
-                assertEquals("String param length", 197, procMD.getInt(9));
+                assertEquals(197, procMD.getInt(9), "String param length");
                 assertFalse(procMD.next());
 
                 // at least one table should exist in current catalog
@@ -4746,15 +4671,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 }
             }
         }
-
     }
 
     /**
      * Tests fix for BUG#90887 (28034570), DATABASEMETADATAUSINGINFOSCHEMA#GETTABLES FAILS IF METHOD ARGUMENTS ARE NULL.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug90887() throws Exception {
         List<String> resNames = new ArrayList<>();
 
@@ -4778,17 +4702,15 @@ public class MetaDataRegressionTest extends BaseTestCase {
         }
 
         assertTrue(resNames.size() == 0);
-
     }
 
     /**
      * Tests fix for BUG#29186870, CONNECTOR/J REGRESSION: NOT RETURNING PRECISION GETPROCEDURECOLUMNS.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug29186870() throws Exception {
-
         Connection con = null;
         ResultSet rst = null;
         DatabaseMetaData dmd = null;
@@ -4868,7 +4790,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
                 rst = dmd.getColumns(null, null, tname, null);
 
-                assertNotNull("No records fetched", rst);
+                assertNotNull(rst, "No records fetched");
                 int cnt = 0;
                 while (rst.next()) {
                     assertEquals(fieldToExpectedLength.get(rst.getString("COLUMN_NAME")), (Integer) rst.getInt("COLUMN_SIZE"));
@@ -4888,12 +4810,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
                 rst = dmd.getProcedureColumns(null, null, pname, null);
 
-                assertNotNull("No records fetched", rst);
+                assertNotNull(rst, "No records fetched");
                 cnt = 0;
                 while (rst.next()) {
                     String paramName = rst.getString("COLUMN_NAME");
-                    assertEquals(paramName, fieldToExpectedPrecision.get(paramName), (Integer) rst.getInt("PRECISION"));
-                    assertEquals(paramName, fieldToExpectedLength.get(paramName), (Integer) rst.getInt("LENGTH"));
+                    assertEquals(fieldToExpectedPrecision.get(paramName), (Integer) rst.getInt("PRECISION"), paramName);
+                    assertEquals(fieldToExpectedLength.get(paramName), (Integer) rst.getInt("LENGTH"), paramName);
                     cnt++;
                 }
                 assertEquals(fieldToType.size(), cnt);
@@ -4910,7 +4832,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
                 rst = dmd.getFunctionColumns(null, null, fname, null);
 
-                assertNotNull("No records fetched", rst);
+                assertNotNull(rst, "No records fetched");
                 cnt = 0;
                 while (rst.next()) {
                     String paramName = rst.getString("COLUMN_NAME");
@@ -4927,15 +4849,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 con.close();
             }
         }
-
     }
 
     /**
      * Tests fix for Bug#97413 (30477722), DATABASEMETADATA IS BROKEN AFTER SERVER WL#13528.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug97413() throws Exception {
         createTable("testBug97413",
                 "(f1_1 TINYINT, f1_2 TINYINT UNSIGNED, f1_3 TINYINT(1), f1_4 TINYINT(1) UNSIGNED, f1_5 TINYINT(1) ZEROFILL, f1_6 TINYINT(1) UNSIGNED ZEROFILL,"
@@ -5110,26 +5031,26 @@ public class MetaDataRegressionTest extends BaseTestCase {
         void testBug97413CheckMDColumn(int dataType, String typeName, int width, int precision, int decimalDigits) throws Exception {
             if (this.rset != null) {
                 assertTrue(this.rset.next());
-                assertEquals(this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n", dataType, this.rset.getInt(this.tidField));
-                assertEquals(this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n", typeName, this.rset.getString(this.tnField));
+                assertEquals(dataType, this.rset.getInt(this.tidField), this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n");
+                assertEquals(typeName, this.rset.getString(this.tnField), this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n");
                 if (this.widthField != null) {
-                    assertEquals(this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n", width, this.rset.getInt(this.widthField));
+                    assertEquals(width, this.rset.getInt(this.widthField), this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n");
                 }
-                assertEquals(this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n", precision, this.rset.getInt(this.precisionField));
-                assertEquals(this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n", decimalDigits, this.rset.getInt(this.decimalField));
+                assertEquals(precision, this.rset.getInt(this.precisionField), this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n");
+                assertEquals(decimalDigits, this.rset.getInt(this.decimalField), this.errMsg + "Field name: " + this.rset.getString("COLUMN_NAME") + "\n");
             } else if (this.pm != null) {
                 this.id++;
-                assertEquals(this.errMsg, dataType, this.pm.getParameterType(this.id));
-                assertEquals(this.errMsg, typeName, this.pm.getParameterTypeName(this.id));
-                assertEquals(this.errMsg, precision, this.pm.getPrecision(this.id));
-                assertEquals(this.errMsg, decimalDigits, this.pm.getScale(this.id));
+                assertEquals(dataType, this.pm.getParameterType(this.id), this.errMsg);
+                assertEquals(typeName, this.pm.getParameterTypeName(this.id), this.errMsg);
+                assertEquals(precision, this.pm.getPrecision(this.id), this.errMsg);
+                assertEquals(decimalDigits, this.pm.getScale(this.id), this.errMsg);
             } else {
                 this.id++;
-                assertEquals(this.errMsg, dataType, this.rm.getColumnType(this.id));
-                assertEquals(this.errMsg, typeName, this.rm.getColumnTypeName(this.id));
-                assertEquals(this.errMsg, precision, this.rm.getPrecision(this.id));
-                assertEquals(this.errMsg, decimalDigits, this.rm.getScale(this.id));
-                assertEquals(this.errMsg, precision, this.rm.getColumnDisplaySize(this.id));
+                assertEquals(dataType, this.rm.getColumnType(this.id), this.errMsg);
+                assertEquals(typeName, this.rm.getColumnTypeName(this.id), this.errMsg);
+                assertEquals(precision, this.rm.getPrecision(this.id), this.errMsg);
+                assertEquals(decimalDigits, this.rm.getScale(this.id), this.errMsg);
+                assertEquals(precision, this.rm.getColumnDisplaySize(this.id), this.errMsg);
             }
 
         }
@@ -5199,5 +5120,4 @@ public class MetaDataRegressionTest extends BaseTestCase {
             testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 12, 12, 10);
         }
     }
-
 }

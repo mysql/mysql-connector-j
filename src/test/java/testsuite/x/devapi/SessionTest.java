@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,13 +29,13 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
@@ -53,9 +53,9 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.Constants;
 import com.mysql.cj.CoreSession;
@@ -88,12 +88,12 @@ import com.mysql.cj.xdevapi.XDevAPIError;
 import testsuite.UnreliableSocketFactory;
 
 public class SessionTest extends DevApiBaseTestCase {
-    @Before
+    @BeforeEach
     public void setupSessionTest() {
         setupTestSession();
     }
 
-    @After
+    @AfterEach
     public void teardownSessionTest() {
         if (this.isSetForXTests) {
             this.createdTestSchemas.forEach(schemaName -> {
@@ -111,6 +111,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     /**
      * Create a random schema name. The schema will be dropped upon test cleanup.
+     * 
+     * @return a string
      */
     private String getRandomTestSchemaName() {
         String n = "cj_test_schema_no_" + new Random().nextInt(1000);
@@ -145,11 +147,11 @@ public class SessionTest extends DevApiBaseTestCase {
                 final String testUri = String.format(testUriPattern, getTestHost(), getTestPort(), testSchemaName, authMech);
 
                 Session testSession = testSessionFactory.getSession(testUri);
-                assertTrue(testCase, testSession.getUri().contains("/" + testSchemaName + "?"));
-                assertEquals(testCase, testSchemaName, testSession.getDefaultSchemaName());
-                assertNotNull(testCase, testSession.getDefaultSchema());
-                assertEquals(testCase, testSchemaName, testSession.getDefaultSchema().getName());
-                assertEquals(testCase, testSchemaName, testSession.sql("SELECT database()").execute().fetchOne().getString(0));
+                assertTrue(testSession.getUri().contains("/" + testSchemaName + "?"), testCase);
+                assertEquals(testSchemaName, testSession.getDefaultSchemaName(), testCase);
+                assertNotNull(testSession.getDefaultSchema(), testCase);
+                assertEquals(testSchemaName, testSession.getDefaultSchema().getName(), testCase);
+                assertEquals(testSchemaName, testSession.sql("SELECT database()").execute().fetchOne().getString(0), testCase);
                 testSession.close();
 
                 // Test using a properties map.
@@ -162,11 +164,11 @@ public class SessionTest extends DevApiBaseTestCase {
                 testProps.setProperty(PropertyKey.xdevapiAuth.getKeyName(), authMech);
 
                 testSession = testSessionFactory.getSession(testProps);
-                assertTrue(testCase, testSession.getUri().contains("/" + testSchemaName + "?"));
-                assertEquals(testCase, testSchemaName, testSession.getDefaultSchemaName());
-                assertNotNull(testCase, testSession.getDefaultSchema());
-                assertEquals(testCase, testSchemaName, testSession.getDefaultSchema().getName());
-                assertEquals(testCase, testSchemaName, testSession.sql("SELECT database()").execute().fetchOne().getString(0));
+                assertTrue(testSession.getUri().contains("/" + testSchemaName + "?"), testCase);
+                assertEquals(testSchemaName, testSession.getDefaultSchemaName(), testCase);
+                assertNotNull(testSession.getDefaultSchema(), testCase);
+                assertEquals(testSchemaName, testSession.getDefaultSchema().getName(), testCase);
+                assertEquals(testSchemaName, testSession.sql("SELECT database()").execute().fetchOne().getString(0), testCase);
                 testSession.close();
             }
         } finally {
@@ -200,10 +202,10 @@ public class SessionTest extends DevApiBaseTestCase {
                     final String testCase = "Testing no default schema with authentication mecanism '" + authMech + "' and URI '" + testUri + "'.";
 
                     Session testSession = testSessionFactory.getSession(testUri);
-                    assertTrue(testCase, testSession.getUri().contains("/?"));
-                    assertEquals(testCase, "", testSession.getDefaultSchemaName());
-                    assertNull(testCase, testSession.getDefaultSchema());
-                    assertNull(testCase, testSession.sql("SELECT database()").execute().fetchOne().getString(0));
+                    assertTrue(testSession.getUri().contains("/?"), testCase);
+                    assertEquals("", testSession.getDefaultSchemaName(), testCase);
+                    assertNull(testSession.getDefaultSchema(), testCase);
+                    assertNull(testSession.sql("SELECT database()").execute().fetchOne().getString(0), testCase);
                     testSession.close();
                 }
 
@@ -217,10 +219,10 @@ public class SessionTest extends DevApiBaseTestCase {
                 testProps.setProperty(PropertyKey.xdevapiAuth.getKeyName(), authMech);
 
                 Session testSession = testSessionFactory.getSession(testProps);
-                assertTrue(testCase, testSession.getUri().contains("/?"));
-                assertEquals(testCase, "", testSession.getDefaultSchemaName());
-                assertNull(testCase, testSession.getDefaultSchema());
-                assertNull(testCase, testSession.sql("SELECT database()").execute().fetchOne().getString(0));
+                assertTrue(testSession.getUri().contains("/?"), testCase);
+                assertEquals("", testSession.getDefaultSchemaName(), testCase);
+                assertNull(testSession.getDefaultSchema(), testCase);
+                assertNull(testSession.sql("SELECT database()").execute().fetchOne().getString(0), testCase);
                 testSession.close();
             }
         } finally {
@@ -359,9 +361,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests fix for Bug#21690043, CONNECT FAILS WHEN PASSWORD IS BLANK.
-     * 
-     * @throws Exception
-     *             if the test fails.
      */
     @Test
     public void testBug21690043() {
@@ -468,7 +467,6 @@ public class SessionTest extends DevApiBaseTestCase {
                 return null;
             }
         });
-
     }
 
     @Test
@@ -539,6 +537,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests fix for Bug #27652379, NPE FROM GETSESSION(PROPERTIES) WHEN HOST PARAMETER IS GIVEN IN SMALL LETTER.
+     * 
+     * @throws Exception
      */
     @Test
     public void testBug27652379() throws Exception {
@@ -972,7 +972,7 @@ public class SessionTest extends DevApiBaseTestCase {
         s1 = cli3.getSession();
         long end = System.currentTimeMillis() - begin;
         s1.sql("SELECT 1").execute();
-        assertTrue("Expected wait time 10000 ms but was " + end, end >= 10000);
+        assertTrue(end >= 10000, "Expected wait time 10000 ms but was " + end);
         assertEquals(fProtocol.get(((SessionImpl) s1).getSession()), fProtocol.get(((SessionImpl) s6).getSession()));
 
         /*
@@ -1075,7 +1075,7 @@ public class SessionTest extends DevApiBaseTestCase {
         long begin = System.currentTimeMillis();
         assertThrows(throwable, message, () -> cli.getSession());
         long end = System.currentTimeMillis() - begin;
-        assertTrue("Expected: " + expLowLimit + ".." + expUpLimit + ". Got " + end, end >= expLowLimit && end < expUpLimit);
+        assertTrue(end >= expLowLimit && end < expUpLimit, "Expected: " + expLowLimit + ".." + expUpLimit + ". Got " + end);
     }
 
     @Test
@@ -1274,13 +1274,13 @@ public class SessionTest extends DevApiBaseTestCase {
         // that no connection attribute was set for current session.
         Session s10 = this.fact.getSession(baseUrlLocal + makeParam(PropertyKey.xdevapiConnectionAttributes, "false", true));
         SqlResult res = s10.sql("SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()").execute();
-        assertFalse("Expected no connection attributes.", res.hasNext());
+        assertFalse(res.hasNext(), "Expected no connection attributes.");
         s10.close();
 
         Client c10 = cf.getClient(baseUrlLocal + makeParam(PropertyKey.xdevapiConnectionAttributes, "false", true), new Properties());
         s10 = c10.getSession();
         res = s10.sql("SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()").execute();
-        assertFalse("Expected no connection attributes.", res.hasNext());
+        assertFalse(res.hasNext(), "Expected no connection attributes.");
         s10.close();
         c10.close();
 

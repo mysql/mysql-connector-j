@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -61,7 +61,7 @@ public abstract class BasePerfTest extends BaseTestCase {
     /**
      * List of values for each iteration
      */
-    private List<Double> testValuesList = new ArrayList<Double>();
+    private List<Double> testValuesList = new ArrayList<>();
 
     private double confidenceLevel = 95; // 95% by default
 
@@ -83,16 +83,6 @@ public abstract class BasePerfTest extends BaseTestCase {
     private int numIterations = 0;
 
     /**
-     * Creates a new BasePerfTest object.
-     * 
-     * @param name
-     *            the testcase name to perform.
-     */
-    public BasePerfTest(String name) {
-        super(name);
-    }
-
-    /**
      * Returns the meanValue.
      * 
      * @return double
@@ -105,14 +95,13 @@ public abstract class BasePerfTest extends BaseTestCase {
      * Sub-classes should override this to perform the operation to be measured.
      * 
      * @throws Exception
-     *             if an error occurs.
      */
     protected abstract void doOneIteration() throws Exception;
 
     /**
      * Returns the current confidence level.
      * 
-     * @return the current confindence level.
+     * @return the current confidence level.
      */
     protected double getCurrentConfidence() {
         return (this.intervalWidth - this.confidenceValue) * 100;
@@ -144,8 +133,7 @@ public abstract class BasePerfTest extends BaseTestCase {
      * Adds one test result to the statistics.
      * 
      * @param value
-     *            a single result representing the value being measured in the
-     *            test.
+     *            a single result representing the value being measured in the test.
      */
     protected void addResult(double value) {
         this.numIterations++;
@@ -164,8 +152,7 @@ public abstract class BasePerfTest extends BaseTestCase {
     }
 
     /**
-     * Calls doIteration() the <code>numIterations</code> times, displaying
-     * the mean, std, margin of error and confidence level.
+     * Calls doIteration() the <code>numIterations</code> times, displaying the mean, std, margin of error and confidence level.
      * 
      * @param num_iterations
      *            the number of iterations to perform ( < 30)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,8 +29,8 @@
 
 package com.mysql.cj.result;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -39,7 +39,7 @@ import java.time.LocalDateTime;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.DefaultPropertySet;
@@ -58,7 +58,6 @@ import com.mysql.cj.protocol.InternalTimestamp;
  * Note: Timestamp.toString() is not locale-specific and is appropriate for use in these tests.
  */
 public class SqlTimestampValueFactoryTest extends CommonAsserts {
-
     PropertySet pset = new DefaultPropertySet();
     SqlTimestampValueFactory vf = new SqlTimestampValueFactory(this.pset, null, TimeZone.getDefault());
 

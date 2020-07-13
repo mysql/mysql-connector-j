@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,10 +30,10 @@
 package testsuite.x.devapi;
 
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -49,7 +49,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.CoreSession;
 import com.mysql.cj.ServerVersion;
@@ -73,7 +73,6 @@ import com.mysql.cj.xdevapi.Type;
  * @todo
  */
 public class TableSelectTest extends BaseTableTestCase {
-
     @Test
     public void basicQuery() {
         if (!this.isSetForXTests) {
@@ -193,9 +192,6 @@ public class TableSelectTest extends BaseTableTestCase {
 
     /**
      * Tests fix for Bug#22931433, GETTING VALUE OF BIT COLUMN RESULTS IN EXCEPTION.
-     * 
-     * @throws Exception
-     *             if the test fails.
      */
     @Test
     public void testBug22931433() {
@@ -582,7 +578,6 @@ public class TableSelectTest extends BaseTableTestCase {
             }
             sqlUpdate("drop table if exists testTableRowLocks");
         }
-
     }
 
     @Test
@@ -881,6 +876,8 @@ public class TableSelectTest extends BaseTableTestCase {
     /**
      * Tests fix for Bug#22038729, X DEVAPI: ANY API CALL AFTER A FAILED CALL PROC() RESULTS IN HANG
      * and for duplicate Bug#25575010, X DEVAPI: ANY API CALL AFTER A FAILED SELECT RESULTS IN HANG
+     * 
+     * @throws Exception
      */
     @Test
     public void testBug22038729() throws Exception {

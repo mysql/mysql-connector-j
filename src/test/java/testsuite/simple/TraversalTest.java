@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,15 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import testsuite.BaseTestCase;
 
@@ -39,42 +45,21 @@ import testsuite.BaseTestCase;
  * Tests result set traversal methods.
  */
 public class TraversalTest extends BaseTestCase {
-
-    /**
-     * Creates a new TraversalTest object.
-     * 
-     * @param name
-     */
-    public TraversalTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(TraversalTest.class);
-    }
-
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
         createTestTable();
     }
 
-    @Override
+    @AfterEach
     public void tearDown() throws Exception {
         try {
             this.stmt.executeUpdate("DROP TABLE TRAVERSAL");
         } catch (SQLException SQLE) {
         }
-        super.tearDown();
     }
 
+    @Test
     public void testTraversal() throws SQLException {
-
         Statement scrollableStmt = null;
 
         try {
@@ -83,16 +68,16 @@ public class TraversalTest extends BaseTestCase {
 
             // Test isFirst()
             if (this.rs.first()) {
-                assertTrue("ResultSet.isFirst() failed", this.rs.isFirst());
+                assertTrue(this.rs.isFirst(), "ResultSet.isFirst() failed");
                 this.rs.relative(-1);
-                assertTrue("ResultSet.isBeforeFirst() failed", this.rs.isBeforeFirst());
+                assertTrue(this.rs.isBeforeFirst(), "ResultSet.isBeforeFirst() failed");
             }
 
             // Test isLast()
             if (this.rs.last()) {
-                assertTrue("ResultSet.isLast() failed", this.rs.isLast());
+                assertTrue(this.rs.isLast(), "ResultSet.isLast() failed");
                 this.rs.relative(1);
-                assertTrue("ResultSet.isAfterLast() failed", this.rs.isAfterLast());
+                assertTrue(this.rs.isAfterLast(), "ResultSet.isAfterLast() failed");
             }
 
             int count = 0;
@@ -101,7 +86,6 @@ public class TraversalTest extends BaseTestCase {
             boolean forwardOk = true;
 
             while (this.rs.next()) {
-
                 int pos = this.rs.getInt("POS");
 
                 // test case-sensitive column names
@@ -117,16 +101,16 @@ public class TraversalTest extends BaseTestCase {
                     forwardOk = false;
                 }
 
-                assertTrue("ResultSet.getRow() failed.", pos == (this.rs.getRow() - 1));
+                assertTrue(pos == (this.rs.getRow() - 1), "ResultSet.getRow() failed.");
 
                 count++;
 
             }
 
-            assertTrue("Only traversed " + count + " / 100 rows", forwardOk);
+            assertTrue(forwardOk, "Only traversed " + count + " / 100 rows");
 
             boolean isAfterLast = this.rs.isAfterLast();
-            assertTrue("ResultSet.isAfterLast() failed", isAfterLast);
+            assertTrue(isAfterLast, "ResultSet.isAfterLast() failed");
             this.rs.afterLast();
 
             // Scroll backwards
@@ -135,7 +119,6 @@ public class TraversalTest extends BaseTestCase {
             boolean reverseOk = true;
 
             while (this.rs.previous()) {
-
                 int pos = this.rs.getInt("pos");
 
                 if (pos != count) {
@@ -145,36 +128,36 @@ public class TraversalTest extends BaseTestCase {
                 count--;
             }
 
-            assertTrue("ResultSet.previous() failed", reverseOk);
+            assertTrue(reverseOk, "ResultSet.previous() failed");
 
             boolean isBeforeFirst = this.rs.isBeforeFirst();
-            assertTrue("ResultSet.isBeforeFirst() failed", isBeforeFirst);
+            assertTrue(isBeforeFirst, "ResultSet.isBeforeFirst() failed");
 
             this.rs.next();
             boolean isFirst = this.rs.isFirst();
-            assertTrue("ResultSet.isFirst() failed", isFirst);
+            assertTrue(isFirst, "ResultSet.isFirst() failed");
 
             // Test absolute positioning
             this.rs.absolute(50);
             int pos = this.rs.getInt("pos");
-            assertTrue("ResultSet.absolute() failed", pos == 49);
+            assertTrue(pos == 49, "ResultSet.absolute() failed");
 
             // Test relative positioning
             this.rs.relative(-1);
             pos = this.rs.getInt("pos");
-            assertTrue("ResultSet.relative(-1) failed", pos == 48);
+            assertTrue(pos == 48, "ResultSet.relative(-1) failed");
 
             // Test bogus absolute index
             boolean onResultSet = this.rs.absolute(200);
-            assertTrue("ResultSet.absolute() to point off result set failed", onResultSet == false);
+            assertTrue(onResultSet == false, "ResultSet.absolute() to point off result set failed");
             onResultSet = this.rs.absolute(100);
-            assertTrue("ResultSet.absolute() from off this.rs to on this.rs failed", onResultSet);
+            assertTrue(onResultSet, "ResultSet.absolute() from off this.rs to on this.rs failed");
 
             onResultSet = this.rs.absolute(-99);
-            assertTrue("ResultSet.absolute(-99) failed", onResultSet);
-            assertTrue("ResultSet absolute(-99) failed", this.rs.getInt(1) == 1);
-        } finally {
+            assertTrue(onResultSet, "ResultSet.absolute(-99) failed");
+            assertTrue(this.rs.getInt(1) == 1, "ResultSet absolute(-99) failed");
 
+        } finally {
             if (scrollableStmt != null) {
 
                 try {

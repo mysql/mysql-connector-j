@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,12 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
@@ -44,6 +50,10 @@ import javax.naming.spi.ObjectFactory;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.conf.BooleanPropertyDefinition;
 import com.mysql.cj.conf.EnumPropertyDefinition;
 import com.mysql.cj.conf.IntegerPropertyDefinition;
@@ -54,70 +64,53 @@ import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.StringPropertyDefinition;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
+import com.mysql.cj.jdbc.MysqlDataSource;
 import com.mysql.cj.jdbc.MysqlXADataSource;
 
 import testsuite.BaseTestCase;
+import testsuite.MockJndiContextFactory;
 
 public class DataSourceTest extends BaseTestCase {
     private Context ctx;
 
-    private File tempDir;
-
     /**
-     * Creates a new DataSourceTest object.
-     * 
-     * @param name
-     */
-    public DataSourceTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(DataSourceTest.class);
-    }
-
-    /**
-     * Sets up this test, calling registerDataSource() to bind a DataSource into
-     * JNDI, using the FSContext JNDI provider from Sun
+     * Sets up this test, binding a DataSource into JNDI, using a mock in-memory JNDI provider.
      * 
      * @throws Exception
-     *             if an error occurs.
      */
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
-        registerDataSource();
+        /*
+         * This code is separated from the rest of the test since you normally would NOT register a JDBC driver in your code. It would likely be configured into
+         * your naming and directory service using some GUI.
+         */
+        MysqlDataSource ds;
+        Hashtable<String, String> env = new Hashtable<>();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, MockJndiContextFactory.class.getName());
+        this.ctx = new InitialContext(env);
+        assertNotNull(this.ctx, "Naming Context not created");
+        ds = new com.mysql.cj.jdbc.MysqlDataSource();
+        ds.setUrl(dbUrl); // from BaseTestCase
+        this.ctx.bind("_test", ds);
     }
 
     /**
-     * Un-binds the DataSource, and cleans up the filesystem
+     * Un-binds the DataSource and closes the context
      * 
      * @throws Exception
-     *             if an error occurs
      */
-    @Override
+    @AfterEach
     public void tearDown() throws Exception {
-        try {
-            this.ctx.unbind(this.tempDir.getAbsolutePath() + "/test");
-            this.ctx.close();
-            this.tempDir.delete();
-        } finally {
-            super.tearDown();
-        }
+        this.ctx.unbind("_test");
+        this.ctx.close();
     }
 
     /**
-     * Tests that we can get a connection from the DataSource bound in JNDI
-     * during test setup
+     * Tests that we can get a connection from the DataSource bound in JNDI during test setup
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testDataSource() throws Exception {
         NameParser nameParser = this.ctx.getNameParser("");
         Name datasourceName = nameParser.parse("_test");
@@ -135,20 +128,19 @@ public class DataSourceTest extends BaseTestCase {
             boundDs = (DataSource) factory.getObjectInstance(objAsRef, datasourceName, this.ctx, new Hashtable<>());
         }
 
-        assertTrue("Datasource not bound", boundDs != null);
+        assertNotNull(boundDs, "Datasource not bound");
 
         Connection con = boundDs.getConnection();
+        assertNotNull(con, "Connection can not be obtained from data source");
         con.close();
-        assertTrue("Connection can not be obtained from data source", con != null);
     }
 
     /**
-     * Tests whether Connection.changeUser() (and thus pooled connections)
-     * restore character set information correctly.
+     * Tests whether Connection.changeUser() (and thus pooled connections) restore character set information correctly.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testChangeUserAndCharsets() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
@@ -159,13 +151,13 @@ public class DataSourceTest extends BaseTestCase {
         this.rs = connToMySQL.createStatement().executeQuery("SELECT @@character_set_results");
         assertTrue(this.rs.next());
 
-        assertEquals(null, this.rs.getString(1));
+        assertNull(this.rs.getString(1));
 
         this.rs = connToMySQL.createStatement().executeQuery("SHOW SESSION VARIABLES LIKE 'character_set_client'");
         assertTrue(this.rs.next());
 
-        //Cause of utf8mb4
-        assertEquals(0, this.rs.getString(2).indexOf("utf8"));
+        // Because of utf8mb4
+        assertTrue(this.rs.getString(2).startsWith("utf8"));
 
         connToMySQL.close();
 
@@ -177,8 +169,8 @@ public class DataSourceTest extends BaseTestCase {
         this.rs = connToMySQL.createStatement().executeQuery("SHOW SESSION VARIABLES LIKE 'character_set_client'");
         assertTrue(this.rs.next());
 
-        //Cause of utf8mb4
-        assertEquals(0, this.rs.getString(2).indexOf("utf8"));
+        // Because of utf8mb4
+        assertTrue(this.rs.getString(2).startsWith("utf8"));
 
         pooledConnection.getConnection().close();
     }
@@ -187,10 +179,9 @@ public class DataSourceTest extends BaseTestCase {
      * Tests whether XADataSources can be bound into JNDI
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testXADataSource() throws Exception {
-
         MysqlXADataSource ds = new MysqlXADataSource();
         ds.setUrl(dbUrl);
 
@@ -199,34 +190,10 @@ public class DataSourceTest extends BaseTestCase {
 
         Object result = this.ctx.lookup(name);
 
-        assertNotNull("XADataSource not bound into JNDI", result);
+        assertNotNull(result, "XADataSource not bound into JNDI");
     }
 
-    /**
-     * This method is separated from the rest of the example since you normally
-     * would NOT register a JDBC driver in your code. It would likely be
-     * configered into your naming and directory service using some GUI.
-     * 
-     * @throws Exception
-     *             if an error occurs
-     */
-    private void registerDataSource() throws Exception {
-        this.tempDir = File.createTempFile("jnditest", null);
-        this.tempDir.delete();
-        this.tempDir.mkdir();
-        this.tempDir.deleteOnExit();
-
-        com.mysql.cj.jdbc.MysqlDataSource ds;
-        Hashtable<String, String> env = new Hashtable<>();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.fscontext.RefFSContextFactory");
-        env.put(Context.PROVIDER_URL, this.tempDir.toURI().toString());
-        this.ctx = new InitialContext(env);
-        assertTrue("Naming Context not created", this.ctx != null);
-        ds = new com.mysql.cj.jdbc.MysqlDataSource();
-        ds.setUrl(dbUrl); // from BaseTestCase
-        this.ctx.bind("_test", ds);
-    }
-
+    @Test
     public void testPropertyGettersSetters() throws Exception {
         com.mysql.cj.jdbc.MysqlDataSource ds = new com.mysql.cj.jdbc.MysqlDataSource();
 
@@ -283,35 +250,35 @@ public class DataSourceTest extends BaseTestCase {
 
             Method getter = ds.getClass().getMethod(gname, new Class<?>[] {});
             Object res1 = getter.invoke(ds, new Object[] {});
-            assertEquals(gname + ": ", def.getDefaultValue() + "", res1 + "");
+            assertEquals(def.getDefaultValue() + "", res1 + "", gname + ": ");
 
             Method setter = null;
 
             if (def instanceof StringPropertyDefinition) {
                 setter = ds.getClass().getMethod(sname, new Class<?>[] { String.class });
                 setter.invoke(ds, new Object[] { testStr });
-                assertEquals(sname + ": ", testStr, (String) getter.invoke(ds, new Object[] {}));
+                assertEquals(testStr, getter.invoke(ds, new Object[] {}), sname + ": ");
 
             } else if (def instanceof BooleanPropertyDefinition) {
                 Boolean testBool = !((Boolean) def.getDefaultValue());
                 setter = ds.getClass().getMethod(sname, new Class<?>[] { Boolean.TYPE });
                 setter.invoke(ds, new Object[] { testBool });
-                assertEquals(sname + ": ", testBool, getter.invoke(ds, new Object[] {}));
+                assertEquals(testBool, getter.invoke(ds, new Object[] {}), sname + ": ");
 
             } else if (def instanceof IntegerPropertyDefinition) {
                 setter = ds.getClass().getMethod(sname, new Class<?>[] { Integer.TYPE });
                 setter.invoke(ds, new Object[] { testInt });
-                assertEquals(sname + ": ", testInt, getter.invoke(ds, new Object[] {}));
+                assertEquals(testInt, getter.invoke(ds, new Object[] {}), sname + ": ");
 
             } else if (def instanceof LongPropertyDefinition) {
                 setter = ds.getClass().getMethod(sname, new Class<?>[] { Long.TYPE });
                 setter.invoke(ds, new Object[] { testLong });
-                assertEquals(sname + ": ", testLong, getter.invoke(ds, new Object[] {}));
+                assertEquals(testLong, getter.invoke(ds, new Object[] {}), sname + ": ");
 
             } else if (def instanceof MemorySizePropertyDefinition) {
                 setter = ds.getClass().getMethod(sname, new Class<?>[] { Integer.TYPE });
                 setter.invoke(ds, new Object[] { testInt });
-                assertEquals(sname + ": ", testInt, getter.invoke(ds, new Object[] {}));
+                assertEquals(testInt, getter.invoke(ds, new Object[] {}), sname + ": ");
 
             } else if (def instanceof EnumPropertyDefinition<?>) {
                 String testEnum = null;
@@ -323,7 +290,7 @@ public class DataSourceTest extends BaseTestCase {
                 }
                 setter = ds.getClass().getMethod(sname, new Class<?>[] { String.class });
                 setter.invoke(ds, new Object[] { testEnum });
-                assertEquals(sname + ": ", testEnum, (String) getter.invoke(ds, new Object[] {}));
+                assertEquals(testEnum, getter.invoke(ds, new Object[] {}), sname + ": ");
 
             } else {
                 fail("Unknown " + def.getName() + " property type.");

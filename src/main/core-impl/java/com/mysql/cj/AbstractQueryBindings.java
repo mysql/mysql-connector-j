@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -312,7 +312,16 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                             break;
 
                         } else if (parameterObj instanceof String) {
-                            setBoolean(parameterIndex, "true".equalsIgnoreCase((String) parameterObj) || !"0".equalsIgnoreCase((String) parameterObj));
+                            if ("true".equalsIgnoreCase((String) parameterObj) || "Y".equalsIgnoreCase((String) parameterObj)) {
+                                setBoolean(parameterIndex, true);
+                            } else if ("false".equalsIgnoreCase((String) parameterObj) || "N".equalsIgnoreCase((String) parameterObj)) {
+                                setBoolean(parameterIndex, false);
+                            } else if (((String) parameterObj).matches("-?\\d+\\.?\\d*")) {
+                                setBoolean(parameterIndex, !((String) parameterObj).matches("-?[0]+[.]*[0]*"));
+                            } else {
+                                throw ExceptionFactory.createException(WrongArgumentException.class,
+                                        Messages.getString("PreparedStatement.66", new Object[] { parameterObj }), this.session.getExceptionInterceptor());
+                            }
                             break;
 
                         } else if (parameterObj instanceof Number) {

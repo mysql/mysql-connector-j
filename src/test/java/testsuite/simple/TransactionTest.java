@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,38 +29,19 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.SQLException;
+
+import org.junit.jupiter.api.Test;
 
 import testsuite.BaseTestCase;
 
 public class TransactionTest extends BaseTestCase {
     private static final double DOUBLE_CONST = 25.4312;
-
     private static final double EPSILON = .0000001;
 
-    /**
-     * Creates a new TransactionTest object.
-     * 
-     * @param name
-     */
-    public TransactionTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(TransactionTest.class);
-    }
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-    }
-
+    @Test
     public void testTransaction() throws SQLException {
         try {
             createTable("trans_test", "(id INT NOT NULL PRIMARY KEY, decdata DOUBLE)", "InnoDB");
@@ -70,16 +51,16 @@ public class TransactionTest extends BaseTestCase {
             this.rs = this.stmt.executeQuery("SELECT * from trans_test");
 
             boolean hasResults = this.rs.next();
-            assertTrue("Results returned, rollback to empty table failed", (hasResults != true));
+            assertTrue(hasResults != true, "Results returned, rollback to empty table failed");
             this.stmt.executeUpdate("INSERT INTO trans_test (id, decdata) VALUES (2, " + DOUBLE_CONST + ")");
             this.conn.commit();
             this.rs = this.stmt.executeQuery("SELECT * from trans_test where id=2");
             hasResults = this.rs.next();
-            assertTrue("No rows in table after INSERT", hasResults);
+            assertTrue(hasResults, "No rows in table after INSERT");
 
             double doubleVal = this.rs.getDouble(2);
             double delta = Math.abs(DOUBLE_CONST - doubleVal);
-            assertTrue("Double value returned != " + DOUBLE_CONST, (delta < EPSILON));
+            assertTrue((delta < EPSILON), "Double value returned != " + DOUBLE_CONST);
         } finally {
             this.conn.setAutoCommit(true);
         }

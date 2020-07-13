@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,10 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -38,6 +42,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.Properties;
+
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.util.Base64Decoder;
@@ -50,29 +56,11 @@ import testsuite.BaseTestCase;
  */
 public class StringRegressionTest extends BaseTestCase {
     /**
-     * Creates a new StringTest object.
-     * 
-     * @param name
-     */
-    public StringRegressionTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(StringRegressionTest.class);
-    }
-
-    /**
      * Tests character conversion bug.
      * 
      * @throws Exception
-     *             if there is an internal error (which is a bug).
      */
+    @Test
     public void testAsciiCharConversion() throws Exception {
         byte[] buf = new byte[10];
         buf[0] = (byte) '?';
@@ -93,16 +81,15 @@ public class StringRegressionTest extends BaseTestCase {
             System.out.println((byte) convertedString.charAt(i));
         }
 
-        assertTrue("Converted string != test string", testString.equals(convertedString));
+        assertTrue(testString.equals(convertedString), "Converted string != test string");
     }
 
     /**
-     * Tests for regression of encoding forced by user, reported by Jive
-     * Software
+     * Tests for regression of encoding forced by user, reported by Jive Software
      * 
      * @throws Exception
-     *             when encoding is not supported (which is a bug)
      */
+    @Test
     public void testEncodingRegression() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
@@ -113,8 +100,8 @@ public class StringRegressionTest extends BaseTestCase {
      * Tests fix for BUG#879
      * 
      * @throws Exception
-     *             if the bug resurfaces.
      */
+    @Test
     public void testEscapeSJISDoubleEscapeBug() throws Exception {
         String testString = "'It\\'s a boy!'";
 
@@ -154,6 +141,7 @@ public class StringRegressionTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testGreekUtf8411() throws Exception {
         Properties newProps = new Properties();
         newProps.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
@@ -186,8 +174,8 @@ public class StringRegressionTest extends BaseTestCase {
      * Tests that 'latin1' character conversion works correctly.
      * 
      * @throws Exception
-     *             if any errors occur
      */
+    @Test
     public void testLatin1Encoding() throws Exception {
         char[] latin1Charset = { 0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
                 0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017, 0x0018, 0x0019, 0x001A, 0x001B, 0x001C, 0x001D, 0x001E, 0x001F, 0x0020, 0x0021,
@@ -255,8 +243,8 @@ public class StringRegressionTest extends BaseTestCase {
      * Tests newline being treated correctly.
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testNewlines() throws Exception {
         String newlineStr = "Foo\nBar\n\rBaz";
 
@@ -272,17 +260,14 @@ public class StringRegressionTest extends BaseTestCase {
         while (this.rs.next()) {
             assertTrue(this.rs.getString(1).equals(newlineStr));
         }
-
     }
 
     /**
      * Tests that single-byte character conversion works correctly.
      * 
      * @throws Exception
-     *             if any errors occur
      */
-    // TODO: Use Unicode Literal escapes for this, for now, this test is
-    // broken :(
+    // TODO: Use Unicode Literal escapes for this, for now, this test is broken :(
     /*
      * public void testSingleByteConversion() throws Exception {
      * testConversionForString("latin1", "��� ����");
@@ -294,8 +279,8 @@ public class StringRegressionTest extends BaseTestCase {
      * Tests that the 0x5c escaping works (we didn't use to have this).
      * 
      * @throws Exception
-     *             if an error occurs.
      */
+    @Test
     public void testSjis5c() throws Exception {
         byte[] origByteStream = new byte[] { (byte) 0x95, (byte) 0x5c, (byte) 0x8e, (byte) 0x96 };
 
@@ -380,8 +365,8 @@ public class StringRegressionTest extends BaseTestCase {
      * Tests that UTF-8 character conversion works correctly.
      * 
      * @throws Exception
-     *             if any errors occur
      */
+    @Test
     public void testUtf8Encoding() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF8");
@@ -391,6 +376,7 @@ public class StringRegressionTest extends BaseTestCase {
         testConversionForString("UTF8", utfConn, "\u043c\u0438\u0445\u0438");
     }
 
+    @Test
     public void testUtf8Encoding2() throws Exception {
         String field1 = "K��sel";
         String field2 = "B�b";
@@ -478,14 +464,15 @@ public class StringRegressionTest extends BaseTestCase {
      * Tests fix for BUG#7601, '+' duplicated in fixDecimalExponent().
      * 
      * @throws Exception
-     *             if the test fails
      */
+    @Test
     public void testBug7601() throws Exception {
         assertTrue("1.5E+7".equals(StringUtils.fixDecimalExponent("1.5E+7")));
         assertTrue("1.5E-7".equals(StringUtils.fixDecimalExponent("1.5E-7")));
         assertTrue("1.5E+7".equals(StringUtils.fixDecimalExponent("1.5E7")));
     }
 
+    @Test
     public void testBug11629() throws Exception {
         class TeeByteArrayOutputStream extends ByteArrayOutputStream {
             PrintStream branch;
@@ -556,13 +543,13 @@ public class StringRegressionTest extends BaseTestCase {
             bErr.printCallStackTrace();
 
             String withExclaims = new String(bOut.toByteArray());
-            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.indexOf("!") == -1);
-            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.length() == 0); // to catch any other
+            assertTrue(withExclaims.indexOf("!") == -1, "Unexpected: '" + withExclaims + "'");
+            assertTrue(withExclaims.length() == 0, "Unexpected: '" + withExclaims + "'"); // to catch any other
             bOut.close();
 
             withExclaims = new String(bErr.toByteArray());
-            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.indexOf("!") == -1);
-            assertTrue("Unexpected: '" + withExclaims + "'", withExclaims.length() == 0); // to catch any other
+            assertTrue(withExclaims.indexOf("!") == -1, "Unexpected: '" + withExclaims + "'");
+            assertTrue(withExclaims.length() == 0, "Unexpected: '" + withExclaims + "'"); // to catch any other
             bErr.close();
         } finally {
             System.setOut(oldOut);
@@ -571,12 +558,11 @@ public class StringRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#11614 - StringUtils.getBytes() doesn't work when using
-     * multibyte character encodings and a length in _characters_ is specified.
+     * Tests fix for BUG#11614 - StringUtils.getBytes() doesn't work when using multibyte character encodings and a length in _characters_ is specified.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug11614() throws Exception {
         createTable("testBug11614",
                 "(`id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT, `text` TEXT NOT NULL," + "PRIMARY KEY(`id`)) CHARACTER SET utf8 COLLATE utf8_general_ci");
@@ -618,10 +604,10 @@ public class StringRegressionTest extends BaseTestCase {
             if (utf8Conn != null) {
                 utf8Conn.close();
             }
-
         }
     }
 
+    @Test
     public void testCodePage1252() throws Exception {
         /*
          * from
@@ -654,12 +640,11 @@ public class StringRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#24840 - character encoding of "US-ASCII" doesn't map
-     * correctly for 4.1 or newer
+     * Tests fix for BUG#24840 - character encoding of "US-ASCII" doesn't map correctly for 4.1 or newer
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug24840() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "US-ASCII");
@@ -673,8 +658,8 @@ public class StringRegressionTest extends BaseTestCase {
      * UPD: Method StringUtils.indexOfIgnoreCaseRespectQuotes() was replaced by StringUtils.indexOfIgnoreCase()
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug25047() throws Exception {
         assertEquals(26, StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) values (?)", "VALUES", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS));
         assertEquals(26, StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) VALUES (?)", "values", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS));
@@ -689,13 +674,14 @@ public class StringRegressionTest extends BaseTestCase {
      * Tests fix for BUG#64731 - StringUtils.getBytesWrapped throws StringIndexOutOfBoundsException.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug64731() throws Exception {
         byte[] data = StringUtils.getBytesWrapped("0f0f0702", '\'', '\'', "gbk");
-        assertTrue(StringUtils.toString(data), true);
+        assertTrue(true, StringUtils.toString(data));
     }
 
+    @Test
     public void testBase64Decoder() throws Exception {
         testBase64DecoderItem(
                 "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0\n"
@@ -734,5 +720,4 @@ public class StringRegressionTest extends BaseTestCase {
     private void testBase64DecoderItem(String source, String expected) throws Exception {
         assertEquals(expected, new String(Base64Decoder.decode(source.getBytes(), 0, source.length())));
     }
-
 }

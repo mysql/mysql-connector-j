@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,14 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.Connection;
 import java.util.Properties;
 import java.util.TimeZone;
+
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.PropertyKey;
 
@@ -42,21 +47,11 @@ import testsuite.BaseTestCase;
  */
 public class EscapeProcessingTest extends BaseTestCase {
     /**
-     * Constructor for EscapeProcessingTest.
-     * 
-     * @param name
-     *            the test to run
-     */
-    public EscapeProcessingTest(String name) {
-        super(name);
-    }
-
-    /**
      * Tests the escape processing functionality
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testEscapeProcessing() throws Exception {
         String results = "select dayname (abs(now())),   -- Today    \n" //
                 + "           '1997-05-24',  -- a date                    \n" + "           '10:30:29',  -- a time                     \n"
@@ -72,24 +67,14 @@ public class EscapeProcessingTest extends BaseTestCase {
         String escapedSql = this.conn.nativeSQL(exSql);
 
         assertTrue(results.equals(escapedSql));
-
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(EscapeProcessingTest.class);
     }
 
     /**
      * JDBC-4.0 spec will allow either SQL_ or not for type in {fn convert ...}
      * 
      * @throws Exception
-     *             if the test fails
      */
+    @Test
     public void testConvertEscape() throws Exception {
         assertEquals(this.conn.nativeSQL("{fn convert(abcd, SQL_INTEGER)}"), this.conn.nativeSQL("{fn convert(abcd, INTEGER)}"));
     }
@@ -99,8 +84,8 @@ public class EscapeProcessingTest extends BaseTestCase {
      * wrt. timezones
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testTimestampConversion() throws Exception {
         TimeZone currentTimezone = TimeZone.getDefault();
         String[] availableIds = TimeZone.getAvailableIDs(currentTimezone.getRawOffset() + (3600 * 1000 * 2));
@@ -133,6 +118,7 @@ public class EscapeProcessingTest extends BaseTestCase {
      * 
      * @throws Exception
      */
+    @Test
     public void testBug51313() throws Exception {
         this.stmt = this.conn.createStatement();
 

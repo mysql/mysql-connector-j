@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,15 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
@@ -58,6 +64,10 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.conf.AbstractRuntimeProperty;
 import com.mysql.cj.conf.PropertyDefinitions;
@@ -74,87 +84,67 @@ import com.mysql.cj.jdbc.StatementWrapper;
 import com.mysql.cj.jdbc.integration.jboss.MysqlValidConnectionChecker;
 
 import testsuite.BaseTestCase;
-import testsuite.simple.DataSourceTest;
+import testsuite.MockJndiContextFactory;
 
 /**
  * Tests fixes for bugs related to datasources.
  */
 public class DataSourceRegressionTest extends BaseTestCase {
-
     private Context ctx;
 
-    private File tempDir;
-
     /**
-     * Creates a new DataSourceRegressionTest suite for the given test name
-     * 
-     * @param name
-     *            the name of the testcase to run.
-     */
-    public DataSourceRegressionTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(DataSourceTest.class);
-    }
-
-    /**
-     * Sets up this test, calling registerDataSource() to bind a DataSource into
-     * JNDI, using the FSContext JNDI provider from Sun
+     * Sets up this test, calling registerDataSource() to bind a DataSource into JNDI, using the FSContext JNDI provider from Sun
      * 
      * @throws Exception
-     *             if an error occurs.
      */
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
-        createJNDIContext();
+        /*
+         * This code is separated from the rest of the test since you normally would NOT register a JDBC driver in your code. It would likely be configured into
+         * your naming and directory service using some GUI.
+         */
+        MysqlConnectionPoolDataSource ds;
+        Hashtable<String, String> env = new Hashtable<>();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, MockJndiContextFactory.class.getName());
+        this.ctx = new InitialContext(env);
+        assertNotNull(this.ctx, "Naming Context not created");
+        ds = new MysqlConnectionPoolDataSource();
+        ds.setUrl(dbUrl); // from BaseTestCase
+        ds.setDatabaseName(this.dbName);
+        this.ctx.bind("/test", ds);
     }
 
     /**
-     * Un-binds the DataSource, and cleans up the filesystem
+     * Un-binds the DataSource and closes the context
      * 
      * @throws Exception
-     *             if an error occurs
      */
-    @Override
+    @AfterEach
     public void tearDown() throws Exception {
-        this.ctx.unbind(this.tempDir.getAbsolutePath() + "/test");
-        this.ctx.unbind(this.tempDir.getAbsolutePath() + "/testNoUrl");
+        this.ctx.unbind("/test");
         this.ctx.close();
-        this.tempDir.delete();
-
-        super.tearDown();
     }
 
     /**
-     * Tests fix for BUG#4808- Calling .close() twice on a PooledConnection
-     * causes NPE.
+     * Tests fix for BUG#4808- Calling .close() twice on a PooledConnection causes NPE.
      * 
      * @throws Exception
-     *             if an error occurs.
      */
+    @Test
     public void testBug4808() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
         PooledConnection closeMeTwice = ds.getPooledConnection();
         closeMeTwice.close();
         closeMeTwice.close();
-
     }
 
     /**
      * Tests fix for Bug#3848, port # alone parsed incorrectly
      * 
      * @throws Exception
-     *             ...
      */
+    @Test
     public void testBug3848() throws Exception {
         String jndiName = "/testBug3848";
 
@@ -190,7 +180,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
             try {
                 boundDs = (ConnectionPoolDataSource) lookupDatasourceInJNDI(jndiName);
 
-                assertTrue("Datasource not bound", boundDs != null);
+                assertNotNull(boundDs, "Datasource not bound");
 
                 Connection dsConn = null;
 
@@ -210,12 +200,11 @@ public class DataSourceRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests that we can get a connection from the DataSource bound in JNDI
-     * during test setup
+     * Tests that we can get a connection from the DataSource bound in JNDI during test setup
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testBug3920() throws Exception {
         String jndiName = "/testBug3920";
 
@@ -256,7 +245,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
             try {
                 boundDs = (ConnectionPoolDataSource) lookupDatasourceInJNDI(jndiName);
 
-                assertTrue("Datasource not bound", boundDs != null);
+                assertNotNull(boundDs, "Datasource not bound");
 
                 Connection dsCon = null;
                 Statement dsStmt = null;
@@ -267,7 +256,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
                     dsStmt.executeUpdate("DROP TABLE IF EXISTS testBug3920");
                     dsStmt.executeUpdate("CREATE TABLE testBug3920 (field1 varchar(32))");
 
-                    assertTrue("Connection can not be obtained from data source", dsCon != null);
+                    assertNotNull(dsCon, "Connection can not be obtained from data source");
                 } finally {
                     if (dsStmt != null) {
                         dsStmt.executeUpdate("DROP TABLE IF EXISTS testBug3920");
@@ -286,25 +275,23 @@ public class DataSourceRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#19169 - ConnectionProperties (and thus some
-     * subclasses) are not serializable, even though some J2EE containers
-     * expect them to be.
+     * Tests fix for BUG#19169 - ConnectionProperties (and thus some subclasses) are not serializable, even though some J2EE containers expect them to be.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug19169() throws Exception {
         MysqlDataSource toSerialize = new MysqlDataSource();
 
-        toSerialize.<PropertyDefinitions.ZeroDatetimeBehavior> getProperty(PropertyKey.zeroDateTimeBehavior)
+        toSerialize.<PropertyDefinitions.ZeroDatetimeBehavior>getProperty(PropertyKey.zeroDateTimeBehavior)
                 .setValue(PropertyDefinitions.ZeroDatetimeBehavior.CONVERT_TO_NULL);
 
-        toSerialize.<String> getProperty(PropertyKey.ha_loadBalanceStrategy).setValue("test_lb_strategy");
+        toSerialize.<String>getProperty(PropertyKey.ha_loadBalanceStrategy).setValue("test_lb_strategy");
 
         boolean testBooleanFlag = !toSerialize.getBooleanProperty(PropertyKey.allowLoadLocalInfile).getValue();
-        toSerialize.<Boolean> getProperty(PropertyKey.allowLoadLocalInfile).setValue(testBooleanFlag);
+        toSerialize.<Boolean>getProperty(PropertyKey.allowLoadLocalInfile).setValue(testBooleanFlag);
 
-        RuntimeProperty<Integer> bscs = toSerialize.<Integer> getProperty(PropertyKey.blobSendChunkSize);
+        RuntimeProperty<Integer> bscs = toSerialize.<Integer>getProperty(PropertyKey.blobSendChunkSize);
         int testIntFlag = bscs.getValue() + 1;
         ((AbstractRuntimeProperty<?>) bscs).setValueInternal(String.valueOf(testIntFlag), null);
 
@@ -324,12 +311,11 @@ public class DataSourceRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#20242 - MysqlValidConnectionChecker for JBoss doesn't
-     * work with MySQLXADataSources.
+     * Tests fix for BUG#20242 - MysqlValidConnectionChecker for JBoss doesn't work with MySQLXADataSources.
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug20242() throws Exception {
         try {
             Class.forName("org.jboss.resource.adapter.jdbc.ValidConnectionChecker");
@@ -347,37 +333,12 @@ public class DataSourceRegressionTest extends BaseTestCase {
     }
 
     private void bindDataSource(String name, DataSource ds) throws Exception {
-        this.ctx.bind(this.tempDir.getAbsolutePath() + name, ds);
-    }
-
-    /**
-     * This method is separated from the rest of the example since you normally
-     * would NOT register a JDBC driver in your code. It would likely be
-     * configered into your naming and directory service using some GUI.
-     * 
-     * @throws Exception
-     *             if an error occurs
-     */
-    private void createJNDIContext() throws Exception {
-        this.tempDir = File.createTempFile("jnditest", null);
-        this.tempDir.delete();
-        this.tempDir.mkdir();
-        this.tempDir.deleteOnExit();
-
-        MysqlConnectionPoolDataSource ds;
-        Hashtable<String, String> env = new Hashtable<>();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.fscontext.RefFSContextFactory");
-        this.ctx = new InitialContext(env);
-        assertTrue("Naming Context not created", this.ctx != null);
-        ds = new MysqlConnectionPoolDataSource();
-        ds.setUrl(dbUrl); // from BaseTestCase
-        ds.setDatabaseName("test");
-        this.ctx.bind(this.tempDir.getAbsolutePath() + "/test", ds);
+        this.ctx.bind(name, ds);
     }
 
     private DataSource lookupDatasourceInJNDI(String jndiName) throws Exception {
         NameParser nameParser = this.ctx.getNameParser("");
-        Name datasourceName = nameParser.parse(this.tempDir.getAbsolutePath() + jndiName);
+        Name datasourceName = nameParser.parse(jndiName);
         Object obj = this.ctx.lookup(datasourceName);
         DataSource boundDs = null;
 
@@ -395,6 +356,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         return boundDs;
     }
 
+    @Test
     public void testCSC4616() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
@@ -438,12 +400,11 @@ public class DataSourceRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#16791 - NullPointerException in MysqlDataSourceFactory
-     * due to Reference containing RefAddrs with null content.
+     * Tests fix for BUG#16791 - NullPointerException in MysqlDataSourceFactory due to Reference containing RefAddrs with null content.
      * 
      * @throws Exception
-     *             if the test fails
      */
+    @Test
     public void testBug16791() throws Exception {
         MysqlDataSource myDs = new MysqlDataSource();
         myDs.setUrl(dbUrl);
@@ -473,12 +434,12 @@ public class DataSourceRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for BUG#32101 - When using a connection from our ConnectionPoolDataSource,
-     * some Connection.prepareStatement() methods would return null instead of
-     * a prepared statement.
+     * Tests fix for BUG#32101 - When using a connection from our ConnectionPoolDataSource, some Connection.prepareStatement() methods would return null instead
+     * of a prepared statement.
      * 
      * @throws Exception
      */
+    @Test
     public void testBug32101() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
@@ -492,6 +453,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
                 pc.getConnection().prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT));
     }
 
+    @Test
     public void testBug35810() throws Exception {
         int defaultConnectTimeout = ((JdbcConnection) this.conn).getPropertySet().getIntegerProperty(PropertyKey.connectTimeout).getValue();
         int nonDefaultConnectTimeout = defaultConnectTimeout + 1000 * 2;
@@ -509,10 +471,11 @@ public class DataSourceRegressionTest extends BaseTestCase {
         Connection dsConn = cpds.getPooledConnection().getConnection();
         int configuredConnectTimeout = ((JdbcConnection) dsConn).getPropertySet().getIntegerProperty(PropertyKey.connectTimeout).getValue();
 
-        assertEquals("Connect timeout spec'd by URL didn't take", nonDefaultConnectTimeout, configuredConnectTimeout);
-        assertFalse("Connect timeout spec'd by URL didn't take", defaultConnectTimeout == configuredConnectTimeout);
+        assertEquals(nonDefaultConnectTimeout, configuredConnectTimeout, "Connect timeout spec'd by URL didn't take");
+        assertFalse(defaultConnectTimeout == configuredConnectTimeout, "Connect timeout spec'd by URL didn't take");
     }
 
+    @Test
     public void testBug42267() throws Exception {
         MysqlDataSource ds = new MysqlDataSource();
         ds.setUrl(dbUrl);
@@ -520,7 +483,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         String query = "select 1,2,345";
         PreparedStatement ps = c.prepareStatement(query);
         String psString = ps.toString();
-        assertTrue("String representation of wrapped ps should contain query string", psString.endsWith(": " + query));
+        assertTrue(psString.endsWith(": " + query), "String representation of wrapped ps should contain query string");
         ps.close();
         ps.toString();
         c.close();
@@ -530,8 +493,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
      * Tests fix for BUG#72890 - Java jdbc driver returns incorrect return code when it's part of XA transaction
      * 
      * @throws Exception
-     *             if the test fails.
      */
+    @Test
     public void testBug72890() throws Exception {
         MysqlXADataSource myDs = new MysqlXADataSource();
         myDs.setUrl(BaseTestCase.dbUrl);
@@ -580,7 +543,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
                             return null;
                         }
                     });
-            assertEquals("XAException error code", XAException.XAER_RMFAIL, xaEx.errorCode);
+            assertEquals(XAException.XAER_RMFAIL, xaEx.errorCode, "XAException error code");
 
             dbConn.close();
             xaConn.close();
@@ -605,7 +568,10 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#72632 - NullPointerException for invalid JDBC URL.
+     * 
+     * @throws Exception
      */
+    @Test
     public void testBug72632() throws Exception {
         final MysqlDataSource dataSource = new MysqlDataSource();
         dataSource.setUrl("jdbc:mysql:nonsupported:");

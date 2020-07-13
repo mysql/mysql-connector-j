@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,11 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import testsuite.BaseTestCase;
 
 /**
@@ -37,33 +42,12 @@ import testsuite.BaseTestCase;
 public class SubqueriesRegressionTest extends BaseTestCase {
     private final static int REPETITIONS = 100;
 
-    /**
-     */
-    public SubqueriesRegressionTest(String name) {
-        super(name);
-    }
-
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
-
         createTables();
     }
 
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(SubqueriesRegressionTest.class);
-    }
-
+    @Test
     public void testSubQuery1() throws Exception {
         for (int i = 0; i < REPETITIONS; i++) {
 
@@ -75,6 +59,7 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testSubQuery2() throws Exception {
         for (int i = 0; i < REPETITIONS; i++) {
 
@@ -83,10 +68,10 @@ public class SubqueriesRegressionTest extends BaseTestCase {
             assertTrue(this.rs.next());
             assertTrue("bbbb".equals(this.rs.getString(1)));
             assertTrue(!this.rs.next());
-
         }
     }
 
+    @Test
     public void testSubQuery3() throws Exception {
         for (int i = 0; i < REPETITIONS; i++) {
 
@@ -95,10 +80,10 @@ public class SubqueriesRegressionTest extends BaseTestCase {
             assertTrue("efgh".equals(this.rs.getString(1)));
             assertTrue("2".equals(this.rs.getString(2)));
             assertTrue(!this.rs.next());
-
         }
     }
 
+    @Test
     public void testSubQuery4() throws Exception {
         // not really a subquery, but we want to have this in our testsuite
         for (int i = 0; i < REPETITIONS; i++) {
@@ -118,7 +103,7 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 
             assertTrue(this.rs.next());
             assertTrue("aaaa".equals(this.rs.getString(1)));
-            assertTrue("'" + this.rs.getString(2) + "' != expected of 'abcd'", "abcd".equals(this.rs.getString(2)));
+            assertTrue("abcd".equals(this.rs.getString(2)), "'" + this.rs.getString(2) + "' != expected of 'abcd'");
 
             assertTrue(this.rs.next());
             assertTrue("bbbb".equals(this.rs.getString(1)));
@@ -126,12 +111,13 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 
             assertTrue(this.rs.next());
             assertTrue("cccc".equals(this.rs.getString(1)));
-            assertTrue("'" + this.rs.getString(2) + "' != expected of 'ijkl'", "ijkl".equals(this.rs.getString(2)));
+            assertTrue("ijkl".equals(this.rs.getString(2)), "'" + this.rs.getString(2) + "' != expected of 'ijkl'");
 
             assertTrue(!this.rs.next());
         }
     }
 
+    @Test
     public void testSubQuery5() throws Exception {
         for (int i = 0; i < REPETITIONS; i++) {
 
@@ -157,5 +143,4 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         this.stmt.executeUpdate("insert into t3 values ('aaaa', 'abcd'), ('bbbb', 'efgh'), ('cccc', 'ijkl')");
         this.stmt.executeUpdate("insert into t4 values ('abcd', 'type1'), ('efgh', 'type2'), ('ijkl', 'type3')");
     }
-
 }

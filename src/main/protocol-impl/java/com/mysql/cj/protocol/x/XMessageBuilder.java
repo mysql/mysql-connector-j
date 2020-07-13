@@ -92,6 +92,8 @@ import com.mysql.cj.xdevapi.CreateIndexParams.IndexField;
 import com.mysql.cj.xdevapi.ExprUtil;
 import com.mysql.cj.xdevapi.FilterParams;
 import com.mysql.cj.xdevapi.InsertParams;
+import com.mysql.cj.xdevapi.Schema.CreateCollectionOptions;
+import com.mysql.cj.xdevapi.Schema.ModifyCollectionOptions;
 import com.mysql.cj.xdevapi.UpdateParams;
 import com.mysql.cj.xdevapi.UpdateSpec;
 
@@ -580,6 +582,78 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     public XMessage buildPrepareDeallocate(int preparedStatementId) {
         Deallocate.Builder builder = Deallocate.newBuilder().setStmtId(preparedStatementId);
         return new XMessage(builder.build());
+    }
+
+    public XMessage buildCreateCollection(String schemaName, String collectionName, CreateCollectionOptions options) {
+        if (schemaName == null) {
+            throw new XProtocolError(Messages.getString("CreateTableStatement.0", new String[] { "schemaName" }));
+        }
+        if (collectionName == null) {
+            throw new XProtocolError(Messages.getString("CreateTableStatement.0", new String[] { "collectionName" }));
+        }
+
+        Builder argsBuilder = com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
+                .addFld(ObjectField.newBuilder().setKey("name").setValue(ExprUtil.buildAny(collectionName)))
+                .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName)));
+
+        Builder optBuilder = com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder();
+
+        boolean hasOptions = false;
+        if (options.getReuseExisting() != null) {
+            hasOptions = true;
+            optBuilder.addFld(ObjectField.newBuilder().setKey("reuse_existing").setValue(ExprUtil.buildAny(options.getReuseExisting())));
+        }
+
+        if (options.getValidation() != null) {
+            hasOptions = true;
+            Builder validationBuilder = com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder();
+            if (options.getValidation().getSchema() != null) {
+                validationBuilder.addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(options.getValidation().getSchema())));
+            }
+            if (options.getValidation().getLevel() != null) {
+                validationBuilder
+                        .addFld(ObjectField.newBuilder().setKey("level").setValue(ExprUtil.buildAny(options.getValidation().getLevel().name().toLowerCase())));
+            }
+            optBuilder.addFld(ObjectField.newBuilder().setKey("validation").setValue(Any.newBuilder().setType(Any.Type.OBJECT).setObj(validationBuilder)));
+        }
+        if (hasOptions) {
+            argsBuilder.addFld(ObjectField.newBuilder().setKey("options").setValue(Any.newBuilder().setType(Any.Type.OBJECT).setObj(optBuilder)));
+        }
+
+        return new XMessage(buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_CREATE_COLLECTION,
+                Any.newBuilder().setType(Any.Type.OBJECT).setObj(argsBuilder).build()));
+    }
+
+    public XMessage buildModifyCollectionOptions(String schemaName, String collectionName, ModifyCollectionOptions options) {
+        if (schemaName == null) {
+            throw new XProtocolError(Messages.getString("CreateTableStatement.0", new String[] { "schemaName" }));
+        }
+        if (collectionName == null) {
+            throw new XProtocolError(Messages.getString("CreateTableStatement.0", new String[] { "collectionName" }));
+        }
+
+        Builder argsBuilder = com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder()
+                .addFld(ObjectField.newBuilder().setKey("name").setValue(ExprUtil.buildAny(collectionName)))
+                .addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(schemaName)));
+
+        Builder optBuilder = com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder();
+
+        if (options != null && options.getValidation() != null) {
+            Builder validationBuilder = com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.newBuilder();
+            if (options.getValidation().getSchema() != null) {
+                validationBuilder.addFld(ObjectField.newBuilder().setKey("schema").setValue(ExprUtil.buildAny(options.getValidation().getSchema())));
+            }
+            if (options.getValidation().getLevel() != null) {
+                validationBuilder
+                        .addFld(ObjectField.newBuilder().setKey("level").setValue(ExprUtil.buildAny(options.getValidation().getLevel().name().toLowerCase())));
+            }
+            optBuilder.addFld(ObjectField.newBuilder().setKey("validation").setValue(Any.newBuilder().setType(Any.Type.OBJECT).setObj(validationBuilder)));
+        }
+
+        argsBuilder.addFld(ObjectField.newBuilder().setKey("options").setValue(Any.newBuilder().setType(Any.Type.OBJECT).setObj(optBuilder)));
+
+        return new XMessage(buildXpluginCommand(XpluginStatementCommand.XPLUGIN_STMT_MODIFY_COLLECTION_OPTIONS,
+                Any.newBuilder().setType(Any.Type.OBJECT).setObj(argsBuilder).build()));
     }
 
     public XMessage buildCreateCollection(String schemaName, String collectionName) {

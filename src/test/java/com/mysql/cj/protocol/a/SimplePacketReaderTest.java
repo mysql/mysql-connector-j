@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,9 @@
 
 package com.mysql.cj.protocol.a;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -41,7 +43,7 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.util.Optional;
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyKey;
@@ -65,7 +67,6 @@ import com.mysql.cj.protocol.SocketFactory;
  * Tests for simple packet reader.
  */
 public class SimplePacketReaderTest {
-
     // the basic operation: make sure header bytes are interpreted properly
     @Test
     public void basicHeaderRead() throws IOException {
@@ -100,7 +101,7 @@ public class SimplePacketReaderTest {
             reader.readHeader();
             fail("Should throw exception as packet size exceeds maxAllowedPacket");
         } catch (CJPacketTooBigException ex) {
-            assertTrue("Connection should be force closed when maxAllowedPacket is exceeded", connection.forceClosed);
+            assertTrue(connection.forceClosed, "Connection should be force closed when maxAllowedPacket is exceeded");
         }
     }
 
@@ -114,7 +115,7 @@ public class SimplePacketReaderTest {
             reader.readHeader();
             fail("Should throw an exception when we can't read the full header");
         } catch (EOFException ex) {
-            assertTrue("Connection should be force closed when header read fails", connection.forceClosed);
+            assertTrue(connection.forceClosed, "Connection should be force closed when header read fails");
         }
     }
 
@@ -146,7 +147,7 @@ public class SimplePacketReaderTest {
             reader.readMessage(Optional.empty(), new NativePacketHeader(new byte[] { 3, 0, 0, 0 }));
             fail("Shouldn't be able to read more than 2 bytes");
         } catch (EOFException ex) {
-            assertTrue("Connection should be force closed when payload read fails", connection.forceClosed);
+            assertTrue(connection.forceClosed, "Connection should be force closed when payload read fails");
         }
 
         // any IO errors during read should hang up the connection
@@ -162,7 +163,7 @@ public class SimplePacketReaderTest {
             reader.readMessage(Optional.empty(), new NativePacketHeader(new byte[] { 3, 0, 0, 0 }));
             fail("IOException should be thrown");
         } catch (IOException ex) {
-            assertTrue("Connection should be force closed when payload read fails", connection.forceClosed);
+            assertTrue(connection.forceClosed, "Connection should be force closed when payload read fails");
         }
     }
 
@@ -314,7 +315,7 @@ public class SimplePacketReaderTest {
          * @param b
          * @param off
          * @param len
-         * @return
+         * @return an integer
          * @throws IOException
          */
         public int readFully(byte[] b, int off, int len) throws IOException {

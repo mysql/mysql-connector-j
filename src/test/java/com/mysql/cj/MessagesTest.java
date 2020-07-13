@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,9 @@
 
 package com.mysql.cj;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MessagesTest {
 
@@ -160,6 +160,5 @@ public class MessagesTest {
         assertEquals("Can not call updateNString() when field's character set isn't UTF-8", Messages.getString("ResultSet.18"));
 
         // TODO: Extend for all escaped messages.
-
     }
 }

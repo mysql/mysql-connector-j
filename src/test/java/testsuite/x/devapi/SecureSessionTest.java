@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,8 +29,8 @@
 
 package testsuite.x.devapi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -40,10 +40,10 @@ import java.util.function.Function;
 
 import javax.net.ssl.SSLContext;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.CoreSession;
 import com.mysql.cj.ServerVersion;
@@ -76,7 +76,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
     String sslFreeBaseUrl = this.baseUrl;
     String opensslTlsFreeBaseUrl = this.baseOpensslUrl;
 
-    @Before
+    @BeforeEach
     public void setupSecureSessionTest() {
         if (setupTestSession()) {
             System.clearProperty("javax.net.ssl.trustStore");
@@ -134,7 +134,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void teardownSecureSessionTest() {
         System.clearProperty("javax.net.ssl.trustStore");
         System.clearProperty("javax.net.ssl.trustStoreType");
@@ -192,7 +192,6 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.sql("DROP USER if exists testPlainAuth").execute();
             testSession.close();
         }
-
     }
 
     /**
@@ -367,7 +366,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      * This test would pass if the server certificate had "CN=<host_name>", with <host_name> equals to the host name in the test URL.
      */
     @Test
-    @Ignore
+    @Disabled("requires a certificate with CN=<host_name> equals to the host name in the test URL")
     public void testSecureSessionVerifyServerCertificateIdentity() {
         if (!this.isSetForXTests) {
             return;

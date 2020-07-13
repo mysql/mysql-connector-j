@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -81,7 +81,7 @@ public class TestUtils {
     /**
      * Checks if there is a server socket listening in the given host and port.
      * 
-     * @param host
+     * @param hostName
      *            the host where to look for the server socket
      * @param port
      *            the expected port the server is listening

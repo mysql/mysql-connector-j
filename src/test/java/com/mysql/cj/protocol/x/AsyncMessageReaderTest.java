@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,7 @@
 
 package com.mysql.cj.protocol.x;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -43,7 +43,7 @@ import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertySet;
@@ -261,7 +261,6 @@ public class AsyncMessageReaderTest {
         public AsynchronousSocketChannel getAsynchronousSocketChannel() {
             return this.channel;
         }
-
     }
 
     /**

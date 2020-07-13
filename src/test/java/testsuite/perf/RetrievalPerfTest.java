@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,11 @@
 
 package testsuite.perf;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.mysql.cj.MysqlConnection;
 
 import testsuite.BaseTestCase;
@@ -41,34 +46,8 @@ public class RetrievalPerfTest extends BaseTestCase {
 
     private static final int NUM_ROWS = 80;
 
-    /**
-     * Constructor for RetrievalPerfTest.
-     * 
-     * @param name
-     *            name of the test to run
-     */
-    public RetrievalPerfTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all tests.
-     * 
-     * @param args
-     *            ignored
-     */
-    public static void main(String[] args) {
-        new RetrievalPerfTest("testRetrievalMyIsam").run();
-        new RetrievalPerfTest("testRetrievalHeap").run();
-        new RetrievalPerfTest("testRetrievalCached").run();
-    }
-
-    /**
-     * @see junit.framework.TestCase#setUp()
-     */
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
         createTable("retrievalPerfTestHeap", "(priKey INT NOT NULL PRIMARY KEY, charField VARCHAR(80)) ", "HEAP");
         createTable("retrievalPerfTestMyIsam", "(priKey INT NOT NULL PRIMARY KEY, charField VARCHAR(80)) ", "MyISAM");
 
@@ -84,8 +63,8 @@ public class RetrievalPerfTest extends BaseTestCase {
      * Tests retrieval from the query cache
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testRetrievalCached() throws Exception {
         if (!((MysqlConnection) this.conn).getSession().getServerSession().isQueryCacheEnabled()) {
             return;
@@ -133,8 +112,8 @@ public class RetrievalPerfTest extends BaseTestCase {
      * Tests retrieval from HEAP tables
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testRetrievalHeap() throws Exception {
         double fullBegin = System.currentTimeMillis();
         double averageQueryTimeMs = 0;
@@ -177,8 +156,8 @@ public class RetrievalPerfTest extends BaseTestCase {
      * Tests retrieval speed from MyISAM type tables
      * 
      * @throws Exception
-     *             if an error occurs
      */
+    @Test
     public void testRetrievalMyIsam() throws Exception {
         double fullBegin = System.currentTimeMillis();
         double averageQueryTimeMs = 0;

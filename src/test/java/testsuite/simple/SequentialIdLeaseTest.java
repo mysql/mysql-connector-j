@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,27 +29,15 @@
 
 package testsuite.simple;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.util.SequentialIdLease;
 
 import testsuite.BaseTestCase;
 
 public class SequentialIdLeaseTest extends BaseTestCase {
-
-    public SequentialIdLeaseTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Runs all test cases in this test suite
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(StringUtilsTest.class);
-    }
-
     /**
      * Tests the {@link SequentialIdLease} lease behavior.
      */

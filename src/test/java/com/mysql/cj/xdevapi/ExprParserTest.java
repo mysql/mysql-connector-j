@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,16 +29,16 @@
 
 package com.mysql.cj.xdevapi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.x.protobuf.MysqlxCrud.Column;
@@ -58,6 +58,8 @@ public class ExprParserTest {
 
     /**
      * Check that a string doesn't parse.
+     * 
+     * @param s
      */
     private void checkBadParse(String s) {
         try {
@@ -109,6 +111,9 @@ public class ExprParserTest {
 
     /**
      * Check that a string parses and is reconstituted as a string that we expect. Futher we parse the canonical version to make sure it doesn't change.
+     * 
+     * @param input
+     * @param expected
      */
     private void checkParseRoundTrip(String input, String expected) {
         if (expected == null) {

@@ -29,11 +29,11 @@
 
 package com.mysql.cj.protocol.x;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -44,7 +44,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.zip.DeflaterOutputStream;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.google.protobuf.ByteString;
 import com.mysql.cj.x.protobuf.Mysqlx;
@@ -176,6 +176,8 @@ public class CompressionTest {
 
     /**
      * Tests that the {@link CompressionSplittedInputStream} reads from original underlying {@link InputStream} when data is not compressed.
+     * 
+     * @throws Exception
      */
     @Test
     public void downlinkCompressionSplittingUncompressed() throws Exception {
@@ -229,6 +231,8 @@ public class CompressionTest {
 
     /**
      * Tests that the {@link CompressionSplittedInputStream} reads single compressed messages and inflates them properly.
+     * 
+     * @throws Exception
      */
     @Test
     public void downlinkCompressionSingleCompressed() throws Exception {
@@ -279,6 +283,8 @@ public class CompressionTest {
 
     /**
      * Tests that the {@link CompressionSplittedInputStream} reads multiple compressed messages and inflates them properly.
+     * 
+     * @throws Exception
      */
     @Test
     public void downlinkCompressionMultipleCompressed() throws Exception {
@@ -329,6 +335,8 @@ public class CompressionTest {
 
     /**
      * Tests that the {@link CompressionSplittedOutputStream} writes into an underlying OutputStream properly deflated data.
+     * 
+     * @throws Exception
      */
     @Test
     public void uplinkCompressionSplitting() throws Exception {
