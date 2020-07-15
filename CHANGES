@@ -3,6 +3,9 @@
 
 Version 8.0.22
 
+  - Fix for Bug#96870 (30304764), Contribution: Allow to disable AbandonedConnectionCleanupThread completely.
+    Thanks to Andrey Turbanov for his contribution.
+
   - WL#14115, Support for authentication_ldap_sasl_client(SCRAM-SHA-1) authentication plugin.
 
   - WL#14096, Add option to specify LOAD DATA LOCAL allow list folder.

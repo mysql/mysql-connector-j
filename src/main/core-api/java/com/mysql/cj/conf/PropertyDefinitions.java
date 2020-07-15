@@ -41,7 +41,7 @@ import com.mysql.cj.util.PerVmServerConfigCacheFactory;
 
 public class PropertyDefinitions {
     /*
-     * Built-in system properties
+     * Built-in system properties.
      */
     public static final String SYSP_line_separator = "line.separator";
     public static final String SYSP_java_vendor = "java.vendor";
@@ -53,7 +53,12 @@ public class PropertyDefinitions {
     public static final String SYSP_file_encoding = "file.encoding";
 
     /*
-     * Custom system properties
+     * Operational system properties.
+     */
+    public static final String SYSP_disableAbandonedConnectionCleanup = "com.mysql.cj.disableAbandonedConnectionCleanup";
+
+    /*
+     * Testsuite system properties.
      */
     public static final String SYSP_testsuite_url /*                          */ = "com.mysql.cj.testsuite.url";
     public final static String SYSP_testsuite_url_admin /*                    */ = "com.mysql.cj.testsuite.url.admin";
@@ -95,10 +100,13 @@ public class PropertyDefinitions {
     public static final String SYSP_testsuite_runLongTests /*                 */ = "com.mysql.cj.testsuite.runLongTests";
     public static final String SYSP_testsuite_serverController_basedir /*     */ = "com.mysql.cj.testsuite.serverController.basedir";
 
+    /*
+     * Build system properties.
+     */
     public static final String SYSP_com_mysql_cj_build_verbose /*             */ = "com.mysql.cj.build.verbose";
 
     /*
-     * Categories of connection properties
+     * Categories of connection properties.
      */
     public static final String CATEGORY_AUTH = Messages.getString("ConnectionProperties.categoryAuthentication");
     public static final String CATEGORY_CONNECTION = Messages.getString("ConnectionProperties.categoryConnection");
@@ -125,7 +133,7 @@ public class PropertyDefinitions {
             CATEGORY_PERFORMANCE, CATEGORY_DEBUGING_PROFILING, CATEGORY_EXCEPTIONS, CATEGORY_INTEGRATION, CATEGORY_JDBC, CATEGORY_XDEVAPI };
 
     /*
-     * Property modifiers
+     * Property modifiers.
      */
     public static final boolean DEFAULT_VALUE_TRUE = true;
     public static final boolean DEFAULT_VALUE_FALSE = false;
@@ -139,7 +147,7 @@ public class PropertyDefinitions {
     public static final boolean RUNTIME_NOT_MODIFIABLE = false;
 
     /*
-     * Property enums
+     * Property enums.
      */
     public enum ZeroDatetimeBehavior { // zeroDateTimeBehavior 
         CONVERT_TO_NULL, EXCEPTION, ROUND;
