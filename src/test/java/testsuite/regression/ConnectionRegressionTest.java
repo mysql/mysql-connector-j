@@ -69,6 +69,7 @@ import java.sql.ResultSet;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLNonTransientConnectionException;
 import java.sql.SQLTransientException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
@@ -11823,5 +11824,30 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } finally {
             UnreliableSocketFactory.flushAllStaticData();
         }
+    }
+
+    /**
+     * Tests for Bug#99076 (31083755), Unclear exception/error when connecting with jdbc:mysql to a mysqlx port.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug99076() throws Exception {
+        if (!versionMeetsMinimum(8, 0, 16)) {
+            return;
+        }
+
+        String xUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
+        if (xUrl == null || xUrl.length() == 0) {
+            return;
+        }
+
+        final ConnectionUrl conUrl = ConnectionUrl.getConnectionUrlInstance(xUrl, null);
+        final HostInfo hostInfo = conUrl.getMainHost();
+        final String host = hostInfo.getHost();
+        final int port = hostInfo.getPort();
+
+        assertThrows(SQLNonTransientConnectionException.class, "Unsupported protocol version: 11\\. Likely connecting to an X Protocol port\\.",
+                () -> getConnectionWithProps("jdbc:mysql://" + host + ":" + port, ""));
     }
 }

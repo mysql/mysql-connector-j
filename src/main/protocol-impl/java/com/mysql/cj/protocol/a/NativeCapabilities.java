@@ -29,7 +29,10 @@
 
 package com.mysql.cj.protocol.a;
 
+import com.mysql.cj.Messages;
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.exceptions.UnableToConnectException;
 import com.mysql.cj.protocol.ServerCapabilities;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
@@ -62,45 +65,56 @@ public class NativeCapabilities implements ServerCapabilities {
         // Get the protocol version
         setProtocolVersion((byte) initialHandshakePacket.readInteger(IntegerDataType.INT1));
 
-        setServerVersion(ServerVersion.parseVersion(initialHandshakePacket.readString(StringSelfDataType.STRING_TERM, "ASCII")));
+        try {
+            setServerVersion(ServerVersion.parseVersion(initialHandshakePacket.readString(StringSelfDataType.STRING_TERM, "ASCII")));
 
-        // read connection id
-        setThreadId(initialHandshakePacket.readInteger(IntegerDataType.INT4));
+            // read connection id
+            setThreadId(initialHandshakePacket.readInteger(IntegerDataType.INT4));
 
-        // read auth-plugin-data-part-1 (string[8])
-        setSeed(initialHandshakePacket.readString(StringLengthDataType.STRING_FIXED, "ASCII", 8));
+            // read auth-plugin-data-part-1 (string[8])
+            setSeed(initialHandshakePacket.readString(StringLengthDataType.STRING_FIXED, "ASCII", 8));
 
-        // read filler ([00])
-        initialHandshakePacket.readInteger(IntegerDataType.INT1);
-
-        int flags = 0;
-
-        // read capability flags (lower 2 bytes)
-        if (initialHandshakePacket.getPosition() < initialHandshakePacket.getPayloadLength()) {
-            flags = (int) initialHandshakePacket.readInteger(IntegerDataType.INT2);
-        }
-
-        // read character set (1 byte)
-        setServerDefaultCollationIndex((int) initialHandshakePacket.readInteger(IntegerDataType.INT1));
-        // read status flags (2 bytes)
-        setStatusFlags((int) initialHandshakePacket.readInteger(IntegerDataType.INT2));
-
-        // read capability flags (upper 2 bytes)
-        flags |= (int) initialHandshakePacket.readInteger(IntegerDataType.INT2) << 16;
-
-        setCapabilityFlags(flags);
-
-        if ((flags & NativeServerSession.CLIENT_PLUGIN_AUTH) != 0) {
-            // read length of auth-plugin-data (1 byte)
-            this.authPluginDataLength = (int) initialHandshakePacket.readInteger(IntegerDataType.INT1);
-        } else {
             // read filler ([00])
             initialHandshakePacket.readInteger(IntegerDataType.INT1);
-        }
-        // next 10 bytes are reserved (all [00])
-        initialHandshakePacket.setPosition(initialHandshakePacket.getPosition() + 10);
 
-        this.serverHasFracSecsSupport = this.serverVersion.meetsMinimum(new ServerVersion(5, 6, 4));
+            int flags = 0;
+
+            // read capability flags (lower 2 bytes)
+            if (initialHandshakePacket.getPosition() < initialHandshakePacket.getPayloadLength()) {
+                flags = (int) initialHandshakePacket.readInteger(IntegerDataType.INT2);
+            }
+
+            // read character set (1 byte)
+            setServerDefaultCollationIndex((int) initialHandshakePacket.readInteger(IntegerDataType.INT1));
+            // read status flags (2 bytes)
+            setStatusFlags((int) initialHandshakePacket.readInteger(IntegerDataType.INT2));
+
+            // read capability flags (upper 2 bytes)
+            flags |= (int) initialHandshakePacket.readInteger(IntegerDataType.INT2) << 16;
+
+            setCapabilityFlags(flags);
+
+            if ((flags & NativeServerSession.CLIENT_PLUGIN_AUTH) != 0) {
+                // read length of auth-plugin-data (1 byte)
+                this.authPluginDataLength = (int) initialHandshakePacket.readInteger(IntegerDataType.INT1);
+            } else {
+                // read filler ([00])
+                initialHandshakePacket.readInteger(IntegerDataType.INT1);
+            }
+            // next 10 bytes are reserved (all [00])
+            initialHandshakePacket.setPosition(initialHandshakePacket.getPosition() + 10);
+
+            this.serverHasFracSecsSupport = this.serverVersion.meetsMinimum(new ServerVersion(5, 6, 4));
+        } catch (Throwable t) {
+            // Chances are that the other end is talking X Protocol instead of MySQL protocol. 
+            // X Protocol message type byte (NOTICE = 11) coincides with MySQL protocol version byte in the Initial Handshake Packet.
+            if (this.protocolVersion == 11 && IndexOutOfBoundsException.class.isAssignableFrom(t.getClass())) {
+                throw ExceptionFactory.createException(UnableToConnectException.class,
+                        Messages.getString("NativeCapabilites.001", new Object[] { this.protocolVersion }));
+            }
+
+            throw t;
+        }
     }
 
     @Override
@@ -118,10 +132,6 @@ public class NativeCapabilities implements ServerCapabilities {
     }
 
     public void setProtocolVersion(byte protocolVersion) {
-        // TODO revise this check after server implementation of initial X Protocol Notice
-        //if (protocolVersion != 10) {
-        //    throw ExceptionFactory.createException(UnableToConnectException.class, "Unsupported protocol version: " + protocolVersion);
-        //}
         this.protocolVersion = protocolVersion;
     }
 
