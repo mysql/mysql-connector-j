@@ -3,6 +3,8 @@
 
 Version 8.0.22
 
+  - Fix for Bug#96309 (31699357), MultiHost in loadbalance may lead to a TPS reduction during a quick switch.
+
   - Fix for Bug#99076 (31083755), Unclear exception/error when connecting with jdbc:mysql to a mysqlx port.
 
   - Fix for Bug#96870 (30304764), Contribution: Allow to disable AbandonedConnectionCleanupThread completely.
