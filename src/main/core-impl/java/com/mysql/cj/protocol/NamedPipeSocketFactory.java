@@ -30,12 +30,14 @@
 package com.mysql.cj.protocol;
 
 import java.io.Closeable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.concurrent.TimeUnit;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.Session;
@@ -47,6 +49,8 @@ import com.mysql.cj.conf.RuntimeProperty;
  * A socket factory for named pipes (on Windows)
  */
 public class NamedPipeSocketFactory implements SocketFactory {
+    private static final int DEFAULT_TIMEOUT = 100;
+
     /**
      * A socket that encapsulates named pipes on Windows
      */
@@ -55,12 +59,32 @@ public class NamedPipeSocketFactory implements SocketFactory {
 
         private RandomAccessFile namedPipeFile;
 
-        NamedPipeSocket(String filePath) throws IOException {
+        NamedPipeSocket(String filePath, int timeout) throws IOException {
             if ((filePath == null) || (filePath.length() == 0)) {
                 throw new IOException(Messages.getString("NamedPipeSocketFactory.4"));
             }
 
-            this.namedPipeFile = new RandomAccessFile(filePath, "rw");
+            int timeoutCountdown = timeout == 0 ? DEFAULT_TIMEOUT : timeout;
+            long startTime = System.currentTimeMillis();
+            for (;;) {
+                try {
+                    this.namedPipeFile = new RandomAccessFile(filePath, "rw");
+                    break;
+                } catch (FileNotFoundException e) {
+                    if (timeout == 0) { // No timeout was set.
+                        throw new IOException("Named pipe busy error (ERROR_PIPE_BUSY).\nConsider setting a value for "
+                                + "'connectTimeout' or DriverManager.setLoginTimeout(int) to repeatedly try opening the named pipe before failing.", e);
+                    }
+                    if (System.currentTimeMillis() - startTime > timeoutCountdown) {
+                        throw e;
+                    }
+                }
+                try {
+                    TimeUnit.MILLISECONDS.sleep(10);
+                } catch (InterruptedException e) {
+                    throw new IOException(e);
+                }
+            }
         }
 
         /**
@@ -227,7 +251,10 @@ public class NamedPipeSocketFactory implements SocketFactory {
                     Messages.getString("NamedPipeSocketFactory.2") + PropertyKey.PATH.getCcAlias() + Messages.getString("NamedPipeSocketFactory.3"));
         }
 
-        this.namedPipeSocket = new NamedPipeSocket(namedPipePath);
+        int connectTimeout = props.getIntegerProperty(PropertyKey.connectTimeout.getKeyName()).getValue();
+        int timeout = (connectTimeout > 0 && loginTimeout > 0) ? Math.min(connectTimeout, loginTimeout) : connectTimeout + loginTimeout;
+
+        this.namedPipeSocket = new NamedPipeSocket(namedPipePath, timeout);
 
         return (T) this.namedPipeSocket;
     }

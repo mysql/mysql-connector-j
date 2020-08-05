@@ -3,6 +3,8 @@
 
 Version 8.0.22
 
+  - Fix for Bug#98667 (31711961), "All pipe instances are busy" exception on multiple connections to named Pipe.
+
   - Fix for Bug#96309 (31699357), MultiHost in loadbalance may lead to a TPS reduction during a quick switch.
 
   - Fix for Bug#99076 (31083755), Unclear exception/error when connecting with jdbc:mysql to a mysqlx port.

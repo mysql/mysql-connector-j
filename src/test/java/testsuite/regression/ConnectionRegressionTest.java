@@ -32,8 +32,11 @@ package testsuite.regression;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -11827,7 +11830,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests for Bug#99076 (31083755), Unclear exception/error when connecting with jdbc:mysql to a mysqlx port.
+     * Tests fix for Bug#99076 (31083755), Unclear exception/error when connecting with jdbc:mysql to a mysqlx port.
      * 
      * @throws Exception
      */
@@ -11849,5 +11852,63 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         assertThrows(SQLNonTransientConnectionException.class, "Unsupported protocol version: 11\\. Likely connecting to an X Protocol port\\.",
                 () -> getConnectionWithProps("jdbc:mysql://" + host + ":" + port, ""));
+    }
+
+    /**
+     * Tests fix for Bug#98667 (31711961), "All pipe instances are busy" exception on multiple connections to named Pipe.
+     * 
+     * This test only runs on Windows with a MySQL instance started with named pipes enabled (--named-pipe=on).
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug98667() throws Exception {
+        this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'named_pipe'");
+        if (!this.rs.next() || !this.rs.getString(2).equalsIgnoreCase("on")) {
+            return; // Only runs on Windows with named pipes enabled.
+        }
+
+        this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'socket'");
+        assumeTrue(this.rs.next());
+        String namedPipeName = this.rs.getString(2);
+        assumeFalse(StringUtils.isNullOrEmpty(namedPipeName));
+
+        final String namedPipePath = "\\\\.\\pipe\\" + namedPipeName;
+        final Properties props = getHostFreePropertiesFromTestsuiteUrl();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.toString());
+
+        DriverManager.setLoginTimeout(0); // Make sure the login timeout is 0.
+
+        ExecutorService executor = Executors.newFixedThreadPool(100);
+        List<Future<Exception>> futures = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            futures.add(executor.submit(() -> {
+                try (Connection testConn = getConnectionWithProps("jdbc:mysql://address=(protocol=pipe)(path=" + namedPipePath + ")?connectTimeout=500",
+                        props)) {
+                    ResultSet testRs = testConn.createStatement().executeQuery("SELECT CURRENT_USER()");
+                    assertTrue(testRs.next());
+                    TimeUnit.SECONDS.sleep(1);
+                } catch (SQLException e) {
+                    return e;
+                } catch (InterruptedException e) {
+                    return null;
+                }
+                return null;
+            }));
+        }
+        Exception oneFail = null;
+        for (Future<Exception> f : futures) {
+            Exception e = f.get();
+            if (oneFail == null && e != null) {
+                oneFail = e;
+            }
+        }
+        if (oneFail != null) {
+            oneFail.printStackTrace();
+        }
+        executor.shutdown();
+        executor.awaitTermination(3, TimeUnit.SECONDS);
+
+        assertNull(oneFail, "At least one connection failed.");
     }
 }
