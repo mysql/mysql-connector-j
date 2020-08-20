@@ -79,6 +79,8 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
         this.bufferType = copyMe.bufferType;
         this.calendar = copyMe.calendar;
         this.charEncoding = copyMe.charEncoding;
+        this.cacheDefaultTimezone = copyMe.cacheDefaultTimezone;
+        this.defaultTimeZone = copyMe.defaultTimeZone;
     }
 
     @Override
