@@ -467,10 +467,17 @@ public class NativeSession extends CoreSession implements Serializable {
                 if (realJavaEncoding.equalsIgnoreCase("UTF-8") || realJavaEncoding.equalsIgnoreCase("UTF8")) {
                     // charset names are case-sensitive
                     String utf8CharsetName = connectionCollationSuffix.length() > 0 ? connectionCollationCharset : "utf8mb4";
-
-                    if (dontCheckServerMatch || !this.protocol.getServerSession().characterSetNamesMatches("utf8")
-                            || (!this.protocol.getServerSession().characterSetNamesMatches("utf8mb4")) || (connectionCollationSuffix.length() > 0
-                                    && !connectionCollation.equalsIgnoreCase(this.protocol.getServerSession().getServerVariable("collation_server")))) {
+    
+                    boolean isCharacterSetNotUTF8 =
+                        !(this.protocol.getServerSession().characterSetNamesMatches("utf8")
+                            || this.protocol.getServerSession().characterSetNamesMatches("utf8mb4"));
+    
+                    String serverCollation = this.protocol.getServerSession().getServerVariable(
+                        "collation_server");
+                    boolean isCollationDifferent = connectionCollationSuffix.length() > 0
+                        && !connectionCollation.equalsIgnoreCase(serverCollation);
+    
+                    if (dontCheckServerMatch || isCharacterSetNotUTF8 || isCollationDifferent) {
 
                         sendCommand(this.commandBuilder.buildComQuery(null, "SET NAMES " + utf8CharsetName + connectionCollationSuffix), false, 0);
 
