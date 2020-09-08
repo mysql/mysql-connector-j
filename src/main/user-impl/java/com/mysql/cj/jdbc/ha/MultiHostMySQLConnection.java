@@ -336,8 +336,8 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     @Override
-    public boolean isMasterConnection() {
-        return getThisAsProxy().isMasterConnection();
+    public boolean isSourceConnection() {
+        return getThisAsProxy().isSourceConnection();
     }
 
     @Override

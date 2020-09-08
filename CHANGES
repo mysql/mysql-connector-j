@@ -3,6 +3,8 @@
 
 Version 8.0.23
 
+  - WL#14207, Replace language in APIs and source code/docs.
+
 Version 8.0.22
 
   - Fix for Bug#98667 (31711961), "All pipe instances are busy" exception on multiple connections to named Pipe.

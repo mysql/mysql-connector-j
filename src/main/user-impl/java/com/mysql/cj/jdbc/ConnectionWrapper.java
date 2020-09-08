@@ -183,8 +183,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public boolean isMasterConnection() {
-        return this.mc.isMasterConnection();
+    public boolean isSourceConnection() {
+        return this.mc.isSourceConnection();
     }
 
     @Override

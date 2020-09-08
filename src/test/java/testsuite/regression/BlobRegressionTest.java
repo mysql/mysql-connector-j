@@ -441,7 +441,7 @@ public class BlobRegressionTest extends BaseTestCase {
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.emulateLocators.getKeyName(), "true");
-        Connection locatorConn = getMasterSlaveReplicationConnection(props);
+        Connection locatorConn = getSourceReplicaReplicationConnection(props);
 
         this.rs = locatorConn.createStatement().executeQuery("SELECT ID, 'DATA' AS BLOB_DATA from testBug95210");
         assertTrue(this.rs.next());

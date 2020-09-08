@@ -59,32 +59,32 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
     }
 
     @Override
-    public void addSlaveHost(String groupFilter, String host) throws SQLException {
-        ReplicationConnectionGroupManager.addSlaveHost(groupFilter, host);
+    public void addReplicaHost(String groupFilter, String host) throws SQLException {
+        ReplicationConnectionGroupManager.addReplicaHost(groupFilter, host);
     }
 
     @Override
-    public void removeSlaveHost(String groupFilter, String host) throws SQLException {
-        ReplicationConnectionGroupManager.removeSlaveHost(groupFilter, host);
+    public void removeReplicaHost(String groupFilter, String host) throws SQLException {
+        ReplicationConnectionGroupManager.removeReplicaHost(groupFilter, host);
     }
 
     @Override
-    public void promoteSlaveToMaster(String groupFilter, String host) throws SQLException {
-        ReplicationConnectionGroupManager.promoteSlaveToMaster(groupFilter, host);
-
-    }
-
-    @Override
-    public void removeMasterHost(String groupFilter, String host) throws SQLException {
-        ReplicationConnectionGroupManager.removeMasterHost(groupFilter, host);
+    public void promoteReplicaToSource(String groupFilter, String host) throws SQLException {
+        ReplicationConnectionGroupManager.promoteReplicaToSource(groupFilter, host);
 
     }
 
     @Override
-    public String getMasterHostsList(String group) {
+    public void removeSourceHost(String groupFilter, String host) throws SQLException {
+        ReplicationConnectionGroupManager.removeSourceHost(groupFilter, host);
+
+    }
+
+    @Override
+    public String getSourceHostsList(String group) {
         StringBuilder sb = new StringBuilder("");
         boolean found = false;
-        for (String host : ReplicationConnectionGroupManager.getMasterHosts(group)) {
+        for (String host : ReplicationConnectionGroupManager.getSourceHosts(group)) {
             if (found) {
                 sb.append(",");
             }
@@ -95,10 +95,10 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
     }
 
     @Override
-    public String getSlaveHostsList(String group) {
+    public String getReplicaHostsList(String group) {
         StringBuilder sb = new StringBuilder("");
         boolean found = false;
-        for (String host : ReplicationConnectionGroupManager.getSlaveHosts(group)) {
+        for (String host : ReplicationConnectionGroupManager.getReplicaHosts(group)) {
             if (found) {
                 sb.append(",");
             }
@@ -124,18 +124,18 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
     }
 
     @Override
-    public int getActiveMasterHostCount(String group) {
-        return ReplicationConnectionGroupManager.getMasterHosts(group).size();
+    public int getActiveSourceHostCount(String group) {
+        return ReplicationConnectionGroupManager.getSourceHosts(group).size();
     }
 
     @Override
-    public int getActiveSlaveHostCount(String group) {
-        return ReplicationConnectionGroupManager.getSlaveHosts(group).size();
+    public int getActiveReplicaHostCount(String group) {
+        return ReplicationConnectionGroupManager.getReplicaHosts(group).size();
     }
 
     @Override
-    public int getSlavePromotionCount(String group) {
-        return ReplicationConnectionGroupManager.getNumberOfMasterPromotion(group);
+    public int getReplicaPromotionCount(String group) {
+        return ReplicationConnectionGroupManager.getNumberOfSourcePromotion(group);
     }
 
     @Override

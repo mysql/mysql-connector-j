@@ -45,11 +45,15 @@ import com.mysql.cj.conf.HostsListView;
 import com.mysql.cj.conf.PropertyKey;
 
 public class ReplicationConnectionUrl extends ConnectionUrl {
-    private static final String TYPE_MASTER = "MASTER";
-    private static final String TYPE_SLAVE = "SLAVE";
+    private static final String TYPE_SOURCE = "SOURCE";
+    private static final String TYPE_REPLICA = "REPLICA";
+    @Deprecated
+    private static final String TYPE_SOURCE_DEPRECATED = "MASTER";
+    @Deprecated
+    private static final String TYPE_REPLICA_DEPRECATED = "SLAVE";
 
-    private List<HostInfo> masterHosts = new ArrayList<>();
-    private List<HostInfo> slaveHosts = new ArrayList<>();
+    private List<HostInfo> sourceHosts = new ArrayList<>();
+    private List<HostInfo> replicaHosts = new ArrayList<>();
 
     /**
      * Constructs an instance of {@link ReplicationConnectionUrl}, performing all the required initializations.
@@ -63,15 +67,17 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
         super(connStrParser, info);
         this.type = Type.REPLICATION_CONNECTION;
 
-        // Split masters and slaves:
+        // Split sources and replicas:
         LinkedList<HostInfo> undefinedHosts = new LinkedList<>();
         for (HostInfo hi : this.hosts) {
             Map<String, String> hostProperties = hi.getHostProperties();
             if (hostProperties.containsKey(PropertyKey.TYPE.getKeyName())) {
-                if (TYPE_MASTER.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))) {
-                    this.masterHosts.add(hi);
-                } else if (TYPE_SLAVE.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))) {
-                    this.slaveHosts.add(hi);
+                if (TYPE_SOURCE.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))
+                        || TYPE_SOURCE_DEPRECATED.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))) {
+                    this.sourceHosts.add(hi);
+                } else if (TYPE_REPLICA.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))
+                        || TYPE_REPLICA_DEPRECATED.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))) {
+                    this.replicaHosts.add(hi);
                 } else {
                     undefinedHosts.add(hi);
                 }
@@ -80,17 +86,17 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
             }
         }
         if (!undefinedHosts.isEmpty()) {
-            if (this.masterHosts.isEmpty()) {
-                this.masterHosts.add(undefinedHosts.removeFirst());
+            if (this.sourceHosts.isEmpty()) {
+                this.sourceHosts.add(undefinedHosts.removeFirst());
             }
-            this.slaveHosts.addAll(undefinedHosts);
+            this.replicaHosts.addAll(undefinedHosts);
         }
 
         // TODO: Validate the hosts list: there can't be any two hosts with same host:port.
         // Although this should be required, it also is incompatible with our current tests which are creating replication connections
         // using the same host configurations.
         //        Set<String> visitedHosts = new HashSet<>();
-        //        for (List<HostInfo> hostsLists : Arrays.asList(this.masterHosts, this.slaveHosts)) {
+        //        for (List<HostInfo> hostsLists : Arrays.asList(this.sourceHosts, this.replicaHosts)) {
         //            for (HostInfo hi : hostsLists) {
         //                if (visitedHosts.contains(hi.getHostPortPair())) {
         //                    throw ExceptionFactory.createException(WrongArgumentException.class,
@@ -102,26 +108,26 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
     }
 
     /**
-     * Constructs an instance of a {@link ReplicationConnectionUrl} based on a list of master hosts, a list of slave hosts and a global set of properties
+     * Constructs an instance of a {@link ReplicationConnectionUrl} based on a list of source hosts, a list of replica hosts and a global set of properties
      * instead of connection string parsing.
      * {@link ConnectionUrl} instances created by this process are not cached.
      * 
-     * @param masters
-     *            the master hosts list to use in this connection string
-     * @param slaves
-     *            the slave hosts list to use in this connection string
+     * @param sources
+     *            the source hosts list to use in this connection string
+     * @param replicas
+     *            the replica hosts list to use in this connection string
      * @param properties
      *            the properties common to all hosts
      */
-    public ReplicationConnectionUrl(List<HostInfo> masters, List<HostInfo> slaves, Map<String, String> properties) {
+    public ReplicationConnectionUrl(List<HostInfo> sources, List<HostInfo> replicas, Map<String, String> properties) {
         this.originalConnStr = ConnectionUrl.Type.REPLICATION_CONNECTION.getScheme() + "//**internally_generated**" + System.currentTimeMillis() + "**";
         this.originalDatabase = properties.containsKey(PropertyKey.DBNAME.getKeyName()) ? properties.get(PropertyKey.DBNAME.getKeyName()) : "";
         this.type = ConnectionUrl.Type.REPLICATION_CONNECTION;
         this.properties.putAll(properties);
         injectPerTypeProperties(this.properties);
         setupPropertiesTransformer(); // This is needed if new hosts come to be spawned in this connection URL.
-        masters.stream().map(this::fixHostInfo).peek(this.masterHosts::add).forEach(this.hosts::add); // Fix the hosts info based on the new properties before adding them.
-        slaves.stream().map(this::fixHostInfo).peek(this.slaveHosts::add).forEach(this.hosts::add); // Fix the hosts info based on the new properties before adding them.
+        sources.stream().map(this::fixHostInfo).peek(this.sourceHosts::add).forEach(this.hosts::add); // Fix the hosts info based on the new properties before adding them.
+        replicas.stream().map(this::fixHostInfo).peek(this.replicaHosts::add).forEach(this.hosts::add); // Fix the hosts info based on the new properties before adding them.
     }
 
     /**
@@ -135,33 +141,33 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
     @Override
     public List<HostInfo> getHostsList(HostsListView view) {
         switch (view) {
-            case MASTERS:
-                return Collections.unmodifiableList(this.masterHosts);
-            case SLAVES:
-                return Collections.unmodifiableList(this.slaveHosts);
+            case SOURCES:
+                return Collections.unmodifiableList(this.sourceHosts);
+            case REPLICAS:
+                return Collections.unmodifiableList(this.replicaHosts);
             default:
                 return super.getHostsList(HostsListView.ALL);
         }
     }
 
     /**
-     * Returns an existing master host info with the same host:port part or spawns a new isolated host info based on this connection URL if none was found.
+     * Returns an existing source host info with the same host:port part or spawns a new isolated host info based on this connection URL if none was found.
      * 
      * @param hostPortPair
      *            the host:port part to search for
      * @return the existing host info or a new independent one
      */
-    public HostInfo getMasterHostOrSpawnIsolated(String hostPortPair) {
-        return super.getHostOrSpawnIsolated(hostPortPair, this.masterHosts);
+    public HostInfo getSourceHostOrSpawnIsolated(String hostPortPair) {
+        return super.getHostOrSpawnIsolated(hostPortPair, this.sourceHosts);
     }
 
     /**
-     * Returns a list of this connection URL master hosts in the form of host:port pairs.
+     * Returns a list of this connection URL source hosts in the form of host:port pairs.
      * 
-     * @return a list of this connection URL master hosts in the form of host:port pairs
+     * @return a list of this connection URL source hosts in the form of host:port pairs
      */
-    public List<String> getMastersListAsHostPortPairs() {
-        return this.masterHosts.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList());
+    public List<String> getSourcesListAsHostPortPairs() {
+        return this.sourceHosts.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList());
     }
 
     /**
@@ -172,28 +178,28 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
      *            a list of host:port pairs
      * @return a list of {@link HostInfo} instances corresponding to the given host:port pairs
      */
-    public List<HostInfo> getMasterHostsListFromHostPortPairs(Collection<String> hostPortPairs) {
-        return hostPortPairs.stream().map(this::getMasterHostOrSpawnIsolated).collect(Collectors.toList());
+    public List<HostInfo> getSourceHostsListFromHostPortPairs(Collection<String> hostPortPairs) {
+        return hostPortPairs.stream().map(this::getSourceHostOrSpawnIsolated).collect(Collectors.toList());
     }
 
     /**
-     * Returns an existing slave host info with the same host:port part or spawns a new isolated host info based on this connection URL if none was found.
+     * Returns an existing replica host info with the same host:port part or spawns a new isolated host info based on this connection URL if none was found.
      * 
      * @param hostPortPair
      *            the host:port part to search for
      * @return the existing host info or a new independent one
      */
-    public HostInfo getSlaveHostOrSpawnIsolated(String hostPortPair) {
-        return super.getHostOrSpawnIsolated(hostPortPair, this.slaveHosts);
+    public HostInfo getReplicaHostOrSpawnIsolated(String hostPortPair) {
+        return super.getHostOrSpawnIsolated(hostPortPair, this.replicaHosts);
     }
 
     /**
-     * Returns a list of this connection URL master hosts in the form of host:port pairs.
+     * Returns a list of this connection URL replica hosts in the form of host:port pairs.
      * 
-     * @return a list of this connection URL master hosts in the form of host:port pairs
+     * @return a list of this connection URL replica hosts in the form of host:port pairs
      */
-    public List<String> getSlavesListAsHostPortPairs() {
-        return this.slaveHosts.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList());
+    public List<String> getReplicasListAsHostPortPairs() {
+        return this.replicaHosts.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList());
     }
 
     /**
@@ -204,7 +210,7 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
      *            a list of host:port pairs
      * @return a list of {@link HostInfo} instances corresponding to the given host:port pairs
      */
-    public List<HostInfo> getSlaveHostsListFromHostPortPairs(Collection<String> hostPortPairs) {
-        return hostPortPairs.stream().map(this::getSlaveHostOrSpawnIsolated).collect(Collectors.toList());
+    public List<HostInfo> getReplicaHostsListFromHostPortPairs(Collection<String> hostPortPairs) {
+        return hostPortPairs.stream().map(this::getReplicaHostOrSpawnIsolated).collect(Collectors.toList());
     }
 }

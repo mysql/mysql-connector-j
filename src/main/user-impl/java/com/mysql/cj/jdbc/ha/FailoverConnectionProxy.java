@@ -49,8 +49,8 @@ import com.mysql.cj.util.Util;
 
 /**
  * A proxy for a dynamic com.mysql.cj.jdbc.JdbcConnection implementation that provides failover features for list of hosts. Connection switching occurs on
- * communications related exceptions and/or user defined settings, namely when one of the conditions set in 'secondsBeforeRetryMaster' or
- * 'queriesBeforeRetryMaster' is met.
+ * communications related exceptions and/or user defined settings, namely when one of the conditions set in 'secondsBeforeRetrySource' or
+ * 'queriesBeforeRetrySource' is met.
  */
 public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     private static final String METHOD_SET_READ_ONLY = "setReadOnly";
@@ -127,8 +127,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
         JdbcPropertySetImpl connProps = new JdbcPropertySetImpl();
         connProps.initializeProperties(connectionUrl.getConnectionArgumentsAsProperties());
 
-        this.secondsBeforeRetryPrimaryHost = connProps.getIntegerProperty(PropertyKey.secondsBeforeRetryMaster).getValue();
-        this.queriesBeforeRetryPrimaryHost = connProps.getIntegerProperty(PropertyKey.queriesBeforeRetryMaster).getValue();
+        this.secondsBeforeRetryPrimaryHost = connProps.getIntegerProperty(PropertyKey.secondsBeforeRetrySource).getValue();
+        this.queriesBeforeRetryPrimaryHost = connProps.getIntegerProperty(PropertyKey.queriesBeforeRetrySource).getValue();
         this.failoverReadOnly = connProps.getBooleanProperty(PropertyKey.failOverReadOnly).getValue();
         this.retriesAllDown = connProps.getIntegerProperty(PropertyKey.retriesAllDown).getValue();
 
@@ -174,10 +174,10 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     }
 
     /**
-     * Checks if current connection is to a master host.
+     * Checks if current connection is to a source host.
      */
     @Override
-    boolean isMasterConnection() {
+    boolean isSourceConnection() {
         return connectedToPrimaryHost();
     }
 
@@ -388,8 +388,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     }
 
     /**
-     * Checks if at least one of the required conditions to fall back to primary host is met, which is determined by the properties 'queriesBeforeRetryMaster'
-     * and 'secondsBeforeRetryMaster'.
+     * Checks if at least one of the required conditions to fall back to primary host is met, which is determined by the properties 'queriesBeforeRetrySource'
+     * and 'secondsBeforeRetrySource'.
      * 
      * @return true if ready
      */
@@ -436,7 +436,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     }
 
     /**
-     * Checks the condition set by the property 'secondsBeforeRetryMaster'.
+     * Checks the condition set by the property 'secondsBeforeRetrySource'.
      * 
      * @return value
      */
@@ -445,7 +445,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     }
 
     /**
-     * Checks the condition set by the property 'queriesBeforeRetryMaster'.
+     * Checks the condition set by the property 'queriesBeforeRetrySource'.
      * 
      * @return value
      */

@@ -226,11 +226,19 @@ public final class MysqlErrorNumbers {
     public final static int ER_ERROR_DURING_CHECKPOINT = 1183; //SQLSTATE: HY000 Message: Got error %d during CHECKPOINT
     public final static int ER_NEW_ABORTING_CONNECTION = 1184; //SQLSTATE: 08S01 Message: Aborted connection %ld to db: '%s' user: '%s' host: '%s' (%s)
     public final static int ER_DUMP_NOT_IMPLEMENTED = 1185; //SQLSTATE: HY000 Message: The storage engine for the table does not support binary table dump
-    public final static int ER_FLUSH_MASTER_BINLOG_CLOSED = 1186; //SQLSTATE: HY000 Message: Binlog closed, cannot RESET MASTER
+    @Deprecated
+    public final static int ER_FLUSH_MASTER_BINLOG_CLOSED = 1186;
+    public final static int ER_FLUSH_SOURCE_BINLOG_CLOSED = 1186; //SQLSTATE: HY000 Message: Binlog closed, cannot RESET SOURCE
     public final static int ER_INDEX_REBUILD = 1187; //SQLSTATE: HY000 Message: Failed rebuilding the index of dumped table '%s'
-    public final static int ER_MASTER = 1188; //SQLSTATE: HY000 Message: Error from master: '%s'
-    public final static int ER_MASTER_NET_READ = 1189; //SQLSTATE: 08S01 Message: Net error reading from master
-    public final static int ER_MASTER_NET_WRITE = 1190; //SQLSTATE: 08S01 Message: Net error writing to master
+    @Deprecated
+    public final static int ER_MASTER = 1188;
+    public final static int ER_SOURCE = 1188; //SQLSTATE: HY000 Message: Error from source: '%s'
+    @Deprecated
+    public final static int ER_MASTER_NET_READ = 1189;
+    public final static int ER_SOURCE_NET_READ = 1189; //SQLSTATE: 08S01 Message: Net error reading from source
+    @Deprecated
+    public final static int ER_MASTER_NET_WRITE = 1190;
+    public final static int ER_SOURCE_NET_WRITE = 1190; //SQLSTATE: 08S01 Message: Net error writing to source
     public final static int ER_FT_MATCHING_KEY_NOT_FOUND = 1191; //SQLSTATE: HY000 Message: Can't find FULLTEXT index matching the column list
     public final static int ER_LOCK_OR_ACTIVE_TRANSACTION = 1192; //SQLSTATE: HY000 Message: Can't execute the given command because you have active locked tables or an active transaction
     public final static int ER_UNKNOWN_SYSTEM_VARIABLE = 1193; //SQLSTATE: HY000 Message: Unknown system variable '%s'
@@ -238,11 +246,21 @@ public final class MysqlErrorNumbers {
     public final static int ER_CRASHED_ON_REPAIR = 1195; //SQLSTATE: HY000 Message: Table '%s' is marked as crashed and last (automatic?) repair failed
     public final static int ER_WARNING_NOT_COMPLETE_ROLLBACK = 1196; //SQLSTATE: HY000 Message: Some non-transactional changed tables couldn't be rolled back
     public final static int ER_TRANS_CACHE_FULL = 1197; //SQLSTATE: HY000 Message: Multi-statement transaction required more than 'max_binlog_cache_size' bytes of storage; increase this mysqld variable and try again
-    public final static int ER_SLAVE_MUST_STOP = 1198; //SQLSTATE: HY000 Message: This operation cannot be performed with a running slave; run STOP SLAVE first
-    public final static int ER_SLAVE_NOT_RUNNING = 1199; //SQLSTATE: HY000 Message: This operation requires a running slave; configure slave and do START SLAVE
-    public final static int ER_BAD_SLAVE = 1200; //SQLSTATE: HY000 Message: The server is not configured as slave; fix in config file or with CHANGE MASTER TO
-    public final static int ER_MASTER_INFO = 1201; //SQLSTATE: HY000 Message: Could not initialize master info structure; more error messages can be found in the MySQL error log
-    public final static int ER_SLAVE_THREAD = 1202; //SQLSTATE: HY000 Message: Could not create slave thread; check system resources
+    @Deprecated
+    public final static int ER_SLAVE_MUST_STOP = 1198;
+    public final static int ER_REPLICA_MUST_STOP = 1198; //SQLSTATE: HY000 Message: This operation cannot be performed with a running replica; run STOP REPLICA first
+    @Deprecated
+    public final static int ER_SLAVE_NOT_RUNNING = 1199;
+    public final static int ER_REPLICA_NOT_RUNNING = 1199; //SQLSTATE: HY000 Message: This operation requires a running replica; configure replica and do START REPLICA
+    @Deprecated
+    public final static int ER_BAD_SLAVE = 1200;
+    public final static int ER_BAD_REPLICA = 1200; //SQLSTATE: HY000 Message: The server is not configured as replica; fix in config file or with CHANGE SOURCE TO
+    @Deprecated
+    public final static int ER_MASTER_INFO = 1201;
+    public final static int ER_SOURCE_INFO = 1201; //SQLSTATE: HY000 Message: Could not initialize source info structure; more error messages can be found in the MySQL error log
+    @Deprecated
+    public final static int ER_SLAVE_THREAD = 1202;
+    public final static int ER_REPLICA_THREAD = 1202; //SQLSTATE: HY000 Message: Could not create replica thread; check system resources
     public final static int ER_TOO_MANY_USER_CONNECTIONS = 1203; //SQLSTATE: 42000 Message: User %s already has more than 'max_user_connections' active connections
     public final static int ER_SET_CONSTANTS_ONLY = 1204; //SQLSTATE: HY000 Message: You may only use constant expressions with SET
     public final static int ER_LOCK_WAIT_TIMEOUT = 1205; //SQLSTATE: HY000 Message: Lock wait timeout exceeded; try restarting transaction
@@ -258,8 +276,12 @@ public final class MysqlErrorNumbers {
     public final static int ER_CANNOT_ADD_FOREIGN = 1215; //SQLSTATE: HY000 Message: Cannot add foreign key constraint
     public final static int ER_NO_REFERENCED_ROW = 1216; //SQLSTATE: 23000 Message: Cannot add or update a child row: a foreign key constraint fails
     public final static int ER_ROW_IS_REFERENCED = 1217; //SQLSTATE: 23000 Message: Cannot delete or update a parent row: a foreign key constraint fails
-    public final static int ER_CONNECT_TO_MASTER = 1218; //SQLSTATE: 08S01 Message: Error connecting to master: %s
-    public final static int ER_QUERY_ON_MASTER = 1219; //SQLSTATE: HY000 Message: Error running query on master: %s
+    @Deprecated
+    public final static int ER_CONNECT_TO_MASTER = 1218;
+    public final static int ER_CONNECT_TO_SOURCE = 1218; //SQLSTATE: 08S01 Message: Error connecting to source: %s
+    @Deprecated
+    public final static int ER_QUERY_ON_MASTER = 1219;
+    public final static int ER_QUERY_ON_SOURCE = 1219; //SQLSTATE: HY000 Message: Error running query on source: %s
     public final static int ER_ERROR_WHEN_EXECUTING_COMMAND = 1220; //SQLSTATE: HY000 Message: Error when executing command %s: %s
     public final static int ER_WRONG_USAGE = 1221; //SQLSTATE: HY000 Message: Incorrect usage of %s and %s
     public final static int ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT = 1222; //SQLSTATE: 21000 Message: The used SELECT statements have a different number of columns
@@ -276,8 +298,12 @@ public final class MysqlErrorNumbers {
     public final static int ER_VAR_CANT_BE_READ = 1233; //SQLSTATE: HY000 Message: Variable '%s' can only be set, not read
     public final static int ER_CANT_USE_OPTION_HERE = 1234; //SQLSTATE: 42000 Message: Incorrect usage/placement of '%s'
     public final static int ER_NOT_SUPPORTED_YET = 1235; //SQLSTATE: 42000 Message: This version of MySQL doesn't yet support '%s'
-    public final static int ER_MASTER_FATAL_ERROR_READING_BINLOG = 1236; //SQLSTATE: HY000 Message: Got fatal error %d from master when reading data from binary log: '%s'
-    public final static int ER_SLAVE_IGNORED_TABLE = 1237; //SQLSTATE: HY000 Message: Slave SQL thread ignored the query because of replicate-*-table rules
+    @Deprecated
+    public final static int ER_MASTER_FATAL_ERROR_READING_BINLOG = 1236;
+    public final static int ER_SOURCE_FATAL_ERROR_READING_BINLOG = 1236; //SQLSTATE: HY000 Message: Got fatal error %d from source when reading data from binary log: '%s'
+    @Deprecated
+    public final static int ER_SLAVE_IGNORED_TABLE = 1237;
+    public final static int ER_REPLICA_IGNORED_TABLE = 1237; //SQLSTATE: HY000 Message: Replica SQL thread ignored the query because of replicate-*-table rules
     public final static int ER_INCORRECT_GLOBAL_LOCAL_VAR = 1238; //SQLSTATE: HY000 Message: Variable '%s' is a %s variable
     public final static int ER_WRONG_FK_DEF = 1239; //SQLSTATE: 42000 Message: Incorrect foreign key definition for '%s': %s
     public final static int ER_KEY_REF_DO_NOT_MATCH_TABLE_REF = 1240; //SQLSTATE: HY000 Message: Key reference and table reference don't match
@@ -294,8 +320,12 @@ public final class MysqlErrorNumbers {
     public final static int ER_NOT_SUPPORTED_AUTH_MODE = 1251; //SQLSTATE: 08004 Message: Client does not support authentication protocol requested by server; consider upgrading MySQL client
     public final static int ER_SPATIAL_CANT_HAVE_NULL = 1252; //SQLSTATE: 42000 Message: All parts of a SPATIAL index must be NOT NULL
     public final static int ER_COLLATION_CHARSET_MISMATCH = 1253; //SQLSTATE: 42000 Message: COLLATION '%s' is not valid for CHARACTER SET '%s'
-    public final static int ER_SLAVE_WAS_RUNNING = 1254; //SQLSTATE: HY000 Message: Slave is already running
-    public final static int ER_SLAVE_WAS_NOT_RUNNING = 1255; //SQLSTATE: HY000 Message: Slave already has been stopped
+    @Deprecated
+    public final static int ER_SLAVE_WAS_RUNNING = 1254;
+    public final static int ER_REPLICA_WAS_RUNNING = 1254; //SQLSTATE: HY000 Message: Replica is already running
+    @Deprecated
+    public final static int ER_SLAVE_WAS_NOT_RUNNING = 1255;
+    public final static int ER_REPLICA_WAS_NOT_RUNNING = 1255; //SQLSTATE: HY000 Message: Replica already has been stopped
     public final static int ER_TOO_BIG_FOR_UNCOMPRESS = 1256; //SQLSTATE: HY000 Message: Uncompressed data size too large; the maximum size is %d (probably, length of uncompressed data was corrupted)
     public final static int ER_ZLIB_Z_MEM_ERROR = 1257; //SQLSTATE: HY000 Message: ZLIB: Not enough memory
     public final static int ER_ZLIB_Z_BUF_ERROR = 1258; //SQLSTATE: HY000 Message: ZLIB: Not enough room in the output buffer (probably, length of uncompressed data was corrupted)
@@ -314,11 +344,17 @@ public final class MysqlErrorNumbers {
     public final static int ER_CANT_AGGREGATE_NCOLLATIONS = 1271; //SQLSTATE: HY000 Message: Illegal mix of collations for operation '%s'
     public final static int ER_VARIABLE_IS_NOT_STRUCT = 1272; //SQLSTATE: HY000 Message: Variable '%s' is not a variable component (can't be used as XXXX.variable_name)
     public final static int ER_UNKNOWN_COLLATION = 1273; //SQLSTATE: HY000 Message: Unknown collation: '%s'
-    public final static int ER_SLAVE_IGNORED_SSL_PARAMS = 1274; //SQLSTATE: HY000 Message: SSL parameters in CHANGE MASTER are ignored because this MySQL slave was compiled without SSL support; they can be used later if MySQL slave with SSL is started
+    @Deprecated
+    public final static int ER_SLAVE_IGNORED_SSL_PARAMS = 1274;
+    public final static int ER_REPLICA_IGNORED_SSL_PARAMS = 1274; //SQLSTATE: HY000 Message: SSL parameters in CHANGE SOURCE are ignored because this MySQL replica was compiled without SSL support; they can be used later if MySQL replica with SSL is started
     public final static int ER_SERVER_IS_IN_SECURE_AUTH_MODE = 1275; //SQLSTATE: HY000 Message: Server is running in --secure-auth mode, but '%s'@'%s' has a password in the old format; please change the password to the new format
     public final static int ER_WARN_FIELD_RESOLVED = 1276; //SQLSTATE: HY000 Message: Field or reference '%s%s%s%s%s' of SELECT #%d was resolved in SELECT #%d
-    public final static int ER_BAD_SLAVE_UNTIL_COND = 1277; //SQLSTATE: HY000 Message: Incorrect parameter or combination of parameters for START SLAVE UNTIL
-    public final static int ER_MISSING_SKIP_SLAVE = 1278; //SQLSTATE: HY000 Message: It is recommended to use --skip-slave-start when doing step-by-step replication with START SLAVE UNTIL; otherwise, you will get problems if you get an unexpected slave's mysqld restart
+    @Deprecated
+    public final static int ER_BAD_SLAVE_UNTIL_COND = 1277;
+    public final static int ER_BAD_REPLICA_UNTIL_COND = 1277; //SQLSTATE: HY000 Message: Incorrect parameter or combination of parameters for START REPLICA UNTIL
+    @Deprecated
+    public final static int ER_MISSING_SKIP_SLAVE = 1278;
+    public final static int ER_MISSING_SKIP_REPLICA = 1278; //SQLSTATE: HY000 Message: It is recommended to use --skip-replica-start when doing step-by-step replication with START REPLICA UNTIL; otherwise, you will get problems if you get an unexpected replica's mysqld restart
     public final static int ER_UNTIL_COND_IGNORED = 1279; //SQLSTATE: HY000 Message: SQL thread is not to be started so UNTIL options are ignored
     public final static int ER_WRONG_NAME_FOR_INDEX = 1280; //SQLSTATE: 42000 Message: Incorrect index name '%s'
     public final static int ER_WRONG_NAME_FOR_CATALOG = 1281; //SQLSTATE: 42000 Message: Incorrect catalog name '%s'
@@ -575,8 +611,8 @@ public final class MysqlErrorNumbers {
     public final static int ER_SIZE_OVERFLOW_ERROR = 1532; //SQLSTATE: HY000 Message: The size number was correct but we don't allow the digit part to be more than 2 billion
     public final static int ER_ALTER_FILEGROUP_FAILED = 1533; //SQLSTATE: HY000 Message: Failed to alter: %s
     public final static int ER_BINLOG_ROW_LOGGING_FAILED = 1534; //SQLSTATE: HY000 Message: Writing one row to the row-based binary log failed
-    public final static int ER_BINLOG_ROW_WRONG_TABLE_DEF = 1535; //SQLSTATE: HY000 Message: Table definition on master and slave does not match: %s
-    public final static int ER_BINLOG_ROW_RBR_TO_SBR = 1536; //SQLSTATE: HY000 Message: Slave running with --log-slave-updates must use row-based binary logging to be able to replicate row-based binary log events
+    public final static int ER_BINLOG_ROW_WRONG_TABLE_DEF = 1535; //SQLSTATE: HY000 Message: Table definition on source and replica does not match: %s
+    public final static int ER_BINLOG_ROW_RBR_TO_SBR = 1536; //SQLSTATE: HY000 Message: Replica running with --log-replica-updates must use row-based binary logging to be able to replicate row-based binary log events
     public final static int ER_EVENT_ALREADY_EXISTS = 1537; //SQLSTATE: HY000 Message: Event '%s' already exists
     public final static int ER_EVENT_STORE_FAILED = 1538; //SQLSTATE: HY000 Message: Failed to store event %s. Error code %d from storage engine.
     public final static int ER_EVENT_DOES_NOT_EXIST = 1539; //SQLSTATE: HY000 Message: Unknown event '%s'
@@ -630,14 +666,26 @@ public final class MysqlErrorNumbers {
     public final static int ER_BINLOG_PURGE_EMFILE = 1587; //SQLSTATE: HY000 Message: Too many files opened, please execute the command again
     public final static int ER_EVENT_CANNOT_CREATE_IN_THE_PAST = 1588; //SQLSTATE: HY000 Message: Event execution time is in the past and ON COMPLETION NOT PRESERVE is set. The event was dropped immediately after creation.
     public final static int ER_EVENT_CANNOT_ALTER_IN_THE_PAST = 1589; //SQLSTATE: HY000 Message: Event execution time is in the past and ON COMPLETION NOT PRESERVE is set. The event was dropped immediately after creation.
-    public final static int ER_SLAVE_INCIDENT = 1590; //SQLSTATE: HY000 Message: The incident %s occured on the master. Message: %s
+    @Deprecated
+    public final static int ER_SLAVE_INCIDENT = 1590;
+    public final static int ER_REPLICA_INCIDENT = 1590; //SQLSTATE: HY000 Message: The incident %s occured on the source. Message: %s
     public final static int ER_NO_PARTITION_FOR_GIVEN_VALUE_SILENT = 1591; //SQLSTATE: HY000 Message: Table has no partition for some existing values
     public final static int ER_BINLOG_UNSAFE_STATEMENT = 1592; //SQLSTATE: HY000 Message: Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT. %s
-    public final static int ER_SLAVE_FATAL_ERROR = 1593; //SQLSTATE: HY000 Message: Fatal error: %s
-    public final static int ER_SLAVE_RELAY_LOG_READ_FAILURE = 1594; //SQLSTATE: HY000 Message: Relay log read failure: %s
-    public final static int ER_SLAVE_RELAY_LOG_WRITE_FAILURE = 1595; //SQLSTATE: HY000 Message: Relay log write failure: %s
-    public final static int ER_SLAVE_CREATE_EVENT_FAILURE = 1596; //SQLSTATE: HY000 Message: Failed to create %s
-    public final static int ER_SLAVE_MASTER_COM_FAILURE = 1597; //SQLSTATE: HY000 Message: Master command %s failed: %s
+    @Deprecated
+    public final static int ER_SLAVE_FATAL_ERROR = 1593;
+    public final static int ER_REPLICA_FATAL_ERROR = 1593; //SQLSTATE: HY000 Message: Fatal error: %s
+    @Deprecated
+    public final static int ER_SLAVE_RELAY_LOG_READ_FAILURE = 1594;
+    public final static int ER_REPLICA_RELAY_LOG_READ_FAILURE = 1594; //SQLSTATE: HY000 Message: Relay log read failure: %s
+    @Deprecated
+    public final static int ER_SLAVE_RELAY_LOG_WRITE_FAILURE = 1595;
+    public final static int ER_REPLICA_RELAY_LOG_WRITE_FAILURE = 1595; //SQLSTATE: HY000 Message: Relay log write failure: %s
+    @Deprecated
+    public final static int ER_SLAVE_CREATE_EVENT_FAILURE = 1596;
+    public final static int ER_REPLICA_CREATE_EVENT_FAILURE = 1596; //SQLSTATE: HY000 Message: Failed to create %s
+    @Deprecated
+    public final static int ER_SLAVE_MASTER_COM_FAILURE = 1597;
+    public final static int ER_REPLICA_SOURCE_COM_FAILURE = 1597; //SQLSTATE: HY000 Message: Source command %s failed: %s
     public final static int ER_BINLOG_LOGGING_IMPOSSIBLE = 1598; //SQLSTATE: HY000 Message: Binary logging not possible. Message: %s
     public final static int ER_VIEW_NO_CREATION_CTX = 1599; //SQLSTATE: HY000 Message: View `%s`.`%s` has no creation context
     public final static int ER_VIEW_INVALID_CREATION_CTX = 1600; //SQLSTATE: HY000 Message: Creation context of view `%s`.`%s' is invalid
@@ -648,23 +696,31 @@ public final class MysqlErrorNumbers {
     public final static int ER_EVENT_INVALID_CREATION_CTX = 1605; //SQLSTATE: HY000 Message: Creation context of event `%s`.`%s` is invalid
     public final static int ER_TRG_CANT_OPEN_TABLE = 1606; //SQLSTATE: HY000 Message: Cannot open table for trigger `%s`.`%s`
     public final static int ER_CANT_CREATE_SROUTINE = 1607; //SQLSTATE: HY000 Message: Cannot create stored routine `%s`. Check warnings
-    public final static int ER_NEVER_USED = 1608; //SQLSTATE: HY000 Message: Ambiguous slave modes combination. %s
+    public final static int ER_NEVER_USED = 1608; //SQLSTATE: HY000 Message: Ambiguous replica modes combination. %s
     public final static int ER_NO_FORMAT_DESCRIPTION_EVENT_BEFORE_BINLOG_STATEMENT = 1609; //SQLSTATE: HY000 Message: The BINLOG statement of type `%s` was not preceded by a format description BINLOG statement.
-    public final static int ER_SLAVE_CORRUPT_EVENT = 1610; //SQLSTATE: HY000 Message: Corrupted replication event was detected
+    @Deprecated
+    public final static int ER_SLAVE_CORRUPT_EVENT = 1610;
+    public final static int ER_REPLICA_CORRUPT_EVENT = 1610; //SQLSTATE: HY000 Message: Corrupted replication event was detected
     public final static int ER_LOAD_DATA_INVALID_COLUMN = 1611; //SQLSTATE: HY000 Message: Invalid column reference (%s) in LOAD DATA
     public final static int ER_LOG_PURGE_NO_FILE = 1612; //SQLSTATE: HY000 Message: Being purged log %s was not found
     public final static int ER_XA_RBTIMEOUT = 1613; //SQLSTATE: XA106 Message: XA_RBTIMEOUT: Transaction branch was rolled back: took too long
     public final static int ER_XA_RBDEADLOCK = 1614; //SQLSTATE: XA102 Message: XA_RBDEADLOCK: Transaction branch was rolled back: deadlock was detected
     public final static int ER_NEED_REPREPARE = 1615; //SQLSTATE: HY000 Message: Prepared statement needs to be re-prepared
     public final static int ER_DELAYED_NOT_SUPPORTED = 1616; //SQLSTATE: HY000 Message: DELAYED option not supported for table '%s'
-    public final static int WARN_NO_MASTER_INFO = 1617; //SQLSTATE: HY000 Message: The master info structure does not exist
+    @Deprecated
+    public final static int WARN_NO_MASTER_INFO = 1617;
+    public final static int WARN_NO_SOURCE_INFO = 1617; //SQLSTATE: HY000 Message: The source info structure does not exist
     public final static int WARN_OPTION_IGNORED = 1618; //SQLSTATE: HY000 Message: <%s> option ignored
     public final static int WARN_PLUGIN_DELETE_BUILTIN = 1619; //SQLSTATE: HY000 Message: Built-in plugins cannot be deleted
     public final static int WARN_PLUGIN_BUSY = 1620; //SQLSTATE: HY000 Message: Plugin is busy and will be uninstalled on shutdown
     public final static int ER_VARIABLE_IS_READONLY = 1621; //SQLSTATE: HY000 Message: %s variable '%s' is read-only. Use SET %s to assign the value
     public final static int ER_WARN_ENGINE_TRANSACTION_ROLLBACK = 1622; //SQLSTATE: HY000 Message: Storage engine %s does not support rollback for this statement. Transaction rolled back and must be restarted
-    public final static int ER_SLAVE_HEARTBEAT_FAILURE = 1623; //SQLSTATE: HY000 Message: Unexpected master's heartbeat data: %s
-    public final static int ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE = 1624; //SQLSTATE: HY000 Message: The requested value for the heartbeat period is either negative or exceeds the maximum allowed (%s seconds).
+    @Deprecated
+    public final static int ER_SLAVE_HEARTBEAT_FAILURE = 1623;
+    public final static int ER_REPLICA_HEARTBEAT_FAILURE = 1623; //SQLSTATE: HY000 Message: Unexpected source's heartbeat data: %s
+    @Deprecated
+    public final static int ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE = 1624;
+    public final static int ER_REPLICA_HEARTBEAT_VALUE_OUT_OF_RANGE = 1624; //SQLSTATE: HY000 Message: The requested value for the heartbeat period is either negative or exceeds the maximum allowed (%s seconds).
     public final static int ER_NDB_REPLICATION_SCHEMA_ERROR = 1625; //SQLSTATE: HY000 Message: Bad schema for mysql.ndb_replication table. Message: %s
     public final static int ER_CONFLICT_FN_PARSE_ERROR = 1626; //SQLSTATE: HY000 Message: Error in parsing conflict function. Message: %s
     public final static int ER_EXCEPTIONS_WRITE_ERROR = 1627; //SQLSTATE: HY000 Message: Write to exceptions table failed. Message: %s"
@@ -690,7 +746,9 @@ public final class MysqlErrorNumbers {
     public final static int WARN_COND_ITEM_TRUNCATED = 1647; //SQLSTATE: HY000 Message: Data truncated for condition item '%s'
     public final static int ER_COND_ITEM_TOO_LONG = 1648; //SQLSTATE: HY000 Message: Data too long for condition item '%s'
     public final static int ER_UNKNOWN_LOCALE = 1649; //SQLSTATE: HY000 Message: Unknown locale: '%s'
-    public final static int ER_SLAVE_IGNORE_SERVER_IDS = 1650; //SQLSTATE: HY000 Message: The requested server id %d clashes with the slave startup option --replicate-same-server-id
+    @Deprecated
+    public final static int ER_SLAVE_IGNORE_SERVER_IDS = 1650;
+    public final static int ER_REPLICA_IGNORE_SERVER_IDS = 1650; //SQLSTATE: HY000 Message: The requested server id %d clashes with the replica startup option --replicate-same-server-id
     public final static int ER_QUERY_CACHE_DISABLED = 1651; //SQLSTATE: HY000 Message: Query cache is disabled; restart the server with query_cache_type=1 to enable it
     public final static int ER_SAME_NAME_PARTITION_FIELD = 1652; //SQLSTATE: HY000 Message: Duplicate partition field name '%s'
     public final static int ER_PARTITION_COLUMN_LIST_ERROR = 1653; //SQLSTATE: HY000 Message: Inconsistency in usage of column lists for partitioning
@@ -710,15 +768,19 @@ public final class MysqlErrorNumbers {
     public final static int ER_BINLOG_MULTIPLE_ENGINES_AND_SELF_LOGGING_ENGINE = 1667; //SQLSTATE: HY000 Message: Cannot execute statement: impossible to write to binary log since more than one engine is involved and at least one engine is self-logging.
     public final static int ER_BINLOG_UNSAFE_LIMIT = 1668; //SQLSTATE: HY000 Message: The statement is unsafe because it uses a LIMIT clause. This is unsafe because the set of rows included cannot be predicted.
     public final static int ER_BINLOG_UNSAFE_INSERT_DELAYED = 1669; //SQLSTATE: HY000 Message: The statement is unsafe because it uses INSERT DELAYED. This is unsafe because the times when rows are inserted cannot be predicted.
-    public final static int ER_BINLOG_UNSAFE_SYSTEM_TABLE = 1670; //SQLSTATE: HY000 Message: The statement is unsafe because it uses the general log, slow query log, or performance_schema table(s). This is unsafe because system tables may differ on slaves.
+    public final static int ER_BINLOG_UNSAFE_SYSTEM_TABLE = 1670; //SQLSTATE: HY000 Message: The statement is unsafe because it uses the general log, slow query log, or performance_schema table(s). This is unsafe because system tables may differ on replicas.
     public final static int ER_BINLOG_UNSAFE_AUTOINC_COLUMNS = 1671; //SQLSTATE: HY000 Message: Statement is unsafe because it invokes a trigger or a stored function that inserts into an AUTO_INCREMENT column. Inserted values cannot be logged correctly.
-    public final static int ER_BINLOG_UNSAFE_UDF = 1672; //SQLSTATE: HY000 Message: Statement is unsafe because it uses a UDF which may not return the same value on the slave.
-    public final static int ER_BINLOG_UNSAFE_SYSTEM_VARIABLE = 1673; //SQLSTATE: HY000 Message: Statement is unsafe because it uses a system variable that may have a different value on the slave.
-    public final static int ER_BINLOG_UNSAFE_SYSTEM_FUNCTION = 1674; //SQLSTATE: HY000 Message: Statement is unsafe because it uses a system function that may return a different value on the slave.
+    public final static int ER_BINLOG_UNSAFE_UDF = 1672; //SQLSTATE: HY000 Message: Statement is unsafe because it uses a UDF which may not return the same value on the replica.
+    public final static int ER_BINLOG_UNSAFE_SYSTEM_VARIABLE = 1673; //SQLSTATE: HY000 Message: Statement is unsafe because it uses a system variable that may have a different value on the replica.
+    public final static int ER_BINLOG_UNSAFE_SYSTEM_FUNCTION = 1674; //SQLSTATE: HY000 Message: Statement is unsafe because it uses a system function that may return a different value on the replica.
     public final static int ER_BINLOG_UNSAFE_NONTRANS_AFTER_TRANS = 1675; //SQLSTATE: HY000 Message: Statement is unsafe because it accesses a non-transactional table after accessing a transactional table within the same transaction.
     public final static int ER_MESSAGE_AND_STATEMENT = 1676; //SQLSTATE: HY000 Message: %s Statement: %s
-    public final static int ER_SLAVE_CONVERSION_FAILED = 1677; //SQLSTATE: HY000 Message: Column %d of table '%s.%s' cannot be converted from type '%s' to type '%s'
-    public final static int ER_SLAVE_CANT_CREATE_CONVERSION = 1678; //SQLSTATE: HY000 Message: Can't create conversion table for table '%s.%s'
+    @Deprecated
+    public final static int ER_SLAVE_CONVERSION_FAILED = 1677;
+    public final static int ER_REPLICA_CONVERSION_FAILED = 1677; //SQLSTATE: HY000 Message: Column %d of table '%s.%s' cannot be converted from type '%s' to type '%s'
+    @Deprecated
+    public final static int ER_SLAVE_CANT_CREATE_CONVERSION = 1678;
+    public final static int ER_REPLICA_CANT_CREATE_CONVERSION = 1678; //SQLSTATE: HY000 Message: Can't create conversion table for table '%s.%s'
     public final static int ER_INSIDE_TRANSACTION_PREVENTS_SWITCH_BINLOG_FORMAT = 1679; //SQLSTATE: HY000 Message: Cannot modify @@session.binlog_format inside a transaction
     public final static int ER_PATH_LENGTH = 1680; //SQLSTATE: HY000 Message: The path specified for %s is too long.
     public final static int ER_WARN_DEPRECATED_SYNTAX_NO_REPLACEMENT = 1681; //SQLSTATE: HY000 Message: The syntax '%s' is deprecated and will be removed in MySQL %s.
@@ -743,8 +805,12 @@ public final class MysqlErrorNumbers {
     public final static int ER_GRANT_PLUGIN_USER_EXISTS = 1700; //SQLSTATE: HY000 Message: GRANT with IDENTIFIED WITH is illegal because the user %-.*s already exists
     public final static int ER_TRUNCATE_ILLEGAL_FK = 1701; //SQLSTATE: 42000 Message: Cannot truncate a table referenced in a foreign key constraint (%s)
     public final static int ER_PLUGIN_IS_PERMANENT = 1702; //SQLSTATE: HY000 Message: Plugin '%s' is force_plus_permanent and can not be unloaded
-    public final static int ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE_MIN = 1703; //SQLSTATE: HY000 Message: The requested value for the heartbeat period is less than 1 millisecond. The value is reset to 0, meaning that heartbeating will effectively be disabled.
-    public final static int ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE_MAX = 1704; //SQLSTATE: HY000 Message: The requested value for the heartbeat period exceeds the value of `slave_net_timeout' seconds. A sensible value for the period should be less than the timeout.
+    @Deprecated
+    public final static int ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE_MIN = 1703;
+    public final static int ER_REPLICA_HEARTBEAT_VALUE_OUT_OF_RANGE_MIN = 1703; //SQLSTATE: HY000 Message: The requested value for the heartbeat period is less than 1 millisecond. The value is reset to 0, meaning that heartbeating will effectively be disabled.
+    @Deprecated
+    public final static int ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE_MAX = 1704;
+    public final static int ER_REPLICA_HEARTBEAT_VALUE_OUT_OF_RANGE_MAX = 1704; //SQLSTATE: HY000 Message: The requested value for the heartbeat period exceeds the value of `replica_net_timeout' seconds. A sensible value for the period should be less than the timeout.
     public final static int ER_STMT_CACHE_FULL = 1705; //SQLSTATE: HY000 Message: Multi-row statements required more than 'max_binlog_stmt_cache_size' bytes of storage; increase this mysqld variable and try again
 
     public final static int ER_MULTI_UPDATE_KEY_CONFLICT = 1706; //SQLSTATE: HY000 Message: Primary key/partition key update is not allowed since the table is updated both as '%s' and '%s'.
@@ -755,22 +821,24 @@ public final class MysqlErrorNumbers {
     public final static int ER_ERROR_IN_UNKNOWN_TRIGGER_BODY = 1711; //SQLSTATE: HY000 Message: Unknown trigger has an error in its body: '%s'
     public final static int ER_INDEX_CORRUPT = 1712; //SQLSTATE: HY000 Message: Index %s is corrupted
     public final static int ER_UNDO_RECORD_TOO_BIG = 1713; //SQLSTATE: HY000 Message: Undo log record is too big.
-    public final static int ER_BINLOG_UNSAFE_INSERT_IGNORE_SELECT = 1714; //SQLSTATE: HY000 Message: INSERT IGNORE... SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are ignored. This order cannot be predicted and may differ on master and the slave.
-    public final static int ER_BINLOG_UNSAFE_INSERT_SELECT_UPDATE = 1715; //SQLSTATE: HY000 Message: INSERT... SELECT... ON DUPLICATE KEY UPDATE is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are updated. This order cannot be predicted and may differ on master and the slave.
-    public final static int ER_BINLOG_UNSAFE_REPLACE_SELECT = 1716; //SQLSTATE: HY000 Message: REPLACE... SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are replaced. This order cannot be predicted and may differ on master and the slave.
-    public final static int ER_BINLOG_UNSAFE_CREATE_IGNORE_SELECT = 1717; //SQLSTATE: HY000 Message: CREATE... IGNORE SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are ignored. This order cannot be predicted and may differ on master and the slave.
-    public final static int ER_BINLOG_UNSAFE_CREATE_REPLACE_SELECT = 1718; //SQLSTATE: HY000 Message: CREATE... REPLACE SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are replaced. This order cannot be predicted and may differ on master and the slave.
-    public final static int ER_BINLOG_UNSAFE_UPDATE_IGNORE = 1719; //SQLSTATE: HY000 Message: UPDATE IGNORE is unsafe because the order in which rows are updated determines which (if any) rows are ignored. This order cannot be predicted and may differ on master and the slave.
+    public final static int ER_BINLOG_UNSAFE_INSERT_IGNORE_SELECT = 1714; //SQLSTATE: HY000 Message: INSERT IGNORE... SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are ignored. This order cannot be predicted and may differ on source and the replica.
+    public final static int ER_BINLOG_UNSAFE_INSERT_SELECT_UPDATE = 1715; //SQLSTATE: HY000 Message: INSERT... SELECT... ON DUPLICATE KEY UPDATE is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are updated. This order cannot be predicted and may differ on source and the replica.
+    public final static int ER_BINLOG_UNSAFE_REPLACE_SELECT = 1716; //SQLSTATE: HY000 Message: REPLACE... SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are replaced. This order cannot be predicted and may differ on source and the replica.
+    public final static int ER_BINLOG_UNSAFE_CREATE_IGNORE_SELECT = 1717; //SQLSTATE: HY000 Message: CREATE... IGNORE SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are ignored. This order cannot be predicted and may differ on source and the replica.
+    public final static int ER_BINLOG_UNSAFE_CREATE_REPLACE_SELECT = 1718; //SQLSTATE: HY000 Message: CREATE... REPLACE SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are replaced. This order cannot be predicted and may differ on source and the replica.
+    public final static int ER_BINLOG_UNSAFE_UPDATE_IGNORE = 1719; //SQLSTATE: HY000 Message: UPDATE IGNORE is unsafe because the order in which rows are updated determines which (if any) rows are ignored. This order cannot be predicted and may differ on source and the replica.
     public final static int ER_PLUGIN_NO_UNINSTALL = 1720; //SQLSTATE: HY000 Message: Plugin '%s' is marked as not dynamically uninstallable. You have to stop the server to uninstall it.
     public final static int ER_PLUGIN_NO_INSTALL = 1721; //SQLSTATE: HY000 Message: Plugin '%s' is marked as not dynamically installable. You have to stop the server to install it.
-    public final static int ER_BINLOG_UNSAFE_WRITE_AUTOINC_SELECT = 1722; //SQLSTATE: HY000 Message: Statements writing to a table with an auto-increment column after selecting from another table are unsafe because the order in which rows are retrieved determines what (if any) rows will be written. This order cannot be predicted and may differ on master and the slave.
-    public final static int ER_BINLOG_UNSAFE_CREATE_SELECT_AUTOINC = 1723; //SQLSTATE: HY000 Message: CREATE TABLE... SELECT... on a table with an auto-increment column is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are inserted. This order cannot be predicted and may differ on master and the slave.
+    public final static int ER_BINLOG_UNSAFE_WRITE_AUTOINC_SELECT = 1722; //SQLSTATE: HY000 Message: Statements writing to a table with an auto-increment column after selecting from another table are unsafe because the order in which rows are retrieved determines what (if any) rows will be written. This order cannot be predicted and may differ on source and the replica.
+    public final static int ER_BINLOG_UNSAFE_CREATE_SELECT_AUTOINC = 1723; //SQLSTATE: HY000 Message: CREATE TABLE... SELECT... on a table with an auto-increment column is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are inserted. This order cannot be predicted and may differ on source and the replica.
     public final static int ER_BINLOG_UNSAFE_INSERT_TWO_KEYS = 1724; //SQLSTATE: HY000 Message: INSERT... ON DUPLICATE KEY UPDATE on a table with more than one UNIQUE KEY is unsafe
     public final static int ER_TABLE_IN_FK_CHECK = 1725; //SQLSTATE: HY000 Message: Table is being used in foreign key check.
     public final static int ER_UNSUPPORTED_ENGINE = 1726; //SQLSTATE: HY000 Message: Storage engine '%s' does not support system tables. [%s.%s]
     public final static int ER_BINLOG_UNSAFE_AUTOINC_NOT_FIRST = 1727; //SQLSTATE: HY000 Message: INSERT into autoincrement field which is not the first part in the composed primary key is unsafe.
     public final static int ER_CANNOT_LOAD_FROM_TABLE_V2 = 1728; //SQLSTATE: HY000 Message: Cannot load from %s.%s. The table is probably corrupted
-    public final static int ER_MASTER_DELAY_VALUE_OUT_OF_RANGE = 1729; //SQLSTATE: HY000 Message: The requested value %u for the master delay exceeds the maximum %u
+    @Deprecated
+    public final static int ER_MASTER_DELAY_VALUE_OUT_OF_RANGE = 1729;
+    public final static int ER_SOURCE_DELAY_VALUE_OUT_OF_RANGE = 1729; //SQLSTATE: HY000 Message: The requested value %u for the source delay exceeds the maximum %u
     public final static int ER_ONLY_FD_AND_RBR_EVENTS_ALLOWED_IN_BINLOG_STATEMENT = 1730; //SQLSTATE: HY000 Message: Only Format_description_log_event and row events are allowed in BINLOG statements (but %s was provided)
     public final static int ER_PARTITION_EXCHANGE_DIFFERENT_OPTION = 1731; //SQLSTATE: HY000 Message: Non matching attribute '%s' between partition and table
     public final static int ER_PARTITION_EXCHANGE_PART_TABLE = 1732; //SQLSTATE: HY000 Message: Table to exchange with partition is partitioned: '%s'
@@ -794,17 +862,21 @@ public final class MysqlErrorNumbers {
     public final static int ER_CHANGE_RPL_INFO_REPOSITORY_FAILURE = 1750; //SQLSTATE: HY000 Message: Failure while changing the type of replication repository: %s.
     public final static int ER_WARNING_NOT_COMPLETE_ROLLBACK_WITH_CREATED_TEMP_TABLE = 1751; //SQLSTATE: HY000 Message: The creation of some temporary tables could not be rolled back.
     public final static int ER_WARNING_NOT_COMPLETE_ROLLBACK_WITH_DROPPED_TEMP_TABLE = 1752; //SQLSTATE: HY000 Message: Some temporary tables were dropped, but these operations could not be rolled back.
-    public final static int ER_MTS_FEATURE_IS_NOT_SUPPORTED = 1753; //SQLSTATE: HY000 Message: %s is not supported in multi-threaded slave mode. %s
+    public final static int ER_MTS_FEATURE_IS_NOT_SUPPORTED = 1753; //SQLSTATE: HY000 Message: %s is not supported in multi-threaded replica mode. %s
     public final static int ER_MTS_UPDATED_DBS_GREATER_MAX = 1754; //SQLSTATE: HY000 Message: The number of modified databases exceeds the maximum %d; the database names will not be included in the replication event metadata.
     public final static int ER_MTS_CANT_PARALLEL = 1755; //SQLSTATE: HY000 Message: Cannot execute the current event group in the parallel mode. Encountered event %s, relay-log name %s, position %s which prevents execution of this event group in parallel mode. Reason: %s.
     public final static int ER_MTS_INCONSISTENT_DATA = 1756; //SQLSTATE: HY000 Message: %s
     public final static int ER_FULLTEXT_NOT_SUPPORTED_WITH_PARTITIONING = 1757; //SQLSTATE: HY000 Message: FULLTEXT index is not supported for partitioned tables.
     public final static int ER_DA_INVALID_CONDITION_NUMBER = 1758; //SQLSTATE: 35000 Message: Invalid condition number
     public final static int ER_INSECURE_PLAIN_TEXT = 1759; //SQLSTATE: HY000 Message: Sending passwords in plain text without SSL/TLS is extremely insecure.
-    public final static int ER_INSECURE_CHANGE_MASTER = 1760; //SQLSTATE: HY000 Message: Storing MySQL user name or password information in the master.info repository is not secure and is therefore not recommended. Please see the MySQL Manual for more about this issue and possible alternatives.
+    @Deprecated
+    public final static int ER_INSECURE_CHANGE_MASTER = 1760;
+    public final static int ER_INSECURE_CHANGE_SOURCE = 1760; //SQLSTATE: HY000 Message: Storing MySQL user name or password information in the source.info repository is not secure and is therefore not recommended. Please see the MySQL Manual for more about this issue and possible alternatives.
     public final static int ER_FOREIGN_DUPLICATE_KEY_WITH_CHILD_INFO = 1761; //SQLSTATE: 23000 Message: Foreign key constraint for table '%s', record '%s' would lead to a duplicate entry in table '%s', key '%s'
     public final static int ER_FOREIGN_DUPLICATE_KEY_WITHOUT_CHILD_INFO = 1762; //SQLSTATE: 23000 Message: Foreign key constraint for table '%s', record '%s' would lead to a duplicate entry in a child table
-    public final static int ER_SQLTHREAD_WITH_SECURE_SLAVE = 1763; //SQLSTATE: HY000 Message: Setting authentication options is not possible when only the Slave SQL Thread is being started.
+    @Deprecated
+    public final static int ER_SQLTHREAD_WITH_SECURE_SLAVE = 1763;
+    public final static int ER_SQLTHREAD_WITH_SECURE_REPLICA = 1763; //SQLSTATE: HY000 Message: Setting authentication options is not possible when only the Replica SQL Thread is being started.
     public final static int ER_TABLE_HAS_NO_FT = 1764; //SQLSTATE: HY000 Message: The table does not have FULLTEXT index to support this query
     public final static int ER_VARIABLE_NOT_SETTABLE_IN_SF_OR_TRIGGER = 1765; //SQLSTATE: HY000 Message: The system variable %s cannot be set in stored functions or triggers.
     public final static int ER_VARIABLE_NOT_SETTABLE_IN_TRANSACTION = 1766; //SQLSTATE: HY000 Message: The system variable %s cannot be set when there is an ongoing transaction.
@@ -817,11 +889,13 @@ public final class MysqlErrorNumbers {
     public final static int ER_MALFORMED_GTID_SET_ENCODING = 1773; //SQLSTATE: HY000 Message: Malformed GTID set encoding.
     public final static int ER_MALFORMED_GTID_SPECIFICATION = 1774; //SQLSTATE: HY000 Message: Malformed GTID specification '%s'.
     public final static int ER_GNO_EXHAUSTED = 1775; //SQLSTATE: HY000 Message: Impossible to generate Global Transaction Identifier: the integer component reached the maximal value. Restart the server with a new server_uuid.
-    public final static int ER_BAD_SLAVE_AUTO_POSITION = 1776; //SQLSTATE: HY000 Message: Parameters MASTER_LOG_FILE, MASTER_LOG_POS, RELAY_LOG_FILE and RELAY_LOG_POS cannot be set when MASTER_AUTO_POSITION is active.
-    public final static int ER_AUTO_POSITION_REQUIRES_GTID_MODE_ON = 1777; //SQLSTATE: HY000 Message: CHANGE MASTER TO MASTER_AUTO_POSITION = 1 can only be executed when GTID_MODE = ON.
+    @Deprecated
+    public final static int ER_BAD_SLAVE_AUTO_POSITION = 1776;
+    public final static int ER_BAD_REPLICA_AUTO_POSITION = 1776; //SQLSTATE: HY000 Message: Parameters SOURCE_LOG_FILE, SOURCE_LOG_POS, RELAY_LOG_FILE and RELAY_LOG_POS cannot be set when SOURCE_AUTO_POSITION is active.
+    public final static int ER_AUTO_POSITION_REQUIRES_GTID_MODE_ON = 1777; //SQLSTATE: HY000 Message: CHANGE SOURCE TO SOURCE_AUTO_POSITION = 1 can only be executed when GTID_MODE = ON.
     public final static int ER_CANT_DO_IMPLICIT_COMMIT_IN_TRX_WHEN_GTID_NEXT_IS_SET = 1778; //SQLSTATE: HY000 Message: Cannot execute statements with implicit commit inside a transaction when GTID_NEXT != AUTOMATIC or GTID_NEXT_LIST != NULL.
     public final static int ER_GTID_MODE_2_OR_3_REQUIRES_ENFORCE_GTID_CONSISTENCY_ON = 1779; //SQLSTATE: HY000 Message: GTID_MODE = ON or GTID_MODE = UPGRADE_STEP_2 requires ENFORCE_GTID_CONSISTENCY = 1.
-    public final static int ER_GTID_MODE_REQUIRES_BINLOG = 1780; //SQLSTATE: HY000 Message: GTID_MODE = ON or UPGRADE_STEP_1 or UPGRADE_STEP_2 requires --log-bin and --log-slave-updates.
+    public final static int ER_GTID_MODE_REQUIRES_BINLOG = 1780; //SQLSTATE: HY000 Message: GTID_MODE = ON or UPGRADE_STEP_1 or UPGRADE_STEP_2 requires --log-bin and --log-replica-updates.
     public final static int ER_CANT_SET_GTID_NEXT_TO_GTID_WHEN_GTID_MODE_IS_OFF = 1781; //SQLSTATE: HY000 Message: GTID_NEXT cannot be set to UUID:NUMBER when GTID_MODE = OFF.
     public final static int ER_CANT_SET_GTID_NEXT_TO_ANONYMOUS_WHEN_GTID_MODE_IS_ON = 1782; //SQLSTATE: HY000 Message: GTID_NEXT cannot be set to ANONYMOUS when GTID_MODE = ON.
     public final static int ER_CANT_SET_GTID_NEXT_LIST_TO_NON_NULL_WHEN_GTID_MODE_IS_OFF = 1783; //SQLSTATE: HY000 Message: GTID_NEXT_LIST cannot be set to a non-NULL value when GTID_MODE = OFF.
@@ -830,12 +904,16 @@ public final class MysqlErrorNumbers {
     public final static int ER_GTID_UNSAFE_CREATE_SELECT = 1786; //SQLSTATE: HY000 Message: CREATE TABLE ... SELECT is forbidden when ENFORCE_GTID_CONSISTENCY = 1.
     public final static int ER_GTID_UNSAFE_CREATE_DROP_TEMPORARY_TABLE_IN_TRANSACTION = 1787; //SQLSTATE: HY000 Message: When ENFORCE_GTID_CONSISTENCY = 1, the statements CREATE TEMPORARY TABLE and DROP TEMPORARY TABLE can be executed in a non-transactional context only, and require that AUTOCOMMIT = 1.
     public final static int ER_GTID_MODE_CAN_ONLY_CHANGE_ONE_STEP_AT_A_TIME = 1788; //SQLSTATE: HY000 Message: The value of GTID_MODE can only change one step at a time: OFF <-> UPGRADE_STEP_1 <-> UPGRADE_STEP_2 <-> ON. Also note that this value must be stepped up or down simultaneously on all servers; see the Manual for instructions.
-    public final static int ER_MASTER_HAS_PURGED_REQUIRED_GTIDS = 1789; //SQLSTATE: HY000 Message: The slave is connecting using CHANGE MASTER TO MASTER_AUTO_POSITION = 1, but the master has purged binary logs containing GTIDs that the slave requires.
+    @Deprecated
+    public final static int ER_MASTER_HAS_PURGED_REQUIRED_GTIDS = 1789;
+    public final static int ER_SOURCE_HAS_PURGED_REQUIRED_GTIDS = 1789; //SQLSTATE: HY000 Message: The replica is connecting using CHANGE SOURCE TO SOURCE_AUTO_POSITION = 1, but the source has purged binary logs containing GTIDs that the replica requires.
     public final static int ER_CANT_SET_GTID_NEXT_WHEN_OWNING_GTID = 1790; //SQLSTATE: HY000 Message: GTID_NEXT cannot be changed by a client that owns a GTID. The client owns %s. Ownership is released on COMMIT or ROLLBACK.
     public final static int ER_UNKNOWN_EXPLAIN_FORMAT = 1791; //SQLSTATE: HY000 Message: Unknown EXPLAIN format name: '%s'
     public final static int ER_CANT_EXECUTE_IN_READ_ONLY_TRANSACTION = 1792; //SQLSTATE: 25006 Message: Cannot execute statement in a READ ONLY transaction.
     public final static int ER_TOO_LONG_TABLE_PARTITION_COMMENT = 1793; //SQLSTATE: HY000 Message: Comment for table partition '%s' is too long (max = %lu)
-    public final static int ER_SLAVE_CONFIGURATION = 1794; //SQLSTATE: HY000 Message: Slave is not configured or failed to initialize properly. You must at least set --server-id to enable either a master or a slave. Additional error messages can be found in the MySQL error log.
+    @Deprecated
+    public final static int ER_SLAVE_CONFIGURATION = 1794;
+    public final static int ER_REPLICA_CONFIGURATION = 1794; //SQLSTATE: HY000 Message: Replica is not configured or failed to initialize properly. You must at least set --server-id to enable either a source or a replica. Additional error messages can be found in the MySQL error log.
     public final static int ER_INNODB_FT_LIMIT = 1795; //SQLSTATE: HY000 Message: InnoDB presently supports one FULLTEXT index creation at a time
     public final static int ER_INNODB_NO_FT_TEMP_TABLE = 1796; //SQLSTATE: HY000 Message: Cannot create FULLTEXT index on temporary InnoDB table
     public final static int ER_INNODB_FT_WRONG_DOCID_COLUMN = 1797; //SQLSTATE: HY000 Message: Column '%s' is of wrong type for an InnoDB FULLTEXT index
@@ -843,11 +921,15 @@ public final class MysqlErrorNumbers {
     public final static int ER_INNODB_ONLINE_LOG_TOO_BIG = 1799; //SQLSTATE: HY000 Message: Creating index '%s' required more than 'innodb_online_alter_log_max_size' bytes of modification log. Please try again.
     public final static int ER_UNKNOWN_ALTER_ALGORITHM = 1800; //SQLSTATE: HY000 Message: Unknown ALGORITHM '%s'
     public final static int ER_UNKNOWN_ALTER_LOCK = 1801; //SQLSTATE: HY000 Message: Unknown LOCK type '%s'
-    public final static int ER_MTS_CHANGE_MASTER_CANT_RUN_WITH_GAPS = 1802; //SQLSTATE: HY000 Message: CHANGE MASTER cannot be executed when the slave was stopped with an error or killed in MTS mode. Consider using RESET SLAVE or START SLAVE UNTIL.
-    public final static int ER_MTS_RECOVERY_FAILURE = 1803; //SQLSTATE: HY000 Message: Cannot recover after SLAVE errored out in parallel execution mode. Additional error messages can be found in the MySQL error log.
+    @Deprecated
+    public final static int ER_MTS_CHANGE_MASTER_CANT_RUN_WITH_GAPS = 1802;
+    public final static int ER_MTS_CHANGE_SOURCE_CANT_RUN_WITH_GAPS = 1802; //SQLSTATE: HY000 Message: CHANGE SOURCE cannot be executed when the replica was stopped with an error or killed in MTS mode. Consider using RESET REPLICA or START REPLICA UNTIL.
+    public final static int ER_MTS_RECOVERY_FAILURE = 1803; //SQLSTATE: HY000 Message: Cannot recover after REPLICA errored out in parallel execution mode. Additional error messages can be found in the MySQL error log.
     public final static int ER_MTS_RESET_WORKERS = 1804; //SQLSTATE: HY000 Message: Cannot clean up worker info tables. Additional error messages can be found in the MySQL error log.
     public final static int ER_COL_COUNT_DOESNT_MATCH_CORRUPTED_V2 = 1805; //SQLSTATE: HY000 Message: Column count of %s.%s is wrong. Expected %d, found %d. The table is probably corrupted
-    public final static int ER_SLAVE_SILENT_RETRY_TRANSACTION = 1806; //SQLSTATE: HY000 Message: Slave must silently retry current transaction
+    @Deprecated
+    public final static int ER_SLAVE_SILENT_RETRY_TRANSACTION = 1806;
+    public final static int ER_REPLICA_SILENT_RETRY_TRANSACTION = 1806; //SQLSTATE: HY000 Message: Replica must silently retry current transaction
     public final static int ER_DISCARD_FK_CHECKS_RUNNING = 1807; //SQLSTATE: HY000 Message: There is a foreign key check running on table '%s'. Cannot discard the table.
     public final static int ER_TABLE_SCHEMA_MISMATCH = 1808; //SQLSTATE: HY000 Message: Schema mismatch (%s)
     public final static int ER_TABLE_IN_SYSTEM_TABLESPACE = 1809; //SQLSTATE: HY000 Message: Table '%s' in system tablespace
@@ -878,7 +960,7 @@ public final class MysqlErrorNumbers {
     public final static int ER_FK_CANNOT_DELETE_PARENT = 1834; //SQLSTATE: HY000 Message: Cannot delete rows from table which is parent in a foreign key constraint '%s' of table '%s'
     public final static int ER_MALFORMED_PACKET = 1835; //SQLSTATE: HY000 Message: Malformed communication packet.
     public final static int ER_READ_ONLY_MODE = 1836; //SQLSTATE: HY000 Message: Running in read-only mode
-    public final static int ER_GTID_NEXT_TYPE_UNDEFINED_GROUP = 1837; //SQLSTATE: HY000 Message: When GTID_NEXT is set to a GTID, you must explicitly set it again after a COMMIT or ROLLBACK. If you see this error message in the slave SQL thread, it means that a table in the current transaction is transactional on the master and non-transactional on the slave. In a client connection, it means that you executed SET GTID_NEXT before a transaction and forgot to set GTID_NEXT to a different identifier or to 'AUTOMATIC' after COMMIT or ROLLBACK. Current GTID_NEXT is '%s'.
+    public final static int ER_GTID_NEXT_TYPE_UNDEFINED_GROUP = 1837; //SQLSTATE: HY000 Message: When GTID_NEXT is set to a GTID, you must explicitly set it again after a COMMIT or ROLLBACK. If you see this error message in the replica SQL thread, it means that a table in the current transaction is transactional on the source and non-transactional on the replica. In a client connection, it means that you executed SET GTID_NEXT before a transaction and forgot to set GTID_NEXT to a different identifier or to 'AUTOMATIC' after COMMIT or ROLLBACK. Current GTID_NEXT is '%s'.
     public final static int ER_VARIABLE_NOT_SETTABLE_IN_SP = 1838; //SQLSTATE: HY000 Message: The system variable %s cannot be set in stored procedures.
     public final static int ER_CANT_SET_GTID_PURGED_WHEN_GTID_MODE_IS_OFF = 1839; //SQLSTATE: HY000 Message: GTID_PURGED can only be set when GTID_MODE = ON.
     public final static int ER_CANT_SET_GTID_PURGED_WHEN_GTID_EXECUTED_IS_NOT_EMPTY = 1840; //SQLSTATE: HY000 Message: GTID_PURGED can only be set when GTID_EXECUTED is empty.
@@ -899,13 +981,15 @@ public final class MysqlErrorNumbers {
     public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_HIDDEN_FTS = 1855; //SQLSTATE: HY000 Message: Cannot replace hidden FTS_DOC_ID with a user-visible one
     public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_CHANGE_FTS = 1856; //SQLSTATE: HY000 Message: Cannot drop or rename FTS_DOC_ID
     public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_FTS = 1857; //SQLSTATE: HY000 Message: Fulltext index creation requires a lock
-    public final static int ER_SQL_SLAVE_SKIP_COUNTER_NOT_SETTABLE_IN_GTID_MODE = 1858; //SQLSTATE: HY000 Message: sql_slave_skip_counter can not be set when the server is running with GTID_MODE = ON. Instead, for each transaction that you want to skip, generate an empty transaction with the same GTID as the transaction
+    @Deprecated
+    public final static int ER_SQL_SLAVE_SKIP_COUNTER_NOT_SETTABLE_IN_GTID_MODE = 1858;
+    public final static int ER_SQL_REPLICA_SKIP_COUNTER_NOT_SETTABLE_IN_GTID_MODE = 1858; //SQLSTATE: HY000 Message: sql_replica_skip_counter can not be set when the server is running with GTID_MODE = ON. Instead, for each transaction that you want to skip, generate an empty transaction with the same GTID as the transaction
     public final static int ER_DUP_UNKNOWN_IN_INDEX = 1859; //SQLSTATE: 23000 Message: Duplicate entry for key '%s'
     public final static int ER_IDENT_CAUSES_TOO_LONG_PATH = 1860; //SQLSTATE: HY000 Message: Long database name and identifier for object resulted in path length exceeding %d characters. Path: '%s'.
     public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_NOT_NULL = 1861; //SQLSTATE: HY000 Message: cannot silently convert NULL values, as required in this SQL_MODE; was introduced in 5.7.1.
     public final static int ER_MUST_CHANGE_PASSWORD_LOGIN = 1862; //SQLSTATE: HY000 Message: Your password has expired. To log in you must change it using a client that supports expired passwords. was introduced in 5.7.1.
     public final static int ER_ROW_IN_WRONG_PARTITION = 1863; //SQLSTATE: HY000 Message: Found a row in wrong partition %s; was introduced in 5.7.1.
-    public final static int ER_MTS_EVENT_BIGGER_PENDING_JOBS_SIZE_MAX = 1864; //SQLSTATE: HY000 Message: Cannot schedule event %s, relay-log name %s, position %s to Worker thread because its size %lu exceeds %lu of slave_pending_jobs_size_max.; was introduced in 5.7.2.
+    public final static int ER_MTS_EVENT_BIGGER_PENDING_JOBS_SIZE_MAX = 1864; //SQLSTATE: HY000 Message: Cannot schedule event %s, relay-log name %s, position %s to Worker thread because its size %lu exceeds %lu of replica_pending_jobs_size_max.; was introduced in 5.7.2.
 
     public final static int ER_INNODB_NO_FT_USES_PARSER = 1865; //SQLSTATE: HY000 Message: Cannot CREATE FULLTEXT INDEX WITH PARSER on InnoDB table; was introduced in 5.7.2.
     public final static int ER_BINLOG_LOGICAL_CORRUPTION = 1866; //SQLSTATE: HY000 Message: The binary log file '%s' is logically corrupted: %s; was introduced in 5.7.2.
@@ -913,12 +997,20 @@ public final class MysqlErrorNumbers {
     public final static int ER_WARN_PURGE_LOG_IS_ACTIVE = 1868; //SQLSTATE: HY000 Message: file %s was not purged because it is the active log file.; was introduced in 5.7.2.
     public final static int ER_AUTO_INCREMENT_CONFLICT = 1869; //SQLSTATE: HY000 Message: Auto-increment value in UPDATE conflicts with internally generated values; was introduced in 5.7.2.
     public final static int WARN_ON_BLOCKHOLE_IN_RBR = 1870; //SQLSTATE: HY000 Message: Row events are not logged for %s statements that modify BLACKHOLE tables in row format. Table(s): '%s'; was introduced in 5.7.2.
-    public final static int ER_SLAVE_MI_INIT_REPOSITORY = 1871; //SQLSTATE: HY000 Message: Slave failed to initialize master info structure from the repository; was introduced in 5.7.2.
-    public final static int ER_SLAVE_RLI_INIT_REPOSITORY = 1872; //SQLSTATE: HY000 Message: Slave failed to initialize relay log info structure from the repository; was introduced in 5.7.2.
+    @Deprecated
+    public final static int ER_SLAVE_MI_INIT_REPOSITORY = 1871;
+    public final static int ER_REPLICA_MI_INIT_REPOSITORY = 1871; //SQLSTATE: HY000 Message: Replica failed to initialize source info structure from the repository; was introduced in 5.7.2.
+    @Deprecated
+    public final static int ER_SLAVE_RLI_INIT_REPOSITORY = 1872;
+    public final static int ER_REPLICA_RLI_INIT_REPOSITORY = 1872; //SQLSTATE: HY000 Message: Replica failed to initialize relay log info structure from the repository; was introduced in 5.7.2.
     public final static int ER_ACCESS_DENIED_CHANGE_USER_ERROR = 1873; //SQLSTATE: 28000 Message: Access denied trying to change to user '%s'@'%s' (using password: %s). Disconnecting. was introduced in 5.7.2.
     public final static int ER_INNODB_READ_ONLY = 1874; //SQLSTATE: HY000 Message: InnoDB is in read only mode.; was introduced in 5.7.2.
-    public final static int ER_STOP_SLAVE_SQL_THREAD_TIMEOUT = 1875; //SQLSTATE: HY000 Message: STOP SLAVE command execution is incomplete: Slave SQL thread got the stop signal, thread is busy, SQL thread will stop once the current task is complete.; was introduced in 5.7.2.
-    public final static int ER_STOP_SLAVE_IO_THREAD_TIMEOUT = 1876; //SQLSTATE: HY000 Message: STOP SLAVE command execution is incomplete: Slave IO thread got the stop signal, thread is busy, IO thread will stop once the current task is complete.; was introduced in 5.7.2.
+    @Deprecated
+    public final static int ER_STOP_SLAVE_SQL_THREAD_TIMEOUT = 1875;
+    public final static int ER_STOP_REPLICA_SQL_THREAD_TIMEOUT = 1875; //SQLSTATE: HY000 Message: STOP REPLICA command execution is incomplete: Replica SQL thread got the stop signal, thread is busy, SQL thread will stop once the current task is complete.; was introduced in 5.7.2.
+    @Deprecated
+    public final static int ER_STOP_SLAVE_IO_THREAD_TIMEOUT = 1876;
+    public final static int ER_STOP_REPLICA_IO_THREAD_TIMEOUT = 1876; //SQLSTATE: HY000 Message: STOP REPLICA command execution is incomplete: Replica IO thread got the stop signal, thread is busy, IO thread will stop once the current task is complete.; was introduced in 5.7.2.
     public final static int ER_TABLE_CORRUPT = 1877; //SQLSTATE: HY000 Message: Operation cannot be performed. The table '%s.%s' is missing, corrupt or contains bad data.; was introduced in 5.7.2.
     public final static int ER_TEMP_FILE_WRITE_FAILURE = 1878; //SQLSTATE: HY000 Message: Temporary file write failure.; was introduced in 5.7.3.
     public final static int ER_INNODB_FT_AUX_NOT_HEX_ID = 1879; //SQLSTATE: HY000 Message: Upgrade index name failed, please use create index(alter table) algorithm copy to rebuild index.; was introduced in 5.7.4.
@@ -926,12 +1018,14 @@ public final class MysqlErrorNumbers {
     public final static int ER_INNODB_FORCED_RECOVERY = 1881; //SQLSTATE: HY000 Message: Operation not allowed when innodb_forced_recovery > 0.; was introduced in 5.7.4.
     public final static int ER_AES_INVALID_IV = 1882; //SQLSTATE: HY000 Message: The initialization vector supplied to %s is too short. Must be at least %d bytes long; was introduced in 5.7.4.
     public final static int ER_FILE_CORRUPT = 1883; //SQLSTATE: HY000 Message: File %s is corrupted
-    public final static int ER_ERROR_ON_MASTER = 1884; //SQLSTATE: HY000 Message: Query partially completed on the master (error on master: %d) and was aborted. There is a chance that your master is inconsistent at this point. If you are sure that your master is ok, run this query manually on the slave and then restart the slave with SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START SLAVE;. Query:'%s'
-    public final static int ER_INCONSISTENT_ERROR = 1885; //SQLSTATE: HY000 Message: Query caused different errors on master and slave. Error on master: message (format)='%s' error code=%d; Error on slave:actual message='%s', error code=%d. Default database:'%s'. Query:'%s'
+    @Deprecated
+    public final static int ER_ERROR_ON_MASTER = 1884;
+    public final static int ER_ERROR_ON_SOURCE = 1884; //SQLSTATE: HY000 Message: Query partially completed on the source (error on source: %d) and was aborted. There is a chance that your source is inconsistent at this point. If you are sure that your source is ok, run this query manually on the replica and then restart the replica with SET GLOBAL SQL_REPLICA_SKIP_COUNTER=1; START REPLICA;. Query:'%s'
+    public final static int ER_INCONSISTENT_ERROR = 1885; //SQLSTATE: HY000 Message: Query caused different errors on source and replica. Error on source: message (format)='%s' error code=%d; Error on replica:actual message='%s', error code=%d. Default database:'%s'. Query:'%s'
     public final static int ER_STORAGE_ENGINE_NOT_LOADED = 1886; //SQLSTATE: HY000 Message: Storage engine for table '%s'.'%s' is not loaded.
     public final static int ER_GET_STACKED_DA_WITHOUT_ACTIVE_HANDLER = 1887; //SQLSTATE: 0Z002 Message: GET STACKED DIAGNOSTICS when handler not active
     public final static int ER_WARN_LEGACY_SYNTAX_CONVERTED = 1888; //SQLSTATE: HY000 Message: %s is no longer supported. The statement was converted to %s.
-    public final static int ER_BINLOG_UNSAFE_FULLTEXT_PLUGIN = 1889; //SQLSTATE: HY000 Message: Statement is unsafe because it uses a fulltext parser plugin which may not return the same value on the slave.; was introduced in 5.7.1.
+    public final static int ER_BINLOG_UNSAFE_FULLTEXT_PLUGIN = 1889; //SQLSTATE: HY000 Message: Statement is unsafe because it uses a fulltext parser plugin which may not return the same value on the replica.; was introduced in 5.7.1.
     public final static int ER_CANNOT_DISCARD_TEMPORARY_TABLE = 1890; //SQLSTATE: HY000 Message: Cannot DISCARD/IMPORT tablespace associated with temporary table; was introduced in 5.7.1.
     public final static int ER_FK_DEPTH_EXCEEDED = 1891; //SQLSTATE: HY000 Message: Foreign key cascade delete/update exceeds max depth of %d.; was introduced in 5.7.2.
     public final static int ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE_V2 = 1892; //SQLSTATE: HY000 Message: Column count of %s.%s is wrong. Expected %d, found %d. Created with MySQL %d, now running %d. Please use mysql_upgrade to fix this error.; was introduced in 5.7.2.
@@ -942,13 +1036,19 @@ public final class MysqlErrorNumbers {
     public final static int ER_MISSING_HA_CREATE_OPTION = 1897; //SQLSTATE: HY000 Message: Table storage engine '%s' found required create option missing; was introduced in 5.7.2.
     public final static int ER_ENGINE_OUT_OF_MEMORY = 1898; //SQLSTATE: HY000 Message: Out of memory in storage engine '%s'.; was introduced in 5.7.3.
     public final static int ER_PASSWORD_EXPIRE_ANONYMOUS_USER = 1899; //SQLSTATE: HY000 Message: The password for anonymous user cannot be expired.; was introduced in 5.7.3.
-    public final static int ER_SLAVE_SQL_THREAD_MUST_STOP = 1900; //SQLSTATE: HY000 Message: This operation cannot be performed with a running slave sql thread; run STOP SLAVE SQL_THREAD first; was introduced in 5.7.3.
+    @Deprecated
+    public final static int ER_SLAVE_SQL_THREAD_MUST_STOP = 1900;
+    public final static int ER_REPLICA_SQL_THREAD_MUST_STOP = 1900; //SQLSTATE: HY000 Message: This operation cannot be performed with a running replica sql thread; run STOP REPLICA SQL_THREAD first; was introduced in 5.7.3.
     public final static int ER_NO_FT_MATERIALIZED_SUBQUERY = 1901; //SQLSTATE: HY000 Message: Cannot create FULLTEXT index on materialized subquery; was introduced in 5.7.4.
     public final static int ER_INNODB_UNDO_LOG_FULL = 1902; //SQLSTATE: HY000 Message: Undo Log error: %s; was introduced in 5.7.4.
     public final static int ER_INVALID_ARGUMENT_FOR_LOGARITHM = 1903; //SQLSTATE: 2201E Message: Invalid argument for logarithm; was introduced in 5.7.4.
-    public final static int ER_SLAVE_IO_THREAD_MUST_STOP = 1904; //SQLSTATE: HY000 Message: This operation cannot be performed with a running slave io thread; run STOP SLAVE IO_THREAD first.; was introduced in 5.7.4.
-    public final static int ER_WARN_OPEN_TEMP_TABLES_MUST_BE_ZERO = 1905; //SQLSTATE: HY000 Message: This operation may not be safe when the slave has temporary tables. The tables will be kept open until the server restarts or until the tables are deleted by any replicated DROP statement. Suggest to wait until slave_open_temp_tables = 0.; was introduced in 5.7.4.
-    public final static int ER_WARN_ONLY_MASTER_LOG_FILE_NO_POS = 1906; //SQLSTATE: HY000 Message: CHANGE MASTER TO with a MASTER_LOG_FILE clause but no MASTER_LOG_POS clause may not be safe. The old position value may not be valid for the new binary log file.; was introduced in 5.7.4.
+    @Deprecated
+    public final static int ER_SLAVE_IO_THREAD_MUST_STOP = 1904;
+    public final static int ER_REPLICA_IO_THREAD_MUST_STOP = 1904; //SQLSTATE: HY000 Message: This operation cannot be performed with a running replica io thread; run STOP REPLICA IO_THREAD first.; was introduced in 5.7.4.
+    public final static int ER_WARN_OPEN_TEMP_TABLES_MUST_BE_ZERO = 1905; //SQLSTATE: HY000 Message: This operation may not be safe when the replica has temporary tables. The tables will be kept open until the server restarts or until the tables are deleted by any replicated DROP statement. Suggest to wait until replica_open_temp_tables = 0.; was introduced in 5.7.4.
+    @Deprecated
+    public final static int ER_WARN_ONLY_MASTER_LOG_FILE_NO_POS = 1906;
+    public final static int ER_WARN_ONLY_SOURCE_LOG_FILE_NO_POS = 1906; //SQLSTATE: HY000 Message: CHANGE SOURCE TO with a SOURCE_LOG_FILE clause but no SOURCE_LOG_POS clause may not be safe. The old position value may not be valid for the new binary log file.; was introduced in 5.7.4.
     public final static int ER_QUERY_TIMEOUT = 1907; //SQLSTATE: HY000 Message: Query execution was interrupted, max_statement_time exceeded; was introduced in 5.7.4.
     public final static int ER_NON_RO_SELECT_DISABLE_TIMER = 1908; //SQLSTATE: HY000 Message: Select is not a read only statement, disabling timer; was introduced in 5.7.4.
     public final static int ER_DUP_LIST_ENTRY = 1909; //SQLSTATE: HY000 Message: Duplicate entry '%s'.; was introduced in 5.7.4.
@@ -1151,9 +1251,9 @@ public final class MysqlErrorNumbers {
         mysqlToSql99State.put(MysqlErrorNumbers.ER_NET_ERROR_ON_WRITE, SQL_STATE_COMMUNICATION_LINK_FAILURE);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_NET_WRITE_INTERRUPTED, SQL_STATE_COMMUNICATION_LINK_FAILURE);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_NEW_ABORTING_CONNECTION, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSql99State.put(MysqlErrorNumbers.ER_MASTER_NET_READ, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSql99State.put(MysqlErrorNumbers.ER_MASTER_NET_WRITE, SQL_STATE_COMMUNICATION_LINK_FAILURE);
-        mysqlToSql99State.put(MysqlErrorNumbers.ER_CONNECT_TO_MASTER, SQL_STATE_COMMUNICATION_LINK_FAILURE);
+        mysqlToSql99State.put(MysqlErrorNumbers.ER_SOURCE_NET_READ, SQL_STATE_COMMUNICATION_LINK_FAILURE);
+        mysqlToSql99State.put(MysqlErrorNumbers.ER_SOURCE_NET_WRITE, SQL_STATE_COMMUNICATION_LINK_FAILURE);
+        mysqlToSql99State.put(MysqlErrorNumbers.ER_CONNECT_TO_SOURCE, SQL_STATE_COMMUNICATION_LINK_FAILURE);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_SP_BADSELECT, SQL_STATE_FEATURE_NOT_SUPPORTED);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_SP_BADSTATEMENT, SQL_STATE_FEATURE_NOT_SUPPORTED);
         mysqlToSql99State.put(MysqlErrorNumbers.ER_SP_SUBSELECT_NYI, SQL_STATE_FEATURE_NOT_SUPPORTED);

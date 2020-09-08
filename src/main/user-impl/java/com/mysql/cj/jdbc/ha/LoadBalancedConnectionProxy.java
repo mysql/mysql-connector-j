@@ -74,7 +74,7 @@ import com.mysql.cj.util.Util;
  * Therefore, for this to work (at all), you must use transactions, even if only reading data.
  * 
  * This implementation will invalidate connections that it detects have had communication errors when processing a request. Problematic hosts will be added to a
- * global blacklist for loadBalanceBlacklistTimeout ms, after which they will be removed from the blacklist and made eligible once again to be selected for new
+ * global blocklist for loadBalanceBlocklistTimeout ms, after which they will be removed from the blocklist and made eligible once again to be selected for new
  * connections.
  * 
  * This implementation is thread-safe, but it's questionable whether sharing a connection instance amongst threads is a good idea, given that transactions are
@@ -93,10 +93,10 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     private int retriesAllDown;
     private BalanceStrategy balancer;
 
-    private int globalBlacklistTimeout = 0;
-    private static Map<String, Long> globalBlacklist = new HashMap<>();
+    private int globalBlocklistTimeout = 0;
+    private static Map<String, Long> globalBlocklist = new HashMap<>();
     private int hostRemovalGracePeriod = 0;
-    // host:port pairs to be considered as removed (definitely blacklisted) from the original hosts list.
+    // host:port pairs to be considered as removed (definitely blocklisted) from the original hosts list.
     private Set<String> hostsToRemove = new HashSet<>();
 
     private boolean inTransaction = false;
@@ -177,12 +177,12 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
-        String blacklistTimeoutAsString = props.getProperty(PropertyKey.loadBalanceBlacklistTimeout.getKeyName(), "0");
+        String blocklistTimeoutAsString = props.getProperty(PropertyKey.loadBalanceBlocklistTimeout.getKeyName(), "0");
         try {
-            this.globalBlacklistTimeout = Integer.parseInt(blacklistTimeoutAsString);
+            this.globalBlocklistTimeout = Integer.parseInt(blocklistTimeoutAsString);
         } catch (NumberFormatException nfe) {
             throw SQLError.createSQLException(
-                    Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceBlacklistTimeout", new Object[] { blacklistTimeoutAsString }),
+                    Messages.getString("LoadBalancedConnectionProxy.badValueForLoadBalanceBlocklistTimeout", new Object[] { blocklistTimeoutAsString }),
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
         }
 
@@ -291,10 +291,10 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     }
 
     /**
-     * Always returns 'true' as there are no "masters" and "slaves" in this type of connection.
+     * Always returns 'true' as there are no "sources" and "replicas" in this type of connection.
      */
     @Override
-    boolean isMasterConnection() {
+    boolean isSourceConnection() {
         return true;
     }
 
@@ -310,11 +310,11 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     synchronized void invalidateConnection(JdbcConnection conn) throws SQLException {
         super.invalidateConnection(conn);
 
-        // add host to the global blacklist, if enabled
-        if (this.isGlobalBlacklistEnabled()) {
+        // add host to the global blocklist, if enabled
+        if (this.isGlobalBlocklistEnabled()) {
             String host = this.connectionsToHostsMap.get(conn);
             if (host != null) {
-                addToGlobalBlacklist(host);
+                addToGlobalBlocklist(host);
             }
         }
 
@@ -404,7 +404,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         this.liveConnections.put(hostInfo.getHostPortPair(), conn);
         this.connectionsToHostsMap.put(conn, hostInfo.getHostPortPair());
 
-        removeFromGlobalBlacklist(hostInfo.getHostPortPair());
+        removeFromGlobalBlocklist(hostInfo.getHostPortPair());
 
         this.totalPhysicalConnections++;
 
@@ -642,7 +642,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                         throw e;
                     }
 
-                    // if the Exception is caused by ping connection lifetime checks, don't add to blacklist
+                    // if the Exception is caused by ping connection lifetime checks, don't add to blocklist
                     if (e.getMessage().equals(Messages.getString("Connection.exceededConnectionLifetime"))) {
                         // only set the return Exception if it's null
                         if (se == null) {
@@ -651,8 +651,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     } else {
                         // overwrite the return Exception no matter what
                         se = e;
-                        if (isGlobalBlacklistEnabled()) {
-                            addToGlobalBlacklist(host);
+                        if (isGlobalBlocklistEnabled()) {
+                            addToGlobalBlocklist(host);
                         }
                     }
                     // take the connection out of the liveConnections Map
@@ -675,104 +675,165 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     }
 
     /**
-     * Adds a host to the blacklist with the given timeout.
+     * Adds a host to the blocklist with the given timeout.
      * 
      * @param host
-     *            The host to be blacklisted.
+     *            The host to be blocklisted.
      * @param timeout
-     *            The blacklist timeout for this entry.
+     *            The blocklist timeout for this entry.
      */
-    public void addToGlobalBlacklist(String host, long timeout) {
-        if (isGlobalBlacklistEnabled()) {
-            synchronized (globalBlacklist) {
-                globalBlacklist.put(host, timeout);
+    public void addToGlobalBlocklist(String host, long timeout) {
+        if (isGlobalBlocklistEnabled()) {
+            synchronized (globalBlocklist) {
+                globalBlocklist.put(host, timeout);
             }
         }
     }
 
     /**
-     * Removes a host from the blacklist.
+     * Removes a host from the blocklist.
      *
      * @param host
-     *            The host to be removed from the blacklist.
+     *            The host to be removed from the blocklist.
      */
-    public void removeFromGlobalBlacklist(String host) {
-        if (isGlobalBlacklistEnabled() && globalBlacklist.containsKey(host)) {
-            synchronized (globalBlacklist) {
-                globalBlacklist.remove(host);
+    public void removeFromGlobalBlocklist(String host) {
+        if (isGlobalBlocklistEnabled() && globalBlocklist.containsKey(host)) {
+            synchronized (globalBlocklist) {
+                globalBlocklist.remove(host);
             }
         }
     }
 
     /**
-     * Adds a host to the blacklist.
+     * Use {@link #removeFromGlobalBlocklist(String)} instead.
      * 
      * @param host
-     *            The host to be blacklisted.
+     *            host
+     * @deprecated
      */
-    public void addToGlobalBlacklist(String host) {
-        addToGlobalBlacklist(host, System.currentTimeMillis() + this.globalBlacklistTimeout);
+    @Deprecated
+    public void removeFromGlobalBlacklist(String host) {
+        this.removeFromGlobalBlocklist(host);
     }
 
     /**
-     * Checks if host blacklist management was enabled.
+     * Use {@link #addToGlobalBlocklist(String, long)} instead.
      * 
-     * @return true if host blacklist management was enabled
+     * @param host
+     *            The host to be blocklisted.
+     * @param timeout
+     *            The blocklist timeout for this entry.
+     * @deprecated
      */
-    public boolean isGlobalBlacklistEnabled() {
-        return (this.globalBlacklistTimeout > 0);
+    @Deprecated
+    public void addToGlobalBlacklist(String host, long timeout) {
+        this.addToGlobalBlocklist(host, timeout);
     }
 
     /**
-     * Returns a local hosts blacklist, while cleaning up expired records from the global blacklist, or a blacklist with the hosts to be removed.
+     * Adds a host to the blocklist.
+     * 
+     * @param host
+     *            The host to be blocklisted.
+     */
+    public void addToGlobalBlocklist(String host) {
+        addToGlobalBlocklist(host, System.currentTimeMillis() + this.globalBlocklistTimeout);
+    }
+
+    /**
+     * Use {@link #addToGlobalBlocklist(String)} instead.
+     * 
+     * @param host
+     *            The host to be blocklisted.
+     * @deprecated
+     */
+    @Deprecated
+    public void addToGlobalBlacklist(String host) {
+        this.addToGlobalBlocklist(host);
+    }
+
+    /**
+     * Checks if host blocklist management was enabled.
+     * 
+     * @return true if host blocklist management was enabled
+     */
+    public boolean isGlobalBlocklistEnabled() {
+        return (this.globalBlocklistTimeout > 0);
+    }
+
+    /**
+     * Use {@link #isGlobalBlocklistEnabled()} instead.
+     * 
+     * @return true if host blocklist management was enabled
+     * @deprecated
+     */
+    @Deprecated
+    public boolean isGlobalBlacklistEnabled() {
+        return this.isGlobalBlocklistEnabled();
+    }
+
+    /**
+     * Returns a local hosts blocklist, while cleaning up expired records from the global blocklist, or a blocklist with the hosts to be removed.
      * 
      * @return
-     *         A local hosts blacklist.
+     *         A local hosts blocklist.
      */
-    public synchronized Map<String, Long> getGlobalBlacklist() {
-        if (!isGlobalBlacklistEnabled()) {
+    public synchronized Map<String, Long> getGlobalBlocklist() {
+        if (!isGlobalBlocklistEnabled()) {
             if (this.hostsToRemove.isEmpty()) {
                 return new HashMap<>(1);
             }
-            HashMap<String, Long> fakedBlacklist = new HashMap<>();
+            HashMap<String, Long> fakedBlocklist = new HashMap<>();
             for (String h : this.hostsToRemove) {
-                fakedBlacklist.put(h, System.currentTimeMillis() + 5000);
+                fakedBlocklist.put(h, System.currentTimeMillis() + 5000);
             }
-            return fakedBlacklist;
+            return fakedBlocklist;
         }
 
-        // Make a local copy of the blacklist
-        Map<String, Long> blacklistClone = new HashMap<>(globalBlacklist.size());
-        // Copy everything from synchronized global blacklist to local copy for manipulation
-        synchronized (globalBlacklist) {
-            blacklistClone.putAll(globalBlacklist);
+        // Make a local copy of the blocklist
+        Map<String, Long> blocklistClone = new HashMap<>(globalBlocklist.size());
+        // Copy everything from synchronized global blocklist to local copy for manipulation
+        synchronized (globalBlocklist) {
+            blocklistClone.putAll(globalBlocklist);
         }
-        Set<String> keys = blacklistClone.keySet();
+        Set<String> keys = blocklistClone.keySet();
 
-        // We're only interested in blacklisted hosts that are in the hostList
+        // We're only interested in blocklisted hosts that are in the hostList
         keys.retainAll(this.hostsList.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList()));
 
         // Don't need to synchronize here as we using a local copy
         for (Iterator<String> i = keys.iterator(); i.hasNext();) {
             String host = i.next();
             // OK if null is returned because another thread already purged Map entry.
-            Long timeout = globalBlacklist.get(host);
+            Long timeout = globalBlocklist.get(host);
             if (timeout != null && timeout < System.currentTimeMillis()) {
-                // Timeout has expired, remove from blacklist
-                synchronized (globalBlacklist) {
-                    globalBlacklist.remove(host);
+                // Timeout has expired, remove from blocklist
+                synchronized (globalBlocklist) {
+                    globalBlocklist.remove(host);
                 }
                 i.remove();
             }
 
         }
         if (keys.size() == this.hostsList.size()) {
-            // return an empty blacklist, let the BalanceStrategy implementations try to connect to everything since it appears that all hosts are
-            // unavailable - we don't want to wait for loadBalanceBlacklistTimeout to expire.
+            // return an empty blocklist, let the BalanceStrategy implementations try to connect to everything since it appears that all hosts are
+            // unavailable - we don't want to wait for loadBalanceBlocklistTimeout to expire.
             return new HashMap<>(1);
         }
 
-        return blacklistClone;
+        return blocklistClone;
+    }
+
+    /**
+     * Use {@link #getGlobalBlocklist()} instead.
+     * 
+     * @return
+     *         A local hosts blocklist.
+     * @deprecated
+     */
+    @Deprecated
+    public synchronized Map<String, Long> getGlobalBlacklist() {
+        return getGlobalBlocklist();
     }
 
     /**
@@ -792,7 +853,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         int timeBetweenChecks = this.hostRemovalGracePeriod > 1000 ? 1000 : this.hostRemovalGracePeriod;
 
         synchronized (this) {
-            addToGlobalBlacklist(hostPortPair, System.currentTimeMillis() + this.hostRemovalGracePeriod + timeBetweenChecks);
+            addToGlobalBlocklist(hostPortPair, System.currentTimeMillis() + this.hostRemovalGracePeriod + timeBetweenChecks);
 
             long cur = System.currentTimeMillis();
 

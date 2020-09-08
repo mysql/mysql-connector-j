@@ -691,7 +691,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
     }
 
     /**
-     * Tests the property 'queriesBeforeRetryMaster' in a failover connection using three hosts and the following sequence of events:
+     * Tests the property 'queriesBeforeRetrySource' in a failover connection using three hosts and the following sequence of events:
      * - [/HOST_1 : /HOST_2 : /HOST_3] --> HOST_1
      * - [\HOST_1 : \HOST_2 : /HOST_3] --> HOST_3
      * - [/HOST_1 : /HOST_2 : \HOST_3] --> HOST_1 vs HOST_2
@@ -701,15 +701,15 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * @throws Exception
      */
     @Test
-    public void testFailoverQueriesBeforeRetryMaster() throws Exception {
+    public void testFailoverQueriesBeforeRetrySource() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
 
-        for (boolean setQueriesBeforeRetryMaster : new boolean[] { true, false }) {
-            if (setQueriesBeforeRetryMaster) {
-                props.setProperty(PropertyKey.queriesBeforeRetryMaster.getKeyName(), "10");
+        for (boolean setQueriesBeforeRetrySource : new boolean[] { true, false }) {
+            if (setQueriesBeforeRetrySource) {
+                props.setProperty(PropertyKey.queriesBeforeRetrySource.getKeyName(), "10");
             } else {
-                props.remove(PropertyKey.queriesBeforeRetryMaster.getKeyName()); // default 50
+                props.remove(PropertyKey.queriesBeforeRetrySource.getKeyName()); // default 50
             }
 
             Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props);
@@ -751,7 +751,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
                 // still connected to HOST_3
                 assertEquals(HOST_3_OK, UnreliableSocketFactory.getHostFromLastConnection());
 
-                if (setQueriesBeforeRetryMaster) {
+                if (setQueriesBeforeRetrySource) {
                     // connects to HOST_1 on connection error
                     assertSQLException(testStmt, "SELECT 1", COMM_LINK_ERR_PATTERN);
                     assertEquals(HOST_1_OK, UnreliableSocketFactory.getHostFromLastConnection());
@@ -778,7 +778,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
     }
 
     /**
-     * Tests the property 'secondsBeforeRetryMaster' in a failover connection using three hosts and the following sequence of events:
+     * Tests the property 'secondsBeforeRetrySource' in a failover connection using three hosts and the following sequence of events:
      * - [/HOST_1 : /HOST_2 : /HOST_3] --> HOST_1
      * - [\HOST_1 : \HOST_2 : /HOST_3] --> HOST_3
      * - [/HOST_1 : /HOST_2 : \HOST_3] --> HOST_1 vs HOST_2
@@ -788,15 +788,15 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * @throws Exception
      */
     @Test
-    public void testFailoverSecondsBeforeRetryMaster() throws Exception {
+    public void testFailoverSecondsBeforeRetrySource() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
 
-        for (boolean setSecondsBeforeRetryMaster : new boolean[] { true, false }) {
-            if (setSecondsBeforeRetryMaster) {
-                props.setProperty(PropertyKey.secondsBeforeRetryMaster.getKeyName(), "1");
+        for (boolean setSecondsBeforeRetrySource : new boolean[] { true, false }) {
+            if (setSecondsBeforeRetrySource) {
+                props.setProperty(PropertyKey.secondsBeforeRetrySource.getKeyName(), "1");
             } else {
-                props.remove(PropertyKey.secondsBeforeRetryMaster.getKeyName()); // default 50
+                props.remove(PropertyKey.secondsBeforeRetrySource.getKeyName()); // default 50
             }
 
             Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props);
@@ -843,7 +843,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
                 // still connected to HOST_3
                 assertEquals(HOST_3_OK, UnreliableSocketFactory.getHostFromLastConnection());
 
-                if (setSecondsBeforeRetryMaster) {
+                if (setSecondsBeforeRetrySource) {
                     // connects to HOST_1 on connection error
                     assertSQLException(testStmt, "SELECT 1", COMM_LINK_ERR_PATTERN);
                     assertEquals(HOST_1_OK, UnreliableSocketFactory.getHostFromLastConnection());
@@ -882,7 +882,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
      * - [/HOST_1 : /HOST_2 : \HOST_3] --> HOST_1
      * - /HOST_2 & \HOST_3
      * 
-     * The automatic fall back only happens at transaction boundaries and at least 'queriesBeforeRetryMaster' or 'secondsBeforeRetryMaster' is greater than 0.
+     * The automatic fall back only happens at transaction boundaries and at least 'queriesBeforeRetrySource' or 'secondsBeforeRetrySource' is greater than 0.
      * [Legend: "/HOST_n" --> HOST_n up; "\HOST_n" --> HOST_n down]
      * 
      * @throws Exception
@@ -896,9 +896,9 @@ public class MultiHostConnectionTest extends BaseTestCase {
         Properties props = new Properties();
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
 
-        // test fall back on ('queriesBeforeRetryMaster' > 0 || 'secondsBeforeRetryMaster' > 0)
-        props.setProperty(PropertyKey.queriesBeforeRetryMaster.getKeyName(), "10");
-        props.setProperty(PropertyKey.secondsBeforeRetryMaster.getKeyName(), "1");
+        // test fall back on ('queriesBeforeRetrySource' > 0 || 'secondsBeforeRetrySource' > 0)
+        props.setProperty(PropertyKey.queriesBeforeRetrySource.getKeyName(), "10");
+        props.setProperty(PropertyKey.secondsBeforeRetrySource.getKeyName(), "1");
 
         for (boolean autoCommit : new boolean[] { true, false }) {
             Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props, downedHosts);
@@ -970,9 +970,9 @@ public class MultiHostConnectionTest extends BaseTestCase {
             }
         }
 
-        // test fall back off ('queriesBeforeRetryMaster' = 0 && 'secondsBeforeRetryMaster' = 0)
-        props.setProperty(PropertyKey.queriesBeforeRetryMaster.getKeyName(), "0");
-        props.setProperty(PropertyKey.secondsBeforeRetryMaster.getKeyName(), "0");
+        // test fall back off ('queriesBeforeRetrySource' = 0 && 'secondsBeforeRetrySource' = 0)
+        props.setProperty(PropertyKey.queriesBeforeRetrySource.getKeyName(), "0");
+        props.setProperty(PropertyKey.secondsBeforeRetrySource.getKeyName(), "0");
 
         for (boolean autoCommit : new boolean[] { true, false }) {
             Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props, downedHosts);
@@ -993,7 +993,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
                 UnreliableSocketFactory.dontDownHost(HOST_3);
 
                 // continue with same statement
-                for (int i = 0; i < 55; i++) { // default queriesBeforeRetryMaster == 50
+                for (int i = 0; i < 55; i++) { // default queriesBeforeRetrySource == 50
                     assertSingleValueQuery(testStmt, "SELECT 1", 1L);
                     assertEquals(HOST_2_OK, UnreliableSocketFactory.getHostFromLastConnection());
                 }
@@ -1361,7 +1361,7 @@ public class MultiHostConnectionTest extends BaseTestCase {
          * Connect to a random host when all affinity hosts are down, then fall back to one of the affinity hosts when its back on.
          */
         props.setProperty(PropertyKey.serverAffinityOrder.getKeyName(), HOST_2 + ":" + port + "," + HOST_4 + ":" + port);
-        props.setProperty(PropertyKey.loadBalanceBlacklistTimeout.getKeyName(), "2000"); // Turn on blacklisting to avoid retrying the affinity hosts.
+        props.setProperty(PropertyKey.loadBalanceBlocklistTimeout.getKeyName(), "2000"); // Turn on blocklisting to avoid retrying the affinity hosts.
 
         testConn = getUnreliableLoadBalancedConnection(hosts, props, new HashSet<>(Arrays.asList(HOST_1, HOST_2, HOST_4)));
         testConn.setAutoCommit(false);
@@ -1372,14 +1372,14 @@ public class MultiHostConnectionTest extends BaseTestCase {
         assertTrue(
                 UnreliableSocketFactory.getHostFromLastConnection().equals(HOST_3_OK) || UnreliableSocketFactory.getHostFromLastConnection().equals(HOST_5_OK));
 
-        Thread.sleep(2100); // Allow the blacklisted hosts to be retried.
+        Thread.sleep(2100); // Allow the blocklisted hosts to be retried.
 
         UnreliableSocketFactory.dontDownHost(HOST_4);
         testConn.commit();
         assertConnectionsHistory(HOST_2_FAIL, HOST_2_FAIL, HOST_4_OK); // Check the expected last events only.
 
         testConn.close();
-        props.remove(PropertyKey.loadBalanceBlacklistTimeout.getKeyName());
+        props.remove(PropertyKey.loadBalanceBlocklistTimeout.getKeyName());
 
         /*
          * Non-existing affinity host.

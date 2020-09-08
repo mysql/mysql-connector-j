@@ -296,7 +296,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     }
 
     /**
-     * Check to see if the statement is safe for read-only slaves after failover.
+     * Check to see if the statement is safe for read-only replicas after failover.
      * 
      * @return true if safe for read-only.
      * @throws SQLException

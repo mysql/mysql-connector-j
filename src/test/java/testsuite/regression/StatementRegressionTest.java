@@ -9395,7 +9395,7 @@ public class StatementRegressionTest extends BaseTestCase {
             Connection highLevelConn = getLoadBalancedConnection(props);
             assertTrue(highLevelConn.getClass().getName().startsWith("com.sun.proxy") || highLevelConn.getClass().getName().startsWith("$Proxy"), testCase);
 
-            Connection lowLevelConn = getMasterSlaveReplicationConnection(props);
+            Connection lowLevelConn = getSourceReplicaReplicationConnection(props);
             // This simulates the behavior from Fabric connections that are causing the problem.
             ((ReplicationConnection) lowLevelConn).setProxy((JdbcConnection) highLevelConn);
 
@@ -9453,7 +9453,7 @@ public class StatementRegressionTest extends BaseTestCase {
         Connection highLevelConn = getLoadBalancedConnection(null);
         assertTrue(highLevelConn.getClass().getName().startsWith("com.sun.proxy") || highLevelConn.getClass().getName().startsWith("$Proxy"));
 
-        Connection lowLevelConn = getMasterSlaveReplicationConnection(null);
+        Connection lowLevelConn = getSourceReplicaReplicationConnection(null);
         // This simulates the behavior from Fabric connections that are causing the problem.
         ((ReplicationConnection) lowLevelConn).setProxy((JdbcConnection) highLevelConn);
 
@@ -10265,7 +10265,7 @@ public class StatementRegressionTest extends BaseTestCase {
         testConn.close();
 
         // Replication connection; all JDBC objects are proxied.
-        testConn = getMasterSlaveReplicationConnection();
+        testConn = getSourceReplicaReplicationConnection();
         assertTrue(testConn.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
         assertTrue(testConn.equals(testConn));
         this.stmt = testConn.createStatement();
@@ -10601,7 +10601,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for Bug#26748909 - MASTER : ERROR - NO OPERATIONS ALLOWED AFTER STATEMENT CLOSED FOR TOSTRING()
+     * Tests fix for Bug#26748909, NO OPERATIONS ALLOWED AFTER STATEMENT CLOSED FOR TOSTRING()
      * 
      * @throws Exception
      */

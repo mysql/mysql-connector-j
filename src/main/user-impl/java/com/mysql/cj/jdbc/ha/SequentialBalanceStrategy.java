@@ -40,7 +40,7 @@ import com.mysql.cj.jdbc.JdbcConnection;
 /**
  * A balancing strategy that starts at a random point, and then advances in the list (wrapping around) for each new pickConnection() call.
  * 
- * The initial point selection, and subsequent point selections are blacklist-aware.
+ * The initial point selection, and subsequent point selections are blocklist-aware.
  */
 public class SequentialBalanceStrategy implements BalanceStrategy {
     private int currentHostIndex = -1;
@@ -55,7 +55,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
 
         SQLException ex = null;
 
-        Map<String, Long> blackList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlacklist();
+        Map<String, Long> blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist();
 
         for (int attempts = 0; attempts < numRetries; attempts++) {
             if (numHosts == 1) {
@@ -64,7 +64,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
                 int random = (int) Math.floor((Math.random() * numHosts));
 
                 for (int i = random; i < numHosts; i++) {
-                    if (!blackList.containsKey(configuredHosts.get(i))) {
+                    if (!blockList.containsKey(configuredHosts.get(i))) {
                         this.currentHostIndex = i;
                         break;
                     }
@@ -72,7 +72,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
 
                 if (this.currentHostIndex == -1) {
                     for (int i = 0; i < random; i++) {
-                        if (!blackList.containsKey(configuredHosts.get(i))) {
+                        if (!blockList.containsKey(configuredHosts.get(i))) {
                             this.currentHostIndex = i;
                             break;
                         }
@@ -80,7 +80,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
                 }
 
                 if (this.currentHostIndex == -1) {
-                    blackList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlacklist(); // it may have changed
+                    blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist(); // it may have changed
                     // and the proxy returns a copy
 
                     try {
@@ -96,7 +96,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
                 boolean foundGoodHost = false;
 
                 for (; i < numHosts; i++) {
-                    if (!blackList.containsKey(configuredHosts.get(i))) {
+                    if (!blockList.containsKey(configuredHosts.get(i))) {
                         this.currentHostIndex = i;
                         foundGoodHost = true;
                         break;
@@ -105,7 +105,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
 
                 if (!foundGoodHost) {
                     for (i = 0; i < this.currentHostIndex; i++) {
-                        if (!blackList.containsKey(configuredHosts.get(i))) {
+                        if (!blockList.containsKey(configuredHosts.get(i))) {
                             this.currentHostIndex = i;
                             foundGoodHost = true;
                             break;
@@ -114,7 +114,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
                 }
 
                 if (!foundGoodHost) {
-                    blackList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlacklist(); // it may have changed
+                    blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist(); // it may have changed
                     // and the proxy returns a copy
 
                     try {
@@ -138,7 +138,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
 
                     if (((LoadBalancedConnectionProxy) proxy).shouldExceptionTriggerConnectionSwitch(sqlEx)) {
 
-                        ((LoadBalancedConnectionProxy) proxy).addToGlobalBlacklist(hostPortSpec);
+                        ((LoadBalancedConnectionProxy) proxy).addToGlobalBlocklist(hostPortSpec);
 
                         try {
                             Thread.sleep(250);

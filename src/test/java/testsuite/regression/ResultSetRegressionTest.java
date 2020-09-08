@@ -4153,18 +4153,18 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 Statement st2 = con2.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
                 st2.setFetchSize(Integer.MIN_VALUE); // turn on streaming mode
                 try {
-                    System.out.println("testBug64204.slave: Running KILL QUERY " + connectionId);
+                    System.out.println("testBug64204.replica: Running KILL QUERY " + connectionId);
                     st2.execute("KILL QUERY " + connectionId + ";");
 
                     Thread.sleep(5000);
-                    System.out.println("testBug64204.slave: parent thread should be hung now!!!");
+                    System.out.println("testBug64204.replica: parent thread should be hung now!!!");
                     res = true;
                 } finally {
                     st2.close();
                     con2.close();
                 }
 
-                System.out.println("testBug64204.slave: Done.");
+                System.out.println("testBug64204.replica: Done.");
                 return res;
             }
         }, 10, TimeUnit.SECONDS);
@@ -6087,7 +6087,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests for fix to BUG#26750705 - MASTER : ERROR - UNSUPPORTED CONVERSION FROM TIME TO JAVA.SQL.DATE
+     * Tests for fix to BUG#26750705, UNSUPPORTED CONVERSION FROM TIME TO JAVA.SQL.DATE
      *
      * @throws Exception
      */

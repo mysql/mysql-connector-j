@@ -291,11 +291,22 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     abstract boolean shouldExceptionTriggerConnectionSwitch(Throwable t);
 
     /**
-     * Checks if current connection is to a master host.
+     * Checks if current connection is to a source host.
      * 
-     * @return true if current connection is to a master host
+     * @return true if current connection is to a source host
      */
-    abstract boolean isMasterConnection();
+    abstract boolean isSourceConnection();
+
+    /**
+     * Use {@link #isSourceConnection()} instead.
+     * 
+     * @return boolean
+     * @deprecated
+     */
+    @Deprecated
+    boolean isMasterConnection() {
+        return isSourceConnection();
+    }
 
     /**
      * Invalidates the current connection.

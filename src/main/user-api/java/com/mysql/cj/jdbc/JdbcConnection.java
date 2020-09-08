@@ -204,7 +204,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     String getStatementComment();
 
     /**
-     * Has this connection tried to execute a query on the "master"
+     * Has this connection tried to execute a query on the "source"
      * server (first host in a multiple host list).
      * 
      * @return true if it has tried
@@ -235,7 +235,18 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      * @return true if this connection is connected to the first in
      *         the list.
      */
-    boolean isMasterConnection();
+    boolean isSourceConnection();
+
+    /**
+     * Use {@link #isSourceConnection()} instead.
+     * 
+     * @return true if it's a source connection
+     * @deprecated
+     */
+    @Deprecated
+    default boolean isMasterConnection() {
+        return isSourceConnection();
+    }
 
     /**
      * Does this connection have the same resource name as the given

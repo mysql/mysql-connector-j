@@ -53,22 +53,22 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 
         SQLException ex = null;
 
-        List<String> whiteList = new ArrayList<>(numHosts);
-        whiteList.addAll(configuredHosts);
+        List<String> allowList = new ArrayList<>(numHosts);
+        allowList.addAll(configuredHosts);
 
-        Map<String, Long> blackList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlacklist();
+        Map<String, Long> blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist();
 
-        whiteList.removeAll(blackList.keySet());
+        allowList.removeAll(blockList.keySet());
 
-        Map<String, Integer> whiteListMap = this.getArrayIndexMap(whiteList);
+        Map<String, Integer> allowListMap = this.getArrayIndexMap(allowList);
 
         for (int attempts = 0; attempts < numRetries;) {
-            int random = (int) Math.floor((Math.random() * whiteList.size()));
-            if (whiteList.size() == 0) {
+            int random = (int) Math.floor((Math.random() * allowList.size()));
+            if (allowList.size() == 0) {
                 throw SQLError.createSQLException(Messages.getString("RandomBalanceStrategy.0"), null);
             }
 
-            String hostPortSpec = whiteList.get(random);
+            String hostPortSpec = allowList.get(random);
 
             ConnectionImpl conn = (ConnectionImpl) liveConnections.get(hostPortSpec);
 
@@ -80,16 +80,16 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 
                     if (((LoadBalancedConnectionProxy) proxy).shouldExceptionTriggerConnectionSwitch(sqlEx)) {
 
-                        Integer whiteListIndex = whiteListMap.get(hostPortSpec);
+                        Integer allowListIndex = allowListMap.get(hostPortSpec);
 
                         // exclude this host from being picked again
-                        if (whiteListIndex != null) {
-                            whiteList.remove(whiteListIndex.intValue());
-                            whiteListMap = this.getArrayIndexMap(whiteList);
+                        if (allowListIndex != null) {
+                            allowList.remove(allowListIndex.intValue());
+                            allowListMap = this.getArrayIndexMap(allowList);
                         }
-                        ((LoadBalancedConnectionProxy) proxy).addToGlobalBlacklist(hostPortSpec);
+                        ((LoadBalancedConnectionProxy) proxy).addToGlobalBlocklist(hostPortSpec);
 
-                        if (whiteList.size() == 0) {
+                        if (allowList.size() == 0) {
                             attempts++;
                             try {
                                 Thread.sleep(250);
@@ -97,12 +97,12 @@ public class RandomBalanceStrategy implements BalanceStrategy {
                             }
 
                             // start fresh
-                            whiteListMap = new HashMap<>(numHosts);
-                            whiteList.addAll(configuredHosts);
-                            blackList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlacklist();
+                            allowListMap = new HashMap<>(numHosts);
+                            allowList.addAll(configuredHosts);
+                            blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist();
 
-                            whiteList.removeAll(blackList.keySet());
-                            whiteListMap = this.getArrayIndexMap(whiteList);
+                            allowList.removeAll(blockList.keySet());
+                            allowListMap = this.getArrayIndexMap(allowList);
                         }
 
                         continue;

@@ -37,20 +37,20 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * Group of connection objects which can be configured as a group. This is used for promotion/demotion of slaves and masters in a replication configuration,
+ * Group of connection objects which can be configured as a group. This is used for promotion/demotion of replicas and sources in a replication configuration,
  * and for exposing metrics around replication-aware connections.
  */
 public class ReplicationConnectionGroup {
     private String groupName;
     private long connections = 0;
-    private long slavesAdded = 0;
-    private long slavesRemoved = 0;
-    private long slavesPromoted = 0;
+    private long replicasAdded = 0;
+    private long replicasRemoved = 0;
+    private long replicasPromoted = 0;
     private long activeConnections = 0;
     private HashMap<Long, ReplicationConnection> replicationConnections = new HashMap<>();
-    private Set<String> slaveHostList = new CopyOnWriteArraySet<>();
+    private Set<String> replicaHostList = new CopyOnWriteArraySet<>();
     private boolean isInitialized = false;
-    private Set<String> masterHostList = new CopyOnWriteArraySet<>();
+    private Set<String> sourceHostList = new CopyOnWriteArraySet<>();
 
     ReplicationConnectionGroup(String groupName) {
         this.groupName = groupName;
@@ -60,16 +60,16 @@ public class ReplicationConnectionGroup {
         return this.connections;
     }
 
-    public long registerReplicationConnection(ReplicationConnection conn, List<String> localMasterList, List<String> localSlaveList) {
+    public long registerReplicationConnection(ReplicationConnection conn, List<String> localSourceList, List<String> localReplicaList) {
         long currentConnectionId;
 
         synchronized (this) {
             if (!this.isInitialized) {
-                if (localMasterList != null) {
-                    this.masterHostList.addAll(localMasterList);
+                if (localSourceList != null) {
+                    this.sourceHostList.addAll(localSourceList);
                 }
-                if (localSlaveList != null) {
-                    this.slaveHostList.addAll(localSlaveList);
+                if (localReplicaList != null) {
+                    this.replicaHostList.addAll(localReplicaList);
                 }
                 this.isInitialized = true;
             }
@@ -85,39 +85,74 @@ public class ReplicationConnectionGroup {
         return this.groupName;
     }
 
-    public Collection<String> getMasterHosts() {
-        return this.masterHostList;
-    }
-
-    public Collection<String> getSlaveHosts() {
-        return this.slaveHostList;
+    public Collection<String> getSourceHosts() {
+        return this.sourceHostList;
     }
 
     /**
-     * Adds a host to the slaves hosts list.
+     * Use {@link #getSourceHosts()} instead.
      * 
-     * We can safely assume that if this host was added to the slaves list, then it must be added to each one of the replication connections from this group as
-     * well.
-     * Unnecessary calls to {@link ReplicationConnection#addSlaveHost(String)} could result in undesirable locking issues, assuming that this method is
+     * @return source hosts
+     * @deprecated
+     */
+    @Deprecated
+    public Collection<String> getMasterHosts() {
+        return getSourceHosts();
+    }
+
+    public Collection<String> getReplicaHosts() {
+        return this.replicaHostList;
+    }
+
+    /**
+     * Use {@link #getReplicaHosts()} instead.
+     * 
+     * @return replica hosts
+     * @deprecated
+     */
+    @Deprecated
+    public Collection<String> getSlaveHosts() {
+        return getReplicaHosts();
+    }
+
+    /**
+     * Adds a host to the replicas hosts list.
+     * 
+     * We can safely assume that if this host was added to the replicas list, then it must be added to each one of the replication connections from this group
+     * as well.
+     * Unnecessary calls to {@link ReplicationConnection#addReplicaHost(String)} could result in undesirable locking issues, assuming that this method is
      * synchronized by nature.
      * 
-     * This is a no-op if the group already has this host in a slave role.
+     * This is a no-op if the group already has this host in a replica role.
      * 
      * @param hostPortPair
      *            "host:port"
      * @throws SQLException
      *             if an error occurs
      */
-    public void addSlaveHost(String hostPortPair) throws SQLException {
-        // only add if it's not already a slave host
-        if (this.slaveHostList.add(hostPortPair)) {
-            this.slavesAdded++;
+    public void addReplicaHost(String hostPortPair) throws SQLException {
+        // only add if it's not already a replica host
+        if (this.replicaHostList.add(hostPortPair)) {
+            this.replicasAdded++;
 
-            // add the slave to all connections:
+            // add the replica to all connections:
             for (ReplicationConnection c : this.replicationConnections.values()) {
-                c.addSlaveHost(hostPortPair);
+                c.addReplicaHost(hostPortPair);
             }
         }
+    }
+
+    /**
+     * Use {@link #addReplicaHost(String)} instead.
+     * 
+     * @param hostPortPair
+     *            host:port
+     * @throws SQLException
+     * @deprecated
+     */
+    @Deprecated
+    public void addSlaveHost(String hostPortPair) throws SQLException {
+        addReplicaHost(hostPortPair);
     }
 
     public void handleCloseConnection(ReplicationConnection conn) {
@@ -126,14 +161,15 @@ public class ReplicationConnectionGroup {
     }
 
     /**
-     * Removes a host from the slaves hosts list.
+     * Removes a host from the replicas hosts list.
      * 
-     * We can safely assume that if this host was removed from the slaves list, then it must be removed from each one of the replication connections from this
+     * We can safely assume that if this host was removed from the replicas list, then it must be removed from each one of the replication connections from this
      * group as well.
-     * Unnecessary calls to {@link ReplicationConnection#removeSlave(String, boolean)} could result in undesirable locking issues, assuming that this method is
+     * Unnecessary calls to {@link ReplicationConnection#removeReplica(String, boolean)} could result in undesirable locking issues, assuming that this method
+     * is
      * synchronized by nature.
      * 
-     * This is a no-op if the group doesn't have this host in a slave role.
+     * This is a no-op if the group doesn't have this host in a replica role.
      * 
      * @param hostPortPair
      *            "host:port"
@@ -142,64 +178,106 @@ public class ReplicationConnectionGroup {
      * @throws SQLException
      *             if an error occurs
      */
-    public void removeSlaveHost(String hostPortPair, boolean closeGently) throws SQLException {
-        if (this.slaveHostList.remove(hostPortPair)) {
-            this.slavesRemoved++;
+    public void removeReplicaHost(String hostPortPair, boolean closeGently) throws SQLException {
+        if (this.replicaHostList.remove(hostPortPair)) {
+            this.replicasRemoved++;
 
-            // remove the slave from all connections:
+            // remove the replica from all connections:
             for (ReplicationConnection c : this.replicationConnections.values()) {
-                c.removeSlave(hostPortPair, closeGently);
+                c.removeReplica(hostPortPair, closeGently);
             }
         }
     }
 
     /**
-     * Promotes a slave host to master.
+     * Use {@link #removeReplicaHost(String, boolean)} instead.
      * 
-     * We can safely assume that if this host was removed from the slaves list or added to the masters list, then the same host promotion must happen in each
+     * @param hostPortPair
+     *            host:port
+     * @param closeGently
+     *            option
+     * @throws SQLException
+     * @deprecated
+     */
+    @Deprecated
+    public void removeSlaveHost(String hostPortPair, boolean closeGently) throws SQLException {
+        removeReplicaHost(hostPortPair, closeGently);
+    }
+
+    /**
+     * Promotes a replica host to source.
+     * 
+     * We can safely assume that if this host was removed from the replicas list or added to the sources list, then the same host promotion must happen in each
      * one of the replication connections from this group as well.
-     * Unnecessary calls to {@link ReplicationConnection#promoteSlaveToMaster(String)} could result in undesirable locking issues, assuming that this method is
+     * Unnecessary calls to {@link ReplicationConnection#promoteReplicaToSource(String)} could result in undesirable locking issues, assuming that this method
+     * is
      * synchronized by nature.
      * 
-     * This is a no-op if the group already has this host in a master role and not in slave role.
+     * This is a no-op if the group already has this host in a source role and not in replica role.
      * 
      * @param hostPortPair
      *            "host:port"
      * @throws SQLException
      *             if an error occurs
      */
-    public void promoteSlaveToMaster(String hostPortPair) throws SQLException {
-        // remove host from slaves AND add host to masters, note that both operands need to be evaluated.
-        if (this.slaveHostList.remove(hostPortPair) | this.masterHostList.add(hostPortPair)) {
-            this.slavesPromoted++;
+    public void promoteReplicaToSource(String hostPortPair) throws SQLException {
+        // remove host from replicas AND add host to sources, note that both operands need to be evaluated.
+        if (this.replicaHostList.remove(hostPortPair) | this.sourceHostList.add(hostPortPair)) {
+            this.replicasPromoted++;
 
             for (ReplicationConnection c : this.replicationConnections.values()) {
-                c.promoteSlaveToMaster(hostPortPair);
+                c.promoteReplicaToSource(hostPortPair);
             }
         }
     }
 
     /**
-     * Removes a host from the masters hosts list.
+     * Use {@link #promoteReplicaToSource(String)} instead.
+     * 
+     * @param hostPortPair
+     *            host:port
+     * @throws SQLException
+     * @deprecated
+     */
+    @Deprecated
+    public void promoteSlaveToMaster(String hostPortPair) throws SQLException {
+        promoteReplicaToSource(hostPortPair);
+    }
+
+    /**
+     * Removes a host from the sources hosts list.
      * 
      * @param hostPortPair
      *            host:port
      * @throws SQLException
      *             if an error occurs
      */
-    public void removeMasterHost(String hostPortPair) throws SQLException {
-        this.removeMasterHost(hostPortPair, true);
+    public void removeSourceHost(String hostPortPair) throws SQLException {
+        this.removeSourceHost(hostPortPair, true);
     }
 
     /**
-     * Removes a host from the masters hosts list.
+     * Use {@link #removeSourceHost(String)} instead.
      * 
-     * We can safely assume that if this host was removed from the masters list, then it must be removed from each one of the replication connections from this
+     * @param hostPortPair
+     *            host:port
+     * @throws SQLException
+     * @deprecated
+     */
+    @Deprecated
+    public void removeMasterHost(String hostPortPair) throws SQLException {
+        removeSourceHost(hostPortPair);
+    }
+
+    /**
+     * Removes a host from the sources hosts list.
+     * 
+     * We can safely assume that if this host was removed from the sources list, then it must be removed from each one of the replication connections from this
      * group as well.
-     * Unnecessary calls to {@link ReplicationConnection#removeMasterHost(String, boolean)} could result in undesirable locking issues, assuming that this
+     * Unnecessary calls to {@link ReplicationConnection#removeSourceHost(String, boolean)} could result in undesirable locking issues, assuming that this
      * method is synchronized by nature.
      * 
-     * This is a no-op if the group doesn't have this host in a master role.
+     * This is a no-op if the group doesn't have this host in a source role.
      * 
      * @param hostPortPair
      *            "host:port"
@@ -208,47 +286,121 @@ public class ReplicationConnectionGroup {
      * @throws SQLException
      *             if an error occurs
      */
-    public void removeMasterHost(String hostPortPair, boolean closeGently) throws SQLException {
-        if (this.masterHostList.remove(hostPortPair)) {
-            // remove the master from all connections:
+    public void removeSourceHost(String hostPortPair, boolean closeGently) throws SQLException {
+        if (this.sourceHostList.remove(hostPortPair)) {
+            // remove the source from all connections:
             for (ReplicationConnection c : this.replicationConnections.values()) {
-                c.removeMasterHost(hostPortPair, closeGently);
+                c.removeSourceHost(hostPortPair, closeGently);
             }
         }
     }
 
+    /**
+     * Use {@link #removeSourceHost(String, boolean)} instead.
+     * 
+     * @param hostPortPair
+     *            host:port
+     * @param closeGently
+     *            option
+     * @throws SQLException
+     * @deprecated
+     */
+    @Deprecated
+    public void removeMasterHost(String hostPortPair, boolean closeGently) throws SQLException {
+        removeSourceHost(hostPortPair, closeGently);
+    }
+
+    public int getConnectionCountWithHostAsReplica(String hostPortPair) {
+        int matched = 0;
+
+        for (ReplicationConnection c : this.replicationConnections.values()) {
+            if (c.isHostReplica(hostPortPair)) {
+                matched++;
+            }
+        }
+        return matched;
+    }
+
+    /**
+     * Use {@link #getConnectionCountWithHostAsReplica(String)} instead.
+     * 
+     * @param hostPortPair
+     *            host:port
+     * @return count
+     * @deprecated
+     */
+    @Deprecated
     public int getConnectionCountWithHostAsSlave(String hostPortPair) {
+        return getConnectionCountWithHostAsReplica(hostPortPair);
+    }
+
+    public int getConnectionCountWithHostAsSource(String hostPortPair) {
         int matched = 0;
 
         for (ReplicationConnection c : this.replicationConnections.values()) {
-            if (c.isHostSlave(hostPortPair)) {
+            if (c.isHostSource(hostPortPair)) {
                 matched++;
             }
         }
         return matched;
     }
 
+    /**
+     * Use {@link #getConnectionCountWithHostAsSource(String)} instead.
+     * 
+     * @param hostPortPair
+     *            host:port
+     * @return count
+     * @deprecated
+     */
+    @Deprecated
     public int getConnectionCountWithHostAsMaster(String hostPortPair) {
-        int matched = 0;
-
-        for (ReplicationConnection c : this.replicationConnections.values()) {
-            if (c.isHostMaster(hostPortPair)) {
-                matched++;
-            }
-        }
-        return matched;
+        return getConnectionCountWithHostAsSource(hostPortPair);
     }
 
+    public long getNumberOfReplicasAdded() {
+        return this.replicasAdded;
+    }
+
+    /**
+     * Use {@link #getNumberOfReplicasAdded()} instead.
+     * 
+     * @return count
+     * @deprecated
+     */
+    @Deprecated
     public long getNumberOfSlavesAdded() {
-        return this.slavesAdded;
+        return getNumberOfReplicasAdded();
     }
 
+    public long getNumberOfReplicasRemoved() {
+        return this.replicasRemoved;
+    }
+
+    /**
+     * Use {@link #getNumberOfReplicasRemoved()} instead.
+     * 
+     * @return count
+     * @deprecated
+     */
+    @Deprecated
     public long getNumberOfSlavesRemoved() {
-        return this.slavesRemoved;
+        return getNumberOfReplicasRemoved();
     }
 
+    public long getNumberOfReplicaPromotions() {
+        return this.replicasPromoted;
+    }
+
+    /**
+     * Use {@link #getNumberOfReplicaPromotions()} instead.
+     * 
+     * @return count
+     * @deprecated
+     */
+    @Deprecated
     public long getNumberOfSlavePromotions() {
-        return this.slavesPromoted;
+        return getNumberOfReplicaPromotions();
     }
 
     public long getTotalConnectionCount() {
@@ -261,7 +413,7 @@ public class ReplicationConnectionGroup {
 
     @Override
     public String toString() {
-        return "ReplicationConnectionGroup[groupName=" + this.groupName + ",masterHostList=" + this.masterHostList + ",slaveHostList=" + this.slaveHostList
+        return "ReplicationConnectionGroup[groupName=" + this.groupName + ",sourceHostList=" + this.sourceHostList + ",replicaHostList=" + this.replicaHostList
                 + "]";
     }
 }

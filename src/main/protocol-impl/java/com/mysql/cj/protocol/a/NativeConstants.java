@@ -84,6 +84,7 @@ public class NativeConstants {
     public static final int COM_BINLOG_DUMP = 18;
     public static final int COM_TABLE_DUMP = 19;
     public static final int COM_CONNECT_OUT = 20;
+    @Deprecated
     public static final int COM_REGISTER_SLAVE = 21;
     public static final int COM_STMT_PREPARE = 22;
     public static final int COM_STMT_EXECUTE = 23;

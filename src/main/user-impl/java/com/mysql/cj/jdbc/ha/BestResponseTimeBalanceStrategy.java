@@ -46,7 +46,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
     public ConnectionImpl pickConnection(InvocationHandler proxy, List<String> configuredHosts, Map<String, JdbcConnection> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException {
 
-        Map<String, Long> blackList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlacklist();
+        Map<String, Long> blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist();
 
         SQLException ex = null;
 
@@ -56,14 +56,14 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
             int bestHostIndex = 0;
 
             // safety
-            if (blackList.size() == configuredHosts.size()) {
-                blackList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlacklist();
+            if (blockList.size() == configuredHosts.size()) {
+                blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist();
             }
 
             for (int i = 0; i < responseTimes.length; i++) {
                 long candidateResponseTime = responseTimes[i];
 
-                if (candidateResponseTime < minResponseTime && !blackList.containsKey(configuredHosts.get(i))) {
+                if (candidateResponseTime < minResponseTime && !blockList.containsKey(configuredHosts.get(i))) {
                     if (candidateResponseTime == 0) {
                         bestHostIndex = i;
 
@@ -86,16 +86,16 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
                     ex = sqlEx;
 
                     if (((LoadBalancedConnectionProxy) proxy).shouldExceptionTriggerConnectionSwitch(sqlEx)) {
-                        ((LoadBalancedConnectionProxy) proxy).addToGlobalBlacklist(bestHost);
-                        blackList.put(bestHost, null);
+                        ((LoadBalancedConnectionProxy) proxy).addToGlobalBlocklist(bestHost);
+                        blockList.put(bestHost, null);
 
-                        if (blackList.size() == configuredHosts.size()) {
+                        if (blockList.size() == configuredHosts.size()) {
                             attempts++;
                             try {
                                 Thread.sleep(250);
                             } catch (InterruptedException e) {
                             }
-                            blackList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlacklist(); // try again after a little bit
+                            blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist(); // try again after a little bit
                         }
 
                         continue;

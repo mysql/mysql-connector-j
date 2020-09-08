@@ -1098,24 +1098,24 @@ public abstract class BaseTestCase {
     }
 
     protected Connection getFailoverConnection(Properties props) throws SQLException {
-        return DriverManager.getConnection(getMasterSlaveUrl(), getHostFreePropertiesFromTestsuiteUrl(props));
+        return DriverManager.getConnection(getSourceReplicaUrl(), getHostFreePropertiesFromTestsuiteUrl(props));
     }
 
-    protected Connection getMasterSlaveReplicationConnection() throws SQLException {
-        return getMasterSlaveReplicationConnection(null);
+    protected Connection getSourceReplicaReplicationConnection() throws SQLException {
+        return getSourceReplicaReplicationConnection(null);
     }
 
-    protected Connection getMasterSlaveReplicationConnection(Properties props) throws SQLException {
-        String replicationUrl = getMasterSlaveUrl(ConnectionUrl.Type.REPLICATION_CONNECTION.getScheme());
+    protected Connection getSourceReplicaReplicationConnection(Properties props) throws SQLException {
+        String replicationUrl = getSourceReplicaUrl(ConnectionUrl.Type.REPLICATION_CONNECTION.getScheme());
         Connection replConn = new NonRegisteringDriver().connect(replicationUrl, getHostFreePropertiesFromTestsuiteUrl(props));
         return replConn;
     }
 
-    protected String getMasterSlaveUrl() throws SQLException {
-        return getMasterSlaveUrl(ConnectionUrl.Type.FAILOVER_CONNECTION.getScheme());
+    protected String getSourceReplicaUrl() throws SQLException {
+        return getSourceReplicaUrl(ConnectionUrl.Type.FAILOVER_CONNECTION.getScheme());
     }
 
-    protected String getMasterSlaveUrl(String protocol) throws SQLException {
+    protected String getSourceReplicaUrl(String protocol) throws SQLException {
         HostInfo hostInfo = mainConnectionUrl.getMainHost();
         String hostPortPair = TestUtils.encodePercent(hostInfo.getHostPortPair());
         return String.format("%s//%s,%s/", protocol, hostPortPair, hostPortPair);

@@ -51,7 +51,7 @@ public enum PropertyKey {
     PROTOCOL("protocol", false),
     /** The name pipes path to use when "protocol=pipe'. */
     PATH("path", "namedPipePath", false),
-    /** The server type in a replication setup. Possible values: "master" and "slave". */
+    /** The server type in a replication setup. Possible values: "source" and "replica". */
     TYPE("type", false),
     /** The address value ("host:port") from the properties instance passed to the driver. */
     ADDRESS("address", false),
@@ -62,11 +62,11 @@ public enum PropertyKey {
 
     allowLoadLocalInfile("allowLoadLocalInfile", true), //
     allowLoadLocalInfileInPath("allowLoadLocalInfileInPath", true), //
-    allowMasterDownConnections("allowMasterDownConnections", true), //
+    allowSourceDownConnections("allowSourceDownConnections", "allowMasterDownConnections", true), //
     allowMultiQueries("allowMultiQueries", true), //
     allowNanAndInf("allowNanAndInf", true), //
     allowPublicKeyRetrieval("allowPublicKeyRetrieval", true), //
-    allowSlaveDownConnections("allowSlaveDownConnections", true), //
+    allowReplicaDownConnections("allowReplicaDownConnections", "allowSlaveDownConnections", true), //
     allowUrlInLocalInfile("allowUrlInLocalInfile", true), //
     alwaysSendSetIsolation("alwaysSendSetIsolation", true), //
     authenticationPlugins("authenticationPlugins", true), //
@@ -140,7 +140,7 @@ public enum PropertyKey {
     largeRowSizeThreshold("largeRowSizeThreshold", true), //
     loadBalanceAutoCommitStatementRegex("loadBalanceAutoCommitStatementRegex", true), //
     loadBalanceAutoCommitStatementThreshold("loadBalanceAutoCommitStatementThreshold", true), //
-    loadBalanceBlacklistTimeout("loadBalanceBlacklistTimeout", true), //
+    loadBalanceBlocklistTimeout("loadBalanceBlocklistTimeout", "loadBalanceBlacklistTimeout", true), //
     loadBalanceConnectionGroup("loadBalanceConnectionGroup", true), //
     loadBalanceExceptionChecker("loadBalanceExceptionChecker", true), //
     loadBalanceHostRemovalGracePeriod("loadBalanceHostRemovalGracePeriod", true), //
@@ -178,10 +178,10 @@ public enum PropertyKey {
     profilerEventHandler("profilerEventHandler", true), //
     profileSQL("profileSQL", true), //
     propertiesTransform("propertiesTransform", true), //
-    queriesBeforeRetryMaster("queriesBeforeRetryMaster", true), //
+    queriesBeforeRetrySource("queriesBeforeRetrySource", "queriesBeforeRetryMaster", true), //
     queryInterceptors("queryInterceptors", true), //
     queryTimeoutKillsConnection("queryTimeoutKillsConnection", true), //
-    readFromMasterWhenNoSlaves("readFromMasterWhenNoSlaves", true), //
+    readFromSourceWhenNoReplicas("readFromSourceWhenNoReplicas", "readFromMasterWhenNoSlaves", true), //
     readOnlyPropagatesToServer("readOnlyPropagatesToServer", true), //
     reconnectAtTxEnd("reconnectAtTxEnd", true), //
     replicationConnectionGroup("replicationConnectionGroup", true), //
@@ -192,7 +192,7 @@ public enum PropertyKey {
     retriesAllDown("retriesAllDown", true), //
     rewriteBatchedStatements("rewriteBatchedStatements", true), //
     rollbackOnPooledClose("rollbackOnPooledClose", true), //
-    secondsBeforeRetryMaster("secondsBeforeRetryMaster", true), //
+    secondsBeforeRetrySource("secondsBeforeRetrySource", "secondsBeforeRetryMaster", true), //
     selfDestructOnPingMaxOperations("selfDestructOnPingMaxOperations", true), //
     selfDestructOnPingSecondsLifetime("selfDestructOnPingSecondsLifetime", true), //
     sendFractionalSeconds("sendFractionalSeconds", true), //

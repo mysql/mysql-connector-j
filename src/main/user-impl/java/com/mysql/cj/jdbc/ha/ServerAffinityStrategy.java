@@ -54,10 +54,10 @@ public class ServerAffinityStrategy extends RandomBalanceStrategy {
         if (this.affinityOrderedServers == null) {
             return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
         }
-        Map<String, Long> blackList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlacklist();
+        Map<String, Long> blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist();
 
         for (String host : this.affinityOrderedServers) {
-            if (configuredHosts.contains(host) && !blackList.containsKey(host)) {
+            if (configuredHosts.contains(host) && !blockList.containsKey(host)) {
                 ConnectionImpl conn = (ConnectionImpl) liveConnections.get(host);
                 if (conn != null) {
                     return conn;
@@ -67,7 +67,7 @@ public class ServerAffinityStrategy extends RandomBalanceStrategy {
                     return conn;
                 } catch (SQLException sqlEx) {
                     if (((LoadBalancedConnectionProxy) proxy).shouldExceptionTriggerConnectionSwitch(sqlEx)) {
-                        ((LoadBalancedConnectionProxy) proxy).addToGlobalBlacklist(host);
+                        ((LoadBalancedConnectionProxy) proxy).addToGlobalBlocklist(host);
                     }
                 }
             }

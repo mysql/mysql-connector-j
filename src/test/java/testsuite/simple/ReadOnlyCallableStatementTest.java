@@ -57,7 +57,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
 
             createProcedure("`testProc.1`", "()\nREADS SQL DATA\nbegin\nSELECT NOW();\nend\n");
 
-            replConn = getMasterSlaveReplicationConnection();
+            replConn = getSourceReplicaReplicationConnection();
             replConn.setReadOnly(true);
 
             CallableStatement cstmt = replConn.prepareCall("CALL testProc1()");
@@ -93,7 +93,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
 
             createProcedure("`testProc.2`", "()\nMODIFIES SQL DATA\nbegin\nSELECT NOW();\nend\n");
 
-            replConn = getMasterSlaveReplicationConnection();
+            replConn = getSourceReplicaReplicationConnection();
             replConn.setReadOnly(true);
 
             CallableStatement cstmt = replConn.prepareCall("CALL testProc2()");

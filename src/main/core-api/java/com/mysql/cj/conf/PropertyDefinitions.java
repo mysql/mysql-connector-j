@@ -522,14 +522,14 @@ public class PropertyDefinitions {
                 //
                 // CATEGORY_HA
                 //
-                new BooleanPropertyDefinition(PropertyKey.allowMasterDownConnections, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.allowMasterDownConnections"), "5.1.27", CATEGORY_HA, Integer.MAX_VALUE),
+                new BooleanPropertyDefinition(PropertyKey.allowSourceDownConnections, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.allowSourceDownConnections"), "5.1.27", CATEGORY_HA, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PropertyKey.allowSlaveDownConnections, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.allowSlaveDownConnections"), "6.0.2", CATEGORY_HA, Integer.MAX_VALUE),
+                new BooleanPropertyDefinition(PropertyKey.allowReplicaDownConnections, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.allowReplicaDownConnections"), "6.0.2", CATEGORY_HA, Integer.MAX_VALUE),
 
-                new BooleanPropertyDefinition(PropertyKey.readFromMasterWhenNoSlaves, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.readFromMasterWhenNoSlaves"), "6.0.2", CATEGORY_HA, Integer.MAX_VALUE),
+                new BooleanPropertyDefinition(PropertyKey.readFromSourceWhenNoReplicas, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.readFromSourceWhenNoReplicas"), "6.0.2", CATEGORY_HA, Integer.MAX_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.autoReconnect, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.autoReconnect"), "1.1", CATEGORY_HA, 0),
@@ -546,8 +546,8 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PropertyKey.ha_loadBalanceStrategy, "random", RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalanceStrategy"), "5.0.6", CATEGORY_HA, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PropertyKey.loadBalanceBlacklistTimeout, 0, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.loadBalanceBlacklistTimeout"), "5.1.0", CATEGORY_HA, Integer.MIN_VALUE, 0, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PropertyKey.loadBalanceBlocklistTimeout, 0, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.loadBalanceBlocklistTimeout"), "5.1.0", CATEGORY_HA, Integer.MIN_VALUE, 0, Integer.MAX_VALUE),
 
                 new IntegerPropertyDefinition(PropertyKey.loadBalancePingTimeout, 0, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadBalancePingTimeout"), "5.1.13", CATEGORY_HA, Integer.MIN_VALUE, 0, Integer.MAX_VALUE),
@@ -583,8 +583,8 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.pinGlobalTxToPhysicalConnection, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.pinGlobalTxToPhysicalConnection"), "5.0.1", CATEGORY_HA, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PropertyKey.queriesBeforeRetryMaster, 50, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.queriesBeforeRetryMaster"), "3.0.2", CATEGORY_HA, 7, 0, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PropertyKey.queriesBeforeRetrySource, 50, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.queriesBeforeRetrySource"), "3.0.2", CATEGORY_HA, 7, 0, Integer.MAX_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.reconnectAtTxEnd, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.reconnectAtTxEnd"), "3.0.10", CATEGORY_HA, 4),
@@ -595,8 +595,8 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PropertyKey.resourceId, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.resourceId"), "5.0.1", CATEGORY_HA, Integer.MIN_VALUE),
 
-                new IntegerPropertyDefinition(PropertyKey.secondsBeforeRetryMaster, 30, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.secondsBeforeRetryMaster"), "3.0.2", CATEGORY_HA, 8, 0, Integer.MAX_VALUE),
+                new IntegerPropertyDefinition(PropertyKey.secondsBeforeRetrySource, 30, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.secondsBeforeRetrySource"), "3.0.2", CATEGORY_HA, 8, 0, Integer.MAX_VALUE),
 
                 new IntegerPropertyDefinition(PropertyKey.selfDestructOnPingSecondsLifetime, 0, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.selfDestructOnPingSecondsLifetime"), "5.1.6", CATEGORY_HA, Integer.MAX_VALUE, 0,

@@ -60,7 +60,7 @@ public class MessagesTest {
         assertEquals("Illegal database URL, host 'Test1' is duplicated but 'Test2' connections can only handle one instance of each host:port pair.",
                 Messages.getString("ConnectionString.12", new Object[] { "Test1", "Test2" }));
         assertEquals(
-                "Illegal database URL, Host 'Test1' is duplicated in the combined hosts list (masters & slaves) but 'Test2' connections can only handle one instance of each host:port pair.",
+                "Illegal database URL, Host 'Test1' is duplicated in the combined hosts list (sources & replicas) but 'Test2' connections can only handle one instance of each host:port pair.",
                 Messages.getString("ConnectionString.13", new Object[] { "Test1", "Test2" }));
         assertEquals("Illegal database URL, in a 'Test' multi-host connection it is required the same credentials in all hosts.",
                 Messages.getString("ConnectionString.14", new Object[] { "Test" }));
