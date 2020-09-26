@@ -212,7 +212,8 @@ public class AuthenticationTest extends BaseTestCase {
             NativePacketPayload badChallenge = new NativePacketPayload(sfm.getBytes("UTF-8"));
 
             // Expect Exception.
-            CJException ex = assertThrows(CJException.class, "Error while processing an authentication iteration for SCRAM-SHA-1\\.",
+            CJException ex = assertThrows(CJException.class,
+                    "Error while processing an authentication iteration for the authentication mechanism 'SCRAM-SHA-1'\\.",
                     () -> authPlugin.nextAuthenticationStep(badChallenge, response));
 
             assertEquals(SaslException.class, ex.getCause().getClass());
@@ -258,7 +259,7 @@ public class AuthenticationTest extends BaseTestCase {
         NativePacketPayload badChallenge = new NativePacketPayload("r=XXXXXXXXXXXXXXXXXXXXXXXX3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096".getBytes("UTF-8"));
 
         // Expect Exception.
-        CJException ex = assertThrows(CJException.class, "Error while processing an authentication iteration for SCRAM-SHA-1\\.",
+        CJException ex = assertThrows(CJException.class, "Error while processing an authentication iteration for the authentication mechanism 'SCRAM-SHA-1'\\.",
                 () -> authPlugin.nextAuthenticationStep(badChallenge, response));
 
         assertEquals(SaslException.class, ex.getCause().getClass());
@@ -303,7 +304,7 @@ public class AuthenticationTest extends BaseTestCase {
         NativePacketPayload badChallenge = new NativePacketPayload("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=1024".getBytes("UTF-8"));
 
         // Expect Exception.
-        CJException ex = assertThrows(CJException.class, "Error while processing an authentication iteration for SCRAM-SHA-1\\.",
+        CJException ex = assertThrows(CJException.class, "Error while processing an authentication iteration for the authentication mechanism 'SCRAM-SHA-1'\\.",
                 () -> authPlugin.nextAuthenticationStep(badChallenge, response));
 
         assertEquals(SaslException.class, ex.getCause().getClass());
@@ -359,7 +360,7 @@ public class AuthenticationTest extends BaseTestCase {
         NativePacketPayload badChallenge = new NativePacketPayload("x=rmF9pqV8S7suAoZWja4dJRkFsKQ=".getBytes("UTF-8"));
 
         // Expected Exception.
-        CJException ex = assertThrows(CJException.class, "Error while processing an authentication iteration for SCRAM-SHA-1\\.",
+        CJException ex = assertThrows(CJException.class, "Error while processing an authentication iteration for the authentication mechanism 'SCRAM-SHA-1'\\.",
                 () -> authPlugin.nextAuthenticationStep(badChallenge, response));
 
         assertEquals(SaslException.class, ex.getCause().getClass());
@@ -415,7 +416,7 @@ public class AuthenticationTest extends BaseTestCase {
         NativePacketPayload badChallenge = new NativePacketPayload("v=XXXXXXXXXXXXXXXXXXXXXXXXXXXX".getBytes("UTF-8"));
 
         // Expected Exception.
-        CJException ex = assertThrows(CJException.class, "Error while processing an authentication iteration for SCRAM-SHA-1\\.",
+        CJException ex = assertThrows(CJException.class, "Error while processing an authentication iteration for the authentication mechanism 'SCRAM-SHA-1'\\.",
                 () -> authPlugin.nextAuthenticationStep(badChallenge, response));
 
         assertEquals(SaslException.class, ex.getCause().getClass());
@@ -429,10 +430,12 @@ public class AuthenticationTest extends BaseTestCase {
      */
     @Test
     public void authLdapSaslCliPluginChallengeUnsupportedMech() throws Exception {
-        assertThrows(CJException.class, "Unsupported SASL authentication mechanism\\.", () -> new AuthenticationLdapSaslClientPlugin()
-                .nextAuthenticationStep(new NativePacketPayload("UNKNOWN-MECH".getBytes("ASCII")), new ArrayList<>()));
-
-        assertThrows(CJException.class, "Unsupported SASL authentication mechanism\\.",
-                () -> new AuthenticationLdapSaslClientPlugin().nextAuthenticationStep(new NativePacketPayload("GSSAPI".getBytes("ASCII")), new ArrayList<>()));
+        assertThrows(CJException.class, "Unsupported SASL authentication mechanism\\.", () -> {
+            AuthenticationPlugin<NativePacketPayload> ap = new AuthenticationLdapSaslClientPlugin();
+            ap.nextAuthenticationStep(new NativePacketPayload("UNKNOWN-MECH".getBytes("ASCII")), new ArrayList<>());
+            // Must do it twice since the auth mech can be confused with a hashing seed in the first iteration.
+            ap.nextAuthenticationStep(new NativePacketPayload("UNKNOWN-MECH".getBytes("ASCII")), new ArrayList<>());
+            return null;
+        });
     }
 }

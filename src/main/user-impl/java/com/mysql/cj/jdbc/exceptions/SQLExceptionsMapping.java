@@ -120,7 +120,7 @@ public class SQLExceptionsMapping {
 
         } else if (ex instanceof CJException) {
             return SQLError.createSQLException(ex.getMessage(), ((CJException) ex).getSQLState(), ((CJException) ex).getVendorCode(),
-                    ((CJException) ex).isTransient(), interceptor);
+                    ((CJException) ex).isTransient(), ex.getCause(), interceptor);
 
         } else {
             return SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, ex, interceptor);

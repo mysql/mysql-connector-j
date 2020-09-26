@@ -138,6 +138,7 @@ public enum PropertyKey {
     interactiveClient("interactiveClient", true), //
     jdbcCompliantTruncation("jdbcCompliantTruncation", true), //
     largeRowSizeThreshold("largeRowSizeThreshold", true), //
+    ldapServerHostname("ldapServerHostname", true), // 
     loadBalanceAutoCommitStatementRegex("loadBalanceAutoCommitStatementRegex", true), //
     loadBalanceAutoCommitStatementThreshold("loadBalanceAutoCommitStatementThreshold", true), //
     loadBalanceBlocklistTimeout("loadBalanceBlocklistTimeout", "loadBalanceBlacklistTimeout", true), //

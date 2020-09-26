@@ -3,6 +3,8 @@
 
 Version 8.0.23
 
+  - WL#14206, Support for authentication_ldap_sasl_client(GSSAPI) authentication plugin.
+
   - WL#14207, Replace language in APIs and source code/docs.
 
 Version 8.0.22

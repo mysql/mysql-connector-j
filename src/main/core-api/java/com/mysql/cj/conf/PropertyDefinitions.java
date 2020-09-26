@@ -242,6 +242,9 @@ public class PropertyDefinitions {
                 new EnumPropertyDefinition<>(PropertyKey.databaseTerm, DatabaseTerm.CATALOG, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.databaseTerm"), "8.0.17", CATEGORY_CONNECTION, Integer.MIN_VALUE),
 
+                new StringPropertyDefinition(PropertyKey.ldapServerHostname, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.ldapServerHostname"), "8.0.23", CATEGORY_CONNECTION, Integer.MIN_VALUE),
+
                 //
                 // CATEGORY_SESSION
                 //
