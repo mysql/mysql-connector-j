@@ -44,17 +44,20 @@ import javax.security.sasl.SaslException;
 import com.mysql.cj.util.StringUtils;
 
 /**
- * A {@link SaslClientFactory} for {@link ScramSha1SaslClient} instances.
+ * A {@link SaslClientFactory} for {@link ScramSha1SaslClient} and {@link ScramSha256SaslClient} instances.
  */
-public class ScramSha1SaslClientFactory implements SaslClientFactory {
-    private static final String[] SUPPORTED_MECHANISMS = { ScramSha1SaslClient.MECHANISM_NAME };
+public class ScramShaSaslClientFactory implements SaslClientFactory {
+    private static final String[] SUPPORTED_MECHANISMS = { ScramSha1SaslClient.MECHANISM_NAME, ScramSha256SaslClient.MECHANISM_NAME };
 
     @Override
     public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName, Map<String, ?> props,
             CallbackHandler cbh) throws SaslException {
         for (String mech : mechanisms) {
             if (mech.equals(ScramSha1SaslClient.MECHANISM_NAME)) {
-                return new ScramSha1SaslClient(authorizationId, getUsername(authorizationId, cbh), getPassword(cbh));
+                return new ScramSha1SaslClient(authorizationId, getUsername(mech, authorizationId, cbh), getPassword(mech, cbh));
+            }
+            if (mech.equals(ScramSha256SaslClient.MECHANISM_NAME)) {
+                return new ScramSha256SaslClient(authorizationId, getUsername(mech, authorizationId, cbh), getPassword(mech, cbh));
             }
         }
         return null;
@@ -68,6 +71,8 @@ public class ScramSha1SaslClientFactory implements SaslClientFactory {
     /**
      * Gets the authentication id, which is provided by a {@link CallbackHandler} to be implemented by the requester of this service.
      * 
+     * @param prefix
+     *            the prefix to use in the prompt.
      * @param authorizationId
      *            the authorization id that can be used as default authentication id if none is provided.
      * @param cbh
@@ -77,13 +82,13 @@ public class ScramSha1SaslClientFactory implements SaslClientFactory {
      * @throws SaslException
      *             if the callback handler is null or not supported by the callback handler implementer.
      */
-    private String getUsername(String authorizationId, CallbackHandler cbh) throws SaslException {
+    private String getUsername(String prefix, String authorizationId, CallbackHandler cbh) throws SaslException {
         if (cbh == null) {
             throw new SaslException("Callback handler required to get username.");
         }
 
         try {
-            String prompt = ScramSha1SaslClient.MECHANISM_NAME + " authentication id:";
+            String prompt = prefix + " authentication id:";
             NameCallback ncb = StringUtils.isNullOrEmpty(authorizationId) ? new NameCallback(prompt) : new NameCallback(prompt, authorizationId);
             cbh.handle(new Callback[] { ncb });
 
@@ -97,6 +102,8 @@ public class ScramSha1SaslClientFactory implements SaslClientFactory {
     /**
      * Gets the password, which is provided by a {@link CallbackHandler} to be implemented by the requester of this service.
      * 
+     * @param prefix
+     *            the prefix to use in the prompt.
      * @param cbh
      *            the callback handler to use.
      * @return
@@ -104,13 +111,13 @@ public class ScramSha1SaslClientFactory implements SaslClientFactory {
      * @throws SaslException
      *             if the callback handler is null or not supported by the callback handler implementer.
      */
-    private String getPassword(CallbackHandler cbh) throws SaslException {
+    private String getPassword(String prefix, CallbackHandler cbh) throws SaslException {
         if (cbh == null) {
             throw new SaslException("Callback handler required to get password.");
         }
 
         try {
-            String prompt = ScramSha1SaslClient.MECHANISM_NAME + " password:";
+            String prompt = prefix + " password:";
             PasswordCallback pcb = new PasswordCallback(prompt, false);
             cbh.handle(new Callback[] { pcb });
 

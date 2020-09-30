@@ -3,6 +3,8 @@
 
 Version 8.0.23
 
+  - WL#14274, Support for authentication_ldap_sasl_client(SCRAM-SHA-256) authentication plugin.
+
   - WL#14206, Support for authentication_ldap_sasl_client(GSSAPI) authentication plugin.
 
   - WL#14207, Replace language in APIs and source code/docs.

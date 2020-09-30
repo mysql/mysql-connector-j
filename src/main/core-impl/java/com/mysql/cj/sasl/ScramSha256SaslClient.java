@@ -45,21 +45,22 @@ import javax.security.sasl.SaslException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 
 /**
- * A {@link SaslClient} implementation for SCRAM-SHA-1, as specified in <a href="https://tools.ietf.org/html/rfc5802">RFC 5802</a>.
+ * A {@link SaslClient} implementation for SCRAM-SHA-256, as specified in <a href="https://tools.ietf.org/html/rfc5802">RFC 5802</a> and <a
+ * href="https://tools.ietf.org/html/rfc7677">RFC 7677</a>.
  * 
- * The IANA-registered mechanism name was renamed to "MYSQLCJ-SCRAM-SHA-1" in order to avoid future conflicts with an officially supported one. If/when there is
- * a Java supported SCRAM-SHA-1 then it will have to be thoroughly tested and this code can be obsoleted.
+ * The IANA-registered mechanism name was renamed to "MYSQLCJ-SCRAM-SHA-256" in order to avoid future conflicts with an officially supported one. If/when there
+ * is a Java supported SCRAM-SHA-256 then it will have to be thoroughly tested and this code can be obsoleted.
  */
-public class ScramSha1SaslClient extends ScramShaSaslClient {
-    public static final String IANA_MECHANISM_NAME = "SCRAM-SHA-1";
+public class ScramSha256SaslClient extends ScramShaSaslClient {
+    public static final String IANA_MECHANISM_NAME = "SCRAM-SHA-256";
     public static final String MECHANISM_NAME = "MYSQLCJ-" + IANA_MECHANISM_NAME;
 
-    private static final String SHA1_ALGORITHM = "SHA-1";
-    private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1";
-    private static final String PBKCF2_HMAC_SHA1_ALGORITHM = "PBKDF2WithHmacSHA1";
-    private static final int SHA1_HASH_LENGTH = 20; // SHA-1 produces 20 Bytes long hashes.
+    private static final String SHA256_ALGORITHM = "SHA-256";
+    private static final String HMAC_SHA256_ALGORITHM = "HmacSHA256";
+    private static final String PBKCF2_HMAC_SHA256_ALGORITHM = "PBKDF2WithHmacSHA256";
+    private static final int SHA256_HASH_LENGTH = 32; // SHA-256 produces 32 Bytes long hashes.
 
-    public ScramSha1SaslClient(String authorizationId, String authenticationId, String password) throws SaslException {
+    public ScramSha256SaslClient(String authorizationId, String authenticationId, String password) throws SaslException {
         super(authorizationId, authenticationId, password);
     }
 
@@ -74,8 +75,8 @@ public class ScramSha1SaslClient extends ScramShaSaslClient {
     }
 
     /**
-     * The "H(str)" cryptographic hash function as described in <a href="https://tools.ietf.org/html/rfc5802#section-2.2">RFC 5802, Section 2.2</a>. This
-     * implementation corresponds to SHA-1.
+     * The "H(str)" cryptographic hash function as described in <a href="https://tools.ietf.org/html/rfc5802#section-2.2">RFC 5802, Section 2.2</a> and <a
+     * href="https://tools.ietf.org/html/rfc7677#section-3">RFC 7677, Section 3</a>. This implementation corresponds to SHA-256.
      * 
      * @param str
      *            the string to hash.
@@ -85,16 +86,16 @@ public class ScramSha1SaslClient extends ScramShaSaslClient {
     @Override
     byte[] h(byte[] str) {
         try {
-            MessageDigest sha1 = MessageDigest.getInstance(SHA1_ALGORITHM);
-            return sha1.digest(str);
+            MessageDigest sha256 = MessageDigest.getInstance(SHA256_ALGORITHM);
+            return sha256.digest(str);
         } catch (NoSuchAlgorithmException e) {
             throw ExceptionFactory.createException("Failed computing authentication hashes", e);
         }
     }
 
     /**
-     * The "HMAC(key, str)" HMAC keyed hash algorithm as described in <a href="https://tools.ietf.org/html/rfc5802#section-2.2">RFC 5802, Section 2.2</a>.
-     * This implementation corresponds to 'HmacSHA1'.
+     * The "HMAC(key, str)" HMAC keyed hash algorithm as described in <a href="https://tools.ietf.org/html/rfc5802#section-2.2">RFC 5802, Section 2.2</a> and <a
+     * href="https://tools.ietf.org/html/rfc7677#section-3">RFC 7677, Section 3</a>. This implementation corresponds to 'HmacSHA256'.
      * 
      * @param key
      *            the hash key.
@@ -105,20 +106,20 @@ public class ScramSha1SaslClient extends ScramShaSaslClient {
      */
     @Override
     byte[] hmac(byte[] key, byte[] str) {
-        Mac hmacSha1;
+        Mac hmacSha256;
         try {
-            hmacSha1 = Mac.getInstance(HMAC_SHA1_ALGORITHM);
-            hmacSha1.init(new SecretKeySpec(key, HMAC_SHA1_ALGORITHM));
+            hmacSha256 = Mac.getInstance(HMAC_SHA256_ALGORITHM);
+            hmacSha256.init(new SecretKeySpec(key, HMAC_SHA256_ALGORITHM));
 
-            return hmacSha1.doFinal(str);
+            return hmacSha256.doFinal(str);
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw ExceptionFactory.createException("Failed computing authentication hashes", e);
         }
     }
 
     /**
-     * The "Hi(str, salt, i)" PBKDF2 function as described in <a href="https://tools.ietf.org/html/rfc5802#section-2.2">RFC 5802, Section 2.2</a>.
-     * This implementation corresponds to 'PBKDF2WithHmacSHA1'.
+     * The "Hi(str, salt, i)" PBKDF2 function as described in <a href="https://tools.ietf.org/html/rfc5802#section-2.2">RFC 5802, Section 2.2</a> and <a
+     * href="https://tools.ietf.org/html/rfc7677#section-3">RFC 7677, Section 3</a>. This implementation corresponds to 'PBKDF2WithHmacSHA256'.
      * 
      * @param str
      *            the string value to use as the internal HMAC key.
@@ -132,9 +133,9 @@ public class ScramSha1SaslClient extends ScramShaSaslClient {
      */
     @Override
     byte[] hi(String str, byte[] salt, int iterations) {
-        KeySpec spec = new PBEKeySpec(str.toCharArray(), salt, iterations, SHA1_HASH_LENGTH * 8);
+        KeySpec spec = new PBEKeySpec(str.toCharArray(), salt, iterations, SHA256_HASH_LENGTH * 8);
         try {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance(PBKCF2_HMAC_SHA1_ALGORITHM);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(PBKCF2_HMAC_SHA256_ALGORITHM);
             return factory.generateSecret(spec).getEncoded();
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw ExceptionFactory.createException(e.getMessage());

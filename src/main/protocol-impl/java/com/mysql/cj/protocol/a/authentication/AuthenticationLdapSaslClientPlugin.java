@@ -60,7 +60,8 @@ import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.sasl.ScramSha1SaslClient;
-import com.mysql.cj.sasl.ScramSha1SaslProvider;
+import com.mysql.cj.sasl.ScramSha256SaslClient;
+import com.mysql.cj.sasl.ScramShaSaslProvider;
 import com.mysql.cj.util.StringUtils;
 
 /**
@@ -68,8 +69,8 @@ import com.mysql.cj.util.StringUtils;
  */
 public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<NativePacketPayload> {
     static {
-        // Register our SCRAM-SHA-1 SASL Client provider.
-        Security.addProvider(new ScramSha1SaslProvider());
+        // Register our own SCRAM-SHA SASL Client provider.
+        Security.addProvider(new ScramShaSaslProvider());
     }
 
     public static String PLUGIN_NAME = "authentication_ldap_sasl_client";
@@ -78,7 +79,9 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
     private static final String LDAP_SERVICE_NAME = "ldap";
 
     private enum AuthenticationMechanisms {
-        SCRAM_SHA_1("SCRAM-SHA-1", ScramSha1SaslClient.MECHANISM_NAME), GSSAPI("GSSAPI", "GSSAPI");
+        SCRAM_SHA_1(ScramSha1SaslClient.IANA_MECHANISM_NAME, ScramSha1SaslClient.MECHANISM_NAME), //
+        SCRAM_SHA_256(ScramSha256SaslClient.IANA_MECHANISM_NAME, ScramSha256SaslClient.MECHANISM_NAME), //
+        GSSAPI("GSSAPI", "GSSAPI");
 
         private String mechName;
         private String saslServiceName;
@@ -94,7 +97,7 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
                     return am;
                 }
             }
-            throw ExceptionFactory.createException(Messages.getString("AuthenticationLdapSaslClientPlugin.UnsupportedAuthMech"));
+            throw ExceptionFactory.createException(Messages.getString("AuthenticationLdapSaslClientPlugin.UnsupportedAuthMech", new String[] { mechName }));
         }
 
         String getMechName() {
@@ -255,6 +258,7 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
                         break;
 
                     case SCRAM_SHA_1:
+                    case SCRAM_SHA_256:
                         this.saslClient = Sasl.createSaslClient(new String[] { this.authMech.getSaslServiceName() }, null, null, null, null,
                                 this.credentialsCallbackHandler);
                         break;

@@ -37,12 +37,14 @@ import java.security.Provider;
 import java.security.ProviderException;
 
 /**
- * A SASL provider for the authentication mechanism SCRAM-SHA-1 here renamed to MYSQLCJ-SCRAM-SHA-1 to avoid conflicts with future standard implementations.
+ * A SASL provider for the authentication mechanisms SCRAM-SHA-1 and SCRAM-SHA-256, here renamed to MYSQLCJ-SCRAM-SHA-1 and MYSQL-SRAM-SHA-256 respectively to
+ * avoid conflicts with future default implementations.
  */
-public final class ScramSha1SaslProvider extends Provider {
-    private static final long serialVersionUID = 728657701379380668L;
+public final class ScramShaSaslProvider extends Provider {
+    private static final long serialVersionUID = 866717063477857937L;
 
-    private static final String INFO = "MySQL Connector/J SASL provider (implements a client mechanism for " + ScramSha1SaslClient.MECHANISM_NAME + ")";
+    private static final String INFO = "MySQL Connector/J SASL provider (implements client mechanisms for " + ScramSha1SaslClient.MECHANISM_NAME + " and "
+            + ScramSha256SaslClient.MECHANISM_NAME + ")";
 
     private static final class ProviderService extends Provider.Service {
         public ProviderService(Provider provider, String type, String algorithm, String className) {
@@ -57,19 +59,26 @@ public final class ScramSha1SaslProvider extends Provider {
             }
 
             String algorithm = getAlgorithm();
-            if (type.equals("SaslClientFactory") && algorithm.equals(ScramSha1SaslClient.MECHANISM_NAME)) {
-                return new ScramSha1SaslClientFactory();
+            if (type.equals("SaslClientFactory")) {
+                if (algorithm.equals(ScramSha1SaslClient.MECHANISM_NAME)) {
+                    return new ScramShaSaslClientFactory();
+                }
+                if (algorithm.equals(ScramSha256SaslClient.MECHANISM_NAME)) {
+                    return new ScramShaSaslClientFactory();
+                }
             }
             throw new ProviderException("No implementation for " + algorithm + " " + type);
         }
     }
 
-    public ScramSha1SaslProvider() {
-        super("MySQLScramSha1Sasl", 1.0, INFO);
+    public ScramShaSaslProvider() {
+        super("MySQLScramShaSasl", 1.0, INFO);
 
         AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-            putService(new ProviderService(ScramSha1SaslProvider.this, "SaslClientFactory", ScramSha1SaslClient.MECHANISM_NAME,
-                    ScramSha1SaslClientFactory.class.getName()));
+            putService(new ProviderService(ScramShaSaslProvider.this, "SaslClientFactory", ScramSha1SaslClient.MECHANISM_NAME,
+                    ScramShaSaslClientFactory.class.getName()));
+            putService(new ProviderService(ScramShaSaslProvider.this, "SaslClientFactory", ScramSha256SaslClient.MECHANISM_NAME,
+                    ScramShaSaslClientFactory.class.getName()));
             return null;
         });
     }
