@@ -82,8 +82,9 @@ public final class MysqlxConnection {
   }
   /**
    * <pre>
-   * a Capability
-   * a tuple of a ``name`` and a :protobuf:msg:`Mysqlx.Datatypes::Any`
+   **
+   *Capability
+   *A tuple of a ``name`` and a &#64;ref Mysqlx::Datatypes::Any
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Connection.Capability}
@@ -441,8 +442,9 @@ public final class MysqlxConnection {
     }
     /**
      * <pre>
-     * a Capability
-     * a tuple of a ``name`` and a :protobuf:msg:`Mysqlx.Datatypes::Any`
+     **
+     *Capability
+     *A tuple of a ``name`` and a &#64;ref Mysqlx::Datatypes::Any
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Connection.Capability}
@@ -913,7 +915,9 @@ public final class MysqlxConnection {
   }
   /**
    * <pre>
-   * Capabilities
+   **
+   *Capabilities
+   *list of Capability
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Connection.Capabilities}
@@ -1206,7 +1210,9 @@ public final class MysqlxConnection {
     }
     /**
      * <pre>
-     * Capabilities
+     **
+     *Capabilities
+     *list of Capability
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Connection.Capabilities}
@@ -1696,8 +1702,9 @@ public final class MysqlxConnection {
   }
   /**
    * <pre>
-   * get supported connection capabilities and their current state
-   *   :returns: :protobuf:msg:`Mysqlx.Connection::Capabilities` or :protobuf:msg:`Mysqlx::Error`
+   **
+   *Get supported connection capabilities and their current state.
+   *&#64;returns &#64;ref Mysqlx::Connection::Capabilities or &#64;ref Mysqlx::Error
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Connection.CapabilitiesGet}
@@ -1922,8 +1929,9 @@ public final class MysqlxConnection {
     }
     /**
      * <pre>
-     * get supported connection capabilities and their current state
-     *   :returns: :protobuf:msg:`Mysqlx.Connection::Capabilities` or :protobuf:msg:`Mysqlx::Error`
+     **
+     *Get supported connection capabilities and their current state.
+     *&#64;returns &#64;ref Mysqlx::Connection::Capabilities or &#64;ref Mysqlx::Error
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Connection.CapabilitiesGet}
@@ -2139,11 +2147,13 @@ public final class MysqlxConnection {
   }
   /**
    * <pre>
-   * sets connection capabilities atomically
-   * only provided values are changed, other values are left unchanged.
-   * If any of the changes fails, all changes are discarded.
-   * :precond: active sessions == 0
-   * :returns: :protobuf:msg:`Mysqlx::Ok` or :protobuf:msg:`Mysqlx::Error`
+   **
+   *Set connection capabilities atomically.
+   *Only provided values are changed, other values are left
+   *unchanged. If any of the changes fails, all changes are
+   *discarded.
+   *&#64;pre active sessions == 0
+   *&#64;returns &#64;ref Mysqlx::Ok  or &#64;ref Mysqlx::Error
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Connection.CapabilitiesSet}
@@ -2430,11 +2440,13 @@ public final class MysqlxConnection {
     }
     /**
      * <pre>
-     * sets connection capabilities atomically
-     * only provided values are changed, other values are left unchanged.
-     * If any of the changes fails, all changes are discarded.
-     * :precond: active sessions == 0
-     * :returns: :protobuf:msg:`Mysqlx::Ok` or :protobuf:msg:`Mysqlx::Error`
+     **
+     *Set connection capabilities atomically.
+     *Only provided values are changed, other values are left
+     *unchanged. If any of the changes fails, all changes are
+     *discarded.
+     *&#64;pre active sessions == 0
+     *&#64;returns &#64;ref Mysqlx::Ok  or &#64;ref Mysqlx::Error
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Connection.CapabilitiesSet}
@@ -2783,9 +2795,10 @@ public final class MysqlxConnection {
   }
   /**
    * <pre>
-   * announce to the server that the client wants to close the connection
-   * it discards any session state of the server
-   * :Returns: :protobuf:msg:`Mysqlx::Ok`
+   **
+   *Announce to the server that the client wants to close the connection.
+   *It discards any session state of the server.
+   *&#64;returns &#64;ref Mysqlx::Ok
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Connection.Close}
@@ -3010,9 +3023,10 @@ public final class MysqlxConnection {
     }
     /**
      * <pre>
-     * announce to the server that the client wants to close the connection
-     * it discards any session state of the server
-     * :Returns: :protobuf:msg:`Mysqlx::Ok`
+     **
+     *Announce to the server that the client wants to close the connection.
+     *It discards any session state of the server.
+     *&#64;returns &#64;ref Mysqlx::Ok
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Connection.Close}

@@ -147,7 +147,7 @@ public class CollectionImpl implements Collection {
         try {
             return this.mysqlxSession.getDataStoreMetadata().getTableRowCount(this.schema.getName(), this.name);
         } catch (XProtocolError e) {
-            if (e.getErrorCode() == 1146) {
+            if (e.getErrorCode() == MysqlErrorNumbers.ER_NO_SUCH_TABLE) {
                 throw new XProtocolError("Collection '" + this.name + "' does not exist in schema '" + this.schema.getName() + "'", e);
             }
             throw e;

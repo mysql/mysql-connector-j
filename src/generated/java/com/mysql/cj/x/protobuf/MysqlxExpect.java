@@ -84,10 +84,12 @@ public final class MysqlxExpect {
   }
   /**
    * <pre>
-   * open an Expect block and set/unset the conditions that have to be fulfilled
-   * if any of the conditions fail, all enclosed messages will fail with
-   * a Mysqlx.Error message.
-   * :returns: :protobuf:msg:`Mysqlx::Ok` on success, :protobuf:msg:`Mysqlx::Error` on error
+   **
+   *Open an Expect block and set/unset the conditions that have to
+   *be fulfilled.
+   *If any of the conditions fail, all enclosed messages will fail
+   *with a ``Mysqlx::Error`` message.
+   *&#64;returns &#64;ref Mysqlx::Ok on success, &#64;ref Mysqlx::Error on error
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Expect.Open}
@@ -200,7 +202,7 @@ public final class MysqlxExpect {
         implements com.google.protobuf.ProtocolMessageEnum {
       /**
        * <pre>
-       * copy the operations from the parent Expect-block
+       ** copy the operations from the parent Expect-block 
        * </pre>
        *
        * <code>EXPECT_CTX_COPY_PREV = 0;</code>
@@ -208,7 +210,7 @@ public final class MysqlxExpect {
       EXPECT_CTX_COPY_PREV(0),
       /**
        * <pre>
-       * start with a empty set of operations
+       ** start with a empty set of operations 
        * </pre>
        *
        * <code>EXPECT_CTX_EMPTY = 1;</code>
@@ -218,7 +220,7 @@ public final class MysqlxExpect {
 
       /**
        * <pre>
-       * copy the operations from the parent Expect-block
+       ** copy the operations from the parent Expect-block 
        * </pre>
        *
        * <code>EXPECT_CTX_COPY_PREV = 0;</code>
@@ -226,7 +228,7 @@ public final class MysqlxExpect {
       public static final int EXPECT_CTX_COPY_PREV_VALUE = 0;
       /**
        * <pre>
-       * start with a empty set of operations
+       ** start with a empty set of operations 
        * </pre>
        *
        * <code>EXPECT_CTX_EMPTY = 1;</code>
@@ -451,7 +453,7 @@ public final class MysqlxExpect {
           implements com.google.protobuf.ProtocolMessageEnum {
         /**
          * <pre>
-         * Change error propagation behaviour
+         ** Change error propagation behaviour 
          * </pre>
          *
          * <code>EXPECT_NO_ERROR = 1;</code>
@@ -459,7 +461,7 @@ public final class MysqlxExpect {
         EXPECT_NO_ERROR(1),
         /**
          * <pre>
-         * Check if X Protocol field exists
+         ** Check if X Protocol field exists 
          * </pre>
          *
          * <code>EXPECT_FIELD_EXIST = 2;</code>
@@ -467,7 +469,7 @@ public final class MysqlxExpect {
         EXPECT_FIELD_EXIST(2),
         /**
          * <pre>
-         * Check if X Protocol support document _id generation
+         ** Check if X Protocol support document _id generation 
          * </pre>
          *
          * <code>EXPECT_DOCID_GENERATED = 3;</code>
@@ -477,7 +479,7 @@ public final class MysqlxExpect {
 
         /**
          * <pre>
-         * Change error propagation behaviour
+         ** Change error propagation behaviour 
          * </pre>
          *
          * <code>EXPECT_NO_ERROR = 1;</code>
@@ -485,7 +487,7 @@ public final class MysqlxExpect {
         public static final int EXPECT_NO_ERROR_VALUE = 1;
         /**
          * <pre>
-         * Check if X Protocol field exists
+         ** Check if X Protocol field exists 
          * </pre>
          *
          * <code>EXPECT_FIELD_EXIST = 2;</code>
@@ -493,7 +495,7 @@ public final class MysqlxExpect {
         public static final int EXPECT_FIELD_EXIST_VALUE = 2;
         /**
          * <pre>
-         * Check if X Protocol support document _id generation
+         ** Check if X Protocol support document _id generation 
          * </pre>
          *
          * <code>EXPECT_DOCID_GENERATED = 3;</code>
@@ -580,9 +582,7 @@ public final class MysqlxExpect {
           implements com.google.protobuf.ProtocolMessageEnum {
         /**
          * <pre>
-         * set the condition
-         * set, if not set
-         * overwrite, if set
+         ** set the condition; set, if not set; overwrite, if set 
          * </pre>
          *
          * <code>EXPECT_OP_SET = 0;</code>
@@ -590,7 +590,7 @@ public final class MysqlxExpect {
         EXPECT_OP_SET(0),
         /**
          * <pre>
-         * unset the condition
+         ** unset the condition 
          * </pre>
          *
          * <code>EXPECT_OP_UNSET = 1;</code>
@@ -600,9 +600,7 @@ public final class MysqlxExpect {
 
         /**
          * <pre>
-         * set the condition
-         * set, if not set
-         * overwrite, if set
+         ** set the condition; set, if not set; overwrite, if set 
          * </pre>
          *
          * <code>EXPECT_OP_SET = 0;</code>
@@ -610,7 +608,7 @@ public final class MysqlxExpect {
         public static final int EXPECT_OP_SET_VALUE = 0;
         /**
          * <pre>
-         * unset the condition
+         ** unset the condition 
          * </pre>
          *
          * <code>EXPECT_OP_UNSET = 1;</code>
@@ -1519,10 +1517,12 @@ public final class MysqlxExpect {
     }
     /**
      * <pre>
-     * open an Expect block and set/unset the conditions that have to be fulfilled
-     * if any of the conditions fail, all enclosed messages will fail with
-     * a Mysqlx.Error message.
-     * :returns: :protobuf:msg:`Mysqlx::Ok` on success, :protobuf:msg:`Mysqlx::Error` on error
+     **
+     *Open an Expect block and set/unset the conditions that have to
+     *be fulfilled.
+     *If any of the conditions fail, all enclosed messages will fail
+     *with a ``Mysqlx::Error`` message.
+     *&#64;returns &#64;ref Mysqlx::Ok on success, &#64;ref Mysqlx::Error on error
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Expect.Open}
@@ -2065,10 +2065,11 @@ public final class MysqlxExpect {
   }
   /**
    * <pre>
-   * close a Expect block
-   * closing a Expect block restores the state of the previous Expect block
-   * for the following messages
-   * :returns: :protobuf:msg:`Mysqlx::Ok` on success, :protobuf:msg:`Mysqlx::Error` on error
+   **
+   *Close a Expect block.
+   *Closing a Expect block restores the state of the previous Expect
+   *block for the following messages.
+   *&#64;returns &#64;ref Mysqlx::Ok on success,  &#64;ref Mysqlx::Error on error
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Expect.Close}
@@ -2293,10 +2294,11 @@ public final class MysqlxExpect {
     }
     /**
      * <pre>
-     * close a Expect block
-     * closing a Expect block restores the state of the previous Expect block
-     * for the following messages
-     * :returns: :protobuf:msg:`Mysqlx::Ok` on success, :protobuf:msg:`Mysqlx::Error` on error
+     **
+     *Close a Expect block.
+     *Closing a Expect block restores the state of the previous Expect
+     *block for the following messages.
+     *&#64;returns &#64;ref Mysqlx::Ok on success,  &#64;ref Mysqlx::Error on error
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Expect.Close}

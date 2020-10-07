@@ -39,6 +39,7 @@ import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.AuthenticationProvider;
 import com.mysql.cj.protocol.Protocol;
@@ -115,7 +116,7 @@ public class XAuthenticationProvider implements AuthenticationProvider<XMessage>
                 capturedAuthErr = null;
                 break;
             } catch (XProtocolError e) {
-                if (e.getErrorCode() != 1045) {
+                if (e.getErrorCode() != MysqlErrorNumbers.ER_ACCESS_DENIED_ERROR) {
                     throw e;
                 }
                 capturedAuthErr = e;

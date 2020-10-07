@@ -244,7 +244,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
         try {
             this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
-            this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
+            this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput(), this);
         } catch (IOException e) {
             throw new XProtocolError(e.getMessage(), e);
         }
@@ -310,7 +310,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
         try {
             this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
-            this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput());
+            this.reader = new SyncMessageReader(this.socketConnection.getMysqlInput(), this);
             this.managedResource = this.socketConnection.getMysqlSocket();
         } catch (IOException e) {
             throw new XProtocolError(e.getMessage(), e);
@@ -429,7 +429,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             } catch (XProtocolError e) {
                 // XProtocolError: ERROR 5002 (HY000) Capability 'session_connect_attrs' doesn't exist
                 // happens when connecting to xplugin which doesn't support this feature. Just ignore this error.
-                if (e.getErrorCode() != 5002 && !e.getMessage().contains(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS)) {
+                if (e.getErrorCode() != MysqlErrorNumbers.ER_X_CAPABILITY_NOT_FOUND
+                        && !e.getMessage().contains(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS)) {
                     throw e;
                 }
                 this.clientCapabilities.remove(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS);
@@ -530,12 +531,13 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     }
 
     public void afterHandshake() {
-        // TODO setup all required server session states
+        // setup all required server session states
 
         if (this.compressionEnabled) {
             try {
                 this.reader = new SyncMessageReader(new FullReadInputStream(
-                        new CompressionSplittedInputStream(this.socketConnection.getMysqlInput(), new CompressorStreamsFactory(this.compressionAlgorithm))));
+                        new CompressionSplittedInputStream(this.socketConnection.getMysqlInput(), new CompressorStreamsFactory(this.compressionAlgorithm))),
+                        this);
             } catch (IOException e) {
                 ExceptionFactory.createException(Messages.getString("Protocol.Compression.6"), e);
             }
@@ -606,10 +608,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     public boolean hasMoreResults() {
         try {
-            XMessageHeader header;
-            if ((header = this.reader.readHeader()).getMessageType() == ServerMessages.Type.RESULTSET_FETCH_DONE_MORE_RESULTSETS_VALUE) {
-                this.reader.readMessage(null, header);
-                if (this.reader.readHeader().getMessageType() == ServerMessages.Type.RESULTSET_FETCH_DONE_VALUE) {
+            if (((SyncMessageReader) this.reader).getNextNonNoticeMessageType() == ServerMessages.Type.RESULTSET_FETCH_DONE_MORE_RESULTSETS_VALUE) {
+                this.reader.readMessage(null, ServerMessages.Type.RESULTSET_FETCH_DONE_MORE_RESULTSETS_VALUE);
+                if (((SyncMessageReader) this.reader).getNextNonNoticeMessageType() == ServerMessages.Type.RESULTSET_FETCH_DONE_VALUE) {
                     // possibly bug in xplugin sending FetchDone immediately following FetchDoneMoreResultsets
                     return false;
                 }
@@ -659,7 +660,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
      */
     public boolean hasResults() {
         try {
-            return this.reader.readHeader().getMessageType() == ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE;
+            return ((SyncMessageReader) this.reader).getNextNonNoticeMessageType() == ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE;
         } catch (IOException e) {
             throw new XProtocolError(e.getMessage(), e);
         }
@@ -670,9 +671,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
      */
     public void drainRows() {
         try {
-            XMessageHeader header;
-            while ((header = this.reader.readHeader()).getMessageType() == ServerMessages.Type.RESULTSET_ROW_VALUE) {
-                this.reader.readMessage(null, header);
+            while (((SyncMessageReader) this.reader).getNextNonNoticeMessageType() == ServerMessages.Type.RESULTSET_ROW_VALUE) {
+                this.reader.readMessage(null, ServerMessages.Type.RESULTSET_ROW_VALUE);
             }
         } catch (XProtocolError e) {
             this.currentResultStreamer = null;
@@ -698,7 +698,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             do { // use this construct to read at least one
                 fromServer.add((ColumnMetaData) this.reader.readMessage(null, ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE).getMessage());
                 // TODO put notices somewhere like it's done eg. in readStatementExecuteOk(): builder.addNotice(this.reader.read(Frame.class));
-            } while (this.reader.readHeader().getMessageType() == ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE);
+            } while (((SyncMessageReader) this.reader).getNextNonNoticeMessageType() == ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE);
             ArrayList<Field> metadata = new ArrayList<>(fromServer.size());
             @SuppressWarnings("unchecked")
             ProtocolEntityFactory<Field, XMessage> fieldFactory = (ProtocolEntityFactory<Field, XMessage>) this.messageToProtocolEntityFactory
@@ -715,7 +715,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         try {
             List<Notice> notices;
             List<ColumnMetaData> fromServer = new LinkedList<>();
-            while (this.reader.readHeader().getMessageType() == ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE) { // use this construct to read at least one
+            while (((SyncMessageReader) this.reader).getNextNonNoticeMessageType() == ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE) { // use this construct to read at least one
                 XMessage mess = this.reader.readMessage(null, ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE);
                 if (noticeConsumer != null && (notices = mess.getNotices()) != null) {
                     notices.stream().forEach(noticeConsumer::accept);
@@ -738,9 +738,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public XProtocolRow readRowOrNull(ColumnDefinition metadata, Consumer<Notice> noticeConsumer) {
         try {
             List<Notice> notices;
-            XMessageHeader header;
-            if ((header = this.reader.readHeader()).getMessageType() == ServerMessages.Type.RESULTSET_ROW_VALUE) {
-                XMessage mess = this.reader.readMessage(null, header);
+            if (((SyncMessageReader) this.reader).getNextNonNoticeMessageType() == ServerMessages.Type.RESULTSET_ROW_VALUE) {
+                XMessage mess = this.reader.readMessage(null, ServerMessages.Type.RESULTSET_ROW_VALUE);
                 if (noticeConsumer != null && (notices = mess.getNotices()) != null) {
                     notices.stream().forEach(noticeConsumer::accept);
                 }
@@ -923,12 +922,11 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     public boolean isSqlResultPending() {
         try {
-            XMessageHeader header;
-            switch ((header = this.reader.readHeader()).getMessageType()) {
+            switch (((SyncMessageReader) this.reader).getNextNonNoticeMessageType()) {
                 case ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE:
                     return true;
                 case ServerMessages.Type.RESULTSET_FETCH_DONE_MORE_RESULTSETS_VALUE:
-                    this.reader.readMessage(null, header);
+                    this.reader.readMessage(null, ServerMessages.Type.RESULTSET_FETCH_DONE_MORE_RESULTSETS_VALUE);
                     break;
                 default:
                     break;
@@ -977,7 +975,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
                 readQueryResult(new OkBuilder());
                 this.useSessionResetKeepOpen = true;
             } catch (XProtocolError e) {
-                if (e.getErrorCode() != 5168 && /* for MySQL 5.7 */ e.getErrorCode() != 5160) {
+                if (e.getErrorCode() != MysqlErrorNumbers.ER_X_EXPECT_FIELD_EXISTS_FAILED
+                        && /* for MySQL 5.7 */ e.getErrorCode() != MysqlErrorNumbers.ER_X_EXPECT_BAD_CONDITION) {
                     throw e;
                 }
                 this.useSessionResetKeepOpen = false;

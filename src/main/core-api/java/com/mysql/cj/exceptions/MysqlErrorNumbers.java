@@ -1054,6 +1054,18 @@ public final class MysqlErrorNumbers {
     public final static int ER_DUP_LIST_ENTRY = 1909; //SQLSTATE: HY000 Message: Duplicate entry '%s'.; was introduced in 5.7.4.
     public final static int ER_SQL_MODE_NO_EFFECT = 1910; //SQLSTATE: HY000 Message: '%s' mode no longer has any effect. Use STRICT_ALL_TABLES or STRICT_TRANS_TABLES instead.; was introduced in 5.7.4. 
 
+    public static final int ER_SESSION_WAS_KILLED = 3169;
+
+    public static final int ER_X_BAD_MESSAGE = 5000;
+    public static final int ER_X_CAPABILITIES_PREPARE_FAILED = 5001;
+    public static final int ER_X_CAPABILITY_NOT_FOUND = 5002;
+    public static final int ER_X_INVALID_PROTOCOL_DATA = 5003;
+    public static final int ER_X_BAD_CONNECTION_SESSION_ATTRIBUTE_VALUE_LENGTH = 5004;
+    public static final int ER_X_BAD_CONNECTION_SESSION_ATTRIBUTE_KEY_LENGTH = 5005;
+    public static final int ER_X_BAD_CONNECTION_SESSION_ATTRIBUTE_EMPTY_KEY = 5006;
+    public static final int ER_X_BAD_CONNECTION_SESSION_ATTRIBUTE_LENGTH = 5007;
+    public static final int ER_X_BAD_CONNECTION_SESSION_ATTRIBUTE_TYPE = 5008;
+    public static final int ER_X_CAPABILITY_SET_NOT_ALLOWED = 5009;
     public static final int ER_X_SERVICE_ERROR = 5010;
     public static final int ER_X_SESSION = 5011;
     public static final int ER_X_INVALID_ARGUMENT = 5012;
@@ -1062,6 +1074,10 @@ public final class MysqlErrorNumbers {
     public static final int ER_X_CMD_NUM_ARGUMENTS = 5015;
     public static final int ER_X_CMD_ARGUMENT_TYPE = 5016;
     public static final int ER_X_CMD_ARGUMENT_VALUE = 5017;
+    public static final int ER_X_BAD_UPSERT_DATA = 5018;
+    public static final int ER_X_DUPLICATED_CAPABILITIES = 5019;
+    public static final int ER_X_CMD_ARGUMENT_OBJECT_EMPTY = 5020;
+    public static final int ER_X_CMD_INVALID_ARGUMENT = 5021;
     public static final int ER_X_BAD_UPDATE_DATA = 5050;
     public static final int ER_X_BAD_TYPE_OF_UPDATE = 5051;
     public static final int ER_X_BAD_COLUMN_TO_UPDATE = 5052;
@@ -1072,11 +1088,15 @@ public final class MysqlErrorNumbers {
     public static final int ER_X_BAD_TABLE = 5113;
     public static final int ER_X_BAD_PROJECTION = 5114;
     public static final int ER_X_DOC_ID_MISSING = 5115;
-    public static final int ER_X_DOC_ID_DUPLICATE = 5116;
+    public static final int ER_X_DUPLICATE_ENTRY = 5116;
     public static final int ER_X_DOC_REQUIRED_FIELD_MISSING = 5117;
     public static final int ER_X_PROJ_BAD_KEY_NAME = 5120;
     public static final int ER_X_BAD_DOC_PATH = 5121;
     public static final int ER_X_CURSOR_EXISTS = 5122;
+    public static final int ER_X_PREPARED_STATMENT_CAN_HAVE_ONE_CURSOR = 5131;
+    public static final int ER_X_PREPARED_EXECUTE_ARGUMENT_NOT_SUPPORTED = 5133;
+    public static final int ER_X_PREPARED_EXECUTE_ARGUMENT_CONSISTENCY = 5134;
+    public static final int ER_X_CURSOR_REACHED_EOF = 5123;
     public static final int ER_X_EXPR_BAD_OPERATOR = 5150;
     public static final int ER_X_EXPR_BAD_NUM_ARGS = 5151;
     public static final int ER_X_EXPR_MISSING_ARG = 5152;
@@ -1086,12 +1106,27 @@ public final class MysqlErrorNumbers {
     public static final int ER_X_INVALID_COLLECTION = 5156;
     public static final int ER_X_INVALID_ADMIN_COMMAND = 5157;
     public static final int ER_X_EXPECT_NOT_OPEN = 5158;
-    public static final int ER_X_EXPECT_FAILED = 5159;
+    public static final int ER_X_EXPECT_NO_ERROR_FAILED = 5159;
     public static final int ER_X_EXPECT_BAD_CONDITION = 5160;
     public static final int ER_X_EXPECT_BAD_CONDITION_VALUE = 5161;
     public static final int ER_X_INVALID_NAMESPACE = 5162;
     public static final int ER_X_BAD_NOTICE = 5163;
     public static final int ER_X_CANNOT_DISABLE_NOTICE = 5164;
+    public static final int ER_X_BAD_CONFIGURATION = 5165;
+    public static final int ER_X_MYSQLX_ACCOUNT_MISSING_PERMISSIONS = 5167;
+    public static final int ER_X_EXPECT_FIELD_EXISTS_FAILED = 5168;
+    public static final int ER_X_BAD_LOCKING = 5169;
+    public static final int ER_X_FRAME_COMPRESSION_DISABLED = 5170;
+    public static final int ER_X_DECOMPRESSION_FAILED = 5171;
+    public static final int ER_X_BAD_COMPRESSED_FRAME = 5174;
+    public static final int ER_X_CAPABILITY_COMPRESSION_INVALID_ALGORITHM = 5175;
+    public static final int ER_X_CAPABILITY_COMPRESSION_INVALID_SERVER_STYLE = 5176;
+    public static final int ER_X_CAPABILITY_COMPRESSION_INVALID_CLIENT_STYLE = 5177;
+    public static final int ER_X_CAPABILITY_COMPRESSION_INVALID_OPTION = 5178;
+    public static final int ER_X_CAPABILITY_COMPRESSION_MISSING_REQUIRED_FIELDS = 5179;
+    public static final int ER_X_DOCUMENT_DOESNT_MATCH_EXPECTED_SCHEMA = 5180;
+    public static final int ER_X_COLLECTION_OPTION_DOESNT_EXISTS = 5181;
+    public static final int ER_X_INVALID_VALIDATION_SCHEMA = 5182;
 
     // Connector/J-specific errors outside the space of server errors.
     public static final int ERROR_CODE_NULL_LOAD_BALANCED_CONNECTION = 1000001;

@@ -113,6 +113,14 @@ public class InternalXBaseTestCase {
         return this.testProperties.getProperty(PropertyKey.DBNAME.getKeyName());
     }
 
+    public String getTestSslHost() {
+        return this.testPropertiesOpenSSL.getProperty(PropertyKey.HOST.getKeyName());
+    }
+
+    public int getTestSslPort() {
+        return Integer.valueOf(this.testPropertiesOpenSSL.getProperty(PropertyKey.PORT.getKeyName()));
+    }
+
     public String getEncodedTestHost() {
         return TestUtils.encodePercent(getTestHost());
     }

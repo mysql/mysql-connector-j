@@ -3,6 +3,8 @@
 
 Version 8.0.24
 
+  - WL#14202, XProtocol: Support connection close notification.
+
 Version 8.0.23
 
   - Fix for Bug#21789378, FORCED TO SET SERVER TIMEZONE IN CONNECT STRING.

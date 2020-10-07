@@ -179,19 +179,24 @@ public final class MysqlxExpr {
   }
   /**
    * <pre>
-   * Expressions
-   * the "root" of the expression tree
-   * .. productionlist::
-   *   expr: `operator` |
-   *       : `identifier` |
-   *       : `function_call` |
-   *       : variable |
-   *       : `literal` |
-   *       : placeholder
-   * If expression type is PLACEHOLDER then it refers to the value of a parameter
-   * specified when executing a statement (see `args` field of `StmtExecute` command).
-   * Field `position` (which must be present for such an expression) gives 0-based
-   * position of the parameter in the parameter list.
+   **
+   *The "root" of the expression tree.
+   *If expression type is PLACEHOLDER, then it refers to the value
+   *of a parameter specified when executing a statement (see args
+   *field of StmtExecute command). Field position (which must be
+   *present for such an expression) gives 0-based position of the
+   *parameter in the parameter list.
+   *&#64;par production list
+   *&#64;code{unparsed}
+   *expr: operator |
+   *: identifier |
+   *: function_call |
+   *: variable |
+   *: literal |
+   *: object |
+   *: array |
+   *: placeholder
+   *&#64;endcode
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Expr.Expr}
@@ -1072,19 +1077,24 @@ public final class MysqlxExpr {
     }
     /**
      * <pre>
-     * Expressions
-     * the "root" of the expression tree
-     * .. productionlist::
-     *   expr: `operator` |
-     *       : `identifier` |
-     *       : `function_call` |
-     *       : variable |
-     *       : `literal` |
-     *       : placeholder
-     * If expression type is PLACEHOLDER then it refers to the value of a parameter
-     * specified when executing a statement (see `args` field of `StmtExecute` command).
-     * Field `position` (which must be present for such an expression) gives 0-based
-     * position of the parameter in the parameter list.
+     **
+     *The "root" of the expression tree.
+     *If expression type is PLACEHOLDER, then it refers to the value
+     *of a parameter specified when executing a statement (see args
+     *field of StmtExecute command). Field position (which must be
+     *present for such an expression) gives 0-based position of the
+     *parameter in the parameter list.
+     *&#64;par production list
+     *&#64;code{unparsed}
+     *expr: operator |
+     *: identifier |
+     *: function_call |
+     *: variable |
+     *: literal |
+     *: object |
+     *: array |
+     *: placeholder
+     *&#64;endcode
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Expr.Expr}
@@ -2376,10 +2386,13 @@ public final class MysqlxExpr {
   }
   /**
    * <pre>
-   * identifier: name, schame.name
-   * .. productionlist::
-   *   identifier: string "." string |
-   *             : string
+   **
+   *Identifier: name, schame.name
+   *&#64;par production list
+   *&#64;code{unparsed}
+   *identifier: string "." string |
+   *: string
+   *&#64;endcode
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Expr.Identifier}
@@ -2744,10 +2757,13 @@ public final class MysqlxExpr {
     }
     /**
      * <pre>
-     * identifier: name, schame.name
-     * .. productionlist::
-     *   identifier: string "." string |
-     *             : string
+     **
+     *Identifier: name, schame.name
+     *&#64;par production list
+     *&#64;code{unparsed}
+     *identifier: string "." string |
+     *: string
+     *&#64;endcode
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Expr.Identifier}
@@ -3172,11 +3188,19 @@ public final class MysqlxExpr {
         getValueBytes();
 
     /**
+     * <pre>
+     ** used in case of ARRY_INDEX 
+     * </pre>
+     *
      * <code>optional uint32 index = 3;</code>
      * @return Whether the index field is set.
      */
     boolean hasIndex();
     /**
+     * <pre>
+     ** used in case of ARRY_INDEX 
+     * </pre>
+     *
      * <code>optional uint32 index = 3;</code>
      * @return The index.
      */
@@ -3184,12 +3208,15 @@ public final class MysqlxExpr {
   }
   /**
    * <pre>
-   * DocumentPathItem
-   * .. productionlist::
-   *    document_path: path_item | path_item document_path
-   *    path_item    : member | array_index | "**"
-   *    member       : "." string | "." "*"
-   *    array_index  : "[" number "]" | "[" "*" "]"
+   **
+   *Document path item
+   *&#64;par production list
+   *&#64;code{unparsed}
+   *document_path: path_item | path_item document_path
+   *path_item    : member | array_index | "**"
+   *member       : "." string | "." "*"
+   *array_index  : "[" number "]" | "[" "*" "]"
+   *&#64;endcode
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Expr.DocumentPathItem}
@@ -3301,7 +3328,7 @@ public final class MysqlxExpr {
         implements com.google.protobuf.ProtocolMessageEnum {
       /**
        * <pre>
-       * .member
+       **  .member 
        * </pre>
        *
        * <code>MEMBER = 1;</code>
@@ -3309,7 +3336,7 @@ public final class MysqlxExpr {
       MEMBER(1),
       /**
        * <pre>
-       * .*
+       ** &#92;.* 
        * </pre>
        *
        * <code>MEMBER_ASTERISK = 2;</code>
@@ -3317,7 +3344,7 @@ public final class MysqlxExpr {
       MEMBER_ASTERISK(2),
       /**
        * <pre>
-       * [index]
+       ** [index] 
        * </pre>
        *
        * <code>ARRAY_INDEX = 3;</code>
@@ -3325,7 +3352,7 @@ public final class MysqlxExpr {
       ARRAY_INDEX(3),
       /**
        * <pre>
-       * [*]
+       ** [*] 
        * </pre>
        *
        * <code>ARRAY_INDEX_ASTERISK = 4;</code>
@@ -3333,7 +3360,7 @@ public final class MysqlxExpr {
       ARRAY_INDEX_ASTERISK(4),
       /**
        * <pre>
-       * **
+       ** ** 
        * </pre>
        *
        * <code>DOUBLE_ASTERISK = 5;</code>
@@ -3343,7 +3370,7 @@ public final class MysqlxExpr {
 
       /**
        * <pre>
-       * .member
+       **  .member 
        * </pre>
        *
        * <code>MEMBER = 1;</code>
@@ -3351,7 +3378,7 @@ public final class MysqlxExpr {
       public static final int MEMBER_VALUE = 1;
       /**
        * <pre>
-       * .*
+       ** &#92;.* 
        * </pre>
        *
        * <code>MEMBER_ASTERISK = 2;</code>
@@ -3359,7 +3386,7 @@ public final class MysqlxExpr {
       public static final int MEMBER_ASTERISK_VALUE = 2;
       /**
        * <pre>
-       * [index]
+       ** [index] 
        * </pre>
        *
        * <code>ARRAY_INDEX = 3;</code>
@@ -3367,7 +3394,7 @@ public final class MysqlxExpr {
       public static final int ARRAY_INDEX_VALUE = 3;
       /**
        * <pre>
-       * [*]
+       ** [*] 
        * </pre>
        *
        * <code>ARRAY_INDEX_ASTERISK = 4;</code>
@@ -3375,7 +3402,7 @@ public final class MysqlxExpr {
       public static final int ARRAY_INDEX_ASTERISK_VALUE = 4;
       /**
        * <pre>
-       * **
+       ** ** 
        * </pre>
        *
        * <code>DOUBLE_ASTERISK = 5;</code>
@@ -3525,6 +3552,10 @@ public final class MysqlxExpr {
     public static final int INDEX_FIELD_NUMBER = 3;
     private int index_;
     /**
+     * <pre>
+     ** used in case of ARRY_INDEX 
+     * </pre>
+     *
      * <code>optional uint32 index = 3;</code>
      * @return Whether the index field is set.
      */
@@ -3532,6 +3563,10 @@ public final class MysqlxExpr {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
+     * <pre>
+     ** used in case of ARRY_INDEX 
+     * </pre>
+     *
      * <code>optional uint32 index = 3;</code>
      * @return The index.
      */
@@ -3735,12 +3770,15 @@ public final class MysqlxExpr {
     }
     /**
      * <pre>
-     * DocumentPathItem
-     * .. productionlist::
-     *    document_path: path_item | path_item document_path
-     *    path_item    : member | array_index | "**"
-     *    member       : "." string | "." "*"
-     *    array_index  : "[" number "]" | "[" "*" "]"
+     **
+     *Document path item
+     *&#64;par production list
+     *&#64;code{unparsed}
+     *document_path: path_item | path_item document_path
+     *path_item    : member | array_index | "**"
+     *member       : "." string | "." "*"
+     *array_index  : "[" number "]" | "[" "*" "]"
+     *&#64;endcode
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Expr.DocumentPathItem}
@@ -4047,6 +4085,10 @@ public final class MysqlxExpr {
 
       private int index_ ;
       /**
+       * <pre>
+       ** used in case of ARRY_INDEX 
+       * </pre>
+       *
        * <code>optional uint32 index = 3;</code>
        * @return Whether the index field is set.
        */
@@ -4054,6 +4096,10 @@ public final class MysqlxExpr {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
+       * <pre>
+       ** used in case of ARRY_INDEX 
+       * </pre>
+       *
        * <code>optional uint32 index = 3;</code>
        * @return The index.
        */
@@ -4061,6 +4107,10 @@ public final class MysqlxExpr {
         return index_;
       }
       /**
+       * <pre>
+       ** used in case of ARRY_INDEX 
+       * </pre>
+       *
        * <code>optional uint32 index = 3;</code>
        * @param value The index to set.
        * @return This builder for chaining.
@@ -4072,6 +4122,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** used in case of ARRY_INDEX 
+       * </pre>
+       *
        * <code>optional uint32 index = 3;</code>
        * @return This builder for chaining.
        */
@@ -4139,40 +4193,72 @@ public final class MysqlxExpr {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** document path 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
     java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem> 
         getDocumentPathList();
     /**
+     * <pre>
+     ** document path 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem getDocumentPath(int index);
     /**
+     * <pre>
+     ** document path 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
     int getDocumentPathCount();
     /**
+     * <pre>
+     ** document path 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
     java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItemOrBuilder> 
         getDocumentPathOrBuilderList();
     /**
+     * <pre>
+     ** document path 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItemOrBuilder getDocumentPathOrBuilder(
         int index);
 
     /**
+     * <pre>
+     ** name of column 
+     * </pre>
+     *
      * <code>optional string name = 2;</code>
      * @return Whether the name field is set.
      */
     boolean hasName();
     /**
+     * <pre>
+     ** name of column 
+     * </pre>
+     *
      * <code>optional string name = 2;</code>
      * @return The name.
      */
     java.lang.String getName();
     /**
+     * <pre>
+     ** name of column 
+     * </pre>
+     *
      * <code>optional string name = 2;</code>
      * @return The bytes for name.
      */
@@ -4180,16 +4266,28 @@ public final class MysqlxExpr {
         getNameBytes();
 
     /**
+     * <pre>
+     ** name of table 
+     * </pre>
+     *
      * <code>optional string table_name = 3;</code>
      * @return Whether the tableName field is set.
      */
     boolean hasTableName();
     /**
+     * <pre>
+     ** name of table 
+     * </pre>
+     *
      * <code>optional string table_name = 3;</code>
      * @return The tableName.
      */
     java.lang.String getTableName();
     /**
+     * <pre>
+     ** name of table 
+     * </pre>
+     *
      * <code>optional string table_name = 3;</code>
      * @return The bytes for tableName.
      */
@@ -4197,16 +4295,28 @@ public final class MysqlxExpr {
         getTableNameBytes();
 
     /**
+     * <pre>
+     ** name of schema 
+     * </pre>
+     *
      * <code>optional string schema_name = 4;</code>
      * @return Whether the schemaName field is set.
      */
     boolean hasSchemaName();
     /**
+     * <pre>
+     ** name of schema 
+     * </pre>
+     *
      * <code>optional string schema_name = 4;</code>
      * @return The schemaName.
      */
     java.lang.String getSchemaName();
     /**
+     * <pre>
+     ** name of schema 
+     * </pre>
+     *
      * <code>optional string schema_name = 4;</code>
      * @return The bytes for schemaName.
      */
@@ -4215,20 +4325,25 @@ public final class MysqlxExpr {
   }
   /**
    * <pre>
-   * col_identifier (table): col&#64;doc_path, tbl.col&#64;doc_path col, tbl.col, schema.tbl.col
-   * col_identifier (document): doc_path
-   * .. productionlist::
-   *   col_identifier: string "." string "." string |
-   *             : string "." string |
-   *             : string |
-   *             : string "." string "." string "&#64;" document_path |
-   *             : string "." string "&#64;" document_path |
-   *             : string "&#64;" document_path |
-   *             : document_path
-   *    document_path: member | arrayLocation | doubleAsterisk
-   *    member = "." string | "." "*"
-   *    arrayLocation = "[" index "]" | "[" "*" "]"
-   *    doubleAsterisk = "**"
+   **
+   *Column identifier
+   *for table: col&#92;&#64;doc_path, tbl.col&#92;&#64;doc_path col, tbl.col, schema.tbl.col
+   *for document collection: doc_path
+   * //
+   *&#64;par production list
+   *&#64;code{unparsed}
+   *col_identifier: string "." string "." string |
+   *: string "." string |
+   *: string |
+   *: string "." string "." string "&#64;" document_path |
+   *: string "." string "&#64;" document_path |
+   *: string "&#64;" document_path |
+   *: document_path
+   *document_path: member | arrayLocation | doubleAsterisk
+   *member = "." string | "." "*"
+   *arrayLocation = "[" index "]" | "[" "*" "]"
+   *doubleAsterisk = "**"
+   *&#64;endcode
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Expr.ColumnIdentifier}
@@ -4346,12 +4461,20 @@ public final class MysqlxExpr {
     public static final int DOCUMENT_PATH_FIELD_NUMBER = 1;
     private java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem> documentPath_;
     /**
+     * <pre>
+     ** document path 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem> getDocumentPathList() {
       return documentPath_;
     }
     /**
+     * <pre>
+     ** document path 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItemOrBuilder> 
@@ -4359,18 +4482,30 @@ public final class MysqlxExpr {
       return documentPath_;
     }
     /**
+     * <pre>
+     ** document path 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
     public int getDocumentPathCount() {
       return documentPath_.size();
     }
     /**
+     * <pre>
+     ** document path 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem getDocumentPath(int index) {
       return documentPath_.get(index);
     }
     /**
+     * <pre>
+     ** document path 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItemOrBuilder getDocumentPathOrBuilder(
@@ -4381,6 +4516,10 @@ public final class MysqlxExpr {
     public static final int NAME_FIELD_NUMBER = 2;
     private volatile java.lang.Object name_;
     /**
+     * <pre>
+     ** name of column 
+     * </pre>
+     *
      * <code>optional string name = 2;</code>
      * @return Whether the name field is set.
      */
@@ -4388,6 +4527,10 @@ public final class MysqlxExpr {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
+     * <pre>
+     ** name of column 
+     * </pre>
+     *
      * <code>optional string name = 2;</code>
      * @return The name.
      */
@@ -4406,6 +4549,10 @@ public final class MysqlxExpr {
       }
     }
     /**
+     * <pre>
+     ** name of column 
+     * </pre>
+     *
      * <code>optional string name = 2;</code>
      * @return The bytes for name.
      */
@@ -4426,6 +4573,10 @@ public final class MysqlxExpr {
     public static final int TABLE_NAME_FIELD_NUMBER = 3;
     private volatile java.lang.Object tableName_;
     /**
+     * <pre>
+     ** name of table 
+     * </pre>
+     *
      * <code>optional string table_name = 3;</code>
      * @return Whether the tableName field is set.
      */
@@ -4433,6 +4584,10 @@ public final class MysqlxExpr {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
+     * <pre>
+     ** name of table 
+     * </pre>
+     *
      * <code>optional string table_name = 3;</code>
      * @return The tableName.
      */
@@ -4451,6 +4606,10 @@ public final class MysqlxExpr {
       }
     }
     /**
+     * <pre>
+     ** name of table 
+     * </pre>
+     *
      * <code>optional string table_name = 3;</code>
      * @return The bytes for tableName.
      */
@@ -4471,6 +4630,10 @@ public final class MysqlxExpr {
     public static final int SCHEMA_NAME_FIELD_NUMBER = 4;
     private volatile java.lang.Object schemaName_;
     /**
+     * <pre>
+     ** name of schema 
+     * </pre>
+     *
      * <code>optional string schema_name = 4;</code>
      * @return Whether the schemaName field is set.
      */
@@ -4478,6 +4641,10 @@ public final class MysqlxExpr {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
+     * <pre>
+     ** name of schema 
+     * </pre>
+     *
      * <code>optional string schema_name = 4;</code>
      * @return The schemaName.
      */
@@ -4496,6 +4663,10 @@ public final class MysqlxExpr {
       }
     }
     /**
+     * <pre>
+     ** name of schema 
+     * </pre>
+     *
      * <code>optional string schema_name = 4;</code>
      * @return The bytes for schemaName.
      */
@@ -4723,20 +4894,25 @@ public final class MysqlxExpr {
     }
     /**
      * <pre>
-     * col_identifier (table): col&#64;doc_path, tbl.col&#64;doc_path col, tbl.col, schema.tbl.col
-     * col_identifier (document): doc_path
-     * .. productionlist::
-     *   col_identifier: string "." string "." string |
-     *             : string "." string |
-     *             : string |
-     *             : string "." string "." string "&#64;" document_path |
-     *             : string "." string "&#64;" document_path |
-     *             : string "&#64;" document_path |
-     *             : document_path
-     *    document_path: member | arrayLocation | doubleAsterisk
-     *    member = "." string | "." "*"
-     *    arrayLocation = "[" index "]" | "[" "*" "]"
-     *    doubleAsterisk = "**"
+     **
+     *Column identifier
+     *for table: col&#92;&#64;doc_path, tbl.col&#92;&#64;doc_path col, tbl.col, schema.tbl.col
+     *for document collection: doc_path
+     * //
+     *&#64;par production list
+     *&#64;code{unparsed}
+     *col_identifier: string "." string "." string |
+     *: string "." string |
+     *: string |
+     *: string "." string "." string "&#64;" document_path |
+     *: string "." string "&#64;" document_path |
+     *: string "&#64;" document_path |
+     *: document_path
+     *document_path: member | arrayLocation | doubleAsterisk
+     *member = "." string | "." "*"
+     *arrayLocation = "[" index "]" | "[" "*" "]"
+     *doubleAsterisk = "**"
+     *&#64;endcode
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Expr.ColumnIdentifier}
@@ -4976,6 +5152,10 @@ public final class MysqlxExpr {
           com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem, com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Builder, com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItemOrBuilder> documentPathBuilder_;
 
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem> getDocumentPathList() {
@@ -4986,6 +5166,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public int getDocumentPathCount() {
@@ -4996,6 +5180,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem getDocumentPath(int index) {
@@ -5006,6 +5194,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public Builder setDocumentPath(
@@ -5023,6 +5215,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public Builder setDocumentPath(
@@ -5037,6 +5233,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public Builder addDocumentPath(com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem value) {
@@ -5053,6 +5253,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public Builder addDocumentPath(
@@ -5070,6 +5274,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public Builder addDocumentPath(
@@ -5084,6 +5292,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public Builder addDocumentPath(
@@ -5098,6 +5310,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public Builder addAllDocumentPath(
@@ -5113,6 +5329,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public Builder clearDocumentPath() {
@@ -5126,6 +5346,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public Builder removeDocumentPath(int index) {
@@ -5139,6 +5363,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Builder getDocumentPathBuilder(
@@ -5146,6 +5374,10 @@ public final class MysqlxExpr {
         return getDocumentPathFieldBuilder().getBuilder(index);
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItemOrBuilder getDocumentPathOrBuilder(
@@ -5156,6 +5388,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItemOrBuilder> 
@@ -5167,6 +5403,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Builder addDocumentPathBuilder() {
@@ -5174,6 +5414,10 @@ public final class MysqlxExpr {
             com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Builder addDocumentPathBuilder(
@@ -5182,6 +5426,10 @@ public final class MysqlxExpr {
             index, com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** document path 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Builder> 
@@ -5205,6 +5453,10 @@ public final class MysqlxExpr {
 
       private java.lang.Object name_ = "";
       /**
+       * <pre>
+       ** name of column 
+       * </pre>
+       *
        * <code>optional string name = 2;</code>
        * @return Whether the name field is set.
        */
@@ -5212,6 +5464,10 @@ public final class MysqlxExpr {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
+       * <pre>
+       ** name of column 
+       * </pre>
+       *
        * <code>optional string name = 2;</code>
        * @return The name.
        */
@@ -5230,6 +5486,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** name of column 
+       * </pre>
+       *
        * <code>optional string name = 2;</code>
        * @return The bytes for name.
        */
@@ -5247,6 +5507,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** name of column 
+       * </pre>
+       *
        * <code>optional string name = 2;</code>
        * @param value The name to set.
        * @return This builder for chaining.
@@ -5262,6 +5526,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** name of column 
+       * </pre>
+       *
        * <code>optional string name = 2;</code>
        * @return This builder for chaining.
        */
@@ -5272,6 +5540,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** name of column 
+       * </pre>
+       *
        * <code>optional string name = 2;</code>
        * @param value The bytes for name to set.
        * @return This builder for chaining.
@@ -5289,6 +5561,10 @@ public final class MysqlxExpr {
 
       private java.lang.Object tableName_ = "";
       /**
+       * <pre>
+       ** name of table 
+       * </pre>
+       *
        * <code>optional string table_name = 3;</code>
        * @return Whether the tableName field is set.
        */
@@ -5296,6 +5572,10 @@ public final class MysqlxExpr {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
+       * <pre>
+       ** name of table 
+       * </pre>
+       *
        * <code>optional string table_name = 3;</code>
        * @return The tableName.
        */
@@ -5314,6 +5594,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** name of table 
+       * </pre>
+       *
        * <code>optional string table_name = 3;</code>
        * @return The bytes for tableName.
        */
@@ -5331,6 +5615,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** name of table 
+       * </pre>
+       *
        * <code>optional string table_name = 3;</code>
        * @param value The tableName to set.
        * @return This builder for chaining.
@@ -5346,6 +5634,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** name of table 
+       * </pre>
+       *
        * <code>optional string table_name = 3;</code>
        * @return This builder for chaining.
        */
@@ -5356,6 +5648,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** name of table 
+       * </pre>
+       *
        * <code>optional string table_name = 3;</code>
        * @param value The bytes for tableName to set.
        * @return This builder for chaining.
@@ -5373,6 +5669,10 @@ public final class MysqlxExpr {
 
       private java.lang.Object schemaName_ = "";
       /**
+       * <pre>
+       ** name of schema 
+       * </pre>
+       *
        * <code>optional string schema_name = 4;</code>
        * @return Whether the schemaName field is set.
        */
@@ -5380,6 +5680,10 @@ public final class MysqlxExpr {
         return ((bitField0_ & 0x00000008) != 0);
       }
       /**
+       * <pre>
+       ** name of schema 
+       * </pre>
+       *
        * <code>optional string schema_name = 4;</code>
        * @return The schemaName.
        */
@@ -5398,6 +5702,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** name of schema 
+       * </pre>
+       *
        * <code>optional string schema_name = 4;</code>
        * @return The bytes for schemaName.
        */
@@ -5415,6 +5723,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** name of schema 
+       * </pre>
+       *
        * <code>optional string schema_name = 4;</code>
        * @param value The schemaName to set.
        * @return This builder for chaining.
@@ -5430,6 +5742,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** name of schema 
+       * </pre>
+       *
        * <code>optional string schema_name = 4;</code>
        * @return This builder for chaining.
        */
@@ -5440,6 +5756,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** name of schema 
+       * </pre>
+       *
        * <code>optional string schema_name = 4;</code>
        * @param value The bytes for schemaName to set.
        * @return This builder for chaining.
@@ -5512,39 +5832,71 @@ public final class MysqlxExpr {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** identifier of function; at least name of it 
+     * </pre>
+     *
      * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
      * @return Whether the name field is set.
      */
     boolean hasName();
     /**
+     * <pre>
+     ** identifier of function; at least name of it 
+     * </pre>
+     *
      * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
      * @return The name.
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.Identifier getName();
     /**
+     * <pre>
+     ** identifier of function; at least name of it 
+     * </pre>
+     *
      * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.IdentifierOrBuilder getNameOrBuilder();
 
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> 
         getParamList();
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.Expr getParam(int index);
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     int getParamCount();
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
         getParamOrBuilderList();
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getParamOrBuilder(
@@ -5552,9 +5904,12 @@ public final class MysqlxExpr {
   }
   /**
    * <pre>
-   * function call: ``func(a, b, "1", 3)``
-   * .. productionlist::
-   *   function_call: `identifier` "(" [ `expr` ["," `expr` ]* ] ")"
+   **
+   *Function call: ``func(a, b, "1", 3)``
+   *&#64;par production list
+   *&#64;code{unparsed}
+   *function_call: `identifier` "(" [ `expr` ["," `expr` ]* ] ")"
+   *&#64;endcode
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Expr.FunctionCall}
@@ -5664,6 +6019,10 @@ public final class MysqlxExpr {
     public static final int NAME_FIELD_NUMBER = 1;
     private com.mysql.cj.x.protobuf.MysqlxExpr.Identifier name_;
     /**
+     * <pre>
+     ** identifier of function; at least name of it 
+     * </pre>
+     *
      * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
      * @return Whether the name field is set.
      */
@@ -5671,6 +6030,10 @@ public final class MysqlxExpr {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
+     * <pre>
+     ** identifier of function; at least name of it 
+     * </pre>
+     *
      * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
      * @return The name.
      */
@@ -5678,6 +6041,10 @@ public final class MysqlxExpr {
       return name_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Identifier.getDefaultInstance() : name_;
     }
     /**
+     * <pre>
+     ** identifier of function; at least name of it 
+     * </pre>
+     *
      * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpr.IdentifierOrBuilder getNameOrBuilder() {
@@ -5687,12 +6054,20 @@ public final class MysqlxExpr {
     public static final int PARAM_FIELD_NUMBER = 2;
     private java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> param_;
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> getParamList() {
       return param_;
     }
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
@@ -5700,18 +6075,30 @@ public final class MysqlxExpr {
       return param_;
     }
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     public int getParamCount() {
       return param_.size();
     }
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getParam(int index) {
       return param_.get(index);
     }
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getParamOrBuilder(
@@ -5908,9 +6295,12 @@ public final class MysqlxExpr {
     }
     /**
      * <pre>
-     * function call: ``func(a, b, "1", 3)``
-     * .. productionlist::
-     *   function_call: `identifier` "(" [ `expr` ["," `expr` ]* ] ")"
+     **
+     *Function call: ``func(a, b, "1", 3)``
+     *&#64;par production list
+     *&#64;code{unparsed}
+     *function_call: `identifier` "(" [ `expr` ["," `expr` ]* ] ")"
+     *&#64;endcode
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Expr.FunctionCall}
@@ -6132,6 +6522,10 @@ public final class MysqlxExpr {
       private com.google.protobuf.SingleFieldBuilderV3<
           com.mysql.cj.x.protobuf.MysqlxExpr.Identifier, com.mysql.cj.x.protobuf.MysqlxExpr.Identifier.Builder, com.mysql.cj.x.protobuf.MysqlxExpr.IdentifierOrBuilder> nameBuilder_;
       /**
+       * <pre>
+       ** identifier of function; at least name of it 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
        * @return Whether the name field is set.
        */
@@ -6139,6 +6533,10 @@ public final class MysqlxExpr {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       ** identifier of function; at least name of it 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
        * @return The name.
        */
@@ -6150,6 +6548,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** identifier of function; at least name of it 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
        */
       public Builder setName(com.mysql.cj.x.protobuf.MysqlxExpr.Identifier value) {
@@ -6166,6 +6568,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** identifier of function; at least name of it 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
        */
       public Builder setName(
@@ -6180,6 +6586,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** identifier of function; at least name of it 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
        */
       public Builder mergeName(com.mysql.cj.x.protobuf.MysqlxExpr.Identifier value) {
@@ -6200,6 +6610,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** identifier of function; at least name of it 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
        */
       public Builder clearName() {
@@ -6213,6 +6627,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** identifier of function; at least name of it 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Identifier.Builder getNameBuilder() {
@@ -6221,6 +6639,10 @@ public final class MysqlxExpr {
         return getNameFieldBuilder().getBuilder();
       }
       /**
+       * <pre>
+       ** identifier of function; at least name of it 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.IdentifierOrBuilder getNameOrBuilder() {
@@ -6232,6 +6654,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** identifier of function; at least name of it 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
@@ -6261,6 +6687,10 @@ public final class MysqlxExpr {
           com.mysql.cj.x.protobuf.MysqlxExpr.Expr, com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> paramBuilder_;
 
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> getParamList() {
@@ -6271,6 +6701,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public int getParamCount() {
@@ -6281,6 +6715,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getParam(int index) {
@@ -6291,6 +6729,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder setParam(
@@ -6308,6 +6750,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder setParam(
@@ -6322,6 +6768,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder addParam(com.mysql.cj.x.protobuf.MysqlxExpr.Expr value) {
@@ -6338,6 +6788,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder addParam(
@@ -6355,6 +6809,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder addParam(
@@ -6369,6 +6827,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder addParam(
@@ -6383,6 +6845,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder addAllParam(
@@ -6398,6 +6864,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder clearParam() {
@@ -6411,6 +6881,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder removeParam(int index) {
@@ -6424,6 +6898,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder getParamBuilder(
@@ -6431,6 +6909,10 @@ public final class MysqlxExpr {
         return getParamFieldBuilder().getBuilder(index);
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getParamOrBuilder(
@@ -6441,6 +6923,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
@@ -6452,6 +6938,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder addParamBuilder() {
@@ -6459,6 +6949,10 @@ public final class MysqlxExpr {
             com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder addParamBuilder(
@@ -6467,6 +6961,10 @@ public final class MysqlxExpr {
             index, com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder> 
@@ -6545,16 +7043,28 @@ public final class MysqlxExpr {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** name of operator 
+     * </pre>
+     *
      * <code>required string name = 1;</code>
      * @return Whether the name field is set.
      */
     boolean hasName();
     /**
+     * <pre>
+     ** name of operator 
+     * </pre>
+     *
      * <code>required string name = 1;</code>
      * @return The name.
      */
     java.lang.String getName();
     /**
+     * <pre>
+     ** name of operator 
+     * </pre>
+     *
      * <code>required string name = 1;</code>
      * @return The bytes for name.
      */
@@ -6562,116 +7072,50 @@ public final class MysqlxExpr {
         getNameBytes();
 
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> 
         getParamList();
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.Expr getParam(int index);
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     int getParamCount();
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
         getParamOrBuilderList();
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getParamOrBuilder(
         int index);
   }
   /**
-   * <pre>
-   * operator: ``&lt;&lt;(a, b)``
-   * .. note::
-   *   Non-authoritative list of operators implemented (case sensitive):
-   *   Nullary
-   *     * ``*``
-   *     * ``default``
-   *   Unary
-   *     * ``!``
-   *     * ``sign_plus``
-   *     * ``sign_minus``
-   *     * ``~``
-   *   Binary
-   *     * ``&amp;&amp;``
-   *     * ``||``
-   *     * ``xor``
-   *     * ``==``
-   *     * ``!=``
-   *     * ``&gt;``
-   *     * ``&gt;=``
-   *     * ``&lt;``
-   *     * ``&lt;=``
-   *     * ``&amp;``
-   *     * ``|``
-   *     * ``^``
-   *     * ``&lt;&lt;``
-   *     * ``&gt;&gt;``
-   *     * ``+``
-   *     * ``-``
-   *     * ``*``
-   *     * ``/``
-   *     * ``div``
-   *     * ``%``
-   *     * ``is``
-   *     * ``is_not``
-   *     * ``regexp``
-   *     * ``not_regexp``
-   *     * ``like``
-   *     * ``not_like``
-   *     * ``cast``
-   *     * ``cont_in``
-   *     * ``not_cont_in``
-   *     * ``overlaps``
-   *     * ``not_overlaps``
-   *   Using special representation, with more than 2 params
-   *     * ``in`` (param[0] IN (param[1], param[2], ...))
-   *     * ``not_in`` (param[0] NOT IN (param[1], param[2], ...))
-   *   Ternary
-   *     * ``between``
-   *     * ``between_not``
-   *     * ``date_add``
-   *     * ``date_sub``
-   *   Units for date_add/date_sub
-   *     * ``MICROSECOND``
-   *     * ``SECOND``
-   *     * ``MINUTE``
-   *     * ``HOUR``
-   *     * ``DAY``
-   *     * ``WEEK``
-   *     * ``MONTH``
-   *     * ``QUARTER``
-   *     * ``YEAR``
-   *     * ``SECOND_MICROSECOND``
-   *     * ``MINUTE_MICROSECOND``
-   *     * ``MINUTE_SECOND``
-   *     * ``HOUR_MICROSECOND``
-   *     * ``HOUR_SECOND``
-   *     * ``HOUR_MINUTE``
-   *     * ``DAY_MICROSECOND``
-   *     * ``DAY_SECOND``
-   *     * ``DAY_MINUTE``
-   *     * ``DAY_HOUR``
-   *   Types for cast
-   *     * ``BINARY[(N)]``
-   *     * ``CHAR[(N)]``
-   *     * ``DATE``
-   *     * ``DATETIME``
-   *     * ``DECIMAL[(M[,D])]``
-   *     * ``JSON``
-   *     * ``SIGNED [INTEGER]``
-   *     * ``TIME``
-   *     * ``UNSIGNED [INTEGER]``
-   * .. productionlist::
-   *   operator: `name` "(" [ `expr` ["," `expr` ]* ] ")"
-   * </pre>
-   *
    * Protobuf type {@code Mysqlx.Expr.Operator}
    */
   public  static final class Operator extends
@@ -6773,6 +7217,10 @@ public final class MysqlxExpr {
     public static final int NAME_FIELD_NUMBER = 1;
     private volatile java.lang.Object name_;
     /**
+     * <pre>
+     ** name of operator 
+     * </pre>
+     *
      * <code>required string name = 1;</code>
      * @return Whether the name field is set.
      */
@@ -6780,6 +7228,10 @@ public final class MysqlxExpr {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
+     * <pre>
+     ** name of operator 
+     * </pre>
+     *
      * <code>required string name = 1;</code>
      * @return The name.
      */
@@ -6798,6 +7250,10 @@ public final class MysqlxExpr {
       }
     }
     /**
+     * <pre>
+     ** name of operator 
+     * </pre>
+     *
      * <code>required string name = 1;</code>
      * @return The bytes for name.
      */
@@ -6818,12 +7274,20 @@ public final class MysqlxExpr {
     public static final int PARAM_FIELD_NUMBER = 2;
     private java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> param_;
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> getParamList() {
       return param_;
     }
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
@@ -6831,18 +7295,30 @@ public final class MysqlxExpr {
       return param_;
     }
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     public int getParamCount() {
       return param_.size();
     }
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getParam(int index) {
       return param_.get(index);
     }
     /**
+     * <pre>
+     ** list of parameters 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getParamOrBuilder(
@@ -7033,92 +7509,6 @@ public final class MysqlxExpr {
       return builder;
     }
     /**
-     * <pre>
-     * operator: ``&lt;&lt;(a, b)``
-     * .. note::
-     *   Non-authoritative list of operators implemented (case sensitive):
-     *   Nullary
-     *     * ``*``
-     *     * ``default``
-     *   Unary
-     *     * ``!``
-     *     * ``sign_plus``
-     *     * ``sign_minus``
-     *     * ``~``
-     *   Binary
-     *     * ``&amp;&amp;``
-     *     * ``||``
-     *     * ``xor``
-     *     * ``==``
-     *     * ``!=``
-     *     * ``&gt;``
-     *     * ``&gt;=``
-     *     * ``&lt;``
-     *     * ``&lt;=``
-     *     * ``&amp;``
-     *     * ``|``
-     *     * ``^``
-     *     * ``&lt;&lt;``
-     *     * ``&gt;&gt;``
-     *     * ``+``
-     *     * ``-``
-     *     * ``*``
-     *     * ``/``
-     *     * ``div``
-     *     * ``%``
-     *     * ``is``
-     *     * ``is_not``
-     *     * ``regexp``
-     *     * ``not_regexp``
-     *     * ``like``
-     *     * ``not_like``
-     *     * ``cast``
-     *     * ``cont_in``
-     *     * ``not_cont_in``
-     *     * ``overlaps``
-     *     * ``not_overlaps``
-     *   Using special representation, with more than 2 params
-     *     * ``in`` (param[0] IN (param[1], param[2], ...))
-     *     * ``not_in`` (param[0] NOT IN (param[1], param[2], ...))
-     *   Ternary
-     *     * ``between``
-     *     * ``between_not``
-     *     * ``date_add``
-     *     * ``date_sub``
-     *   Units for date_add/date_sub
-     *     * ``MICROSECOND``
-     *     * ``SECOND``
-     *     * ``MINUTE``
-     *     * ``HOUR``
-     *     * ``DAY``
-     *     * ``WEEK``
-     *     * ``MONTH``
-     *     * ``QUARTER``
-     *     * ``YEAR``
-     *     * ``SECOND_MICROSECOND``
-     *     * ``MINUTE_MICROSECOND``
-     *     * ``MINUTE_SECOND``
-     *     * ``HOUR_MICROSECOND``
-     *     * ``HOUR_SECOND``
-     *     * ``HOUR_MINUTE``
-     *     * ``DAY_MICROSECOND``
-     *     * ``DAY_SECOND``
-     *     * ``DAY_MINUTE``
-     *     * ``DAY_HOUR``
-     *   Types for cast
-     *     * ``BINARY[(N)]``
-     *     * ``CHAR[(N)]``
-     *     * ``DATE``
-     *     * ``DATETIME``
-     *     * ``DECIMAL[(M[,D])]``
-     *     * ``JSON``
-     *     * ``SIGNED [INTEGER]``
-     *     * ``TIME``
-     *     * ``UNSIGNED [INTEGER]``
-     * .. productionlist::
-     *   operator: `name` "(" [ `expr` ["," `expr` ]* ] ")"
-     * </pre>
-     *
      * Protobuf type {@code Mysqlx.Expr.Operator}
      */
     public static final class Builder extends
@@ -7326,6 +7716,10 @@ public final class MysqlxExpr {
 
       private java.lang.Object name_ = "";
       /**
+       * <pre>
+       ** name of operator 
+       * </pre>
+       *
        * <code>required string name = 1;</code>
        * @return Whether the name field is set.
        */
@@ -7333,6 +7727,10 @@ public final class MysqlxExpr {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       ** name of operator 
+       * </pre>
+       *
        * <code>required string name = 1;</code>
        * @return The name.
        */
@@ -7351,6 +7749,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** name of operator 
+       * </pre>
+       *
        * <code>required string name = 1;</code>
        * @return The bytes for name.
        */
@@ -7368,6 +7770,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** name of operator 
+       * </pre>
+       *
        * <code>required string name = 1;</code>
        * @param value The name to set.
        * @return This builder for chaining.
@@ -7383,6 +7789,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** name of operator 
+       * </pre>
+       *
        * <code>required string name = 1;</code>
        * @return This builder for chaining.
        */
@@ -7393,6 +7803,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** name of operator 
+       * </pre>
+       *
        * <code>required string name = 1;</code>
        * @param value The bytes for name to set.
        * @return This builder for chaining.
@@ -7421,6 +7835,10 @@ public final class MysqlxExpr {
           com.mysql.cj.x.protobuf.MysqlxExpr.Expr, com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> paramBuilder_;
 
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> getParamList() {
@@ -7431,6 +7849,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public int getParamCount() {
@@ -7441,6 +7863,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getParam(int index) {
@@ -7451,6 +7877,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder setParam(
@@ -7468,6 +7898,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder setParam(
@@ -7482,6 +7916,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder addParam(com.mysql.cj.x.protobuf.MysqlxExpr.Expr value) {
@@ -7498,6 +7936,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder addParam(
@@ -7515,6 +7957,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder addParam(
@@ -7529,6 +7975,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder addParam(
@@ -7543,6 +7993,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder addAllParam(
@@ -7558,6 +8012,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder clearParam() {
@@ -7571,6 +8029,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public Builder removeParam(int index) {
@@ -7584,6 +8046,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder getParamBuilder(
@@ -7591,6 +8057,10 @@ public final class MysqlxExpr {
         return getParamFieldBuilder().getBuilder(index);
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getParamOrBuilder(
@@ -7601,6 +8071,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
@@ -7612,6 +8086,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder addParamBuilder() {
@@ -7619,6 +8097,10 @@ public final class MysqlxExpr {
             com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder addParamBuilder(
@@ -7627,6 +8109,10 @@ public final class MysqlxExpr {
             index, com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** list of parameters 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder> 
@@ -7705,24 +8191,44 @@ public final class MysqlxExpr {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** list of fields 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
     java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField> 
         getFldList();
     /**
+     * <pre>
+     ** list of fields 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField getFld(int index);
     /**
+     * <pre>
+     ** list of fields 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
     int getFldCount();
     /**
+     * <pre>
+     ** list of fields 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
     java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectFieldOrBuilder> 
         getFldOrBuilderList();
     /**
+     * <pre>
+     ** list of fields 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectFieldOrBuilder getFldOrBuilder(
@@ -7730,7 +8236,8 @@ public final class MysqlxExpr {
   }
   /**
    * <pre>
-   * an object (with expression values)
+   **
+   *An object (with expression values)
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Expr.Object}
@@ -7828,16 +8335,28 @@ public final class MysqlxExpr {
         com.google.protobuf.MessageOrBuilder {
 
       /**
+       * <pre>
+       ** identifier of field 
+       * </pre>
+       *
        * <code>required string key = 1;</code>
        * @return Whether the key field is set.
        */
       boolean hasKey();
       /**
+       * <pre>
+       ** identifier of field 
+       * </pre>
+       *
        * <code>required string key = 1;</code>
        * @return The key.
        */
       java.lang.String getKey();
       /**
+       * <pre>
+       ** identifier of field 
+       * </pre>
+       *
        * <code>required string key = 1;</code>
        * @return The bytes for key.
        */
@@ -7845,16 +8364,28 @@ public final class MysqlxExpr {
           getKeyBytes();
 
       /**
+       * <pre>
+       ** value of field 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Expr value = 2;</code>
        * @return Whether the value field is set.
        */
       boolean hasValue();
       /**
+       * <pre>
+       ** value of field 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Expr value = 2;</code>
        * @return The value.
        */
       com.mysql.cj.x.protobuf.MysqlxExpr.Expr getValue();
       /**
+       * <pre>
+       ** value of field 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Expr value = 2;</code>
        */
       com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getValueOrBuilder();
@@ -7961,6 +8492,10 @@ public final class MysqlxExpr {
       public static final int KEY_FIELD_NUMBER = 1;
       private volatile java.lang.Object key_;
       /**
+       * <pre>
+       ** identifier of field 
+       * </pre>
+       *
        * <code>required string key = 1;</code>
        * @return Whether the key field is set.
        */
@@ -7968,6 +8503,10 @@ public final class MysqlxExpr {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       ** identifier of field 
+       * </pre>
+       *
        * <code>required string key = 1;</code>
        * @return The key.
        */
@@ -7986,6 +8525,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** identifier of field 
+       * </pre>
+       *
        * <code>required string key = 1;</code>
        * @return The bytes for key.
        */
@@ -8006,6 +8549,10 @@ public final class MysqlxExpr {
       public static final int VALUE_FIELD_NUMBER = 2;
       private com.mysql.cj.x.protobuf.MysqlxExpr.Expr value_;
       /**
+       * <pre>
+       ** value of field 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Expr value = 2;</code>
        * @return Whether the value field is set.
        */
@@ -8013,6 +8560,10 @@ public final class MysqlxExpr {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
+       * <pre>
+       ** value of field 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Expr value = 2;</code>
        * @return The value.
        */
@@ -8020,6 +8571,10 @@ public final class MysqlxExpr {
         return value_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : value_;
       }
       /**
+       * <pre>
+       ** value of field 
+       * </pre>
+       *
        * <code>required .Mysqlx.Expr.Expr value = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getValueOrBuilder() {
@@ -8398,6 +8953,10 @@ public final class MysqlxExpr {
 
         private java.lang.Object key_ = "";
         /**
+         * <pre>
+         ** identifier of field 
+         * </pre>
+         *
          * <code>required string key = 1;</code>
          * @return Whether the key field is set.
          */
@@ -8405,6 +8964,10 @@ public final class MysqlxExpr {
           return ((bitField0_ & 0x00000001) != 0);
         }
         /**
+         * <pre>
+         ** identifier of field 
+         * </pre>
+         *
          * <code>required string key = 1;</code>
          * @return The key.
          */
@@ -8423,6 +8986,10 @@ public final class MysqlxExpr {
           }
         }
         /**
+         * <pre>
+         ** identifier of field 
+         * </pre>
+         *
          * <code>required string key = 1;</code>
          * @return The bytes for key.
          */
@@ -8440,6 +9007,10 @@ public final class MysqlxExpr {
           }
         }
         /**
+         * <pre>
+         ** identifier of field 
+         * </pre>
+         *
          * <code>required string key = 1;</code>
          * @param value The key to set.
          * @return This builder for chaining.
@@ -8455,6 +9026,10 @@ public final class MysqlxExpr {
           return this;
         }
         /**
+         * <pre>
+         ** identifier of field 
+         * </pre>
+         *
          * <code>required string key = 1;</code>
          * @return This builder for chaining.
          */
@@ -8465,6 +9040,10 @@ public final class MysqlxExpr {
           return this;
         }
         /**
+         * <pre>
+         ** identifier of field 
+         * </pre>
+         *
          * <code>required string key = 1;</code>
          * @param value The bytes for key to set.
          * @return This builder for chaining.
@@ -8484,6 +9063,10 @@ public final class MysqlxExpr {
         private com.google.protobuf.SingleFieldBuilderV3<
             com.mysql.cj.x.protobuf.MysqlxExpr.Expr, com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> valueBuilder_;
         /**
+         * <pre>
+         ** value of field 
+         * </pre>
+         *
          * <code>required .Mysqlx.Expr.Expr value = 2;</code>
          * @return Whether the value field is set.
          */
@@ -8491,6 +9074,10 @@ public final class MysqlxExpr {
           return ((bitField0_ & 0x00000002) != 0);
         }
         /**
+         * <pre>
+         ** value of field 
+         * </pre>
+         *
          * <code>required .Mysqlx.Expr.Expr value = 2;</code>
          * @return The value.
          */
@@ -8502,6 +9089,10 @@ public final class MysqlxExpr {
           }
         }
         /**
+         * <pre>
+         ** value of field 
+         * </pre>
+         *
          * <code>required .Mysqlx.Expr.Expr value = 2;</code>
          */
         public Builder setValue(com.mysql.cj.x.protobuf.MysqlxExpr.Expr value) {
@@ -8518,6 +9109,10 @@ public final class MysqlxExpr {
           return this;
         }
         /**
+         * <pre>
+         ** value of field 
+         * </pre>
+         *
          * <code>required .Mysqlx.Expr.Expr value = 2;</code>
          */
         public Builder setValue(
@@ -8532,6 +9127,10 @@ public final class MysqlxExpr {
           return this;
         }
         /**
+         * <pre>
+         ** value of field 
+         * </pre>
+         *
          * <code>required .Mysqlx.Expr.Expr value = 2;</code>
          */
         public Builder mergeValue(com.mysql.cj.x.protobuf.MysqlxExpr.Expr value) {
@@ -8552,6 +9151,10 @@ public final class MysqlxExpr {
           return this;
         }
         /**
+         * <pre>
+         ** value of field 
+         * </pre>
+         *
          * <code>required .Mysqlx.Expr.Expr value = 2;</code>
          */
         public Builder clearValue() {
@@ -8565,6 +9168,10 @@ public final class MysqlxExpr {
           return this;
         }
         /**
+         * <pre>
+         ** value of field 
+         * </pre>
+         *
          * <code>required .Mysqlx.Expr.Expr value = 2;</code>
          */
         public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder getValueBuilder() {
@@ -8573,6 +9180,10 @@ public final class MysqlxExpr {
           return getValueFieldBuilder().getBuilder();
         }
         /**
+         * <pre>
+         ** value of field 
+         * </pre>
+         *
          * <code>required .Mysqlx.Expr.Expr value = 2;</code>
          */
         public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getValueOrBuilder() {
@@ -8584,6 +9195,10 @@ public final class MysqlxExpr {
           }
         }
         /**
+         * <pre>
+         ** value of field 
+         * </pre>
+         *
          * <code>required .Mysqlx.Expr.Expr value = 2;</code>
          */
         private com.google.protobuf.SingleFieldBuilderV3<
@@ -8655,12 +9270,20 @@ public final class MysqlxExpr {
     public static final int FLD_FIELD_NUMBER = 1;
     private java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField> fld_;
     /**
+     * <pre>
+     ** list of fields 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField> getFldList() {
       return fld_;
     }
     /**
+     * <pre>
+     ** list of fields 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectFieldOrBuilder> 
@@ -8668,18 +9291,30 @@ public final class MysqlxExpr {
       return fld_;
     }
     /**
+     * <pre>
+     ** list of fields 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
     public int getFldCount() {
       return fld_.size();
     }
     /**
+     * <pre>
+     ** list of fields 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField getFld(int index) {
       return fld_.get(index);
     }
     /**
+     * <pre>
+     ** list of fields 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectFieldOrBuilder getFldOrBuilder(
@@ -8852,7 +9487,8 @@ public final class MysqlxExpr {
     }
     /**
      * <pre>
-     * an object (with expression values)
+     **
+     *An object (with expression values)
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Expr.Object}
@@ -9057,6 +9693,10 @@ public final class MysqlxExpr {
           com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField, com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField.Builder, com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectFieldOrBuilder> fldBuilder_;
 
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField> getFldList() {
@@ -9067,6 +9707,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public int getFldCount() {
@@ -9077,6 +9721,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField getFld(int index) {
@@ -9087,6 +9735,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public Builder setFld(
@@ -9104,6 +9756,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public Builder setFld(
@@ -9118,6 +9774,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public Builder addFld(com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField value) {
@@ -9134,6 +9794,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public Builder addFld(
@@ -9151,6 +9815,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public Builder addFld(
@@ -9165,6 +9833,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public Builder addFld(
@@ -9179,6 +9851,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public Builder addAllFld(
@@ -9194,6 +9870,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public Builder clearFld() {
@@ -9207,6 +9887,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public Builder removeFld(int index) {
@@ -9220,6 +9904,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField.Builder getFldBuilder(
@@ -9227,6 +9915,10 @@ public final class MysqlxExpr {
         return getFldFieldBuilder().getBuilder(index);
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectFieldOrBuilder getFldOrBuilder(
@@ -9237,6 +9929,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectFieldOrBuilder> 
@@ -9248,6 +9944,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField.Builder addFldBuilder() {
@@ -9255,6 +9955,10 @@ public final class MysqlxExpr {
             com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField.Builder addFldBuilder(
@@ -9263,6 +9967,10 @@ public final class MysqlxExpr {
             index, com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** list of fields 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField.Builder> 
@@ -9341,24 +10049,44 @@ public final class MysqlxExpr {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** list of values 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
     java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> 
         getValueList();
     /**
+     * <pre>
+     ** list of values 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.Expr getValue(int index);
     /**
+     * <pre>
+     ** list of values 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
     int getValueCount();
     /**
+     * <pre>
+     ** list of values 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
     java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
         getValueOrBuilderList();
     /**
+     * <pre>
+     ** list of values 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getValueOrBuilder(
@@ -9366,7 +10094,8 @@ public final class MysqlxExpr {
   }
   /**
    * <pre>
-   * a Array of expressions
+   **
+   *An array of expressions
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Expr.Array}
@@ -9462,12 +10191,20 @@ public final class MysqlxExpr {
     public static final int VALUE_FIELD_NUMBER = 1;
     private java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> value_;
     /**
+     * <pre>
+     ** list of values 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> getValueList() {
       return value_;
     }
     /**
+     * <pre>
+     ** list of values 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
@@ -9475,18 +10212,30 @@ public final class MysqlxExpr {
       return value_;
     }
     /**
+     * <pre>
+     ** list of values 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
     public int getValueCount() {
       return value_.size();
     }
     /**
+     * <pre>
+     ** list of values 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getValue(int index) {
       return value_.get(index);
     }
     /**
+     * <pre>
+     ** list of values 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getValueOrBuilder(
@@ -9659,7 +10408,8 @@ public final class MysqlxExpr {
     }
     /**
      * <pre>
-     * a Array of expressions
+     **
+     *An array of expressions
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Expr.Array}
@@ -9864,6 +10614,10 @@ public final class MysqlxExpr {
           com.mysql.cj.x.protobuf.MysqlxExpr.Expr, com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> valueBuilder_;
 
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> getValueList() {
@@ -9874,6 +10628,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public int getValueCount() {
@@ -9884,6 +10642,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getValue(int index) {
@@ -9894,6 +10656,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public Builder setValue(
@@ -9911,6 +10677,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public Builder setValue(
@@ -9925,6 +10695,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public Builder addValue(com.mysql.cj.x.protobuf.MysqlxExpr.Expr value) {
@@ -9941,6 +10715,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public Builder addValue(
@@ -9958,6 +10736,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public Builder addValue(
@@ -9972,6 +10754,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public Builder addValue(
@@ -9986,6 +10772,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public Builder addAllValue(
@@ -10001,6 +10791,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public Builder clearValue() {
@@ -10014,6 +10808,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public Builder removeValue(int index) {
@@ -10027,6 +10825,10 @@ public final class MysqlxExpr {
         return this;
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder getValueBuilder(
@@ -10034,6 +10836,10 @@ public final class MysqlxExpr {
         return getValueFieldBuilder().getBuilder(index);
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getValueOrBuilder(
@@ -10044,6 +10850,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
@@ -10055,6 +10865,10 @@ public final class MysqlxExpr {
         }
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder addValueBuilder() {
@@ -10062,6 +10876,10 @@ public final class MysqlxExpr {
             com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder addValueBuilder(
@@ -10070,6 +10888,10 @@ public final class MysqlxExpr {
             index, com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** list of values 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder> 

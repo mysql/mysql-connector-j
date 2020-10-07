@@ -31,6 +31,7 @@ package com.mysql.cj.protocol.x;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
@@ -41,12 +42,17 @@ import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.FullReadInputStream;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.MessageReader;
+import com.mysql.cj.protocol.Protocol.ProtocolEventHandler;
+import com.mysql.cj.protocol.Protocol.ProtocolEventListener.EventType;
+import com.mysql.cj.protocol.x.Notice.XWarning;
 import com.mysql.cj.x.protobuf.Mysqlx.Error;
 import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
+import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
 
 /**
  * Synchronous-only implementation of {@link MessageReader}. This implementation wraps a {@link java.io.InputStream}.
@@ -55,7 +61,8 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
     /** Stream as a source of messages. */
     private FullReadInputStream inputStream;
 
-    private XMessageHeader header;
+    LinkedList<XMessageHeader> headersQueue = new LinkedList<>();
+    LinkedList<GeneratedMessageV3> messagesQueue = new LinkedList<>();
 
     /** Queue of <code>MessageListener</code>s waiting to process messages. */
     BlockingQueue<MessageListener<XMessage>> messageListenerQueue = new LinkedBlockingQueue<>();
@@ -67,26 +74,58 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
 
     Thread dispatchingThread = null;
 
-    public SyncMessageReader(FullReadInputStream inputStream) {
+    private ProtocolEventHandler protocolEventHandler = null;
+
+    public SyncMessageReader(FullReadInputStream inputStream, ProtocolEventHandler protocolEventHandler) {
         this.inputStream = inputStream;
+        this.protocolEventHandler = protocolEventHandler;
     }
 
     @Override
     public XMessageHeader readHeader() throws IOException {
         // waiting for ListenersDispatcher completion to perform sync call
         synchronized (this.waitingSyncOperationMonitor) {
-            if (this.header == null) {
-                this.header = readHeaderLocal();
+            XMessageHeader header;
+            if ((header = this.headersQueue.peek()) == null) {
+                header = readHeaderLocal();
             }
-            if (this.header.getMessageType() == ServerMessages.Type.ERROR_VALUE) {
-                throw new XProtocolError(readMessageLocal(Error.class));
+            if (header.getMessageType() == ServerMessages.Type.ERROR_VALUE) {
+                throw new XProtocolError(readMessageLocal(Error.class, true));
             }
-            return this.header;
+            return header;
+        }
+    }
+
+    public int getNextNonNoticeMessageType() throws IOException {
+        synchronized (this.waitingSyncOperationMonitor) {
+            if (!this.headersQueue.isEmpty()) {
+                for (XMessageHeader hdr : this.headersQueue) {
+                    if (hdr.getMessageType() != ServerMessages.Type.NOTICE_VALUE) {
+                        return hdr.getMessageType();
+                    }
+                }
+            }
+
+            XMessageHeader header;
+            do {
+                header = readHeaderLocal();
+                if (header.getMessageType() == ServerMessages.Type.ERROR_VALUE) {
+                    Error msg;
+                    this.messagesQueue.addLast(msg = readMessageLocal(Error.class, false));
+                    throw new XProtocolError(msg);
+
+                } else if (header.getMessageType() == ServerMessages.Type.NOTICE_VALUE) {
+                    this.messagesQueue.addLast(readMessageLocal(Frame.class, false));
+                }
+            } while (header.getMessageType() == ServerMessages.Type.NOTICE_VALUE);
+
+            return header.getMessageType();
         }
     }
 
     private XMessageHeader readHeaderLocal() throws IOException {
 
+        XMessageHeader header;
         try {
             /*
              * Note that the "header" per-se is the size of all data following the header. This currently includes the message type tag (1 byte) and the
@@ -94,21 +133,33 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
              * multiplexing is supported by the protocol. The protocol will be able to accommodate it but we will have to separate reading data after the
              * header (size).
              */
-            byte[] len = new byte[5];
-            this.inputStream.readFully(len);
-            this.header = new XMessageHeader(len);
+            byte[] buf = new byte[5];
+            this.inputStream.readFully(buf);
+            header = new XMessageHeader(buf);
+            this.headersQueue.add(header);
         } catch (IOException ex) {
             // TODO close socket?
             throw new CJCommunicationsException("Cannot read packet header", ex);
         }
-
-        return this.header;
+        return header;
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends GeneratedMessageV3> T readMessageLocal(Class<T> messageClass) {
+    private <T extends GeneratedMessageV3> T readMessageLocal(Class<T> messageClass, boolean fromQueue) {
+
+        XMessageHeader header;
+        if (fromQueue) {
+            header = this.headersQueue.poll();
+            T msg = (T) this.messagesQueue.poll();
+            if (msg != null) {
+                return msg;
+            }
+        } else {
+            header = this.headersQueue.getLast();
+        }
+
         Parser<T> parser = (Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
-        byte[] packet = new byte[this.header.getMessageSize()];
+        byte[] packet = new byte[header.getMessageSize()];
 
         try {
             this.inputStream.readFully(packet);
@@ -118,12 +169,29 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
         }
 
         try {
-            return parser.parseFrom(packet);
+            T msg = parser.parseFrom(packet);
+
+            if (msg instanceof Frame && ((Frame) msg).getType() == Frame.Type.WARNING_VALUE && ((Frame) msg).getScope() == Frame.Scope.GLOBAL) {
+                XWarning w = new XWarning((Frame) msg);
+                int code = (int) w.getCode();
+                if (code == MysqlErrorNumbers.ER_SERVER_SHUTDOWN || code == MysqlErrorNumbers.ER_IO_READ_ERROR
+                        || code == MysqlErrorNumbers.ER_SESSION_WAS_KILLED) {
+
+                    CJCommunicationsException ex = new CJCommunicationsException(w.getMessage());
+                    ex.setVendorCode(code);
+                    if (this.protocolEventHandler != null) {
+                        this.protocolEventHandler.invokeListeners(
+                                code == MysqlErrorNumbers.ER_SERVER_SHUTDOWN ? EventType.SERVER_SHUTDOWN : EventType.SERVER_CLOSED_SESSION, ex);
+                    }
+
+                    throw ex;
+                }
+            }
+
+            return msg;
+
         } catch (InvalidProtocolBufferException ex) {
             throw new WrongArgumentException(ex);
-        } finally {
-            // This must happen if we *successfully* read a packet. CJCommunicationsException will be thrown above if not
-            this.header = null;
         }
     }
 
@@ -145,7 +213,8 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
                     if (notices == null) {
                         notices = new ArrayList<>();
                     }
-                    notices.add(Notice.getInstance(new XMessage(readMessageLocal(MessageConstants.getMessageClassForType(ServerMessages.Type.NOTICE_VALUE)))));
+                    notices.add(Notice
+                            .getInstance(new XMessage(readMessageLocal(MessageConstants.getMessageClassForType(ServerMessages.Type.NOTICE_VALUE), true))));
                 }
 
                 Class<? extends GeneratedMessageV3> messageClass = MessageConstants.getMessageClassForType(hdr.getMessageType());
@@ -155,7 +224,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
                             + messageClass.getSimpleName() + "'");
                 }
 
-                return new XMessage(readMessageLocal(messageClass)).addNotices(notices);
+                return new XMessage(readMessageLocal(messageClass, true)).addNotices(notices);
             } catch (IOException e) {
                 throw new XProtocolError(e.getMessage(), e);
             }

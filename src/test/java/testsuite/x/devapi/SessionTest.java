@@ -40,6 +40,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,6 +52,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -57,16 +60,23 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.google.protobuf.MessageLite;
 import com.mysql.cj.Constants;
 import com.mysql.cj.CoreSession;
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.conf.PropertyDefinitions.Compression;
+import com.mysql.cj.conf.PropertyDefinitions.XdevapiSslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.SocketFactory;
 import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
+import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
+import com.mysql.cj.x.protobuf.MysqlxNotice.Warning;
 import com.mysql.cj.xdevapi.Client;
 import com.mysql.cj.xdevapi.Client.ClientProperty;
 import com.mysql.cj.xdevapi.ClientFactory;
@@ -85,6 +95,7 @@ import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.SqlStatement;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
+import testsuite.InjectedSocketFactory;
 import testsuite.UnreliableSocketFactory;
 
 public class SessionTest extends DevApiBaseTestCase {
@@ -2005,4 +2016,260 @@ public class SessionTest extends DevApiBaseTestCase {
 
         client.close();
     }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testConnectionCloseNotification() throws Exception {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        String shutdownMessage = "Server shutdown in progress";
+        String ioReadErrorMessage = "IO Read error: read_timeout exceeded";
+        String sessionWasKilledMessage = "Session was killed";
+
+        // create notice message buffers
+        Frame.Builder shutdownNotice = Frame.newBuilder().setScope(Frame.Scope.GLOBAL).setType(Frame.Type.WARNING_VALUE)
+                .setPayload(Warning.newBuilder().setCode(MysqlErrorNumbers.ER_SERVER_SHUTDOWN).setMsg(shutdownMessage).build().toByteString());
+        Frame.Builder ioReadErrorNotice = Frame.newBuilder().setScope(Frame.Scope.GLOBAL).setType(Frame.Type.WARNING_VALUE)
+                .setPayload(Warning.newBuilder().setCode(MysqlErrorNumbers.ER_IO_READ_ERROR).setMsg(ioReadErrorMessage).build().toByteString());
+        Frame.Builder sessionWasKilledNotice = Frame.newBuilder().setScope(Frame.Scope.GLOBAL).setType(Frame.Type.WARNING_VALUE)
+                .setPayload(Warning.newBuilder().setCode(MysqlErrorNumbers.ER_SESSION_WAS_KILLED).setMsg(sessionWasKilledMessage).build().toByteString());
+
+        byte[] shutdownNoticeBytes = makeNoticeBytes(shutdownNotice.build());
+        byte[] ioReadErrorNoticeBytes = makeNoticeBytes(ioReadErrorNotice.build());
+        byte[] sessionWasKilledNoticeBytes = makeNoticeBytes(sessionWasKilledNotice.build());
+
+        InjectedSocketFactory.flushAllStaticData();
+
+        String url = this.baseUrl + (this.baseUrl.contains("?") ? "" : "?")
+                + makeParam(PropertyKey.socketFactory, InjectedSocketFactory.class.getName(), !this.baseUrl.contains("?") || this.baseUrl.endsWith("?"))
+                + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.DISABLED.toString())
+                + makeParam(PropertyKey.xdevapiCompression, Compression.DISABLED.toString())
+                // to allow injection between result rows
+                + makeParam(PropertyKey.useReadAheadInput, "false");
+
+        // ER_SERVER_SHUTDOWN
+
+        // 1.1. Shutdown during a sync query execution.
+        Session sess11 = this.fact.getSession(url);
+        SocketFactory sf = ((SessionImpl) sess11).getSession().getProtocol().getSocketConnection().getSocketFactory();
+        assertTrue(InjectedSocketFactory.class.isAssignableFrom(sf.getClass()));
+
+        InjectedSocketFactory.injectedBuffer = shutdownNoticeBytes;
+        assertThrows(CJCommunicationsException.class, shutdownMessage, () -> sess11.sql("SELECT 1").execute());
+
+        // 1.2. Shutdown during a sync result set consuming
+        Session sess12 = this.fact.getSession(url);
+        SqlResult res0 = sess12.sql("SELECT 1").execute();
+        assertTrue(res0.hasNext());
+        Row r = res0.next();
+        assertEquals("1", r.getString(0));
+        InjectedSocketFactory.injectedBuffer = shutdownNoticeBytes;
+        assertThrows(CJCommunicationsException.class, shutdownMessage, () -> res0.next());
+
+        // 1.3. Shutdown during an async query execution.
+        Session sess13 = this.fact.getSession(url);
+        InjectedSocketFactory.injectedBuffer = shutdownNoticeBytes;
+        assertThrows(ExecutionException.class, CJCommunicationsException.class.getName() + ": " + shutdownMessage,
+                () -> sess13.sql("SELECT 1").executeAsync().get());
+
+        // 1.4. Shutdown during an async result set consuming
+        Session sess14 = this.fact.getSession(url);
+        SqlResult res1 = sess14.sql("SELECT 1").executeAsync().get();
+        InjectedSocketFactory.injectedBuffer = shutdownNoticeBytes;
+        assertTrue(res1.hasNext());
+        r = res1.next();
+        assertEquals("1", r.getString(0));
+        assertFalse(res1.hasNext());
+        assertThrows(CJCommunicationsException.class, shutdownMessage, () -> sess14.getSchemas());
+
+        // ER_IO_READ_ERROR
+
+        // 2.1. ER_IO_READ_ERROR during a sync query execution.
+        Session sess21 = this.fact.getSession(url);
+        InjectedSocketFactory.injectedBuffer = ioReadErrorNoticeBytes;
+        assertThrows(CJCommunicationsException.class, ioReadErrorMessage, () -> sess21.sql("SELECT 1").execute());
+
+        // 2.2. ER_IO_READ_ERROR during a sync result set consuming
+        Session sess22 = this.fact.getSession(url);
+        SqlResult res2 = sess22.sql("SELECT 1").execute();
+        assertTrue(res2.hasNext());
+        r = res2.next();
+        assertEquals("1", r.getString(0));
+        InjectedSocketFactory.injectedBuffer = ioReadErrorNoticeBytes;
+        assertThrows(CJCommunicationsException.class, ioReadErrorMessage, () -> res2.next());
+
+        // 2.3. ER_IO_READ_ERROR during an async query execution.
+        Session sess23 = this.fact.getSession(url);
+        InjectedSocketFactory.injectedBuffer = ioReadErrorNoticeBytes;
+        assertThrows(ExecutionException.class, CJCommunicationsException.class.getName() + ": " + ioReadErrorMessage,
+                () -> sess23.sql("SELECT 1").executeAsync().get());
+
+        // 2.4. ER_IO_READ_ERROR during an async result set consuming
+        Session sess24 = this.fact.getSession(url);
+        res1 = sess24.sql("SELECT 1").executeAsync().get();
+        InjectedSocketFactory.injectedBuffer = ioReadErrorNoticeBytes;
+        assertTrue(res1.hasNext());
+        r = res1.next();
+        assertEquals("1", r.getString(0));
+        assertFalse(res1.hasNext());
+        assertThrows(CJCommunicationsException.class, ioReadErrorMessage, () -> sess24.getSchemas());
+
+        // ER_SESSION_WAS_KILLED
+
+        // 3.1. ER_SESSION_WAS_KILLED during a sync query execution.
+        Session sess31 = this.fact.getSession(url);
+        InjectedSocketFactory.injectedBuffer = sessionWasKilledNoticeBytes;
+        assertThrows(CJCommunicationsException.class, sessionWasKilledMessage, () -> sess31.sql("SELECT 1").execute());
+
+        // 3.2. ER_SESSION_WAS_KILLED during a sync result set consuming
+        Session sess32 = this.fact.getSession(url);
+        SqlResult res3 = sess32.sql("SELECT 1").execute();
+        assertTrue(res3.hasNext());
+        r = res3.next();
+        assertEquals("1", r.getString(0));
+        InjectedSocketFactory.injectedBuffer = sessionWasKilledNoticeBytes;
+        assertThrows(CJCommunicationsException.class, sessionWasKilledMessage, () -> res3.next());
+
+        // 3.3. ER_SESSION_WAS_KILLED during an async query execution.
+        Session sess33 = this.fact.getSession(url);
+        InjectedSocketFactory.injectedBuffer = sessionWasKilledNoticeBytes;
+        assertThrows(ExecutionException.class, CJCommunicationsException.class.getName() + ": " + sessionWasKilledMessage,
+                () -> sess33.sql("SELECT 1").executeAsync().get());
+
+        // 3.4. ER_SESSION_WAS_KILLED during an async result set consuming
+        Session sess34 = this.fact.getSession(url);
+        res1 = sess34.sql("SELECT 1").executeAsync().get();
+        InjectedSocketFactory.injectedBuffer = sessionWasKilledNoticeBytes;
+        assertTrue(res1.hasNext());
+        r = res1.next();
+        assertEquals("1", r.getString(0));
+        assertFalse(res1.hasNext());
+        assertThrows(CJCommunicationsException.class, sessionWasKilledMessage, () -> sess34.getSchemas());
+
+        /*
+         * With pooling.
+         */
+
+        this.fact.getSession(this.baseOpensslUrl);
+
+        final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + makeParam(PropertyKey.socketFactory, InjectedSocketFactory.class.getName())
+                + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.DISABLED.toString()) + makeParam(PropertyKey.allowPublicKeyRetrieval, "true")
+                + makeParam(PropertyKey.xdevapiCompression, Compression.DISABLED.toString())
+                // to allow injection between result rows
+                + makeParam(PropertyKey.useReadAheadInput, "false");
+
+        String testHosts = "(address=" + getTestHost() + ":" + getTestPort() + "),(address=" + getTestSslHost() + ":" + getTestSslPort() + ")";
+        url = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+
+        Field fProtocol = CoreSession.class.getDeclaredField("protocol");
+        fProtocol.setAccessible(true);
+
+        Field idleProtocols = ClientImpl.class.getDeclaredField("idleProtocols");
+        idleProtocols.setAccessible(true);
+        Field activeProtocols = ClientImpl.class.getDeclaredField("activeProtocols");
+        activeProtocols.setAccessible(true);
+        Field nonPooledSessions = ClientImpl.class.getDeclaredField("nonPooledSessions");
+        nonPooledSessions.setAccessible(true);
+
+        String host1 = getTestHost();
+        String host2 = getTestSslHost();
+        int port1 = getTestPort();
+        int port2 = getTestSslPort();
+
+        final ClientFactory cf = new ClientFactory();
+        Client cli0 = cf.getClient(url, "{\"pooling\": {\"enabled\": true}}");
+
+        InjectedSocketFactory.downHost(getTestSslHost() + ":" + getTestSslPort());
+        Session s1_1 = cli0.getSession();
+        Session s1_2 = cli0.getSession();
+        Session s1_3 = cli0.getSession();
+
+        assertEquals(host1, ((SessionImpl) s1_1).getSession().getProcessHost());
+        assertEquals(host1, ((SessionImpl) s1_2).getSession().getProcessHost());
+        assertEquals(host1, ((SessionImpl) s1_3).getSession().getProcessHost());
+        assertEquals(port1, ((SessionImpl) s1_1).getSession().getPort());
+        assertEquals(port1, ((SessionImpl) s1_2).getSession().getPort());
+        assertEquals(port1, ((SessionImpl) s1_3).getSession().getPort());
+
+        InjectedSocketFactory.dontDownHost(getTestSslHost() + ":" + getTestSslPort());
+        InjectedSocketFactory.downHost(getTestHost() + ":" + getTestPort());
+        Session s2_1 = cli0.getSession();
+        Session s2_2 = cli0.getSession();
+        Session s2_3 = cli0.getSession();
+
+        assertEquals(host2, ((SessionImpl) s2_1).getSession().getProcessHost());
+        assertEquals(host2, ((SessionImpl) s2_2).getSession().getProcessHost());
+        assertEquals(host2, ((SessionImpl) s2_3).getSession().getProcessHost());
+        assertEquals(port2, ((SessionImpl) s2_1).getSession().getPort());
+        assertEquals(port2, ((SessionImpl) s2_2).getSession().getPort());
+        assertEquals(port2, ((SessionImpl) s2_3).getSession().getPort());
+
+        InjectedSocketFactory.dontDownHost(getTestHost() + ":" + getTestPort());
+        InjectedSocketFactory.downHost(getTestSslHost() + ":" + getTestSslPort());
+        Session s1 = cli0.getSession();
+
+        assertEquals(host1, ((SessionImpl) s1).getSession().getProcessHost());
+        assertEquals(port1, ((SessionImpl) s1).getSession().getPort());
+
+        s1_1.close();
+        s1_2.close();
+        s1_3.close();
+        s2_1.close();
+        s2_2.close();
+        s2_3.close();
+
+        assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        assertEquals(6, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+
+        // ER_IO_READ_ERROR
+
+        InjectedSocketFactory.injectedBuffer = ioReadErrorNoticeBytes;
+        assertThrows(CJCommunicationsException.class, ioReadErrorMessage, () -> s1.sql("SELECT 1").execute());
+
+        assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        assertEquals(6, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+        assertThrows(CJCommunicationsException.class, "Unable to write message", () -> s1.sql("SELECT 1").execute());
+
+        // ER_SESSION_WAS_KILLED
+
+        Session s2 = cli0.getSession();
+        assertEquals(host1, ((SessionImpl) s2).getSession().getProcessHost());
+        assertEquals(port1, ((SessionImpl) s2).getSession().getPort());
+        assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        assertEquals(5, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+
+        InjectedSocketFactory.injectedBuffer = sessionWasKilledNoticeBytes;
+        assertThrows(CJCommunicationsException.class, sessionWasKilledMessage, () -> s2.sql("SELECT 1").execute());
+
+        assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        assertEquals(5, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+        assertThrows(CJCommunicationsException.class, "Unable to write message", () -> s2.sql("SELECT 1").execute());
+
+        // ER_SERVER_SHUTDOWN
+
+        Session s3 = cli0.getSession();
+        assertEquals(host1, ((SessionImpl) s3).getSession().getProcessHost());
+        assertEquals(port1, ((SessionImpl) s3).getSession().getPort());
+        assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        assertEquals(4, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+
+        InjectedSocketFactory.injectedBuffer = shutdownNoticeBytes;
+        assertThrows(CJCommunicationsException.class, shutdownMessage, () -> s3.sql("SELECT 1").execute());
+
+        assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        assertEquals(3, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+
+    }
+
+    private byte[] makeNoticeBytes(MessageLite msg) {
+        int size = 1 + msg.getSerializedSize();
+        byte[] nbuf = new byte[4 + size];
+        System.arraycopy(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(size).array(), 0, nbuf, 0, 4);
+        nbuf[4] = (byte) ServerMessages.Type.NOTICE_VALUE;
+        System.arraycopy(msg.toByteArray(), 0, nbuf, 5, size - 1);
+        return nbuf;
+    }
+
 }

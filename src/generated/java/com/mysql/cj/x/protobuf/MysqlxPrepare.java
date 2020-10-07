@@ -49,44 +49,69 @@ public final class MysqlxPrepare {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** client side assigned statement id, which is going to identify
+     *the result of preparation 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return Whether the stmtId field is set.
      */
     boolean hasStmtId();
     /**
+     * <pre>
+     ** client side assigned statement id, which is going to identify
+     *the result of preparation 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return The stmtId.
      */
     int getStmtId();
 
     /**
+     * <pre>
+     ** defines one of following messages to be prepared:
+     *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+     * </pre>
+     *
      * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
      * @return Whether the stmt field is set.
      */
     boolean hasStmt();
     /**
+     * <pre>
+     ** defines one of following messages to be prepared:
+     *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+     * </pre>
+     *
      * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
      * @return The stmt.
      */
     com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage getStmt();
     /**
+     * <pre>
+     ** defines one of following messages to be prepared:
+     *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+     * </pre>
+     *
      * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessageOrBuilder getStmtOrBuilder();
   }
   /**
    * <pre>
-   * Prepare a new statement
-   * .. uml::
-   *   client -&gt; server: Prepare
-   *   alt Success
-   *     client &lt;- server: Ok
-   *   else Failure
-   *     client &lt;- server: Error
-   *   end
-   * :param stmt_id: client side assigned statement id, which is going to identify the result of preparation
-   * :param stmt: defines one of following messages to be prepared - Crud.Find, Crud.Insert, Crud.Delete, Crud.Upsert, Sql.StmtExecute
-   * :Returns: :protobuf:msg:`Mysqlx.Ok|Mysqlx.Error`
+   **
+   *Prepare a new statement
+   *&#64;startuml
+   *client -&gt; server: Prepare
+   *alt Success
+   *client &lt;- server: Ok
+   *else Failure
+   *client &lt;- server: Error
+   *end
+   *&#64;enduml
+   *&#64;returns &#64;ref Mysqlx::Ok or &#64;ref Mysqlx::Error
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Prepare.Prepare}
@@ -1936,6 +1961,11 @@ public final class MysqlxPrepare {
     public static final int STMT_ID_FIELD_NUMBER = 1;
     private int stmtId_;
     /**
+     * <pre>
+     ** client side assigned statement id, which is going to identify
+     *the result of preparation 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return Whether the stmtId field is set.
      */
@@ -1943,6 +1973,11 @@ public final class MysqlxPrepare {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
+     * <pre>
+     ** client side assigned statement id, which is going to identify
+     *the result of preparation 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return The stmtId.
      */
@@ -1953,6 +1988,11 @@ public final class MysqlxPrepare {
     public static final int STMT_FIELD_NUMBER = 2;
     private com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage stmt_;
     /**
+     * <pre>
+     ** defines one of following messages to be prepared:
+     *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+     * </pre>
+     *
      * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
      * @return Whether the stmt field is set.
      */
@@ -1960,6 +2000,11 @@ public final class MysqlxPrepare {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
+     * <pre>
+     ** defines one of following messages to be prepared:
+     *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+     * </pre>
+     *
      * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
      * @return The stmt.
      */
@@ -1967,6 +2012,11 @@ public final class MysqlxPrepare {
       return stmt_ == null ? com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.getDefaultInstance() : stmt_;
     }
     /**
+     * <pre>
+     ** defines one of following messages to be prepared:
+     *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+     * </pre>
+     *
      * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessageOrBuilder getStmtOrBuilder() {
@@ -2163,17 +2213,17 @@ public final class MysqlxPrepare {
     }
     /**
      * <pre>
-     * Prepare a new statement
-     * .. uml::
-     *   client -&gt; server: Prepare
-     *   alt Success
-     *     client &lt;- server: Ok
-     *   else Failure
-     *     client &lt;- server: Error
-     *   end
-     * :param stmt_id: client side assigned statement id, which is going to identify the result of preparation
-     * :param stmt: defines one of following messages to be prepared - Crud.Find, Crud.Insert, Crud.Delete, Crud.Upsert, Sql.StmtExecute
-     * :Returns: :protobuf:msg:`Mysqlx.Ok|Mysqlx.Error`
+     **
+     *Prepare a new statement
+     *&#64;startuml
+     *client -&gt; server: Prepare
+     *alt Success
+     *client &lt;- server: Ok
+     *else Failure
+     *client &lt;- server: Error
+     *end
+     *&#64;enduml
+     *&#64;returns &#64;ref Mysqlx::Ok or &#64;ref Mysqlx::Error
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Prepare.Prepare}
@@ -2358,6 +2408,11 @@ public final class MysqlxPrepare {
 
       private int stmtId_ ;
       /**
+       * <pre>
+       ** client side assigned statement id, which is going to identify
+       *the result of preparation 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @return Whether the stmtId field is set.
        */
@@ -2365,6 +2420,11 @@ public final class MysqlxPrepare {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       ** client side assigned statement id, which is going to identify
+       *the result of preparation 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @return The stmtId.
        */
@@ -2372,6 +2432,11 @@ public final class MysqlxPrepare {
         return stmtId_;
       }
       /**
+       * <pre>
+       ** client side assigned statement id, which is going to identify
+       *the result of preparation 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @param value The stmtId to set.
        * @return This builder for chaining.
@@ -2383,6 +2448,11 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** client side assigned statement id, which is going to identify
+       *the result of preparation 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @return This builder for chaining.
        */
@@ -2397,6 +2467,11 @@ public final class MysqlxPrepare {
       private com.google.protobuf.SingleFieldBuilderV3<
           com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage, com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.Builder, com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessageOrBuilder> stmtBuilder_;
       /**
+       * <pre>
+       ** defines one of following messages to be prepared:
+       *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+       * </pre>
+       *
        * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
        * @return Whether the stmt field is set.
        */
@@ -2404,6 +2479,11 @@ public final class MysqlxPrepare {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
+       * <pre>
+       ** defines one of following messages to be prepared:
+       *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+       * </pre>
+       *
        * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
        * @return The stmt.
        */
@@ -2415,6 +2495,11 @@ public final class MysqlxPrepare {
         }
       }
       /**
+       * <pre>
+       ** defines one of following messages to be prepared:
+       *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+       * </pre>
+       *
        * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
        */
       public Builder setStmt(com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage value) {
@@ -2431,6 +2516,11 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** defines one of following messages to be prepared:
+       *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+       * </pre>
+       *
        * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
        */
       public Builder setStmt(
@@ -2445,6 +2535,11 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** defines one of following messages to be prepared:
+       *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+       * </pre>
+       *
        * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
        */
       public Builder mergeStmt(com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage value) {
@@ -2465,6 +2560,11 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** defines one of following messages to be prepared:
+       *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+       * </pre>
+       *
        * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
        */
       public Builder clearStmt() {
@@ -2478,6 +2578,11 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** defines one of following messages to be prepared:
+       *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+       * </pre>
+       *
        * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.Builder getStmtBuilder() {
@@ -2486,6 +2591,11 @@ public final class MysqlxPrepare {
         return getStmtFieldBuilder().getBuilder();
       }
       /**
+       * <pre>
+       ** defines one of following messages to be prepared:
+       *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+       * </pre>
+       *
        * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessageOrBuilder getStmtOrBuilder() {
@@ -2497,6 +2607,11 @@ public final class MysqlxPrepare {
         }
       }
       /**
+       * <pre>
+       ** defines one of following messages to be prepared:
+       *Crud::Find, Crud::Insert, Crud::Delete, Crud::Upsert, Sql::StmtExecute 
+       * </pre>
+       *
        * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
@@ -2570,46 +2685,84 @@ public final class MysqlxPrepare {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** client side assigned statement id, must be already prepared 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return Whether the stmtId field is set.
      */
     boolean hasStmtId();
     /**
+     * <pre>
+     ** client side assigned statement id, must be already prepared 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return The stmtId.
      */
     int getStmtId();
 
     /**
+     * <pre>
+     ** Arguments to bind to the prepared statement 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
     java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Any> 
         getArgsList();
     /**
+     * <pre>
+     ** Arguments to bind to the prepared statement 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getArgs(int index);
     /**
+     * <pre>
+     ** Arguments to bind to the prepared statement 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
     int getArgsCount();
     /**
+     * <pre>
+     ** Arguments to bind to the prepared statement 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
     java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder> 
         getArgsOrBuilderList();
     /**
+     * <pre>
+     ** Arguments to bind to the prepared statement 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
         int index);
 
     /**
+     * <pre>
+     ** send only type information for
+     *&#64;ref Mysqlx::Resultset::ColumnMetaData, skipping names and others 
+     * </pre>
+     *
      * <code>optional bool compact_metadata = 3 [default = false];</code>
      * @return Whether the compactMetadata field is set.
      */
     boolean hasCompactMetadata();
     /**
+     * <pre>
+     ** send only type information for
+     *&#64;ref Mysqlx::Resultset::ColumnMetaData, skipping names and others 
+     * </pre>
+     *
      * <code>optional bool compact_metadata = 3 [default = false];</code>
      * @return The compactMetadata.
      */
@@ -2617,19 +2770,18 @@ public final class MysqlxPrepare {
   }
   /**
    * <pre>
-   * Execute already prepared statement
-   * .. uml::
-   *   client -&gt; server: Execute
-   *   alt Success
-   *     ... Resultsets...
-   *     client &lt;- server: StmtExecuteOk
-   *  else Failure
-   *     client &lt;- server: Error
-   *  end
-   * :param stmt_id: client side assigned statement id, must be already prepared
-   * :param args_list: Arguments to bind to the prepared statement
-   * :param compact_metadata: send only type information for :protobuf:msg:`Mysqlx.Resultset::ColumnMetadata`, skipping names and others
-   * :Returns: :protobuf:msg:`Mysqlx.Ok::`
+   **
+   *Execute already prepared statement
+   *&#64;startuml
+   *client -&gt; server: Execute
+   *alt Success
+   *... Resultsets...
+   *client &lt;- server: StmtExecuteOk
+   *else Failure
+   *client &lt;- server: Error
+   *end
+   *&#64;enduml
+   *&#64;returns &#64;ref Mysqlx::Ok
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Prepare.Execute}
@@ -2736,6 +2888,10 @@ public final class MysqlxPrepare {
     public static final int STMT_ID_FIELD_NUMBER = 1;
     private int stmtId_;
     /**
+     * <pre>
+     ** client side assigned statement id, must be already prepared 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return Whether the stmtId field is set.
      */
@@ -2743,6 +2899,10 @@ public final class MysqlxPrepare {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
+     * <pre>
+     ** client side assigned statement id, must be already prepared 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return The stmtId.
      */
@@ -2753,12 +2913,20 @@ public final class MysqlxPrepare {
     public static final int ARGS_FIELD_NUMBER = 2;
     private java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Any> args_;
     /**
+     * <pre>
+     ** Arguments to bind to the prepared statement 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Any> getArgsList() {
       return args_;
     }
     /**
+     * <pre>
+     ** Arguments to bind to the prepared statement 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder> 
@@ -2766,18 +2934,30 @@ public final class MysqlxPrepare {
       return args_;
     }
     /**
+     * <pre>
+     ** Arguments to bind to the prepared statement 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
     public int getArgsCount() {
       return args_.size();
     }
     /**
+     * <pre>
+     ** Arguments to bind to the prepared statement 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getArgs(int index) {
       return args_.get(index);
     }
     /**
+     * <pre>
+     ** Arguments to bind to the prepared statement 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
@@ -2788,6 +2968,11 @@ public final class MysqlxPrepare {
     public static final int COMPACT_METADATA_FIELD_NUMBER = 3;
     private boolean compactMetadata_;
     /**
+     * <pre>
+     ** send only type information for
+     *&#64;ref Mysqlx::Resultset::ColumnMetaData, skipping names and others 
+     * </pre>
+     *
      * <code>optional bool compact_metadata = 3 [default = false];</code>
      * @return Whether the compactMetadata field is set.
      */
@@ -2795,6 +2980,11 @@ public final class MysqlxPrepare {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
+     * <pre>
+     ** send only type information for
+     *&#64;ref Mysqlx::Resultset::ColumnMetaData, skipping names and others 
+     * </pre>
+     *
      * <code>optional bool compact_metadata = 3 [default = false];</code>
      * @return The compactMetadata.
      */
@@ -3004,19 +3194,18 @@ public final class MysqlxPrepare {
     }
     /**
      * <pre>
-     * Execute already prepared statement
-     * .. uml::
-     *   client -&gt; server: Execute
-     *   alt Success
-     *     ... Resultsets...
-     *     client &lt;- server: StmtExecuteOk
-     *  else Failure
-     *     client &lt;- server: Error
-     *  end
-     * :param stmt_id: client side assigned statement id, must be already prepared
-     * :param args_list: Arguments to bind to the prepared statement
-     * :param compact_metadata: send only type information for :protobuf:msg:`Mysqlx.Resultset::ColumnMetadata`, skipping names and others
-     * :Returns: :protobuf:msg:`Mysqlx.Ok::`
+     **
+     *Execute already prepared statement
+     *&#64;startuml
+     *client -&gt; server: Execute
+     *alt Success
+     *... Resultsets...
+     *client &lt;- server: StmtExecuteOk
+     *else Failure
+     *client &lt;- server: Error
+     *end
+     *&#64;enduml
+     *&#64;returns &#64;ref Mysqlx::Ok
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Prepare.Execute}
@@ -3233,6 +3422,10 @@ public final class MysqlxPrepare {
 
       private int stmtId_ ;
       /**
+       * <pre>
+       ** client side assigned statement id, must be already prepared 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @return Whether the stmtId field is set.
        */
@@ -3240,6 +3433,10 @@ public final class MysqlxPrepare {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       ** client side assigned statement id, must be already prepared 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @return The stmtId.
        */
@@ -3247,6 +3444,10 @@ public final class MysqlxPrepare {
         return stmtId_;
       }
       /**
+       * <pre>
+       ** client side assigned statement id, must be already prepared 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @param value The stmtId to set.
        * @return This builder for chaining.
@@ -3258,6 +3459,10 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** client side assigned statement id, must be already prepared 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @return This builder for chaining.
        */
@@ -3281,6 +3486,10 @@ public final class MysqlxPrepare {
           com.mysql.cj.x.protobuf.MysqlxDatatypes.Any, com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder> argsBuilder_;
 
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Any> getArgsList() {
@@ -3291,6 +3500,10 @@ public final class MysqlxPrepare {
         }
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public int getArgsCount() {
@@ -3301,6 +3514,10 @@ public final class MysqlxPrepare {
         }
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getArgs(int index) {
@@ -3311,6 +3528,10 @@ public final class MysqlxPrepare {
         }
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public Builder setArgs(
@@ -3328,6 +3549,10 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public Builder setArgs(
@@ -3342,6 +3567,10 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public Builder addArgs(com.mysql.cj.x.protobuf.MysqlxDatatypes.Any value) {
@@ -3358,6 +3587,10 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public Builder addArgs(
@@ -3375,6 +3608,10 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public Builder addArgs(
@@ -3389,6 +3626,10 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public Builder addArgs(
@@ -3403,6 +3644,10 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public Builder addAllArgs(
@@ -3418,6 +3663,10 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public Builder clearArgs() {
@@ -3431,6 +3680,10 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public Builder removeArgs(int index) {
@@ -3444,6 +3697,10 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder getArgsBuilder(
@@ -3451,6 +3708,10 @@ public final class MysqlxPrepare {
         return getArgsFieldBuilder().getBuilder(index);
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
@@ -3461,6 +3722,10 @@ public final class MysqlxPrepare {
         }
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder> 
@@ -3472,6 +3737,10 @@ public final class MysqlxPrepare {
         }
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder() {
@@ -3479,6 +3748,10 @@ public final class MysqlxPrepare {
             com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder addArgsBuilder(
@@ -3487,6 +3760,10 @@ public final class MysqlxPrepare {
             index, com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** Arguments to bind to the prepared statement 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Builder> 
@@ -3510,6 +3787,11 @@ public final class MysqlxPrepare {
 
       private boolean compactMetadata_ ;
       /**
+       * <pre>
+       ** send only type information for
+       *&#64;ref Mysqlx::Resultset::ColumnMetaData, skipping names and others 
+       * </pre>
+       *
        * <code>optional bool compact_metadata = 3 [default = false];</code>
        * @return Whether the compactMetadata field is set.
        */
@@ -3517,6 +3799,11 @@ public final class MysqlxPrepare {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
+       * <pre>
+       ** send only type information for
+       *&#64;ref Mysqlx::Resultset::ColumnMetaData, skipping names and others 
+       * </pre>
+       *
        * <code>optional bool compact_metadata = 3 [default = false];</code>
        * @return The compactMetadata.
        */
@@ -3524,6 +3811,11 @@ public final class MysqlxPrepare {
         return compactMetadata_;
       }
       /**
+       * <pre>
+       ** send only type information for
+       *&#64;ref Mysqlx::Resultset::ColumnMetaData, skipping names and others 
+       * </pre>
+       *
        * <code>optional bool compact_metadata = 3 [default = false];</code>
        * @param value The compactMetadata to set.
        * @return This builder for chaining.
@@ -3535,6 +3827,11 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** send only type information for
+       *&#64;ref Mysqlx::Resultset::ColumnMetaData, skipping names and others 
+       * </pre>
+       *
        * <code>optional bool compact_metadata = 3 [default = false];</code>
        * @return This builder for chaining.
        */
@@ -3602,11 +3899,19 @@ public final class MysqlxPrepare {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** client side assigned statement id, must be already prepared 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return Whether the stmtId field is set.
      */
     boolean hasStmtId();
     /**
+     * <pre>
+     ** client side assigned statement id, must be already prepared 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return The stmtId.
      */
@@ -3614,17 +3919,17 @@ public final class MysqlxPrepare {
   }
   /**
    * <pre>
-   * Deallocate already prepared statement
-   * Deallocating the statement.
-   * .. uml::
-   *   client -&gt; server: Deallocate
-   *   alt Success
-   *     client &lt;- server: Ok
-   *   else Failure
-   *     client &lt;- server: Error
-   *   end
-   * :param stmt_id: client side assigned statement id, must be already prepared
-   * :Returns: :protobuf:msg:`Mysqlx.Ok|Mysqlx.Error`
+   **
+   *Deallocate already prepared statement
+   *&#64;startuml
+   *client -&gt; server: Deallocate
+   *alt Success
+   *client &lt;- server: Ok
+   *else Failure
+   *client &lt;- server: Error
+   *end
+   *&#64;enduml
+   *&#64;returns &#64;ref Mysqlx::Ok or &#64;ref Mysqlx::Error
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Prepare.Deallocate}
@@ -3713,6 +4018,10 @@ public final class MysqlxPrepare {
     public static final int STMT_ID_FIELD_NUMBER = 1;
     private int stmtId_;
     /**
+     * <pre>
+     ** client side assigned statement id, must be already prepared 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return Whether the stmtId field is set.
      */
@@ -3720,6 +4029,10 @@ public final class MysqlxPrepare {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
+     * <pre>
+     ** client side assigned statement id, must be already prepared 
+     * </pre>
+     *
      * <code>required uint32 stmt_id = 1;</code>
      * @return The stmtId.
      */
@@ -3893,17 +4206,17 @@ public final class MysqlxPrepare {
     }
     /**
      * <pre>
-     * Deallocate already prepared statement
-     * Deallocating the statement.
-     * .. uml::
-     *   client -&gt; server: Deallocate
-     *   alt Success
-     *     client &lt;- server: Ok
-     *   else Failure
-     *     client &lt;- server: Error
-     *   end
-     * :param stmt_id: client side assigned statement id, must be already prepared
-     * :Returns: :protobuf:msg:`Mysqlx.Ok|Mysqlx.Error`
+     **
+     *Deallocate already prepared statement
+     *&#64;startuml
+     *client -&gt; server: Deallocate
+     *alt Success
+     *client &lt;- server: Ok
+     *else Failure
+     *client &lt;- server: Error
+     *end
+     *&#64;enduml
+     *&#64;returns &#64;ref Mysqlx::Ok or &#64;ref Mysqlx::Error
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Prepare.Deallocate}
@@ -4064,6 +4377,10 @@ public final class MysqlxPrepare {
 
       private int stmtId_ ;
       /**
+       * <pre>
+       ** client side assigned statement id, must be already prepared 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @return Whether the stmtId field is set.
        */
@@ -4071,6 +4388,10 @@ public final class MysqlxPrepare {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       ** client side assigned statement id, must be already prepared 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @return The stmtId.
        */
@@ -4078,6 +4399,10 @@ public final class MysqlxPrepare {
         return stmtId_;
       }
       /**
+       * <pre>
+       ** client side assigned statement id, must be already prepared 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @param value The stmtId to set.
        * @return This builder for chaining.
@@ -4089,6 +4414,10 @@ public final class MysqlxPrepare {
         return this;
       }
       /**
+       * <pre>
+       ** client side assigned statement id, must be already prepared 
+       * </pre>
+       *
        * <code>required uint32 stmt_id = 1;</code>
        * @return This builder for chaining.
        */

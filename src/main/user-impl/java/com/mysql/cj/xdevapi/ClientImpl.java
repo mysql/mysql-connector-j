@@ -56,11 +56,12 @@ import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.Protocol.ProtocolEventListener;
 import com.mysql.cj.protocol.x.XProtocol;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.util.StringUtils;
 
-public class ClientImpl implements Client {
+public class ClientImpl implements Client, ProtocolEventListener {
     boolean isClosed = false;
 
     private ConnectionUrl connUrl = null;
@@ -373,6 +374,7 @@ public class ClientImpl implements Client {
         PropertySet pset = new DefaultPropertySet();
         pset.initializeProperties(hi.exposeAsProperties());
         tryProt = new PooledXProtocol(hi, pset);
+        tryProt.addListener(this);
         tryProt.connect(hi.getUser(), hi.getPassword(), hi.getDatabase());
         return tryProt;
     }
@@ -394,7 +396,7 @@ public class ClientImpl implements Client {
         }
     }
 
-    void idleProtocol(PooledXProtocol sess) {
+    void idleProtocol(PooledXProtocol prot) {
         synchronized (this.idleProtocols) {
             if (!this.isClosed) {
                 List<WeakReference<PooledXProtocol>> removeThem = new ArrayList<>();
@@ -403,7 +405,7 @@ public class ClientImpl implements Client {
                         PooledXProtocol as = wps.get();
                         if (as == null) {
                             removeThem.add(wps);
-                        } else if (as == sess) {
+                        } else if (as == prot) {
                             removeThem.add(wps);
                             this.idleProtocols.add(as);
                         }
@@ -452,6 +454,45 @@ public class ClientImpl implements Client {
                 // TODO is it really no-op?
             }
         }
+    }
 
+    @Override
+    public void handleEvent(EventType type, Object info, Throwable reason) {
+        switch (type) {
+            case SERVER_SHUTDOWN:
+                HostInfo hi = ((PooledXProtocol) info).getHostInfo();
+                synchronized (this.idleProtocols) {
+                    // Close and remove idle protocols connected to a host that is not usable anymore.
+                    List<PooledXProtocol> toCloseAndRemove = this.idleProtocols.stream().filter(p -> p.getHostInfo().equalHostPortPair(hi))
+                            .collect(Collectors.toList());
+                    toCloseAndRemove.stream().peek(PooledXProtocol::realClose).peek(this.idleProtocols::remove).map(PooledXProtocol::getHostInfo).sequential()
+                            .forEach(this.demotedHosts::remove);
+
+                    removeActivePooledXProtocol((PooledXProtocol) info);
+                }
+                break;
+
+            case SERVER_CLOSED_SESSION:
+                removeActivePooledXProtocol((PooledXProtocol) info);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private void removeActivePooledXProtocol(PooledXProtocol prot) {
+        WeakReference<PooledXProtocol> wprot = null;
+        for (WeakReference<PooledXProtocol> wps : this.activeProtocols) {
+            if (wps != null) {
+                PooledXProtocol as = wps.get();
+                if (as == prot) {
+                    wprot = wps;
+                    break;
+                }
+            }
+        }
+        this.activeProtocols.remove(wprot);
+        prot.realClose();
     }
 }

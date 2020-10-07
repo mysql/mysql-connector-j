@@ -479,7 +479,7 @@ public final class MysqlxDatatypes {
     }
     /**
      * <pre>
-     * a string with a charset/collation
+     ** a string with a charset/collation 
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Datatypes.Scalar.String}
@@ -788,7 +788,7 @@ public final class MysqlxDatatypes {
       }
       /**
        * <pre>
-       * a string with a charset/collation
+       ** a string with a charset/collation 
        * </pre>
        *
        * Protobuf type {@code Mysqlx.Datatypes.Scalar.String}
@@ -1113,8 +1113,8 @@ public final class MysqlxDatatypes {
     }
     /**
      * <pre>
-     * an opaque octet sequence, with an optional content_type
-     * See ``Mysqlx.Resultset.ContentType_BYTES`` for list of known values.
+     ** an opaque octet sequence, with an optional content_type
+     *See &#64;ref Mysqlx::Resultset::ContentType_BYTES for list of known values. 
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Datatypes.Scalar.Octets}
@@ -1422,8 +1422,8 @@ public final class MysqlxDatatypes {
       }
       /**
        * <pre>
-       * an opaque octet sequence, with an optional content_type
-       * See ``Mysqlx.Resultset.ContentType_BYTES`` for list of known values.
+       ** an opaque octet sequence, with an optional content_type
+       *See &#64;ref Mysqlx::Resultset::ContentType_BYTES for list of known values. 
        * </pre>
        *
        * Protobuf type {@code Mysqlx.Datatypes.Scalar.Octets}
@@ -3014,7 +3014,8 @@ public final class MysqlxDatatypes {
   }
   /**
    * <pre>
-   * a object
+   **
+   *An object
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Datatypes.Object}
@@ -4136,7 +4137,8 @@ public final class MysqlxDatatypes {
     }
     /**
      * <pre>
-     * a object
+     **
+     *An object
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Datatypes.Object}
@@ -4650,7 +4652,8 @@ public final class MysqlxDatatypes {
   }
   /**
    * <pre>
-   * a Array
+   **
+   *An Array
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Datatypes.Array}
@@ -4943,7 +4946,8 @@ public final class MysqlxDatatypes {
     }
     /**
      * <pre>
-     * a Array
+     **
+     *An Array
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Datatypes.Array}
@@ -5489,7 +5493,8 @@ public final class MysqlxDatatypes {
   }
   /**
    * <pre>
-   * a helper to allow all field types
+   **
+   *A helper to allow all field types
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Datatypes.Any}
@@ -6046,7 +6051,8 @@ public final class MysqlxDatatypes {
     }
     /**
      * <pre>
-     * a helper to allow all field types
+     **
+     *A helper to allow all field types
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Datatypes.Any}

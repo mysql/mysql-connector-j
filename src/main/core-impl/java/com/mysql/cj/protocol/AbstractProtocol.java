@@ -29,7 +29,9 @@
 
 package com.mysql.cj.protocol;
 
+import java.lang.ref.WeakReference;
 import java.util.LinkedList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.mysql.cj.MessageBuilder;
 import com.mysql.cj.Messages;
@@ -39,9 +41,11 @@ import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.log.Log;
+import com.mysql.cj.protocol.Protocol.ProtocolEventHandler;
+import com.mysql.cj.protocol.Protocol.ProtocolEventListener.EventType;
 import com.mysql.cj.util.TimeUtil;
 
-public abstract class AbstractProtocol<M extends Message> implements Protocol<M> {
+public abstract class AbstractProtocol<M extends Message> implements Protocol<M>, ProtocolEventHandler {
 
     protected Session session;
     protected SocketConnection socketConnection;
@@ -69,6 +73,8 @@ public abstract class AbstractProtocol<M extends Message> implements Protocol<M>
 
     protected boolean useNanosForElapsedTime;
     protected String queryTimingUnits;
+
+    private CopyOnWriteArrayList<WeakReference<ProtocolEventListener>> listeners = new CopyOnWriteArrayList<>();
 
     @Override
     public void init(Session sess, SocketConnection phConnection, PropertySet propSet, TransactionEventHandler trManager) {
@@ -136,4 +142,31 @@ public abstract class AbstractProtocol<M extends Message> implements Protocol<M>
         return this.queryTimingUnits;
     }
 
+    @Override
+    public void addListener(ProtocolEventListener l) {
+        this.listeners.addIfAbsent(new WeakReference<>(l));
+    }
+
+    @Override
+    public void removeListener(ProtocolEventListener listener) {
+        for (WeakReference<ProtocolEventListener> wr : this.listeners) {
+            ProtocolEventListener l = wr.get();
+            if (l == listener) {
+                this.listeners.remove(wr);
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void invokeListeners(EventType type, Throwable reason) {
+        for (WeakReference<ProtocolEventListener> wr : this.listeners) {
+            ProtocolEventListener l = wr.get();
+            if (l != null) {
+                l.handleEvent(type, this, reason);
+            } else {
+                this.listeners.remove(wr);
+            }
+        }
+    }
 }

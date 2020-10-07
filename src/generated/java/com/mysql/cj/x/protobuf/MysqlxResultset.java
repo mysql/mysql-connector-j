@@ -45,20 +45,19 @@ public final class MysqlxResultset {
   }
   /**
    * <pre>
-   * a hint about the higher-level encoding of a BYTES field
-   * ====== ====== ===========
-   * type   value  description
-   * ====== ====== ===========
-   * BYTES  0x0001 GEOMETRY (WKB encoding)
-   * BYTES  0x0002 JSON (text encoding)
-   * BYTES  0x0003 XML (text encoding)
-   * ====== ====== ===========
-   * .. note::
-   *   this list isn't comprehensive. As guideline: the field's value is expected
-   *   to pass a validator check on client and server if this field is set.
-   *   If the server adds more internal datatypes that rely on BLOB storage
-   *   like image manipulation, seeking into complex types in BLOBs, ... more
-   *   types will be added.
+   **
+   *A hint about the higher-level encoding of a BYTES field
+   *|type  | value  | description             |
+   *|------| -------|-------------------------|
+   *|BYTES | 0x0001 | GEOMETRY (WKB encoding) |
+   *|BYTES | 0x0002 | JSON (text encoding)    |
+   *|BYTES | 0x0003 | XML (text encoding)     |
+   *&#64;note
+   *this list isn't comprehensive. As guideline: the field's value is expected
+   *to pass a validator check on client and server if this field is set.
+   *If the server adds more internal datatypes that rely on BLOB storage
+   *like image manipulation, seeking into complex types in BLOBs, ... more
+   *types will be added.
    * </pre>
    *
    * Protobuf enum {@code Mysqlx.Resultset.ContentType_BYTES}
@@ -167,13 +166,12 @@ public final class MysqlxResultset {
 
   /**
    * <pre>
-   * a hint about the higher-level encoding of a DATETIME field
-   * ======   ====== ===========
-   * type     value  description
-   * ======== ====== ===========
-   * DATE     0x0001 DATETIME contains only date part
-   * DATETIME 0x0002 DATETIME contains both date and time parts
-   * ======   ====== ===========
+   **
+   *A hint about the higher-level encoding of a DATETIME field
+   *|type     |value  |description                                |
+   *|---------|-------|-------------------------------------------|
+   *|DATE     |0x0001 |DATETIME contains only date part           |
+   *|DATETIME |0x0002 |DATETIME contains both date and time parts |
    * </pre>
    *
    * Protobuf enum {@code Mysqlx.Resultset.ContentType_DATETIME}
@@ -277,7 +275,8 @@ public final class MysqlxResultset {
   }
   /**
    * <pre>
-   * resultsets are finished, OUT paramset is next
+   **
+   *Resultsets are finished, OUT paramset is next:
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Resultset.FetchDoneMoreOutParams}
@@ -502,7 +501,8 @@ public final class MysqlxResultset {
     }
     /**
      * <pre>
-     * resultsets are finished, OUT paramset is next
+     **
+     *Resultsets are finished, OUT paramset is next:
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Resultset.FetchDoneMoreOutParams}
@@ -703,7 +703,8 @@ public final class MysqlxResultset {
   }
   /**
    * <pre>
-   * resultset and out-params are finished, but more resultsets available
+   **
+   *Resultset and out-params are finished, but more resultsets available
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Resultset.FetchDoneMoreResultsets}
@@ -928,7 +929,8 @@ public final class MysqlxResultset {
     }
     /**
      * <pre>
-     * resultset and out-params are finished, but more resultsets available
+     **
+     *Resultset and out-params are finished, but more resultsets available
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Resultset.FetchDoneMoreResultsets}
@@ -1129,7 +1131,8 @@ public final class MysqlxResultset {
   }
   /**
    * <pre>
-   * all resultsets are finished
+   **
+   *All resultsets are finished
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Resultset.FetchDone}
@@ -1354,7 +1357,8 @@ public final class MysqlxResultset {
     }
     /**
      * <pre>
-     * all resultsets are finished
+     **
+     *All resultsets are finished
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Resultset.FetchDone}
@@ -1555,7 +1559,8 @@ public final class MysqlxResultset {
   }
   /**
    * <pre>
-   * cursor is opened still the execution of PrepFetch or PrepExecute ended
+   **
+   *Cursor is opened still the execution of PrepFetch or PrepExecute ended
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Resultset.FetchSuspended}
@@ -1780,7 +1785,8 @@ public final class MysqlxResultset {
     }
     /**
      * <pre>
-     * cursor is opened still the execution of PrepFetch or PrepExecute ended
+     **
+     *Cursor is opened still the execution of PrepFetch or PrepExecute ended
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Resultset.FetchSuspended}
@@ -1981,7 +1987,7 @@ public final class MysqlxResultset {
 
     /**
      * <pre>
-     * datatype of the field in a row
+     ** datatype of the field in a row 
      * </pre>
      *
      * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
@@ -1990,7 +1996,7 @@ public final class MysqlxResultset {
     boolean hasType();
     /**
      * <pre>
-     * datatype of the field in a row
+     ** datatype of the field in a row 
      * </pre>
      *
      * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
@@ -1999,66 +2005,122 @@ public final class MysqlxResultset {
     com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.FieldType getType();
 
     /**
+     * <pre>
+     ** ame of the column 
+     * </pre>
+     *
      * <code>optional bytes name = 2;</code>
      * @return Whether the name field is set.
      */
     boolean hasName();
     /**
+     * <pre>
+     ** ame of the column 
+     * </pre>
+     *
      * <code>optional bytes name = 2;</code>
      * @return The name.
      */
     com.google.protobuf.ByteString getName();
 
     /**
+     * <pre>
+     ** name of the column before an alias was applied 
+     * </pre>
+     *
      * <code>optional bytes original_name = 3;</code>
      * @return Whether the originalName field is set.
      */
     boolean hasOriginalName();
     /**
+     * <pre>
+     ** name of the column before an alias was applied 
+     * </pre>
+     *
      * <code>optional bytes original_name = 3;</code>
      * @return The originalName.
      */
     com.google.protobuf.ByteString getOriginalName();
 
     /**
+     * <pre>
+     ** name of the table the column originates from 
+     * </pre>
+     *
      * <code>optional bytes table = 4;</code>
      * @return Whether the table field is set.
      */
     boolean hasTable();
     /**
+     * <pre>
+     ** name of the table the column originates from 
+     * </pre>
+     *
      * <code>optional bytes table = 4;</code>
      * @return The table.
      */
     com.google.protobuf.ByteString getTable();
 
     /**
+     * <pre>
+     ** name of the table the column originates from before an alias was applied 
+     * </pre>
+     *
      * <code>optional bytes original_table = 5;</code>
      * @return Whether the originalTable field is set.
      */
     boolean hasOriginalTable();
     /**
+     * <pre>
+     ** name of the table the column originates from before an alias was applied 
+     * </pre>
+     *
      * <code>optional bytes original_table = 5;</code>
      * @return The originalTable.
      */
     com.google.protobuf.ByteString getOriginalTable();
 
     /**
+     * <pre>
+     ** schema the column originates from 
+     * </pre>
+     *
      * <code>optional bytes schema = 6;</code>
      * @return Whether the schema field is set.
      */
     boolean hasSchema();
     /**
+     * <pre>
+     ** schema the column originates from 
+     * </pre>
+     *
      * <code>optional bytes schema = 6;</code>
      * @return The schema.
      */
     com.google.protobuf.ByteString getSchema();
 
     /**
+     * <pre>
+     ** catalog the schema originates from
+     *&#64;note
+     *As there is current no support for catalogs in MySQL,
+     *don't expect this field to be set. In the MySQL C/S
+     *protocol the field had the value ``def`` all the time 
+     * </pre>
+     *
      * <code>optional bytes catalog = 7;</code>
      * @return Whether the catalog field is set.
      */
     boolean hasCatalog();
     /**
+     * <pre>
+     ** catalog the schema originates from
+     *&#64;note
+     *As there is current no support for catalogs in MySQL,
+     *don't expect this field to be set. In the MySQL C/S
+     *protocol the field had the value ``def`` all the time 
+     * </pre>
+     *
      * <code>optional bytes catalog = 7;</code>
      * @return The catalog.
      */
@@ -2076,44 +2138,132 @@ public final class MysqlxResultset {
     long getCollation();
 
     /**
+     * <pre>
+     ** displayed factional decimal digits for floating point and
+     *fixed point numbers 
+     * </pre>
+     *
      * <code>optional uint32 fractional_digits = 9;</code>
      * @return Whether the fractionalDigits field is set.
      */
     boolean hasFractionalDigits();
     /**
+     * <pre>
+     ** displayed factional decimal digits for floating point and
+     *fixed point numbers 
+     * </pre>
+     *
      * <code>optional uint32 fractional_digits = 9;</code>
      * @return The fractionalDigits.
      */
     int getFractionalDigits();
 
     /**
+     * <pre>
+     ** maximum count of displayable characters of .type 
+     * </pre>
+     *
      * <code>optional uint32 length = 10;</code>
      * @return Whether the length field is set.
      */
     boolean hasLength();
     /**
+     * <pre>
+     ** maximum count of displayable characters of .type 
+     * </pre>
+     *
      * <code>optional uint32 length = 10;</code>
      * @return The length.
      */
     int getLength();
 
     /**
+     * <pre>
+     ** ``.type`` specific flags
+     *| Type    | Value  | Description  |
+     *|---------|--------|--------------|
+     *| UINT    | 0x0001 | zerofill     |
+     *| DOUBLE  | 0x0001 | unsigned     |
+     *| FLOAT   | 0x0001 | unsigned     |
+     *| DECIMAL | 0x0001 | unsigned     |
+     *| BYTES   | 0x0001 | rightpad     |
+     *| Value  | Description     |
+     *|--------|-----------------|
+     *| 0x0010 | NOT&#92;_NULL       |
+     *| 0x0020 | PRIMARY&#92;_KEY    |
+     *| 0x0040 | UNIQUE&#92;_KEY     |
+     *| 0x0080 | MULTIPLE&#92;_KEY   |
+     *| 0x0100 | AUTO&#92;_INCREMENT |
+     *default: 0 
+     * </pre>
+     *
      * <code>optional uint32 flags = 11;</code>
      * @return Whether the flags field is set.
      */
     boolean hasFlags();
     /**
+     * <pre>
+     ** ``.type`` specific flags
+     *| Type    | Value  | Description  |
+     *|---------|--------|--------------|
+     *| UINT    | 0x0001 | zerofill     |
+     *| DOUBLE  | 0x0001 | unsigned     |
+     *| FLOAT   | 0x0001 | unsigned     |
+     *| DECIMAL | 0x0001 | unsigned     |
+     *| BYTES   | 0x0001 | rightpad     |
+     *| Value  | Description     |
+     *|--------|-----------------|
+     *| 0x0010 | NOT&#92;_NULL       |
+     *| 0x0020 | PRIMARY&#92;_KEY    |
+     *| 0x0040 | UNIQUE&#92;_KEY     |
+     *| 0x0080 | MULTIPLE&#92;_KEY   |
+     *| 0x0100 | AUTO&#92;_INCREMENT |
+     *default: 0 
+     * </pre>
+     *
      * <code>optional uint32 flags = 11;</code>
      * @return The flags.
      */
     int getFlags();
 
     /**
+     * <pre>
+     ** a hint about the higher-level encoding of a BYTES field
+     *| Type   | Value  | Description             |
+     *|--------|--------|-------------------------|
+     *| BYTES  | 0x0001 | GEOMETRY (WKB encoding) |
+     *| BYTES  | 0x0002 | JSON (text encoding)    |
+     *| BYTES  | 0x0003 | XML (text encoding)     |
+     *&#64;note
+     *This list isn't comprehensive. As guideline: the field's
+     *value is expected to pass a validator check on client
+     *and server if this field is set. If the server adds more
+     *internal data types that rely on BLOB storage like image
+     *manipulation, seeking into complex types in BLOBs, and
+     *more types will be added 
+     * </pre>
+     *
      * <code>optional uint32 content_type = 12;</code>
      * @return Whether the contentType field is set.
      */
     boolean hasContentType();
     /**
+     * <pre>
+     ** a hint about the higher-level encoding of a BYTES field
+     *| Type   | Value  | Description             |
+     *|--------|--------|-------------------------|
+     *| BYTES  | 0x0001 | GEOMETRY (WKB encoding) |
+     *| BYTES  | 0x0002 | JSON (text encoding)    |
+     *| BYTES  | 0x0003 | XML (text encoding)     |
+     *&#64;note
+     *This list isn't comprehensive. As guideline: the field's
+     *value is expected to pass a validator check on client
+     *and server if this field is set. If the server adds more
+     *internal data types that rely on BLOB storage like image
+     *manipulation, seeking into complex types in BLOBs, and
+     *more types will be added 
+     * </pre>
+     *
      * <code>optional uint32 content_type = 12;</code>
      * @return The contentType.
      */
@@ -2121,239 +2271,251 @@ public final class MysqlxResultset {
   }
   /**
    * <pre>
-   * meta data of a Column
-   * .. note:: the encoding used for the different ``bytes`` fields in the meta data is externally
-   *   controlled.
-   *   .. seealso:: https://dev.mysql.com/doc/refman/8.0/en/charset-connection.html
-   * .. note::
-   *   The server may not set the ``original_{table|name}`` fields if they are equal to the plain
-   *   ``{table|name}`` field.
-   *   A client has to reconstruct it like::
-   *     if .original_name is empty and .name is not empty:
-   *       .original_name = .name
-   *     if .original_table is empty and .table is not empty:
-   *       .original_table = .table
-   * .. note::
-   *   ``compact metadata format`` can be requested by the client. In that case only ``.type`` is set and
-   *   all other fields are empty.
-   * :param type:
-   *   .. table:: Expected Datatype of Mysqlx.Resultset.Row per SQL Type for non NULL values
-   *     ================= ============ ======= ========== ====== ========
-   *     SQL Type          .type        .length .frac_dig  .flags .charset
-   *     ================= ============ ======= ========== ====== ========
-   *     TINY              SINT         x
-   *     TINY UNSIGNED     UINT         x                  x
-   *     SHORT             SINT         x
-   *     SHORT UNSIGNED    UINT         x                  x
-   *     INT24             SINT         x
-   *     INT24 UNSIGNED    UINT         x                  x
-   *     INT               SINT         x
-   *     INT UNSIGNED      UINT         x                  x
-   *     LONGLONG          SINT         x
-   *     LONGLONG UNSIGNED UINT         x                  x
-   *     DOUBLE            DOUBLE       x       x          x
-   *     FLOAT             FLOAT        x       x          x
-   *     DECIMAL           DECIMAL      x       x          x
-   *     VARCHAR,CHAR,...  BYTES        x                  x      x
-   *     GEOMETRY          BYTES
-   *     TIME              TIME         x
-   *     DATE              DATETIME     x
-   *     DATETIME          DATETIME     x
-   *     YEAR              UINT         x                  x
-   *     TIMESTAMP         DATETIME     x
-   *     SET               SET                                    x
-   *     ENUM              ENUM                                   x
-   *     NULL              BYTES
-   *     BIT               BIT          x
-   *     ================= ============ ======= ========== ====== ========
-   *   .. note:: the SQL "NULL" value is sent as an empty field value in :protobuf:msg:`Mysqlx.Resultset::Row`
-   *   .. seealso:: protobuf encoding of primitive datatypes are decribed in https://developers.google.com/protocol-buffers/docs/encoding
-   *   SINT
-   *     ``.length``
-   *       maximum number of displayable decimal digits (including minus sign) of the type
-   *       .. note::
-   *         valid range is 0-255, but usually you'll see 1-20
-   *       =============== ==
-   *       SQL Type        max digits per type
-   *       =============== ==
-   *       TINY SIGNED      4
-   *       SHORT SIGNED     6
-   *       INT24 SIGNED     8
-   *       INT SIGNED      11
-   *       LONGLONG SIGNED 20
-   *       =============== ==
-   *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
-   *     ``value``
-   *       variable length encoded signed 64 integer
-   *   UINT
-   *     ``.flags &amp; 1`` (zerofill)
-   *       the client has to left pad with 0's up to .length
-   *     ``.length``
-   *       maximum number of displayable decimal digits of the type
-   *       .. note::
-   *         valid range is 0-255, but usually you'll see 1-20
-   *       ================= ==
-   *       SQL Type          max digits per type
-   *       ================= ==
-   *       TINY UNSIGNED      3
-   *       SHORT UNSIGNED     5
-   *       INT24 UNSIGNED     8
-   *       INT UNSIGNED      10
-   *       LONGLONG UNSIGNED 20
-   *       ================= ==
-   *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
-   *     ``value``
-   *       variable length encoded unsigned 64 integer
-   *   BIT
-   *     ``.length``
-   *       maximum number of displayable binary digits
-   *       .. note:: valid range for M of the ``BIT`` type is 1 - 64
-   *       .. seealso:: https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
-   *     ``value``
-   *       variable length encoded unsigned 64 integer
-   *   DOUBLE
-   *     ``.length``
-   *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
-   *     ``.fractional_digits``
-   *       maximum number of displayable decimal digits following the decimal point
-   *     ``value``
-   *       encoded as Protobuf's 'double'
-   *   FLOAT
-   *     ``.length``
-   *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
-   *     ``.fractional_digits``
-   *       maximum number of displayable decimal digits following the decimal point
-   *     ``value``
-   *       encoded as Protobuf's 'float'
-   *   BYTES, ENUM
-   *     BYTES is used for all opaque byte strings that may have a charset
-   *       * TINYBLOB, BLOB, MEDIUMBLOB, LONGBLOB
-   *       * TINYTEXT, TEXT, MEDIUMTEXT, LONGTEXT
-   *       * VARCHAR, VARBINARY
-   *       * CHAR, BINARY
-   *       * ENUM
-   *     ``.length``
-   *       the maximum length of characters of the underlying type
-   *     ``.flags &amp; 1`` (rightpad)
-   *       if the length of the field is less than ``.length``, the receiver is
-   *       supposed to add padding characters to the right end of the string.
-   *       If the ``.charset`` is "binary", the padding character is ``0x00``,
-   *       otherwise it is a space character as defined by that character set.
-   *       ============= ======= ======== =======
-   *       SQL Type      .length .charset .flags
-   *       ============= ======= ======== =======
-   *       TINYBLOB      256     binary
-   *       BLOB          65535   binary
-   *       VARCHAR(32)   32      utf8
-   *       VARBINARY(32) 32      utf8_bin
-   *       BINARY(32)    32      binary   rightpad
-   *       CHAR(32)      32      utf8     rightpad
-   *       ============= ======= ======== =======
-   *     ``value``
-   *       sequence of bytes with added one extra '&#92;0' byte at the end. To obtain the
-   *       original string, the extra '&#92;0' should be removed.
-   *       .. note:: the length of the string can be acquired with protobuf's field length() method
-   *         length of sequence-of-bytes = length-of-field - 1
-   *       .. note:: the extra byte allows to distinguish between a NULL and empty byte sequence
-   *   TIME
-   *     A time value.
-   *     ``value``
-   *       the following bytes sequence:
-   *         ``| negate [ | hour | [ | minutes | [ | seconds | [ | useconds | ]]]]``
-   *       * negate - one byte, should be one of: 0x00 for "+", 0x01 for "-"
-   *       * hour - optional variable length encoded unsigned64 value for the hour
-   *       * minutes - optional variable length encoded unsigned64 value for the minutes
-   *       * seconds - optional variable length encoded unsigned64 value for the seconds
-   *       * useconds - optional variable length encoded unsigned64 value for the microseconds
-   *       .. seealso:: protobuf encoding in https://developers.google.com/protocol-buffers/docs/encoding
-   *       .. note:: hour, minutes, seconds, useconds are optional if all the values to the right are 0
-   *       Example: 0x00 -&gt; +00:00:00.000000
-   *   DATETIME
-   *     A date or date and time value.
-   *     ``value``
-   *       a sequence of variants, arranged as follows:
-   *         ``| year | month | day | [ | hour | [ | minutes | [ | seconds | [ | useconds | ]]]]``
-   *       * year - variable length encoded unsigned64 value for the year
-   *       * month - variable length encoded unsigned64 value for the month
-   *       * day - variable length encoded unsigned64 value for the day
-   *       * hour - optional variable length encoded unsigned64 value for the hour
-   *       * minutes - optional variable length encoded unsigned64 value for the minutes
-   *       * seconds - optional variable length encoded unsigned64 value for the seconds
-   *       * useconds - optional variable length encoded unsigned64 value for the microseconds
-   *       .. note:: hour, minutes, seconds, useconds are optional if all the values to the right are 0
-   *     ``.flags &amp; 1`` (timestamp)
-   *       ============= =======
-   *       SQL Type      .flags
-   *       ============= =======
-   *       DATETIME
-   *       TIMESTAMP     1
-   *   DECIMAL
-   *     An arbitrary length number. The number is encoded as a single byte
-   *     indicating the position of the decimal point followed by the Packed BCD
-   *     encoded number. Packed BCD is used to simplify conversion to and
-   *     from strings and other native arbitrary precision math datatypes.
-   *     .. seealso:: packed BCD in https://en.wikipedia.org/wiki/Binary-coded_decimal
-   *     ``.length``
-   *       maximum number of displayable decimal digits (*excluding* the decimal point and sign, but including ``.fractional_digits``)
-   *       .. note:: should be in the range of 1 - 65
-   *     ``.fractional_digits``
-   *       is the decimal digits to display out of length
-   *       .. note:: should be in the range of 0 - 30
-   *     ``value``
-   *       the following bytes sequence:
-   *         ``| scale | BCD | sign | [0x0] |``
-   *       * scale - 8bit scale value (number of decimal digit after the '.')
-   *       * BCD - BCD encoded digits (4 bits for each digit)
-   *       * sign - sign encoded on 4 bits (0xc = "+", 0xd = "-")
-   *       * 0x0 - last 4bits if length(digits) % 2 == 0
-   *       Example: x04 0x12 0x34 0x01 0xd0 -&gt; -12.3401
-   *   SET
-   *     A list of strings representing a SET of values.
-   *     ``value``
-   *       A sequence of 0 or more of protobuf's bytes (length prepended octets) or one of
-   *       the special sequences with a predefined meaning listed below.
-   *       Example (length of the bytes array shown in brackets):
-   *         * ``[0]`` - the NULL value
-   *         * ``[1] 0x00`` - a set containing a blank string ''
-   *         * ``[1] 0x01`` - this would be an invalid value, but is to be treated as the empty set
-   *         * ``[2] 0x01 0x00`` - a set with a single item, which is the '&#92;0' character
-   *         * ``[8] 0x03 F O O 0x03 B A R`` - a set with 2 items: FOO,BAR
-   * :param name: name of the column
-   * :param original_name: name of the column before an alias was applied
-   * :param table: name of the table the column orginates from
-   * :param original_table: name of the table the column orginates from before an alias was applied
-   * :param schema: schema the column originates from
-   * :param catalog:
-   *   catalog the schema originates from
-   *   .. note::
-   *     as there is current no support for catalogs in MySQL, don't expect this field to be set.
-   *     In the MySQL C/S protocol the field had the value ``def`` all the time.
-   * :param fractional_digits: displayed factional decimal digits for floating point and fixed point numbers
-   * :param length: maximum count of displayable characters of .type
-   * :param flags:
-   *   ``.type`` specific flags
-   *   ======= ====== ===========
-   *   type    value  description
-   *   ======= ====== ===========
-   *   UINT    0x0001 zerofill
-   *   DOUBLE  0x0001 unsigned
-   *   FLOAT   0x0001 unsigned
-   *   DECIMAL 0x0001 unsigned
-   *   BYTES   0x0001 rightpad
-   *   ======= ====== ===========
-   *   ====== ================
-   *   value  description
-   *   ====== ================
-   *   0x0010 NOT_NULL
-   *   0x0020 PRIMARY_KEY
-   *   0x0040 UNIQUE_KEY
-   *   0x0080 MULTIPLE_KEY
-   *   0x0100 AUTO_INCREMENT
-   *   ====== ================
-   *   default: 0
-   * :param content_type:
-   *   a hint about the higher-level encoding of a BYTES field, for more informations
-   *   please refer to Mysqlx.Resultset.ContentType_BYTES enum.
+   **
+   *Meta data of a column
+   *&#64;note
+   *The encoding used for the different ``bytes`` fields in the
+   *meta data is externally controlled. See also:
+   *https://dev.mysql.com/doc/refman/5.0/en/charset-connection.html
+   *&#64;par
+   *&#64;note
+   *The server may not set the ``original_{table|name}`` fields
+   *if they are equal to the plain ``{table|name}`` field.
+   *&#64;par
+   *&#64;note
+   *A client has to reconstruct it like:
+   *&#64;code{py}
+   *if .original_name is empty and .name is not empty:
+   *.original_name = .name
+   *if .original_table is empty and .table is not empty:
+   *.original_table = .table
+   *&#64;endcode
+   *&#64;par
+   *&#64;note
+   *``Compact metadata format`` can be requested by the client.
+   *In that case, only ``.type`` is set and all other fields are  empty.
+   *Expected data type of Mysqlx.Resultset.Row per SQL Type for
+   *non-NULL values:
+   *| SQL Type          | .type     | .length | .frac&#92;_dig | .flags | .charset |
+   *|-------------------|-----------|---------|------------|--------|----------|
+   *| TINY              | SINT      | x       |            |        |          |
+   *| TINY UNSIGNED     | UINT      | x       |            | x      |          |
+   *| SHORT             | SINT      | x       |            |        |          |
+   *| SHORT UNSIGNED    | UINT      | x       |            | x      |          |
+   *| INT24             | SINT      | x       |            |        |          |
+   *| INT24 UNSIGNED    | UINT      | x       |            | x      |          |
+   *| INT               | SINT      | x       |            |        |          |
+   *| INT UNSIGNED      | UINT      | x       |            | x      |          |
+   *| LONGLONG          | SINT      | x       |            |        |          |
+   *| LONGLONG UNSIGNED | UINT      | x       |            | x      |          |
+   *| DOUBLE            | DOUBLE    | x       | x          | x      |          |
+   *| FLOAT             | FLOAT     | x       | x          | x      |          |
+   *| DECIMAL           | DECIMAL   | x       | x          | x      |          |
+   *| VARCHAR,CHAR,...  | BYTES     | x       |            | x      | x        |
+   *| GEOMETRY          | BYTES     |         |            |        |          |
+   *| TIME              | TIME      | x       |            |        |          |
+   *| DATE              | DATETIME  | x       |            |        |          |
+   *| DATETIME          | DATETIME  | x       |            |        |          |
+   *| YEAR              | UINT      | x       |            | x      |          |
+   *| TIMESTAMP         | DATETIME  | x       |            |        |          |
+   *| SET               | SET       |         |            |        | x        |
+   *| ENUM              | ENUM      |         |            |        | x        |
+   *| NULL              | BYTES     |         |            |        |          |
+   *| BIT               | BIT       | x       |            |        |          |
+   *&#64;note
+   *The SQL "NULL" value is sent as an empty field value in
+   *&#64;ref Mysqlx::Resultset::Row.
+   *&#64;par Tip
+   *The protobuf encoding of primitive data types is described in
+   *https://developers.google.com/protocol-buffers/docs/encoding
+   *+ SINT
+   *- ``.length`` &#64;n
+   *Maximum number of displayable decimal digits (including
+   *minus sign) of the type.
+   *&#64;note
+   *The valid range is 0-255, but usually you'll see 1-20.
+   *| SQL Type         | Maximum Digits per Type |
+   *|------------------|-------------------------|
+   *| TINY SIGNED      | 4                       |
+   *| SHORT SIGNED     | 6                       |
+   *| INT24 SIGNED     | 8                       |
+   *| INT SIGNED       | 11                      |
+   *| LONGLONG SIGNED  | 20                      |
+   *&#64;par Tip
+   *Definition of ``M`` are in
+   *https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html.
+   *- ``value``&#64;n
+   *Variable length encoded signed 64 integer.
+   *+ UINT
+   *- ``.flags &amp; 1`` (zerofill) &#64;n
+   *The client has to left pad with 0's up to .length.
+   *- ``.length`` &#64;n
+   *Maximum number of displayable decimal digits of the
+   *type.
+   *&#64;note
+   *The valid range is 0-255, but usually you'll see
+   *1-20.
+   *| SQL Type             | max digits per type |
+   *|----------------------|---------------------|
+   *| TINY UNSIGNED        | 3                   |
+   *| SHORT UNSIGNED       | 5                   |
+   *| INT24 UNSIGNED       | 8                   |
+   *| INT UNSIGNED         | 10                  |
+   *| LONGLONG UNSIGNED    | 20                  |
+   *&#64;par Tip
+   *Definition of ``M`` are in
+   *https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html.
+   *- ``value`` &#64;n
+   *Variable length encoded unsigned 64 integer.
+   *+ BIT
+   *- ``.length`` &#64;n
+   *Maximum number of displayable binary digits.
+   *&#64;note
+   *The valid range for M of the ``BIT`` type is 1 - 64.
+   *&#64;par Tip
+   *https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+   *- ``value`` &#64;n
+   *Variable length encoded unsigned 64 integer.
+   *+ DOUBLE
+   *- ``.length`` &#64;n
+   *Maximum number of displayable decimal digits (including
+   *the decimal point and ``.fractional_digits``).
+   *- ``.fractional_digits`` &#64;n
+   *Maximum number of displayable decimal digits following
+   *the decimal point.
+   *- ``value``&#64;n
+   *Encoded as protobuf's 'double'.
+   *+ FLOAT
+   *- ``.length``&#64;n
+   *Maximum number of displayable decimal digits (including
+   *the decimal point and ``.fractional_digits``).
+   *- ``.fractional_digits``&#64;n
+   *Maximum number of displayable decimal digits following
+   *the decimal point.
+   *- ``value``&#64;n
+   *Encoded as protobuf's 'float'.
+   *+ BYTES, ENUM
+   *&#64;note
+   *BYTES is used for all opaque byte strings that may have a charset:
+   *-  TINYBLOB, BLOB, MEDIUMBLOB, LONGBLOB
+   *-  TINYTEXT, TEXT, MEDIUMTEXT, LONGTEXT
+   *-  VARCHAR, VARBINARY
+   *-  CHAR, BINARY
+   *-  ENUM
+   *- ``.length``&#64;n
+   *Maximum length of characters of the underlying type.
+   *- ``.flags &amp; 1`` (rightpad) &#64;n
+   *If the length of the field is less than ``.length``, the
+   *receiver is supposed to add padding characters to the
+   *right end of the string. If the ``.charset`` is
+   *"binary", the padding character is ``0x00``, otherwise
+   *it is a space character as defined by that character
+   *set.
+   *| SQL Type      | .length  | .charset  | .flags   |
+   *|---------------|----------|-----------|----------|
+   *| TINYBLOB      | 256      | binary    |          |
+   *| BLOB          | 65535    | binary    |          |
+   *| VARCHAR(32)   | 32       | utf8      |          |
+   *| VARBINARY(32) | 32       | utf8&#92;_bin |          |
+   *| BINARY(32)    | 32       | binary    | rightpad |
+   *| CHAR(32)      | 32       | utf8      | rightpad |
+   *- ``value``
+   *Sequence of bytes with added one extra ``0x00`` byte at
+   *the end. To obtain the original string, the extra
+   *``0x00`` should be removed. The length of the string can
+   *be acquired with protobuf's field ``length()`` method:
+   *``length of sequence-of-bytes = length-of-field - 1``
+   *&#64;note
+   *The extra byte allows to distinguish between a NULL
+   *and empty byte sequence.
+   *+ TIME
+   *A time value.
+   *- ``value``&#64;n
+   *The following bytes sequence:
+   *``negate [ hour [ minutes [ seconds [ useconds ]]]]``
+   *-  negate - one byte, should be one of: 0x00 for "+",
+   *0x01 for "-"
+   *-  hour - optional variable length encoded unsigned64
+   *value for the hour
+   *-  minutes - optional variable length encoded unsigned64
+   *value for the minutes
+   *-  seconds - optional variable length encoded unsigned64
+   *value for the seconds
+   *-  useconds - optional variable length encoded
+   *unsigned64 value for the microseconds
+   *&#64;par Tip
+   *The protobuf encoding in
+   *https://developers.google.com/protocol-buffers/docs/encoding.
+   *&#64;note
+   *Hour, minutes, seconds, and useconds are optional if
+   *all the values to the right are 0.
+   *Example: ``0x00 -&gt; +00:00:00.000000``
+   *+ DATETIME
+   *A date or date and time value.
+   *- ``value`` &#64;n
+   *A sequence of variants, arranged as follows:
+   *``| year | month | day | [ | hour | [ | minutes | [ | seconds | [ | useconds | ]]]]``
+   *-  year - variable length encoded unsigned64 value for
+   *the year
+   *-  month - variable length encoded unsigned64 value for
+   *the month
+   *-  day - variable length encoded unsigned64 value for
+   *the day
+   *-  hour - optional variable length encoded unsigned64
+   *value for the hour
+   *-  minutes - optional variable length encoded unsigned64
+   *value for the minutes
+   *-  seconds - optional variable length encoded unsigned64
+   *value for the seconds
+   *-  useconds - optional variable length encoded
+   *unsigned64 value for the microseconds
+   *&#64;note
+   *Hour, minutes, seconds, useconds are optional if all
+   *the values to the right are 0.
+   *- ``.flags``&#64;n
+   *| Name          | Position |
+   *|---------------|----------|
+   *| is&#92;_timestamp | 1        |
+   *+ DECIMAL
+   *An arbitrary length number. The number is encoded as a
+   *single byte indicating the position of the decimal point
+   *followed by the Packed BCD encoded number. Packed BCD is
+   *used to simplify conversion to and from strings and other
+   *native arbitrary precision math data types. See also: packed
+   *BCD in https://en.wikipedia.org/wiki/Binary-coded_decimal
+   *- ``.length``
+   *Maximum number of displayable decimal digits
+   *(*excluding* the decimal point and sign, but including
+   *``.fractional_digits``).
+   *&#64;note
+   *Should be in the range of 1 - 65.
+   *- ``.fractional_digits``
+   *The decimal digits to display out of length.
+   *&#64;note
+   *Should be in the range of 0 - 30.
+   *``value``
+   *The following bytes sequence:
+   *``scale | BCD+ sign [0x00]?``
+   *-  scale - 8bit scale value (number of decimal digit after the '.')
+   *-  BCD - BCD encoded digits (4 bits for each digit)
+   *-  sign - sign encoded on 4 bits (0xc = "+", 0xd = "-")
+   *-  0x0 - last 4bits if length(digits) % 2 == 0
+   *Example: ``x04 0x12 0x34 0x01
+   *0xd0 -&gt; -12.3401``
+   *+ SET
+   *A list of strings representing a SET of values.
+   *- ``value``&#64;n
+   *A sequence of 0 or more of protobuf's bytes (length
+   *prepended octets) or one of the special sequences with a
+   *predefined meaning listed below.
+   *Example (length of the bytes array shown in brackets):
+   *-  ``[0]`` - the NULL value
+   *-  ``[1] 0x00`` - a set containing a blank string ''
+   *-  ``[1] 0x01`` - this would be an invalid value,
+   *but is to be treated as the empty set
+   *-  ``[2] 0x01 0x00`` - a set with a single item, which is the '0'
+   *character
+   *-  ``[8] 0x03 F O O 0x03 B A R`` - a set with 2 items: FOO,BAR
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Resultset.ColumnMetaData}
@@ -2689,7 +2851,7 @@ public final class MysqlxResultset {
     private int type_;
     /**
      * <pre>
-     * datatype of the field in a row
+     ** datatype of the field in a row 
      * </pre>
      *
      * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
@@ -2700,7 +2862,7 @@ public final class MysqlxResultset {
     }
     /**
      * <pre>
-     * datatype of the field in a row
+     ** datatype of the field in a row 
      * </pre>
      *
      * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
@@ -2715,6 +2877,10 @@ public final class MysqlxResultset {
     public static final int NAME_FIELD_NUMBER = 2;
     private com.google.protobuf.ByteString name_;
     /**
+     * <pre>
+     ** ame of the column 
+     * </pre>
+     *
      * <code>optional bytes name = 2;</code>
      * @return Whether the name field is set.
      */
@@ -2722,6 +2888,10 @@ public final class MysqlxResultset {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
+     * <pre>
+     ** ame of the column 
+     * </pre>
+     *
      * <code>optional bytes name = 2;</code>
      * @return The name.
      */
@@ -2732,6 +2902,10 @@ public final class MysqlxResultset {
     public static final int ORIGINAL_NAME_FIELD_NUMBER = 3;
     private com.google.protobuf.ByteString originalName_;
     /**
+     * <pre>
+     ** name of the column before an alias was applied 
+     * </pre>
+     *
      * <code>optional bytes original_name = 3;</code>
      * @return Whether the originalName field is set.
      */
@@ -2739,6 +2913,10 @@ public final class MysqlxResultset {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
+     * <pre>
+     ** name of the column before an alias was applied 
+     * </pre>
+     *
      * <code>optional bytes original_name = 3;</code>
      * @return The originalName.
      */
@@ -2749,6 +2927,10 @@ public final class MysqlxResultset {
     public static final int TABLE_FIELD_NUMBER = 4;
     private com.google.protobuf.ByteString table_;
     /**
+     * <pre>
+     ** name of the table the column originates from 
+     * </pre>
+     *
      * <code>optional bytes table = 4;</code>
      * @return Whether the table field is set.
      */
@@ -2756,6 +2938,10 @@ public final class MysqlxResultset {
       return ((bitField0_ & 0x00000008) != 0);
     }
     /**
+     * <pre>
+     ** name of the table the column originates from 
+     * </pre>
+     *
      * <code>optional bytes table = 4;</code>
      * @return The table.
      */
@@ -2766,6 +2952,10 @@ public final class MysqlxResultset {
     public static final int ORIGINAL_TABLE_FIELD_NUMBER = 5;
     private com.google.protobuf.ByteString originalTable_;
     /**
+     * <pre>
+     ** name of the table the column originates from before an alias was applied 
+     * </pre>
+     *
      * <code>optional bytes original_table = 5;</code>
      * @return Whether the originalTable field is set.
      */
@@ -2773,6 +2963,10 @@ public final class MysqlxResultset {
       return ((bitField0_ & 0x00000010) != 0);
     }
     /**
+     * <pre>
+     ** name of the table the column originates from before an alias was applied 
+     * </pre>
+     *
      * <code>optional bytes original_table = 5;</code>
      * @return The originalTable.
      */
@@ -2783,6 +2977,10 @@ public final class MysqlxResultset {
     public static final int SCHEMA_FIELD_NUMBER = 6;
     private com.google.protobuf.ByteString schema_;
     /**
+     * <pre>
+     ** schema the column originates from 
+     * </pre>
+     *
      * <code>optional bytes schema = 6;</code>
      * @return Whether the schema field is set.
      */
@@ -2790,6 +2988,10 @@ public final class MysqlxResultset {
       return ((bitField0_ & 0x00000020) != 0);
     }
     /**
+     * <pre>
+     ** schema the column originates from 
+     * </pre>
+     *
      * <code>optional bytes schema = 6;</code>
      * @return The schema.
      */
@@ -2800,6 +3002,14 @@ public final class MysqlxResultset {
     public static final int CATALOG_FIELD_NUMBER = 7;
     private com.google.protobuf.ByteString catalog_;
     /**
+     * <pre>
+     ** catalog the schema originates from
+     *&#64;note
+     *As there is current no support for catalogs in MySQL,
+     *don't expect this field to be set. In the MySQL C/S
+     *protocol the field had the value ``def`` all the time 
+     * </pre>
+     *
      * <code>optional bytes catalog = 7;</code>
      * @return Whether the catalog field is set.
      */
@@ -2807,6 +3017,14 @@ public final class MysqlxResultset {
       return ((bitField0_ & 0x00000040) != 0);
     }
     /**
+     * <pre>
+     ** catalog the schema originates from
+     *&#64;note
+     *As there is current no support for catalogs in MySQL,
+     *don't expect this field to be set. In the MySQL C/S
+     *protocol the field had the value ``def`` all the time 
+     * </pre>
+     *
      * <code>optional bytes catalog = 7;</code>
      * @return The catalog.
      */
@@ -2834,6 +3052,11 @@ public final class MysqlxResultset {
     public static final int FRACTIONAL_DIGITS_FIELD_NUMBER = 9;
     private int fractionalDigits_;
     /**
+     * <pre>
+     ** displayed factional decimal digits for floating point and
+     *fixed point numbers 
+     * </pre>
+     *
      * <code>optional uint32 fractional_digits = 9;</code>
      * @return Whether the fractionalDigits field is set.
      */
@@ -2841,6 +3064,11 @@ public final class MysqlxResultset {
       return ((bitField0_ & 0x00000100) != 0);
     }
     /**
+     * <pre>
+     ** displayed factional decimal digits for floating point and
+     *fixed point numbers 
+     * </pre>
+     *
      * <code>optional uint32 fractional_digits = 9;</code>
      * @return The fractionalDigits.
      */
@@ -2851,6 +3079,10 @@ public final class MysqlxResultset {
     public static final int LENGTH_FIELD_NUMBER = 10;
     private int length_;
     /**
+     * <pre>
+     ** maximum count of displayable characters of .type 
+     * </pre>
+     *
      * <code>optional uint32 length = 10;</code>
      * @return Whether the length field is set.
      */
@@ -2858,6 +3090,10 @@ public final class MysqlxResultset {
       return ((bitField0_ & 0x00000200) != 0);
     }
     /**
+     * <pre>
+     ** maximum count of displayable characters of .type 
+     * </pre>
+     *
      * <code>optional uint32 length = 10;</code>
      * @return The length.
      */
@@ -2868,6 +3104,25 @@ public final class MysqlxResultset {
     public static final int FLAGS_FIELD_NUMBER = 11;
     private int flags_;
     /**
+     * <pre>
+     ** ``.type`` specific flags
+     *| Type    | Value  | Description  |
+     *|---------|--------|--------------|
+     *| UINT    | 0x0001 | zerofill     |
+     *| DOUBLE  | 0x0001 | unsigned     |
+     *| FLOAT   | 0x0001 | unsigned     |
+     *| DECIMAL | 0x0001 | unsigned     |
+     *| BYTES   | 0x0001 | rightpad     |
+     *| Value  | Description     |
+     *|--------|-----------------|
+     *| 0x0010 | NOT&#92;_NULL       |
+     *| 0x0020 | PRIMARY&#92;_KEY    |
+     *| 0x0040 | UNIQUE&#92;_KEY     |
+     *| 0x0080 | MULTIPLE&#92;_KEY   |
+     *| 0x0100 | AUTO&#92;_INCREMENT |
+     *default: 0 
+     * </pre>
+     *
      * <code>optional uint32 flags = 11;</code>
      * @return Whether the flags field is set.
      */
@@ -2875,6 +3130,25 @@ public final class MysqlxResultset {
       return ((bitField0_ & 0x00000400) != 0);
     }
     /**
+     * <pre>
+     ** ``.type`` specific flags
+     *| Type    | Value  | Description  |
+     *|---------|--------|--------------|
+     *| UINT    | 0x0001 | zerofill     |
+     *| DOUBLE  | 0x0001 | unsigned     |
+     *| FLOAT   | 0x0001 | unsigned     |
+     *| DECIMAL | 0x0001 | unsigned     |
+     *| BYTES   | 0x0001 | rightpad     |
+     *| Value  | Description     |
+     *|--------|-----------------|
+     *| 0x0010 | NOT&#92;_NULL       |
+     *| 0x0020 | PRIMARY&#92;_KEY    |
+     *| 0x0040 | UNIQUE&#92;_KEY     |
+     *| 0x0080 | MULTIPLE&#92;_KEY   |
+     *| 0x0100 | AUTO&#92;_INCREMENT |
+     *default: 0 
+     * </pre>
+     *
      * <code>optional uint32 flags = 11;</code>
      * @return The flags.
      */
@@ -2885,6 +3159,22 @@ public final class MysqlxResultset {
     public static final int CONTENT_TYPE_FIELD_NUMBER = 12;
     private int contentType_;
     /**
+     * <pre>
+     ** a hint about the higher-level encoding of a BYTES field
+     *| Type   | Value  | Description             |
+     *|--------|--------|-------------------------|
+     *| BYTES  | 0x0001 | GEOMETRY (WKB encoding) |
+     *| BYTES  | 0x0002 | JSON (text encoding)    |
+     *| BYTES  | 0x0003 | XML (text encoding)     |
+     *&#64;note
+     *This list isn't comprehensive. As guideline: the field's
+     *value is expected to pass a validator check on client
+     *and server if this field is set. If the server adds more
+     *internal data types that rely on BLOB storage like image
+     *manipulation, seeking into complex types in BLOBs, and
+     *more types will be added 
+     * </pre>
+     *
      * <code>optional uint32 content_type = 12;</code>
      * @return Whether the contentType field is set.
      */
@@ -2892,6 +3182,22 @@ public final class MysqlxResultset {
       return ((bitField0_ & 0x00000800) != 0);
     }
     /**
+     * <pre>
+     ** a hint about the higher-level encoding of a BYTES field
+     *| Type   | Value  | Description             |
+     *|--------|--------|-------------------------|
+     *| BYTES  | 0x0001 | GEOMETRY (WKB encoding) |
+     *| BYTES  | 0x0002 | JSON (text encoding)    |
+     *| BYTES  | 0x0003 | XML (text encoding)     |
+     *&#64;note
+     *This list isn't comprehensive. As guideline: the field's
+     *value is expected to pass a validator check on client
+     *and server if this field is set. If the server adds more
+     *internal data types that rely on BLOB storage like image
+     *manipulation, seeking into complex types in BLOBs, and
+     *more types will be added 
+     * </pre>
+     *
      * <code>optional uint32 content_type = 12;</code>
      * @return The contentType.
      */
@@ -3241,239 +3547,251 @@ public final class MysqlxResultset {
     }
     /**
      * <pre>
-     * meta data of a Column
-     * .. note:: the encoding used for the different ``bytes`` fields in the meta data is externally
-     *   controlled.
-     *   .. seealso:: https://dev.mysql.com/doc/refman/8.0/en/charset-connection.html
-     * .. note::
-     *   The server may not set the ``original_{table|name}`` fields if they are equal to the plain
-     *   ``{table|name}`` field.
-     *   A client has to reconstruct it like::
-     *     if .original_name is empty and .name is not empty:
-     *       .original_name = .name
-     *     if .original_table is empty and .table is not empty:
-     *       .original_table = .table
-     * .. note::
-     *   ``compact metadata format`` can be requested by the client. In that case only ``.type`` is set and
-     *   all other fields are empty.
-     * :param type:
-     *   .. table:: Expected Datatype of Mysqlx.Resultset.Row per SQL Type for non NULL values
-     *     ================= ============ ======= ========== ====== ========
-     *     SQL Type          .type        .length .frac_dig  .flags .charset
-     *     ================= ============ ======= ========== ====== ========
-     *     TINY              SINT         x
-     *     TINY UNSIGNED     UINT         x                  x
-     *     SHORT             SINT         x
-     *     SHORT UNSIGNED    UINT         x                  x
-     *     INT24             SINT         x
-     *     INT24 UNSIGNED    UINT         x                  x
-     *     INT               SINT         x
-     *     INT UNSIGNED      UINT         x                  x
-     *     LONGLONG          SINT         x
-     *     LONGLONG UNSIGNED UINT         x                  x
-     *     DOUBLE            DOUBLE       x       x          x
-     *     FLOAT             FLOAT        x       x          x
-     *     DECIMAL           DECIMAL      x       x          x
-     *     VARCHAR,CHAR,...  BYTES        x                  x      x
-     *     GEOMETRY          BYTES
-     *     TIME              TIME         x
-     *     DATE              DATETIME     x
-     *     DATETIME          DATETIME     x
-     *     YEAR              UINT         x                  x
-     *     TIMESTAMP         DATETIME     x
-     *     SET               SET                                    x
-     *     ENUM              ENUM                                   x
-     *     NULL              BYTES
-     *     BIT               BIT          x
-     *     ================= ============ ======= ========== ====== ========
-     *   .. note:: the SQL "NULL" value is sent as an empty field value in :protobuf:msg:`Mysqlx.Resultset::Row`
-     *   .. seealso:: protobuf encoding of primitive datatypes are decribed in https://developers.google.com/protocol-buffers/docs/encoding
-     *   SINT
-     *     ``.length``
-     *       maximum number of displayable decimal digits (including minus sign) of the type
-     *       .. note::
-     *         valid range is 0-255, but usually you'll see 1-20
-     *       =============== ==
-     *       SQL Type        max digits per type
-     *       =============== ==
-     *       TINY SIGNED      4
-     *       SHORT SIGNED     6
-     *       INT24 SIGNED     8
-     *       INT SIGNED      11
-     *       LONGLONG SIGNED 20
-     *       =============== ==
-     *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
-     *     ``value``
-     *       variable length encoded signed 64 integer
-     *   UINT
-     *     ``.flags &amp; 1`` (zerofill)
-     *       the client has to left pad with 0's up to .length
-     *     ``.length``
-     *       maximum number of displayable decimal digits of the type
-     *       .. note::
-     *         valid range is 0-255, but usually you'll see 1-20
-     *       ================= ==
-     *       SQL Type          max digits per type
-     *       ================= ==
-     *       TINY UNSIGNED      3
-     *       SHORT UNSIGNED     5
-     *       INT24 UNSIGNED     8
-     *       INT UNSIGNED      10
-     *       LONGLONG UNSIGNED 20
-     *       ================= ==
-     *       .. seealso:: definition of ``M`` in https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
-     *     ``value``
-     *       variable length encoded unsigned 64 integer
-     *   BIT
-     *     ``.length``
-     *       maximum number of displayable binary digits
-     *       .. note:: valid range for M of the ``BIT`` type is 1 - 64
-     *       .. seealso:: https://dev.mysql.com/doc/refman/8.0/en/numeric-type-overview.html
-     *     ``value``
-     *       variable length encoded unsigned 64 integer
-     *   DOUBLE
-     *     ``.length``
-     *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
-     *     ``.fractional_digits``
-     *       maximum number of displayable decimal digits following the decimal point
-     *     ``value``
-     *       encoded as Protobuf's 'double'
-     *   FLOAT
-     *     ``.length``
-     *       maximum number of displayable decimal digits (including the decimal point and ``.fractional_digits``)
-     *     ``.fractional_digits``
-     *       maximum number of displayable decimal digits following the decimal point
-     *     ``value``
-     *       encoded as Protobuf's 'float'
-     *   BYTES, ENUM
-     *     BYTES is used for all opaque byte strings that may have a charset
-     *       * TINYBLOB, BLOB, MEDIUMBLOB, LONGBLOB
-     *       * TINYTEXT, TEXT, MEDIUMTEXT, LONGTEXT
-     *       * VARCHAR, VARBINARY
-     *       * CHAR, BINARY
-     *       * ENUM
-     *     ``.length``
-     *       the maximum length of characters of the underlying type
-     *     ``.flags &amp; 1`` (rightpad)
-     *       if the length of the field is less than ``.length``, the receiver is
-     *       supposed to add padding characters to the right end of the string.
-     *       If the ``.charset`` is "binary", the padding character is ``0x00``,
-     *       otherwise it is a space character as defined by that character set.
-     *       ============= ======= ======== =======
-     *       SQL Type      .length .charset .flags
-     *       ============= ======= ======== =======
-     *       TINYBLOB      256     binary
-     *       BLOB          65535   binary
-     *       VARCHAR(32)   32      utf8
-     *       VARBINARY(32) 32      utf8_bin
-     *       BINARY(32)    32      binary   rightpad
-     *       CHAR(32)      32      utf8     rightpad
-     *       ============= ======= ======== =======
-     *     ``value``
-     *       sequence of bytes with added one extra '&#92;0' byte at the end. To obtain the
-     *       original string, the extra '&#92;0' should be removed.
-     *       .. note:: the length of the string can be acquired with protobuf's field length() method
-     *         length of sequence-of-bytes = length-of-field - 1
-     *       .. note:: the extra byte allows to distinguish between a NULL and empty byte sequence
-     *   TIME
-     *     A time value.
-     *     ``value``
-     *       the following bytes sequence:
-     *         ``| negate [ | hour | [ | minutes | [ | seconds | [ | useconds | ]]]]``
-     *       * negate - one byte, should be one of: 0x00 for "+", 0x01 for "-"
-     *       * hour - optional variable length encoded unsigned64 value for the hour
-     *       * minutes - optional variable length encoded unsigned64 value for the minutes
-     *       * seconds - optional variable length encoded unsigned64 value for the seconds
-     *       * useconds - optional variable length encoded unsigned64 value for the microseconds
-     *       .. seealso:: protobuf encoding in https://developers.google.com/protocol-buffers/docs/encoding
-     *       .. note:: hour, minutes, seconds, useconds are optional if all the values to the right are 0
-     *       Example: 0x00 -&gt; +00:00:00.000000
-     *   DATETIME
-     *     A date or date and time value.
-     *     ``value``
-     *       a sequence of variants, arranged as follows:
-     *         ``| year | month | day | [ | hour | [ | minutes | [ | seconds | [ | useconds | ]]]]``
-     *       * year - variable length encoded unsigned64 value for the year
-     *       * month - variable length encoded unsigned64 value for the month
-     *       * day - variable length encoded unsigned64 value for the day
-     *       * hour - optional variable length encoded unsigned64 value for the hour
-     *       * minutes - optional variable length encoded unsigned64 value for the minutes
-     *       * seconds - optional variable length encoded unsigned64 value for the seconds
-     *       * useconds - optional variable length encoded unsigned64 value for the microseconds
-     *       .. note:: hour, minutes, seconds, useconds are optional if all the values to the right are 0
-     *     ``.flags &amp; 1`` (timestamp)
-     *       ============= =======
-     *       SQL Type      .flags
-     *       ============= =======
-     *       DATETIME
-     *       TIMESTAMP     1
-     *   DECIMAL
-     *     An arbitrary length number. The number is encoded as a single byte
-     *     indicating the position of the decimal point followed by the Packed BCD
-     *     encoded number. Packed BCD is used to simplify conversion to and
-     *     from strings and other native arbitrary precision math datatypes.
-     *     .. seealso:: packed BCD in https://en.wikipedia.org/wiki/Binary-coded_decimal
-     *     ``.length``
-     *       maximum number of displayable decimal digits (*excluding* the decimal point and sign, but including ``.fractional_digits``)
-     *       .. note:: should be in the range of 1 - 65
-     *     ``.fractional_digits``
-     *       is the decimal digits to display out of length
-     *       .. note:: should be in the range of 0 - 30
-     *     ``value``
-     *       the following bytes sequence:
-     *         ``| scale | BCD | sign | [0x0] |``
-     *       * scale - 8bit scale value (number of decimal digit after the '.')
-     *       * BCD - BCD encoded digits (4 bits for each digit)
-     *       * sign - sign encoded on 4 bits (0xc = "+", 0xd = "-")
-     *       * 0x0 - last 4bits if length(digits) % 2 == 0
-     *       Example: x04 0x12 0x34 0x01 0xd0 -&gt; -12.3401
-     *   SET
-     *     A list of strings representing a SET of values.
-     *     ``value``
-     *       A sequence of 0 or more of protobuf's bytes (length prepended octets) or one of
-     *       the special sequences with a predefined meaning listed below.
-     *       Example (length of the bytes array shown in brackets):
-     *         * ``[0]`` - the NULL value
-     *         * ``[1] 0x00`` - a set containing a blank string ''
-     *         * ``[1] 0x01`` - this would be an invalid value, but is to be treated as the empty set
-     *         * ``[2] 0x01 0x00`` - a set with a single item, which is the '&#92;0' character
-     *         * ``[8] 0x03 F O O 0x03 B A R`` - a set with 2 items: FOO,BAR
-     * :param name: name of the column
-     * :param original_name: name of the column before an alias was applied
-     * :param table: name of the table the column orginates from
-     * :param original_table: name of the table the column orginates from before an alias was applied
-     * :param schema: schema the column originates from
-     * :param catalog:
-     *   catalog the schema originates from
-     *   .. note::
-     *     as there is current no support for catalogs in MySQL, don't expect this field to be set.
-     *     In the MySQL C/S protocol the field had the value ``def`` all the time.
-     * :param fractional_digits: displayed factional decimal digits for floating point and fixed point numbers
-     * :param length: maximum count of displayable characters of .type
-     * :param flags:
-     *   ``.type`` specific flags
-     *   ======= ====== ===========
-     *   type    value  description
-     *   ======= ====== ===========
-     *   UINT    0x0001 zerofill
-     *   DOUBLE  0x0001 unsigned
-     *   FLOAT   0x0001 unsigned
-     *   DECIMAL 0x0001 unsigned
-     *   BYTES   0x0001 rightpad
-     *   ======= ====== ===========
-     *   ====== ================
-     *   value  description
-     *   ====== ================
-     *   0x0010 NOT_NULL
-     *   0x0020 PRIMARY_KEY
-     *   0x0040 UNIQUE_KEY
-     *   0x0080 MULTIPLE_KEY
-     *   0x0100 AUTO_INCREMENT
-     *   ====== ================
-     *   default: 0
-     * :param content_type:
-     *   a hint about the higher-level encoding of a BYTES field, for more informations
-     *   please refer to Mysqlx.Resultset.ContentType_BYTES enum.
+     **
+     *Meta data of a column
+     *&#64;note
+     *The encoding used for the different ``bytes`` fields in the
+     *meta data is externally controlled. See also:
+     *https://dev.mysql.com/doc/refman/5.0/en/charset-connection.html
+     *&#64;par
+     *&#64;note
+     *The server may not set the ``original_{table|name}`` fields
+     *if they are equal to the plain ``{table|name}`` field.
+     *&#64;par
+     *&#64;note
+     *A client has to reconstruct it like:
+     *&#64;code{py}
+     *if .original_name is empty and .name is not empty:
+     *.original_name = .name
+     *if .original_table is empty and .table is not empty:
+     *.original_table = .table
+     *&#64;endcode
+     *&#64;par
+     *&#64;note
+     *``Compact metadata format`` can be requested by the client.
+     *In that case, only ``.type`` is set and all other fields are  empty.
+     *Expected data type of Mysqlx.Resultset.Row per SQL Type for
+     *non-NULL values:
+     *| SQL Type          | .type     | .length | .frac&#92;_dig | .flags | .charset |
+     *|-------------------|-----------|---------|------------|--------|----------|
+     *| TINY              | SINT      | x       |            |        |          |
+     *| TINY UNSIGNED     | UINT      | x       |            | x      |          |
+     *| SHORT             | SINT      | x       |            |        |          |
+     *| SHORT UNSIGNED    | UINT      | x       |            | x      |          |
+     *| INT24             | SINT      | x       |            |        |          |
+     *| INT24 UNSIGNED    | UINT      | x       |            | x      |          |
+     *| INT               | SINT      | x       |            |        |          |
+     *| INT UNSIGNED      | UINT      | x       |            | x      |          |
+     *| LONGLONG          | SINT      | x       |            |        |          |
+     *| LONGLONG UNSIGNED | UINT      | x       |            | x      |          |
+     *| DOUBLE            | DOUBLE    | x       | x          | x      |          |
+     *| FLOAT             | FLOAT     | x       | x          | x      |          |
+     *| DECIMAL           | DECIMAL   | x       | x          | x      |          |
+     *| VARCHAR,CHAR,...  | BYTES     | x       |            | x      | x        |
+     *| GEOMETRY          | BYTES     |         |            |        |          |
+     *| TIME              | TIME      | x       |            |        |          |
+     *| DATE              | DATETIME  | x       |            |        |          |
+     *| DATETIME          | DATETIME  | x       |            |        |          |
+     *| YEAR              | UINT      | x       |            | x      |          |
+     *| TIMESTAMP         | DATETIME  | x       |            |        |          |
+     *| SET               | SET       |         |            |        | x        |
+     *| ENUM              | ENUM      |         |            |        | x        |
+     *| NULL              | BYTES     |         |            |        |          |
+     *| BIT               | BIT       | x       |            |        |          |
+     *&#64;note
+     *The SQL "NULL" value is sent as an empty field value in
+     *&#64;ref Mysqlx::Resultset::Row.
+     *&#64;par Tip
+     *The protobuf encoding of primitive data types is described in
+     *https://developers.google.com/protocol-buffers/docs/encoding
+     *+ SINT
+     *- ``.length`` &#64;n
+     *Maximum number of displayable decimal digits (including
+     *minus sign) of the type.
+     *&#64;note
+     *The valid range is 0-255, but usually you'll see 1-20.
+     *| SQL Type         | Maximum Digits per Type |
+     *|------------------|-------------------------|
+     *| TINY SIGNED      | 4                       |
+     *| SHORT SIGNED     | 6                       |
+     *| INT24 SIGNED     | 8                       |
+     *| INT SIGNED       | 11                      |
+     *| LONGLONG SIGNED  | 20                      |
+     *&#64;par Tip
+     *Definition of ``M`` are in
+     *https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html.
+     *- ``value``&#64;n
+     *Variable length encoded signed 64 integer.
+     *+ UINT
+     *- ``.flags &amp; 1`` (zerofill) &#64;n
+     *The client has to left pad with 0's up to .length.
+     *- ``.length`` &#64;n
+     *Maximum number of displayable decimal digits of the
+     *type.
+     *&#64;note
+     *The valid range is 0-255, but usually you'll see
+     *1-20.
+     *| SQL Type             | max digits per type |
+     *|----------------------|---------------------|
+     *| TINY UNSIGNED        | 3                   |
+     *| SHORT UNSIGNED       | 5                   |
+     *| INT24 UNSIGNED       | 8                   |
+     *| INT UNSIGNED         | 10                  |
+     *| LONGLONG UNSIGNED    | 20                  |
+     *&#64;par Tip
+     *Definition of ``M`` are in
+     *https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html.
+     *- ``value`` &#64;n
+     *Variable length encoded unsigned 64 integer.
+     *+ BIT
+     *- ``.length`` &#64;n
+     *Maximum number of displayable binary digits.
+     *&#64;note
+     *The valid range for M of the ``BIT`` type is 1 - 64.
+     *&#64;par Tip
+     *https://dev.mysql.com/doc/refman/5.5/en/numeric-type-overview.html
+     *- ``value`` &#64;n
+     *Variable length encoded unsigned 64 integer.
+     *+ DOUBLE
+     *- ``.length`` &#64;n
+     *Maximum number of displayable decimal digits (including
+     *the decimal point and ``.fractional_digits``).
+     *- ``.fractional_digits`` &#64;n
+     *Maximum number of displayable decimal digits following
+     *the decimal point.
+     *- ``value``&#64;n
+     *Encoded as protobuf's 'double'.
+     *+ FLOAT
+     *- ``.length``&#64;n
+     *Maximum number of displayable decimal digits (including
+     *the decimal point and ``.fractional_digits``).
+     *- ``.fractional_digits``&#64;n
+     *Maximum number of displayable decimal digits following
+     *the decimal point.
+     *- ``value``&#64;n
+     *Encoded as protobuf's 'float'.
+     *+ BYTES, ENUM
+     *&#64;note
+     *BYTES is used for all opaque byte strings that may have a charset:
+     *-  TINYBLOB, BLOB, MEDIUMBLOB, LONGBLOB
+     *-  TINYTEXT, TEXT, MEDIUMTEXT, LONGTEXT
+     *-  VARCHAR, VARBINARY
+     *-  CHAR, BINARY
+     *-  ENUM
+     *- ``.length``&#64;n
+     *Maximum length of characters of the underlying type.
+     *- ``.flags &amp; 1`` (rightpad) &#64;n
+     *If the length of the field is less than ``.length``, the
+     *receiver is supposed to add padding characters to the
+     *right end of the string. If the ``.charset`` is
+     *"binary", the padding character is ``0x00``, otherwise
+     *it is a space character as defined by that character
+     *set.
+     *| SQL Type      | .length  | .charset  | .flags   |
+     *|---------------|----------|-----------|----------|
+     *| TINYBLOB      | 256      | binary    |          |
+     *| BLOB          | 65535    | binary    |          |
+     *| VARCHAR(32)   | 32       | utf8      |          |
+     *| VARBINARY(32) | 32       | utf8&#92;_bin |          |
+     *| BINARY(32)    | 32       | binary    | rightpad |
+     *| CHAR(32)      | 32       | utf8      | rightpad |
+     *- ``value``
+     *Sequence of bytes with added one extra ``0x00`` byte at
+     *the end. To obtain the original string, the extra
+     *``0x00`` should be removed. The length of the string can
+     *be acquired with protobuf's field ``length()`` method:
+     *``length of sequence-of-bytes = length-of-field - 1``
+     *&#64;note
+     *The extra byte allows to distinguish between a NULL
+     *and empty byte sequence.
+     *+ TIME
+     *A time value.
+     *- ``value``&#64;n
+     *The following bytes sequence:
+     *``negate [ hour [ minutes [ seconds [ useconds ]]]]``
+     *-  negate - one byte, should be one of: 0x00 for "+",
+     *0x01 for "-"
+     *-  hour - optional variable length encoded unsigned64
+     *value for the hour
+     *-  minutes - optional variable length encoded unsigned64
+     *value for the minutes
+     *-  seconds - optional variable length encoded unsigned64
+     *value for the seconds
+     *-  useconds - optional variable length encoded
+     *unsigned64 value for the microseconds
+     *&#64;par Tip
+     *The protobuf encoding in
+     *https://developers.google.com/protocol-buffers/docs/encoding.
+     *&#64;note
+     *Hour, minutes, seconds, and useconds are optional if
+     *all the values to the right are 0.
+     *Example: ``0x00 -&gt; +00:00:00.000000``
+     *+ DATETIME
+     *A date or date and time value.
+     *- ``value`` &#64;n
+     *A sequence of variants, arranged as follows:
+     *``| year | month | day | [ | hour | [ | minutes | [ | seconds | [ | useconds | ]]]]``
+     *-  year - variable length encoded unsigned64 value for
+     *the year
+     *-  month - variable length encoded unsigned64 value for
+     *the month
+     *-  day - variable length encoded unsigned64 value for
+     *the day
+     *-  hour - optional variable length encoded unsigned64
+     *value for the hour
+     *-  minutes - optional variable length encoded unsigned64
+     *value for the minutes
+     *-  seconds - optional variable length encoded unsigned64
+     *value for the seconds
+     *-  useconds - optional variable length encoded
+     *unsigned64 value for the microseconds
+     *&#64;note
+     *Hour, minutes, seconds, useconds are optional if all
+     *the values to the right are 0.
+     *- ``.flags``&#64;n
+     *| Name          | Position |
+     *|---------------|----------|
+     *| is&#92;_timestamp | 1        |
+     *+ DECIMAL
+     *An arbitrary length number. The number is encoded as a
+     *single byte indicating the position of the decimal point
+     *followed by the Packed BCD encoded number. Packed BCD is
+     *used to simplify conversion to and from strings and other
+     *native arbitrary precision math data types. See also: packed
+     *BCD in https://en.wikipedia.org/wiki/Binary-coded_decimal
+     *- ``.length``
+     *Maximum number of displayable decimal digits
+     *(*excluding* the decimal point and sign, but including
+     *``.fractional_digits``).
+     *&#64;note
+     *Should be in the range of 1 - 65.
+     *- ``.fractional_digits``
+     *The decimal digits to display out of length.
+     *&#64;note
+     *Should be in the range of 0 - 30.
+     *``value``
+     *The following bytes sequence:
+     *``scale | BCD+ sign [0x00]?``
+     *-  scale - 8bit scale value (number of decimal digit after the '.')
+     *-  BCD - BCD encoded digits (4 bits for each digit)
+     *-  sign - sign encoded on 4 bits (0xc = "+", 0xd = "-")
+     *-  0x0 - last 4bits if length(digits) % 2 == 0
+     *Example: ``x04 0x12 0x34 0x01
+     *0xd0 -&gt; -12.3401``
+     *+ SET
+     *A list of strings representing a SET of values.
+     *- ``value``&#64;n
+     *A sequence of 0 or more of protobuf's bytes (length
+     *prepended octets) or one of the special sequences with a
+     *predefined meaning listed below.
+     *Example (length of the bytes array shown in brackets):
+     *-  ``[0]`` - the NULL value
+     *-  ``[1] 0x00`` - a set containing a blank string ''
+     *-  ``[1] 0x01`` - this would be an invalid value,
+     *but is to be treated as the empty set
+     *-  ``[2] 0x01 0x00`` - a set with a single item, which is the '0'
+     *character
+     *-  ``[8] 0x03 F O O 0x03 B A R`` - a set with 2 items: FOO,BAR
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Resultset.ColumnMetaData}
@@ -3734,7 +4052,7 @@ public final class MysqlxResultset {
       private int type_ = 1;
       /**
        * <pre>
-       * datatype of the field in a row
+       ** datatype of the field in a row 
        * </pre>
        *
        * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
@@ -3745,7 +4063,7 @@ public final class MysqlxResultset {
       }
       /**
        * <pre>
-       * datatype of the field in a row
+       ** datatype of the field in a row 
        * </pre>
        *
        * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
@@ -3758,7 +4076,7 @@ public final class MysqlxResultset {
       }
       /**
        * <pre>
-       * datatype of the field in a row
+       ** datatype of the field in a row 
        * </pre>
        *
        * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
@@ -3776,7 +4094,7 @@ public final class MysqlxResultset {
       }
       /**
        * <pre>
-       * datatype of the field in a row
+       ** datatype of the field in a row 
        * </pre>
        *
        * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
@@ -3791,6 +4109,10 @@ public final class MysqlxResultset {
 
       private com.google.protobuf.ByteString name_ = com.google.protobuf.ByteString.EMPTY;
       /**
+       * <pre>
+       ** ame of the column 
+       * </pre>
+       *
        * <code>optional bytes name = 2;</code>
        * @return Whether the name field is set.
        */
@@ -3798,6 +4120,10 @@ public final class MysqlxResultset {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
+       * <pre>
+       ** ame of the column 
+       * </pre>
+       *
        * <code>optional bytes name = 2;</code>
        * @return The name.
        */
@@ -3805,6 +4131,10 @@ public final class MysqlxResultset {
         return name_;
       }
       /**
+       * <pre>
+       ** ame of the column 
+       * </pre>
+       *
        * <code>optional bytes name = 2;</code>
        * @param value The name to set.
        * @return This builder for chaining.
@@ -3819,6 +4149,10 @@ public final class MysqlxResultset {
         return this;
       }
       /**
+       * <pre>
+       ** ame of the column 
+       * </pre>
+       *
        * <code>optional bytes name = 2;</code>
        * @return This builder for chaining.
        */
@@ -3831,6 +4165,10 @@ public final class MysqlxResultset {
 
       private com.google.protobuf.ByteString originalName_ = com.google.protobuf.ByteString.EMPTY;
       /**
+       * <pre>
+       ** name of the column before an alias was applied 
+       * </pre>
+       *
        * <code>optional bytes original_name = 3;</code>
        * @return Whether the originalName field is set.
        */
@@ -3838,6 +4176,10 @@ public final class MysqlxResultset {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
+       * <pre>
+       ** name of the column before an alias was applied 
+       * </pre>
+       *
        * <code>optional bytes original_name = 3;</code>
        * @return The originalName.
        */
@@ -3845,6 +4187,10 @@ public final class MysqlxResultset {
         return originalName_;
       }
       /**
+       * <pre>
+       ** name of the column before an alias was applied 
+       * </pre>
+       *
        * <code>optional bytes original_name = 3;</code>
        * @param value The originalName to set.
        * @return This builder for chaining.
@@ -3859,6 +4205,10 @@ public final class MysqlxResultset {
         return this;
       }
       /**
+       * <pre>
+       ** name of the column before an alias was applied 
+       * </pre>
+       *
        * <code>optional bytes original_name = 3;</code>
        * @return This builder for chaining.
        */
@@ -3871,6 +4221,10 @@ public final class MysqlxResultset {
 
       private com.google.protobuf.ByteString table_ = com.google.protobuf.ByteString.EMPTY;
       /**
+       * <pre>
+       ** name of the table the column originates from 
+       * </pre>
+       *
        * <code>optional bytes table = 4;</code>
        * @return Whether the table field is set.
        */
@@ -3878,6 +4232,10 @@ public final class MysqlxResultset {
         return ((bitField0_ & 0x00000008) != 0);
       }
       /**
+       * <pre>
+       ** name of the table the column originates from 
+       * </pre>
+       *
        * <code>optional bytes table = 4;</code>
        * @return The table.
        */
@@ -3885,6 +4243,10 @@ public final class MysqlxResultset {
         return table_;
       }
       /**
+       * <pre>
+       ** name of the table the column originates from 
+       * </pre>
+       *
        * <code>optional bytes table = 4;</code>
        * @param value The table to set.
        * @return This builder for chaining.
@@ -3899,6 +4261,10 @@ public final class MysqlxResultset {
         return this;
       }
       /**
+       * <pre>
+       ** name of the table the column originates from 
+       * </pre>
+       *
        * <code>optional bytes table = 4;</code>
        * @return This builder for chaining.
        */
@@ -3911,6 +4277,10 @@ public final class MysqlxResultset {
 
       private com.google.protobuf.ByteString originalTable_ = com.google.protobuf.ByteString.EMPTY;
       /**
+       * <pre>
+       ** name of the table the column originates from before an alias was applied 
+       * </pre>
+       *
        * <code>optional bytes original_table = 5;</code>
        * @return Whether the originalTable field is set.
        */
@@ -3918,6 +4288,10 @@ public final class MysqlxResultset {
         return ((bitField0_ & 0x00000010) != 0);
       }
       /**
+       * <pre>
+       ** name of the table the column originates from before an alias was applied 
+       * </pre>
+       *
        * <code>optional bytes original_table = 5;</code>
        * @return The originalTable.
        */
@@ -3925,6 +4299,10 @@ public final class MysqlxResultset {
         return originalTable_;
       }
       /**
+       * <pre>
+       ** name of the table the column originates from before an alias was applied 
+       * </pre>
+       *
        * <code>optional bytes original_table = 5;</code>
        * @param value The originalTable to set.
        * @return This builder for chaining.
@@ -3939,6 +4317,10 @@ public final class MysqlxResultset {
         return this;
       }
       /**
+       * <pre>
+       ** name of the table the column originates from before an alias was applied 
+       * </pre>
+       *
        * <code>optional bytes original_table = 5;</code>
        * @return This builder for chaining.
        */
@@ -3951,6 +4333,10 @@ public final class MysqlxResultset {
 
       private com.google.protobuf.ByteString schema_ = com.google.protobuf.ByteString.EMPTY;
       /**
+       * <pre>
+       ** schema the column originates from 
+       * </pre>
+       *
        * <code>optional bytes schema = 6;</code>
        * @return Whether the schema field is set.
        */
@@ -3958,6 +4344,10 @@ public final class MysqlxResultset {
         return ((bitField0_ & 0x00000020) != 0);
       }
       /**
+       * <pre>
+       ** schema the column originates from 
+       * </pre>
+       *
        * <code>optional bytes schema = 6;</code>
        * @return The schema.
        */
@@ -3965,6 +4355,10 @@ public final class MysqlxResultset {
         return schema_;
       }
       /**
+       * <pre>
+       ** schema the column originates from 
+       * </pre>
+       *
        * <code>optional bytes schema = 6;</code>
        * @param value The schema to set.
        * @return This builder for chaining.
@@ -3979,6 +4373,10 @@ public final class MysqlxResultset {
         return this;
       }
       /**
+       * <pre>
+       ** schema the column originates from 
+       * </pre>
+       *
        * <code>optional bytes schema = 6;</code>
        * @return This builder for chaining.
        */
@@ -3991,6 +4389,14 @@ public final class MysqlxResultset {
 
       private com.google.protobuf.ByteString catalog_ = com.google.protobuf.ByteString.EMPTY;
       /**
+       * <pre>
+       ** catalog the schema originates from
+       *&#64;note
+       *As there is current no support for catalogs in MySQL,
+       *don't expect this field to be set. In the MySQL C/S
+       *protocol the field had the value ``def`` all the time 
+       * </pre>
+       *
        * <code>optional bytes catalog = 7;</code>
        * @return Whether the catalog field is set.
        */
@@ -3998,6 +4404,14 @@ public final class MysqlxResultset {
         return ((bitField0_ & 0x00000040) != 0);
       }
       /**
+       * <pre>
+       ** catalog the schema originates from
+       *&#64;note
+       *As there is current no support for catalogs in MySQL,
+       *don't expect this field to be set. In the MySQL C/S
+       *protocol the field had the value ``def`` all the time 
+       * </pre>
+       *
        * <code>optional bytes catalog = 7;</code>
        * @return The catalog.
        */
@@ -4005,6 +4419,14 @@ public final class MysqlxResultset {
         return catalog_;
       }
       /**
+       * <pre>
+       ** catalog the schema originates from
+       *&#64;note
+       *As there is current no support for catalogs in MySQL,
+       *don't expect this field to be set. In the MySQL C/S
+       *protocol the field had the value ``def`` all the time 
+       * </pre>
+       *
        * <code>optional bytes catalog = 7;</code>
        * @param value The catalog to set.
        * @return This builder for chaining.
@@ -4019,6 +4441,14 @@ public final class MysqlxResultset {
         return this;
       }
       /**
+       * <pre>
+       ** catalog the schema originates from
+       *&#64;note
+       *As there is current no support for catalogs in MySQL,
+       *don't expect this field to be set. In the MySQL C/S
+       *protocol the field had the value ``def`` all the time 
+       * </pre>
+       *
        * <code>optional bytes catalog = 7;</code>
        * @return This builder for chaining.
        */
@@ -4068,6 +4498,11 @@ public final class MysqlxResultset {
 
       private int fractionalDigits_ ;
       /**
+       * <pre>
+       ** displayed factional decimal digits for floating point and
+       *fixed point numbers 
+       * </pre>
+       *
        * <code>optional uint32 fractional_digits = 9;</code>
        * @return Whether the fractionalDigits field is set.
        */
@@ -4075,6 +4510,11 @@ public final class MysqlxResultset {
         return ((bitField0_ & 0x00000100) != 0);
       }
       /**
+       * <pre>
+       ** displayed factional decimal digits for floating point and
+       *fixed point numbers 
+       * </pre>
+       *
        * <code>optional uint32 fractional_digits = 9;</code>
        * @return The fractionalDigits.
        */
@@ -4082,6 +4522,11 @@ public final class MysqlxResultset {
         return fractionalDigits_;
       }
       /**
+       * <pre>
+       ** displayed factional decimal digits for floating point and
+       *fixed point numbers 
+       * </pre>
+       *
        * <code>optional uint32 fractional_digits = 9;</code>
        * @param value The fractionalDigits to set.
        * @return This builder for chaining.
@@ -4093,6 +4538,11 @@ public final class MysqlxResultset {
         return this;
       }
       /**
+       * <pre>
+       ** displayed factional decimal digits for floating point and
+       *fixed point numbers 
+       * </pre>
+       *
        * <code>optional uint32 fractional_digits = 9;</code>
        * @return This builder for chaining.
        */
@@ -4105,6 +4555,10 @@ public final class MysqlxResultset {
 
       private int length_ ;
       /**
+       * <pre>
+       ** maximum count of displayable characters of .type 
+       * </pre>
+       *
        * <code>optional uint32 length = 10;</code>
        * @return Whether the length field is set.
        */
@@ -4112,6 +4566,10 @@ public final class MysqlxResultset {
         return ((bitField0_ & 0x00000200) != 0);
       }
       /**
+       * <pre>
+       ** maximum count of displayable characters of .type 
+       * </pre>
+       *
        * <code>optional uint32 length = 10;</code>
        * @return The length.
        */
@@ -4119,6 +4577,10 @@ public final class MysqlxResultset {
         return length_;
       }
       /**
+       * <pre>
+       ** maximum count of displayable characters of .type 
+       * </pre>
+       *
        * <code>optional uint32 length = 10;</code>
        * @param value The length to set.
        * @return This builder for chaining.
@@ -4130,6 +4592,10 @@ public final class MysqlxResultset {
         return this;
       }
       /**
+       * <pre>
+       ** maximum count of displayable characters of .type 
+       * </pre>
+       *
        * <code>optional uint32 length = 10;</code>
        * @return This builder for chaining.
        */
@@ -4142,6 +4608,25 @@ public final class MysqlxResultset {
 
       private int flags_ ;
       /**
+       * <pre>
+       ** ``.type`` specific flags
+       *| Type    | Value  | Description  |
+       *|---------|--------|--------------|
+       *| UINT    | 0x0001 | zerofill     |
+       *| DOUBLE  | 0x0001 | unsigned     |
+       *| FLOAT   | 0x0001 | unsigned     |
+       *| DECIMAL | 0x0001 | unsigned     |
+       *| BYTES   | 0x0001 | rightpad     |
+       *| Value  | Description     |
+       *|--------|-----------------|
+       *| 0x0010 | NOT&#92;_NULL       |
+       *| 0x0020 | PRIMARY&#92;_KEY    |
+       *| 0x0040 | UNIQUE&#92;_KEY     |
+       *| 0x0080 | MULTIPLE&#92;_KEY   |
+       *| 0x0100 | AUTO&#92;_INCREMENT |
+       *default: 0 
+       * </pre>
+       *
        * <code>optional uint32 flags = 11;</code>
        * @return Whether the flags field is set.
        */
@@ -4149,6 +4634,25 @@ public final class MysqlxResultset {
         return ((bitField0_ & 0x00000400) != 0);
       }
       /**
+       * <pre>
+       ** ``.type`` specific flags
+       *| Type    | Value  | Description  |
+       *|---------|--------|--------------|
+       *| UINT    | 0x0001 | zerofill     |
+       *| DOUBLE  | 0x0001 | unsigned     |
+       *| FLOAT   | 0x0001 | unsigned     |
+       *| DECIMAL | 0x0001 | unsigned     |
+       *| BYTES   | 0x0001 | rightpad     |
+       *| Value  | Description     |
+       *|--------|-----------------|
+       *| 0x0010 | NOT&#92;_NULL       |
+       *| 0x0020 | PRIMARY&#92;_KEY    |
+       *| 0x0040 | UNIQUE&#92;_KEY     |
+       *| 0x0080 | MULTIPLE&#92;_KEY   |
+       *| 0x0100 | AUTO&#92;_INCREMENT |
+       *default: 0 
+       * </pre>
+       *
        * <code>optional uint32 flags = 11;</code>
        * @return The flags.
        */
@@ -4156,6 +4660,25 @@ public final class MysqlxResultset {
         return flags_;
       }
       /**
+       * <pre>
+       ** ``.type`` specific flags
+       *| Type    | Value  | Description  |
+       *|---------|--------|--------------|
+       *| UINT    | 0x0001 | zerofill     |
+       *| DOUBLE  | 0x0001 | unsigned     |
+       *| FLOAT   | 0x0001 | unsigned     |
+       *| DECIMAL | 0x0001 | unsigned     |
+       *| BYTES   | 0x0001 | rightpad     |
+       *| Value  | Description     |
+       *|--------|-----------------|
+       *| 0x0010 | NOT&#92;_NULL       |
+       *| 0x0020 | PRIMARY&#92;_KEY    |
+       *| 0x0040 | UNIQUE&#92;_KEY     |
+       *| 0x0080 | MULTIPLE&#92;_KEY   |
+       *| 0x0100 | AUTO&#92;_INCREMENT |
+       *default: 0 
+       * </pre>
+       *
        * <code>optional uint32 flags = 11;</code>
        * @param value The flags to set.
        * @return This builder for chaining.
@@ -4167,6 +4690,25 @@ public final class MysqlxResultset {
         return this;
       }
       /**
+       * <pre>
+       ** ``.type`` specific flags
+       *| Type    | Value  | Description  |
+       *|---------|--------|--------------|
+       *| UINT    | 0x0001 | zerofill     |
+       *| DOUBLE  | 0x0001 | unsigned     |
+       *| FLOAT   | 0x0001 | unsigned     |
+       *| DECIMAL | 0x0001 | unsigned     |
+       *| BYTES   | 0x0001 | rightpad     |
+       *| Value  | Description     |
+       *|--------|-----------------|
+       *| 0x0010 | NOT&#92;_NULL       |
+       *| 0x0020 | PRIMARY&#92;_KEY    |
+       *| 0x0040 | UNIQUE&#92;_KEY     |
+       *| 0x0080 | MULTIPLE&#92;_KEY   |
+       *| 0x0100 | AUTO&#92;_INCREMENT |
+       *default: 0 
+       * </pre>
+       *
        * <code>optional uint32 flags = 11;</code>
        * @return This builder for chaining.
        */
@@ -4179,6 +4721,22 @@ public final class MysqlxResultset {
 
       private int contentType_ ;
       /**
+       * <pre>
+       ** a hint about the higher-level encoding of a BYTES field
+       *| Type   | Value  | Description             |
+       *|--------|--------|-------------------------|
+       *| BYTES  | 0x0001 | GEOMETRY (WKB encoding) |
+       *| BYTES  | 0x0002 | JSON (text encoding)    |
+       *| BYTES  | 0x0003 | XML (text encoding)     |
+       *&#64;note
+       *This list isn't comprehensive. As guideline: the field's
+       *value is expected to pass a validator check on client
+       *and server if this field is set. If the server adds more
+       *internal data types that rely on BLOB storage like image
+       *manipulation, seeking into complex types in BLOBs, and
+       *more types will be added 
+       * </pre>
+       *
        * <code>optional uint32 content_type = 12;</code>
        * @return Whether the contentType field is set.
        */
@@ -4186,6 +4744,22 @@ public final class MysqlxResultset {
         return ((bitField0_ & 0x00000800) != 0);
       }
       /**
+       * <pre>
+       ** a hint about the higher-level encoding of a BYTES field
+       *| Type   | Value  | Description             |
+       *|--------|--------|-------------------------|
+       *| BYTES  | 0x0001 | GEOMETRY (WKB encoding) |
+       *| BYTES  | 0x0002 | JSON (text encoding)    |
+       *| BYTES  | 0x0003 | XML (text encoding)     |
+       *&#64;note
+       *This list isn't comprehensive. As guideline: the field's
+       *value is expected to pass a validator check on client
+       *and server if this field is set. If the server adds more
+       *internal data types that rely on BLOB storage like image
+       *manipulation, seeking into complex types in BLOBs, and
+       *more types will be added 
+       * </pre>
+       *
        * <code>optional uint32 content_type = 12;</code>
        * @return The contentType.
        */
@@ -4193,6 +4767,22 @@ public final class MysqlxResultset {
         return contentType_;
       }
       /**
+       * <pre>
+       ** a hint about the higher-level encoding of a BYTES field
+       *| Type   | Value  | Description             |
+       *|--------|--------|-------------------------|
+       *| BYTES  | 0x0001 | GEOMETRY (WKB encoding) |
+       *| BYTES  | 0x0002 | JSON (text encoding)    |
+       *| BYTES  | 0x0003 | XML (text encoding)     |
+       *&#64;note
+       *This list isn't comprehensive. As guideline: the field's
+       *value is expected to pass a validator check on client
+       *and server if this field is set. If the server adds more
+       *internal data types that rely on BLOB storage like image
+       *manipulation, seeking into complex types in BLOBs, and
+       *more types will be added 
+       * </pre>
+       *
        * <code>optional uint32 content_type = 12;</code>
        * @param value The contentType to set.
        * @return This builder for chaining.
@@ -4204,6 +4794,22 @@ public final class MysqlxResultset {
         return this;
       }
       /**
+       * <pre>
+       ** a hint about the higher-level encoding of a BYTES field
+       *| Type   | Value  | Description             |
+       *|--------|--------|-------------------------|
+       *| BYTES  | 0x0001 | GEOMETRY (WKB encoding) |
+       *| BYTES  | 0x0002 | JSON (text encoding)    |
+       *| BYTES  | 0x0003 | XML (text encoding)     |
+       *&#64;note
+       *This list isn't comprehensive. As guideline: the field's
+       *value is expected to pass a validator check on client
+       *and server if this field is set. If the server adds more
+       *internal data types that rely on BLOB storage like image
+       *manipulation, seeking into complex types in BLOBs, and
+       *more types will be added 
+       * </pre>
+       *
        * <code>optional uint32 content_type = 12;</code>
        * @return This builder for chaining.
        */
@@ -4289,12 +4895,13 @@ public final class MysqlxResultset {
   }
   /**
    * <pre>
-   *   Row in a Resultset
-   *   a row is represented as a list of fields encoded as byte blobs.
-   *   Blob of size 0 represents the NULL value. Otherwise, if it contains at least
-   *   one byte, it encodes a non-null value of the field using encoding appropriate for the
-   *   type of the value given by ``ColumnMetadata``, as specified
-   *   in the :protobuf:msg:`Mysqlx.Resultset::ColumnMetaData` description.
+   **
+   *Row in a Resultset.
+   *A row is represented as a list of fields encoded as byte blobs.
+   *Value of each field is encoded as sequence of bytes using
+   *encoding appropriate for the type of the value given by
+   *``ColumnMetadata``, as specified in the &#64;ref Mysqlx::Resultset::ColumnMetaData
+   *description.
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Resultset.Row}
@@ -4576,12 +5183,13 @@ public final class MysqlxResultset {
     }
     /**
      * <pre>
-     *   Row in a Resultset
-     *   a row is represented as a list of fields encoded as byte blobs.
-     *   Blob of size 0 represents the NULL value. Otherwise, if it contains at least
-     *   one byte, it encodes a non-null value of the field using encoding appropriate for the
-     *   type of the value given by ``ColumnMetadata``, as specified
-     *   in the :protobuf:msg:`Mysqlx.Resultset::ColumnMetaData` description.
+     **
+     *Row in a Resultset.
+     *A row is represented as a list of fields encoded as byte blobs.
+     *Value of each field is encoded as sequence of bytes using
+     *encoding appropriate for the type of the value given by
+     *``ColumnMetadata``, as specified in the &#64;ref Mysqlx::Resultset::ColumnMetaData
+     *description.
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Resultset.Row}

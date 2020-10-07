@@ -77,14 +77,14 @@ public class SyncMessageReaderTest {
 
     @Test
     public void testNextMessageClass() throws IOException {
-        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)), null);
         assertEquals(Ok.class, MessageConstants.getMessageClassForType(this.reader.readHeader().getMessageType()));
     }
 
     @Test
     public void testReadKnownMessageType() {
         try {
-            this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
+            this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)), null);
             Ok msg = (Ok) this.reader.readMessage(null, ServerMessages.Type.OK_VALUE).getMessage();
             assertTrue(msg.isInitialized());
         } catch (IOException e) {
@@ -94,7 +94,7 @@ public class SyncMessageReaderTest {
 
     @Test
     public void testReadWrongMessageType() {
-        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)));
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(okMsgPacket)), null);
         // will throw a WrongArgumentException if failed
         try {
             Error msg = (Error) this.reader.readMessage(null, ServerMessages.Type.ERROR_VALUE).getMessage();
@@ -110,7 +110,7 @@ public class SyncMessageReaderTest {
 
     @Test
     public void testUnexpectedError() {
-        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(errMsgPacket)));
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(errMsgPacket)), null);
         try {
             // attempt to read an Ok packet
             this.reader.readMessage(null, ServerMessages.Type.OK_VALUE);
@@ -144,7 +144,7 @@ public class SyncMessageReaderTest {
         x.write(okMsgPacket);
         x.write(errMsgPacket);
 
-        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(x.toByteArray())));
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(x.toByteArray())), null);
         // read first three errors "unexpectedly" in a loop
         for (int i = 0; i < 3; ++i) {
             try {

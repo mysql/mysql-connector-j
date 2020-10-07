@@ -49,33 +49,57 @@ public final class MysqlxNotice {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** the type of the payload 
+     * </pre>
+     *
      * <code>required uint32 type = 1;</code>
      * @return Whether the type field is set.
      */
     boolean hasType();
     /**
+     * <pre>
+     ** the type of the payload 
+     * </pre>
+     *
      * <code>required uint32 type = 1;</code>
      * @return The type.
      */
     int getType();
 
     /**
+     * <pre>
+     ** global or local notification 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
      * @return Whether the scope field is set.
      */
     boolean hasScope();
     /**
+     * <pre>
+     ** global or local notification 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
      * @return The scope.
      */
     com.mysql.cj.x.protobuf.MysqlxNotice.Frame.Scope getScope();
 
     /**
+     * <pre>
+     ** the payload of the notification 
+     * </pre>
+     *
      * <code>optional bytes payload = 3;</code>
      * @return Whether the payload field is set.
      */
     boolean hasPayload();
     /**
+     * <pre>
+     ** the payload of the notification 
+     * </pre>
+     *
      * <code>optional bytes payload = 3;</code>
      * @return The payload.
      */
@@ -83,17 +107,15 @@ public final class MysqlxNotice {
   }
   /**
    * <pre>
-   * Common Frame for all Notices
-   * ===================================================== =====
-   * .type                                                 value
-   * ===================================================== =====
-   * :protobuf:msg:`Mysqlx.Notice::Warning`                1
-   * :protobuf:msg:`Mysqlx.Notice::SessionVariableChanged` 2
-   * :protobuf:msg:`Mysqlx.Notice::SessionStateChanged`    3
-   * ===================================================== =====
-   * :param type: the type of the payload
-   * :param payload: the payload of the notification
-   * :param scope: global or local notification
+   **
+   *Common frame for all notices
+   *| ``.type``                                         | Value |
+   *|---------------------------------------------------|------ |
+   *| &#64;ref Mysqlx::Notice::Warning                      | 1     |
+   *| &#64;ref Mysqlx::Notice::SessionVariableChanged       | 2     |
+   *| &#64;ref Mysqlx::Notice::SessionStateChanged          | 3     |
+   *| &#64;ref Mysqlx::Notice::GroupReplicationStateChanged | 4     |
+   *| &#64;ref Mysqlx::Notice::ServerHello                  | 5     |
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Notice.Frame}
@@ -198,6 +220,10 @@ public final class MysqlxNotice {
     }
 
     /**
+     * <pre>
+     ** scope of notice 
+     * </pre>
+     *
      * Protobuf enum {@code Mysqlx.Notice.Frame.Scope}
      */
     public enum Scope
@@ -294,6 +320,10 @@ public final class MysqlxNotice {
     }
 
     /**
+     * <pre>
+     ** type of notice payload
+     * </pre>
+     *
      * Protobuf enum {@code Mysqlx.Notice.Frame.Type}
      */
     public enum Type
@@ -420,6 +450,10 @@ public final class MysqlxNotice {
     public static final int TYPE_FIELD_NUMBER = 1;
     private int type_;
     /**
+     * <pre>
+     ** the type of the payload 
+     * </pre>
+     *
      * <code>required uint32 type = 1;</code>
      * @return Whether the type field is set.
      */
@@ -427,6 +461,10 @@ public final class MysqlxNotice {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
+     * <pre>
+     ** the type of the payload 
+     * </pre>
+     *
      * <code>required uint32 type = 1;</code>
      * @return The type.
      */
@@ -437,6 +475,10 @@ public final class MysqlxNotice {
     public static final int SCOPE_FIELD_NUMBER = 2;
     private int scope_;
     /**
+     * <pre>
+     ** global or local notification 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
      * @return Whether the scope field is set.
      */
@@ -444,6 +486,10 @@ public final class MysqlxNotice {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
+     * <pre>
+     ** global or local notification 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
      * @return The scope.
      */
@@ -456,6 +502,10 @@ public final class MysqlxNotice {
     public static final int PAYLOAD_FIELD_NUMBER = 3;
     private com.google.protobuf.ByteString payload_;
     /**
+     * <pre>
+     ** the payload of the notification 
+     * </pre>
+     *
      * <code>optional bytes payload = 3;</code>
      * @return Whether the payload field is set.
      */
@@ -463,6 +513,10 @@ public final class MysqlxNotice {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
+     * <pre>
+     ** the payload of the notification 
+     * </pre>
+     *
      * <code>optional bytes payload = 3;</code>
      * @return The payload.
      */
@@ -667,17 +721,15 @@ public final class MysqlxNotice {
     }
     /**
      * <pre>
-     * Common Frame for all Notices
-     * ===================================================== =====
-     * .type                                                 value
-     * ===================================================== =====
-     * :protobuf:msg:`Mysqlx.Notice::Warning`                1
-     * :protobuf:msg:`Mysqlx.Notice::SessionVariableChanged` 2
-     * :protobuf:msg:`Mysqlx.Notice::SessionStateChanged`    3
-     * ===================================================== =====
-     * :param type: the type of the payload
-     * :param payload: the payload of the notification
-     * :param scope: global or local notification
+     **
+     *Common frame for all notices
+     *| ``.type``                                         | Value |
+     *|---------------------------------------------------|------ |
+     *| &#64;ref Mysqlx::Notice::Warning                      | 1     |
+     *| &#64;ref Mysqlx::Notice::SessionVariableChanged       | 2     |
+     *| &#64;ref Mysqlx::Notice::SessionStateChanged          | 3     |
+     *| &#64;ref Mysqlx::Notice::GroupReplicationStateChanged | 4     |
+     *| &#64;ref Mysqlx::Notice::ServerHello                  | 5     |
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Notice.Frame}
@@ -856,6 +908,10 @@ public final class MysqlxNotice {
 
       private int type_ ;
       /**
+       * <pre>
+       ** the type of the payload 
+       * </pre>
+       *
        * <code>required uint32 type = 1;</code>
        * @return Whether the type field is set.
        */
@@ -863,6 +919,10 @@ public final class MysqlxNotice {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       ** the type of the payload 
+       * </pre>
+       *
        * <code>required uint32 type = 1;</code>
        * @return The type.
        */
@@ -870,6 +930,10 @@ public final class MysqlxNotice {
         return type_;
       }
       /**
+       * <pre>
+       ** the type of the payload 
+       * </pre>
+       *
        * <code>required uint32 type = 1;</code>
        * @param value The type to set.
        * @return This builder for chaining.
@@ -881,6 +945,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** the type of the payload 
+       * </pre>
+       *
        * <code>required uint32 type = 1;</code>
        * @return This builder for chaining.
        */
@@ -893,6 +961,10 @@ public final class MysqlxNotice {
 
       private int scope_ = 1;
       /**
+       * <pre>
+       ** global or local notification 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
        * @return Whether the scope field is set.
        */
@@ -900,6 +972,10 @@ public final class MysqlxNotice {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
+       * <pre>
+       ** global or local notification 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
        * @return The scope.
        */
@@ -909,6 +985,10 @@ public final class MysqlxNotice {
         return result == null ? com.mysql.cj.x.protobuf.MysqlxNotice.Frame.Scope.GLOBAL : result;
       }
       /**
+       * <pre>
+       ** global or local notification 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
        * @param value The scope to set.
        * @return This builder for chaining.
@@ -923,6 +1003,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** global or local notification 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
        * @return This builder for chaining.
        */
@@ -935,6 +1019,10 @@ public final class MysqlxNotice {
 
       private com.google.protobuf.ByteString payload_ = com.google.protobuf.ByteString.EMPTY;
       /**
+       * <pre>
+       ** the payload of the notification 
+       * </pre>
+       *
        * <code>optional bytes payload = 3;</code>
        * @return Whether the payload field is set.
        */
@@ -942,6 +1030,10 @@ public final class MysqlxNotice {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
+       * <pre>
+       ** the payload of the notification 
+       * </pre>
+       *
        * <code>optional bytes payload = 3;</code>
        * @return The payload.
        */
@@ -949,6 +1041,10 @@ public final class MysqlxNotice {
         return payload_;
       }
       /**
+       * <pre>
+       ** the payload of the notification 
+       * </pre>
+       *
        * <code>optional bytes payload = 3;</code>
        * @param value The payload to set.
        * @return This builder for chaining.
@@ -963,6 +1059,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** the payload of the notification 
+       * </pre>
+       *
        * <code>optional bytes payload = 3;</code>
        * @return This builder for chaining.
        */
@@ -1030,38 +1130,66 @@ public final class MysqlxNotice {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** Note or Warning 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
      * @return Whether the level field is set.
      */
     boolean hasLevel();
     /**
+     * <pre>
+     ** Note or Warning 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
      * @return The level.
      */
     com.mysql.cj.x.protobuf.MysqlxNotice.Warning.Level getLevel();
 
     /**
+     * <pre>
+     ** warning code 
+     * </pre>
+     *
      * <code>required uint32 code = 2;</code>
      * @return Whether the code field is set.
      */
     boolean hasCode();
     /**
+     * <pre>
+     ** warning code 
+     * </pre>
+     *
      * <code>required uint32 code = 2;</code>
      * @return The code.
      */
     int getCode();
 
     /**
+     * <pre>
+     ** warning message 
+     * </pre>
+     *
      * <code>required string msg = 3;</code>
      * @return Whether the msg field is set.
      */
     boolean hasMsg();
     /**
+     * <pre>
+     ** warning message 
+     * </pre>
+     *
      * <code>required string msg = 3;</code>
      * @return The msg.
      */
     java.lang.String getMsg();
     /**
+     * <pre>
+     ** warning message 
+     * </pre>
+     *
      * <code>required string msg = 3;</code>
      * @return The bytes for msg.
      */
@@ -1070,25 +1198,22 @@ public final class MysqlxNotice {
   }
   /**
    * <pre>
-   * Server-side warnings and notes
-   * ``.scope`` == ``local``
-   *   ``.level``, ``.code`` and ``.msg`` map the content of
-   *   .. code-block:: sql
-   *     SHOW WARNINGS
-   * ``.scope`` == ``global``
-   *   (undefined) will be used for global, unstructured messages like:
-   *   * server is shutting down
-   *   * a node disconnected from group
-   *   * schema or table dropped
-   * ========================================== =======================
-   * :protobuf:msg:`Mysqlx.Notice::Frame` field value
-   * ========================================== =======================
-   * ``.type``                                  1
-   * ``.scope``                                 ``local`` or ``global``
-   * ========================================== =======================
-   * :param level: warning level: Note or Warning
-   * :param code: warning code
-   * :param msg: warning message
+   **
+   *Server-side warnings and notes
+   *&#64;par ``.scope`` == ``local``
+   *``.level``, ``.code`` and ``.msg`` map the content of:
+   *&#64;code{sql}
+   *SHOW WARNINGS
+   *&#64;endcode
+   *&#64;par ``.scope`` == ``global``
+   *(undefined) Will be used for global, unstructured messages like:
+   *-  server is shutting down
+   *-  a node disconnected from group
+   *-  schema or table dropped
+   *| &#64;ref Mysqlx::Notice::Frame Field  | Value                   |
+   *|-----------------------------------|-------------------------|
+   *| ``.type``                         | 1                       |
+   *| ``.scope``                        | ``local`` or ``global`` |
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Notice.Warning}
@@ -1302,6 +1427,10 @@ public final class MysqlxNotice {
     public static final int LEVEL_FIELD_NUMBER = 1;
     private int level_;
     /**
+     * <pre>
+     ** Note or Warning 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
      * @return Whether the level field is set.
      */
@@ -1309,6 +1438,10 @@ public final class MysqlxNotice {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
+     * <pre>
+     ** Note or Warning 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
      * @return The level.
      */
@@ -1321,6 +1454,10 @@ public final class MysqlxNotice {
     public static final int CODE_FIELD_NUMBER = 2;
     private int code_;
     /**
+     * <pre>
+     ** warning code 
+     * </pre>
+     *
      * <code>required uint32 code = 2;</code>
      * @return Whether the code field is set.
      */
@@ -1328,6 +1465,10 @@ public final class MysqlxNotice {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
+     * <pre>
+     ** warning code 
+     * </pre>
+     *
      * <code>required uint32 code = 2;</code>
      * @return The code.
      */
@@ -1338,6 +1479,10 @@ public final class MysqlxNotice {
     public static final int MSG_FIELD_NUMBER = 3;
     private volatile java.lang.Object msg_;
     /**
+     * <pre>
+     ** warning message 
+     * </pre>
+     *
      * <code>required string msg = 3;</code>
      * @return Whether the msg field is set.
      */
@@ -1345,6 +1490,10 @@ public final class MysqlxNotice {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
+     * <pre>
+     ** warning message 
+     * </pre>
+     *
      * <code>required string msg = 3;</code>
      * @return The msg.
      */
@@ -1363,6 +1512,10 @@ public final class MysqlxNotice {
       }
     }
     /**
+     * <pre>
+     ** warning message 
+     * </pre>
+     *
      * <code>required string msg = 3;</code>
      * @return The bytes for msg.
      */
@@ -1580,25 +1733,22 @@ public final class MysqlxNotice {
     }
     /**
      * <pre>
-     * Server-side warnings and notes
-     * ``.scope`` == ``local``
-     *   ``.level``, ``.code`` and ``.msg`` map the content of
-     *   .. code-block:: sql
-     *     SHOW WARNINGS
-     * ``.scope`` == ``global``
-     *   (undefined) will be used for global, unstructured messages like:
-     *   * server is shutting down
-     *   * a node disconnected from group
-     *   * schema or table dropped
-     * ========================================== =======================
-     * :protobuf:msg:`Mysqlx.Notice::Frame` field value
-     * ========================================== =======================
-     * ``.type``                                  1
-     * ``.scope``                                 ``local`` or ``global``
-     * ========================================== =======================
-     * :param level: warning level: Note or Warning
-     * :param code: warning code
-     * :param msg: warning message
+     **
+     *Server-side warnings and notes
+     *&#64;par ``.scope`` == ``local``
+     *``.level``, ``.code`` and ``.msg`` map the content of:
+     *&#64;code{sql}
+     *SHOW WARNINGS
+     *&#64;endcode
+     *&#64;par ``.scope`` == ``global``
+     *(undefined) Will be used for global, unstructured messages like:
+     *-  server is shutting down
+     *-  a node disconnected from group
+     *-  schema or table dropped
+     *| &#64;ref Mysqlx::Notice::Frame Field  | Value                   |
+     *|-----------------------------------|-------------------------|
+     *| ``.type``                         | 1                       |
+     *| ``.scope``                        | ``local`` or ``global`` |
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Notice.Warning}
@@ -1782,6 +1932,10 @@ public final class MysqlxNotice {
 
       private int level_ = 2;
       /**
+       * <pre>
+       ** Note or Warning 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
        * @return Whether the level field is set.
        */
@@ -1789,6 +1943,10 @@ public final class MysqlxNotice {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       ** Note or Warning 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
        * @return The level.
        */
@@ -1798,6 +1956,10 @@ public final class MysqlxNotice {
         return result == null ? com.mysql.cj.x.protobuf.MysqlxNotice.Warning.Level.WARNING : result;
       }
       /**
+       * <pre>
+       ** Note or Warning 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
        * @param value The level to set.
        * @return This builder for chaining.
@@ -1812,6 +1974,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** Note or Warning 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
        * @return This builder for chaining.
        */
@@ -1824,6 +1990,10 @@ public final class MysqlxNotice {
 
       private int code_ ;
       /**
+       * <pre>
+       ** warning code 
+       * </pre>
+       *
        * <code>required uint32 code = 2;</code>
        * @return Whether the code field is set.
        */
@@ -1831,6 +2001,10 @@ public final class MysqlxNotice {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
+       * <pre>
+       ** warning code 
+       * </pre>
+       *
        * <code>required uint32 code = 2;</code>
        * @return The code.
        */
@@ -1838,6 +2012,10 @@ public final class MysqlxNotice {
         return code_;
       }
       /**
+       * <pre>
+       ** warning code 
+       * </pre>
+       *
        * <code>required uint32 code = 2;</code>
        * @param value The code to set.
        * @return This builder for chaining.
@@ -1849,6 +2027,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** warning code 
+       * </pre>
+       *
        * <code>required uint32 code = 2;</code>
        * @return This builder for chaining.
        */
@@ -1861,6 +2043,10 @@ public final class MysqlxNotice {
 
       private java.lang.Object msg_ = "";
       /**
+       * <pre>
+       ** warning message 
+       * </pre>
+       *
        * <code>required string msg = 3;</code>
        * @return Whether the msg field is set.
        */
@@ -1868,6 +2054,10 @@ public final class MysqlxNotice {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
+       * <pre>
+       ** warning message 
+       * </pre>
+       *
        * <code>required string msg = 3;</code>
        * @return The msg.
        */
@@ -1886,6 +2076,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** warning message 
+       * </pre>
+       *
        * <code>required string msg = 3;</code>
        * @return The bytes for msg.
        */
@@ -1903,6 +2097,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** warning message 
+       * </pre>
+       *
        * <code>required string msg = 3;</code>
        * @param value The msg to set.
        * @return This builder for chaining.
@@ -1918,6 +2116,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** warning message 
+       * </pre>
+       *
        * <code>required string msg = 3;</code>
        * @return This builder for chaining.
        */
@@ -1928,6 +2130,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** warning message 
+       * </pre>
+       *
        * <code>required string msg = 3;</code>
        * @param value The bytes for msg to set.
        * @return This builder for chaining.
@@ -2000,16 +2206,28 @@ public final class MysqlxNotice {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** name of the variable 
+     * </pre>
+     *
      * <code>required string param = 1;</code>
      * @return Whether the param field is set.
      */
     boolean hasParam();
     /**
+     * <pre>
+     ** name of the variable 
+     * </pre>
+     *
      * <code>required string param = 1;</code>
      * @return The param.
      */
     java.lang.String getParam();
     /**
+     * <pre>
+     ** name of the variable 
+     * </pre>
+     *
      * <code>required string param = 1;</code>
      * @return The bytes for param.
      */
@@ -2017,35 +2235,44 @@ public final class MysqlxNotice {
         getParamBytes();
 
     /**
+     * <pre>
+     ** the changed value of param 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
      * @return Whether the value field is set.
      */
     boolean hasValue();
     /**
+     * <pre>
+     ** the changed value of param 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
      * @return The value.
      */
     com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue();
     /**
+     * <pre>
+     ** the changed value of param 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder();
   }
   /**
    * <pre>
-   * Notify clients about changes to the current session variables
-   * Every change to a variable that is accessible through:
-   * .. code-block:: sql
-   *   SHOW SESSION VARIABLES
-   * ========================================== =========
-   * :protobuf:msg:`Mysqlx.Notice::Frame` field value
-   * ========================================== =========
-   * ``.type``                                  2
-   * ``.scope``                                 ``local``
-   * ========================================== =========
-   * :param namespace: namespace that param belongs to
-   * :param param: name of the variable
-   * :param value: the changed value of param
+   **
+   *Notify clients about changes to the current session variables.
+   *Every change to a variable that is accessible through:
+   *&#64;code{sql}
+   *SHOW SESSION VARIABLES
+   *&#64;endcode
+   *| &#64;ref Mysqlx::Notice::Frame  Field | Value    |
+   *|-----------------------------------|----------|
+   *| ``.type``                         | 2        |
+   *| ``.scope``                        | ``local``|
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Notice.SessionVariableChanged}
@@ -2149,6 +2376,10 @@ public final class MysqlxNotice {
     public static final int PARAM_FIELD_NUMBER = 1;
     private volatile java.lang.Object param_;
     /**
+     * <pre>
+     ** name of the variable 
+     * </pre>
+     *
      * <code>required string param = 1;</code>
      * @return Whether the param field is set.
      */
@@ -2156,6 +2387,10 @@ public final class MysqlxNotice {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
+     * <pre>
+     ** name of the variable 
+     * </pre>
+     *
      * <code>required string param = 1;</code>
      * @return The param.
      */
@@ -2174,6 +2409,10 @@ public final class MysqlxNotice {
       }
     }
     /**
+     * <pre>
+     ** name of the variable 
+     * </pre>
+     *
      * <code>required string param = 1;</code>
      * @return The bytes for param.
      */
@@ -2194,6 +2433,10 @@ public final class MysqlxNotice {
     public static final int VALUE_FIELD_NUMBER = 2;
     private com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar value_;
     /**
+     * <pre>
+     ** the changed value of param 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
      * @return Whether the value field is set.
      */
@@ -2201,6 +2444,10 @@ public final class MysqlxNotice {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
+     * <pre>
+     ** the changed value of param 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
      * @return The value.
      */
@@ -2208,6 +2455,10 @@ public final class MysqlxNotice {
       return value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance() : value_;
     }
     /**
+     * <pre>
+     ** the changed value of param 
+     * </pre>
+     *
      * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder() {
@@ -2401,19 +2652,16 @@ public final class MysqlxNotice {
     }
     /**
      * <pre>
-     * Notify clients about changes to the current session variables
-     * Every change to a variable that is accessible through:
-     * .. code-block:: sql
-     *   SHOW SESSION VARIABLES
-     * ========================================== =========
-     * :protobuf:msg:`Mysqlx.Notice::Frame` field value
-     * ========================================== =========
-     * ``.type``                                  2
-     * ``.scope``                                 ``local``
-     * ========================================== =========
-     * :param namespace: namespace that param belongs to
-     * :param param: name of the variable
-     * :param value: the changed value of param
+     **
+     *Notify clients about changes to the current session variables.
+     *Every change to a variable that is accessible through:
+     *&#64;code{sql}
+     *SHOW SESSION VARIABLES
+     *&#64;endcode
+     *| &#64;ref Mysqlx::Notice::Frame  Field | Value    |
+     *|-----------------------------------|----------|
+     *| ``.type``                         | 2        |
+     *| ``.scope``                        | ``local``|
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Notice.SessionVariableChanged}
@@ -2599,6 +2847,10 @@ public final class MysqlxNotice {
 
       private java.lang.Object param_ = "";
       /**
+       * <pre>
+       ** name of the variable 
+       * </pre>
+       *
        * <code>required string param = 1;</code>
        * @return Whether the param field is set.
        */
@@ -2606,6 +2858,10 @@ public final class MysqlxNotice {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       ** name of the variable 
+       * </pre>
+       *
        * <code>required string param = 1;</code>
        * @return The param.
        */
@@ -2624,6 +2880,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** name of the variable 
+       * </pre>
+       *
        * <code>required string param = 1;</code>
        * @return The bytes for param.
        */
@@ -2641,6 +2901,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** name of the variable 
+       * </pre>
+       *
        * <code>required string param = 1;</code>
        * @param value The param to set.
        * @return This builder for chaining.
@@ -2656,6 +2920,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** name of the variable 
+       * </pre>
+       *
        * <code>required string param = 1;</code>
        * @return This builder for chaining.
        */
@@ -2666,6 +2934,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** name of the variable 
+       * </pre>
+       *
        * <code>required string param = 1;</code>
        * @param value The bytes for param to set.
        * @return This builder for chaining.
@@ -2685,6 +2957,10 @@ public final class MysqlxNotice {
       private com.google.protobuf.SingleFieldBuilderV3<
           com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> valueBuilder_;
       /**
+       * <pre>
+       ** the changed value of param 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
        * @return Whether the value field is set.
        */
@@ -2692,6 +2968,10 @@ public final class MysqlxNotice {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
+       * <pre>
+       ** the changed value of param 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
        * @return The value.
        */
@@ -2703,6 +2983,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** the changed value of param 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder setValue(com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar value) {
@@ -2719,6 +3003,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** the changed value of param 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder setValue(
@@ -2733,6 +3021,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** the changed value of param 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder mergeValue(com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar value) {
@@ -2753,6 +3045,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** the changed value of param 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder clearValue() {
@@ -2766,6 +3062,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** the changed value of param 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder getValueBuilder() {
@@ -2774,6 +3074,10 @@ public final class MysqlxNotice {
         return getValueFieldBuilder().getBuilder();
       }
       /**
+       * <pre>
+       ** the changed value of param 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder() {
@@ -2785,6 +3089,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** the changed value of param 
+       * </pre>
+       *
        * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
@@ -2858,53 +3166,69 @@ public final class MysqlxNotice {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** parameter key 
+     * </pre>
+     *
      * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
      * @return Whether the param field is set.
      */
     boolean hasParam();
     /**
+     * <pre>
+     ** parameter key 
+     * </pre>
+     *
      * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
      * @return The param.
      */
     com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter getParam();
 
     /**
+     * <pre>
+     ** updated value 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> 
         getValueList();
     /**
+     * <pre>
+     ** updated value 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue(int index);
     /**
+     * <pre>
+     ** updated value 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     int getValueCount();
     /**
+     * <pre>
+     ** updated value 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getValueOrBuilderList();
     /**
+     * <pre>
+     ** updated value 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder(
         int index);
   }
   /**
-   * <pre>
-   * Notify clients about changes to the internal session state
-   * ========================================== =========
-   * :protobuf:msg:`Mysqlx.Notice::Frame` field value
-   * ========================================== =========
-   * ``.type``                                  3
-   * ``.scope``                                 ``local``
-   * ========================================== =========
-   * :param param: parameter key
-   * :param value: updated value
-   * </pre>
-   *
    * Protobuf type {@code Mysqlx.Notice.SessionStateChanged}
    */
   public  static final class SessionStateChanged extends
@@ -3197,6 +3521,10 @@ public final class MysqlxNotice {
     public static final int PARAM_FIELD_NUMBER = 1;
     private int param_;
     /**
+     * <pre>
+     ** parameter key 
+     * </pre>
+     *
      * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
      * @return Whether the param field is set.
      */
@@ -3204,6 +3532,10 @@ public final class MysqlxNotice {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
+     * <pre>
+     ** parameter key 
+     * </pre>
+     *
      * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
      * @return The param.
      */
@@ -3216,12 +3548,20 @@ public final class MysqlxNotice {
     public static final int VALUE_FIELD_NUMBER = 2;
     private java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> value_;
     /**
+     * <pre>
+     ** updated value 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> getValueList() {
       return value_;
     }
     /**
+     * <pre>
+     ** updated value 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
@@ -3229,18 +3569,30 @@ public final class MysqlxNotice {
       return value_;
     }
     /**
+     * <pre>
+     ** updated value 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     public int getValueCount() {
       return value_.size();
     }
     /**
+     * <pre>
+     ** updated value 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue(int index) {
       return value_.get(index);
     }
     /**
+     * <pre>
+     ** updated value 
+     * </pre>
+     *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder(
@@ -3431,18 +3783,6 @@ public final class MysqlxNotice {
       return builder;
     }
     /**
-     * <pre>
-     * Notify clients about changes to the internal session state
-     * ========================================== =========
-     * :protobuf:msg:`Mysqlx.Notice::Frame` field value
-     * ========================================== =========
-     * ``.type``                                  3
-     * ``.scope``                                 ``local``
-     * ========================================== =========
-     * :param param: parameter key
-     * :param value: updated value
-     * </pre>
-     *
      * Protobuf type {@code Mysqlx.Notice.SessionStateChanged}
      */
     public static final class Builder extends
@@ -3648,6 +3988,10 @@ public final class MysqlxNotice {
 
       private int param_ = 1;
       /**
+       * <pre>
+       ** parameter key 
+       * </pre>
+       *
        * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
        * @return Whether the param field is set.
        */
@@ -3655,6 +3999,10 @@ public final class MysqlxNotice {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       ** parameter key 
+       * </pre>
+       *
        * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
        * @return The param.
        */
@@ -3664,6 +4012,10 @@ public final class MysqlxNotice {
         return result == null ? com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter.CURRENT_SCHEMA : result;
       }
       /**
+       * <pre>
+       ** parameter key 
+       * </pre>
+       *
        * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
        * @param value The param to set.
        * @return This builder for chaining.
@@ -3678,6 +4030,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** parameter key 
+       * </pre>
+       *
        * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
        * @return This builder for chaining.
        */
@@ -3701,6 +4057,10 @@ public final class MysqlxNotice {
           com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder, com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> valueBuilder_;
 
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> getValueList() {
@@ -3711,6 +4071,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public int getValueCount() {
@@ -3721,6 +4085,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue(int index) {
@@ -3731,6 +4099,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder setValue(
@@ -3748,6 +4120,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder setValue(
@@ -3762,6 +4138,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder addValue(com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar value) {
@@ -3778,6 +4158,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder addValue(
@@ -3795,6 +4179,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder addValue(
@@ -3809,6 +4197,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder addValue(
@@ -3823,6 +4215,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder addAllValue(
@@ -3838,6 +4234,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder clearValue() {
@@ -3851,6 +4251,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public Builder removeValue(int index) {
@@ -3864,6 +4268,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder getValueBuilder(
@@ -3871,6 +4279,10 @@ public final class MysqlxNotice {
         return getValueFieldBuilder().getBuilder(index);
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder(
@@ -3881,6 +4293,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
@@ -3892,6 +4308,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder addValueBuilder() {
@@ -3899,6 +4319,10 @@ public final class MysqlxNotice {
             com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder addValueBuilder(
@@ -3907,6 +4331,10 @@ public final class MysqlxNotice {
             index, com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance());
       }
       /**
+       * <pre>
+       ** updated value 
+       * </pre>
+       *
        * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
        */
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Builder> 
@@ -3985,27 +4413,47 @@ public final class MysqlxNotice {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     ** type of group replication event 
+     * </pre>
+     *
      * <code>required uint32 type = 1;</code>
      * @return Whether the type field is set.
      */
     boolean hasType();
     /**
+     * <pre>
+     ** type of group replication event 
+     * </pre>
+     *
      * <code>required uint32 type = 1;</code>
      * @return The type.
      */
     int getType();
 
     /**
+     * <pre>
+     ** view identifier 
+     * </pre>
+     *
      * <code>optional string view_id = 2;</code>
      * @return Whether the viewId field is set.
      */
     boolean hasViewId();
     /**
+     * <pre>
+     ** view identifier 
+     * </pre>
+     *
      * <code>optional string view_id = 2;</code>
      * @return The viewId.
      */
     java.lang.String getViewId();
     /**
+     * <pre>
+     ** view identifier 
+     * </pre>
+     *
      * <code>optional string view_id = 2;</code>
      * @return The bytes for viewId.
      */
@@ -4014,15 +4462,12 @@ public final class MysqlxNotice {
   }
   /**
    * <pre>
-   * Notify clients about group replication state changes
-   * ========================================== ==========
-   * :protobuf:msg:`Mysqlx.Notice::Frame` field value
-   * ========================================== ==========
-   * ``.type``                                  4
-   * ``.scope``                                 ``global``
-   * ========================================== ==========
-   * :param type: type of group replication event
-   * :param view_id: view identifier
+   **
+   *Notify clients about group replication state changes
+   *| &#64;ref Mysqlx::Notice::Frame Field  | Value      |
+   *|-----------------------------------|------------|
+   *|``.type``                          | 4          |
+   *|``.scope``                         | ``global`` |
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Notice.GroupReplicationStateChanged}
@@ -4232,6 +4677,10 @@ public final class MysqlxNotice {
     public static final int TYPE_FIELD_NUMBER = 1;
     private int type_;
     /**
+     * <pre>
+     ** type of group replication event 
+     * </pre>
+     *
      * <code>required uint32 type = 1;</code>
      * @return Whether the type field is set.
      */
@@ -4239,6 +4688,10 @@ public final class MysqlxNotice {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
+     * <pre>
+     ** type of group replication event 
+     * </pre>
+     *
      * <code>required uint32 type = 1;</code>
      * @return The type.
      */
@@ -4249,6 +4702,10 @@ public final class MysqlxNotice {
     public static final int VIEW_ID_FIELD_NUMBER = 2;
     private volatile java.lang.Object viewId_;
     /**
+     * <pre>
+     ** view identifier 
+     * </pre>
+     *
      * <code>optional string view_id = 2;</code>
      * @return Whether the viewId field is set.
      */
@@ -4256,6 +4713,10 @@ public final class MysqlxNotice {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
+     * <pre>
+     ** view identifier 
+     * </pre>
+     *
      * <code>optional string view_id = 2;</code>
      * @return The viewId.
      */
@@ -4274,6 +4735,10 @@ public final class MysqlxNotice {
       }
     }
     /**
+     * <pre>
+     ** view identifier 
+     * </pre>
+     *
      * <code>optional string view_id = 2;</code>
      * @return The bytes for viewId.
      */
@@ -4472,15 +4937,12 @@ public final class MysqlxNotice {
     }
     /**
      * <pre>
-     * Notify clients about group replication state changes
-     * ========================================== ==========
-     * :protobuf:msg:`Mysqlx.Notice::Frame` field value
-     * ========================================== ==========
-     * ``.type``                                  4
-     * ``.scope``                                 ``global``
-     * ========================================== ==========
-     * :param type: type of group replication event
-     * :param view_id: view identifier
+     **
+     *Notify clients about group replication state changes
+     *| &#64;ref Mysqlx::Notice::Frame Field  | Value      |
+     *|-----------------------------------|------------|
+     *|``.type``                          | 4          |
+     *|``.scope``                         | ``global`` |
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Notice.GroupReplicationStateChanged}
@@ -4652,6 +5114,10 @@ public final class MysqlxNotice {
 
       private int type_ ;
       /**
+       * <pre>
+       ** type of group replication event 
+       * </pre>
+       *
        * <code>required uint32 type = 1;</code>
        * @return Whether the type field is set.
        */
@@ -4659,6 +5125,10 @@ public final class MysqlxNotice {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       ** type of group replication event 
+       * </pre>
+       *
        * <code>required uint32 type = 1;</code>
        * @return The type.
        */
@@ -4666,6 +5136,10 @@ public final class MysqlxNotice {
         return type_;
       }
       /**
+       * <pre>
+       ** type of group replication event 
+       * </pre>
+       *
        * <code>required uint32 type = 1;</code>
        * @param value The type to set.
        * @return This builder for chaining.
@@ -4677,6 +5151,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** type of group replication event 
+       * </pre>
+       *
        * <code>required uint32 type = 1;</code>
        * @return This builder for chaining.
        */
@@ -4689,6 +5167,10 @@ public final class MysqlxNotice {
 
       private java.lang.Object viewId_ = "";
       /**
+       * <pre>
+       ** view identifier 
+       * </pre>
+       *
        * <code>optional string view_id = 2;</code>
        * @return Whether the viewId field is set.
        */
@@ -4696,6 +5178,10 @@ public final class MysqlxNotice {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
+       * <pre>
+       ** view identifier 
+       * </pre>
+       *
        * <code>optional string view_id = 2;</code>
        * @return The viewId.
        */
@@ -4714,6 +5200,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** view identifier 
+       * </pre>
+       *
        * <code>optional string view_id = 2;</code>
        * @return The bytes for viewId.
        */
@@ -4731,6 +5221,10 @@ public final class MysqlxNotice {
         }
       }
       /**
+       * <pre>
+       ** view identifier 
+       * </pre>
+       *
        * <code>optional string view_id = 2;</code>
        * @param value The viewId to set.
        * @return This builder for chaining.
@@ -4746,6 +5240,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** view identifier 
+       * </pre>
+       *
        * <code>optional string view_id = 2;</code>
        * @return This builder for chaining.
        */
@@ -4756,6 +5254,10 @@ public final class MysqlxNotice {
         return this;
       }
       /**
+       * <pre>
+       ** view identifier 
+       * </pre>
+       *
        * <code>optional string view_id = 2;</code>
        * @param value The bytes for viewId to set.
        * @return This builder for chaining.
@@ -4829,13 +5331,12 @@ public final class MysqlxNotice {
   }
   /**
    * <pre>
-   * Notify clients about connection to X Protocol server
-   * ========================================== ==========
-   * :protobuf:msg:`Mysqlx.Notice::Frame` field value
-   * ========================================== ==========
-   * ``.type``                                  5
-   * ``.scope``                                 ``global``
-   * ========================================== ==========
+   **
+   *Notify clients about connection to X Protocol server
+   *| &#64;ref Mysqlx::Notice::Frame Field  | Value      |
+   *|-----------------------------------|------------|
+   *|``.type``                          | 5          |
+   *|``.scope``                         | ``global`` |
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Notice.ServerHello}
@@ -5060,13 +5561,12 @@ public final class MysqlxNotice {
     }
     /**
      * <pre>
-     * Notify clients about connection to X Protocol server
-     * ========================================== ==========
-     * :protobuf:msg:`Mysqlx.Notice::Frame` field value
-     * ========================================== ==========
-     * ``.type``                                  5
-     * ``.scope``                                 ``global``
-     * ========================================== ==========
+     **
+     *Notify clients about connection to X Protocol server
+     *| &#64;ref Mysqlx::Notice::Frame Field  | Value      |
+     *|-----------------------------------|------------|
+     *|``.type``                          | 5          |
+     *|``.scope``                         | ``global`` |
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Notice.ServerHello}
