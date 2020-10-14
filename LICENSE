@@ -10,7 +10,7 @@ Introduction
    third-party software which may be included in this distribution of
    MySQL Connector/J 8.0.
 
-   Last updated: August 2020
+   Last updated: October 2020
 
 Licensing Information
 
@@ -58,8 +58,10 @@ on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 either express or implied. See the License for the specific language
 governing permissions and limitations under the License.
 
-=====================================================================
-=====================================================================
+
+  ======================================================================
+  ======================================================================
+
 
 GNU GENERAL PUBLIC LICENSE
 Version 2, June 1991
@@ -409,8 +411,8 @@ you may consider it more useful to permit linking proprietary
 applications with the library.  If this is what you want to do, use
 the GNU Lesser General Public License instead of this License.
 
-   =====================================================================
-   =====================================================================
+   ======================================================================
+   ======================================================================
 
 The Universal FOSS Exception, Version 1.0
 
@@ -793,24 +795,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    ======================================================================
    ======================================================================
 
-jboss-common-jdbc-wrapper.jar
-
-   This product may include a copy of jboss-common-jdbc-wrapper.jar in
-   both source and object code in the following
-   /src/lib/jboss-common-jdbc-wrapper.jar. The terms of the Oracle license
-   do NOT apply to jboss-common-jdbc-wrapper.jar; it is licensed under the
-   following license, separately from the Oracle programs you receive. If
-   you do not wish to install this library, you may remove the file
-   /src/lib/jboss-common-jdbc-wrapper.jar, but the Oracle program might
-   not operate properly or at all without the library.
-
-   This component is licensed under GNU Lesser General Public License
-   Version 2.1, February 1999. See the 'Standard Licenses' section for
-   license text.
-
-   ======================================================================
-   ======================================================================
-
 JUnit 5
 
 COPYRIGHT: Copyright 2015-2020 the original author or authors.
@@ -1136,65 +1120,6 @@ The above component is licensed under
 Apache License Version 2.0, January 2004
 
 
-
-   ======================================================================
-   ======================================================================
-
-NanoXML
-
-   NanoXML
- * Copyright (C) 2000-2002 Marc De Scheemaecker, All Rights Reserved.
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from the
- * use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- *  1. The origin of this software must not be misrepresented; you must not
- *     claim that you wrote the original software. If you use this software in
- *     a product, an acknowledgment in the product documentation would be
- *     appreciated but is not required.
- *
- *  2. Altered source versions must be plainly marked as such, and must not be
- *     misrepresented as being the original software.
- *
- *  3. This notice may not be removed or altered from any source distribution.
- *
-
-   ======================================================================
-   ======================================================================
-
-rox.jar
-
-   rox.jar
-Copyright (c) 2006, James Greenfield
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
-    * Neither the name of the <ORGANIZATION> nor the names of its
-      contributors may be used to endorse or promote products derived from this
-      software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
    ======================================================================
    ======================================================================
