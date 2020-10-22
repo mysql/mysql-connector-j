@@ -74,6 +74,9 @@ public class PropertyDefinitions {
 
     public static final String SYSP_testsuite_unavailable_host /*             */ = "com.mysql.cj.testsuite.unavailable.host";
 
+    /** Option to indicate that the server was installed without the test package */
+    public static final String SYSP_testsuite_no_server_testsuite /*          */ = "com.mysql.cj.testsuite.no.server.testsuite";
+
     /** For testsuite.regression.DataSourceRegressionTest */
     public static final String SYSP_testsuite_ds_host /*                      */ = "com.mysql.cj.testsuite.ds.host";
     /** For testsuite.regression.DataSourceRegressionTest */

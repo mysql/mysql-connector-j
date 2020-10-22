@@ -54,9 +54,11 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
     @BeforeEach
     public void setupIpv6SupportTest() {
         if (setupTestSession()) {
-            List<Inet6Address> ipv6List = TestUtils.getIpv6List();
+            List<Inet6Address> ipv6List = isMysqlRunningLocally() ? TestUtils.getIpv6List() : TestUtils.getIpv6List(getTestHost());
             this.ipv6Addrs = ipv6List.stream().map((e) -> e.getHostAddress()).collect(Collectors.toList());
-            this.ipv6Addrs.add("::1"); // IPv6 loopback
+            if (isMysqlRunningLocally()) {
+                this.ipv6Addrs.add("::1"); // IPv6 loopback
+            }
 
             this.session.sql("DROP USER IF EXISTS '" + this.testUser + "'@'%'").execute();
             this.session.sql("CREATE USER '" + this.testUser + "'@'%' IDENTIFIED WITH mysql_native_password BY '" + this.testUser + "'").execute();
@@ -102,9 +104,14 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
         }
 
         if (!atLeastOne) {
-            fail("None of the tested hosts have server sockets listening on the port " + port
+            String errMsg = "None of the tested hosts have server sockets listening on the port " + port
                     + ". This test requires a MySQL server with X Protocol running in local host with IPv6 support enabled "
-                    + "(set '--mysqlx-bind-address = *' if needed.");
+                    + "(set '--mysqlx-bind-address = *' if needed.";
+            if (isMysqlRunningLocally()) {
+                fail(errMsg);
+            } else {
+                System.err.println(errMsg);
+            }
         }
     }
 }

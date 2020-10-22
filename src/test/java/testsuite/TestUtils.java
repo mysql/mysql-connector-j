@@ -79,6 +79,27 @@ public class TestUtils {
     }
 
     /**
+     * Get all IPv6 addresses of the given host.
+     * 
+     * @return a list of {@link Inet6Address}s
+     */
+    public static List<Inet6Address> getIpv6List(String hostname) {
+        List<Inet6Address> addresses = new ArrayList<>();
+        try {
+            InetAddress[] allAddresses = InetAddress.getAllByName(hostname);
+            for (InetAddress address : allAddresses) {
+                if (address instanceof Inet6Address) {
+                    addresses.add((Inet6Address) address);
+                }
+                System.out.println(address.getHostAddress());
+            }
+        } catch (UnknownHostException e) {
+            // Failed to get the network interfaces. Return an empty list. 
+        }
+        return addresses;
+    }
+
+    /**
      * Checks if there is a server socket listening in the given host and port.
      * 
      * @param hostName

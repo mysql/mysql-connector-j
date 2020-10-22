@@ -1342,47 +1342,15 @@ public class ConnectionTest extends BaseTestCase {
         }
 
         boolean didOneWork = false;
-        boolean didOneFail = false;
-
         for (LocalSocketAddressCheckThread t : allChecks) {
             if (t.atLeastOneWorked) {
                 didOneWork = true;
 
                 break;
             }
-            if (!didOneFail) {
-                didOneFail = true;
-            }
         }
 
         assertTrue(didOneWork, "At least one connection was made with the localSocketAddress set");
-
-        String hostname = getHostFromTestsuiteUrl();
-
-        if (!hostname.startsWith(":") && !hostname.startsWith("localhost")) {
-
-            int indexOfColon = hostname.indexOf(":");
-
-            if (indexOfColon != -1) {
-                hostname = hostname.substring(0, indexOfColon);
-            }
-
-            boolean isLocalIf = false;
-
-            isLocalIf = (null != NetworkInterface.getByName(hostname));
-
-            if (!isLocalIf) {
-                try {
-                    isLocalIf = (null != NetworkInterface.getByInetAddress(InetAddress.getByName(hostname)));
-                } catch (Throwable t) {
-                    isLocalIf = false;
-                }
-            }
-
-            if (!isLocalIf) {
-                assertTrue(didOneFail, "At least one connection didn't fail with localSocketAddress set");
-            }
-        }
     }
 
     class SpawnedWorkerCounter {
@@ -1846,9 +1814,11 @@ public class ConnectionTest extends BaseTestCase {
         connProps.setProperty(PropertyKey.USER.getKeyName(), testUser);
         connProps.setProperty(PropertyKey.PASSWORD.getKeyName(), testUser);
 
-        List<Inet6Address> ipv6List = TestUtils.getIpv6List();
+        List<Inet6Address> ipv6List = isMysqlRunningLocally() ? TestUtils.getIpv6List() : TestUtils.getIpv6List(getHostFromTestsuiteUrl());
         List<String> ipv6Addrs = ipv6List.stream().map((e) -> e.getHostAddress()).collect(Collectors.toList());
-        ipv6Addrs.add("::1"); // IPv6 loopback
+        if (isMysqlRunningLocally()) {
+            ipv6Addrs.add("::1"); // IPv6 loopback
+        }
         int port = getPortFromTestsuiteUrl();
 
         boolean atLeastOne = false;
@@ -1875,7 +1845,11 @@ public class ConnectionTest extends BaseTestCase {
         }
 
         if (!atLeastOne) {
-            fail("None of the tested hosts have server sockets listening on the port " + port + ". This test requires a MySQL server running in local host.");
+            if (isMysqlRunningLocally()) {
+                fail("None of the tested hosts have server sockets listening on the port " + port + ".");
+            } else {
+                System.err.println("None of the tested hosts have server sockets listening on the port " + port + ".");
+            }
         }
     }
 

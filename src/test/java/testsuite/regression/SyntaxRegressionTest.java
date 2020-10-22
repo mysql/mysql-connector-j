@@ -230,11 +230,17 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * ALTER TABLE ... DISCARD TABLESPACE
      * ALTER TABLE ... IMPORT TABLESPACE
      * 
+     * Requires a MySQL server running locally.
+     * 
      * @throws Exception
      */
     @Test
     public void testTransportableTablespaces() throws Exception {
         if (!versionMeetsMinimum(5, 6, 8)) {
+            return;
+        }
+        if (!isMysqlRunningLocally()) {
+            System.err.println("Skip test as client and server are running on different machines.");
             return;
         }
 
@@ -319,7 +325,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
             assertTrue(this.pstmt instanceof ClientPreparedStatement);
 
         } finally {
-            // we need to drop them even if retainArtifacts=true, otherwise temp files could be deleted by OS and DB became corrupted
+            // we need to drop them even if retainArtifacts=true, otherwise temp files could be deleted by OS and DB become corrupted
             dropTable("testTransportableTablespaces1");
             dropTable("testTransportableTablespaces2");
         }
@@ -479,7 +485,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         Connection c = null;
 
-        boolean exceptionCaugth = false;
         try {
 
             this.stmt.executeUpdate("SET @old_default_storage_engine = @@default_storage_engine");
@@ -690,7 +695,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("SET @@default_storage_engine = @old_default_storage_engine");
 
         } catch (SQLException e) {
-            exceptionCaugth = true;
             fail(e.getMessage());
 
         } finally {
@@ -703,9 +707,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 File f = new File(datadir + File.separator + dbname + File.separator + "loadtestExplicitPartitions.txt");
                 if (f.exists()) {
                     f.deleteOnExit();
-                } else if (!exceptionCaugth) {
-                    fail("File " + datadir + File.separator + dbname + File.separator + "loadtestExplicitPartitions.txt cannot be deleted."
-                            + "You should run server and tests on the same filesystem.");
                 }
             }
         }

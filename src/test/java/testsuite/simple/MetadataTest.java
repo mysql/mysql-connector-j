@@ -961,7 +961,7 @@ public class MetadataTest extends BaseTestCase {
     @Test
     public void testGetColumnPrivileges() throws Exception {
 
-        if (!runTestIfSysPropDefined(PropertyDefinitions.SYSP_testsuite_cantGrant)) {
+        if (!isSysPropDefined(PropertyDefinitions.SYSP_testsuite_cantGrant)) {
             Properties props = new Properties();
 
             props.setProperty(PropertyKey.nullDatabaseMeansCurrent.getKeyName(), "true");

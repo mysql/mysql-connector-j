@@ -188,6 +188,7 @@ com.mysql.cj.testsuite.mysqlx.url.openssl - connection string to the test server
 com.mysql.cj.testsuite.test.class - testcase class name to run, default _unset_
 com.mysql.cj.testsuite.test.methods - a comma separated list of test names existing in class defined by 'com.mysql.cj.testsuite.test.class', default _unset_
 com.mysql.cj.testsuite.unavailable.host - a host:port pair used for tests checking socket connection timeout
+com.mysql.cj.testsuite.no.server.testsuite - Option to indicate that the server was installed without the test package, default _unset_
 
 See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test options.
 
@@ -330,14 +331,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 </not>
             </condition>
         </fail>
-
-        <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
-            <classpath>
-                <fileset dir="${com.mysql.cj.extra.libs}">
-                    <include name="**/jacocoant.jar" />
-                </fileset>
-            </classpath>
-        </taskdef>
     </target>
 
 
@@ -1148,7 +1141,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <!-- Delete the build and distribution directories and archives. -->
     <target name="real-clean" description="Deletes the build and distribution directories.">
-        <delete dir="${com.mysql.cj.build.dir}" />
+        <delete dir="${com.mysql.cj.build.dir}" failonerror="false" />
         <delete dir="${com.mysql.cj.testsuite.build.dir}" failonerror="false" />
         <delete dir="${com.mysql.cj.dist.dir}" failonerror="false" />
         <delete dir="${com.mysql.cj.docs.xdevapi}" failonerror="false" />
@@ -1159,7 +1152,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <target name="clean"
             description="Deletes the build directory unless 'com.mysql.cj.build.noCleanBetweenCompiles=yes'."
             unless="${com.mysql.cj.build.noCleanBetweenCompiles}">
-        <delete dir="${com.mysql.cj.build.dir}" />
+        <delete dir="${com.mysql.cj.build.dir}" failonerror="false" />
         <delete dir="${com.mysql.cj.testsuite.build.dir}" failonerror="false" />
     </target>
 
@@ -1278,11 +1271,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <isset property="com.mysql.cj.coverage.result.dir.final" />
         </condition>
 
-        <local name="com.mysql.cj.testsuite.test.coverage.jvmarg" />
-        <jacoco:agent destfile="${com.mysql.cj.coverage.result.dir.final}/${com.mysql.cj.coverage.result.name.final}"
-                      enabled="${com.mysql.cj.testsuite.test.coverage}"
-                      property="com.mysql.cj.testsuite.test.coverage.jvmarg" />
-
         <local name="com.mysql.cj.testsuite.test.coverage.jvmargfinal" />
         <condition property="com.mysql.cj.testsuite.test.coverage.jvmargfinal"
                    value="${com.mysql.cj.testsuite.test.coverage.jvmarg}"
@@ -1307,6 +1295,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
                     <syspropertyset refid="junit.system.properties" />
                 </fork>
+                <listener classname="testsuite.JUnitSummary" />
                 <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
                 <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
             </test>
@@ -1320,6 +1309,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
                     <syspropertyset refid="junit.system.properties" />
                 </fork>
+                <listener classname="testsuite.JUnitSummary" />
                 <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
                 <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
             </test>
@@ -1334,6 +1324,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
                     <syspropertyset refid="junit.system.properties" />
                 </fork>
+                <listener classname="testsuite.JUnitSummary" />
                 <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
                 <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
             </testclasses>
@@ -1362,10 +1353,12 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- ********************************* -->
 
 
-    <target name="test-coverage" description="Runs tests collecting coverage results." depends="-set-test-coverage-detaults, test" />
+    <target name="test-coverage"
+            description="Runs tests collecting coverage results."
+            depends="-setup-test-coverage-agent, test" />
 
 
-    <target name="-set-test-coverage-detaults">
+    <target name="-set-test-coverage-defaults" depends="-extra-libs-check">
         <condition property="com.mysql.cj.coverage.result.dir.final"
                    value="${com.mysql.cj.coverage.result.dir}"
                    else="${com.mysql.cj.testsuite.build.dir}/coverage">
@@ -1374,6 +1367,20 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <condition property="com.mysql.cj.coverage.result.name.final" value="${com.mysql.cj.coverage.result.name}" else="jacoco.exec">
             <isset property="com.mysql.cj.coverage.result.name" />
         </condition>
+
+        <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+            <classpath>
+                <fileset dir="${com.mysql.cj.extra.libs}">
+                    <include name="**/jacocoant.jar" />
+                </fileset>
+            </classpath>
+        </taskdef>
+    </target>
+
+
+    <target name="-setup-test-coverage-agent" depends="-set-test-coverage-defaults">
+        <jacoco:agent destfile="${com.mysql.cj.coverage.result.dir.final}/${com.mysql.cj.coverage.result.name.final}"
+                      property="com.mysql.cj.testsuite.test.coverage.jvmarg" />
     </target>
 
 
@@ -1383,7 +1390,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
 
     <target name="report-coverage"
-            depends="-extra-libs-check, -set-report-coverage-detaults, -jacoco-merge"
+            depends="-set-report-coverage-defaults, -jacoco-merge"
             description="Merges coverage results and creates HTML coverage report.">
         <jacoco:report>
             <executiondata>
@@ -1410,14 +1417,14 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     </target>
 
 
-    <target name="-jacoco-merge" depends="-set-report-coverage-detaults" if="com.mysql.cj.coverage.merge.files">
+    <target name="-jacoco-merge" depends="-set-report-coverage-defaults" if="com.mysql.cj.coverage.merge.files">
         <jacoco:merge destfile="${com.mysql.cj.coverage.merge.result.final}">
             <fileset dir="${com.mysql.cj.coverage.result.dir.final}" includes="${com.mysql.cj.coverage.merge.files}" />
         </jacoco:merge>
     </target>
 
 
-    <target name="-set-report-coverage-detaults" depends="-set-test-coverage-detaults">
+    <target name="-set-report-coverage-defaults" depends="-set-test-coverage-defaults">
         <condition property="com.mysql.cj.coverage.merge.result.final"
                    value="${com.mysql.cj.coverage.merge.result}"
                    else="${com.mysql.cj.coverage.result.dir.final}/jacoco.exec">

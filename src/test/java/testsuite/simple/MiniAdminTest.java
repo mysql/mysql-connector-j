@@ -49,7 +49,7 @@ public class MiniAdminTest extends BaseTestCase {
      */
     @Test
     public void testShutdown() throws Exception {
-        if (runTestIfSysPropDefined(PropertyDefinitions.SYSP_testsuite_miniAdminTest_runShutdown)) {
+        if (isSysPropDefined(PropertyDefinitions.SYSP_testsuite_miniAdminTest_runShutdown)) {
             new MiniAdmin(this.conn).shutdown();
         }
     }

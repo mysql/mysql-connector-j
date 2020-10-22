@@ -32,6 +32,8 @@ package testsuite.x.devapi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Field;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.SQLException;
 
 import com.mysql.cj.MysqlxSession;
@@ -59,6 +61,8 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
     Schema schema;
     String dbCharset;
     String dbCollation;
+
+    private Boolean mysqlRunningLocally = null;
 
     public boolean setupTestSession() {
         if (this.isSetForXTests) {
@@ -124,6 +128,23 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
     protected boolean isServerRunningOnWindows() throws SQLException {
         SqlResult res = this.session.sql("SHOW VARIABLES LIKE 'datadir'").execute();
         return res.fetchOne().getString(1).indexOf('\\') != -1;
+    }
+
+    protected boolean isMysqlRunningLocally() {
+        if (this.mysqlRunningLocally != null) {
+            return this.mysqlRunningLocally;
+        }
+        try {
+            String clientHostname = InetAddress.getLocalHost().getHostName();
+
+            SqlResult res = this.session.sql("SHOW VARIABLES LIKE 'hostname'").execute();
+            String serverHostname = res.fetchOne().getString(1);
+
+            this.mysqlRunningLocally = clientHostname.equalsIgnoreCase(serverHostname);
+        } catch (UnknownHostException e) {
+            this.mysqlRunningLocally = false;
+        }
+        return this.mysqlRunningLocally;
     }
 
     protected int getThreadId(Session sess) {

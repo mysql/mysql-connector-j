@@ -484,7 +484,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         assertFalse(cw.isReadOnly());
         assertFalse(cw.isReadOnly(false));
         assertFalse(cw.isReadOnly(true));
-        assertTrue(cw.isServerLocal());
+        assertEquals(isMysqlRunningLocally(), cw.isServerLocal());
         assertTrue(cw.isValid(10));
         assertTrue(cw.isWrapperFor(Connection.class));
         assertEquals(((JdbcConnection) this.conn).lowerCaseTableNames(), cw.lowerCaseTableNames());
@@ -852,7 +852,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
                 return null;
             }
         });
-        assertTrue(cw.isServerLocal());
+        assertEquals(isMysqlRunningLocally(), cw.isServerLocal());
         assertTrue(cw.isValid(10));
         assertTrue(cw.isWrapperFor(Connection.class));
         assertEquals(((JdbcConnection) this.conn).lowerCaseTableNames(), cw.lowerCaseTableNames());

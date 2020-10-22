@@ -3409,7 +3409,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testAuthTestPlugin() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7)) {
+        if (!versionMeetsMinimum(5, 5, 7) || isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite)) {
             return;
         }
         boolean install_plugin_in_runtime = false;
@@ -3484,7 +3484,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testTwoQuestionsPlugin() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7)) {
+        if (!versionMeetsMinimum(5, 5, 7) || isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite)) {
             return;
         }
         boolean install_plugin_in_runtime = false;
@@ -3554,7 +3554,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testThreeAttemptsPlugin() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7)) {
+        if (!versionMeetsMinimum(5, 5, 7) || isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite)) {
             return;
         }
         boolean install_plugin_in_runtime = false;
@@ -3853,7 +3853,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testAuthCleartextPlugin() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7)) {
+        if (!versionMeetsMinimum(5, 5, 7) || isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite)) {
             return;
         }
         boolean install_plugin_in_runtime = false;
@@ -7368,7 +7368,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug20825727() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7)) {
+        if (!versionMeetsMinimum(5, 5, 7) || isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite)) {
             return;
         }
 
@@ -10907,8 +10907,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL,
                 con.getPropertySet().<ZeroDatetimeBehavior>getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
 
-        con = (JdbcConnection) getConnectionWithProps("jdbc:mysql://(port=" + getPortFromTestsuiteUrl() + ",user=" + mainConnectionUrl.getDefaultUser()
-                + ",password=" + mainConnectionUrl.getDefaultPassword() + ",zeroDateTimeBehavior=convertToNull)/" + this.dbName,
+        con = (JdbcConnection) getConnectionWithProps(
+                "jdbc:mysql://(host=" + getHostFromTestsuiteUrl() + ",port=" + getPortFromTestsuiteUrl() + ",user=" + mainConnectionUrl.getMainHost().getUser()
+                        + ",password=" + mainConnectionUrl.getMainHost().getPassword() + ",zeroDateTimeBehavior=convertToNull)/" + this.dbName,
                 appendRequiredProperties(null));
         assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL,
                 con.getPropertySet().<ZeroDatetimeBehavior>getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue());
