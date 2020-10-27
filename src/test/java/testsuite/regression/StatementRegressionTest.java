@@ -11238,4 +11238,42 @@ public class StatementRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests fix for Bug#101242 (32046007), CANNOT USE BYTEARRAYINPUTSTREAM AS ARGUMENTS IN PREPARED STATEMENTS ANYMORE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug101242() throws Exception {
+        createTable("testBug101242", "(my_column blob NOT NULL)");
+
+        byte[] value = "TEST".getBytes();
+
+        Connection con = null;
+        Properties props = new Properties();
+        try {
+            for (boolean useSSPS : new boolean[] { false, true }) {
+                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+                con = getConnectionWithProps(props);
+
+                this.stmt.executeUpdate("TRUNCATE TABLE testBug101242");
+
+                this.pstmt = con.prepareStatement("INSERT INTO testBug101242(my_column) VALUES (?)");
+                this.pstmt.setObject(1, new ByteArrayInputStream(value));
+                this.pstmt.execute();
+
+                this.rs = this.stmt.executeQuery("SELECT * FROM testBug101242");
+                this.rs.next();
+
+                assertByteArrayEquals("Different value retrieved than inserted", value, this.rs.getBytes("my_column"));
+            }
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+
+    }
+
 }

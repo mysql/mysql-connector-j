@@ -3,6 +3,9 @@
 
 Version 8.0.23
 
+  - Fix for Bug#101242 (32046007), CANNOT USE BYTEARRAYINPUTSTREAM AS ARGUMENTS IN PREPARED STATEMENTS ANYMORE.
+    Thanks to Martynas Puronas for his contribution.
+
   - WL#14274, Support for authentication_ldap_sasl_client(SCRAM-SHA-256) authentication plugin.
 
   - WL#14206, Support for authentication_ldap_sasl_client(GSSAPI) authentication plugin.

@@ -44,6 +44,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
@@ -210,7 +211,6 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
         DEFAULT_MYSQL_TYPES.put(Double.class, MysqlType.DOUBLE);
         DEFAULT_MYSQL_TYPES.put(byte[].class, MysqlType.BINARY);
         DEFAULT_MYSQL_TYPES.put(Boolean.class, MysqlType.BOOLEAN);
-        DEFAULT_MYSQL_TYPES.put(Boolean.class, MysqlType.BOOLEAN);
         DEFAULT_MYSQL_TYPES.put(LocalDate.class, MysqlType.DATE);
         DEFAULT_MYSQL_TYPES.put(LocalTime.class, MysqlType.TIME);
         DEFAULT_MYSQL_TYPES.put(LocalDateTime.class, MysqlType.DATETIME); // TODO default JDBC mapping is TIMESTAMP, see B-4
@@ -227,7 +227,16 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
             setNull(parameterIndex);
             return;
         }
+
         MysqlType defaultMysqlType = DEFAULT_MYSQL_TYPES.get(parameterObj.getClass());
+
+        if (defaultMysqlType == null) {
+            Optional<MysqlType> mysqlType = DEFAULT_MYSQL_TYPES.entrySet().stream().filter(m -> m.getKey().isAssignableFrom(parameterObj.getClass()))
+                    .map(m -> m.getValue()).findFirst();
+            if (mysqlType.isPresent()) {
+                defaultMysqlType = mysqlType.get();
+            }
+        }
 
         if (defaultMysqlType != null) {
             setObject(parameterIndex, parameterObj, defaultMysqlType);
