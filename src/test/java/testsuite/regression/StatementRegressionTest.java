@@ -11238,4 +11238,31 @@ public class StatementRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * #101242 - Ensure that InputStreams can be passed to PreparedStatement's setObject()
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug101242() throws Exception {
+        createTable("testBug101242", "(c BLOB)");
+
+        byte[] value = "TEST".getBytes();
+
+        this.conn = getNewConnection();
+        InputStream inputStream = new ByteArrayInputStream(value);
+
+        this.pstmt = this.conn.prepareStatement("INSERT INTO testBug101242(c) VALUES(?)");
+        this.pstmt.setObject(1, inputStream);
+        this.pstmt.execute();
+        this.pstmt.close();
+
+        this.pstmt = this.conn.prepareStatement("SELECT c FROM testBug101242 LIMIT 1");
+        ResultSet resultSet = this.pstmt.executeQuery();
+
+        resultSet.next();
+
+        assertByteArrayEquals("Different value retrieved than inserted", value, resultSet.getBytes("c"));
+    }
 }

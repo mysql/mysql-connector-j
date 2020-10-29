@@ -227,11 +227,18 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
             setNull(parameterIndex);
             return;
         }
-        MysqlType defaultMysqlType = DEFAULT_MYSQL_TYPES.get(parameterObj.getClass());
+
+        MysqlType defaultMysqlType = null;
+
+        for (Map.Entry<Class<?>, MysqlType> entry : DEFAULT_MYSQL_TYPES.entrySet()) {
+            if (entry.getKey().isInstance(parameterObj)) {
+                defaultMysqlType = entry.getValue();
+                break;
+            }
+        }
 
         if (defaultMysqlType != null) {
             setObject(parameterIndex, parameterObj, defaultMysqlType);
-
         } else {
             setSerializableObject(parameterIndex, parameterObj); // TODO maybe default to error?
         }
