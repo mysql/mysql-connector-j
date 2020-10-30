@@ -210,7 +210,6 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
         DEFAULT_MYSQL_TYPES.put(Double.class, MysqlType.DOUBLE);
         DEFAULT_MYSQL_TYPES.put(byte[].class, MysqlType.BINARY);
         DEFAULT_MYSQL_TYPES.put(Boolean.class, MysqlType.BOOLEAN);
-        DEFAULT_MYSQL_TYPES.put(Boolean.class, MysqlType.BOOLEAN);
         DEFAULT_MYSQL_TYPES.put(LocalDate.class, MysqlType.DATE);
         DEFAULT_MYSQL_TYPES.put(LocalTime.class, MysqlType.TIME);
         DEFAULT_MYSQL_TYPES.put(LocalDateTime.class, MysqlType.DATETIME); // TODO default JDBC mapping is TIMESTAMP, see B-4
@@ -228,12 +227,18 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
             return;
         }
 
+        Class<?> parameterClass = parameterObj.getClass();
+
         MysqlType defaultMysqlType = null;
 
-        for (Map.Entry<Class<?>, MysqlType> entry : DEFAULT_MYSQL_TYPES.entrySet()) {
-            if (entry.getKey().isInstance(parameterObj)) {
-                defaultMysqlType = entry.getValue();
-                break;
+        if (DEFAULT_MYSQL_TYPES.containsKey(parameterClass)) {
+            defaultMysqlType = DEFAULT_MYSQL_TYPES.get(parameterObj.getClass());
+        } else {
+            for (Map.Entry<Class<?>, MysqlType> entry : DEFAULT_MYSQL_TYPES.entrySet()) {
+                if (entry.getKey().isInstance(parameterObj)) {
+                    defaultMysqlType = entry.getValue();
+                    break;
+                }
             }
         }
 
