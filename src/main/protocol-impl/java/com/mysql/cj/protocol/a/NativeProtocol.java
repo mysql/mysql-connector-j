@@ -50,6 +50,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.DataTruncation;
 import java.sql.SQLWarning;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -2170,43 +2172,61 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      *             if the timezone the server is configured to use can't be
      *             mapped to a Java timezone.
      */
-    public void configureTimezone() {
-        String configuredTimeZoneOnServer = this.serverSession.getServerVariable("time_zone");
+    public void configureTimeZone() {
+        String connectionTimeZone = getPropertySet().getStringProperty(PropertyKey.connectionTimeZone).getValue();
 
-        if ("SYSTEM".equalsIgnoreCase(configuredTimeZoneOnServer)) {
-            configuredTimeZoneOnServer = this.serverSession.getServerVariable("system_time_zone");
-        }
+        String selectedTzName = null;
+        TimeZone selectedTz = null;
 
-        String canonicalTimezone = getPropertySet().getStringProperty(PropertyKey.serverTimezone).getValue();
+        if (connectionTimeZone == null || StringUtils.isEmptyOrWhitespaceOnly(connectionTimeZone) || "LOCAL".equals(connectionTimeZone)) {
+            selectedTz = TimeZone.getDefault();
+            selectedTzName = selectedTz.getID();
 
-        if (configuredTimeZoneOnServer != null) {
-            // user can override this with driver properties, so don't detect if that's the case
-            if (canonicalTimezone == null || StringUtils.isEmptyOrWhitespaceOnly(canonicalTimezone)) {
+        } else if ("SERVER".equals(connectionTimeZone)) {
+            String configuredTimeZoneOnServer = this.serverSession.getServerVariable("time_zone");
+            if ("SYSTEM".equalsIgnoreCase(configuredTimeZoneOnServer)) {
+                configuredTimeZoneOnServer = this.serverSession.getServerVariable("system_time_zone");
+            }
+            if (configuredTimeZoneOnServer != null) {
                 try {
-                    canonicalTimezone = TimeUtil.getCanonicalTimezone(configuredTimeZoneOnServer, getExceptionInterceptor());
+                    selectedTzName = TimeUtil.getCanonicalTimeZone(configuredTimeZoneOnServer, getExceptionInterceptor());
                 } catch (IllegalArgumentException iae) {
                     throw ExceptionFactory.createException(WrongArgumentException.class, iae.getMessage(), getExceptionInterceptor());
                 }
             }
+        } else {
+            selectedTzName = connectionTimeZone;
         }
 
-        if (canonicalTimezone != null && canonicalTimezone.length() > 0) {
-            this.serverSession.setServerTimeZone(TimeZone.getTimeZone(canonicalTimezone));
+        if (selectedTz == null) {
+            selectedTz = TimeZone.getTimeZone(ZoneId.of(selectedTzName)); // TODO use of(String zoneId, Map<String, String> aliasMap) for custom abbreviations support
+        }
 
-            //
-            // The Calendar class has the behavior of mapping unknown timezones to 'GMT' instead of throwing an exception, so we must check for this...
-            //
-            if (!canonicalTimezone.equalsIgnoreCase("GMT") && this.serverSession.getServerTimeZone().getID().equals("GMT")) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Connection.9", new Object[] { canonicalTimezone }),
-                        getExceptionInterceptor());
+        this.serverSession.setSessionTimeZone(selectedTz);
+
+        if (getPropertySet().getBooleanProperty(PropertyKey.forceConnectionTimeZoneToSession).getValue() && !"SERVER".equals(connectionTimeZone)) {
+            // TODO don't send 'SET SESSION time_zone' if time_zone is already equal to the selectedTz (but it requires time zone detection)
+
+            StringBuilder query = new StringBuilder("SET SESSION time_zone='");
+
+            ZoneId zid = selectedTz.toZoneId().normalized();
+            if (zid instanceof ZoneOffset) {
+                String offsetStr = ((ZoneOffset) zid).getId().replace("Z", "+00:00");
+                query.append(offsetStr);
+                this.serverSession.getServerVariables().put("time_zone", offsetStr);
+            } else {
+                query.append(selectedTz.getID());
+                this.serverSession.getServerVariables().put("time_zone", selectedTz.getID());
             }
-        }
 
+            query.append("'");
+            sendCommand(this.commandBuilder.buildComQuery(null, query.toString()), false, 0);
+        }
     }
 
     @Override
     public void initServerSession() {
-        configureTimezone();
+        configureTimeZone();
 
         if (this.session.getServerSession().getServerVariables().containsKey("max_allowed_packet")) {
             int serverMaxAllowedPacket = this.session.getServerSession().getServerVariable("max_allowed_packet", -1);

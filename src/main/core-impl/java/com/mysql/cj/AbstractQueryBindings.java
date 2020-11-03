@@ -36,10 +36,15 @@ import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.text.ParsePosition;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
@@ -76,7 +81,9 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
     protected int numberOfExecutions = 0;
 
     protected RuntimeProperty<Boolean> useStreamLengthsInPrepStmts;
+    protected RuntimeProperty<Boolean> preserveInstants;
     protected RuntimeProperty<Boolean> sendFractionalSeconds;
+    protected RuntimeProperty<Boolean> sendFractionalSecondsForTime;
     private RuntimeProperty<Boolean> treatUtilDateAsTimestamp;
 
     /** Is this query a LOAD DATA query? */
@@ -87,7 +94,9 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
     public AbstractQueryBindings(int parameterCount, Session sess) {
         this.session = sess;
         this.charEncoding = this.session.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
+        this.preserveInstants = this.session.getPropertySet().getBooleanProperty(PropertyKey.preserveInstants);
         this.sendFractionalSeconds = this.session.getPropertySet().getBooleanProperty(PropertyKey.sendFractionalSeconds);
+        this.sendFractionalSecondsForTime = this.session.getPropertySet().getBooleanProperty(PropertyKey.sendFractionalSecondsForTime);
         this.treatUtilDateAsTimestamp = this.session.getPropertySet().getBooleanProperty(PropertyKey.treatUtilDateAsTimestamp);
         this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyKey.useStreamLengthsInPrepStmts);
 
@@ -213,12 +222,54 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
         DEFAULT_MYSQL_TYPES.put(Boolean.class, MysqlType.BOOLEAN);
         DEFAULT_MYSQL_TYPES.put(LocalDate.class, MysqlType.DATE);
         DEFAULT_MYSQL_TYPES.put(LocalTime.class, MysqlType.TIME);
-        DEFAULT_MYSQL_TYPES.put(LocalDateTime.class, MysqlType.DATETIME); // TODO default JDBC mapping is TIMESTAMP, see B-4
+        DEFAULT_MYSQL_TYPES.put(LocalDateTime.class, MysqlType.DATETIME); // default JDBC mapping is TIMESTAMP, see B-4
+        DEFAULT_MYSQL_TYPES.put(OffsetTime.class, MysqlType.TIME); // default JDBC mapping is TIME_WITH_TIMEZONE, see B-4
+        DEFAULT_MYSQL_TYPES.put(OffsetDateTime.class, MysqlType.TIMESTAMP); // default JDBC mapping is TIMESTAMP_WITH_TIMEZONE, see B-4
+        DEFAULT_MYSQL_TYPES.put(ZonedDateTime.class, MysqlType.TIMESTAMP); // no JDBC mapping is defined
         DEFAULT_MYSQL_TYPES.put(java.sql.Blob.class, MysqlType.BLOB);
         DEFAULT_MYSQL_TYPES.put(java.sql.Clob.class, MysqlType.TEXT);
         DEFAULT_MYSQL_TYPES.put(BigInteger.class, MysqlType.BIGINT);
         DEFAULT_MYSQL_TYPES.put(java.util.Date.class, MysqlType.TIMESTAMP);
+        DEFAULT_MYSQL_TYPES.put(java.util.Calendar.class, MysqlType.TIMESTAMP);
         DEFAULT_MYSQL_TYPES.put(InputStream.class, MysqlType.BLOB);
+    }
+
+    @Override
+    public void setTimestamp(int parameterIndex, Timestamp x, MysqlType targetMysqlType) {
+        int fractLen = -1;
+        if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs() || !this.sendFractionalSeconds.getValue()) {
+            fractLen = 0;
+        } else if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0) {
+            fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+        }
+
+        setTimestamp(parameterIndex, x, null, fractLen, targetMysqlType);
+    }
+
+    @Override
+    public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal, MysqlType targetMysqlType) {
+        int fractLen = -1;
+        if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs() || !this.sendFractionalSeconds.getValue()) {
+            fractLen = 0;
+        } else if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0
+                && this.columnDefinition.getFields()[parameterIndex].getDecimals() > 0) {
+            fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+        }
+
+        setTimestamp(parameterIndex, x, cal, fractLen, targetMysqlType);
+    }
+
+    @Override
+    public void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, int fractionalLength, MysqlType targetMysqlType) {
+        if (x == null) {
+            setNull(parameterIndex);
+            return;
+        }
+        if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs() || !this.sendFractionalSeconds.getValue()) {
+            x = TimeUtil.truncateFractionalSeconds(x);
+        }
+
+        bindTimestamp(parameterIndex, x, targetCalendar, fractionalLength, targetMysqlType);
     }
 
     @Override
@@ -282,11 +333,11 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                     case DATE:
                         setLocalDate(parameterIndex, (LocalDate) parameterObj, targetMysqlType);
                         break;
-                    case DATETIME: // non-JDBC
-                    case TIMESTAMP: // non-JDBC
+                    case DATETIME:
+                    case TIMESTAMP:
                         setLocalDateTime(parameterIndex, LocalDateTime.of((LocalDate) parameterObj, DEFAULT_TIME), targetMysqlType);
                         break;
-                    case YEAR: // non-JDBC
+                    case YEAR:
                         setInt(parameterIndex, ((LocalDate) parameterObj).getYear());
                         break;
                     case CHAR:
@@ -314,7 +365,10 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                     case TEXT:
                     case MEDIUMTEXT:
                     case LONGTEXT:
-                        setString(parameterIndex, parameterObj.toString());
+                        setString(parameterIndex,
+                                ((LocalTime) parameterObj).format(this.sendFractionalSeconds.getValue() && ((LocalTime) parameterObj).getNano() > 0
+                                        ? TimeUtil.TIME_FORMATTER_WITH_NANOS_NO_OFFSET
+                                        : TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET));
                         break;
                     default:
                         throw ExceptionFactory.createException(WrongArgumentException.class,
@@ -339,7 +393,137 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                     case TEXT:
                     case MEDIUMTEXT:
                     case LONGTEXT:
-                        setString(parameterIndex, parameterObj.toString().replace('T', ' '));
+                        setString(parameterIndex,
+                                ((LocalDateTime) parameterObj).format(this.sendFractionalSeconds.getValue() && ((LocalDateTime) parameterObj).getNano() > 0
+                                        ? TimeUtil.DATETIME_FORMATTER_WITH_NANOS_NO_OFFSET
+                                        : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET));
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof OffsetTime) {
+                switch (targetMysqlType) {
+                    case TIME:
+                        setLocalTime(parameterIndex,
+                                ((OffsetTime) parameterObj)
+                                        .withOffsetSameInstant(
+                                                ZoneOffset.ofTotalSeconds(this.session.getServerSession().getDefaultTimeZone().getRawOffset() / 1000))
+                                        .toLocalTime(),
+                                targetMysqlType);
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex,
+                                ((OffsetTime) parameterObj).format(this.sendFractionalSeconds.getValue() && ((OffsetTime) parameterObj).getNano() > 0
+                                        ? TimeUtil.TIME_FORMATTER_WITH_NANOS_WITH_OFFSET
+                                        : TimeUtil.TIME_FORMATTER_NO_FRACT_WITH_OFFSET));
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof OffsetDateTime) {
+                switch (targetMysqlType) {
+                    case DATE:
+                        setLocalDate(parameterIndex, ((OffsetDateTime) parameterObj)
+                                .atZoneSameInstant(this.session.getServerSession().getDefaultTimeZone().toZoneId()).toLocalDate(), targetMysqlType);
+                        break;
+                    case DATETIME:
+                    case TIMESTAMP:
+                        java.sql.Timestamp ts = Timestamp.valueOf(((OffsetDateTime) parameterObj)
+                                .atZoneSameInstant(this.session.getServerSession().getDefaultTimeZone().toZoneId()).toLocalDateTime());
+
+                        int fractLen = -1;
+                        if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs() || !this.sendFractionalSeconds.getValue()) {
+                            fractLen = 0;
+                        } else if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0
+                                && this.columnDefinition.getFields()[parameterIndex].getDecimals() > 0) {
+                            fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+                        }
+
+                        if (fractLen == 0) {
+                            ts = TimeUtil.truncateFractionalSeconds(ts);
+                        }
+
+                        bindTimestamp(parameterIndex, ts, null, fractLen, targetMysqlType);
+                        break;
+                    case TIME:
+                        setLocalTime(parameterIndex, ((OffsetDateTime) parameterObj)
+                                .atZoneSameInstant(this.session.getServerSession().getDefaultTimeZone().toZoneId()).toLocalTime(), targetMysqlType);
+                        break;
+                    case YEAR:
+                        setInt(parameterIndex,
+                                ((OffsetDateTime) parameterObj).atZoneSameInstant(this.session.getServerSession().getDefaultTimeZone().toZoneId()).getYear());
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex,
+                                ((OffsetDateTime) parameterObj).format(this.sendFractionalSeconds.getValue() && ((OffsetDateTime) parameterObj).getNano() > 0
+                                        ? TimeUtil.DATETIME_FORMATTER_WITH_NANOS_WITH_OFFSET
+                                        : TimeUtil.DATETIME_FORMATTER_NO_FRACT_WITH_OFFSET));
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof ZonedDateTime) {
+                switch (targetMysqlType) {
+                    case DATE:
+                        setLocalDate(parameterIndex, ((ZonedDateTime) parameterObj)
+                                .withZoneSameInstant(this.session.getServerSession().getDefaultTimeZone().toZoneId()).toLocalDate(), targetMysqlType);
+                        break;
+                    case DATETIME:
+                    case TIMESTAMP:
+                        java.sql.Timestamp ts = Timestamp.valueOf(((ZonedDateTime) parameterObj)
+                                .withZoneSameInstant(this.session.getServerSession().getDefaultTimeZone().toZoneId()).toLocalDateTime());
+
+                        int fractLen = -1;
+                        if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs() || !this.sendFractionalSeconds.getValue()) {
+                            fractLen = 0;
+                        } else if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0
+                                && this.columnDefinition.getFields()[parameterIndex].getDecimals() > 0) {
+                            fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+                        }
+
+                        if (fractLen == 0) {
+                            ts = TimeUtil.truncateFractionalSeconds(ts);
+                        }
+
+                        bindTimestamp(parameterIndex, ts, null, fractLen, targetMysqlType);
+                        break;
+                    case TIME:
+                        setLocalTime(parameterIndex, ((ZonedDateTime) parameterObj)
+                                .withZoneSameInstant(this.session.getServerSession().getDefaultTimeZone().toZoneId()).toLocalTime(), targetMysqlType);
+                        break;
+                    case YEAR:
+                        setInt(parameterIndex,
+                                ((ZonedDateTime) parameterObj).withZoneSameInstant(this.session.getServerSession().getDefaultTimeZone().toZoneId()).getYear());
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex,
+                                ((ZonedDateTime) parameterObj).format(this.sendFractionalSeconds.getValue() && ((ZonedDateTime) parameterObj).getNano() > 0
+                                        ? TimeUtil.DATETIME_FORMATTER_WITH_NANOS_WITH_OFFSET
+                                        : TimeUtil.DATETIME_FORMATTER_NO_FRACT_WITH_OFFSET));
                         break;
                     default:
                         throw ExceptionFactory.createException(WrongArgumentException.class,
@@ -354,7 +538,7 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                         break;
                     case DATETIME:
                     case TIMESTAMP:
-                        setTimestamp(parameterIndex, new java.sql.Timestamp(((java.util.Date) parameterObj).getTime()));
+                        setTimestamp(parameterIndex, new java.sql.Timestamp(((java.util.Date) parameterObj).getTime()), targetMysqlType);
                         break;
                     case YEAR:
                         Calendar cal = Calendar.getInstance();
@@ -382,7 +566,7 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                         break;
                     case DATETIME:
                     case TIMESTAMP:
-                        setTimestamp(parameterIndex, (java.sql.Timestamp) parameterObj);
+                        setTimestamp(parameterIndex, (java.sql.Timestamp) parameterObj, targetMysqlType);
                         break;
                     case YEAR:
                         Calendar cal = Calendar.getInstance();
@@ -390,8 +574,7 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                         setInt(parameterIndex, cal.get(Calendar.YEAR));
                         break;
                     case TIME:
-                        java.sql.Timestamp xT = (java.sql.Timestamp) parameterObj;
-                        setTime(parameterIndex, new java.sql.Time(xT.getTime()));
+                        setLocalTime(parameterIndex, ((java.sql.Timestamp) parameterObj).toLocalDateTime().toLocalTime(), targetMysqlType);
                         break;
                     case CHAR:
                     case VARCHAR:
@@ -399,7 +582,13 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                     case TEXT:
                     case MEDIUMTEXT:
                     case LONGTEXT:
-                        setString(parameterIndex, parameterObj.toString());
+                        String val = parameterObj.toString();
+                        int dotPos;
+                        if ((((java.sql.Timestamp) parameterObj).getNanos() == 0 || !this.sendFractionalSeconds.getValue())
+                                && (dotPos = val.indexOf(".")) > 0) {
+                            val = val.substring(0, dotPos);
+                        }
+                        setString(parameterIndex, val);
                         break;
                     default:
                         throw ExceptionFactory.createException(WrongArgumentException.class,
@@ -414,7 +603,23 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                         break;
                     case DATETIME:
                     case TIMESTAMP:
-                        setTimestamp(parameterIndex, new java.sql.Timestamp(((java.util.Date) parameterObj).getTime()));
+                        java.sql.Timestamp ts = new java.sql.Timestamp(((java.sql.Time) parameterObj).getTime());
+
+                        int fractLen = -1;
+                        if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs() || !this.sendFractionalSecondsForTime.getValue()
+                                || !this.sendFractionalSeconds.getValue()) {
+                            fractLen = 0;
+                        } else if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0
+                                && this.columnDefinition.getFields()[parameterIndex].getDecimals() > 0) {
+                            fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+                        }
+
+                        if (fractLen == 0) {
+                            ts = TimeUtil.truncateFractionalSeconds(ts);
+                        }
+
+                        bindTimestamp(parameterIndex, ts, null, fractLen, MysqlType.DATETIME); // Override TIMESTAMP to avoid conversion to the server time zone
+
                         break;
                     case YEAR:
                         Calendar cal = Calendar.getInstance();
@@ -430,7 +635,12 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                     case TEXT:
                     case MEDIUMTEXT:
                     case LONGTEXT:
-                        setString(parameterIndex, parameterObj.toString());
+                        setString(
+                                parameterIndex, TimeUtil
+                                        .getSimpleDateFormat(this.session.getServerSession().getCapabilities().serverSupportsFracSecs()
+                                                && this.sendFractionalSeconds.getValue() && this.sendFractionalSecondsForTime.getValue()
+                                                && TimeUtil.hasFractionalSeconds((java.sql.Time) parameterObj) ? "HH:mm:ss.SSS" : "HH:mm:ss", null)
+                                        .format(parameterObj));
                         break;
                     default:
                         throw ExceptionFactory.createException(WrongArgumentException.class,
@@ -449,24 +659,65 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                         break;
                     case DATETIME:
                     case TIMESTAMP:
-                        setTimestamp(parameterIndex, new java.sql.Timestamp(((java.util.Date) parameterObj).getTime()));
+                        setTimestamp(parameterIndex, new java.sql.Timestamp(((java.util.Date) parameterObj).getTime()), targetMysqlType);
                         break;
                     case YEAR:
                         Calendar cal = Calendar.getInstance();
                         cal.setTime(((java.util.Date) parameterObj));
                         setInt(parameterIndex, cal.get(Calendar.YEAR));
                         break;
-                    // TODO
-                    //case TIME:
-                    //    setTime(parameterIndex, (java.sql.Time) parameterObj);
-                    //    break;
+                    case TIME:
+                        LocalTime lt = ((java.util.Date) parameterObj).toInstant().atZone(this.session.getServerSession().getDefaultTimeZone().toZoneId())
+                                .toLocalTime();
+                        setLocalTime(parameterIndex, lt, targetMysqlType);
+                        break;
                     case CHAR:
                     case VARCHAR:
                     case TINYTEXT:
                     case TEXT:
                     case MEDIUMTEXT:
                     case LONGTEXT:
-                        setString(parameterIndex, parameterObj.toString());
+                        setString(parameterIndex, TimeUtil.getSimpleDateFormat(
+                                this.session.getServerSession().getCapabilities().serverSupportsFracSecs() && this.sendFractionalSeconds.getValue()
+                                        && ((java.util.Date) parameterObj).toInstant().getNano() > 0 ? "yyyy-MM-dd HH:mm:ss.SSS" : "yyyy-MM-dd HH:mm:ss",
+                                null).format(parameterObj));
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
+            } else if (parameterObj instanceof java.util.Calendar) {
+                switch (targetMysqlType) {
+                    case DATE:
+                        setDate(parameterIndex, new java.sql.Date(((java.util.Calendar) parameterObj).getTimeInMillis()));
+                        break;
+                    case DATETIME:
+                    case TIMESTAMP:
+                        setTimestamp(parameterIndex, new java.sql.Timestamp(((java.util.Calendar) parameterObj).getTimeInMillis()), targetMysqlType);
+                        break;
+                    case YEAR:
+                        setInt(parameterIndex, ((java.util.Calendar) parameterObj).get(Calendar.YEAR));
+                        break;
+                    case TIME:
+                        LocalTime lt = ((java.util.Calendar) parameterObj).toInstant().atZone(this.session.getServerSession().getDefaultTimeZone().toZoneId())
+                                .toLocalTime();
+                        setLocalTime(parameterIndex, lt, targetMysqlType);
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        ZonedDateTime zdt = ZonedDateTime
+                                .ofInstant(((java.util.Calendar) parameterObj).toInstant(), ((java.util.Calendar) parameterObj).getTimeZone().toZoneId())
+                                .withZoneSameInstant(this.session.getServerSession().getDefaultTimeZone().toZoneId());
+                        setString(parameterIndex,
+                                zdt.format(zdt.getNano() > 0 && this.session.getServerSession().getCapabilities().serverSupportsFracSecs()
+                                        && this.sendFractionalSeconds.getValue() ? TimeUtil.DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET
+                                                : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET));
                         break;
                     default:
                         throw ExceptionFactory.createException(WrongArgumentException.class,

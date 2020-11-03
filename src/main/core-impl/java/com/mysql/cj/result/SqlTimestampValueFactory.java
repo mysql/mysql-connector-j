@@ -35,6 +35,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.DataReadException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -51,23 +52,24 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
     // cached per instance to avoid re-creation on every create*() call
     private Calendar cal;
 
+    private TimeZone defaultTimeZone;
+    private TimeZone connectionTimeZone;
+
     /**
      * @param pset
      *            {@link PropertySet}
      * @param calendar
      *            Calendar used to interpret the fields.
-     * @param tz
-     *            The time zone used to interpret the fields.
+     * @param defaultTimeZone
+     *            The local JVM time zone.
+     * @param connectionTimeZone
+     *            The server session time zone as defined by connectionTimeZone property.
      */
-    public SqlTimestampValueFactory(PropertySet pset, Calendar calendar, TimeZone tz) {
+    public SqlTimestampValueFactory(PropertySet pset, Calendar calendar, TimeZone defaultTimeZone, TimeZone connectionTimeZone) {
         super(pset);
-        if (calendar != null) {
-            this.cal = (Calendar) calendar.clone();
-        } else {
-            // c.f. Bug#11540 for details on locale
-            this.cal = Calendar.getInstance(tz, Locale.US);
-            this.cal.setLenient(false);
-        }
+        this.defaultTimeZone = defaultTimeZone;
+        this.connectionTimeZone = connectionTimeZone;
+        this.cal = calendar != null ? (Calendar) calendar.clone() : null;
     }
 
     /**
@@ -77,7 +79,29 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
      */
     @Override
     public Timestamp localCreateFromDate(InternalDate idate) {
-        return createFromTimestamp(new InternalTimestamp(idate.getYear(), idate.getMonth(), idate.getDay(), 0, 0, 0, 0, 0));
+        if (idate.getYear() == 0 && idate.getMonth() == 0 && idate.getDay() == 0) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
+        }
+
+        synchronized (this.defaultTimeZone) {
+            Calendar c;
+
+            if (this.cal != null) {
+                c = this.cal;
+            } else {
+                // c.f. Bug#11540 for details on locale
+                c = Calendar.getInstance(this.defaultTimeZone, Locale.US);
+                c.setLenient(false);
+            }
+
+            try {
+                c.clear();
+                c.set(idate.getYear(), idate.getMonth() - 1, idate.getDay(), 0, 0, 0);
+                return new Timestamp(c.getTimeInMillis());
+            } catch (IllegalArgumentException e) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
+            }
+        }
     }
 
     /**
@@ -92,7 +116,26 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
                     Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + it.getHours() + ":" + it.getMinutes() + ":" + it.getSeconds() }));
         }
 
-        return createFromTimestamp(new InternalTimestamp(1970, 1, 1, it.getHours(), it.getMinutes(), it.getSeconds(), it.getNanos(), it.getScale()));
+        synchronized (this.defaultTimeZone) {
+            Calendar c;
+
+            if (this.cal != null) {
+                c = this.cal;
+            } else {
+                // c.f. Bug#11540 for details on locale
+                c = Calendar.getInstance(this.defaultTimeZone, Locale.US);
+                c.setLenient(false);
+            }
+
+            try {
+                c.set(1970, 0, 1, it.getHours(), it.getMinutes(), it.getSeconds());
+                Timestamp ts = new Timestamp(c.getTimeInMillis());
+                ts.setNanos(it.getNanos());
+                return ts;
+            } catch (IllegalArgumentException e) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
+            }
+        }
     }
 
     @Override
@@ -101,11 +144,52 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
             throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
         }
 
-        synchronized (this.cal) {
+        synchronized (this.defaultTimeZone) {
+            Calendar c;
+
+            if (this.cal != null) {
+                c = this.cal;
+            } else {
+                // c.f. Bug#11540 for details on locale
+                c = Calendar.getInstance(this.pset.getBooleanProperty(PropertyKey.preserveInstants).getValue() ? this.connectionTimeZone : this.defaultTimeZone,
+                        Locale.US);
+                c.setLenient(false);
+            }
+
             try {
                 // this method is HUGEly faster than Java 8's Calendar.Builder()
-                this.cal.set(its.getYear(), its.getMonth() - 1, its.getDay(), its.getHours(), its.getMinutes(), its.getSeconds());
-                Timestamp ts = new Timestamp(this.cal.getTimeInMillis());
+                c.set(its.getYear(), its.getMonth() - 1, its.getDay(), its.getHours(), its.getMinutes(), its.getSeconds());
+                Timestamp ts = new Timestamp(c.getTimeInMillis());
+                ts.setNanos(its.getNanos());
+                return ts;
+            } catch (IllegalArgumentException e) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
+            }
+        }
+    }
+
+    @Override
+    public Timestamp localCreateFromDatetime(InternalTimestamp its) {
+        if (its.getYear() == 0 && its.getMonth() == 0 && its.getDay() == 0) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
+        }
+
+        synchronized (this.defaultTimeZone) {
+            Calendar c;
+
+            if (this.cal != null) {
+                c = this.cal;
+            } else {
+                // c.f. Bug#11540 for details on locale
+                c = Calendar.getInstance(this.pset.getBooleanProperty(PropertyKey.preserveInstants).getValue() ? this.connectionTimeZone : this.defaultTimeZone,
+                        Locale.US);
+                c.setLenient(false);
+            }
+
+            try {
+                // this method is HUGEly faster than Java 8's Calendar.Builder()
+                c.set(its.getYear(), its.getMonth() - 1, its.getDay(), its.getHours(), its.getMinutes(), its.getSeconds());
+                Timestamp ts = new Timestamp(c.getTimeInMillis());
                 ts.setNanos(its.getNanos());
                 return ts;
             } catch (IllegalArgumentException e) {

@@ -551,13 +551,13 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     }
 
     @Override
-    public void configureTimezone() {
+    public void configureTimeZone() {
         // no-op
     }
 
     @Override
     public void initServerSession() {
-        configureTimezone();
+        configureTimeZone();
 
         send(this.messageBuilder.buildSqlStatement("select @@mysqlx_max_allowed_packet"), 0);
         // TODO: can use a simple default for this as we don't need metadata. need to prevent against exceptions though

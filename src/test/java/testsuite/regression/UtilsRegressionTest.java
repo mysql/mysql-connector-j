@@ -551,13 +551,13 @@ public class UtilsRegressionTest extends BaseTestCase {
         // GENERATED CODE ENDS HERE
 
         for (String key : tzMap.keySet()) {
-            assertEquals(tzMap.get(key), TimeUtil.getCanonicalTimezone(key, null), "Custom time Zone '" + key + "' mapping");
+            assertEquals(tzMap.get(key), TimeUtil.getCanonicalTimeZone(key, null), "Custom time Zone '" + key + "' mapping");
         }
 
         for (String tz : TimeZone.getAvailableIDs()) {
             String canonicalTZ;
             try {
-                canonicalTZ = TimeUtil.getCanonicalTimezone(tz, null);
+                canonicalTZ = TimeUtil.getCanonicalTimeZone(tz, null);
             } catch (CJException e) {
                 canonicalTZ = null;
             }
@@ -572,8 +572,8 @@ public class UtilsRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug70436() throws Exception {
-        assertEquals("Asia/Yerevan", TimeUtil.getCanonicalTimezone("Caucasus Standard Time", null));
-        assertEquals("Asia/Tbilisi", TimeUtil.getCanonicalTimezone("Georgian Standard Time", null));
+        assertEquals("Asia/Yerevan", TimeUtil.getCanonicalTimeZone("Caucasus Standard Time", null));
+        assertEquals("Asia/Tbilisi", TimeUtil.getCanonicalTimeZone("Georgian Standard Time", null));
     }
 
     /**

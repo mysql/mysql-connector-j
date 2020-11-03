@@ -610,10 +610,11 @@ public class SessionTest extends DevApiBaseTestCase {
         if (!url.contains("?")) {
             url += "?";
         }
-        Session sess = this.fact.getSession(url + makeParam(PropertyKey.serverTimezone, "Asia/Calcutta") + makeParam(PropertyKey.serverConfigCacheFactory, ""));
+        Session sess = this.fact
+                .getSession(url + makeParam(PropertyKey.connectionTimeZone, "Asia/Calcutta") + makeParam(PropertyKey.serverConfigCacheFactory, ""));
 
         String uri = sess.getUri();
-        assertTrue(uri.contains("serverTimezone=Asia/Calcutta"));
+        assertTrue(uri.contains("connectionTimeZone=Asia/Calcutta"));
         assertTrue(uri.contains("serverConfigCacheFactory="));
         assertFalse(uri.contains(","));
     }

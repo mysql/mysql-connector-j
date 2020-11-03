@@ -83,6 +83,8 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
         // eg. buildResultSet(), could imply unexpected conversions when substitutes RowData in ResultSet;
         switch (f.getMysqlTypeId()) {
             case MysqlType.FIELD_TYPE_DATETIME:
+                return this.valueDecoder.decodeDatetime(bytes, offset, length, f.getDecimals(), vf);
+
             case MysqlType.FIELD_TYPE_TIMESTAMP:
                 return this.valueDecoder.decodeTimestamp(bytes, offset, length, f.getDecimals(), vf);
 

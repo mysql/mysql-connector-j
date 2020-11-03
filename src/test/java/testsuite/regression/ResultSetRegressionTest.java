@@ -72,7 +72,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -92,6 +95,7 @@ import javax.sql.rowset.CachedRowSet;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.Messages;
+import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.DefaultPropertySet;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
@@ -971,17 +975,16 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     @Test
     public void testBogusTimestampAsString() throws Exception {
-        this.rs = this.stmt.executeQuery("SELECT '2004-08-13 13:21:17.'");
-
-        this.rs.next();
+        ResultSet rs1 = this.stmt.executeQuery("SELECT '2004-08-13 13:21:17.'");
+        rs1.next();
 
         // We're only checking for an exception being thrown here as the bug
-        try {
-            this.rs.getTimestamp(1);
-            fail("Invalid timestamp throws an exception");
-        } catch (SQLException ex) {
-            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
-        }
+        assertThrows(SQLDataException.class, "Cannot convert string '2004-08-13 13:21:17.' to java.sql.Timestamp value", new Callable<Void>() {
+            public Void call() throws Exception {
+                rs1.getTimestamp(1);
+                return null;
+            }
+        });
     }
 
     /**
@@ -1192,9 +1195,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
         String sQuery = " SELECT * FROM " + tableName + " WHERE id1 = ? AND id2 = ?";
         this.pstmt = this.conn.prepareStatement(sQuery, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
 
+        TimeZone serverTz = ((MysqlConnection) this.conn).getSession().getServerSession().getSessionTimeZone();
+
         this.conn.setAutoCommit(false);
         this.pstmt.setInt(1, 1);
-        GregorianCalendar cal = new GregorianCalendar();
+        GregorianCalendar cal = new GregorianCalendar(serverTz);
         cal.clear();
         cal.set(2005, 00, 05, 13, 59, 20);
 
@@ -4617,15 +4622,27 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         Calendar cal = Calendar.getInstance();
 
-        this.rs = this.conn.createStatement().executeQuery("SELECT * FROM testBug20804635");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "LOCAL");
+        Connection testConn = getConnectionWithProps(props);
+
+        this.rs = testConn.createStatement().executeQuery("SELECT * FROM testBug20804635");
         this.rs.next();
 
-        assertEquals("2031-01-15", this.rs.getDate(1).toString());
-        assertEquals("2031-01-15", this.rs.getDate(1, cal).toString());
-        assertEquals("03:14:07", this.rs.getTime(1).toString());
-        assertEquals("03:14:07", this.rs.getTime(1, cal).toString());
-        assertEquals("2031-01-15 03:14:07.34", this.rs.getTimestamp(1).toString());
-        assertEquals("2031-01-15 03:14:07.34", this.rs.getTimestamp(1, cal).toString());
+        TimeZone serverTz = ((MysqlConnection) testConn).getSession().getServerSession().getSessionTimeZone();
+        ZonedDateTime expZdt = LocalDateTime.of(2031, 1, 15, 3, 14, 07, 340000000).atZone(serverTz.toZoneId());
+        String expDate = expZdt.withZoneSameInstant(ZoneId.systemDefault()).format(TimeUtil.DATE_FORMATTER);
+        String expDateCal = expZdt.withZoneSameLocal(ZoneId.systemDefault()).format(TimeUtil.DATE_FORMATTER);
+        String expTime = expZdt.withZoneSameLocal(ZoneId.systemDefault()).format(TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET);
+        String expTimestamp = expZdt.withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SS"));
+        String expTimestampCal = expZdt.withZoneSameLocal(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SS"));
+
+        assertEquals(expDate, this.rs.getDate(1).toString());
+        assertEquals(expDateCal, this.rs.getDate(1, cal).toString());
+        assertEquals(expTime, this.rs.getTime(1).toString());
+        assertEquals(expTime, this.rs.getTime(1, cal).toString());
+        assertEquals(expTimestamp, this.rs.getTimestamp(1).toString());
+        assertEquals(expTimestampCal, this.rs.getTimestamp(1, cal).toString());
 
         assertEquals("12:59:00", this.rs.getTime(2).toString());
         assertEquals("12:59:00", this.rs.getTime(2, cal).toString());
@@ -4694,8 +4711,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         String tsStr1 = "2010-09-02 03:55:10";
         String tsStr2 = "2010-09-02 03:55:10.123456";
-        Timestamp ts1 = Timestamp.valueOf(tsStr1);
-        Timestamp ts2 = Timestamp.valueOf(tsStr2);
+
+        TimeZone serverTz = ((MysqlConnection) this.conn).getSession().getServerSession().getSessionTimeZone();
+
+        Timestamp ts1 = Timestamp.from(LocalDateTime.parse(tsStr1.replace(" ", "T")).atZone(serverTz.toZoneId()).toInstant());
+        Timestamp ts2 = Timestamp.from(LocalDateTime.parse(tsStr2.replace(" ", "T")).atZone(serverTz.toZoneId()).toInstant());
 
         createTable("testBug56479", "(id INT PRIMARY KEY, ts1 TIMESTAMP NULL, ts2 TIMESTAMP(6) NULL)", "InnoDB");
         this.stmt.executeUpdate("INSERT INTO testBug56479 VALUES (1, '" + tsStr1 + "', '" + tsStr2 + "'), (2, '" + tsStr1 + "', '" + tsStr2 + "')");
@@ -5310,33 +5330,43 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug81202() throws Exception {
-        createTable("testBug81202", "(id INT unsigned NOT NULL, value_timestamp TIMESTAMP NULL, ot1 VARCHAR(100), ot2 BLOB, odt1 VARCHAR(100), odt2 BLOB)");
+        createTable("testBug81202",
+                "(id INT unsigned NOT NULL, value_timestamp TIMESTAMP NULL, ot1 VARCHAR(100), ot2 BLOB, odt1 VARCHAR(100), odt2 BLOB, otd3 TIMESTAMP NULL, otd4 DATETIME)");
 
         OffsetDateTime testOffsetDateTime = OffsetDateTime.of(2015, 8, 04, 12, 34, 56, 7890, ZoneOffset.UTC);
         OffsetTime testOffsetTime = OffsetTime.of(12, 34, 56, 7890, ZoneOffset.UTC);
 
-        this.pstmt = this.conn.prepareStatement("INSERT INTO testBug81202 VALUES (?, TIMESTAMP '2016-04-27 12:15:55', ?, ?, ?, ?)");
+        Properties props = new Properties();
+        Connection testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
+
+        this.pstmt = testConn.prepareStatement("INSERT INTO testBug81202 VALUES (?, TIMESTAMP '2016-04-27 12:15:55', ?, ?, ?, ?, ?, ?)");
         this.pstmt.setInt(1, 1);
         this.pstmt.setObject(2, testOffsetTime, JDBCType.VARCHAR);
         this.pstmt.setObject(3, testOffsetTime);
         this.pstmt.setObject(4, testOffsetDateTime, JDBCType.VARCHAR);
         this.pstmt.setObject(5, testOffsetDateTime);
+        this.pstmt.setObject(6, testOffsetDateTime, JDBCType.TIMESTAMP);
+        this.pstmt.setObject(7, testOffsetDateTime, MysqlType.DATETIME);
         assertEquals(1, this.pstmt.executeUpdate());
 
-        this.stmt.executeUpdate("INSERT INTO testBug81202 VALUES (2, NULL, NULL, NULL, NULL, NULL)");
+        this.stmt.executeUpdate("INSERT INTO testBug81202 VALUES (2, NULL, NULL, NULL, NULL, NULL, NULL, NULL)");
 
-        // autoDeserialize=true is needed for retrieving OffsetTime and OffsetDateTime from BLOBs
-        Connection testConn = getConnectionWithProps("autoDeserialize=true");
+        testConn.close();
+
+        testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
         this.rs = testConn.createStatement().executeQuery("SELECT * FROM testBug81202");
 
         assertTrue(this.rs.next());
         assertEquals(LocalDate.of(2016, 4, 27), this.rs.getObject(2, LocalDate.class));
         assertEquals(LocalDateTime.of(2016, 4, 27, 12, 15, 55), this.rs.getObject(2, LocalDateTime.class));
         assertEquals(LocalTime.of(12, 15, 55), this.rs.getObject(2, LocalTime.class));
-        assertEquals(testOffsetTime, this.rs.getObject(3, OffsetTime.class));
-        assertEquals(testOffsetTime, this.rs.getObject(4, OffsetTime.class));
-        assertEquals(testOffsetDateTime, this.rs.getObject(5, OffsetDateTime.class));
-        assertEquals(testOffsetDateTime, this.rs.getObject(6, OffsetDateTime.class));
+        assertEquals(testOffsetTime.atDate(LocalDate.now()).toEpochSecond(), this.rs.getObject(3, OffsetTime.class).atDate(LocalDate.now()).toEpochSecond());
+        assertEquals(testOffsetTime.atDate(LocalDate.now()).toEpochSecond(), this.rs.getObject(4, OffsetTime.class).atDate(LocalDate.now()).toEpochSecond());
+
+        assertEquals(testOffsetDateTime.toEpochSecond(), this.rs.getObject(5, OffsetDateTime.class).toEpochSecond());
+        assertEquals(testOffsetDateTime.toEpochSecond(), this.rs.getObject(6, OffsetDateTime.class).toEpochSecond());
+        assertEquals(testOffsetDateTime.toEpochSecond(), this.rs.getObject(7, OffsetDateTime.class).toEpochSecond());
+        assertEquals(testOffsetDateTime.toEpochSecond(), this.rs.getObject(8, OffsetDateTime.class).toEpochSecond());
 
         assertTrue(this.rs.next());
         assertNull(this.rs.getObject(2, LocalDate.class));
@@ -5346,6 +5376,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertNull(this.rs.getObject(4, OffsetTime.class));
         assertNull(this.rs.getObject(5, OffsetDateTime.class));
         assertNull(this.rs.getObject(6, OffsetDateTime.class));
+        assertNull(this.rs.getObject(7, OffsetDateTime.class));
+        assertNull(this.rs.getObject(8, OffsetDateTime.class));
 
         assertFalse(this.rs.next());
     }
@@ -5364,7 +5396,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"));
 
             Properties props = new Properties();
-            props.setProperty(PropertyKey.serverTimezone.getKeyName(), "Europe/Berlin");
+            props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "Europe/Berlin");
 
             ResultSet rs1 = getConnectionWithProps(props).createStatement().executeQuery("SELECT '2016-03-27 02:15:00'");
             assertTrue(rs1.next());
@@ -5428,13 +5460,18 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         createTable("testBug24525461", sb.toString());
 
-        tstBug24525461testBytes("useSSL=false,allowPublicKeyRetrieval=true", testJSON); // CSPS
-        tstBug24525461testBytes("useSSL=false,allowPublicKeyRetrieval=true,useServerPrepStmts=true", testJSON); // SSPS without cursor
-        tstBug24525461testBytes("useSSL=false,allowPublicKeyRetrieval=true,useCursorFetch=true,defaultFetchSize=1", testJSON); // SSPS with cursor
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "LOCAL");
+        Connection testConn = getConnectionWithProps(props);
+        Statement st = testConn.createStatement();
+
+        tstBug24525461testBytes("connectionTimeZone=LOCAL,useSSL=false,allowPublicKeyRetrieval=true", testJSON, st); // CSPS
+        tstBug24525461testBytes("connectionTimeZone=LOCAL,useSSL=false,allowPublicKeyRetrieval=true,useServerPrepStmts=true", testJSON, st); // SSPS without cursor
+        tstBug24525461testBytes("connectionTimeZone=LOCAL,useSSL=false,allowPublicKeyRetrieval=true,useCursorFetch=true,defaultFetchSize=1", testJSON, st); // SSPS with cursor
     }
 
-    private void tstBug24525461testBytes(String params, boolean testJSON) throws Exception {
-        this.stmt.executeUpdate("truncate table testBug24525461");
+    private void tstBug24525461testBytes(String params, boolean testJSON, Statement st) throws Exception {
+        st.executeUpdate("truncate table testBug24525461");
 
         String fGeomFromText = versionMeetsMinimum(5, 6, 1) ? "ST_GeomFromText" : "GeomFromText";
 
@@ -5447,7 +5484,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         }
         sb.append(")");
 
-        this.stmt.executeUpdate(sb.toString());
+        st.executeUpdate(sb.toString());
 
         System.out.println(" with params = " + params);
         Connection con = getConnectionWithProps(params);
@@ -5459,7 +5496,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         // check that other fields are refreshed properly
         rs1.updateInt(2, 10);
         rs1.updateRow();
-        tstBug24525461assertResults1(testJSON);
+        tstBug24525461assertResults1(testJSON, st);
 
         // check that all fields are set as expected
 
@@ -5524,13 +5561,21 @@ public class ResultSetRegressionTest extends BaseTestCase {
         }
 
         rs1.updateRow();
-        tstBug24525461assertResults2(testJSON);
+        tstBug24525461assertResults2(testJSON, st);
     }
 
-    private void tstBug24525461assertResults1(boolean testJSON) throws Exception {
+    private void tstBug24525461assertResults1(boolean testJSON, Statement st) throws Exception {
         String fAsText = versionMeetsMinimum(5, 6, 1) ? "ST_AsText" : "AsText";
 
-        ResultSet rs2 = this.stmt.executeQuery("SELECT *, " + fAsText + "(f30), " + fAsText + "(f31) FROM testBug24525461");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "LOCAL");
+        Connection testConn = getConnectionWithProps(props);
+
+        TimeZone serverTz = ((MysqlConnection) testConn).getSession().getServerSession().getSessionTimeZone();
+        ZonedDateTime expZdt = LocalDateTime.of(2000, 1, 1, 0, 0).atZone(serverTz.toZoneId()).withZoneSameInstant(ZoneId.systemDefault());
+        String expTimestamp = expZdt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.S"));
+
+        ResultSet rs2 = st.executeQuery("SELECT *, " + fAsText + "(f30), " + fAsText + "(f31) FROM testBug24525461");
         assertTrue(rs2.next());
 
         assertEquals(0, rs2.getInt(1));
@@ -5541,7 +5586,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(1, rs2.getInt(6));
         assertEquals(Float.valueOf(1), rs2.getFloat(7));
         assertEquals(Double.valueOf(1), rs2.getDouble(8));
-        assertEquals("2000-01-01 00:00:00.0", rs2.getTimestamp(9).toString());
+        assertEquals(expTimestamp, rs2.getTimestamp(9).toString());
         assertEquals(BigDecimal.valueOf(1), rs2.getBigDecimal(10));
         assertEquals(1, rs2.getInt(11));
         assertEquals("2000-01-01", rs2.getDate(12).toString());
@@ -5598,10 +5643,18 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertFalse(rs2.next());
     }
 
-    private void tstBug24525461assertResults2(boolean testJSON) throws Exception {
+    private void tstBug24525461assertResults2(boolean testJSON, Statement st) throws Exception {
         String fAsText = versionMeetsMinimum(5, 6, 1) ? "ST_AsText" : "AsText";
 
-        ResultSet rs2 = this.stmt.executeQuery("SELECT *, " + fAsText + "(f30), " + fAsText + "(f31) FROM testBug24525461");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "LOCAL");
+        Connection testConn = getConnectionWithProps(props);
+
+        TimeZone serverTz = ((MysqlConnection) testConn).getSession().getServerSession().getSessionTimeZone();
+        ZonedDateTime expZdt = LocalDateTime.of(2002, 2, 2, 10, 30).atZone(ZoneId.systemDefault()).withZoneSameInstant(serverTz.toZoneId());
+        String expTimestamp = expZdt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.S"));
+
+        ResultSet rs2 = st.executeQuery("SELECT *, " + fAsText + "(f30), " + fAsText + "(f31) FROM testBug24525461");
         assertTrue(rs2.next());
 
         assertEquals(0, rs2.getInt(1));
@@ -5617,7 +5670,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(2, rs2.getInt(11));
         assertEquals("2002-02-02", rs2.getDate(12).toString());
         assertEquals("10:30:00", rs2.getTime(13).toString());
-        assertEquals("2002-02-02 10:30:00.0", rs2.getTimestamp(14).toString());
+        assertEquals(expTimestamp, rs2.getTimestamp(14).toString());
         assertEquals("2002-01-01", rs2.getDate(15).toString());
         assertEquals("bbb", rs2.getString(16));
         Blob blob = rs2.getBlob(17);
@@ -5910,7 +5963,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(LocalTime.of(10, 20, 30), this.rs.getObject(2, LocalTime.class));
         assertEquals(LocalDateTime.of(2017, 1, 1, 10, 20, 30), this.rs.getObject(3, LocalDateTime.class));
         assertEquals(LocalDateTime.of(2017, 1, 1, 10, 20, 30), this.rs.getObject(4, LocalDateTime.class));
-        assertEquals(OffsetTime.of(10, 20, 30, 0, ZoneOffset.ofHours(4)), this.rs.getObject(5, OffsetTime.class));
+        assertEquals(OffsetTime.of(10, 20, 30, 0, ZoneOffset.ofHours(4)).atDate(LocalDate.now()).toEpochSecond(),
+                this.rs.getObject(5, OffsetTime.class).atDate(LocalDate.now()).toEpochSecond());
         assertEquals(OffsetDateTime.of(2017, 01, 01, 10, 20, 30, 0, ZoneOffset.ofHours(4)), this.rs.getObject(6, OffsetDateTime.class));
 
         assertEquals(LocalDate.class, this.rs.getObject(1, LocalDate.class).getClass());
@@ -6071,17 +6125,25 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs = testConn.createStatement().executeQuery("SELECT * FROM testBug25650305");
         this.rs.next();
 
-        assertEquals("2031-01-15", this.rs.getDate(1).toString());
-        assertEquals("2031-01-15", this.rs.getDate(1, cal).toString());
-        assertEquals("2031-01-15", this.rs.getDate(1, null).toString());
+        TimeZone serverTz = ((MysqlConnection) this.conn).getSession().getServerSession().getSessionTimeZone();
+        ZonedDateTime expZdt = LocalDateTime.of(2031, 1, 15, 3, 14, 07, 340000000).atZone(serverTz.toZoneId());
+        String expDate = expZdt.withZoneSameInstant(ZoneId.systemDefault()).format(TimeUtil.DATE_FORMATTER);
+        String expDateCal = expZdt.withZoneSameLocal(ZoneId.systemDefault()).format(TimeUtil.DATE_FORMATTER);
+        String expTime = expZdt.withZoneSameLocal(ZoneId.systemDefault()).format(TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET);
+        String expTimestamp = expZdt.withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SS"));
+        String expTimestampCal = expZdt.withZoneSameLocal(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SS"));
 
-        assertEquals("03:14:07", this.rs.getTime(1).toString());
-        assertEquals("03:14:07", this.rs.getTime(1, cal).toString());
-        assertEquals("03:14:07", this.rs.getTime(1, null).toString());
+        assertEquals(expDate, this.rs.getDate(1).toString());
+        assertEquals(expDateCal, this.rs.getDate(1, cal).toString());
+        assertEquals(expDate, this.rs.getDate(1, null).toString());
 
-        assertEquals("2031-01-15 03:14:07.34", this.rs.getTimestamp(1).toString());
-        assertEquals("2031-01-15 03:14:07.34", this.rs.getTimestamp(1, cal).toString());
-        assertEquals("2031-01-15 03:14:07.34", this.rs.getTimestamp(1, null).toString());
+        assertEquals(expTime, this.rs.getTime(1).toString());
+        assertEquals(expTime, this.rs.getTime(1, cal).toString());
+        assertEquals(expTime, this.rs.getTime(1, null).toString());
+
+        assertEquals(expTimestamp, this.rs.getTimestamp(1).toString());
+        assertEquals(expTimestampCal, this.rs.getTimestamp(1, cal).toString());
+        assertEquals(expTimestamp, this.rs.getTimestamp(1, null).toString());
 
         testConn.close();
     }
@@ -6100,9 +6162,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
         createTable("testBug26750705", "(c1 time(3), c2 time(3))");
         this.stmt.execute("insert into testBug26750705 values('80:59:59','8:59:59.01')");
 
-        long expected1 = 80 * 60 * 60 * 1000 + 59 * 60 * 1000 + 59 * 1000; // '80:59:59' in milliseconds
-        long expected2 = 8 * 60 * 60 * 1000 + 59 * 60 * 1000 + 59 * 1000 + 10; // '8:59:59.01' in milliseconds
-
         Properties props = new Properties();
         props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
@@ -6112,8 +6171,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs = ps.executeQuery();
 
         assertNotNull(this.rs.next());
-        assertEquals(expected1, this.rs.getDate(1, null).getTime());
-        assertEquals(expected2, this.rs.getDate(2, null).getTime());
+        assertEquals(Date.valueOf(LocalDate.of(1970, 1, 1)).getTime(), this.rs.getDate(1, null).getTime());
+        assertEquals(Date.valueOf(LocalDate.of(1970, 1, 1)).getTime(), this.rs.getDate(2, null).getTime());
 
         // at least 2 warnings are expected 
         SQLWarning w = this.rs.getWarnings();
@@ -6202,10 +6261,10 @@ public class ResultSetRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "false");
 
-        for (String serverTimezone : new String[] { null, "GMT", "Asia/Calcutta" }) {
-            System.out.println("serverTimezone=" + serverTimezone);
-            if (serverTimezone != null) {
-                props.setProperty(PropertyKey.serverTimezone.getKeyName(), serverTimezone);
+        for (String connectionTimeZone : new String[] { null, "GMT", "Asia/Calcutta" }) {
+            System.out.println("connectionTimeZone=" + connectionTimeZone);
+            if (connectionTimeZone != null) {
+                props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), connectionTimeZone);
             }
             testConn2 = getConnectionWithProps(props);
 
@@ -6227,7 +6286,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(1, this.rs.getInt(1));
             assertEquals(100, this.rs.getInt(2));
             assertEquals("2019-12-30 13:59:57.0", this.rs.getTimestamp(3).toString());
-            // TODO this.rs.getString(3) here doesn't take into account the serverTimezone thus returns the value as it is stored in table; is it a bug?
+            // TODO this.rs.getString(3) here doesn't take into account the connectionTimeZone thus returns the value as it is stored in table; is it a bug?
             // assertEquals("2019-12-30 13:59:57", this.rs.getString(3));
             assertEquals("2015-12-31 23:59:59.456", this.rs.getString(4));
             assertTrue(this.rs.next());
@@ -6251,6 +6310,17 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 Timestamp.valueOf("2018-07-09 13:14:15.1234567"), //
                 Timestamp.valueOf("2018-07-09 13:14:15.12345678"), //
                 Timestamp.valueOf("2018-07-09 13:14:15.999999999") };
+        Time[] t_ins = new Time[] { //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987654321").getTime()) };
 
         // Values we expect in DB after insert operation if TIME_TRUNCATE_FRACTIONAL sql_mode is unset
         Timestamp[] ts_ins_expected_round = new Timestamp[] { //
@@ -6264,6 +6334,17 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 Timestamp.valueOf("2018-07-09 13:14:15.123457"), //
                 Timestamp.valueOf("2018-07-09 13:14:15.123457"), //
                 Timestamp.valueOf("2018-07-09 13:14:16.0") };
+        Time[] t_ins_expected_round = new Time[] { //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:16").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:16.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.99").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.9870").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.98700").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.9870000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.98700000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987000000").getTime()) };
 
         // Values we expect in DB after insert operation if TIME_TRUNCATE_FRACTIONAL sql_mode is set
         Timestamp[] ts_ins_expected_truncate = new Timestamp[] { //
@@ -6277,6 +6358,17 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 Timestamp.valueOf("2018-07-09 13:14:15.123456"), //
                 Timestamp.valueOf("2018-07-09 13:14:15.123456"), //
                 Timestamp.valueOf("2018-07-09 13:14:15.999999") };
+        Time[] t_ins_expected_truncate = new Time[] { //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.9").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.98").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.9870").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.98700").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.9870000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.98700000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.987000000").getTime()) };
 
         // Values we expect in DB after insert operation if sendFractionalSeconds=false
         Timestamp[] ts_ins_expected_not_sendFractionalSeconds = new Timestamp[] { //
@@ -6290,6 +6382,17 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 Timestamp.valueOf("2018-07-09 13:14:15.0"), //
                 Timestamp.valueOf("2018-07-09 13:14:15.0"), //
                 Timestamp.valueOf("2018-07-09 13:14:15.0") };
+        Time[] t_ins_expected_not_sendFractionalSeconds = new Time[] { //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 13:14:15.0").getTime()) };
 
         // Original values we pass to update operation
         Timestamp[] ts_upd = new Timestamp[] { //
@@ -6303,6 +6406,17 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 Timestamp.valueOf("2018-07-09 03:14:15.1234567"), //
                 Timestamp.valueOf("2018-07-09 03:14:15.12345678"), //
                 Timestamp.valueOf("2018-07-09 03:14:15.999999999") };
+        Time[] t_upd = new Time[] { //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987654321").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987654321").getTime()) };
 
         // Values we expect in DB after update operation if TIME_TRUNCATE_FRACTIONAL sql_mode is unset
         Timestamp[] ts_upd_expected_round = new Timestamp[] { //
@@ -6316,6 +6430,17 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 Timestamp.valueOf("2018-07-09 03:14:15.123457"), //
                 Timestamp.valueOf("2018-07-09 03:14:15.123457"), //
                 Timestamp.valueOf("2018-07-09 03:14:16.0") };
+        Time[] t_upd_expected_round = new Time[] { //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:16").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:16.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.99").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.9870").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.98700").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.9870000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.98700000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987000000").getTime()) };
 
         // Values we expect in DB after update operation if TIME_TRUNCATE_FRACTIONAL sql_mode is set
         Timestamp[] ts_upd_expected_truncate = new Timestamp[] { //
@@ -6329,6 +6454,17 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 Timestamp.valueOf("2018-07-09 03:14:15.123457"), //
                 Timestamp.valueOf("2018-07-09 03:14:15.123457"), //
                 Timestamp.valueOf("2018-07-09 03:14:15.999999") };
+        Time[] t_upd_expected_truncate = new Time[] { //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.9").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.98").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.9870").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.98700").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.9870000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.98700000").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.987000000").getTime()) };
 
         // Values we expect in DB after update operation if sendFractionalSeconds=false
         Timestamp[] ts_upd_expected_not_sendFractionalSeconds = new Timestamp[] { //
@@ -6342,11 +6478,23 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 Timestamp.valueOf("2018-07-09 03:14:15.0"), //
                 Timestamp.valueOf("2018-07-09 03:14:15.0"), //
                 Timestamp.valueOf("2018-07-09 03:14:15.0") };
+        Time[] t_upd_expected_not_sendFractionalSeconds = new Time[] { //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.0").getTime()), //
+                new Time(Timestamp.valueOf("2018-07-09 03:14:15.0").getTime()) };
 
         Connection testConn;
 
         boolean sqlModeTimeTruncateFractional = false;
         boolean sendFractionalSeconds = false;
+        boolean sendFractionalSecondsForTime = false;
         boolean useServerPrepStmts = false;
 
         do {
@@ -6354,15 +6502,18 @@ public class ResultSetRegressionTest extends BaseTestCase {
             if (sqlModeTimeTruncateFractional && !versionMeetsMinimum(8, 0)) {
                 continue;
             }
-            for (String serverTimezone : new String[] { null, "GMT", "Asia/Calcutta" }) {
-                if (serverTimezone != null) {
-                    props.setProperty(PropertyKey.serverTimezone.getKeyName(), serverTimezone);
+            for (String connectionTimeZone : new String[] { null, "GMT", "Asia/Calcutta" }) {
+                System.out.println("connectionTimeZone=" + connectionTimeZone);
+                if (connectionTimeZone != null) {
+                    props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), connectionTimeZone);
                 } else {
-                    props.remove(PropertyKey.serverTimezone);
+                    props.remove(PropertyKey.connectionTimeZone.getKeyName());
                 }
 
-                final String testCase = String.format("Case: [TIME_TRUNCATE_FRACTIONAL=%s, sendFractionalSeconds=%s, useServerPrepStmts=%s,",
-                        sqlModeTimeTruncateFractional ? "Y" : "N", sendFractionalSeconds ? "Y" : "N", useServerPrepStmts ? "Y" : "N");
+                final String testCase = String.format(
+                        "Case: [TIME_TRUNCATE_FRACTIONAL=%s, sendFractionalSeconds=%s, sendFractionalSecondsForTime=%s, useServerPrepStmts=%s,",
+                        sqlModeTimeTruncateFractional ? "Y" : "N", sendFractionalSeconds ? "Y" : "N", sendFractionalSecondsForTime ? "Y" : "N",
+                        useServerPrepStmts ? "Y" : "N");
                 System.out.println(testCase);
 
                 String sqlMode = getMysqlVariable("sql_mode");
@@ -6376,6 +6527,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
                 props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode='" + sqlMode + "'");
                 props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
+                props.setProperty(PropertyKey.sendFractionalSecondsForTime.getKeyName(), "" + sendFractionalSecondsForTime);
                 props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useServerPrepStmts);
 
                 testConn = getConnectionWithProps(props);
@@ -6399,7 +6551,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     this.rs.updateInt("id", 1);
                     this.rs.updateTimestamp("dt", ts_ins[len]);
                     this.rs.updateTimestamp("ts", ts_ins[len]);
-                    this.rs.updateTime("tm", new Time(ts_ins[len].getTime()));
+                    this.rs.updateTime("tm", t_ins[len]);
                     this.rs.insertRow();
                     assertTrue(this.rs.last(), testCase);
 
@@ -6418,16 +6570,16 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     // TODO java.sql.Time does not provide any way for setting/getting milliseconds and removes them from toString() method.
                     // So the rs.updateTime(String columnName, java.sql.Time x) will always truncate milliseconds. Probably it is a bug because
                     // java.sql.Time contains milliseconds internally. We have a Bug#76775 feature request about that.
-                    if (sendFractionalSeconds) {
-                        c_exp.setTime(ts_ins_expected_truncate[len]);
-                    }
+                    c_exp.setTime(sendFractionalSeconds && sendFractionalSecondsForTime
+                            ? (sqlModeTimeTruncateFractional ? t_ins_expected_truncate[len] : t_ins_expected_round[len])
+                            : t_ins_expected_not_sendFractionalSeconds[len]);
                     c_res.setTime(this.rs.getTime("tm"));
                     assertEquals(c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND), testCase);
-                    assertEquals(0, c_res.get(Calendar.MILLISECOND), testCase);
+                    assertEquals(c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND), testCase);
 
                     this.rs.updateTimestamp("dt", ts_upd[len]);
                     this.rs.updateTimestamp("ts", ts_upd[len]);
-                    this.rs.updateTime("tm", new Time(ts_upd[len].getTime()));
+                    this.rs.updateTime("tm", t_upd[len]);
                     this.rs.updateRow();
                     c_exp.setTime(sendFractionalSeconds ? (sqlModeTimeTruncateFractional ? ts_upd_expected_truncate[len] : ts_upd_expected_round[len])
                             : ts_upd_expected_not_sendFractionalSeconds[len]);
@@ -6438,12 +6590,12 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     assertEquals(c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND), testCase);
                     assertEquals(c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND), testCase);
 
-                    if (sendFractionalSeconds) {
-                        c_exp.setTime(ts_upd_expected_truncate[len]);
-                    }
+                    c_exp.setTime(sendFractionalSeconds && sendFractionalSecondsForTime
+                            ? (sqlModeTimeTruncateFractional ? t_upd_expected_truncate[len] : t_upd_expected_round[len])
+                            : t_upd_expected_not_sendFractionalSeconds[len]);
                     c_res.setTime(this.rs.getTime("tm"));
                     assertEquals(c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND), testCase);
-                    assertEquals(0, c_res.get(Calendar.MILLISECOND), testCase);
+                    assertEquals(c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND), testCase);
 
                     st.close();
                 }
@@ -6451,7 +6603,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 testConn.close();
             }
         } while ((sqlModeTimeTruncateFractional = !sqlModeTimeTruncateFractional) || (sendFractionalSeconds = !sendFractionalSeconds)
-                || (useServerPrepStmts = !useServerPrepStmts));
+                || (sendFractionalSecondsForTime = !sendFractionalSecondsForTime) || (useServerPrepStmts = !useServerPrepStmts));
 
     }
 
@@ -7360,5 +7512,153 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals(3, this.rs.getInt(1));
         assertEquals(3.3d, this.rs.getDouble(1));
         assertFalse(this.rs.next());
+    }
+
+    /**
+     * Tests fix for BUG#94457 (29402209), CONNECTOR/J RESULTSET.GETOBJECT( ..., OFFSETDATETIME.CLASS ) THROWS.
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    @Test
+    public void testBug94457() throws Exception {
+        boolean withFract = versionMeetsMinimum(5, 6, 4); // fractional seconds are not supported in previous versions
+        createTable("testBug94457", withFract ? "(dt DATETIME(4) NOT NULL, ts TIMESTAMP(4) NOT NULL, t TIME(4) NOT NULL, odt VARCHAR(30), ot VARCHAR(20))"
+                : "(dt DATETIME NOT NULL, ts TIMESTAMP NOT NULL, t TIME NOT NULL, odt VARCHAR(30), ot VARCHAR(20))");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.cacheDefaultTimeZone.getKeyName(), "false");
+
+        for (boolean preserveInstants : new boolean[] { false, true }) {
+            props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "SERVER");
+            props.setProperty(PropertyKey.preserveInstants.getKeyName(), "" + preserveInstants);
+            Connection c1 = getConnectionWithProps(props);
+
+            TimeZone serverTz = ((MysqlConnection) c1).getSession().getServerSession().getSessionTimeZone();
+
+            Statement st1 = c1.createStatement();
+            st1.execute("INSERT INTO testBug94457 VALUES( NOW(4), NOW(4), NOW(4), '2019-01-20T12:00:00.12+06:00', '12:00:00.123+06:00' )");
+
+            this.rs = st1.executeQuery("SELECT CONCAT('',dt) as origDate, dt, ts, CONCAT('',t) as origTime, t, odt, ot FROM testBug94457");
+            this.rs.next();
+
+            String origDate = this.rs.getString("origDate");
+            String origTime = this.rs.getString("origTime");
+            System.out.println("Original date string                 : " + origDate + " (" + serverTz + ")");
+            System.out.println("getString(dt)                        : " + this.rs.getString("dt"));
+            System.out.println("getString(ts)                        : " + this.rs.getString("ts"));
+            System.out.println("Original time string                 : " + origTime + " (" + serverTz + ")");
+            System.out.println("getString(t)                         : " + this.rs.getString("t"));
+            assertEquals(this.rs.getString("origDate"), this.rs.getString("dt"));
+            assertEquals(this.rs.getString("origDate"), this.rs.getString("ts"));
+            assertEquals(this.rs.getString("origTime"), this.rs.getString("t"));
+
+            Timestamp ts1 = this.rs.getTimestamp("dt");
+            Timestamp ts2 = this.rs.getTimestamp("dt", Calendar.getInstance(preserveInstants ? serverTz : TimeZone.getDefault()));
+            Timestamp ts3 = this.rs.getTimestamp("ts");
+            Timestamp ts4 = this.rs.getTimestamp("ts", Calendar.getInstance(preserveInstants ? serverTz : TimeZone.getDefault()));
+            ts1.setNanos(0);
+            ts2.setNanos(0);
+            ts3.setNanos(0);
+            ts4.setNanos(0);
+            System.out.println("getTimestamp(dt))                    : " + ts1 + " (" + ts1.getTime() + ")");
+            System.out.println("getTimestamp(dt, GMT+10))            : " + ts2 + " (" + ts2.getTime() + ")");
+            System.out.println("getTimestamp(ts))                    : " + ts3 + " (" + ts3.getTime() + ")");
+            System.out.println("getTimestamp(ts, GMT+10))            : " + ts4 + " (" + ts4.getTime() + ")");
+            assertEquals(ts1, ts2);
+            assertEquals(ts3, ts4);
+            assertEquals(ts1, ts4);
+
+            Time t1 = this.rs.getTime("t");
+            Time t2 = this.rs.getTime("t", Calendar.getInstance(TimeZone.getDefault()));
+            System.out.println("getTime(t))                          : " + t1 + " (" + t1.getTime() + ")");
+            System.out.println("getTime(t, GMT+10))                  : " + t2 + " (" + t2.getTime() + ")");
+            assertEquals(t1, t2);
+
+            Calendar cal1 = Calendar.getInstance(preserveInstants ? serverTz : TimeZone.getDefault());
+            cal1.set(Integer.valueOf(origDate.substring(0, 4)), Integer.valueOf(origDate.substring(5, 7)) - 1, Integer.valueOf(origDate.substring(8, 10)),
+                    Integer.valueOf(origDate.substring(11, 13)), Integer.valueOf(origDate.substring(14, 16)), Integer.valueOf(origDate.substring(17, 19)));
+            Timestamp ts = new Timestamp(cal1.getTimeInMillis());
+            ts.setNanos(0);
+            System.out.println("Manually constructed Timestamp       : " + ts + " (" + ts.getTime() + ")");
+            assertEquals(ts1, ts);
+
+            Calendar cal2 = Calendar.getInstance(TimeZone.getDefault());
+            cal2.set(1970, 0, 1, Integer.valueOf(origTime.substring(0, 2)), Integer.valueOf(origTime.substring(3, 5)),
+                    Integer.valueOf(origTime.substring(6, 8)));
+            cal2.set(Calendar.MILLISECOND, 0);
+            int millis = 0;
+            if (withFract) {
+                StringBuilder millisStr = new StringBuilder("1" + origTime.substring(9));
+                for (int i = millisStr.length(); i < 10; i++) {
+                    millisStr.append('0');
+                }
+                millis = (int) (Long.valueOf(millisStr.toString()) / 1000000) - 1000;
+            }
+            Time t3 = new Time(cal2.getTimeInMillis() + millis);
+
+            System.out.println("Manually constructed Time            : " + t3 + " (" + t3.getTime() + ")");
+            assertEquals(t1, t3);
+
+            OffsetDateTime odt1 = this.rs.getObject("dt", OffsetDateTime.class);
+            OffsetDateTime odt2 = this.rs.getObject("ts", OffsetDateTime.class);
+            OffsetDateTime odt3 = this.rs.getObject("odt", OffsetDateTime.class);
+            System.out.println("getObject(dt, OffsetDateTime.class)  : " + odt1 + " (" + odt1.toEpochSecond() + ")");
+            System.out.println("getObject(ts, OffsetDateTime.class)  : " + odt2 + " (" + odt2.toEpochSecond() + ")");
+            System.out.println("getObject(odt, OffsetDateTime.class) : " + odt3 + " (" + odt3.toEpochSecond() + ")");
+
+            int localOffset = TimeZone.getDefault().getRawOffset() / 1000;
+            int serverOffset = serverTz.getRawOffset() / 1000;
+
+            int expOffset = 6 * 60 * 60;
+
+            assertEquals(preserveInstants ? serverOffset : localOffset, odt1.getOffset().getTotalSeconds());
+            assertEquals(preserveInstants ? serverOffset : localOffset, odt2.getOffset().getTotalSeconds());
+            assertEquals(expOffset, odt3.getOffset().getTotalSeconds());
+            assertEquals(ts1.getTime(), odt1.toEpochSecond() * 1000);
+            assertEquals(ts1.getTime(), odt2.toEpochSecond() * 1000);
+            assertEquals(LocalDate.of(2019, 1, 20), odt3.toLocalDate());
+
+            ZonedDateTime zdt1 = this.rs.getObject("dt", ZonedDateTime.class);
+            ZonedDateTime zdt2 = this.rs.getObject("ts", ZonedDateTime.class);
+            System.out.println("getObject(dt, ZonedDateTime.class)   : " + odt1 + " (" + zdt1.toEpochSecond() + ")");
+            System.out.println("getObject(ts, ZonedDateTime.class)   : " + odt2 + " (" + zdt2.toEpochSecond() + ")");
+
+            assertEquals(preserveInstants ? serverOffset : localOffset, zdt1.getOffset().getTotalSeconds());
+            assertEquals(preserveInstants ? serverOffset : localOffset, zdt2.getOffset().getTotalSeconds());
+            assertEquals(ts1.getTime(), zdt1.toEpochSecond() * 1000);
+            assertEquals(ts1.getTime(), zdt2.toEpochSecond() * 1000);
+
+            OffsetTime ot1 = this.rs.getObject("ot", OffsetTime.class);
+            System.out.println("getObject(ot, OffsetTime.class)      : " + ot1);
+            assertEquals(expOffset, ot1.getOffset().getTotalSeconds());
+            assertEquals(LocalTime.of(12, 0, 0, 123000000), ot1.toLocalTime());
+        }
+    }
+
+    /**
+     * Tests fix for Bug#99013 (31074051), AN EXTRA HOUR GETS ADDED TO THE TIMESTAMP WHEN SUBTRACTING INTERVAL 'N' DAYS.
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    @Test
+    public void testBug99013() throws Exception {
+        createTable("partorder", "(PNO char(2), SNO char(2), ORDERDATE date, RECEIVEDATE date)");
+        this.stmt.executeUpdate("INSERT INTO partorder VALUES('P1','S1','1990-04-30','1990-06-21')");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "LOCAL");
+        Connection testConn = getConnectionWithProps(props);
+
+        this.pstmt = testConn
+                .prepareStatement("SELECT (TIMESTAMP '2018-04-01 00:00:00'- interval(0) day) AS Test FROM partorder where PNO = 'P1' and SNO ='S1'");
+        this.rs = this.pstmt.executeQuery();
+        while (this.rs.next()) {
+            assertEquals(Timestamp.valueOf("2018-04-01 00:00:00"), this.rs.getTimestamp(1));
+        }
+
     }
 }

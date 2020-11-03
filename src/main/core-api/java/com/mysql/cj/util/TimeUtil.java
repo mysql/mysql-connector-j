@@ -33,10 +33,12 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
@@ -50,10 +52,21 @@ import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 
 /**
- * Timezone conversion routines and other time related methods
+ * Time zone conversion routines and other time related methods
  */
 public class TimeUtil {
     static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
+
+    public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    public static final DateTimeFormatter TIME_FORMATTER_NO_FRACT_NO_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ss");
+    public static final DateTimeFormatter TIME_FORMATTER_WITH_NANOS_NO_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSSSS");
+    public static final DateTimeFormatter TIME_FORMATTER_NO_FRACT_WITH_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ssXXX");
+    public static final DateTimeFormatter TIME_FORMATTER_WITH_NANOS_WITH_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSSSSXXX");
+    public static final DateTimeFormatter DATETIME_FORMATTER_NO_FRACT_NO_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_NANOS_NO_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS");
+    public static final DateTimeFormatter DATETIME_FORMATTER_NO_FRACT_WITH_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX");
+    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_NANOS_WITH_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSSXXX");
 
     // Mappings from TimeZone identifications (prefixed by type: Windows, TZ name, MetaZone, TZ alias, ...), to standard TimeZone Ids
     private static final String TIME_ZONE_MAPPINGS_RESOURCE = "/com/mysql/cj/util/TimeZoneMapping.properties";
@@ -106,7 +119,7 @@ public class TimeUtil {
      * 
      * @return the Java timezone name for the given timezone
      */
-    public static String getCanonicalTimezone(String timezoneStr, ExceptionInterceptor exceptionInterceptor) {
+    public static String getCanonicalTimeZone(String timezoneStr, ExceptionInterceptor exceptionInterceptor) {
         if (timezoneStr == null) {
             return null;
         }
@@ -132,7 +145,7 @@ public class TimeUtil {
         }
 
         throw ExceptionFactory.createException(InvalidConnectionAttributeException.class,
-                Messages.getString("TimeUtil.UnrecognizedTimezoneId", new Object[] { timezoneStr }), exceptionInterceptor);
+                Messages.getString("TimeUtil.UnrecognizedTimeZoneId", new Object[] { timezoneStr }), exceptionInterceptor);
     }
 
     /**
@@ -292,6 +305,15 @@ public class TimeUtil {
         return truncatedTimestamp;
     }
 
+    public static Time truncateFractionalSeconds(Time time) {
+        Time truncatedTime = new Time((time.getTime() / 1000) * 1000);
+        return truncatedTime;
+    }
+
+    public static Boolean hasFractionalSeconds(Time t) {
+        return t.getTime() % 1000 > 0;
+    }
+
     /**
      * Get SimpleDateFormat with a default Calendar which TimeZone is replaced with the provided one.
      * <p>
@@ -307,7 +329,8 @@ public class TimeUtil {
      * @return {@link SimpleDateFormat} object
      */
     public static SimpleDateFormat getSimpleDateFormat(SimpleDateFormat cachedSimpleDateFormat, String pattern, TimeZone tz) {
-        SimpleDateFormat sdf = cachedSimpleDateFormat != null ? cachedSimpleDateFormat : new SimpleDateFormat(pattern, Locale.US);
+        SimpleDateFormat sdf = cachedSimpleDateFormat != null && cachedSimpleDateFormat.toPattern().equals(pattern) ? cachedSimpleDateFormat
+                : new SimpleDateFormat(pattern, Locale.US);
         if (tz != null) {
             sdf.setTimeZone(tz);
         }

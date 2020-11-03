@@ -60,11 +60,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -277,8 +279,11 @@ public class ResultSetTest extends BaseTestCase {
      */
     @Test
     public void testDateTimeRetrieval() throws Exception {
-        testDateTimeRetrieval_internal(this.conn);
-        Connection sspsConn = getConnectionWithProps("useServerPrepStmts=true");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "LOCAL");
+        Connection testConn = getConnectionWithProps(props);
+        testDateTimeRetrieval_internal(testConn);
+        Connection sspsConn = getConnectionWithProps("connectionTimeZone=LOCAL,useServerPrepStmts=true");
         testDateTimeRetrieval_internal(sspsConn);
         sspsConn.close();
     }
@@ -402,7 +407,11 @@ public class ResultSetTest extends BaseTestCase {
          */
         createTable("testUpdateObject1", "(id INT PRIMARY KEY, d DATE, t TIME, dt DATETIME, ts TIMESTAMP)");
 
-        Statement testStmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
+
+        Connection testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
+        Statement testStmt = testConn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 
         /*
          * Test insert new rows.
@@ -412,13 +421,17 @@ public class ResultSetTest extends BaseTestCase {
         String testDateTimeString = testDateString + " " + testTimeString + ".0";
         String testISODateTimeString = testDateString + "T" + testTimeString + ".0";
 
-        Date testSqlDate = Date.valueOf(testDateString);
-        Time testSqlTime = Time.valueOf(testTimeString);
-        Timestamp testSqlTimeStamp = Timestamp.valueOf(testDateTimeString);
-
         LocalDate testLocalDate = LocalDate.parse(testDateString);
         LocalTime testLocalTime = LocalTime.parse(testTimeString);
         LocalDateTime testLocalDateTime = LocalDateTime.parse(testISODateTimeString);
+
+        Connection testConn2 = getConnectionWithProps(timeZoneFreeDbUrl, new Properties());
+        TimeZone sessionTz = ((MysqlConnection) testConn2).getSession().getServerSession().getSessionTimeZone();
+
+        Date testSqlDate = Date.valueOf(testDateString);
+        Time testSqlTime = Time.valueOf(testTimeString);
+        Timestamp testTSFromDatetime = Timestamp.valueOf(testDateTimeString);
+        Timestamp testTSFromTimestamp = Timestamp.from(testLocalDateTime.atZone(sessionTz.toZoneId()).toInstant());
 
         this.rs = testStmt.executeQuery("SELECT * FROM testUpdateObject1");
 
@@ -514,8 +527,8 @@ public class ResultSetTest extends BaseTestCase {
             assertEquals(i, this.rs.getInt(1));
             assertEquals(testSqlDate, this.rs.getDate(2));
             assertEquals(testSqlTime, this.rs.getTime(3));
-            assertEquals(testSqlTimeStamp, this.rs.getTimestamp(4));
-            assertEquals(testSqlTimeStamp, this.rs.getTimestamp(5));
+            assertEquals(testTSFromDatetime, this.rs.getTimestamp(4));
+            assertEquals(testTSFromTimestamp, this.rs.getTimestamp(5));
         }
         assertFalse(this.rs.next());
 
@@ -527,13 +540,14 @@ public class ResultSetTest extends BaseTestCase {
         testDateTimeString = testDateString + " " + testTimeString + ".0";
         testISODateTimeString = testDateString + "T" + testTimeString + ".0";
 
-        testSqlDate = Date.valueOf(testDateString);
-        testSqlTime = Time.valueOf(testTimeString);
-        testSqlTimeStamp = Timestamp.valueOf(testDateTimeString);
-
         testLocalDate = LocalDate.parse(testDateString);
         testLocalTime = LocalTime.parse(testTimeString);
         testLocalDateTime = LocalDateTime.parse(testISODateTimeString);
+
+        testSqlDate = Date.valueOf(testDateString);
+        testSqlTime = Time.valueOf(testTimeString);
+        testTSFromDatetime = Timestamp.valueOf(testDateTimeString);
+        testTSFromTimestamp = Timestamp.from(testLocalDateTime.atZone(sessionTz.toZoneId()).toInstant());
 
         this.rs = testStmt.executeQuery("SELECT * FROM testUpdateObject1");
 
@@ -619,8 +633,8 @@ public class ResultSetTest extends BaseTestCase {
 
             assertEquals(testSqlDate, this.rs.getDate(2), row);
             assertEquals(testSqlTime, this.rs.getTime(3), row);
-            assertEquals(testSqlTimeStamp, this.rs.getTimestamp(4), row);
-            assertEquals(testSqlTimeStamp, this.rs.getTimestamp(5), row);
+            assertEquals(testTSFromDatetime, this.rs.getTimestamp(4), row);
+            assertEquals(testTSFromTimestamp, this.rs.getTimestamp(5), row);
 
             assertEquals(testLocalDate, this.rs.getObject(2, LocalDate.class), row);
             assertEquals(testLocalTime, this.rs.getObject(3, LocalTime.class), row);
@@ -631,8 +645,8 @@ public class ResultSetTest extends BaseTestCase {
 
             assertEquals(testSqlDate, this.rs.getDate("d"), row);
             assertEquals(testSqlTime, this.rs.getTime("t"), row);
-            assertEquals(testSqlTimeStamp, this.rs.getTimestamp("dt"), row);
-            assertEquals(testSqlTimeStamp, this.rs.getTimestamp("ts"), row);
+            assertEquals(testTSFromDatetime, this.rs.getTimestamp("dt"), row);
+            assertEquals(testTSFromTimestamp, this.rs.getTimestamp("ts"), row);
 
             assertEquals(testLocalDate, this.rs.getObject("d", LocalDate.class), row);
             assertEquals(testLocalTime, this.rs.getObject("t", LocalTime.class), row);
@@ -641,9 +655,6 @@ public class ResultSetTest extends BaseTestCase {
         }
         assertEquals(12, rowCount);
 
-        /*
-         * Objects java.time.Offset[Date]Time are supported via conversion to *CHAR or serialization.
-         */
         OffsetDateTime testOffsetDateTime = OffsetDateTime.of(2015, 8, 04, 12, 34, 56, 7890, ZoneOffset.UTC);
         OffsetTime testOffsetTime = OffsetTime.of(12, 34, 56, 7890, ZoneOffset.UTC);
 
@@ -665,26 +676,28 @@ public class ResultSetTest extends BaseTestCase {
         this.rs.updateObject("odt2", testOffsetDateTime);
         this.rs.insertRow();
 
-        Connection testConn = getConnectionWithProps("autoDeserialize=true");
+        testConn = getConnectionWithProps(timeZoneFreeDbUrl, new Properties());
         testStmt = testConn.createStatement();
 
-        this.rs = testStmt.executeQuery("SELECT * FROM testUpdateObject2");
+        long expTimeSeconds = testOffsetTime.atDate(LocalDate.now()).toEpochSecond();
+        long expDatetimeSeconds = testOffsetDateTime.toEpochSecond();
         rowCount = 0;
+        this.rs = testStmt.executeQuery("SELECT * FROM testUpdateObject2");
         while (this.rs.next()) {
             String row = "Row " + this.rs.getInt(1);
             assertEquals(++rowCount, this.rs.getInt(1), row);
 
-            assertEquals(testOffsetTime, this.rs.getObject(2, OffsetTime.class), row);
-            assertEquals(testOffsetTime, this.rs.getObject(3, OffsetTime.class), row);
-            assertEquals(testOffsetDateTime, this.rs.getObject(4, OffsetDateTime.class), row);
-            assertEquals(testOffsetDateTime, this.rs.getObject(5, OffsetDateTime.class), row);
+            assertEquals(expTimeSeconds, this.rs.getObject(2, OffsetTime.class).atDate(LocalDate.now()).toEpochSecond(), row);
+            assertEquals(expTimeSeconds, this.rs.getObject(3, OffsetTime.class).atDate(LocalDate.now()).toEpochSecond(), row);
+            assertEquals(expDatetimeSeconds, this.rs.getObject(4, OffsetDateTime.class).toEpochSecond(), row);
+            assertEquals(expDatetimeSeconds, this.rs.getObject(5, OffsetDateTime.class).toEpochSecond(), row);
 
             assertEquals(rowCount, this.rs.getInt("id"), row);
 
-            assertEquals(testOffsetTime, this.rs.getObject("ot1", OffsetTime.class), row);
-            assertEquals(testOffsetTime, this.rs.getObject("ot2", OffsetTime.class), row);
-            assertEquals(testOffsetDateTime, this.rs.getObject("odt1", OffsetDateTime.class), row);
-            assertEquals(testOffsetDateTime, this.rs.getObject("odt2", OffsetDateTime.class), row);
+            assertEquals(expTimeSeconds, this.rs.getObject("ot1", OffsetTime.class).atDate(LocalDate.now()).toEpochSecond(), row);
+            assertEquals(expTimeSeconds, this.rs.getObject("ot2", OffsetTime.class).atDate(LocalDate.now()).toEpochSecond(), row);
+            assertEquals(expDatetimeSeconds, this.rs.getObject("odt1", OffsetDateTime.class).toEpochSecond(), row);
+            assertEquals(expDatetimeSeconds, this.rs.getObject("odt2", OffsetDateTime.class).toEpochSecond(), row);
         }
         assertEquals(2, rowCount);
 

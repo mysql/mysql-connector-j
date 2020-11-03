@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,97 +29,75 @@
 
 package com.mysql.cj.result;
 
+import java.time.LocalTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
+import java.util.TimeZone;
+
 import com.mysql.cj.Messages;
-import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.WarningListener;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.DataConversionException;
+import com.mysql.cj.exceptions.DataReadException;
 import com.mysql.cj.protocol.InternalDate;
 import com.mysql.cj.protocol.InternalTime;
 import com.mysql.cj.protocol.InternalTimestamp;
 import com.mysql.cj.protocol.a.MysqlTextValueDecoder;
 import com.mysql.cj.util.StringUtils;
 
-public abstract class AbstractDateTimeValueFactory<T> extends DefaultValueFactory<T> {
+/**
+ * A value factory to create {@link OffsetTime} instances.
+ */
+public class OffsetTimeValueFactory extends AbstractDateTimeValueFactory<OffsetTime> {
+    private WarningListener warningListener;
+    private TimeZone tz;
 
-    public AbstractDateTimeValueFactory(PropertySet pset) {
+    public OffsetTimeValueFactory(PropertySet pset, TimeZone tz) {
         super(pset);
+        this.tz = tz;
     }
 
-    abstract T localCreateFromDate(InternalDate idate);
-
-    abstract T localCreateFromTime(InternalTime it);
-
-    abstract T localCreateFromTimestamp(InternalTimestamp its);
-
-    abstract T localCreateFromDatetime(InternalTimestamp its);
+    public OffsetTimeValueFactory(PropertySet pset, TimeZone tz, WarningListener warningListener) {
+        this(pset, tz);
+        this.warningListener = warningListener;
+    }
 
     @Override
-    public T createFromDate(InternalDate idate) {
-        if (idate.isZero()) {
-            switch (this.pset.<PropertyDefinitions.ZeroDatetimeBehavior>getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue()) {
-                case CONVERT_TO_NULL:
-                    return null;
-                case ROUND:
-                    return localCreateFromDate(new InternalDate(1, 1, 1));
-                default:
-                    break;
-            }
+    OffsetTime localCreateFromDate(InternalDate idate) {
+        return LocalTime.of(0, 0).atOffset(ZoneOffset.ofTotalSeconds(this.tz.getRawOffset() / 1000));
+    }
+
+    @Override
+    public OffsetTime localCreateFromTime(InternalTime it) {
+        if (it.getHours() < 0 || it.getHours() >= 24) {
+            throw new DataReadException(
+                    Messages.getString("ResultSet.InvalidTimeValue", new Object[] { "" + it.getHours() + ":" + it.getMinutes() + ":" + it.getSeconds() }));
         }
-        return localCreateFromDate(idate);
+        return LocalTime.of(it.getHours(), it.getMinutes(), it.getSeconds(), it.getNanos()).atOffset(ZoneOffset.ofTotalSeconds(this.tz.getRawOffset() / 1000));
     }
 
     @Override
-    public T createFromTime(InternalTime it) {
-        return localCreateFromTime(it);
-    }
-
-    @Override
-    public T createFromTimestamp(InternalTimestamp its) {
-        if (its.isZero()) {
-            switch (this.pset.<PropertyDefinitions.ZeroDatetimeBehavior>getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue()) {
-                case CONVERT_TO_NULL:
-                    return null;
-                case ROUND:
-                    return localCreateFromTimestamp(new InternalTimestamp(1, 1, 1, 0, 0, 0, 0, 0));
-                default:
-                    break;
-            }
+    public OffsetTime localCreateFromTimestamp(InternalTimestamp its) {
+        if (this.warningListener != null) {
+            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { getTargetTypeName() }));
         }
-        return localCreateFromTimestamp(its);
+        // truncate date information
+        return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos(), its.getScale()));
     }
 
     @Override
-    public T createFromDatetime(InternalTimestamp its) {
-        if (its.isZero()) {
-            switch (this.pset.<PropertyDefinitions.ZeroDatetimeBehavior>getEnumProperty(PropertyKey.zeroDateTimeBehavior).getValue()) {
-                case CONVERT_TO_NULL:
-                    return null;
-                case ROUND:
-                    return localCreateFromDatetime(new InternalTimestamp(1, 1, 1, 0, 0, 0, 0, 0));
-                default:
-                    break;
-            }
+    public OffsetTime localCreateFromDatetime(InternalTimestamp its) {
+        if (this.warningListener != null) {
+            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { getTargetTypeName() }));
         }
-        return localCreateFromDatetime(its);
+        // truncate date information
+        return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos(), its.getScale()));
     }
 
     @Override
-    public T createFromYear(long year) {
-        if (this.pset.getBooleanProperty(PropertyKey.yearIsDateType).getValue()) {
-            if (year < 100) {
-                if (year <= 69) {
-                    year += 100;
-                }
-                year += 1900;
-            }
-            return createFromDate(new InternalDate((int) year, 1, 1));
-        }
-        return createFromLong(year);
-    }
-
-    @Override
-    public T createFromBytes(byte[] bytes, int offset, int length, Field f) {
+    public OffsetTime createFromBytes(byte[] bytes, int offset, int length, Field f) {
         if (length == 0 && this.pset.getBooleanProperty(PropertyKey.emptyStringsConvertToZero).getValue()) {
             return createFromLong(0);
         }
@@ -137,6 +115,16 @@ public abstract class AbstractDateTimeValueFactory<T> extends DefaultValueFactor
         } else if (MysqlTextValueDecoder.isTimestamp(s)) {
             return createFromTimestamp(MysqlTextValueDecoder.getTimestamp(newBytes, 0, newBytes.length, f.getDecimals()));
         }
-        throw new DataConversionException(Messages.getString("ResultSet.UnableToConvertString", new Object[] { s, getTargetTypeName() }));
+
+        // by default try to parse
+        try {
+            return OffsetTime.parse(s);
+        } catch (DateTimeParseException e) {
+            throw new DataConversionException(Messages.getString("ResultSet.UnableToConvertString", new Object[] { s, getTargetTypeName() }));
+        }
+    }
+
+    public String getTargetTypeName() {
+        return OffsetTime.class.getName();
     }
 }

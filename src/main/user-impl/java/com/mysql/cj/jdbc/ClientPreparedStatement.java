@@ -1380,7 +1380,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
-    protected final int getCoreParameterIndex(int paramIndex) throws SQLException {
+    public final int getCoreParameterIndex(int paramIndex) throws SQLException {
         int parameterIndexOffset = getParameterIndexOffset();
         checkBounds(paramIndex, parameterIndexOffset);
         return paramIndex - 1 + parameterIndexOffset;
@@ -1770,20 +1770,21 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) throws java.sql.SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ((PreparedQuery<?>) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x);
+            ((PreparedQuery<?>) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x, MysqlType.TIMESTAMP);
         }
     }
 
     @Override
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x, Calendar cal) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ((PreparedQuery<?>) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x, cal);
+            ((PreparedQuery<?>) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x, cal, MysqlType.TIMESTAMP);
         }
     }
 
     public void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, int fractionalLength) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            ((PreparedQuery<?>) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x, targetCalendar, fractionalLength);
+            ((PreparedQuery<?>) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x, targetCalendar, fractionalLength,
+                    MysqlType.TIMESTAMP);
         }
     }
 

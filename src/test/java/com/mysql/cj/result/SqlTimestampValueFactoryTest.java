@@ -59,7 +59,7 @@ import com.mysql.cj.protocol.InternalTimestamp;
  */
 public class SqlTimestampValueFactoryTest extends CommonAsserts {
     PropertySet pset = new DefaultPropertySet();
-    SqlTimestampValueFactory vf = new SqlTimestampValueFactory(this.pset, null, TimeZone.getDefault());
+    SqlTimestampValueFactory vf = new SqlTimestampValueFactory(this.pset, null, TimeZone.getDefault(), TimeZone.getDefault());
 
     @Test
     public void testBasics() {

@@ -37,6 +37,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
@@ -45,6 +47,7 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
@@ -134,26 +137,27 @@ public class DateTest extends BaseTestCase {
                     + "(3, '1969-12-31 18:00:00.000000900'), (4, '1969-12-31 18:00:00.000009000'), (5, '1969-12-31 18:00:00.000090000'), "
                     + "(6, '1969-12-31 18:00:00.000900000'), (7, '1969-12-31 18:00:00.')");
 
-            this.rs = this.stmt.executeQuery("SELECT field1 FROM testNanosParsing ORDER BY dateIndex ASC");
-            assertTrue(this.rs.next());
-            assertTrue(this.rs.getTimestamp(1).getNanos() == 0);
-            assertTrue(this.rs.next());
-            assertTrue(this.rs.getTimestamp(1).getNanos() == 90, this.rs.getTimestamp(1).getNanos() + " != 90");
-            assertTrue(this.rs.next());
-            assertTrue(this.rs.getTimestamp(1).getNanos() == 900, this.rs.getTimestamp(1).getNanos() + " != 900");
-            assertTrue(this.rs.next());
-            assertTrue(this.rs.getTimestamp(1).getNanos() == 9000, this.rs.getTimestamp(1).getNanos() + " != 9000");
-            assertTrue(this.rs.next());
-            assertTrue(this.rs.getTimestamp(1).getNanos() == 90000, this.rs.getTimestamp(1).getNanos() + " != 90000");
-            assertTrue(this.rs.next());
-            assertTrue(this.rs.getTimestamp(1).getNanos() == 900000, this.rs.getTimestamp(1).getNanos() + " != 900000");
-            assertTrue(this.rs.next());
+            ResultSet rs1 = this.stmt.executeQuery("SELECT field1 FROM testNanosParsing ORDER BY dateIndex ASC");
+            assertTrue(rs1.next());
+            assertTrue(rs1.getTimestamp(1).getNanos() == 0);
+            assertTrue(rs1.next());
+            assertTrue(rs1.getTimestamp(1).getNanos() == 90, rs1.getTimestamp(1).getNanos() + " != 90");
+            assertTrue(rs1.next());
+            assertTrue(rs1.getTimestamp(1).getNanos() == 900, rs1.getTimestamp(1).getNanos() + " != 900");
+            assertTrue(rs1.next());
+            assertTrue(rs1.getTimestamp(1).getNanos() == 9000, rs1.getTimestamp(1).getNanos() + " != 9000");
+            assertTrue(rs1.next());
+            assertTrue(rs1.getTimestamp(1).getNanos() == 90000, rs1.getTimestamp(1).getNanos() + " != 90000");
+            assertTrue(rs1.next());
+            assertTrue(rs1.getTimestamp(1).getNanos() == 900000, rs1.getTimestamp(1).getNanos() + " != 900000");
+            assertTrue(rs1.next());
 
-            try {
-                this.rs.getTimestamp(1);
-            } catch (SQLException sqlEx) {
-                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
-            }
+            assertThrows(SQLDataException.class, "Cannot convert string '1969-12-31 18:00:00.' to java.sql.Timestamp value", new Callable<Void>() {
+                public Void call() throws Exception {
+                    rs1.getTimestamp(1);
+                    return null;
+                }
+            });
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testNanosParsing");
         }
@@ -171,9 +175,10 @@ public class DateTest extends BaseTestCase {
         Connection nullConn = null;
         Connection exceptionConn = null;
         try {
+            Properties props = new Properties();
             if (versionMeetsMinimum(5, 7, 4)) {
-                Properties props = new Properties();
                 props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
+                props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
                 if (versionMeetsMinimum(5, 7, 5)) {
                     String sqlMode = getMysqlVariable("sql_mode");
                     if (sqlMode.contains("STRICT_TRANS_TABLES")) {
@@ -189,7 +194,10 @@ public class DateTest extends BaseTestCase {
             this.stmt.executeUpdate("CREATE TABLE testZeroDateBehavior(fieldAsString VARCHAR(32), fieldAsDateTime DATETIME)");
             this.stmt.executeUpdate("INSERT INTO testZeroDateBehavior VALUES ('0000-00-00 00:00:00', '0000-00-00 00:00:00')");
 
-            roundConn = getConnectionWithProps("zeroDateTimeBehavior=ROUND");
+            props.clear();
+            props.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "ROUND");
+            props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
+            roundConn = getConnectionWithProps(props);
             Statement roundStmt = roundConn.createStatement();
             this.rs = roundStmt.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
             this.rs.next();
@@ -332,21 +340,21 @@ public class DateTest extends BaseTestCase {
         this.pstmt.close();
 
         this.pstmt = this.conn.prepareStatement("SELECT time_field, date_field, datetime_field, timestamp_field FROM testNativeConversions");
-        this.rs = this.pstmt.executeQuery();
-        assertTrue(this.rs.next());
-        System.out.println(this.rs.getTime(1));
-        // DATE -> Time not allowed
-        System.out.println(this.rs.getTime(3));
-        System.out.println(this.rs.getTime(4));
+        ResultSet rs1 = this.pstmt.executeQuery();
+        assertTrue(rs1.next());
+        System.out.println(rs1.getTime(1));
+        System.out.println(rs1.getTime(2));
+        System.out.println(rs1.getTime(3));
+        System.out.println(rs1.getTime(4));
         System.out.println();
-        // TIME -> Date not allowed
-        System.out.println(this.rs.getDate(2));
-        System.out.println(this.rs.getDate(3));
-        System.out.println(this.rs.getDate(4));
+        System.out.println(rs1.getDate(1));
+        System.out.println(rs1.getDate(2));
+        System.out.println(rs1.getDate(3));
+        System.out.println(rs1.getDate(4));
         System.out.println();
-        System.out.println(this.rs.getTimestamp(1));
-        System.out.println(this.rs.getTimestamp(2));
-        System.out.println(this.rs.getTimestamp(3));
-        System.out.println(this.rs.getTimestamp(4));
+        System.out.println(rs1.getTimestamp(1));
+        System.out.println(rs1.getTimestamp(2));
+        System.out.println(rs1.getTimestamp(3));
+        System.out.println(rs1.getTimestamp(4));
     }
 }

@@ -79,7 +79,7 @@ public enum PropertyKey {
     blobsAreStrings("blobsAreStrings", true), //
     blobSendChunkSize("blobSendChunkSize", true), //
     cacheCallableStmts("cacheCallableStmts", true), //
-    cacheDefaultTimezone("cacheDefaultTimezone", true), //
+    cacheDefaultTimeZone("cacheDefaultTimeZone", "cacheDefaultTimezone", true), //
     cachePrepStmts("cachePrepStmts", true), //
     cacheResultSetMetadata("cacheResultSetMetadata", true), //
     cacheServerConfiguration("cacheServerConfiguration", true), //
@@ -96,6 +96,7 @@ public enum PropertyKey {
     connectionAttributes("connectionAttributes", true), //
     connectionCollation("connectionCollation", true), //
     connectionLifecycleInterceptors("connectionLifecycleInterceptors", true), //
+    connectionTimeZone("connectionTimeZone", "serverTimezone", true), //
     connectTimeout("connectTimeout", true), //
     continueBatchOnError("continueBatchOnError", true), //
     createDatabaseIfNotExist("createDatabaseIfNotExist", true), //
@@ -175,9 +176,11 @@ public enum PropertyKey {
     populateInsertRowWithDefaultValues("populateInsertRowWithDefaultValues", true), //
     prepStmtCacheSize("prepStmtCacheSize", true), //
     prepStmtCacheSqlLimit("prepStmtCacheSqlLimit", true), //
+    preserveInstants("preserveInstants", true), //
     processEscapeCodesForPrepStmts("processEscapeCodesForPrepStmts", true), //
     profilerEventHandler("profilerEventHandler", true), //
     profileSQL("profileSQL", true), //
+    forceConnectionTimeZoneToSession("forceConnectionTimeZoneToSession", true), //
     propertiesTransform("propertiesTransform", true), //
     queriesBeforeRetrySource("queriesBeforeRetrySource", "queriesBeforeRetryMaster", true), //
     queryInterceptors("queryInterceptors", true), //
@@ -197,10 +200,10 @@ public enum PropertyKey {
     selfDestructOnPingMaxOperations("selfDestructOnPingMaxOperations", true), //
     selfDestructOnPingSecondsLifetime("selfDestructOnPingSecondsLifetime", true), //
     sendFractionalSeconds("sendFractionalSeconds", true), //
+    sendFractionalSecondsForTime("sendFractionalSecondsForTime", true), //
     serverAffinityOrder("serverAffinityOrder", true), //
     serverConfigCacheFactory("serverConfigCacheFactory", true), //
     serverRSAPublicKeyFile("serverRSAPublicKeyFile", true), //
-    serverTimezone("serverTimezone", true), //
     sessionVariables("sessionVariables", true), //
     slowQueryThresholdMillis("slowQueryThresholdMillis", true), //
     slowQueryThresholdNanos("slowQueryThresholdNanos", true), //

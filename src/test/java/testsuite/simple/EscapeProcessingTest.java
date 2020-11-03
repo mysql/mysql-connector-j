@@ -33,12 +33,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Connection;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Properties;
 import java.util.TimeZone;
 
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.util.TimeUtil;
 
 import testsuite.BaseTestCase;
 
@@ -53,11 +58,15 @@ public class EscapeProcessingTest extends BaseTestCase {
      */
     @Test
     public void testEscapeProcessing() throws Exception {
+        TimeZone sessionTz = ((MysqlConnection) this.conn).getSession().getServerSession().getSessionTimeZone();
+        ZonedDateTime zdt = LocalDateTime.parse("1997-05-24T10:30:29.123").atZone(ZoneId.systemDefault()).withZoneSameInstant(sessionTz.toZoneId());
+        boolean withFract = versionMeetsMinimum(5, 6, 4);
+
         String results = "select dayname (abs(now())),   -- Today    \n" //
-                + "           '1997-05-24',  -- a date                    \n" + "           '10:30:29',  -- a time                     \n"
-                + (versionMeetsMinimum(5, 6, 4) ? "           '1997-05-24 10:30:29.123', -- a timestamp  \n"
-                        : "           '1997-05-24 10:30:29', -- a timestamp  \n")
-                + "          '{string data with { or } will not be altered'   \n" + "--  Also note that you can safely include { and } in comments";
+                + "           '1997-05-24',  -- a date                    \n" + "           '10:30:29',  -- a time                     \n" + "           '"
+                + zdt.format(withFract ? TimeUtil.DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET)
+                + "', -- a timestamp  \n" + "          '{string data with { or } will not be altered'   \n"
+                + "--  Also note that you can safely include { and } in comments";
 
         String exSql = "select {fn dayname ({fn abs({fn now()})})},   -- Today    \n" //
                 + "           {d '1997-05-24'},  -- a date                    \n" + "           {t '10:30:29' },  -- a time                     \n"
@@ -66,7 +75,7 @@ public class EscapeProcessingTest extends BaseTestCase {
 
         String escapedSql = this.conn.nativeSQL(exSql);
 
-        assertTrue(results.equals(escapedSql));
+        assertTrue(results.equals(escapedSql), escapedSql + "\n\nwas expected to match\n\n" + results);
     }
 
     /**
@@ -87,19 +96,28 @@ public class EscapeProcessingTest extends BaseTestCase {
      */
     @Test
     public void testTimestampConversion() throws Exception {
-        TimeZone currentTimezone = TimeZone.getDefault();
-        String[] availableIds = TimeZone.getAvailableIDs(currentTimezone.getRawOffset() + (3600 * 1000 * 2));
-        String newTimezone = null;
+        TimeZone currentTimeZone = TimeZone.getDefault();
+        String[] availableIds = TimeZone.getAvailableIDs(currentTimeZone.getRawOffset() - (3600 * 1000 * 7));
+        String newTimeZone = null;
 
         if (availableIds.length > 0) {
-            newTimezone = availableIds[0];
-        } else {
-            newTimezone = "UTC"; // punt
+            for (String id : availableIds) {
+                try {
+                    ZoneId.of(id);
+                    newTimeZone = id;
+                } catch (Exception e) {
+                    // ignore, try different time zone ID
+                }
+            }
+        }
+
+        if (newTimeZone == null) {
+            newTimeZone = "UTC"; // punt
         }
 
         Properties props = new Properties();
 
-        props.setProperty(PropertyKey.serverTimezone.getKeyName(), newTimezone);
+        props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), newTimeZone);
         Connection tzConn = null;
 
         try {

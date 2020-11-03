@@ -79,6 +79,14 @@ public class LocalDateTimeValueFactory extends AbstractDateTimeValueFactory<Loca
         return LocalDateTime.of(its.getYear(), its.getMonth(), its.getDay(), its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos());
     }
 
+    @Override
+    public LocalDateTime localCreateFromDatetime(InternalTimestamp its) {
+        if (its.getYear() == 0 && its.getMonth() == 0 && its.getDay() == 0) {
+            throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
+        }
+        return LocalDateTime.of(its.getYear(), its.getMonth(), its.getDay(), its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos());
+    }
+
     public String getTargetTypeName() {
         return LocalDateTime.class.getName();
     }

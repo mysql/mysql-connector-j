@@ -122,6 +122,43 @@ public class XProtocolDecoder implements ValueDecoder {
     }
 
     @Override
+    public <T> T decodeDatetime(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
+        try {
+            CodedInputStream inputStream = CodedInputStream.newInstance(bytes, offset, length);
+            int year = (int) inputStream.readUInt64();
+            int month = (int) inputStream.readUInt64();
+            int day = (int) inputStream.readUInt64();
+
+            // do we have a time too?
+            if (inputStream.getBytesUntilLimit() > 0) {
+                int hours = 0;
+                int minutes = 0;
+                int seconds = 0;
+
+                int nanos = 0;
+
+                if (!inputStream.isAtEnd()) {
+                    hours = (int) inputStream.readInt64();
+                    if (!inputStream.isAtEnd()) {
+                        minutes = (int) inputStream.readInt64();
+                        if (!inputStream.isAtEnd()) {
+                            seconds = (int) inputStream.readInt64();
+                            if (!inputStream.isAtEnd()) {
+                                nanos = 1000 * (int) inputStream.readInt64();
+                            }
+                        }
+                    }
+                }
+
+                return vf.createFromDatetime(new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos, scale));
+            }
+            return vf.createFromDate(new InternalDate(year, month, day));
+        } catch (IOException e) {
+            throw new DataReadException(e);
+        }
+    }
+
+    @Override
     public <T> T decodeInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         // TODO Auto-generated method stub
         return null;

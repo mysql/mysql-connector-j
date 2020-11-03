@@ -97,6 +97,19 @@ public class StringValueFactory implements ValueFactory<String> {
                 createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos(), its.getScale())));
     }
 
+    /**
+     * Create a string from time fields. The fields are formatted by concatenating the result of {@link #createFromDate(InternalDate)} and {@link
+     * #createFromTime(InternalTime)}.
+     * 
+     * @param its
+     *            {@link InternalTimestamp}
+     * @return string
+     */
+    public String createFromDatetime(InternalTimestamp its) {
+        return String.format("%s %s", createFromDate(its),
+                createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos(), its.getScale())));
+    }
+
     public String createFromLong(long l) {
         return String.valueOf(l);
     }
@@ -114,7 +127,7 @@ public class StringValueFactory implements ValueFactory<String> {
     }
 
     /**
-     * Interpret the given byte array as a string. This value factory needs to know the encoding to interpret the string. The default (null) will interpet the
+     * Interpret the given byte array as a string. This value factory needs to know the encoding to interpret the string. The default (null) will interpret the
      * byte array using the platform encoding.
      * 
      * @param bytes
@@ -123,6 +136,8 @@ public class StringValueFactory implements ValueFactory<String> {
      *            offset
      * @param length
      *            data length in bytes
+     * @param f
+     *            field
      * @return string
      */
     public String createFromBytes(byte[] bytes, int offset, int length, Field f) {

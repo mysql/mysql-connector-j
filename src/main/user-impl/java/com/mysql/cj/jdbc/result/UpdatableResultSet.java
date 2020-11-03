@@ -40,6 +40,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLType;
 import java.sql.SQLXML;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,7 @@ import java.util.TreeMap;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
+import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.AssertionFailedException;
@@ -475,8 +477,11 @@ public class UpdatableResultSet extends ResultSetImpl {
                 ps.setDate(psIdx, getDate(rsIdx + 1));
                 break;
             case TIMESTAMP:
+                ((PreparedQuery<?>) ps.getQuery()).getQueryBindings().bindTimestamp(ps.getCoreParameterIndex(psIdx), getTimestamp(rsIdx + 1), null,
+                        field.getDecimals(), MysqlType.TIMESTAMP);
+                break;
             case DATETIME:
-                ps.setTimestamp(psIdx, getTimestamp(rsIdx + 1), null, field.getDecimals());
+                ps.setObject(psIdx, getObject(rsIdx + 1, LocalDateTime.class), MysqlType.DATETIME, field.getDecimals());
                 break;
             case TIME:
                 // TODO adjust nanos to decimal numbers

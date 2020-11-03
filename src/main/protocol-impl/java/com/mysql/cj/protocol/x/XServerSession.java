@@ -44,9 +44,6 @@ public class XServerSession implements ServerSession {
     /** Server-assigned client-id. */
     private long clientId = -1;
 
-    /** The timezone of the server */
-    //private TimeZone serverTimeZone = null;
-
     private TimeZone defaultTimeZone = TimeZone.getDefault();
 
     @Override
@@ -315,13 +312,11 @@ public class XServerSession implements ServerSession {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
-    public TimeZone getServerTimeZone() {
-        //return serverTimeZone;
+    public TimeZone getSessionTimeZone() {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
-    public void setServerTimeZone(TimeZone serverTimeZone) {
-        //this.serverTimeZone = serverTimeZone;
+    public void setSessionTimeZone(TimeZone sessionTimeZone) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 

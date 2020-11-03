@@ -270,7 +270,7 @@ public interface Protocol<M extends Message> {
 
     void close() throws IOException;
 
-    void configureTimezone();
+    void configureTimeZone();
 
     void initServerSession();
 

@@ -189,6 +189,6 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
     }
 
     public Timestamp getTimestamp(int pos) {
-        return this.row.getValue(pos, new SqlTimestampValueFactory(this.pset, null, this.defaultTimeZone));
+        return this.row.getValue(pos, new SqlTimestampValueFactory(this.pset, null, this.defaultTimeZone, this.defaultTimeZone));
     }
 }

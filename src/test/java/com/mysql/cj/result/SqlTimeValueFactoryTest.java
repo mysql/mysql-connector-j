@@ -65,13 +65,8 @@ public class SqlTimeValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromDate() {
-        assertThrows(DataConversionException.class, "Unsupported conversion from DATE to java.sql.Time", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromDate(new InternalDate(2015, 5, 1));
-                return null;
-            }
-        });
+        assertEquals(Time.valueOf(LocalTime.of(0, 0)), this.vf.createFromDate(new InternalDate(2015, 5, 1)));
+        assertEquals(Time.valueOf(LocalTime.of(0, 0)).toString(), this.vf.createFromDate(new InternalDate(2015, 5, 1)).toString());
     }
 
     @Test
@@ -185,14 +180,7 @@ public class SqlTimeValueFactoryTest extends CommonAsserts {
         assertEquals(Time.valueOf(LocalTime.of(3, 4, 5, 600000000)).toString(),
                 this.vf.createFromBytes("2018-01-02 03:04:05.6".getBytes(), 0, 21, f).toString());
         assertEquals(Time.valueOf(LocalTime.of(3, 4, 5, 600000000)).toString(), this.vf.createFromBytes("03:04:05.6".getBytes(), 0, 10, f).toString());
-
-        assertThrows(DataConversionException.class, "Unsupported conversion from DATE to java.sql.Time", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromBytes("2018-01-02".getBytes(), 0, 10, f);
-                return null;
-            }
-        });
+        assertEquals(Time.valueOf(LocalTime.of(0, 0)).toString(), this.vf.createFromBytes("2018-01-02".getBytes(), 0, 10, f).toString());
 
         assertThrows(DataConversionException.class, "Cannot convert string '1' to java.sql.Time value", new Callable<Void>() {
             @Override

@@ -71,7 +71,14 @@ public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
 
     @Override
     Time localCreateFromDate(InternalDate idate) {
-        return unsupported("DATE");
+        synchronized (this.cal) {
+            try {
+                this.cal.clear();
+                return new Time(this.cal.getTimeInMillis());
+            } catch (IllegalArgumentException e) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
+            }
+        }
     }
 
     @Override
@@ -95,7 +102,7 @@ public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
     }
 
     @Override
-    public Time localCreateFromTimestamp(InternalTimestamp its) {
+    public Time localCreateFromDatetime(InternalTimestamp its) {
         if (this.warningListener != null) {
             // TODO: need column context
             this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { "java.sql.Time" }));
@@ -106,8 +113,14 @@ public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
     }
 
     @Override
-    public Time createFromYear(long year) {
-        return unsupported("YEAR");
+    public Time localCreateFromTimestamp(InternalTimestamp its) {
+        if (this.warningListener != null) {
+            // TODO: need column context
+            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { "java.sql.Time" }));
+        }
+
+        // truncate date information
+        return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos(), its.getScale()));
     }
 
     public String getTargetTypeName() {

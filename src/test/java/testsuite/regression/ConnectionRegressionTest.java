@@ -4452,13 +4452,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
     @Test
     public void testBug36662() throws Exception {
         try {
-            String tz1 = TimeUtil.getCanonicalTimezone("MEST", null);
+            String tz1 = TimeUtil.getCanonicalTimeZone("MEST", null);
             assertNotNull(tz1);
         } catch (Exception e1) {
             String mes1 = e1.getMessage();
             mes1 = mes1.substring(mes1.lastIndexOf("The timezones that 'MEST' maps to are:") + 39);
             try {
-                String tz2 = TimeUtil.getCanonicalTimezone("CEST", null);
+                String tz2 = TimeUtil.getCanonicalTimeZone("CEST", null);
                 assertEquals(mes1, tz2);
             } catch (Exception e2) {
                 String mes2 = e2.getMessage();
@@ -7145,7 +7145,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     propsList += "," + (String) k;
                 }
 
-                connPropsLocal.setProperty(PropertyKey.serverTimezone.getKeyName(), serverTZ);
+                connPropsLocal.setProperty(PropertyKey.connectionTimeZone.getKeyName(), serverTZ);
 
                 Connection testConn = getConnectionWithProps(connPropsLocal);
 
@@ -9515,7 +9515,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         final String database = connProps.getProperty(PropertyKey.DBNAME.getKeyName());
         final String username = connProps.getProperty(PropertyKey.USER.getKeyName());
         final String password = connProps.getProperty(PropertyKey.PASSWORD.getKeyName(), "");
-        final String serverTimezone = connProps.getProperty(PropertyKey.serverTimezone.getKeyName());
+        final String connectionTimeZone = connProps.getProperty(PropertyKey.connectionTimeZone.getKeyName());
 
         final Map<String, String> props = new HashMap<>();
         props.put(PropertyKey.USER.getKeyName(), username);
@@ -9528,8 +9528,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.put(PropertyKey.allowSourceDownConnections.getKeyName(), "true");
         props.put(PropertyKey.allowReplicaDownConnections.getKeyName(), "true");
         props.put(PropertyKey.readFromSourceWhenNoReplicas.getKeyName(), "true");
-        if (serverTimezone != null) {
-            props.put(PropertyKey.serverTimezone.getKeyName(), serverTimezone);
+        if (connectionTimeZone != null) {
+            props.put(PropertyKey.connectionTimeZone.getKeyName(), connectionTimeZone);
         }
 
         ConnectionUrl replConnectionUrl = new ReplicationConnectionUrl(Collections.<HostInfo>emptyList(), Collections.<HostInfo>emptyList(), props);

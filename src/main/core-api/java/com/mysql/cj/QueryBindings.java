@@ -211,11 +211,13 @@ public interface QueryBindings<T extends BindValue> {
 
     // Time getTime(int parameterIndex);
 
-    void setTimestamp(int parameterIndex, Timestamp x, Calendar cal);
+    void setTimestamp(int parameterIndex, Timestamp x, Calendar cal, MysqlType targetMysqlType);
 
-    void setTimestamp(int parameterIndex, Timestamp x);
+    void setTimestamp(int parameterIndex, Timestamp x, MysqlType targetMysqlType);
 
-    void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, int fractionalLength);
+    void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, int fractionalLength, MysqlType targetMysqlType);
+
+    void bindTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, int fractionalLength, MysqlType targetMysqlType);
 
     // Timestamp getTimestamp(int parameterIndex);
 

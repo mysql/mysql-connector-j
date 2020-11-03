@@ -72,8 +72,17 @@ public class LocalDateValueFactory extends AbstractDateTimeValueFactory<LocalDat
     }
 
     @Override
+    public LocalDate localCreateFromDatetime(InternalTimestamp its) {
+        if (this.warningListener != null) {
+            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { getTargetTypeName() }));
+        }
+        // truncate any time information
+        return createFromDate(its);
+    }
+
+    @Override
     LocalDate localCreateFromTime(InternalTime it) {
-        return unsupported("TIME");
+        return LocalDate.of(1970, 1, 1);
     }
 
     public String getTargetTypeName() {

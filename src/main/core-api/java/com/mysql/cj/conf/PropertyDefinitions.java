@@ -389,8 +389,8 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PropertyKey.queryInterceptors, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.queryInterceptors"), "8.0.7", CATEGORY_STATEMENTS, Integer.MIN_VALUE),
 
-                new BooleanPropertyDefinition(PropertyKey.cacheDefaultTimezone, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.cacheDefaultTimezone"), "8.0.20", CATEGORY_STATEMENTS, Integer.MIN_VALUE),
+                new BooleanPropertyDefinition(PropertyKey.cacheDefaultTimeZone, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.cacheDefaultTimeZone"), "8.0.20", CATEGORY_STATEMENTS, Integer.MIN_VALUE),
 
                 //
                 // CATEGORY_PREPARED_STATEMENTS
@@ -505,14 +505,23 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.noDatetimeStringSync, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.noDatetimeStringSync"), "3.1.7", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PropertyKey.serverTimezone, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.serverTimezone"), "3.0.2", CATEGORY_DATETIMES, Integer.MIN_VALUE),
+                new StringPropertyDefinition(PropertyKey.connectionTimeZone, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.connectionTimeZone"), "3.0.2", CATEGORY_DATETIMES, Integer.MIN_VALUE),
+
+                new BooleanPropertyDefinition(PropertyKey.forceConnectionTimeZoneToSession, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.forceConnectionTimeZoneToSession"), "8.0.23", CATEGORY_DATETIMES, Integer.MIN_VALUE),
+
+                new BooleanPropertyDefinition(PropertyKey.preserveInstants, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.preserveInstants"), "8.0.23", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.treatUtilDateAsTimestamp, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.treatUtilDateAsTimestamp"), "5.0.5", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.sendFractionalSeconds, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.sendFractionalSeconds"), "5.1.37", CATEGORY_DATETIMES, Integer.MIN_VALUE),
+
+                new BooleanPropertyDefinition(PropertyKey.sendFractionalSecondsForTime, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.sendFractionalSecondsForTime"), "8.0.23", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.yearIsDateType, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.yearIsDateType"), "3.1.9", CATEGORY_DATETIMES, Integer.MIN_VALUE),

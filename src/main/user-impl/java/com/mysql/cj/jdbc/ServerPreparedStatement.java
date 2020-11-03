@@ -757,6 +757,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                             batchedStatement.setDate(batchedParamIndex++, (Date) paramArg[j].value);
                             break;
                         case MysqlType.FIELD_TYPE_DATETIME:
+                            batchedStatement.setObject(batchedParamIndex++, paramArg[j].value);
+                            break;
                         case MysqlType.FIELD_TYPE_TIMESTAMP:
                             batchedStatement.setTimestamp(batchedParamIndex++, (Timestamp) paramArg[j].value);
                             break;

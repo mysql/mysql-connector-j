@@ -185,7 +185,6 @@ public class StatementImpl implements JdbcStatement {
     protected RuntimeProperty<Boolean> rewriteBatchedStatements;
     protected RuntimeProperty<Integer> maxAllowedPacket;
     protected boolean dontCheckOnDuplicateKeyUpdateInSQL;
-    protected RuntimeProperty<Boolean> sendFractionalSeconds;
 
     protected ResultSetFactory resultSetFactory;
 
@@ -233,7 +232,6 @@ public class StatementImpl implements JdbcStatement {
         this.logSlowQueries = pset.getBooleanProperty(PropertyKey.logSlowQueries).getValue();
         this.maxAllowedPacket = pset.getIntegerProperty(PropertyKey.maxAllowedPacket);
         this.dontCheckOnDuplicateKeyUpdateInSQL = pset.getBooleanProperty(PropertyKey.dontCheckOnDuplicateKeyUpdateInSQL).getValue();
-        this.sendFractionalSeconds = pset.getBooleanProperty(PropertyKey.sendFractionalSeconds);
         this.doEscapeProcessing = pset.getBooleanProperty(PropertyKey.enableEscapeProcessing).getValue();
 
         this.maxFieldSize = this.maxAllowedPacket.getValue();
@@ -684,7 +682,7 @@ public class StatementImpl implements JdbcStatement {
                 setupStreamingTimeout(locallyScopedConn);
 
                 if (this.doEscapeProcessing) {
-                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getServerTimeZone(),
+                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getSessionTimeZone(),
                             this.session.getServerSession().getCapabilities().serverSupportsFracSecs(),
                             this.session.getServerSession().isServerTruncatesFracSecs(), getExceptionInterceptor());
                     sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;
@@ -1124,7 +1122,7 @@ public class StatementImpl implements JdbcStatement {
             setupStreamingTimeout(locallyScopedConn);
 
             if (this.doEscapeProcessing) {
-                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getServerTimeZone(),
+                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getSessionTimeZone(),
                         this.session.getServerSession().getCapabilities().serverSupportsFracSecs(), this.session.getServerSession().isServerTruncatesFracSecs(),
                         getExceptionInterceptor());
                 sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;
@@ -1262,7 +1260,7 @@ public class StatementImpl implements JdbcStatement {
             ResultSetInternalMethods rs = null;
 
             if (this.doEscapeProcessing) {
-                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getServerTimeZone(),
+                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getSessionTimeZone(),
                         this.session.getServerSession().getCapabilities().serverSupportsFracSecs(), this.session.getServerSession().isServerTruncatesFracSecs(),
                         getExceptionInterceptor());
                 sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;

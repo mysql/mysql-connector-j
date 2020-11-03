@@ -58,16 +58,18 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     /* Calendar to be used for DATE and DATETIME values storing */
     public Calendar calendar;
 
+    PropertySet pset;
     private TimeZone defaultTimeZone;
-    private TimeZone serverTimeZone;
-    private RuntimeProperty<Boolean> cacheDefaultTimezone = null;
+    private TimeZone connectionTimeZone;
+    private RuntimeProperty<Boolean> cacheDefaultTimeZone = null;
 
     protected String charEncoding = null;
 
-    public ServerPreparedQueryBindValue(TimeZone defaultTZ, TimeZone serverTZ, PropertySet pset) {
-        this.defaultTimeZone = defaultTZ;
-        this.serverTimeZone = serverTZ;
-        this.cacheDefaultTimezone = pset.getBooleanProperty(PropertyKey.cacheDefaultTimezone);
+    public ServerPreparedQueryBindValue(TimeZone defaultTimeZone, TimeZone connectionTimeZone, PropertySet pset) {
+        this.pset = pset;
+        this.defaultTimeZone = defaultTimeZone;
+        this.connectionTimeZone = connectionTimeZone;
+        this.cacheDefaultTimeZone = pset.getBooleanProperty(PropertyKey.cacheDefaultTimeZone);
     }
 
     @Override
@@ -78,9 +80,10 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     private ServerPreparedQueryBindValue(ServerPreparedQueryBindValue copyMe) {
         super(copyMe);
 
+        this.pset = copyMe.pset;
         this.defaultTimeZone = copyMe.defaultTimeZone;
-        this.serverTimeZone = copyMe.serverTimeZone;
-        this.cacheDefaultTimezone = copyMe.cacheDefaultTimezone;
+        this.connectionTimeZone = copyMe.connectionTimeZone;
+        this.cacheDefaultTimeZone = copyMe.cacheDefaultTimeZone;
         this.bufferType = copyMe.bufferType;
         this.calendar = copyMe.calendar;
         this.charEncoding = copyMe.charEncoding;
@@ -245,7 +248,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
                         return;
                     case MysqlType.FIELD_TYPE_DATETIME:
                     case MysqlType.FIELD_TYPE_TIMESTAMP:
-                        storeDateTime(intoPacket);
+                        storeDateTime(intoPacket, this.bufferType);
                         return;
                     case MysqlType.FIELD_TYPE_VAR_STRING:
                     case MysqlType.FIELD_TYPE_STRING:
@@ -290,7 +293,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
 
             } else {
                 if (this.calendar == null) {
-                    this.calendar = Calendar.getInstance(this.cacheDefaultTimezone.getValue() ? this.defaultTimeZone : TimeZone.getDefault(), Locale.US);
+                    this.calendar = Calendar.getInstance(this.cacheDefaultTimeZone.getValue() ? this.defaultTimeZone : TimeZone.getDefault(), Locale.US);
                 }
 
                 this.calendar.setTime((java.util.Date) this.value);
@@ -304,14 +307,11 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
                 day = this.calendar.get(Calendar.DAY_OF_MONTH);
             }
 
-            intoPacket.ensureCapacity(8);
-            intoPacket.writeInteger(IntegerDataType.INT1, 7); // length
+            intoPacket.ensureCapacity(5);
+            intoPacket.writeInteger(IntegerDataType.INT1, 4); // length
             intoPacket.writeInteger(IntegerDataType.INT2, year);
             intoPacket.writeInteger(IntegerDataType.INT1, month);
             intoPacket.writeInteger(IntegerDataType.INT1, day);
-            intoPacket.writeInteger(IntegerDataType.INT1, 0);
-            intoPacket.writeInteger(IntegerDataType.INT1, 0);
-            intoPacket.writeInteger(IntegerDataType.INT1, 0);
         }
     }
 
@@ -330,7 +330,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
             microseconds = ((LocalTime) this.value).getNano() / 1000;
         } else {
             if (this.calendar == null) {
-                this.calendar = Calendar.getInstance(this.serverTimeZone, Locale.US);
+                this.calendar = Calendar.getInstance(this.defaultTimeZone, Locale.US);
             }
 
             this.calendar.setTime((java.util.Date) this.value);
@@ -339,7 +339,6 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
             minutes = this.calendar.get(Calendar.MINUTE);
             seconds = this.calendar.get(Calendar.SECOND);
             microseconds = this.calendar.get(Calendar.MILLISECOND) * 1000;
-
         }
 
         intoPacket.ensureCapacity(microseconds > 0 ? 13 : 9);
@@ -357,8 +356,10 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     /**
      * @param intoPacket
      *            packet to write into
+     * @param mysqlType
+     *            MysqlType.FIELD_TYPE_*
      */
-    private void storeDateTime(NativePacketPayload intoPacket) {
+    private void storeDateTime(NativePacketPayload intoPacket, int mysqlType) {
         synchronized (this) {
 
             int year = 0, month = 0, day = 0, hours = 0, minutes = 0, seconds = 0, microseconds = 0;
@@ -388,7 +389,12 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
 
             } else {
                 if (this.calendar == null) {
-                    this.calendar = Calendar.getInstance(this.serverTimeZone, Locale.US);
+                    this.calendar = Calendar.getInstance(mysqlType == MysqlType.FIELD_TYPE_TIMESTAMP
+                            //                            && ("SERVER".equals(this.pset.getStringProperty(PropertyKey.connectionTimeZone).getValue())
+                            //                                    || "LOCAL".equals(this.pset.getStringProperty(PropertyKey.connectionTimeZone).getValue())
+                            //                                            && !this.pset.getBooleanProperty(PropertyKey.forceConnectionTimeZoneToSession).getValue())
+                            && this.pset.getBooleanProperty(PropertyKey.preserveInstants).getValue() ? this.connectionTimeZone : this.defaultTimeZone,
+                            Locale.US);
                 }
 
                 this.calendar.setTime((java.util.Date) this.value);

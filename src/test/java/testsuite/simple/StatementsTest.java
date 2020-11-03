@@ -66,6 +66,8 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
@@ -1156,6 +1158,7 @@ public class StatementsTest extends BaseTestCase {
     public void testSetObject() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.noDatetimeStringSync.getKeyName(), "true"); // value=true for #5
+        props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
         createTable("t1", " (c1 DECIMAL," // instance of String
@@ -1168,7 +1171,7 @@ public class StatementsTest extends BaseTestCase {
 
         this.pstmt = conn1.prepareStatement("INSERT INTO t1 VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-        long currentTime = System.currentTimeMillis();
+        long currentTime = (System.currentTimeMillis() / 1000) * 1000; // removing fractional seconds
 
         this.pstmt.setObject(1, "1000", Types.DECIMAL);
         this.pstmt.setObject(2, "2000", Types.VARCHAR);
@@ -1203,6 +1206,7 @@ public class StatementsTest extends BaseTestCase {
         Properties props = new Properties();
         props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.noDatetimeStringSync.getKeyName(), "true"); // value=true for #5
+        props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
         Connection conn1 = getConnectionWithProps(props);
         Statement stmt1 = conn1.createStatement();
         createTable("t1", " (c1 DECIMAL," // instance of String
@@ -1215,7 +1219,7 @@ public class StatementsTest extends BaseTestCase {
 
         this.pstmt = conn1.prepareStatement("INSERT INTO t1 VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-        long currentTime = System.currentTimeMillis();
+        long currentTime = (System.currentTimeMillis() / 1000) * 1000; // removing fractional seconds
 
         this.pstmt.setObject(1, "1000", MysqlType.DECIMAL);
         this.pstmt.setObject(2, "2000", MysqlType.VARCHAR);
@@ -1372,13 +1376,13 @@ public class StatementsTest extends BaseTestCase {
                 assertEquals(i, genKeys.getInt(1));
             }
 
-            Object[][] differentTypes = new Object[1000][14];
+            Object[][] differentTypes = new Object[1000][15];
 
             createTable("rewriteBatchTypes",
                     "(internalOrder int, f1 tinyint null, " + "f2 smallint null, f3 int null, f4 bigint null, "
                             + "f5 decimal(8, 2) null, f6 float null, f7 double null, " + "f8 varchar(255) null, f9 text null, f10 blob null, f11 blob null, "
-                            + (versionMeetsMinimum(5, 6, 4) ? "f12 datetime(3) null, f13 time(3) null, f14 date null)"
-                                    : "f12 datetime null, f13 time null, f14 date null)"));
+                            + (versionMeetsMinimum(5, 6, 4) ? "f12 datetime(3) null, f13 time(3) null, f14 date null, f15 timestamp(3) null)"
+                                    : "f12 datetime null, f13 time null, f14 date null, f15 timestamp null)"));
 
             for (int i = 0; i < 1000; i++) {
                 differentTypes[i][0] = Math.random() < .5 ? null : new Byte((byte) (Math.random() * 127));
@@ -1392,21 +1396,22 @@ public class StatementsTest extends BaseTestCase {
                 differentTypes[i][8] = Math.random() < .5 ? null : randomString();
                 differentTypes[i][9] = Math.random() < .5 ? null : randomString().getBytes();
                 differentTypes[i][10] = Math.random() < .5 ? null : randomString().getBytes();
-                differentTypes[i][11] = Math.random() < .5 ? null : new Timestamp(System.currentTimeMillis());
+                differentTypes[i][11] = Math.random() < .5 ? null : LocalDateTime.now();
                 differentTypes[i][12] = Math.random() < .5 ? null : new Time(System.currentTimeMillis());
                 differentTypes[i][13] = Math.random() < .5 ? null : new Date(System.currentTimeMillis());
+                differentTypes[i][14] = Math.random() < .5 ? null : new Timestamp(System.currentTimeMillis());
             }
 
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), j == 0 ? "true" : "false");
             props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
             props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), j == 0 ? "10240" : "1024");
             multiConn = getConnectionWithProps(props);
-            pStmt = multiConn.prepareStatement(
-                    "INSERT INTO rewriteBatchTypes(internalOrder,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14) VALUES " + "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            pStmt = multiConn.prepareStatement("INSERT INTO rewriteBatchTypes(internalOrder,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14,f15) VALUES "
+                    + "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
             for (int i = 0; i < 1000; i++) {
                 pStmt.setInt(1, i);
-                for (int k = 0; k < 14; k++) {
+                for (int k = 0; k < 15; k++) {
                     if (k == 8) {
                         String asString = (String) differentTypes[i][k];
 
@@ -1433,13 +1438,14 @@ public class StatementsTest extends BaseTestCase {
             pStmt.executeBatch();
 
             this.rs = this.stmt
-                    .executeQuery("SELECT f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14 FROM rewriteBatchTypes ORDER BY internalOrder");
+                    .executeQuery("SELECT f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15 FROM rewriteBatchTypes ORDER BY internalOrder");
 
             int idx = 0;
 
             // We need to format this ourselves, since we have to strip the nanos off of TIMESTAMPs, so .equals() doesn't really work...
 
             SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss''", null);
+            DateTimeFormatter dtf = TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET;
 
             while (this.rs.next()) {
                 for (int k = 0; k < 14; k++) {
@@ -1487,6 +1493,9 @@ public class StatementsTest extends BaseTestCase {
                                     "On row " + idx + ", column " + (k + 1));
                         } else if (differentTypes[idx][k] instanceof Timestamp) {
                             assertEquals(sdf.format(differentTypes[idx][k]), sdf.format(this.rs.getObject(k + 1)), "On row " + idx + ", column " + (k + 1));
+                        } else if (differentTypes[idx][k] instanceof LocalDateTime) {
+                            assertEquals(((LocalDateTime) differentTypes[idx][k]).format(dtf), ((LocalDateTime) this.rs.getObject(k + 1)).format(dtf),
+                                    "On row " + idx + ", column " + (k + 1));
                         } else if (differentTypes[idx][k] instanceof Double) {
                             assertEquals(((Double) differentTypes[idx][k]).doubleValue(), this.rs.getDouble(k + 1), .1,
                                     "On row " + idx + ", column " + (k + 1));
@@ -2458,6 +2467,8 @@ public class StatementsTest extends BaseTestCase {
     private final OffsetDateTime testOffsetDateTime = OffsetDateTime.of(2015, 8, 04, 12, 34, 56, 7890, ZoneOffset.UTC);
     private final OffsetTime testOffsetTime = OffsetTime.of(12, 34, 56, 7890, ZoneOffset.UTC);
 
+    private final ZonedDateTime testZonedDateTime = ZonedDateTime.of(2015, 8, 04, 12, 34, 56, 7890, ZoneOffset.UTC);
+
     /**
      * Test shared test data validity.
      * 
@@ -3099,15 +3110,17 @@ public class StatementsTest extends BaseTestCase {
          */
         createTable("testSetObjectPS1", "(id INT, d DATE, t TIME, dt DATETIME, ts TIMESTAMP)");
 
-        this.pstmt = this.conn.prepareStatement("INSERT INTO testSetObjectPS1 VALUES (?, ?, ?, ?, ?)");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
+
+        Connection testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
+        this.pstmt = testConn.prepareStatement("INSERT INTO testSetObjectPS1 VALUES (?, ?, ?, ?, ?)");
+        this.stmt = testConn.createStatement();
         validateTestDataLocalDTTypes("testSetObjectPS1", insertTestDataLocalDTTypes(this.pstmt));
 
-        /*
-         * Objects java.time.Offset[Date]Time are supported via conversion to *CHAR or serialization.
-         */
-        createTable("testSetObjectPS2", "(id INT, ot1 VARCHAR(100), ot2 BLOB, odt1 VARCHAR(100), odt2 BLOB)");
+        createTable("testSetObjectPS2", "(id INT, ot1 VARCHAR(100), ot2 BLOB, odt1 VARCHAR(100), odt2 BLOB, zdt1 VARCHAR(100), zdt2 BLOB)");
 
-        this.pstmt = this.conn.prepareStatement("INSERT INTO testSetObjectPS2 VALUES (?, ?, ?, ?, ?)");
+        this.pstmt = testConn.prepareStatement("INSERT INTO testSetObjectPS2 VALUES (?, ?, ?, ?, ?, ?, ?)");
         validateTestDataOffsetDTTypes("testSetObjectPS2", insertTestDataOffsetDTTypes(this.pstmt));
     }
 
@@ -3136,17 +3149,20 @@ public class StatementsTest extends BaseTestCase {
         createProcedure("testSetObjectCS1Proc",
                 "(IN id INT, IN d DATE, IN t TIME, IN dt DATETIME, IN ts TIMESTAMP) BEGIN " + "INSERT INTO testSetObjectCS1 VALUES (id, d, t, dt, ts); END");
 
-        CallableStatement testCstmt = this.conn.prepareCall("{CALL testSetObjectCS1Proc(?, ?, ?, ?, ?)}");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
+
+        Connection testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
+        this.stmt = testConn.createStatement();
+
+        CallableStatement testCstmt = testConn.prepareCall("{CALL testSetObjectCS1Proc(?, ?, ?, ?, ?)}");
         validateTestDataLocalDTTypes("testSetObjectCS1", insertTestDataLocalDTTypes(testCstmt));
 
-        /*
-         * Objects java.time.Offset[Date]Time are supported via conversion to *CHAR or serialization.
-         */
-        createTable("testSetObjectCS2", "(id INT, ot1 VARCHAR(100), ot2 BLOB, odt1 VARCHAR(100), odt2 BLOB)");
+        createTable("testSetObjectCS2", "(id INT, ot1 VARCHAR(100), ot2 BLOB, odt1 VARCHAR(100), odt2 BLOB, zdt1 VARCHAR(100), zdt2 BLOB)");
         createProcedure("testSetObjectCS2Proc",
-                "(id INT, ot1 VARCHAR(100), ot2 BLOB, odt1 VARCHAR(100), odt2 BLOB) BEGIN INSERT INTO testSetObjectCS2 VALUES (id, ot1, ot2, odt1, odt2); END");
+                "(id INT, ot1 VARCHAR(100), ot2 BLOB, odt1 VARCHAR(100), odt2 BLOB, zdt1 VARCHAR(100), zdt2 BLOB) BEGIN INSERT INTO testSetObjectCS2 VALUES (id, ot1, ot2, odt1, odt2, zdt1, zdt2); END");
 
-        testCstmt = this.conn.prepareCall("{CALL testSetObjectCS2Proc(?, ?, ?, ?, ?)}");
+        testCstmt = testConn.prepareCall("{CALL testSetObjectCS2Proc(?, ?, ?, ?, ?, ?, ?)}");
         validateTestDataOffsetDTTypes("testSetObjectCS2", insertTestDataOffsetDTTypes(testCstmt));
     }
 
@@ -3174,17 +3190,19 @@ public class StatementsTest extends BaseTestCase {
          */
         createTable("testSetObjectSPS1", "(id INT, d DATE, t TIME, dt DATETIME, ts TIMESTAMP)");
 
-        Connection testConn = getConnectionWithProps("useServerPrepStmts=true");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
 
+        Connection testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
+
+        this.stmt = testConn.createStatement();
         this.pstmt = testConn.prepareStatement("INSERT INTO testSetObjectSPS1 VALUES (?, ?, ?, ?, ?)");
         validateTestDataLocalDTTypes("testSetObjectSPS1", insertTestDataLocalDTTypes(this.pstmt));
 
-        /*
-         * Objects java.time.Offset[Date]Time are supported via conversion to *CHAR or serialization.
-         */
-        createTable("testSetObjectSPS2", "(id INT, ot1 VARCHAR(100), ot2 BLOB, odt1 VARCHAR(100), odt2 BLOB)");
+        createTable("testSetObjectSPS2", "(id INT, ot1 VARCHAR(100), ot2 BLOB, odt1 VARCHAR(100), odt2 BLOB, zdt1 VARCHAR(100), zdt2 BLOB)");
 
-        this.pstmt = testConn.prepareStatement("INSERT INTO testSetObjectSPS2 VALUES (?, ?, ?, ?, ?)");
+        this.pstmt = testConn.prepareStatement("INSERT INTO testSetObjectSPS2 VALUES (?, ?, ?, ?, ?, ?, ?)");
         validateTestDataOffsetDTTypes("testSetObjectSPS2", insertTestDataOffsetDTTypes(this.pstmt));
     }
 
@@ -3384,6 +3402,8 @@ public class StatementsTest extends BaseTestCase {
         prepStmt.setObject(3, this.testOffsetTime);
         prepStmt.setObject(4, this.testOffsetDateTime, JDBCType.VARCHAR);
         prepStmt.setObject(5, this.testOffsetDateTime);
+        prepStmt.setObject(6, this.testZonedDateTime, JDBCType.VARCHAR);
+        prepStmt.setObject(7, this.testZonedDateTime);
         assertEquals(1, prepStmt.executeUpdate());
 
         if (prepStmt instanceof CallableStatement) {
@@ -3394,6 +3414,8 @@ public class StatementsTest extends BaseTestCase {
             cstmt.setObject("ot2", this.testOffsetTime);
             cstmt.setObject("odt1", this.testOffsetDateTime, JDBCType.VARCHAR);
             cstmt.setObject("odt2", this.testOffsetDateTime);
+            cstmt.setObject("zdt1", this.testZonedDateTime, JDBCType.VARCHAR);
+            cstmt.setObject("zdt2", this.testZonedDateTime);
             assertEquals(1, cstmt.executeUpdate());
 
             return 2;
@@ -3418,26 +3440,35 @@ public class StatementsTest extends BaseTestCase {
      * @throws Exception
      */
     private void validateTestDataOffsetDTTypes(String tableName, int expectedRowCount) throws Exception {
-        Connection testConn = getConnectionWithProps("autoDeserialize=true"); // Offset[Date]Time are supported via object serialization too.
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
+        Connection testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
         Statement testStmt = testConn.createStatement();
         this.rs = testStmt.executeQuery("SELECT * FROM " + tableName);
 
+        long expTimeSeconds = this.testOffsetTime.atDate(LocalDate.now()).toEpochSecond();
+        long expDatetimeSeconds = this.testOffsetDateTime.toEpochSecond();
+        long expZdtSeconds = this.testZonedDateTime.toEpochSecond();
         int rowCount = 0;
         while (this.rs.next()) {
             String row = "Row " + this.rs.getInt(1);
             assertEquals(++rowCount, this.rs.getInt(1));
 
-            assertEquals(this.testOffsetTime, this.rs.getObject(2, OffsetTime.class), row);
-            assertEquals(this.testOffsetTime, this.rs.getObject(3, OffsetTime.class), row);
+            assertEquals(expTimeSeconds, this.rs.getObject(2, OffsetTime.class).atDate(LocalDate.now()).toEpochSecond(), row);
+            assertEquals(expTimeSeconds, this.rs.getObject(3, OffsetTime.class).atDate(LocalDate.now()).toEpochSecond(), row);
             assertEquals(this.testOffsetDateTime, this.rs.getObject(4, OffsetDateTime.class), row);
-            assertEquals(this.testOffsetDateTime, this.rs.getObject(5, OffsetDateTime.class), row);
+            assertEquals(expDatetimeSeconds, this.rs.getObject(5, OffsetDateTime.class).toEpochSecond(), row);
+            assertEquals(expZdtSeconds, this.rs.getObject(6, ZonedDateTime.class).toEpochSecond(), row);
+            assertEquals(expZdtSeconds, this.rs.getObject(7, ZonedDateTime.class).toEpochSecond(), row);
 
             assertEquals(rowCount, this.rs.getInt("id"), row);
 
-            assertEquals(this.testOffsetTime, this.rs.getObject("ot1", OffsetTime.class), row);
-            assertEquals(this.testOffsetTime, this.rs.getObject("ot2", OffsetTime.class), row);
+            assertEquals(expTimeSeconds, this.rs.getObject("ot1", OffsetTime.class).atDate(LocalDate.now()).toEpochSecond(), row);
+            assertEquals(expTimeSeconds, this.rs.getObject("ot2", OffsetTime.class).atDate(LocalDate.now()).toEpochSecond(), row);
             assertEquals(this.testOffsetDateTime, this.rs.getObject("odt1", OffsetDateTime.class), row);
-            assertEquals(this.testOffsetDateTime, this.rs.getObject("odt2", OffsetDateTime.class), row);
+            assertEquals(expDatetimeSeconds, this.rs.getObject("odt2", OffsetDateTime.class).toEpochSecond(), row);
+            assertEquals(expZdtSeconds, this.rs.getObject("zdt1", ZonedDateTime.class).toEpochSecond(), row);
+            assertEquals(expZdtSeconds, this.rs.getObject("zdt2", ZonedDateTime.class).toEpochSecond(), row);
         }
         assertEquals(expectedRowCount, rowCount);
         testConn.close();

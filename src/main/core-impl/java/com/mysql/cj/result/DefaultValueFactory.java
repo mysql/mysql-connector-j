@@ -82,6 +82,11 @@ public abstract class DefaultValueFactory<T> implements ValueFactory<T> {
         return unsupported("TIMESTAMP");
     }
 
+    @Override
+    public T createFromDatetime(InternalTimestamp its) {
+        return unsupported("DATETIME");
+    }
+
     public T createFromLong(long l) {
         return unsupported("LONG");
     }

@@ -84,7 +84,7 @@ class EscapeProcessor {
      * 
      * @param sql
      *            the SQL to escape process.
-     * @param serverTimeZone
+     * @param connectionTimeZone
      *            server time zone
      * @param serverSupportsFractionalSecond
      *            flag indicating if server supports fractional seconds
@@ -98,7 +98,7 @@ class EscapeProcessor {
      * @throws SQLException
      *             if error occurs
      */
-    public static final Object escapeSQL(String sql, TimeZone serverTimeZone, boolean serverSupportsFractionalSecond, boolean serverTruncatesFractionalSecond,
+    public static final Object escapeSQL(String sql, TimeZone connectionTimeZone, boolean serverSupportsFractionalSecond, boolean serverTruncatesFractionalSecond,
             ExceptionInterceptor exceptionInterceptor) throws java.sql.SQLException {
         boolean replaceEscapeSequence = false;
         String escapeSequence = null;
@@ -140,7 +140,7 @@ class EscapeProcessor {
                         if (nestedBrace != -1) {
                             StringBuilder buf = new StringBuilder(token.substring(0, 1));
 
-                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), serverTimeZone, serverSupportsFractionalSecond,
+                            Object remainingResults = escapeSQL(token.substring(1, token.length() - 1), connectionTimeZone, serverSupportsFractionalSecond,
                                     serverTruncatesFractionalSecond, exceptionInterceptor);
 
                             String remaining = null;
@@ -223,7 +223,7 @@ class EscapeProcessor {
                             }
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{ts")) {
-                        processTimestampToken(serverTimeZone, newSql, token, serverSupportsFractionalSecond, serverTruncatesFractionalSecond,
+                        processTimestampToken(connectionTimeZone, newSql, token, serverSupportsFractionalSecond, serverTruncatesFractionalSecond,
                                 exceptionInterceptor);
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{t")) {
                         processTimeToken(newSql, token, serverSupportsFractionalSecond, exceptionInterceptor);

@@ -30,6 +30,8 @@
 package com.mysql.cj.protocol.a;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
@@ -122,5 +124,71 @@ public class MysqlTextValueDecoderTest {
         byte[] uint8MoreThanMaxLong2 = "18223372036854775807".getBytes();
         assertEquals("9223372036854775807", this.valueDecoder.decodeUInt8(uint8MoreThanMaxLong1, 0, uint8MoreThanMaxLong1.length, vf));
         assertEquals("18223372036854775807", this.valueDecoder.decodeUInt8(uint8MoreThanMaxLong2, 0, uint8MoreThanMaxLong2.length, vf));
+    }
+
+    @Test
+    public void testIsTime() {
+        assertTrue(MysqlTextValueDecoder.isTime("10:00:00"));
+        assertTrue(MysqlTextValueDecoder.isTime("100:00:00"));
+        assertTrue(MysqlTextValueDecoder.isTime("-10:00:00"));
+        assertTrue(MysqlTextValueDecoder.isTime("-100:00:00"));
+        assertTrue(MysqlTextValueDecoder.isTime("10:00:00.1"));
+        assertTrue(MysqlTextValueDecoder.isTime("100:00:00.12"));
+        assertTrue(MysqlTextValueDecoder.isTime("-10:00:00.12345"));
+        assertTrue(MysqlTextValueDecoder.isTime("-100:00:00.123456"));
+
+        assertFalse(MysqlTextValueDecoder.isTime("10:000:00"));
+        assertFalse(MysqlTextValueDecoder.isTime("10:00:000"));
+        assertFalse(MysqlTextValueDecoder.isTime("1Z:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTime("10:Z0:00"));
+        assertFalse(MysqlTextValueDecoder.isTime("10:00:Z0"));
+        assertFalse(MysqlTextValueDecoder.isTime("10:00:00Z"));
+        assertFalse(MysqlTextValueDecoder.isTime("+100:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTime("Z100:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTime("10:00:00.Z"));
+        assertFalse(MysqlTextValueDecoder.isTime("10:00:00.12345Z"));
+        assertFalse(MysqlTextValueDecoder.isTime("10:00:00.12345+01:00"));
+    }
+
+    @Test
+    public void testIsTimestamp() {
+        assertTrue(MysqlTextValueDecoder.isTimestamp("2004-01-01 10:00:00"));
+        assertTrue(MysqlTextValueDecoder.isTimestamp("2004-01-01 10:00:00.1"));
+        assertTrue(MysqlTextValueDecoder.isTimestamp("2004-01-01 10:00:00.123456789"));
+
+        assertFalse(MysqlTextValueDecoder.isTimestamp("200-01-01 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("20-01-01 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2000-01-01 100:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2000-01-01 10:000:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2000-01-01 10:00:000"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2000-01-01 100:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("200-01-01 10:00:00.1"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("20-01-01 10:00:00.1"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2000-01-01 100:00:00.1"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2000-01-01 10:000:00.1"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2000-01-01 10:00:000.1"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2000-01-01 100:00:00.1"));
+
+        assertFalse(MysqlTextValueDecoder.isTimestamp("Z004-01-01 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2Z04-01-01 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("20Z4-01-01 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("200Z-01-01 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004Z01-01 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-Z1-01 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-0Z-01 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01Z01 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-Z1 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-0Z 10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-01Z10:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-01 Z0:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-01 1Z:00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-01 10Z00:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-01 10:Z0:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-01 10:0Z:00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-01 10:00Z00"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-01 10:00:Z0"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-01 10:00:0Z"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-01 10:00:00Z"));
+        assertFalse(MysqlTextValueDecoder.isTimestamp("2004-01-01 10:00:00+01:00"));
     }
 }

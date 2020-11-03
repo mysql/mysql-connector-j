@@ -31,7 +31,15 @@ package testsuite.regression;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.TimeZone;
+
 import org.junit.jupiter.api.Test;
+
+import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.util.TimeUtil;
 
 import testsuite.BaseTestCase;
 
@@ -101,8 +109,13 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
     @Test
     public void testBug60598() throws Exception {
 
-        String expected = versionMeetsMinimum(5, 6, 4) ? "SELECT '2001-02-03 04:05:06' , '2001-02-03 04:05:06.007' , '11:22:33.444'"
-                : "SELECT '2001-02-03 04:05:06' , '2001-02-03 04:05:06' , '11:22:33'";
+        TimeZone sessionTz = ((MysqlConnection) this.conn).getSession().getServerSession().getSessionTimeZone();
+        ZonedDateTime zdt = LocalDateTime.of(2001, 2, 3, 4, 5, 6, 7000000).atZone(ZoneId.systemDefault()).withZoneSameInstant(sessionTz.toZoneId());
+        boolean withFract = versionMeetsMinimum(5, 6, 4);
+
+        String expected = "SELECT '" + zdt.format(TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET) + "' , '"
+                + zdt.format(withFract ? TimeUtil.DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET) + "' , '11:22:33"
+                + (withFract ? ".444'" : "'");
 
         String input = "SELECT {ts '2001-02-03 04:05:06' } , {ts '2001-02-03 04:05:06.007' } , {t '11:22:33.444' }";
 

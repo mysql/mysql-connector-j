@@ -31,6 +31,8 @@ package com.mysql.cj.protocol.a;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.DataReadException;
@@ -66,6 +68,8 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     /** String length of String timestamp with nanos. This does not come from MySQL server but we support it via string conversion. */
     public static final int TIMESTAMP_STR_LEN_WITH_NANOS = TIMESTAMP_STR_LEN_NO_FRAC + 10;
 
+    public static final Pattern TIME_PTRN = Pattern.compile("[-]{0,1}\\d{2,3}:\\d{2}:\\d{2}(\\.\\d{1,9})?");
+
     /** Max string length of a signed long = 9223372036854775807 (19+1 for minus sign) */
     public static final int MAX_SIGNED_LONG_LEN = 20;
 
@@ -79,6 +83,11 @@ public class MysqlTextValueDecoder implements ValueDecoder {
 
     public <T> T decodeTimestamp(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
         return vf.createFromTimestamp(getTimestamp(bytes, offset, length, scale));
+    }
+
+    @Override
+    public <T> T decodeDatetime(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
+        return vf.createFromDatetime(getTimestamp(bytes, offset, length, scale));
     }
 
     public <T> T decodeUInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
@@ -241,18 +250,18 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     }
 
     public static boolean isDate(String s) {
-        return s.length() == DATE_BUF_LEN && s.charAt(4) == '-' && s.charAt(7) == '-';
+        return s.length() == DATE_BUF_LEN && s.charAt(4) == '-' && s.charAt(7) == '-'; // TODO also check proper date parts ranges
     }
 
     public static boolean isTime(String s) {
-        return s.contains(".") ? //
-                s.length() >= TIME_STR_LEN_MIN && s.length() <= TIME_STR_LEN_MAX_WITH_MICROS && s.charAt(2) == ':' && s.charAt(5) == ':'
-                : s.length() >= TIME_STR_LEN_MIN && s.length() <= TIME_STR_LEN_MAX_NO_FRAC && s.charAt(2) == ':' && s.charAt(5) == ':';
+        Matcher matcher = TIME_PTRN.matcher(s);
+        return matcher.matches();
     }
 
     public static boolean isTimestamp(String s) {
-        return s.length() >= TIMESTAMP_STR_LEN_NO_FRAC && (s.length() <= TIMESTAMP_STR_LEN_WITH_MICROS || s.length() == TIMESTAMP_STR_LEN_WITH_NANOS)
-                && s.charAt(4) == '-' && s.charAt(7) == '-' && s.charAt(10) == ' ' && s.charAt(13) == ':' && s.charAt(16) == ':';
+        Pattern DATETIME_PTRN = Pattern.compile("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9}){0,1}");
+        Matcher matcher = DATETIME_PTRN.matcher(s);
+        return matcher.matches();
     }
 
     public static InternalDate getDate(byte[] bytes, int offset, int length) {

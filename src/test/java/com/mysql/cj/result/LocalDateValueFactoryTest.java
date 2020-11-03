@@ -66,13 +66,7 @@ public class LocalDateValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromTime() {
-        assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.time.LocalDate", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                LocalDateValueFactoryTest.this.vf.createFromTime(new InternalTime(-1, 0, 0, 0, 0));
-                return null;
-            }
-        });
+        assertEquals(LocalDate.of(1970, 1, 1), this.vf.createFromTime(new InternalTime(-1, 0, 0, 0, 0)));
     }
 
     @Test
@@ -194,14 +188,7 @@ public class LocalDateValueFactoryTest extends CommonAsserts {
 
         assertEquals(LocalDate.of(2018, 1, 2), this.vf.createFromBytes("2018-01-02 03:04:05.6".getBytes(), 0, 21, f));
         assertEquals(LocalDate.of(2018, 1, 2), this.vf.createFromBytes("2018-01-02".getBytes(), 0, 10, f));
-
-        assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.time.LocalDate", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                LocalDateValueFactoryTest.this.vf.createFromBytes("03:04:05.6".getBytes(), 0, 10, f);
-                return null;
-            }
-        });
+        assertEquals(LocalDate.of(1970, 1, 1), this.vf.createFromBytes("03:04:05.6".getBytes(), 0, 10, f));
 
         assertThrows(DataConversionException.class, "Cannot convert string '1' to java.time.LocalDate value", new Callable<Void>() {
             @Override

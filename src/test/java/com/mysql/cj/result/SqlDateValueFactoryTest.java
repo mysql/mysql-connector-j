@@ -74,7 +74,7 @@ public class SqlDateValueFactoryTest extends CommonAsserts {
         assertEquals("1970-01-01", this.vf.createFromTime(new InternalTime(12, 20, 02, 4, 9)).toString());
         assertEquals("1970-01-01", this.vf.createFromTime(new InternalTime(1, 1, 1, 1, 9)).toString());
         assertEquals("1970-01-01", this.vf.createFromTime(new InternalTime(-1, 1, 1, 1, 9)).toString());
-        assertEquals("1970-01-03", this.vf.createFromTime(new InternalTime(48, 1, 1, 1, 9)).toString());
+        assertEquals("1970-01-01", this.vf.createFromTime(new InternalTime(48, 1, 1, 1, 9)).toString());
     }
 
     @Test

@@ -56,7 +56,7 @@ public class LocalTimeValueFactory extends AbstractDateTimeValueFactory<LocalTim
 
     @Override
     LocalTime localCreateFromDate(InternalDate idate) {
-        return unsupported("DATE");
+        return LocalTime.of(0, 0);
     }
 
     @Override
@@ -78,8 +78,12 @@ public class LocalTimeValueFactory extends AbstractDateTimeValueFactory<LocalTim
     }
 
     @Override
-    public LocalTime createFromYear(long year) {
-        return unsupported("YEAR");
+    public LocalTime localCreateFromDatetime(InternalTimestamp its) {
+        if (this.warningListener != null) {
+            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { getTargetTypeName() }));
+        }
+        // truncate date information
+        return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos(), its.getScale()));
     }
 
     public String getTargetTypeName() {

@@ -45,6 +45,8 @@ public interface ValueDecoder {
 
     <T> T decodeTimestamp(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf);
 
+    <T> T decodeDatetime(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf);
+
     <T> T decodeInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf);
 
     <T> T decodeUInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf);

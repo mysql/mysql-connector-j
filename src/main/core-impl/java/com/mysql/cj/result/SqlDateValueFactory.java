@@ -30,6 +30,7 @@
 package com.mysql.cj.result;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -94,23 +95,22 @@ public class SqlDateValueFactory extends AbstractDateTimeValueFactory<Date> {
             this.warningListener.warningEncountered(Messages.getString("ResultSet.ImplicitDatePartWarning", new Object[] { "java.sql.Date" }));
         }
 
-        synchronized (this.cal) {
-            try {
-                // c.f. java.sql.Time "The date components should be set to the "zero epoch" value of January 1, 1970 GMT and should not be accessed."
-                // A new Calendar instance is used to don't spoil the date part of the default one.
-                Calendar c1 = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.US);
-                c1.set(1970, 0, 1, it.getHours(), it.getMinutes(), it.getSeconds());
-                c1.set(Calendar.MILLISECOND, 0);
-                long ms = (it.getNanos() / 1000000) + c1.getTimeInMillis();
-                return new Date(ms);
-            } catch (IllegalArgumentException e) {
-                throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
-            }
-        }
+        return Date.valueOf(LocalDate.of(1970, 1, 1));
     }
 
     @Override
     public Date localCreateFromTimestamp(InternalTimestamp its) {
+        if (this.warningListener != null) {
+            // TODO: need column context
+            this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { "java.sql.Date" }));
+        }
+
+        // truncate any time information
+        return createFromDate(its);
+    }
+
+    @Override
+    public Date localCreateFromDatetime(InternalTimestamp its) {
         if (this.warningListener != null) {
             // TODO: need column context
             this.warningListener.warningEncountered(Messages.getString("ResultSet.PrecisionLostWarning", new Object[] { "java.sql.Date" }));

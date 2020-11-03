@@ -92,6 +92,7 @@ public abstract class BaseTestCase {
      * JDBC URL, initialized from com.mysql.cj.testsuite.url system property, or defaults to jdbc:mysql:///test and its connection URL.
      */
     public static String dbUrl = "jdbc:mysql:///test";
+    public static String timeZoneFreeDbUrl = "jdbc:mysql:///test";
     protected static ConnectionUrl mainConnectionUrl = null;
 
     /**
@@ -159,6 +160,8 @@ public abstract class BaseTestCase {
         if ((newDbUrl != null) && (newDbUrl.trim().length() != 0)) {
             dbUrl = newDbUrl;
         }
+        timeZoneFreeDbUrl = dbUrl.replaceAll(PropertyKey.connectionTimeZone.getKeyName() + "=", PropertyKey.connectionTimeZone.getKeyName() + "VOID=")
+                .replaceAll("serverTimezone=", "serverTimezoneVOID=");
         mainConnectionUrl = ConnectionUrl.getConnectionUrlInstance(dbUrl, null);
         this.dbName = mainConnectionUrl.getDatabase();
 
@@ -473,7 +476,7 @@ public abstract class BaseTestCase {
 
     /**
      * Some tests build connections strings for internal usage but, in order for them to work, they may require some connection properties set in the main test
-     * suite URL. For example 'serverTimezone' is one of those properties.
+     * suite URL. For example 'connectionTimeZone' is one of those properties.
      * 
      * @param props
      *            the Properties object where to add the missing connection properties
@@ -485,8 +488,8 @@ public abstract class BaseTestCase {
             props = new Properties();
         }
 
-        // Add 'serverTimezone' if set in test suite URL and missing from props.
-        String propKey = PropertyKey.serverTimezone.getKeyName();
+        // Add 'connectionTimeZone' if set in test suite URL and missing from props.
+        String propKey = PropertyKey.connectionTimeZone.getKeyName();
         String origTzValue = null;
         if (!props.containsKey(propKey) && (origTzValue = mainConnectionUrl.getOriginalProperties().get(propKey)) != null) {
             props.setProperty(propKey, origTzValue);

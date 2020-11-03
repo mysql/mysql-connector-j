@@ -58,6 +58,8 @@ public interface ValueFactory<T> {
 
     T createFromTimestamp(InternalTimestamp its);
 
+    T createFromDatetime(InternalTimestamp its);
+
     T createFromLong(long l);
 
     T createFromBigInteger(BigInteger i);
@@ -75,12 +77,12 @@ public interface ValueFactory<T> {
     /**
      * Create result value from intermediate null value.
      * 
-     * @return {@link T} object
+     * @return T object
      */
     T createFromNull();
 
     /**
-     * Get the actual class name of {@link T} parameter.
+     * Get the actual class name of T parameter.
      * 
      * @return class name
      */

@@ -235,9 +235,9 @@ public interface ServerSession {
 
     void setAutoCommit(boolean autoCommit);
 
-    TimeZone getServerTimeZone();
+    TimeZone getSessionTimeZone();
 
-    void setServerTimeZone(TimeZone serverTimeZone);
+    void setSessionTimeZone(TimeZone sessionTimeZone);
 
     /**
      * The default time zone used to marshall date/time values to/from the server. This is used when getDate(), etc methods are called without a calendar
