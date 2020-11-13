@@ -731,7 +731,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
 
             Properties transformedProps = this.propertiesTransformer.transformProperties(props);
 
-            host = transformedProps.getProperty(PropertyKey.PORT.getKeyName());
+            host = transformedProps.getProperty(PropertyKey.HOST.getKeyName());
             try {
                 port = Integer.parseInt(transformedProps.getProperty(PropertyKey.PORT.getKeyName()));
             } catch (NumberFormatException e) {
