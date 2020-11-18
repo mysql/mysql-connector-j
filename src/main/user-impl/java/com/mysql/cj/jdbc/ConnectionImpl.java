@@ -385,8 +385,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             this.origPortToConnectTo = hostInfo.getPort();
 
             this.database = hostInfo.getDatabase();
-            this.user = StringUtils.isNullOrEmpty(hostInfo.getUser()) ? "" : hostInfo.getUser();
-            this.password = StringUtils.isNullOrEmpty(hostInfo.getPassword()) ? "" : hostInfo.getPassword();
+            this.user = hostInfo.getUser();
+            this.password = hostInfo.getPassword();
 
             this.props = hostInfo.exposeAsProperties();
 
@@ -814,8 +814,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public void createNewIO(boolean isForReconnect) {
         synchronized (getConnectionMutex()) {
-            // Synchronization Not needed for *new* connections, but defintely for connections going through fail-over, since we might get the new connection up
-            // and running *enough* to start sending cached or still-open server-side prepared statements over to the backend before we get a chance to
+            // Synchronization Not needed for *new* connections, but definitely for connections going through fail-over, since we might get the new connection
+            // up and running *enough* to start sending cached or still-open server-side prepared statements over to the backend before we get a chance to
             // re-prepare them...
 
             try {

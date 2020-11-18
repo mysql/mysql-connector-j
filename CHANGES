@@ -3,6 +3,8 @@
 
 Version 8.0.24
 
+  - WL#14453, Pluggable authentication: new default behavior & user-less authentications.
+
   - WL#14392, Improve timeout error messages [classic].
 
   - WL#14202, XProtocol: Support connection close notification.

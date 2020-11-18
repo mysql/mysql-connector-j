@@ -1010,7 +1010,7 @@ public abstract class BaseTestCase {
             testRoutine.call();
         } catch (Throwable t) {
             if (!throwable.isAssignableFrom(t.getClass())) {
-                fail(message + "expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName()
+                fail(message + "expected exception of type '" + throwable.getName() + "' but instead an exception of type '" + t.getClass().getName()
                         + "' was thrown.");
             }
 

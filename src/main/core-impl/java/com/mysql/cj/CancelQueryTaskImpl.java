@@ -36,7 +36,6 @@ import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.OperationCancelledException;
 import com.mysql.cj.protocol.a.NativeMessageBuilder;
-import com.mysql.cj.util.StringUtils;
 
 //TODO should not be protocol-specific
 
@@ -89,8 +88,8 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
                             long origConnId = session.getThreadId();
                             HostInfo hostInfo = session.getHostInfo();
                             String database = hostInfo.getDatabase();
-                            String user = StringUtils.isNullOrEmpty(hostInfo.getUser()) ? "" : hostInfo.getUser();
-                            String password = StringUtils.isNullOrEmpty(hostInfo.getPassword()) ? "" : hostInfo.getPassword();
+                            String user = hostInfo.getUser();
+                            String password = hostInfo.getPassword();
 
                             NativeSession newSession = new NativeSession(hostInfo, session.getPropertySet());
                             newSession.connect(hostInfo, user, password, database, 30000, new TransactionEventHandler() {

@@ -911,8 +911,8 @@ public class ConnectionUrlTest {
                 assertEquals("localhost", hi.getHost(), cs + "#host");
                 assertEquals(connStr.get(cs).intValue(), hi.getPort(), cs + "#port");
                 assertEquals("localhost:" + connStr.get(cs), hi.getHostPortPair(), cs + "#hostPortPair");
-                assertEquals("", hi.getUser(), cs + "#user");
-                assertEquals("", hi.getPassword(), cs + "#password");
+                assertNull(hi.getUser(), cs + "#user");
+                assertNull(hi.getPassword(), cs + "#password");
                 assertEquals("", hi.getDatabase(), cs + "#database");
             }
         }

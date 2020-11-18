@@ -563,8 +563,12 @@ public class SessionTest extends DevApiBaseTestCase {
         props.clear();
         props.setProperty("HOST", getTestHost());
         props.setProperty("PORT", String.valueOf(getTestPort()));
-        props.setProperty("USER", getTestUser());
-        props.setProperty("PASSWORD", getTestPassword());
+        if (getTestUser() != null) {
+            props.setProperty("USER", getTestUser());
+        }
+        if (getTestPassword() != null) {
+            props.setProperty("PASSWORD", getTestPassword());
+        }
         props.setProperty("DBNAME", getTestDatabase());
 
         Session testSession = this.fact.getSession(props);
@@ -579,8 +583,12 @@ public class SessionTest extends DevApiBaseTestCase {
         props.clear();
         props.setProperty("host", getTestHost());
         props.setProperty("port", String.valueOf(getTestPort()));
-        props.setProperty("user", getTestUser());
-        props.setProperty("password", getTestPassword());
+        if (getTestUser() != null) {
+            props.setProperty("user", getTestUser());
+        }
+        if (getTestPassword() != null) {
+            props.setProperty("password", getTestPassword());
+        }
         props.setProperty("dbname", getTestDatabase());
 
         testSession = this.fact.getSession(props);
@@ -595,8 +603,12 @@ public class SessionTest extends DevApiBaseTestCase {
         props.clear();
         props.setProperty("HOst", getTestHost());
         props.setProperty("poRT", String.valueOf(getTestPort()));
-        props.setProperty("uSEr", getTestUser());
-        props.setProperty("PassworD", getTestPassword());
+        if (getTestUser() != null) {
+            props.setProperty("uSEr", getTestUser());
+        }
+        if (getTestPassword() != null) {
+            props.setProperty("PassworD", getTestPassword());
+        }
         props.setProperty("DbNaMe", getTestDatabase());
 
         testSession = this.fact.getSession(props);
@@ -1690,7 +1702,8 @@ public class SessionTest extends DevApiBaseTestCase {
                 + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
         String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
                 .map(h -> h + ":" + getTestPort()).collect(Collectors.joining(","));
-        String testUri = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+        String testUri = String.format(testUriPattern, getTestUser() == null ? "" : getTestUser(), getTestPassword() == null ? "" : getTestPassword(),
+                testHosts, getTestDatabase());
 
         Set<String> downHosts = new HashSet<>();
         for (int i = 1; i <= 5; i++) {
@@ -1732,7 +1745,8 @@ public class SessionTest extends DevApiBaseTestCase {
                 + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
         String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
                 .map(h -> "(address=" + h + ":" + getTestPort() + ",priority=%d)").collect(Collectors.joining(","));
-        String testUriPatternPriorities = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+        String testUriPatternPriorities = String.format(testUriPattern, getTestUser() == null ? "" : getTestUser(),
+                getTestPassword() == null ? "" : getTestPassword(), testHosts, getTestDatabase());
         String testUri = String.format(testUriPatternPriorities, 60, 80, 100, 20, 40);
         int[] hostsOrder = new int[] { 3, 2, 1, 5, 4 };
 
@@ -1782,7 +1796,8 @@ public class SessionTest extends DevApiBaseTestCase {
                 + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
         String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
                 .map(h -> h + ":" + getTestPort()).collect(Collectors.joining(","));
-        String testUri = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+        String testUri = String.format(testUriPattern, getTestUser() == null ? "" : getTestUser(), getTestPassword() == null ? "" : getTestPassword(),
+                testHosts, getTestDatabase());
 
         final ClientFactory cf = new ClientFactory();
         Client client = cf.getClient(testUri, "{\"pooling\" : {\"enabled\" : true, \"maxSize\" : 10} }");
@@ -1839,7 +1854,8 @@ public class SessionTest extends DevApiBaseTestCase {
                 + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
         String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
                 .map(h -> h + ":" + getTestPort()).collect(Collectors.joining(","));
-        String testUri = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+        String testUri = String.format(testUriPattern, getTestUser() == null ? "" : getTestUser(), getTestPassword() == null ? "" : getTestPassword(),
+                testHosts, getTestDatabase());
 
         final ClientFactory cf = new ClientFactory();
         Client client = cf.getClient(testUri, "{\"pooling\" : {\"enabled\" : true, \"maxSize\" : 10} }");
@@ -1890,7 +1906,8 @@ public class SessionTest extends DevApiBaseTestCase {
                 + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
         String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
                 .map(h -> "(address=" + h + ":" + getTestPort() + ",priority=%d)").collect(Collectors.joining(","));
-        String testUriPatternPriorities = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+        String testUriPatternPriorities = String.format(testUriPattern, getTestUser() == null ? "" : getTestUser(),
+                getTestPassword() == null ? "" : getTestPassword(), testHosts, getTestDatabase());
         String testUri = String.format(testUriPatternPriorities, 60, 80, 100, 20, 40);
         int[] hostsOrder = new int[] { 3, 2, 1, 5, 4 };
 
@@ -1962,7 +1979,8 @@ public class SessionTest extends DevApiBaseTestCase {
                 + PropertyKey.socketFactory.getKeyName() + "=" + UnreliableSocketFactory.class.getName();
         String testHosts = IntStream.range(1, 6).mapToObj(i -> "host" + i).peek(h -> UnreliableSocketFactory.mapHost(h, getTestHost()))
                 .map(h -> "(address=" + h + ":" + getTestPort() + ",priority=%d)").collect(Collectors.joining(","));
-        String testUriPatternPriorities = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+        String testUriPatternPriorities = String.format(testUriPattern, getTestUser() == null ? "" : getTestUser(),
+                getTestPassword() == null ? "" : getTestPassword(), testHosts, getTestDatabase());
         String testUri = String.format(testUriPatternPriorities, 60, 80, 100, 20, 40);
         int[] hostsOrder = new int[] { 3, 2, 1, 5, 4 };
 

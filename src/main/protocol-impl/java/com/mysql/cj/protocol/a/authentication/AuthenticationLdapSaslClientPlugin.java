@@ -124,7 +124,8 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
             if (NameCallback.class.isAssignableFrom(cb.getClass())) {
                 ((NameCallback) cb).setName(this.user);
             } else if (PasswordCallback.class.isAssignableFrom(cb.getClass())) {
-                ((PasswordCallback) cb).setPassword(this.password.toCharArray());
+                char[] passwordChars = this.password == null ? new char[0] : this.password.toCharArray();
+                ((PasswordCallback) cb).setPassword(passwordChars);
             } else {
                 throw new UnsupportedCallbackException(cb, cb.getClass().getName());
             }

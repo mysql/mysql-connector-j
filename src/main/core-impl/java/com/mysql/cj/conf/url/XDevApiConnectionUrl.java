@@ -51,6 +51,7 @@ import com.mysql.cj.conf.HostsListView;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.util.StringUtils;
 
 public class XDevApiConnectionUrl extends ConnectionUrl {
     private static final int DEFAULT_PORT = 33060;
@@ -88,7 +89,7 @@ public class XDevApiConnectionUrl extends ConnectionUrl {
                 password = hi.getPassword();
                 hasPriority = hi.getHostProperties().containsKey(PropertyKey.PRIORITY.getKeyName());
             } else {
-                if (!user.equals(hi.getUser()) || !password.equals(hi.getPassword())) {
+                if (!StringUtils.nullSafeEqual(user, hi.getUser()) || !StringUtils.nullSafeEqual(password, hi.getPassword())) {
                     throw ExceptionFactory.createException(WrongArgumentException.class,
                             Messages.getString("ConnectionString.14", new Object[] { Type.XDEVAPI_SESSION.getScheme() }));
                 }

@@ -913,7 +913,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
                         ((NameCallback) c).setName(user);
                     } else if (PasswordCallback.class.isAssignableFrom(c.getClass())) {
                         // we get  password callback and provide the password
-                        ((PasswordCallback) c).setPassword(password.toCharArray());
+                        ((PasswordCallback) c).setPassword(password == null ? new char[0] : password.toCharArray());
                     } else {
                         // otherwise, thrown an exception
                         throw new UnsupportedCallbackException(c);

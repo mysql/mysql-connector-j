@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.ServerVersion;
@@ -276,6 +275,9 @@ public class StringUtils {
      * @return bytes
      */
     public static byte[] getBytes(String s, String encoding) {
+        if (s == null) {
+            return new byte[0];
+        }
         if (encoding == null) {
             return getBytes(s);
         }
@@ -759,11 +761,11 @@ public class StringUtils {
         }
 
         String[] tokens = stringToSplit.split(delimiter, -1);
-        Stream<String> tokensStream = Arrays.asList(tokens).stream();
+        List<String> tokensList = Arrays.asList(tokens);
         if (trim) {
-            tokensStream = tokensStream.map(String::trim);
+            tokensList = tokensList.stream().map(String::trim).collect(Collectors.toList());
         }
-        return tokensStream.collect(Collectors.toList());
+        return tokensList;
     }
 
     /**
@@ -1044,8 +1046,6 @@ public class StringUtils {
      * 
      * @param searchIn
      *            the string to search in
-     * @param startAt
-     *            the position to start at
      * @param searchFor
      *            the string to search for
      * 
@@ -1282,6 +1282,20 @@ public class StringUtils {
 
     public static boolean isNullOrEmpty(String toTest) {
         return (toTest == null || toTest.isEmpty());
+    }
+
+    /**
+     * Two given strings are considered equal if both are null or if they have the same string value.
+     * 
+     * @param str1
+     *            first string to compare
+     * @param str2
+     *            fecond string to compare
+     * @return
+     *         <code>true</code> if both strings are null or have the same value
+     */
+    public static boolean nullSafeEqual(String str1, String str2) {
+        return str1 == null && str2 == null || str1 != null && str1.equals(str2);
     }
 
     /**

@@ -41,7 +41,8 @@ import java.util.Properties;
  * <ul>
  * <li>host: an IP or host name.
  * <li>port: the port number or 0 if not known.
- * <li>user info: a structure containing the user name and password.
+ * <li>user: the user name.
+ * <li>password: the password.
  * <li>host properties: host specific connection arguments.
  * </ul>
  */
@@ -54,14 +55,13 @@ public class HostInfo implements DatabaseUrlContainer {
     private final int port;
     private final String user;
     private final String password;
-    private final boolean isPasswordless;
     private final Map<String, String> hostProperties = new HashMap<>();
 
     /**
      * Constructs an empty {@link HostInfo} instance.
      */
     public HostInfo() {
-        this(null, null, NO_PORT, null, null, true, null);
+        this(null, null, NO_PORT, null, null, null);
     }
 
     /**
@@ -79,7 +79,7 @@ public class HostInfo implements DatabaseUrlContainer {
      *            the user's password
      */
     public HostInfo(DatabaseUrlContainer url, String host, int port, String user, String password) {
-        this(url, host, port, user, password, password == null, null);
+        this(url, host, port, user, password, null);
     }
 
     /**
@@ -99,34 +99,11 @@ public class HostInfo implements DatabaseUrlContainer {
      *            a connection arguments map.
      */
     public HostInfo(DatabaseUrlContainer url, String host, int port, String user, String password, Map<String, String> properties) {
-        this(url, host, port, user, password, password == null, properties);
-    }
-
-    /**
-     * Constructs a {@link HostInfo} instance initialized with the provided host, port, user, password and connection arguments.
-     * 
-     * @param url
-     *            a reference to the original database URL that produced this host info
-     * @param host
-     *            the host ip or name
-     * @param port
-     *            the port
-     * @param user
-     *            the user name
-     * @param password
-     *            this user's password
-     * @param isPasswordless
-     *            no password was provided in the connection URL or arguments?
-     * @param properties
-     *            a connection arguments map.
-     */
-    public HostInfo(DatabaseUrlContainer url, String host, int port, String user, String password, boolean isPasswordless, Map<String, String> properties) {
         this.originalUrl = url;
         this.host = host;
         this.port = port;
         this.user = user;
         this.password = password;
-        this.isPasswordless = isPasswordless;
         if (properties != null) {
             this.hostProperties.putAll(properties);
         }
@@ -178,16 +155,6 @@ public class HostInfo implements DatabaseUrlContainer {
     }
 
     /**
-     * Returns true if the is the default one, i.e., no password was provided in the connection URL or arguments.
-     * 
-     * @return
-     *         true if no password was provided in the connection URL or arguments.
-     */
-    public boolean isPasswordless() {
-        return this.isPasswordless;
-    }
-
-    /**
      * Returns the properties specific to this host.
      * 
      * @return this host specific properties
@@ -229,8 +196,12 @@ public class HostInfo implements DatabaseUrlContainer {
         this.hostProperties.entrySet().stream().forEach(e -> props.setProperty(e.getKey(), e.getValue() == null ? "" : e.getValue()));
         props.setProperty(PropertyKey.HOST.getKeyName(), getHost());
         props.setProperty(PropertyKey.PORT.getKeyName(), String.valueOf(getPort()));
-        props.setProperty(PropertyKey.USER.getKeyName(), getUser());
-        props.setProperty(PropertyKey.PASSWORD.getKeyName(), getPassword());
+        if (getUser() != null) {
+            props.setProperty(PropertyKey.USER.getKeyName(), getUser());
+        }
+        if (getPassword() != null) {
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), getPassword());
+        }
         return props;
     }
 

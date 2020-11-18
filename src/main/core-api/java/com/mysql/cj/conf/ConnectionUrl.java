@@ -438,14 +438,14 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
     }
 
     /**
-     * Some acceptable property values have changed in c/J 8.0 but old values remain hardcoded in a widely used software.
-     * So we need to accept old values and translate them to new ones.
+     * Some acceptable property values have changed in c/J 8.0 but old values remain hard-coded in widely used software.
+     * So, old values must be accepted and translated to new ones.
      * 
      * @param props
      *            the host properties map to fix
      */
     protected void replaceLegacyPropertyValues(Map<String, String> props) {
-        // Workaround for zeroDateTimeBehavior=convertToNull hardcoded in NetBeans
+        // Workaround for zeroDateTimeBehavior=convertToNull hard-coded in NetBeans
         String zeroDateTimeBehavior = props.get(PropertyKey.zeroDateTimeBehavior.getKeyName());
         if (zeroDateTimeBehavior != null && zeroDateTimeBehavior.equalsIgnoreCase("convertToNull")) {
             props.put(PropertyKey.zeroDateTimeBehavior.getKeyName(), "CONVERT_TO_NULL");
@@ -512,22 +512,18 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
             user = getDefaultUser();
         }
 
-        boolean isPasswordless = hi.isPasswordless();
         String password = hostProps.remove(PropertyKey.PASSWORD.getKeyName());
-        if (!isPasswordless) {
+        if (!isNullOrEmpty(hi.getPassword())) {
             password = hi.getPassword();
-        } else if (password == null) {
+        } else if (isNullOrEmpty(password)) {
             password = getDefaultPassword();
-            isPasswordless = true;
-        } else {
-            isPasswordless = false;
         }
 
         expandPropertiesFromConfigFiles(hostProps);
         fixProtocolDependencies(hostProps);
         replaceLegacyPropertyValues(hostProps);
 
-        return buildHostInfo(host, port, user, password, isPasswordless, hostProps);
+        return buildHostInfo(host, port, user, password, hostProps);
     }
 
     /**
@@ -564,8 +560,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      * @return the default user
      */
     public String getDefaultUser() {
-        String user = this.properties.get(PropertyKey.USER.getKeyName());
-        return isNullOrEmpty(user) ? "" : user;
+        return this.properties.get(PropertyKey.USER.getKeyName());
     }
 
     /**
@@ -575,8 +570,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      * @return the default password
      */
     public String getDefaultPassword() {
-        String password = this.properties.get(PropertyKey.PASSWORD.getKeyName());
-        return isNullOrEmpty(password) ? "" : password;
+        return this.properties.get(PropertyKey.PASSWORD.getKeyName());
     }
 
     /**
@@ -697,7 +691,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         String user = getDefaultUser();
         String password = getDefaultPassword();
 
-        return buildHostInfo(host, port, user, password, true, this.properties);
+        return buildHostInfo(host, port, user, password, this.properties);
     }
 
     /**
@@ -712,13 +706,11 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      *            the user name
      * @param password
      *            the password
-     * @param isDefaultPwd
-     *            no password was provided in the connection URL or arguments?
      * @param hostProps
      *            the host properties map
      * @return a new instance of {@link HostInfo}
      */
-    protected HostInfo buildHostInfo(String host, int port, String user, String password, boolean isDefaultPwd, Map<String, String> hostProps) {
+    protected HostInfo buildHostInfo(String host, int port, String user, String password, Map<String, String> hostProps) {
         // Apply properties transformations if needed.
         if (this.propertiesTransformer != null) {
             Properties props = new Properties();
@@ -726,8 +718,12 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
 
             props.setProperty(PropertyKey.HOST.getKeyName(), host);
             props.setProperty(PropertyKey.PORT.getKeyName(), String.valueOf(port));
-            props.setProperty(PropertyKey.USER.getKeyName(), user);
-            props.setProperty(PropertyKey.PASSWORD.getKeyName(), password);
+            if (user != null) {
+                props.setProperty(PropertyKey.USER.getKeyName(), user);
+            }
+            if (password != null) {
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), password);
+            }
 
             Properties transformedProps = this.propertiesTransformer.transformProperties(props);
 
@@ -752,7 +748,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
             hostProps = transformedHostProps;
         }
 
-        return new HostInfo(this, host, port, user, password, isDefaultPwd, hostProps);
+        return new HostInfo(this, host, port, user, password, hostProps);
     }
 
     /**
@@ -814,8 +810,9 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
      *         a list of hosts.
      */
     private List<HostInfo> srvRecordsToHostsList(List<SrvRecord> srvRecords, HostInfo baseHostInfo) {
-        return srvRecords.stream().map(s -> buildHostInfo(s.getTarget(), s.getPort(), baseHostInfo.getUser(), baseHostInfo.getPassword(),
-                baseHostInfo.isPasswordless(), baseHostInfo.getHostProperties())).collect(Collectors.toList());
+        return srvRecords.stream()
+                .map(s -> buildHostInfo(s.getTarget(), s.getPort(), baseHostInfo.getUser(), baseHostInfo.getPassword(), baseHostInfo.getHostProperties()))
+                .collect(Collectors.toList());
     }
 
     /**

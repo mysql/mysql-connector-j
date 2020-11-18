@@ -32,6 +32,8 @@ package com.mysql.cj.protocol.a.authentication;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 
+import com.mysql.cj.callback.MysqlCallbackHandler;
+import com.mysql.cj.callback.UsernameCallback;
 import com.mysql.cj.protocol.AuthenticationPlugin;
 import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
@@ -43,13 +45,16 @@ import com.mysql.cj.util.StringUtils;
  * MySQL Native Old-Password Authentication Plugin
  */
 public class MysqlOldPasswordPlugin implements AuthenticationPlugin<NativePacketPayload> {
+    public static String PLUGIN_NAME = "mysql_old_password";
 
     private Protocol<NativePacketPayload> protocol;
+    private MysqlCallbackHandler usernameCallbackHandler;
     private String password = null;
 
     @Override
-    public void init(Protocol<NativePacketPayload> prot) {
+    public void init(Protocol<NativePacketPayload> prot, MysqlCallbackHandler cbh) {
         this.protocol = prot;
+        this.usernameCallbackHandler = cbh;
     }
 
     public void destroy() {
@@ -57,7 +62,7 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin<NativePacket
     }
 
     public String getProtocolPluginName() {
-        return "mysql_old_password";
+        return PLUGIN_NAME;
     }
 
     public boolean requiresConfidentiality() {
@@ -70,6 +75,10 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin<NativePacket
 
     public void setAuthenticationParameters(String user, String password) {
         this.password = password;
+        if (user == null) {
+            // Fall-back to system login user.
+            this.usernameCallbackHandler.handle(new UsernameCallback(System.getProperty("user.name")));
+        }
     }
 
     @Override

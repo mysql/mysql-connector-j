@@ -40,21 +40,21 @@ public interface AuthenticationProvider<M extends Message> {
 
     void init(Protocol<M> prot, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor);
 
-    void connect(ServerSession serverSession, String userName, String password, String database);
+    void connect(ServerSession serverSession, String username, String password, String database);
 
     /**
      * Re-authenticates as the given user and password
      * 
      * @param serverSession
      *            {@link ServerSession} object
-     * @param userName
+     * @param username
      *            user name
      * @param password
      *            password
      * @param database
      *            db name
      */
-    void changeUser(ServerSession serverSession, String userName, String password, String database);
+    void changeUser(ServerSession serverSession, String username, String password, String database);
 
     String getEncodingForHandshake();
 

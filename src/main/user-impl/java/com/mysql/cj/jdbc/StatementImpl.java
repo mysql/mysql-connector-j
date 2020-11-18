@@ -292,8 +292,8 @@ public class StatementImpl implements JdbcStatement {
             try {
                 HostInfo hostInfo = this.session.getHostInfo();
                 String database = hostInfo.getDatabase();
-                String user = StringUtils.isNullOrEmpty(hostInfo.getUser()) ? "" : hostInfo.getUser();
-                String password = StringUtils.isNullOrEmpty(hostInfo.getPassword()) ? "" : hostInfo.getPassword();
+                String user = hostInfo.getUser();
+                String password = hostInfo.getPassword();
                 NativeSession newSession = new NativeSession(this.session.getHostInfo(), this.session.getPropertySet());
                 newSession.connect(hostInfo, user, password, database, 30000, new TransactionEventHandler() {
                     @Override

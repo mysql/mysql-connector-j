@@ -232,9 +232,8 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PropertyKey.disabledAuthenticationPlugins, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.disabledAuthenticationPlugins"), "5.1.19", CATEGORY_CONNECTION, Integer.MIN_VALUE),
 
-                new StringPropertyDefinition(PropertyKey.defaultAuthenticationPlugin, "com.mysql.cj.protocol.a.authentication.MysqlNativePasswordPlugin",
-                        RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.defaultAuthenticationPlugin"), "5.1.19", CATEGORY_CONNECTION,
-                        Integer.MIN_VALUE),
+                new StringPropertyDefinition(PropertyKey.defaultAuthenticationPlugin, "mysql_native_password", RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.defaultAuthenticationPlugin"), "5.1.19", CATEGORY_CONNECTION, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.disconnectOnExpiredPasswords, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.disconnectOnExpiredPasswords"), "5.1.23", CATEGORY_CONNECTION, Integer.MIN_VALUE),

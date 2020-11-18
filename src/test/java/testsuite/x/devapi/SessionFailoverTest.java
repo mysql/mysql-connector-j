@@ -67,7 +67,7 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
      */
     private String buildConnectionString(String... hosts) {
         StringBuilder url = new StringBuilder(ConnectionUrl.Type.XDEVAPI_SESSION.getScheme()).append("//");
-        url.append(getTestUser()).append(":").append(getTestPassword()).append("@").append("[");
+        url.append(getTestUser()==null ? "" : getTestUser()).append(":").append(getTestPassword() == null ? "" : getTestPassword()).append("@").append("[");
         String separator = "";
         int priority = 100;
         for (String h : hosts) {
