@@ -389,12 +389,10 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
 
             } else {
                 if (this.calendar == null) {
-                    this.calendar = Calendar.getInstance(mysqlType == MysqlType.FIELD_TYPE_TIMESTAMP
-                            //                            && ("SERVER".equals(this.pset.getStringProperty(PropertyKey.connectionTimeZone).getValue())
-                            //                                    || "LOCAL".equals(this.pset.getStringProperty(PropertyKey.connectionTimeZone).getValue())
-                            //                                            && !this.pset.getBooleanProperty(PropertyKey.forceConnectionTimeZoneToSession).getValue())
-                            && this.pset.getBooleanProperty(PropertyKey.preserveInstants).getValue() ? this.connectionTimeZone : this.defaultTimeZone,
-                            Locale.US);
+                    this.calendar = Calendar
+                            .getInstance(mysqlType == MysqlType.FIELD_TYPE_TIMESTAMP && this.pset.getBooleanProperty(PropertyKey.preserveInstants).getValue()
+                                    ? this.connectionTimeZone
+                                    : this.defaultTimeZone, Locale.US);
                 }
 
                 this.calendar.setTime((java.util.Date) this.value);

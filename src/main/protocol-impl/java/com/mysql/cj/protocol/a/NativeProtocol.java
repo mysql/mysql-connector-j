@@ -2175,36 +2175,22 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     public void configureTimeZone() {
         String connectionTimeZone = getPropertySet().getStringProperty(PropertyKey.connectionTimeZone).getValue();
 
-        String selectedTzName = null;
         TimeZone selectedTz = null;
 
         if (connectionTimeZone == null || StringUtils.isEmptyOrWhitespaceOnly(connectionTimeZone) || "LOCAL".equals(connectionTimeZone)) {
             selectedTz = TimeZone.getDefault();
-            selectedTzName = selectedTz.getID();
 
         } else if ("SERVER".equals(connectionTimeZone)) {
-            String configuredTimeZoneOnServer = this.serverSession.getServerVariable("time_zone");
-            if ("SYSTEM".equalsIgnoreCase(configuredTimeZoneOnServer)) {
-                configuredTimeZoneOnServer = this.serverSession.getServerVariable("system_time_zone");
-            }
-            if (configuredTimeZoneOnServer != null) {
-                try {
-                    selectedTzName = TimeUtil.getCanonicalTimeZone(configuredTimeZoneOnServer, getExceptionInterceptor());
-                } catch (IllegalArgumentException iae) {
-                    throw ExceptionFactory.createException(WrongArgumentException.class, iae.getMessage(), getExceptionInterceptor());
-                }
-            }
-        } else {
-            selectedTzName = connectionTimeZone;
-        }
+            // Session time zone will be detected after the first ServerSession.getSessionTimeZone() call.
+            return;
 
-        if (selectedTz == null) {
-            selectedTz = TimeZone.getTimeZone(ZoneId.of(selectedTzName)); // TODO use of(String zoneId, Map<String, String> aliasMap) for custom abbreviations support
+        } else {
+            selectedTz = TimeZone.getTimeZone(ZoneId.of(connectionTimeZone)); // TODO use ZoneId.of(String zoneId, Map<String, String> aliasMap) for custom abbreviations support
         }
 
         this.serverSession.setSessionTimeZone(selectedTz);
 
-        if (getPropertySet().getBooleanProperty(PropertyKey.forceConnectionTimeZoneToSession).getValue() && !"SERVER".equals(connectionTimeZone)) {
+        if (getPropertySet().getBooleanProperty(PropertyKey.forceConnectionTimeZoneToSession).getValue()) {
             // TODO don't send 'SET SESSION time_zone' if time_zone is already equal to the selectedTz (but it requires time zone detection)
 
             StringBuilder query = new StringBuilder("SET SESSION time_zone='");

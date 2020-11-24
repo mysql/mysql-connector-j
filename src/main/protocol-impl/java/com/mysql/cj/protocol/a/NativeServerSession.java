@@ -44,6 +44,7 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.ServerCapabilities;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.TimeUtil;
 
 public class NativeServerSession implements ServerSession {
 
@@ -535,6 +536,20 @@ public class NativeServerSession implements ServerSession {
     }
 
     public TimeZone getSessionTimeZone() {
+        if (this.sessionTimeZone == null) {
+            String configuredTimeZoneOnServer = getServerVariable("time_zone");
+            if ("SYSTEM".equalsIgnoreCase(configuredTimeZoneOnServer)) {
+                configuredTimeZoneOnServer = getServerVariable("system_time_zone");
+            }
+            if (configuredTimeZoneOnServer != null) {
+                try {
+                    this.sessionTimeZone = TimeZone.getTimeZone(TimeUtil.getCanonicalTimeZone(configuredTimeZoneOnServer, null));
+                } catch (IllegalArgumentException iae) {
+                    throw ExceptionFactory.createException(WrongArgumentException.class, iae.getMessage());
+                }
+            }
+        }
+
         return this.sessionTimeZone;
     }
 

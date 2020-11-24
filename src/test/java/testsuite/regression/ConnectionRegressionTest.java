@@ -189,6 +189,7 @@ import com.mysql.cj.protocol.a.MultiPacketReader;
 import com.mysql.cj.protocol.a.NativePacketHeader;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.protocol.a.NativeProtocol;
+import com.mysql.cj.protocol.a.NativeServerSession;
 import com.mysql.cj.protocol.a.SimplePacketReader;
 import com.mysql.cj.protocol.a.SimplePacketSender;
 import com.mysql.cj.protocol.a.TimeTrackingPacketReader;
@@ -11912,5 +11913,32 @@ public class ConnectionRegressionTest extends BaseTestCase {
         executor.awaitTermination(3, TimeUnit.SECONDS);
 
         assertNull(oneFail, "At least one connection failed.");
+    }
+
+    /**
+     * Tests fix for Bug#21789378, FORCED TO SET SERVER TIMEZONE IN CONNECT STRING (ALPHA).
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug21789378() throws Exception {
+        Field f = NativeServerSession.class.getDeclaredField("sessionTimeZone");
+        f.setAccessible(true);
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.cacheDefaultTimeZone.getKeyName(), "false");
+        props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "SERVER");
+
+        try (Connection testConn = getConnectionWithProps(props)) {
+            TimeZone serverTz = (TimeZone) f.get(((MysqlConnection) testConn).getSession().getServerSession());
+            assertNull(serverTz);
+
+            // force time zone initialization
+            ((MysqlConnection) testConn).getSession().getServerSession().getSessionTimeZone();
+
+            serverTz = (TimeZone) f.get(((MysqlConnection) testConn).getSession().getServerSession());
+            assertNotNull(serverTz);
+        }
+
     }
 }
