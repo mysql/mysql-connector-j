@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.24
+
 Version 8.0.23
 
   - Fix for Bug#21789378, FORCED TO SET SERVER TIMEZONE IN CONNECT STRING.
