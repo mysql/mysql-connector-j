@@ -47,8 +47,9 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 /**
  * A {@link SaslClient} implementation for SCRAM-SHA-1, as specified in <a href="https://tools.ietf.org/html/rfc5802">RFC 5802</a>.
  * 
- * The IANA-registered mechanism name was renamed to "MYSQLCJ-SCRAM-SHA-1" in order to avoid future conflicts with an officially supported one. If/when there is
- * a Java supported SCRAM-SHA-1 then it will have to be thoroughly tested and this code can be obsoleted.
+ * The IANA-registered mechanism was renamed to "MYSQLCJ-SCRAM-SHA-1" in order to avoid future conflicts with an officially supported implementation.
+ * When there is a Java-supported implementation for SCRAM-SHA-1, it will have to be thoroughly tested with Connector/J and if that works, this code can be
+ * obsoleted.
  */
 public class ScramSha1SaslClient extends ScramShaSaslClient {
     public static final String IANA_MECHANISM_NAME = "SCRAM-SHA-1";
