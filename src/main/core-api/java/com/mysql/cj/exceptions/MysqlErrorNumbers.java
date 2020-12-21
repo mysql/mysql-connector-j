@@ -1056,6 +1056,8 @@ public final class MysqlErrorNumbers {
 
     public static final int ER_SESSION_WAS_KILLED = 3169;
 
+    public final static int ER_CLIENT_INTERACTION_TIMEOUT = 4031; //SQLSTATE: HY000 Message: The client was disconnected by the server because of inactivity. See wait_timeout and interactive_timeout for configuring this behavior.; was added in 8.0.24.
+
     public static final int ER_X_BAD_MESSAGE = 5000;
     public static final int ER_X_CAPABILITIES_PREPARE_FAILED = 5001;
     public static final int ER_X_CAPABILITY_NOT_FOUND = 5002;

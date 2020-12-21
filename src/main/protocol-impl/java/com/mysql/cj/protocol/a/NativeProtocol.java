@@ -788,6 +788,9 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
                 } else if (errno == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
                     throw ExceptionFactory.createException(ClosedOnExpiredPasswordException.class, errorBuf.toString(), getExceptionInterceptor());
+
+                } else if (errno == MysqlErrorNumbers.ER_CLIENT_INTERACTION_TIMEOUT) {
+                    throw ExceptionFactory.createException(CJCommunicationsException.class, errorBuf.toString(), null, getExceptionInterceptor());
                 }
             }
 

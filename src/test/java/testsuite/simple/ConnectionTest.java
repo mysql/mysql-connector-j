@@ -2916,4 +2916,47 @@ public class ConnectionTest extends BaseTestCase {
         assertEquals("TEST DATA", this.rs.getString(1));
         assertEquals(1, this.stmt.executeUpdate("DELETE FROM testAllowLoadLocalInfileInPath"));
     }
+
+    /**
+     * Tests WL#14392, Improve timeout error messages [classic].
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testTimeoutErrors() throws Exception {
+        int seconds = 2;
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sessionVariables.getKeyName(), "wait_timeout=" + seconds);
+
+        Connection timeoutConn = getConnectionWithProps(props);
+        Thread.sleep(1500 * seconds);
+        if (versionMeetsMinimum(8, 0, 24) && !(isServerRunningOnWindows() && System.getProperty("os.name").contains("Windows"))) { // server reports timeout
+            // TS.1.1 Create a connection to a MySQL configured with a short session timeout value.
+            // Sleep for a time longer than the specified timeout and assess that the error message obtained is the new one.        
+            assertThrows(CommunicationsException.class,
+                    "The client was disconnected by the server because of inactivity. See wait_timeout and interactive_timeout for configuring this behavior.",
+                    () -> timeoutConn.createStatement().executeQuery("SELECT 1"));
+        } else {
+            // TS.2.1 Create a connection to a MySQL configured with a short session timeout value.
+            // Sleep for a time longer than the specified timeout and assess that the error message obtained is the old one.
+            assertThrows(CommunicationsException.class,
+                    "The last packet successfully received from the server was .+ milliseconds ago.+"
+                            + "The last packet sent successfully to the server was .+ milliseconds ago.+"
+                            + "is longer than the server configured value of 'wait_timeout'.+",
+                    () -> timeoutConn.createStatement().executeQuery("SELECT 1"));
+        }
+
+        // TS.1.2 & TS.2.2 Create a connection to a MySQL configured with a short session timeout value.
+        // Before the timeout runs out, use a second connection to kill the previous session.
+        // Assess that the error message obtained is the old one.
+        final Connection toBeKilledConn = getConnectionWithProps(props);
+        long connId = ((MysqlConnection) toBeKilledConn).getSession().getThreadId();
+        this.stmt.execute("KILL CONNECTION " + connId);
+        Thread.sleep(1500 * seconds);
+        assertThrows(CommunicationsException.class,
+                "The last packet successfully received from the server was .+ milliseconds ago."
+                        + " The last packet sent successfully to the server was .+ milliseconds ago.+",
+                () -> toBeKilledConn.createStatement().executeQuery("SELECT 1"));
+    }
+
 }
