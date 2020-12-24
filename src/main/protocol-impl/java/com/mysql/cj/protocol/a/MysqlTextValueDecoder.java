@@ -102,7 +102,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     }
 
     public <T> T decodeInt4(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        return vf.createFromLong(getInt(bytes, offset, offset + length));
+        return vf.createFromLong(getLong(bytes, offset, offset + length));
     }
 
     public <T> T decodeUInt8(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
