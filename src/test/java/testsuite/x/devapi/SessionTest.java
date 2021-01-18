@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -2179,7 +2179,8 @@ public class SessionTest extends DevApiBaseTestCase {
                 + makeParam(PropertyKey.useReadAheadInput, "false");
 
         String testHosts = "(address=" + getTestHost() + ":" + getTestPort() + "),(address=" + getTestSslHost() + ":" + getTestSslPort() + ")";
-        url = String.format(testUriPattern, getTestUser(), getTestPassword(), testHosts, getTestDatabase());
+        url = String.format(testUriPattern, getTestUser() == null ? "" : getTestUser(), getTestPassword() == null ? "" : getTestPassword(), testHosts,
+                getTestDatabase());
 
         Field fProtocol = CoreSession.class.getDeclaredField("protocol");
         fProtocol.setAccessible(true);
