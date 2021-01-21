@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,6 +36,7 @@ import java.sql.SQLType;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.LocalDateTime;
 
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.util.StringUtils;
@@ -247,7 +248,7 @@ public enum MysqlType implements SQLType {
      * 
      * Protocol: FIELD_TYPE_DATETIME = 12
      */
-    DATETIME("DATETIME", Types.TIMESTAMP, Timestamp.class, 0, MysqlType.IS_NOT_DECIMAL, 26L, "[(fsp)]"),
+    DATETIME("DATETIME", Types.TIMESTAMP, LocalDateTime.class, 0, MysqlType.IS_NOT_DECIMAL, 26L, "[(fsp)]"),
     /**
      * YEAR[(4)]
      * A year in four-digit format. MySQL displays YEAR values in YYYY format, but permits assignment of

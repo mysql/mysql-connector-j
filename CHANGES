@@ -3,6 +3,8 @@
 
 Version 8.0.24
 
+  - Fix for Bug#102321 (32405590), CALLING RESULTSETMETADATA.GETCOLUMNCLASSNAME RETURNS WRONG VALUE FOR DATETIME.
+
   - WL#14453, Pluggable authentication: new default behavior & user-less authentications.
 
   - WL#14392, Improve timeout error messages [classic].

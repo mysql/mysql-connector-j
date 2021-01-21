@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -7660,5 +7660,27 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(Timestamp.valueOf("2018-04-01 00:00:00"), this.rs.getTimestamp(1));
         }
 
+    }
+
+    /**
+     * Tests fix for Bug#102321 (32405590), CALLING RESULTSETMETADATA.GETCOLUMNCLASSNAME RETURNS WRONG VALUE FOR DATETIME.
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    @Test
+    public void testBug102321() throws Exception {
+        createTable("testBug102321",
+                "(dcol date NOT NULL, dtcol datetime NOT NULL, ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+        this.stmt.executeUpdate("INSERT INTO testBug102321(dcol, dtcol) VALUES (now(), now())");
+
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug102321");
+        assertTrue(this.rs.next());
+        final ResultSetMetaData rsm = this.rs.getMetaData();
+        for (int colnum = 1; colnum <= rsm.getColumnCount(); colnum++) {
+            Object ob = this.rs.getObject(colnum);
+            assertEquals(ob.getClass().getName(), rsm.getColumnClassName(colnum),
+                    "Wrong ResultSetMetaData metadata for column type " + rsm.getColumnTypeName(colnum));
+        }
     }
 }
