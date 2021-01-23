@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -458,6 +458,9 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PropertyKey.transformedBitIsBoolean, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.transformedBitIsBoolean"), "3.1.9", CATEGORY_RESULT_SETS, Integer.MIN_VALUE),
+
+                new BooleanPropertyDefinition(PropertyKey.scrollTolerantForwardOnly, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.scrollTolerantForwardOnly"), "8.0.24", CATEGORY_RESULT_SETS, Integer.MIN_VALUE),
 
                 //
                 // CATEGORY_METADATA

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -4666,28 +4666,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public boolean supportsResultSetConcurrency(int type, int concurrency) throws SQLException {
-        switch (type) {
-            case ResultSet.TYPE_SCROLL_INSENSITIVE:
-                if ((concurrency == ResultSet.CONCUR_READ_ONLY) || (concurrency == ResultSet.CONCUR_UPDATABLE)) {
-                    return true;
-                }
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-
-            case ResultSet.TYPE_FORWARD_ONLY:
-                if ((concurrency == ResultSet.CONCUR_READ_ONLY) || (concurrency == ResultSet.CONCUR_UPDATABLE)) {
-                    return true;
-                }
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
-
-            case ResultSet.TYPE_SCROLL_SENSITIVE:
-                return false;
-            default:
-                throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+        if ((type == ResultSet.TYPE_FORWARD_ONLY || type == ResultSet.TYPE_SCROLL_INSENSITIVE)
+                && (concurrency == ResultSet.CONCUR_READ_ONLY || concurrency == ResultSet.CONCUR_UPDATABLE)) {
+            return true;
+        } else if (type == ResultSet.TYPE_SCROLL_SENSITIVE) {
+            return false;
         }
-
+        throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.20"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
     }
 
     @Override

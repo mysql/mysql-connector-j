@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -177,6 +177,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     protected boolean useUsageAdvisor = false;
     protected boolean gatherPerfMetrics = false;
 
+    /** Is ResultSet.TYPE_FORWARD_ONLY scroll tolerant? */
+    protected boolean scrollTolerant = false;
+
     /** The warning chain */
     protected java.sql.SQLWarning warningChain = null;
 
@@ -265,6 +268,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         this.yearIsDateType = pset.getBooleanProperty(PropertyKey.yearIsDateType).getValue();
         this.useUsageAdvisor = pset.getBooleanProperty(PropertyKey.useUsageAdvisor).getValue();
         this.gatherPerfMetrics = pset.getBooleanProperty(PropertyKey.gatherPerfMetrics).getValue();
+        this.scrollTolerant = pset.getBooleanProperty(PropertyKey.scrollTolerantForwardOnly).getValue();
 
         this.booleanValueFactory = new BooleanValueFactory(pset);
         this.byteValueFactory = new ByteValueFactory(pset);
@@ -365,7 +369,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean absolute(int row) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+            if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
 
@@ -413,7 +417,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public void afterLast() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+            if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
 
@@ -429,7 +433,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public void beforeFirst() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+            if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
 
@@ -584,7 +588,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean first() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+            if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
 
@@ -1707,10 +1711,21 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         }
     }
 
+    /**
+     * Checks whether this ResultSet is scrollable even if its type is ResultSet.TYPE_FORWARD_ONLY. Required for backwards compatibility.
+     * 
+     * @return
+     *         <code>true</code> if this result set type is ResultSet.TYPE_FORWARD_ONLY and the connection property 'scrollTolerantForwardOnly' has not been set
+     *         to <code>true</code>.
+     */
+    protected boolean isStrictlyForwardOnly() {
+        return this.resultSetType == ResultSet.TYPE_FORWARD_ONLY && !this.scrollTolerant;
+    }
+
     @Override
     public boolean last() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+            if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
 
@@ -1816,7 +1831,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean previous() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+            if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
 
@@ -1938,7 +1953,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean relative(int rows) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
+            if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
 
@@ -1980,7 +1995,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
-            if (getType() == ResultSet.TYPE_FORWARD_ONLY && direction != FETCH_FORWARD) {
+            if (isStrictlyForwardOnly() && direction != FETCH_FORWARD) {
                 String constName = direction == ResultSet.FETCH_REVERSE ? "ResultSet.FETCH_REVERSE" : "ResultSet.FETCH_UNKNOWN";
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.Unacceptable_value_for_fetch_direction", new Object[] { constName }));
             }

@@ -7659,7 +7659,126 @@ public class ResultSetRegressionTest extends BaseTestCase {
         while (this.rs.next()) {
             assertEquals(Timestamp.valueOf("2018-04-01 00:00:00"), this.rs.getTimestamp(1));
         }
+    }
 
+    /**
+     * Tests fix for Bug#31747910, BUG 30474158 FIX IMPROVES JDBC COMPLIANCE BUT CHANGES DEFAULT RESULTSETTYPE HANDLING.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug31747910() throws Exception {
+        createTable("testBug31747910", "(id INT)");
+        this.stmt.executeUpdate("INSERT INTO testBug31747910 VALUES (1), (2), (3), (4), (5)");
+
+        /*
+         * Expected exceptions with default RS type and:
+         * 0. static;
+         * 1. streaming;
+         * 2. streaming & scroll-tolerant;
+         * 3. cursor-based;
+         * 4. cursor-based & scroll-tolerant.
+         */
+        String[] connOpts = new String[] { "", "", "scrollTolerantForwardOnly=true", "useCursorFetch=true",
+                "useCursorFetch=true,scrollTolerantForwardOnly=true" };
+        int[] fetchSize = new int[] { 0, Integer.MIN_VALUE, Integer.MIN_VALUE, 2, 2 };
+        for (int i = 0; i < connOpts.length; i++) {
+            for (int j = 0; j < 3; j++) { // Statement; PreparedStatement and ServerPreparedStatement.
+                Connection testConn = null;
+                Statement testStmt = null;
+                switch (j) {
+                    case 0:
+                        // Default behavior using Statement
+                        testConn = getConnectionWithProps("connOpts[i]");
+                        testStmt = testConn.createStatement();
+                        if (fetchSize[i] != 0) {
+                            testStmt.setFetchSize(fetchSize[i]);
+                        }
+                        this.rs = testStmt.executeQuery("SELECT * FROM testBug31747910");
+                        break;
+                    case 1:
+                        // Default behavior using PreparedStatement
+                        testConn = getConnectionWithProps(connOpts[i]);
+                        testStmt = testConn.prepareStatement("SELECT * FROM testBug31747910");
+                        if (fetchSize[i] != 0) {
+                            testStmt.setFetchSize(fetchSize[i]);
+                        }
+                        this.rs = ((PreparedStatement) testStmt).executeQuery();
+                        break;
+                    case 2:
+                        // Default behavior using ServerPreparedStatement
+                        testConn = getConnectionWithProps("useServerPrepStmts=true," + connOpts[i]);
+                        testStmt = testConn.prepareStatement("SELECT * FROM testBug31747910");
+                        if (fetchSize[i] != 0) {
+                            testStmt.setFetchSize(fetchSize[i]);
+                        }
+                        this.rs = ((PreparedStatement) testStmt).executeQuery();
+                        break;
+                }
+
+                assertTrue(this.rs.next());
+                assertEquals(1, this.rs.getInt(1));
+                assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet\\.TYPE_FORWARD_ONLY\\.", () -> this.rs.last());
+                assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet\\.TYPE_FORWARD_ONLY\\.", () -> this.rs.previous());
+                assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet\\.TYPE_FORWARD_ONLY\\.", () -> this.rs.first());
+                assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet\\.TYPE_FORWARD_ONLY\\.", () -> this.rs.absolute(3));
+                assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet\\.TYPE_FORWARD_ONLY\\.", () -> this.rs.relative(-1));
+                assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet\\.TYPE_FORWARD_ONLY\\.", () -> {
+                    this.rs.beforeFirst();
+                    return null;
+                });
+                assertThrows(SQLException.class, "Operation not allowed for a result set of type ResultSet\\.TYPE_FORWARD_ONLY\\.", () -> {
+                    this.rs.afterLast();
+                    return null;
+                });
+                testStmt.close();
+                testConn.close();
+            }
+        }
+
+        // Scroll-tolerant behavior using: Statement; PreparedStatement; ServerPreparedStatement.
+        for (int i = 0; i < 3; i++) {
+            Connection testConn = null;
+            Statement testStmt = null;
+            switch (i) {
+                case 0:
+                    // Scroll-tolerant using Statement
+                    testConn = getConnectionWithProps("scrollTolerantForwardOnly=true");
+                    testStmt = testConn.createStatement();
+                    this.rs = testStmt.executeQuery("SELECT * FROM testBug31747910");
+                    break;
+                case 1:
+                    // Scroll-tolerant using PreparedStatement
+                    testConn = getConnectionWithProps("scrollTolerantForwardOnly=true");
+                    testStmt = testConn.prepareStatement("SELECT * FROM testBug31747910");
+                    this.rs = ((PreparedStatement) testStmt).executeQuery();
+                    break;
+                case 2:
+                    // Scroll-tolerant using ServerPreparedStatement
+                    testConn = getConnectionWithProps("useServerPrepStmts=true,scrollTolerantForwardOnly=true");
+                    testStmt = testConn.prepareStatement("SELECT * FROM testBug31747910");
+                    this.rs = ((PreparedStatement) testStmt).executeQuery();
+                    break;
+            }
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+            assertTrue(this.rs.last());
+            assertEquals(5, this.rs.getInt(1));
+            assertTrue(this.rs.previous());
+            assertEquals(4, this.rs.getInt(1));
+            assertTrue(this.rs.first());
+            assertEquals(1, this.rs.getInt(1));
+            assertTrue(this.rs.absolute(3));
+            assertEquals(3, this.rs.getInt(1));
+            assertTrue(this.rs.relative(-1));
+            assertEquals(2, this.rs.getInt(1));
+            this.rs.beforeFirst();
+            assertTrue(this.rs.isBeforeFirst());
+            this.rs.afterLast();
+            assertTrue(this.rs.isAfterLast());
+            testStmt.close();
+            testConn.close();
+        }
     }
 
     /**
