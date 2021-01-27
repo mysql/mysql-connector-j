@@ -182,10 +182,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     class TypeDescriptor {
         int bufferLength;
 
-        int charOctetLength;
-
         Integer datetimePrecision = null;
         Integer columnSize = null;
+        Integer charOctetLength = null;
 
         Integer decimalDigits = null;
 
@@ -383,6 +382,27 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             if (this.columnSize == null) {
                 // JDBC spec reserved only 'int' type for precision, thus we need to cut longer values
                 this.columnSize = this.mysqlType.getPrecision() > Integer.MAX_VALUE ? Integer.MAX_VALUE : this.mysqlType.getPrecision().intValue();
+            }
+
+            switch (this.mysqlType) {
+                case CHAR:
+                case VARCHAR:
+                case TINYTEXT:
+                case MEDIUMTEXT:
+                case LONGTEXT:
+                case JSON:
+                case TEXT:
+                case TINYBLOB:
+                case MEDIUMBLOB:
+                case LONGBLOB:
+                case BLOB:
+                case BINARY:
+                case VARBINARY:
+                case BIT:
+                    this.charOctetLength = this.columnSize;
+                    break;
+                default:
+                    break;
             }
 
             // BUFFER_LENGTH
@@ -880,7 +900,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         row[12] = null;
 
         if (forGetFunctionColumns) {
-            row[13] = null;                                                                                         // CHAR_OCTECT_LENGTH
+            row[13] = typeDesc.charOctetLength == null ? null : s2b(typeDesc.charOctetLength.toString());           // CHAR_OCTET_LENGTH
             row[14] = s2b(String.valueOf(ordinal));                                                                 // ORDINAL_POSITION
             row[15] = s2b(typeDesc.isNullable);                                                                     // IS_NULLABLE
             row[16] = procNameAsBytes;                                                                              // SPECIFIC_NAME
@@ -889,8 +909,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             row[13] = null;                                                                                         // COLUMN_DEF
             row[14] = null;                                                                                         // SQL_DATA_TYPE (future use)
             row[15] = null;                                                                                         // SQL_DATETIME_SUB (future use)
-            // TODO CHAR_OCTET_LENGTH the maximum length of binary and character based columns. For any other datatype the returned value is a NULL
-            row[16] = null;                                                                                         // CHAR_OCTET_LENGTH
+            row[16] = typeDesc.charOctetLength == null ? null : s2b(typeDesc.charOctetLength.toString());           // CHAR_OCTET_LENGTH
             row[17] = s2b(String.valueOf(ordinal));                                                                 // ORDINAL_POSITION
             row[18] = s2b(typeDesc.isNullable);                                                                     // IS_NULLABLE
             row[19] = procNameAsBytes;                                                                              // SPECIFIC_NAME

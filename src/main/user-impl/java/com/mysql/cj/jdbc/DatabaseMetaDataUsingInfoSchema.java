@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -735,7 +735,14 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append("10 AS RADIX,");
         sqlBuf.append(procedureNullable);
         sqlBuf.append(" AS `NULLABLE`, NULL AS `REMARKS`, NULL AS `COLUMN_DEF`, NULL AS `SQL_DATA_TYPE`, NULL AS `SQL_DATETIME_SUB`,");
-        sqlBuf.append(" CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`, SPECIFIC_NAME");
+
+        sqlBuf.append(" CASE WHEN CHARACTER_OCTET_LENGTH > ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" THEN ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" ELSE CHARACTER_OCTET_LENGTH END AS `CHAR_OCTET_LENGTH`,"); //
+
+        sqlBuf.append(" ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`, SPECIFIC_NAME");
         sqlBuf.append(" FROM INFORMATION_SCHEMA.PARAMETERS");
 
         StringBuilder conditionBuf = new StringBuilder();
@@ -1020,7 +1027,15 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         sqlBuf.append("NUMERIC_SCALE AS `SCALE`, 10 AS RADIX, ");
         sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_NULLABLE));
-        sqlBuf.append(" AS `NULLABLE`,  NULL AS `REMARKS`, CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`,  ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`,");
+        sqlBuf.append(" AS `NULLABLE`,  NULL AS `REMARKS`,");
+
+        sqlBuf.append(" CASE WHEN CHARACTER_OCTET_LENGTH > ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" THEN ");
+        sqlBuf.append(Integer.MAX_VALUE);
+        sqlBuf.append(" ELSE CHARACTER_OCTET_LENGTH END AS `CHAR_OCTET_LENGTH`,"); //
+
+        sqlBuf.append(" ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`,");
         sqlBuf.append(" SPECIFIC_NAME FROM INFORMATION_SCHEMA.PARAMETERS WHERE");
 
         StringBuilder conditionBuf = new StringBuilder();

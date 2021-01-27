@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -5119,5 +5119,33 @@ public class MetaDataRegressionTest extends BaseTestCase {
             testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 12, 12, 10);
             testBug97413CheckMDColumn(Types.DOUBLE, "DOUBLE UNSIGNED", 12, 12, 10);
         }
+    }
+
+    /**
+     * Tests fix for Bug#102076 (32329915), CONTRIBUTION: MYSQL JDBC DRIVER RESULTSET.GETLONG() THROWS NUMBEROUTOFRANGE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug102076() throws Exception {
+        createFunction("testBug102076f", "(x LONGBLOB, y LONGTEXT) RETURNS LONGBLOB DETERMINISTIC RETURN CONCAT(x, y)");
+        createProcedure("testBug102076p", "(x LONGBLOB, y LONGTEXT)\nBEGIN\nSELECT 1;end\n");
+
+        DatabaseMetaData dbmd = this.conn.getMetaData();
+
+        this.rs = dbmd.getProcedureColumns(null, null, "testBug102076p", "%");
+        assertTrue(this.rs.next());
+        do {
+            assertEquals(Integer.MAX_VALUE, this.rs.getLong(9)); // LENGTH
+            assertEquals(Integer.MAX_VALUE, this.rs.getLong(17)); // CHAR_OCTET_LENGTH
+        } while (this.rs.next());
+
+        this.rs = dbmd.getFunctionColumns(null, null, "testBug102076f", "%");
+        assertTrue(this.rs.next());
+        do {
+            assertEquals(Integer.MAX_VALUE, this.rs.getLong(9)); // LENGTH
+            assertEquals(Integer.MAX_VALUE, this.rs.getLong(14)); // CHAR_OCTET_LENGTH
+        } while (this.rs.next());
+
     }
 }
