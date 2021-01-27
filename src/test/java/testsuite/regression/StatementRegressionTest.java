@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -11384,5 +11384,31 @@ public class StatementRegressionTest extends BaseTestCase {
                 }
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#101558 (32141210), NULLPOINTEREXCEPTION WHEN EXECUTING INVALID QUERY WITH USEUSAGEADVISOR ENABLED.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug101558() throws Exception {
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        props.setProperty(PropertyKey.useUsageAdvisor.getKeyName(), "true");
+        Connection testConn = getConnectionWithProps(props);
+
+        // The query would work after setting allowMultiQueries=true, but when it is set the original bug is not reproducible.
+        assertThrows(SQLException.class,
+                "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SELECT 1 FROM DUAL' at line 1",
+                () -> {
+                    PreparedStatement statement = testConn.prepareStatement("SELECT 1 FROM DUAL; SELECT 1 FROM DUAL");
+                    statement.execute();
+                    return null;
+                });
+
+        testConn.close();
     }
 }

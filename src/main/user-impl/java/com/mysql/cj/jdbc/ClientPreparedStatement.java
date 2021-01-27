@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1301,7 +1301,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             }
 
             if (this.useUsageAdvisor) {
-                if (((PreparedQuery<?>) this.query).getQueryBindings().getNumberOfExecutions() <= 1) {
+                QueryBindings<?> qb = ((PreparedQuery<?>) this.query).getQueryBindings();
+                if (qb == null || qb.getNumberOfExecutions() <= 1) {
                     this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_USAGE, this.session, this, null, 0, new Throwable(),
                             Messages.getString("PreparedStatement.43"));
                 }
