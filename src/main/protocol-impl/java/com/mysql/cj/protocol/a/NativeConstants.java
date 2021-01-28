@@ -96,6 +96,8 @@ public class NativeConstants {
     public static final int COM_DAEMON = 29;
     public static final int COM_BINLOG_DUMP_GTID = 30;
     public static final int COM_RESET_CONNECTION = 31;
+    public static final long SERVER_SESSION_STATE_CHANGED = 1 << 14;
+
 
     /**
      * Used to indicate that the server sent no field-level character set information, so the driver should use the connection-level character encoding instead.

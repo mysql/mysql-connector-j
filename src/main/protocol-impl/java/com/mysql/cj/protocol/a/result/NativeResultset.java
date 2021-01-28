@@ -30,6 +30,8 @@
 package com.mysql.cj.protocol.a.result;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.Resultset;
@@ -62,6 +64,9 @@ public class NativeResultset implements Resultset {
      */
     protected String serverInfo = null;
 
+    /** track session state change info */
+    protected Map<Integer, List<String>> sessionStateChangeMap;
+
     /** Pointer to current row data */
     protected Row thisRow = null; // Values for current row
 
@@ -78,6 +83,7 @@ public class NativeResultset implements Resultset {
         this.updateCount = ok.getUpdateCount();
         this.updateId = ok.getUpdateID();
         this.serverInfo = ok.getInfo();
+        this.sessionStateChangeMap = ok.getSessionStateChangeMap();
         this.columnDefinition = new DefaultColumnDefinition(new Field[0]);
     }
 

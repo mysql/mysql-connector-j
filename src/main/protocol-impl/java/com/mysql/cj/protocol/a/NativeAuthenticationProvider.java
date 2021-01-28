@@ -29,13 +29,6 @@
 
 package com.mysql.cj.protocol.a;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
@@ -52,14 +45,11 @@ import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
-import com.mysql.cj.protocol.a.authentication.AuthenticationLdapSaslClientPlugin;
-import com.mysql.cj.protocol.a.authentication.CachingSha2PasswordPlugin;
-import com.mysql.cj.protocol.a.authentication.MysqlClearPasswordPlugin;
-import com.mysql.cj.protocol.a.authentication.MysqlNativePasswordPlugin;
-import com.mysql.cj.protocol.a.authentication.MysqlOldPasswordPlugin;
-import com.mysql.cj.protocol.a.authentication.Sha256PasswordPlugin;
+import com.mysql.cj.protocol.a.authentication.*;
 import com.mysql.cj.protocol.a.result.OkPacket;
 import com.mysql.cj.util.StringUtils;
+
+import java.util.*;
 
 public class NativeAuthenticationProvider implements AuthenticationProvider<NativePacketPayload> {
 
@@ -155,10 +145,8 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                         : (capabilityFlags & NativeServerSession.CLIENT_CONNECT_ATTRS))
                 | (this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode).getValue() != SslMode.DISABLED
                         ? (capabilityFlags & NativeServerSession.CLIENT_SSL)
-                        : 0);
-
-        // TODO MYSQLCONNJ-437
-        // clientParam |= (capabilityFlags & NativeServerSession.CLIENT_SESSION_TRACK);
+                        : 0)
+                | (this.propertySet.getBooleanProperty(PropertyKey.sessionTrack).getValue() ? (capabilityFlags & NativeServerSession.CLIENT_SESSION_TRACK) : 0);
 
         sessState.setClientParam(clientParam);
 

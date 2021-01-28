@@ -205,6 +205,7 @@ public enum PropertyKey {
     serverConfigCacheFactory("serverConfigCacheFactory", true), //
     serverRSAPublicKeyFile("serverRSAPublicKeyFile", true), //
     sessionVariables("sessionVariables", true), //
+    sessionTrack("sessionTrack", true), //
     slowQueryThresholdMillis("slowQueryThresholdMillis", true), //
     slowQueryThresholdNanos("slowQueryThresholdNanos", true), //
     socketFactory("socketFactory", true), //

@@ -260,6 +260,10 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PropertyKey.sessionVariables, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.sessionVariables"), "3.1.8", CATEGORY_SESSION, Integer.MAX_VALUE),
 
+                //todo sinceVersion=8.0.24???
+                new BooleanPropertyDefinition(PropertyKey.sessionTrack, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.sessionTrack"), "8.0.24", CATEGORY_SESSION, Integer.MIN_VALUE),
+
                 //
                 // CATEGORY_NETWORK
                 //

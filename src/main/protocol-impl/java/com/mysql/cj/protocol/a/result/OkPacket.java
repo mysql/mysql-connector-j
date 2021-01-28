@@ -31,16 +31,22 @@ package com.mysql.cj.protocol.a.result;
 
 import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
+import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 
-public class OkPacket implements ProtocolEntity {
+import java.util.*;
 
+import static com.mysql.cj.protocol.a.NativeConstants.SERVER_SESSION_STATE_CHANGED;
+
+//Types of State Change Information
+public class OkPacket implements ProtocolEntity {
     private long updateCount = -1;
     private long updateID = -1;
     private int statusFlags = 0;
     private int warningCount = 0;
     private String info = null;
+    private Map<Integer, List<String>> sessionStateChangeMap = new HashMap<>(7);
 
     public OkPacket() {
     }
@@ -56,7 +62,56 @@ public class OkPacket implements ProtocolEntity {
         ok.setStatusFlags((int) buf.readInteger(IntegerDataType.INT2));
         ok.setWarningCount((int) buf.readInteger(IntegerDataType.INT2));
         ok.setInfo(buf.readString(StringSelfDataType.STRING_TERM, errorMessageEncoding)); // info
+
+        // read session state changes info
+        if ((ok.getStatusFlags() & SERVER_SESSION_STATE_CHANGED) > 0) {
+            int totalLen = (int) buf.readInteger(IntegerDataType.INT_LENENC);
+            int start = buf.getPosition();
+            int end = start + totalLen;
+            while (totalLen > 0 && end > start) {
+                int type = (int) buf.readInteger(IntegerDataType.INT1);
+                SessionStateType typeEnum = SessionStateType.valueOf(type);
+                if (typeEnum == null) {
+                    break;
+                }
+                switch (typeEnum) {
+                    case SESSION_TRACK_SYSTEM_VARIABLES:
+                        // just skip one position
+                        buf.readInteger(IntegerDataType.INT1);
+                        ok.addChanges(type, buf.readString(StringSelfDataType.STRING_LENENC, errorMessageEncoding));
+                        ok.addChanges(type, buf.readString(StringSelfDataType.STRING_LENENC, errorMessageEncoding));
+                        break;
+                    case SESSION_TRACK_TRANSACTION_CHARACTERISTICS:
+                    case SESSION_TRACK_TRANSACTION_STATE:
+                    case SESSION_TRACK_SCHEMA:
+                        // just skip one position
+                        buf.readInteger(IntegerDataType.INT1);
+                        ok.addChanges(type, buf.readString(StringSelfDataType.STRING_LENENC, errorMessageEncoding));
+                        break;
+                    case SESSION_TRACK_STATE_CHANGE:
+                        int len = (int) buf.readInteger(IntegerDataType.INT1);
+                        if (len == 1) {
+                            ok.addChanges(type, buf.readString(StringLengthDataType.STRING_FIXED, errorMessageEncoding, len));
+                        }
+                        break;
+                    case SESSION_TRACK_GTID:
+                        // just skip two position
+                        buf.readInteger(IntegerDataType.INT2);
+                        ok.addChanges(type, buf.readString(StringSelfDataType.STRING_LENENC, errorMessageEncoding));
+                        break;
+                    default:
+                        //nothing to do
+                }
+                start = buf.getPosition();
+            }
+        }
         return ok;
+    }
+
+    private void addChanges(int type, String msg) {
+        Map<Integer, List<String>> sessionStateChangeMap = this.getSessionStateChangeMap();
+        List<String> msgList = sessionStateChangeMap.computeIfAbsent(type, ArrayList::new);
+        msgList.add(msg);
     }
 
     public long getUpdateCount() {
@@ -97,5 +152,35 @@ public class OkPacket implements ProtocolEntity {
 
     public void setWarningCount(int warningCount) {
         this.warningCount = warningCount;
+    }
+
+    public Map<Integer, List<String>> getSessionStateChangeMap() {
+        return sessionStateChangeMap;
+    }
+
+    public void setSessionStateChangeMap(Map<Integer, List<String>> sessionStateChangeMap) {
+        this.sessionStateChangeMap = sessionStateChangeMap;
+    }
+
+    public enum SessionStateType {
+        SESSION_TRACK_SYSTEM_VARIABLES(0x00),
+        SESSION_TRACK_SCHEMA(0x01),
+        SESSION_TRACK_STATE_CHANGE(0x02),
+        SESSION_TRACK_GTID(0x03),
+        SESSION_TRACK_TRANSACTION_CHARACTERISTICS(0x04),
+        SESSION_TRACK_TRANSACTION_STATE(0x05);
+
+        int value;
+
+        SessionStateType(int value) {
+            this.value = value;
+        }
+
+        public static SessionStateType valueOf(int type) {
+            return Arrays.stream(SessionStateType.values())
+                    .filter(t -> Objects.equals(t.value, type))
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 }
