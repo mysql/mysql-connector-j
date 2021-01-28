@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -269,49 +269,52 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
 
         packet.writeInteger(IntegerDataType.INT4, 1); // placeholder for parameter iterations
 
-        /* Reserve place for null-marker bytes */
-        int nullCount = (this.parameterCount + 7) / 8;
+        if (this.parameterCount > 0) {
+            /* Reserve place for null-marker bytes */
+            int nullCount = (this.parameterCount + 7) / 8;
 
-        int nullBitsPosition = packet.getPosition();
+            int nullBitsPosition = packet.getPosition();
 
-        for (int i = 0; i < nullCount; i++) {
-            packet.writeInteger(IntegerDataType.INT1, 0);
-        }
-
-        byte[] nullBitsBuffer = new byte[nullCount];
-
-        /* In case if buffers (type) altered, indicate to server */
-        packet.writeInteger(IntegerDataType.INT1, this.queryBindings.getSendTypesToServer().get() ? (byte) 1 : (byte) 0);
-
-        if (this.queryBindings.getSendTypesToServer().get()) {
-            /*
-             * Store types of parameters in the first package that is sent to the server.
-             */
-            for (int i = 0; i < this.parameterCount; i++) {
-                packet.writeInteger(IntegerDataType.INT2, parameterBindings[i].bufferType);
+            for (int i = 0; i < nullCount; i++) {
+                packet.writeInteger(IntegerDataType.INT1, 0);
             }
-        }
 
-        //
-        // store the parameter values
-        //
-        for (int i = 0; i < this.parameterCount; i++) {
-            if (!parameterBindings[i].isStream()) {
-                if (!parameterBindings[i].isNull()) {
-                    parameterBindings[i].storeBinding(packet, this.queryBindings.isLoadDataQuery(), this.charEncoding, this.session.getExceptionInterceptor());
-                } else {
-                    nullBitsBuffer[i / 8] |= (1 << (i & 7));
+            byte[] nullBitsBuffer = new byte[nullCount];
+
+            /* In case if buffers (type) altered, indicate to server */
+            packet.writeInteger(IntegerDataType.INT1, this.queryBindings.getSendTypesToServer().get() ? (byte) 1 : (byte) 0);
+
+            if (this.queryBindings.getSendTypesToServer().get()) {
+                /*
+                 * Store types of parameters in the first package that is sent to the server.
+                 */
+                for (int i = 0; i < this.parameterCount; i++) {
+                    packet.writeInteger(IntegerDataType.INT2, parameterBindings[i].bufferType);
                 }
             }
-        }
 
-        //
-        // Go back and write the NULL flags to the beginning of the packet
-        //
-        int endPosition = packet.getPosition();
-        packet.setPosition(nullBitsPosition);
-        packet.writeBytes(StringLengthDataType.STRING_FIXED, nullBitsBuffer);
-        packet.setPosition(endPosition);
+            //
+            // store the parameter values
+            //
+            for (int i = 0; i < this.parameterCount; i++) {
+                if (!parameterBindings[i].isStream()) {
+                    if (!parameterBindings[i].isNull()) {
+                        parameterBindings[i].storeBinding(packet, this.queryBindings.isLoadDataQuery(), this.charEncoding,
+                                this.session.getExceptionInterceptor());
+                    } else {
+                        nullBitsBuffer[i / 8] |= (1 << (i & 7));
+                    }
+                }
+            }
+
+            //
+            // Go back and write the NULL flags to the beginning of the packet
+            //
+            int endPosition = packet.getPosition();
+            packet.setPosition(nullBitsPosition);
+            packet.writeBytes(StringLengthDataType.STRING_FIXED, nullBitsBuffer);
+            packet.setPosition(endPosition);
+        }
 
         return packet;
     }
