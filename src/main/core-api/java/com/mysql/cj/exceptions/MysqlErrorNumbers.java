@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1056,7 +1056,7 @@ public final class MysqlErrorNumbers {
 
     public static final int ER_SESSION_WAS_KILLED = 3169;
 
-    public final static int ER_CLIENT_INTERACTION_TIMEOUT = 4031; //SQLSTATE: HY000 Message: The client was disconnected by the server because of inactivity. See wait_timeout and interactive_timeout for configuring this behavior.; was added in 8.0.24.
+    public final static int ER_CLIENT_INTERACTION_TIMEOUT = 4031; //SQLSTATE: HY000 Message: The client was disconnected by the server because of inactivity. See wait_timeout and interactive_timeout for configuring this behavior. Was added in 8.0.24.
 
     public static final int ER_X_BAD_MESSAGE = 5000;
     public static final int ER_X_CAPABILITIES_PREPARE_FAILED = 5001;
