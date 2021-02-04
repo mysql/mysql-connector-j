@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,7 +42,7 @@ public class CompressorStreamsFactory {
     private CompressionAlgorithm compressionAlgorithm;
 
     private InputStream compressorInputStreamInstance = null;
-    private ReusableInputStream underlyingInputStream = null;
+    private ContinuousInputStream underlyingInputStream = null;
 
     private OutputStream compressorOutputStreamInstance = null;
     private ReusableOutputStream underlyingOutputStream = null;
@@ -55,13 +55,16 @@ public class CompressorStreamsFactory {
         return this.compressionAlgorithm.getCompressionMode();
     }
 
-    public boolean areCompressedStreamsReusable() {
+    public boolean areCompressedStreamsContinuous() {
         return getCompressionMode() == CompressionMode.STREAM;
     }
 
     /**
      * Creates an instance of an {@link InputStream} that wraps around the given {@link InputStream} and knows how to inflate data using the algorithm given in
      * this class' constructor.
+     * 
+     * If the compression algorithm operates in steam mode (continuous) then create and reuse one single instance of the compressor {@link InputStream}, else
+     * create a new instance every time.
      * 
      * @param in
      *            the {@link InputStream} to use as source of the bytes to inflate.
@@ -71,12 +74,12 @@ public class CompressorStreamsFactory {
     public InputStream getInputStreamInstance(InputStream in) {
         InputStream underlyingIn = in;
 
-        if (areCompressedStreamsReusable()) {
+        if (areCompressedStreamsContinuous()) {
             if (this.compressorInputStreamInstance != null) {
-                this.underlyingInputStream.setInputStream(underlyingIn);
+                this.underlyingInputStream.addInputStream(underlyingIn);
                 return this.compressorInputStreamInstance;
             }
-            this.underlyingInputStream = new ReusableInputStream(underlyingIn);
+            this.underlyingInputStream = new ContinuousInputStream(underlyingIn);
             underlyingIn = this.underlyingInputStream;
         }
 
@@ -84,7 +87,7 @@ public class CompressorStreamsFactory {
                 new Class<?>[] { InputStream.class }, new Object[] { underlyingIn }, null, Messages.getString("Protocol.Compression.IoFactory.0",
                         new Object[] { this.compressionAlgorithm.getInputStreamClass().getName(), this.compressionAlgorithm }));
 
-        if (areCompressedStreamsReusable()) {
+        if (areCompressedStreamsContinuous()) {
             this.compressorInputStreamInstance = compressionIn;
         }
         return compressionIn;
@@ -94,6 +97,9 @@ public class CompressorStreamsFactory {
      * Creates an instance of an {@link OutputStream} that wraps around the given {@link OutputStream} and knows how to deflate data using the algorithm given
      * in this class' constructor.
      * 
+     * If the compression algorithm operates in steam mode (continuous) then create and reuse one single instance of the compressor {@link OutputStream}, else
+     * create a new instance every time.
+     * 
      * @param out
      *            the {@link OutputStream} to use as target of the bytes to deflate.
      * @return
@@ -102,7 +108,7 @@ public class CompressorStreamsFactory {
     public OutputStream getOutputStreamInstance(OutputStream out) {
         OutputStream underlyingOut = out;
 
-        if (areCompressedStreamsReusable()) {
+        if (areCompressedStreamsContinuous()) {
             if (this.compressorOutputStreamInstance != null) {
                 this.underlyingOutputStream.setOutputStream(underlyingOut);
                 return this.compressorOutputStreamInstance;
@@ -115,7 +121,7 @@ public class CompressorStreamsFactory {
                 new Class<?>[] { OutputStream.class }, new Object[] { underlyingOut }, null, Messages.getString("Protocol.Compression.IoFactory.1",
                         new Object[] { this.compressionAlgorithm.getOutputStreamClass().getName(), this.compressionAlgorithm }));
 
-        if (areCompressedStreamsReusable()) {
+        if (areCompressedStreamsContinuous()) {
             compressionOut = new ContinuousOutputStream(compressionOut);
             this.compressorOutputStreamInstance = compressionOut;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -133,7 +133,7 @@ public class CompressionSplittedInputStream extends FilterInputStream {
 
     /**
      * Reads bytes from the underlying {@link InputStream} either from the one that gets data directly from the original source {@link InputStream} or from
-     * a compressorable {@link InputStream}, if reading of a compressed X Protocol frame is in progress.
+     * a compressor able {@link InputStream}, if reading of a compressed X Protocol frame is in progress.
      * 
      * @see FilterInputStream#read(byte[], int, int)
      */
@@ -210,7 +210,8 @@ public class CompressionSplittedInputStream extends FilterInputStream {
      * Checks if current X Protocol frame is compressed.
      * 
      * @return
-     *         <code>true</code> if the type of current frame is {@link ServerMessages.Type#COMPRESSION}, <code>false</code> otherwise.
+     *         <code>true</code> if the type of current frame is {@link com.mysql.cj.x.protobuf.Mysqlx.ServerMessages.Type#COMPRESSION}, <code>false</code>
+     *         otherwise.
      */
     private boolean isCompressedFrame() {
         return ServerMessages.Type.forNumber(this.xMessageHeader.getMessageType()) == ServerMessages.Type.COMPRESSION;

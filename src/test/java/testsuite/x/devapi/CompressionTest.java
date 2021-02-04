@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -65,6 +65,7 @@ import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.JsonParser;
+import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.RowResult;
 import com.mysql.cj.xdevapi.Session;
@@ -802,5 +803,38 @@ public class CompressionTest extends DevApiBaseTestCase {
                 () -> this.fact.getSession(this.compressFreeBaseUrl + makeParam(PropertyKey.xdevapiCompressionAlgorithms, "zstd,lz4,deflate")
                         + makeParam(PropertyKey.xdevapiCompressionExtensions, "ZSTD:" + TestInputStream.class.getName() + ":" + OutputStream.class.getName())));
         assertTrue(TestInputStream.instantiatedAtLeastOnce);
+    }
+
+    /**
+     * Test fix for Bug#99708 (31510398), mysql-connector-java 8.0.20 ASSERTION FAILED: Unknown message type: 57 s.close.
+     * 
+     * This test is not entirely deterministic, since it depends on the size of the compressed data returned from the server. Observations showed that it fails
+     * in pretty close to 100% of executions.
+     * 
+     * The test fails by throwing an exception.
+     */
+    @Test
+    public void testBug99708() {
+        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
+            return;
+        }
+
+        dropCollection("testBug99708");
+        Collection col = this.schema.createCollection("testBug99708");
+        String docId = "1";
+        DbDoc doc = JsonParser.parseDoc("{ \"product\": \"MySQL Connector/J\" }");
+        col.addOrReplaceOne(docId, doc);
+
+        for (int i = 1; i <= 150; i++) {
+            Session testSession = this.fact.getSession(this.compressFreeBaseUrl + makeParam(PropertyKey.xdevapiCompressionAlgorithms, "deflate")
+                    + makeParam(PropertyKey.xdevapiCompression, "required"));
+            col = testSession.getDefaultSchema().getCollection("testBug99708");
+            doc = col.find("_id = :id").bind("id", docId).execute().fetchOne();
+            doc.add("Iteration-" + i, new JsonString().setValue("" + System.nanoTime()));
+            col.addOrReplaceOne(docId, doc);
+            testSession.close();
+        }
+
+        dropCollection("TestBug99708");
     }
 }
