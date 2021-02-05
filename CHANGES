@@ -3,6 +3,8 @@
 
 Version 8.0.24
 
+  - Fix for Bug#97730 (31699993), xdev api: ConcurrentModificationException at Session.close.
+
   - Fix for Bug#99708 (31510398), mysql-connector-java 8.0.20 ASSERTION FAILED: Unknown message type: 57 s.close.
 
   - Fix for Bug#32122553, EXTRA BYTE IN COM_STMT_EXECUTE.

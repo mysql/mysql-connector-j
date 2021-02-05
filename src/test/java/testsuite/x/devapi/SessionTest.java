@@ -53,6 +53,10 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -2291,4 +2295,48 @@ public class SessionTest extends DevApiBaseTestCase {
         return nbuf;
     }
 
+    /**
+     * Tests fix for Bug#97730 (31699993), xdev api: ConcurrentModificationException at Session.close.
+     * 
+     * @throws Throwable
+     */
+    @Test
+    public void testBug97730() throws Throwable {
+        if (!this.isSetForXTests) {
+            return;
+        }
+
+        for (String pooling : new String[] { "false", "true" }) {
+            Properties props = new Properties();
+            props.setProperty(ClientProperty.POOLING_ENABLED.getKeyName(), pooling);
+            ClientFactory cf = new ClientFactory();
+            Client client = cf.getClient(this.baseUrl, props);
+
+            List<Future<?>> futures = new ArrayList<>();
+            ExecutorService executor = Executors.newFixedThreadPool(10);
+            for (int i = 0; i < 1000; i++) {
+                futures.add(executor.submit(() -> {
+                    client.getSession().close();
+                }));
+            }
+
+            Exception exception = null;
+            for (Future<?> f : futures) {
+                try {
+                    f.get();
+                } catch (ExecutionException e) {
+                    exception = e;
+                    break;
+                }
+            }
+            executor.shutdown();
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+
+            if (exception != null) {
+                throw exception.getCause();
+            }
+        }
+    }
 }

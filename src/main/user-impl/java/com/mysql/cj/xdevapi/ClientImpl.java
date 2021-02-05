@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -249,29 +249,31 @@ public class ClientImpl implements Client, ProtocolEventListener {
         }
 
         if (!this.poolingEnabled) {
-            // Remove nulled and closed session references from the nonPooledSessions set.
-            List<WeakReference<Session>> obsoletedSessions = new ArrayList<>();
-            for (WeakReference<Session> ws : this.nonPooledSessions) {
-                if (ws != null) {
-                    Session s = ws.get();
-                    if (s == null || !s.isOpen()) {
-                        obsoletedSessions.add(ws);
+            synchronized (this) {
+                // Remove nulled and closed session references from the nonPooledSessions set.
+                List<WeakReference<Session>> obsoletedSessions = new ArrayList<>();
+                for (WeakReference<Session> ws : this.nonPooledSessions) {
+                    if (ws != null) {
+                        Session s = ws.get();
+                        if (s == null || !s.isOpen()) {
+                            obsoletedSessions.add(ws);
+                        }
                     }
                 }
-            }
-            for (WeakReference<Session> ws : obsoletedSessions) {
-                this.nonPooledSessions.remove(ws);
-            }
+                for (WeakReference<Session> ws : obsoletedSessions) {
+                    this.nonPooledSessions.remove(ws);
+                }
 
-            Session sess = this.sessionFactory.getSession(this.connUrl);
-            this.nonPooledSessions.add(new WeakReference<>(sess));
-            return sess;
+                Session sess = this.sessionFactory.getSession(this.connUrl);
+                this.nonPooledSessions.add(new WeakReference<>(sess));
+                return sess;
+            }
         }
 
         PooledXProtocol prot = null;
         List<HostInfo> hostsList = this.connUrl.getHostsList();
 
-        synchronized (this.idleProtocols) {
+        synchronized (this) {
             // 0. Close and remove idle protocols connected to a host that is not usable anymore.
             List<PooledXProtocol> toCloseAndRemove = this.idleProtocols.stream().filter(p -> !p.isHostInfoValid(hostsList)).collect(Collectors.toList());
             toCloseAndRemove.stream().peek(PooledXProtocol::realClose).peek(this.idleProtocols::remove).map(PooledXProtocol::getHostInfo).sequential()
@@ -281,7 +283,6 @@ public class ClientImpl implements Client, ProtocolEventListener {
         long start = System.currentTimeMillis();
         while (prot == null && (this.queueTimeout == 0 || System.currentTimeMillis() < start + this.queueTimeout)) { // TODO how to avoid endless loop?
             synchronized (this.idleProtocols) {
-
                 if (this.idleProtocols.peek() != null) {
                     // 1. If there are idle Protocols then return one of them. 
                     PooledXProtocol tryProt = this.idleProtocols.poll();
@@ -364,7 +365,9 @@ public class ClientImpl implements Client, ProtocolEventListener {
         if (prot == null) {
             throw new XDevAPIError("Session can not be obtained within " + this.queueTimeout + " milliseconds.");
         }
-        this.activeProtocols.add(new WeakReference<>(prot));
+        synchronized (this) {
+            this.activeProtocols.add(new WeakReference<>(prot));
+        }
         SessionImpl sess = new SessionImpl(prot);
         return sess;
     }
@@ -381,8 +384,8 @@ public class ClientImpl implements Client, ProtocolEventListener {
 
     @Override
     public void close() {
-        if (this.poolingEnabled) {
-            synchronized (this.idleProtocols) {
+        synchronized (this) {
+            if (this.poolingEnabled) {
                 if (!this.isClosed) {
                     this.isClosed = true;
                     this.idleProtocols.forEach(s -> s.realClose());
@@ -390,14 +393,14 @@ public class ClientImpl implements Client, ProtocolEventListener {
                     this.activeProtocols.stream().map(WeakReference::get).filter(Objects::nonNull).forEach(s -> s.realClose());
                     this.activeProtocols.clear();
                 }
+            } else {
+                this.nonPooledSessions.stream().map(WeakReference::get).filter(Objects::nonNull).filter(Session::isOpen).forEach(s -> s.close());
             }
-        } else {
-            this.nonPooledSessions.stream().map(WeakReference::get).filter(Objects::nonNull).filter(Session::isOpen).forEach(s -> s.close());
         }
     }
 
     void idleProtocol(PooledXProtocol prot) {
-        synchronized (this.idleProtocols) {
+        synchronized (this) {
             if (!this.isClosed) {
                 List<WeakReference<PooledXProtocol>> removeThem = new ArrayList<>();
                 for (WeakReference<PooledXProtocol> wps : this.activeProtocols) {
@@ -461,7 +464,7 @@ public class ClientImpl implements Client, ProtocolEventListener {
         switch (type) {
             case SERVER_SHUTDOWN:
                 HostInfo hi = ((PooledXProtocol) info).getHostInfo();
-                synchronized (this.idleProtocols) {
+                synchronized (this) {
                     // Close and remove idle protocols connected to a host that is not usable anymore.
                     List<PooledXProtocol> toCloseAndRemove = this.idleProtocols.stream().filter(p -> p.getHostInfo().equalHostPortPair(hi))
                             .collect(Collectors.toList());
@@ -473,7 +476,9 @@ public class ClientImpl implements Client, ProtocolEventListener {
                 break;
 
             case SERVER_CLOSED_SESSION:
-                removeActivePooledXProtocol((PooledXProtocol) info);
+                synchronized (this) {
+                    removeActivePooledXProtocol((PooledXProtocol) info);
+                }
                 break;
 
             default:
