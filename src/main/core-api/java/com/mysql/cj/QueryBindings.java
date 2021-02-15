@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,6 +38,7 @@ import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -232,5 +233,7 @@ public interface QueryBindings<T extends BindValue> {
     void setLocalTime(int parameterIndex, LocalTime x, MysqlType targetMysqlType);
 
     void setLocalDateTime(int parameterIndex, LocalDateTime x, MysqlType targetMysqlType);
+
+    void setDuration(int parameterIndex, Duration x, MysqlType targetMysqlType);
 
 }

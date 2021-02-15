@@ -54,6 +54,7 @@ import java.sql.SQLXML;
 import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -99,6 +100,7 @@ import com.mysql.cj.result.BinaryStreamValueFactory;
 import com.mysql.cj.result.BooleanValueFactory;
 import com.mysql.cj.result.ByteValueFactory;
 import com.mysql.cj.result.DoubleValueFactory;
+import com.mysql.cj.result.DurationValueFactory;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.FloatValueFactory;
 import com.mysql.cj.result.IntegerValueFactory;
@@ -1396,6 +1398,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 checkRowPos();
                 checkColumnBounds(columnIndex);
                 return (T) this.thisRow.getValue(columnIndex - 1, this.defaultZonedDateTimeValueFactory);
+
+            } else if (type.equals(Duration.class)) {
+                checkRowPos();
+                checkColumnBounds(columnIndex);
+                return (T) this.thisRow.getValue(columnIndex - 1, new DurationValueFactory(this.session.getPropertySet()));
             }
 
             if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.autoDeserialize).getValue()) {

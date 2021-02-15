@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,7 +40,6 @@ import com.mysql.cj.protocol.InternalTime;
 import com.mysql.cj.protocol.InternalTimestamp;
 import com.mysql.cj.util.DataTypeUtil;
 import com.mysql.cj.util.StringUtils;
-import com.mysql.cj.util.TimeUtil;
 
 /**
  * A {@link com.mysql.cj.result.ValueFactory} implementation to create strings.
@@ -77,11 +76,7 @@ public class StringValueFactory implements ValueFactory<String> {
      * @return string
      */
     public String createFromTime(InternalTime it) {
-        if (it.getNanos() > 0) {
-            return String.format("%02d:%02d:%02d.%s", it.getHours(), it.getMinutes(), it.getSeconds(),
-                    TimeUtil.formatNanos(it.getNanos(), it.getScale(), false));
-        }
-        return String.format("%02d:%02d:%02d", it.getHours(), it.getMinutes(), it.getSeconds());
+        return it.toString();
     }
 
     /**

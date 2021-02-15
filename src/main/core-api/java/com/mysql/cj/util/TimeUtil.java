@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,22 +30,26 @@
 package com.mysql.cj.util;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 
 import com.mysql.cj.Messages;
+import com.mysql.cj.MysqlType;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
@@ -67,6 +71,26 @@ public class TimeUtil {
     public static final DateTimeFormatter DATETIME_FORMATTER_WITH_NANOS_NO_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS");
     public static final DateTimeFormatter DATETIME_FORMATTER_NO_FRACT_WITH_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX");
     public static final DateTimeFormatter DATETIME_FORMATTER_WITH_NANOS_WITH_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSSXXX");
+
+    public static final Pattern DATE_LITERAL_WITH_DELIMITERS = Pattern
+            .compile("(\\d{4}|\\d{2})[\\p{Punct}&&[^:]](([0])?[1-9]|[1][0-2])[\\p{Punct}&&[^:]](([0])?[1-9]|[1-2]\\d|[3][0-1])");
+    public static final Pattern DATE_LITERAL_NO_DELIMITERS = Pattern.compile("(\\d{4}|\\d{2})([0][1-9]|[1][0-2])([0][1-9]|[1-2]\\d|[3][0-1])");
+
+    public static final Pattern TIME_LITERAL_WITH_DELIMITERS = Pattern.compile("(([0-1])?\\d|[2][0-3]):([0-5])?\\d(:([0-5])?\\d(\\.\\d{1,9})?)?");
+    public static final Pattern TIME_LITERAL_SHORT6 = Pattern.compile("([0-1]\\d|[2][0-3])([0-5]\\d){2}(\\.\\d{1,9})?");
+    public static final Pattern TIME_LITERAL_SHORT4 = Pattern.compile("([0-5]\\d){2}(\\.\\d{1,9})?");
+    public static final Pattern TIME_LITERAL_SHORT2 = Pattern.compile("[0-5]\\d(\\.\\d{1,9})?");
+
+    public static final Pattern DATETIME_LITERAL_WITH_DELIMITERS = Pattern.compile(
+            "(\\d{4}|\\d{2})\\p{Punct}(([0])?[1-9]|[1][0-2])\\p{Punct}(([0])?[1-9]|[1-2]\\d|[3][0-1])[ T](([0-1])?\\d|[2][0-3])\\p{Punct}([0-5])?\\d(\\p{Punct}([0-5])?\\d(\\.\\d{1,9})?)?");
+    public static final Pattern DATETIME_LITERAL_SHORT14 = Pattern
+            .compile("\\d{4}([0][1-9]|[1][0-2])([0][1-9]|[1-2]\\d|[3][0-1])([0-1]\\d|[2][0-3])([0-5]\\d){2}(\\.\\d{1,9}){0,1}");
+    public static final Pattern DATETIME_LITERAL_SHORT12 = Pattern
+            .compile("\\d{2}([0][1-9]|[1][0-2])([0][1-9]|[1-2]\\d|[3][0-1])([0-1]\\d|[2][0-3])([0-5]\\d){2}(\\.\\d{1,9}){0,1}");
+
+    public static final Pattern DURATION_LITERAL_WITH_DAYS = Pattern
+            .compile("(-)?(([0-2])?\\d|[3][0-4]) (([0-1])?\\d|[2][0-3])(:([0-5])?\\d(:([0-5])?\\d(\\.\\d{1,9})?)?)?");
+    public static final Pattern DURATION_LITERAL_NO_DAYS = Pattern.compile("(-)?\\d{1,3}:([0-5])?\\d(:([0-5])?\\d(\\.\\d{1,9})?)?");
 
     // Mappings from TimeZone identifications (prefixed by type: Windows, TZ name, MetaZone, TZ alias, ...), to standard TimeZone Ids
     private static final String TIME_ZONE_MAPPINGS_RESOURCE = "/com/mysql/cj/util/TimeZoneMapping.properties";
@@ -219,6 +243,21 @@ public class TimeUtil {
         return x.withNano(adjustedNano);
     }
 
+    public static Duration adjustNanosPrecision(Duration x, int fsp, boolean serverRoundFracSecs) {
+        if (fsp < 0 || fsp > 6) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, "fsp value must be in 0 to 6 range.");
+        }
+        int originalNano = x.getNano();
+        double tail = Math.pow(10, 9 - fsp);
+
+        int adjustedNano = serverRoundFracSecs ? (int) Math.round(originalNano / tail) * (int) tail : (int) (originalNano / tail) * (int) tail;
+        if (adjustedNano > 999999999) { // if rounded up to the second then increment seconds
+            adjustedNano %= 1000000000;
+            x = x.plusSeconds(1);
+        }
+        return x.withNanos(adjustedNano);
+    }
+
     /**
      * Return a string representation of a fractional seconds part. This method assumes that all Timestamp adjustments are already done before,
      * thus no rounding is needed, only a proper "0" padding to be done.
@@ -357,191 +396,118 @@ public class TimeUtil {
         return sdf;
     }
 
-    /**
-     * Used in prepared statements
-     * 
-     * @param dt
-     *            DateTime string
-     * @param toTime
-     *            true if get Time pattern
-     * @return pattern
-     * @throws IOException
-     *             if an error occurs
-     */
-    public static final String getDateTimePattern(String dt, boolean toTime) throws IOException {
-        //
-        // Special case
-        //
-        int dtLength = (dt != null) ? dt.length() : 0;
+    public static Object parseToDateTimeObject(String s, MysqlType targetMysqlType) throws IOException {
+        if (DATE_LITERAL_WITH_DELIMITERS.matcher(s).matches()) {
+            return LocalDate.parse(getCanonicalDate(s), DateTimeFormatter.ISO_LOCAL_DATE);
 
-        if ((dtLength >= 8) && (dtLength <= 10)) {
-            int dashCount = 0;
-            boolean isDateOnly = true;
+        } else if (DATE_LITERAL_NO_DELIMITERS.matcher(s).matches() && !(targetMysqlType == MysqlType.TIME && TIME_LITERAL_SHORT6.matcher(s).matches())) {
+            return s.length() == 8 ? LocalDate.parse(s, DateTimeFormatter.BASIC_ISO_DATE) : LocalDate.parse(s, DateTimeFormatter.ofPattern("yyMMdd"));
 
-            for (int i = 0; i < dtLength; i++) {
-                char c = dt.charAt(i);
+        } else if (TIME_LITERAL_WITH_DELIMITERS.matcher(s).matches()) {
+            return LocalTime.parse(getCanonicalTime(s),
+                    new DateTimeFormatterBuilder().appendPattern("HH:mm:ss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).toFormatter());
 
-                if (!Character.isDigit(c) && (c != '-')) {
-                    isDateOnly = false;
+        } else if (TIME_LITERAL_SHORT6.matcher(s).matches()) {
+            return LocalTime.parse(s,
+                    new DateTimeFormatterBuilder().appendPattern("HHmmss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).toFormatter());
 
-                    break;
-                }
+        } else if (TIME_LITERAL_SHORT4.matcher(s).matches()) {
+            return LocalTime.parse("00" + s,
+                    new DateTimeFormatterBuilder().appendPattern("HHmmss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).toFormatter());
 
-                if (c == '-') {
-                    dashCount++;
-                }
+        } else if (TIME_LITERAL_SHORT2.matcher(s).matches()) {
+            return LocalTime.parse("0000" + s,
+                    new DateTimeFormatterBuilder().appendPattern("HHmmss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).toFormatter());
+
+        } else if (DATETIME_LITERAL_SHORT14.matcher(s).matches()) {
+            return LocalDateTime.parse(s,
+                    new DateTimeFormatterBuilder().appendPattern("yyyyMMddHHmmss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).toFormatter());
+
+        } else if (DATETIME_LITERAL_SHORT12.matcher(s).matches()) {
+            return LocalDateTime.parse(s,
+                    new DateTimeFormatterBuilder().appendPattern("yyMMddHHmmss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).toFormatter());
+
+        } else if (DATETIME_LITERAL_WITH_DELIMITERS.matcher(s).matches()) {
+            return LocalDateTime.parse(getCanonicalDateTime(s),
+                    new DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd HH:mm:ss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).toFormatter());
+
+        } else if (DURATION_LITERAL_WITH_DAYS.matcher(s).matches() || DURATION_LITERAL_NO_DAYS.matcher(s).matches()) {
+            s = s.startsWith("-") ? s.replace("-", "-P") : "P" + s;
+            s = s.contains(" ") ? s.replace(" ", "DT") : s.replace("P", "PT");
+            String[] ch = new String[] { "H", "M", "S" };
+            int pos = 0;
+            while (s.contains(":")) {
+                s = s.replaceFirst(":", ch[pos++]);
             }
-
-            if (isDateOnly && (dashCount == 2)) {
-                return "yyyy-MM-dd";
-            }
+            s = s + ch[pos];
+            return Duration.parse(s);
         }
-
-        //
-        // Special case - time-only
-        //
-        boolean colonsOnly = true;
-
-        for (int i = 0; i < dtLength; i++) {
-            char c = dt.charAt(i);
-
-            if (!Character.isDigit(c) && (c != ':')) {
-                colonsOnly = false;
-
-                break;
-            }
-        }
-
-        if (colonsOnly) {
-            return "HH:mm:ss";
-        }
-
-        int n;
-        int z;
-        int count;
-        int maxvecs;
-        char c;
-        char separator;
-        StringReader reader = new StringReader(dt + " ");
-        ArrayList<Object[]> vec = new ArrayList<>();
-        ArrayList<Object[]> vecRemovelist = new ArrayList<>();
-        Object[] nv = new Object[3];
-        Object[] v;
-        nv[0] = Character.valueOf('y');
-        nv[1] = new StringBuilder();
-        nv[2] = Integer.valueOf(0);
-        vec.add(nv);
-
-        if (toTime) {
-            nv = new Object[3];
-            nv[0] = Character.valueOf('h');
-            nv[1] = new StringBuilder();
-            nv[2] = Integer.valueOf(0);
-            vec.add(nv);
-        }
-
-        while ((z = reader.read()) != -1) {
-            separator = (char) z;
-            maxvecs = vec.size();
-
-            for (count = 0; count < maxvecs; count++) {
-                v = vec.get(count);
-                n = ((Integer) v[2]).intValue();
-                c = getSuccessor(((Character) v[0]).charValue(), n);
-
-                if (!Character.isLetterOrDigit(separator)) {
-                    if ((c == ((Character) v[0]).charValue()) && (c != 'S')) {
-                        vecRemovelist.add(v);
-                    } else {
-                        ((StringBuilder) v[1]).append(separator);
-
-                        if ((c == 'X') || (c == 'Y')) {
-                            v[2] = Integer.valueOf(4);
-                        }
-                    }
-                } else {
-                    if (c == 'X') {
-                        c = 'y';
-                        nv = new Object[3];
-                        nv[1] = (new StringBuilder(((StringBuilder) v[1]).toString())).append('M');
-                        nv[0] = Character.valueOf('M');
-                        nv[2] = Integer.valueOf(1);
-                        vec.add(nv);
-                    } else if (c == 'Y') {
-                        c = 'M';
-                        nv = new Object[3];
-                        nv[1] = (new StringBuilder(((StringBuilder) v[1]).toString())).append('d');
-                        nv[0] = Character.valueOf('d');
-                        nv[2] = Integer.valueOf(1);
-                        vec.add(nv);
-                    }
-
-                    ((StringBuilder) v[1]).append(c);
-
-                    if (c == ((Character) v[0]).charValue()) {
-                        v[2] = Integer.valueOf(n + 1);
-                    } else {
-                        v[0] = Character.valueOf(c);
-                        v[2] = Integer.valueOf(1);
-                    }
-                }
-            }
-
-            int size = vecRemovelist.size();
-
-            for (int i = 0; i < size; i++) {
-                v = vecRemovelist.get(i);
-                vec.remove(v);
-            }
-
-            vecRemovelist.clear();
-        }
-
-        int size = vec.size();
-
-        for (int i = 0; i < size; i++) {
-            v = vec.get(i);
-            c = ((Character) v[0]).charValue();
-            n = ((Integer) v[2]).intValue();
-
-            boolean bk = getSuccessor(c, n) != c;
-            boolean atEnd = (((c == 's') || (c == 'm') || ((c == 'h') && toTime)) && bk);
-            boolean finishesAtDate = (bk && (c == 'd') && !toTime);
-            boolean containsEnd = (((StringBuilder) v[1]).toString().indexOf('W') != -1);
-
-            if ((!atEnd && !finishesAtDate) || (containsEnd)) {
-                vecRemovelist.add(v);
-            }
-        }
-
-        size = vecRemovelist.size();
-
-        for (int i = 0; i < size; i++) {
-            vec.remove(vecRemovelist.get(i));
-        }
-
-        vecRemovelist.clear();
-        v = vec.get(0); // might throw exception
-
-        StringBuilder format = (StringBuilder) v[1];
-        format.setLength(format.length() - 1);
-
-        return format.toString();
+        throw ExceptionFactory.createException(WrongArgumentException.class, "There is no known date-time pattern for '" + s + "' value");
     }
 
-    private static final char getSuccessor(char c, int n) {
-        return ((c == 'y') && (n == 2)) ? 'X'
-                : (((c == 'y') && (n < 4)) ? 'y'
-                        : ((c == 'y') ? 'M'
-                                : (((c == 'M') && (n == 2)) ? 'Y'
-                                        : (((c == 'M') && (n < 3)) ? 'M'
-                                                : ((c == 'M') ? 'd'
-                                                        : (((c == 'd') && (n < 2)) ? 'd'
-                                                                : ((c == 'd') ? 'H'
-                                                                        : (((c == 'H') && (n < 2)) ? 'H'
-                                                                                : ((c == 'H') ? 'm'
-                                                                                        : (((c == 'm') && (n < 2)) ? 'm'
-                                                                                                : ((c == 'm') ? 's'
-                                                                                                        : (((c == 's') && (n < 2)) ? 's' : 'W'))))))))))));
+    private static String getCanonicalDate(String s) {
+        String[] sa = s.split("\\p{Punct}");
+        StringBuilder sb = new StringBuilder();
+        if (sa[0].length() == 2) {
+            sb.append(Integer.valueOf(sa[0]) > 69 ? "19" : "20");
+        }
+        sb.append(sa[0]);
+        sb.append("-");
+        if (sa[1].length() == 1) {
+            sb.append("0");
+        }
+        sb.append(sa[1]);
+        sb.append("-");
+        if (sa[2].length() == 1) {
+            sb.append("0");
+        }
+        sb.append(sa[2]);
+
+        return sb.toString();
+    }
+
+    private static String getCanonicalTime(String s) {
+        String[] sa = s.split("\\p{Punct}");
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < sa.length; i++) {
+            if (i > 0) {
+                sb.append(i < 3 ? ":" : ".");
+            }
+            if (i < 3 && sa[i].length() == 1) {
+                sb.append("0");
+            }
+            sb.append(sa[i]);
+
+        }
+        if (sa.length < 3) {
+            sb.append(":00");
+        }
+
+        return sb.toString();
+    }
+
+    private static String getCanonicalDateTime(String s) {
+        String[] sa = s.split("[ T]");
+        StringBuilder sb = new StringBuilder();
+        sb.append(getCanonicalDate(sa[0]));
+        sb.append(" ");
+        sb.append(getCanonicalTime(sa[1]));
+        return sb.toString();
+    }
+
+    public static String getDurationString(Duration x) {
+        String s = (x.isNegative() ? "-" + x.abs().toString() : x.toString()).replace("PT", "");
+        if (s.contains("M")) {
+            s = s.replace("H", ":");
+            if (s.contains("S")) {
+                s = s.replace("M", ":").replace("S", "");
+            } else {
+                s = s.replace("M", ":0");
+            }
+        } else {
+            s = s.replace("H", ":0:0");
+        }
+        return s;
     }
 }

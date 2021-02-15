@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,9 +47,13 @@ import java.sql.NClob;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Calendar;
 
 import com.mysql.cj.conf.PropertyKey;
@@ -463,14 +467,13 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
             x = TimeUtil.adjustNanosPrecision(x, fractLen, !this.session.getServerSession().isServerTruncatesFracSecs());
         }
 
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder().appendPattern("HH:mm:ss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true)
+                .toFormatter();
+
         switch (targetMysqlType) {
             case TIME:
                 StringBuilder sb = new StringBuilder("'");
-                sb.append(x.toString());
-                if (sb.length() < 7) {
-                    // LocalTime.toString() omits zero parts, so we need to append zero minutes to be consistent with SSPS
-                    sb.append(":00");
-                }
+                sb.append(x.format(formatter));
                 sb.append("'");
                 setValue(parameterIndex, sb.toString(), targetMysqlType);
                 break;
@@ -479,11 +482,35 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
                 sb = new StringBuilder("'");
                 sb.append(DEFAULT_DATE);
                 sb.append(" ");
-                sb.append(x.toString());
-                if (sb.length() < 18) {
-                    // LocalTime.toString() omits zero parts, so we need to append zero minutes to be consistent with SSPS
-                    sb.append(":00");
-                }
+                sb.append(x.format(formatter));
+                sb.append("'");
+                setValue(parameterIndex, sb.toString(), targetMysqlType);
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public void setDuration(int parameterIndex, Duration x, MysqlType targetMysqlType) {
+        if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs() || !this.sendFractionalSeconds.getValue()) {
+            if (x.getNano() > 0) {
+                x = x.isNegative() ? x.plusSeconds(1).withNanos(0) : x.withNanos(0); // truncate nanoseconds
+            }
+        } else {
+            int fractLen = 6; // max supported length (i.e. microsecond)
+            if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0) {
+                // use the column definition if available
+                fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+            }
+
+            x = TimeUtil.adjustNanosPrecision(x, fractLen, !this.session.getServerSession().isServerTruncatesFracSecs());
+        }
+
+        switch (targetMysqlType) {
+            case TIME:
+                StringBuilder sb = new StringBuilder("'");
+                sb.append(TimeUtil.getDurationString(x));
                 sb.append("'");
                 setValue(parameterIndex, sb.toString(), targetMysqlType);
                 break;
@@ -528,25 +555,19 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
             switch (targetMysqlType) {
                 case TIME:
+                    DateTimeFormatter formatter = new DateTimeFormatterBuilder().appendPattern("HH:mm:ss")
+                            .appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true).toFormatter();
                     StringBuilder sb = new StringBuilder("'");
-                    sb.append(x.toLocalTime().toString());
-                    if (sb.length() < 7) {
-                        // LocalTime.toString() omits zero parts, so we need to append zero minutes to be consistent with SSPS
-                        sb.append(":00");
-                    }
+                    sb.append(x.toLocalTime().format(formatter));
                     sb.append("'");
                     setValue(parameterIndex, sb.toString(), targetMysqlType);
                     break;
                 case DATETIME:
                 case TIMESTAMP:
+                    formatter = new DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd HH:mm:ss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true)
+                            .toFormatter();
                     sb = new StringBuilder("'");
-                    sb.append(x.toLocalDate());
-                    sb.append(" ");
-                    sb.append(x.toLocalTime().toString());
-                    if (sb.length() < 18) {
-                        // LocalTime.toString() omits zero parts, so we need to append zero minutes to be consistent with SSPS
-                        sb.append(":00");
-                    }
+                    sb.append(x.format(formatter));
                     sb.append("'");
                     setValue(parameterIndex, sb.toString(), targetMysqlType);
                     break;

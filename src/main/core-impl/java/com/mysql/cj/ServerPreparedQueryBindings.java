@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,6 +39,7 @@ import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -571,5 +572,31 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
         binding.calendar = targetCalendar == null ? null : (Calendar) targetCalendar.clone();
         binding.parameterType = targetMysqlType;
 
+    }
+
+    @Override
+    public void setDuration(int parameterIndex, Duration x, MysqlType targetMysqlType) {
+        ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
+        if (!this.session.getServerSession().getCapabilities().serverSupportsFracSecs() || !this.sendFractionalSeconds.getValue()) {
+            if (x.getNano() > 0) {
+                x = x.isNegative() ? x.plusSeconds(1).withNanos(0) : x.withNanos(0); // truncate nanoseconds
+            }
+        } else {
+            int fractLen = 6; // max supported length (i.e. microsecond)
+            if (this.columnDefinition != null && parameterIndex <= this.columnDefinition.getFields().length && parameterIndex >= 0) {
+                // use the column definition if available
+                fractLen = this.columnDefinition.getFields()[parameterIndex].getDecimals();
+            }
+            x = TimeUtil.adjustNanosPrecision(x, fractLen, !this.session.getServerSession().isServerTruncatesFracSecs());
+        }
+
+        if (targetMysqlType == MysqlType.TIME) {
+            this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_TIME, this.numberOfExecutions));
+        } else {
+            // DATETIME or TIMESTAMP
+            this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_DATETIME, this.numberOfExecutions));
+        }
+        binding.parameterType = targetMysqlType;
+        binding.value = x;
     }
 }

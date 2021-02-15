@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,7 +37,7 @@ import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
-import java.text.ParsePosition;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -47,7 +47,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -226,6 +225,7 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
         DEFAULT_MYSQL_TYPES.put(OffsetTime.class, MysqlType.TIME); // default JDBC mapping is TIME_WITH_TIMEZONE, see B-4
         DEFAULT_MYSQL_TYPES.put(OffsetDateTime.class, MysqlType.TIMESTAMP); // default JDBC mapping is TIMESTAMP_WITH_TIMEZONE, see B-4
         DEFAULT_MYSQL_TYPES.put(ZonedDateTime.class, MysqlType.TIMESTAMP); // no JDBC mapping is defined
+        DEFAULT_MYSQL_TYPES.put(Duration.class, MysqlType.TIME);
         DEFAULT_MYSQL_TYPES.put(java.sql.Blob.class, MysqlType.BLOB);
         DEFAULT_MYSQL_TYPES.put(java.sql.Clob.class, MysqlType.TEXT);
         DEFAULT_MYSQL_TYPES.put(BigInteger.class, MysqlType.BIGINT);
@@ -531,6 +531,25 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                                 this.session.getExceptionInterceptor());
                 }
 
+            } else if (parameterObj instanceof Duration) {
+                switch (targetMysqlType) {
+                    case TIME:
+                        setDuration(parameterIndex, (Duration) parameterObj, targetMysqlType);
+                        break;
+                    case CHAR:
+                    case VARCHAR:
+                    case TINYTEXT:
+                    case TEXT:
+                    case MEDIUMTEXT:
+                    case LONGTEXT:
+                        setString(parameterIndex, TimeUtil.getDurationString((Duration) parameterObj));
+                        break;
+                    default:
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("PreparedStatement.67", new Object[] { parameterObj.getClass().getName(), targetMysqlType.toString() }),
+                                this.session.getExceptionInterceptor());
+                }
+
             } else if (parameterObj instanceof java.sql.Date) {
                 switch (targetMysqlType) {
                     case DATE:
@@ -815,14 +834,9 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                     case DATE:
                     case DATETIME:
                     case TIMESTAMP:
-                    case YEAR:
-                        ParsePosition pp = new ParsePosition(0);
-                        java.text.DateFormat sdf = new java.text.SimpleDateFormat(TimeUtil.getDateTimePattern((String) parameterObj, false), Locale.US);
-                        setObject(parameterIndex, sdf.parse((String) parameterObj, pp), targetMysqlType, scaleOrLength);
-                        break;
                     case TIME:
-                        sdf = new java.text.SimpleDateFormat(TimeUtil.getDateTimePattern((String) parameterObj, true), Locale.US);
-                        setTime(parameterIndex, new java.sql.Time(sdf.parse((String) parameterObj).getTime()));
+                    case YEAR:
+                        setObject(parameterIndex, TimeUtil.parseToDateTimeObject((String) parameterObj, targetMysqlType), targetMysqlType);
                         break;
                     case UNKNOWN:
                         setSerializableObject(parameterIndex, parameterObj);

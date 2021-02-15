@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,13 @@
 
 package com.mysql.cj;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -46,6 +50,7 @@ import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.TimeUtil;
 
 //TODO should not be protocol-specific
 
@@ -138,6 +143,11 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
             return "NULL";
         }
 
+        DateTimeFormatter timeFmtWithOptMicros = new DateTimeFormatterBuilder().appendPattern("HH:mm:ss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true)
+                .toFormatter();
+        DateTimeFormatter datetimeFmtWithOptMicros = new DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd HH:mm:ss")
+                .appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true).toFormatter();
+
         switch (this.bufferType) {
             case MysqlType.FIELD_TYPE_TINY:
             case MysqlType.FIELD_TYPE_SHORT:
@@ -149,9 +159,40 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
             case MysqlType.FIELD_TYPE_DOUBLE:
                 return String.valueOf(((Double) this.value).doubleValue());
             case MysqlType.FIELD_TYPE_TIME:
+                String s;
+                if (this.value instanceof LocalDateTime) {
+                    s = ((LocalDateTime) this.value).format(timeFmtWithOptMicros);
+                } else if (this.value instanceof LocalTime) {
+                    s = ((LocalTime) this.value).format(timeFmtWithOptMicros);
+                } else if (this.value instanceof Duration) {
+                    s = TimeUtil.getDurationString(((Duration) this.value));
+                } else {
+                    s = String.valueOf(this.value);
+                }
+                return "'" + s + "'";
             case MysqlType.FIELD_TYPE_DATE:
+                if (this.value instanceof LocalDate) {
+                    s = ((LocalDate) this.value).format(TimeUtil.DATE_FORMATTER);
+                } else if (this.value instanceof LocalTime) {
+                    s = ((LocalTime) this.value).atDate(LocalDate.of(1970, 1, 1)).format(TimeUtil.DATE_FORMATTER);
+                } else if (this.value instanceof LocalDateTime) {
+                    s = ((LocalDateTime) this.value).format(TimeUtil.DATE_FORMATTER);
+                } else {
+                    s = String.valueOf(this.value);
+                }
+                return "'" + s + "'";
             case MysqlType.FIELD_TYPE_DATETIME:
             case MysqlType.FIELD_TYPE_TIMESTAMP:
+                if (this.value instanceof LocalDate) {
+                    s = ((LocalDate) this.value).format(datetimeFmtWithOptMicros);
+                } else if (this.value instanceof LocalTime) {
+                    s = ((LocalTime) this.value).atDate(LocalDate.of(1970, 1, 1)).format(timeFmtWithOptMicros);
+                } else if (this.value instanceof LocalDateTime) {
+                    s = ((LocalDateTime) this.value).format(datetimeFmtWithOptMicros);
+                } else {
+                    s = String.valueOf(this.value);
+                }
+                return "'" + s + "'";
             case MysqlType.FIELD_TYPE_VAR_STRING:
             case MysqlType.FIELD_TYPE_STRING:
             case MysqlType.FIELD_TYPE_VARCHAR:
@@ -316,7 +357,7 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
     }
 
     private void storeTime(NativePacketPayload intoPacket) {
-        int hours, minutes, seconds, microseconds;
+        int neg = 0, days = 0, hours, minutes, seconds, microseconds;
 
         if (this.value instanceof LocalDateTime) {
             hours = ((LocalDateTime) this.value).getHour();
@@ -328,6 +369,16 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
             minutes = ((LocalTime) this.value).getMinute();
             seconds = ((LocalTime) this.value).getSecond();
             microseconds = ((LocalTime) this.value).getNano() / 1000;
+        } else if (this.value instanceof Duration) {
+            neg = ((Duration) this.value).isNegative() ? 1 : 0;
+            long fullSeconds = ((Duration) this.value).abs().getSeconds();
+            seconds = (int) (fullSeconds % 60);
+            long fullMinutes = fullSeconds / 60;
+            minutes = (int) (fullMinutes % 60);
+            long fullHours = fullMinutes / 60;
+            hours = (int) (fullHours % 24);
+            days = (int) (fullHours / 24);
+            microseconds = ((Duration) this.value).abs().getNano() / 1000;
         } else {
             if (this.calendar == null) {
                 this.calendar = Calendar.getInstance(this.defaultTimeZone, Locale.US);
@@ -343,8 +394,8 @@ public class ServerPreparedQueryBindValue extends ClientPreparedQueryBindValue i
 
         intoPacket.ensureCapacity(microseconds > 0 ? 13 : 9);
         intoPacket.writeInteger(IntegerDataType.INT1, microseconds > 0 ? 12 : 8); // length
-        intoPacket.writeInteger(IntegerDataType.INT1, 0); // neg flag
-        intoPacket.writeInteger(IntegerDataType.INT4, 0); // tm->day, not used
+        intoPacket.writeInteger(IntegerDataType.INT1, neg);
+        intoPacket.writeInteger(IntegerDataType.INT4, days);
         intoPacket.writeInteger(IntegerDataType.INT1, hours);
         intoPacket.writeInteger(IntegerDataType.INT1, minutes);
         intoPacket.writeInteger(IntegerDataType.INT1, seconds);
