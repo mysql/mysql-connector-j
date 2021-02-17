@@ -7802,4 +7802,27 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     "Wrong ResultSetMetaData metadata for column type " + rsm.getColumnTypeName(colnum));
         }
     }
+
+    /**
+     * Tests fix for Bug#102131 (32338451), UPDATABLERESULTSET NPE WHEN USING DERIVED QUERIES OR VIEWS.
+     *
+     * @throws Exception
+     *             if the test fails
+     */
+    @Test
+    public void testBug102131() throws Exception {
+        createTable("testBug102131User", "(id int,name varchar(10))");
+        createTable("testBug102131Age", "(id int,age int)");
+        createView("testBug102131View",
+                "as select name,ifnull(age,0) age from testBug102131User inner join testBug102131Age on testBug102131User.id = testBug102131Age.id");
+
+        this.stmt.executeUpdate("INSERT INTO testBug102131User VALUES (1, 'a')");
+        this.stmt.executeUpdate("INSERT INTO testBug102131Age VALUES (1, 20)");
+
+        Statement st1 = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        this.rs = st1.executeQuery("select * from testBug102131View");
+        assertTrue(this.rs.next());
+        assertEquals("a", this.rs.getString("name"));
+        assertEquals(20, this.rs.getInt("age"));
+    }
 }

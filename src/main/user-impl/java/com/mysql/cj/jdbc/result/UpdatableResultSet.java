@@ -284,7 +284,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                     }
 
                     // Can't reference more than one database
-                    if ((dbName == null) || !otherDbName.equals(dbName)) {
+                    if ((dbName == null) || !dbName.equals(otherDbName)) {
                         this.isUpdatable = false;
                         this.notUpdatableReason = Messages.getString("NotUpdatableReason.1");
 
