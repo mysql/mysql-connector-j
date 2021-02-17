@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -127,6 +127,7 @@ import com.mysql.cj.NativeSession;
 import com.mysql.cj.Query;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.Session;
+import com.mysql.cj.conf.ConnectionPropertiesTransform;
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
@@ -11768,5 +11769,31 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         assertFalse(authenticationPluginsTested.isEmpty());
+    }
+
+    /**
+     * Tests fix for Bug#101596 (32151143), GET THE 'HOST' PROPERTY ERROR AFTER CALLING TRANSFORMPROPERTIES() METHOD.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug101596() throws Exception {
+        Connection testConn = null;
+        try {
+            String transformClassName = TestBug101596Transformer.class.getName();
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.propertiesTransform.getKeyName(), transformClassName);
+            testConn = getConnectionWithProps(props); // it was failing before the fix
+        } finally {
+            if (testConn != null) {
+                testConn.close();
+            }
+        }
+    }
+
+    public static class TestBug101596Transformer implements ConnectionPropertiesTransform {
+        public Properties transformProperties(Properties props) {
+            return props;
+        }
     }
 }
