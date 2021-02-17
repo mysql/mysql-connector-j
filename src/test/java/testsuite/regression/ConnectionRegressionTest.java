@@ -11796,4 +11796,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
             return props;
         }
     }
+
+    /**
+     * Tests fix for Bug#22508715, SETSESSIONMAXROWS() CALL ON CLOSED CONNECTION RESULTS IN NPE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug22508715() throws Exception {
+        Properties props = new Properties();
+        Connection con = getConnectionWithProps(props);
+        con.close();
+
+        assertThrows(SQLNonTransientConnectionException.class, "No operations allowed after connection closed.*", () -> {
+            ((JdbcConnection) con).setSessionMaxRows(0);
+            return null;
+        });
+    }
 }
