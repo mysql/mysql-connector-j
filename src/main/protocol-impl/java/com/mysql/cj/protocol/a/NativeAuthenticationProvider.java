@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -268,11 +268,9 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
             }
         }
 
-        // initialize and add plugin instances
+        // add plugin instances
         boolean defaultFound = false;
         for (AuthenticationPlugin<NativePacketPayload> plugin : pluginsToInit) {
-            plugin.init(this.protocol, this.callbackHandler);
-
             String pluginProtocolName = plugin.getProtocolPluginName();
             String pluginClassName = plugin.getClass().getName();
             boolean disabledByProtocolName = disabledAuthenticationPlugins.contains(pluginProtocolName);
@@ -307,10 +305,9 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     }
 
     /**
-     * Get authentication plugin instance from authentication plugins map by
-     * pluginName key. If such plugin is found it's {@link AuthenticationPlugin#isReusable()} method
-     * is checked, when it's false this method returns a new instance of plugin
-     * and the same instance otherwise.
+     * Get an authentication plugin instance from the authentication plugins map by pluginName key. If such plugin is found, its method
+     * {@link AuthenticationPlugin#isReusable()} is called and if the value returned is <code>false</code> then a new instance of the plugin is returned
+     * otherwise the instance that already exists is returned.
      * 
      * If plugin is not found method returns null, in such case the subsequent behavior
      * of handshake process depends on type of last packet received from server:
@@ -328,7 +325,6 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         if (plugin != null && !plugin.isReusable()) {
             try {
                 plugin = plugin.getClass().newInstance();
-                plugin.init(this.protocol, this.callbackHandler);
             } catch (Throwable t) {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
                         Messages.getString("AuthenticationProvider.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }), t,
@@ -336,6 +332,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
             }
         }
 
+        plugin.init(this.protocol, this.callbackHandler);
         return plugin;
     }
 

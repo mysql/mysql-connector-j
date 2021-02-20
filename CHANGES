@@ -3,6 +3,8 @@
 
 Version 8.0.24
 
+  - Fix for Bug#102188 (32526663), AccessControlException with AuthenticationLdapSaslClientPlugin.
+
   - Fix for Bug#22508715, SETSESSIONMAXROWS() CALL ON CLOSED CONNECTION RESULTS IN NPE.
 
   - Fix for Bug#102131 (32338451), UPDATABLERESULTSET NPE WHEN USING DERIVED QUERIES OR VIEWS.

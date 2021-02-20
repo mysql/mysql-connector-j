@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -253,6 +253,9 @@ public class AuthenticationTest extends BaseTestCase {
         for (int i = 0; i < 3; i++) {
             AuthenticationPlugin<NativePacketPayload> authPlugin = new AuthenticationLdapSaslClientPlugin();
 
+            // Initialize plugin with some protocol (none is needed).
+            authPlugin.init(null);
+
             // Set authentication parameters.
             authPlugin.setAuthenticationParameters("user", "pencil");
 
@@ -309,6 +312,9 @@ public class AuthenticationTest extends BaseTestCase {
     public void authLdapSaslCliPluginChallengeBadNonce() throws Exception {
         AuthenticationPlugin<NativePacketPayload> authPlugin = new AuthenticationLdapSaslClientPlugin();
 
+        // Initialize plugin with some protocol (none is needed).
+        authPlugin.init(null);
+
         // Set authentication parameters.
         authPlugin.setAuthenticationParameters("user", "pencil");
 
@@ -355,6 +361,9 @@ public class AuthenticationTest extends BaseTestCase {
     public void authLdapSaslCliPluginChallengeBadIterations() throws Exception {
         AuthenticationPlugin<NativePacketPayload> authPlugin = new AuthenticationLdapSaslClientPlugin();
 
+        // Initialize plugin with some protocol (none is needed).
+        authPlugin.init(null);
+
         // Set authentication parameters.
         authPlugin.setAuthenticationParameters("user", "pencil");
 
@@ -400,6 +409,9 @@ public class AuthenticationTest extends BaseTestCase {
     @Test
     public void authLdapSaslCliPluginChallengeMissingProof() throws Exception {
         AuthenticationPlugin<NativePacketPayload> authPlugin = new AuthenticationLdapSaslClientPlugin();
+
+        // Initialize plugin with some protocol (none is needed).
+        authPlugin.init(null);
 
         // Set authentication parameters.
         authPlugin.setAuthenticationParameters("user", "pencil");
@@ -458,6 +470,9 @@ public class AuthenticationTest extends BaseTestCase {
     public void authLdapSaslCliPluginChallengeBadProof() throws Exception {
         AuthenticationPlugin<NativePacketPayload> authPlugin = new AuthenticationLdapSaslClientPlugin();
 
+        // Initialize plugin with some protocol (none is needed).
+        authPlugin.init(null);
+
         // Set authentication parameters.
         authPlugin.setAuthenticationParameters("user", "pencil");
 
@@ -514,6 +529,7 @@ public class AuthenticationTest extends BaseTestCase {
     public void authLdapSaslCliPluginChallengeUnsupportedMech() throws Exception {
         assertThrows(CJException.class, "Unsupported SASL authentication mechanism 'UNKNOWN-MECH'\\.", () -> {
             AuthenticationPlugin<NativePacketPayload> ap = new AuthenticationLdapSaslClientPlugin();
+            ap.init(null);
             ap.nextAuthenticationStep(new NativePacketPayload("UNKNOWN-MECH".getBytes("ASCII")), new ArrayList<>());
             // Must do it twice because there's a chance to run the first iteration with a hashing seed instead of an authentication mechanism. 
             ap.nextAuthenticationStep(new NativePacketPayload("UNKNOWN-MECH".getBytes("ASCII")), new ArrayList<>());

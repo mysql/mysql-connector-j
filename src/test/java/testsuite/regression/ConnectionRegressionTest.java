@@ -63,6 +63,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.security.Security;
 import java.security.cert.CertificateException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11812,5 +11813,43 @@ public class ConnectionRegressionTest extends BaseTestCase {
             ((JdbcConnection) con).setSessionMaxRows(0);
             return null;
         });
+    }
+
+    /**
+     * Tests fix for Bug#102188 (32526663), AccessControlException with AuthenticationLdapSaslClientPlugin.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug102188() throws Exception {
+        /*
+         * Remove the provider 'MySQLScramShaSasl' that may have been loaded by other tests.
+         */
+        Security.removeProvider("MySQLScramShaSasl");
+
+        /*
+         * The provider 'MySQLScramShaSasl' should not have been loaded yet.
+         */
+        assertNull(Security.getProvider("MySQLScramShaSasl"));
+
+        /*
+         * After this fix the provider 'MySQLScramShaSasl' should not be loaded while connecting using an authentication plugin different than
+         * 'authentication_ldap_sasl_client'.
+         */
+        getConnectionWithProps("").close();
+        assertNull(Security.getProvider("MySQLScramShaSasl"));
+
+        /*
+         * Disabling the authentication plugin 'authentication_ldap_sasl_client' is another way to avoid loading the provider 'MySQLScramShaSasl'.
+         */
+        getConnectionWithProps("disabledAuthenticationPlugins=authentication_ldap_sasl_client").close();
+        assertNull(Security.getProvider("MySQLScramShaSasl"));
+
+        /*
+         * Setting 'authentication_ldap_sasl_client' as the default authentication plugin initializes it and, thus, the provider 'MySQLScramShaSasl' gets
+         * loaded.
+         */
+        getConnectionWithProps("defaultAuthenticationPlugin=authentication_ldap_sasl_client").close();
+        assertNotNull(Security.getProvider("MySQLScramShaSasl"));
     }
 }

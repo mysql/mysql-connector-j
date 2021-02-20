@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -68,11 +68,6 @@ import com.mysql.cj.util.StringUtils;
  * MySQL 'authentication_ldap_sasl_client' authentication plugin.
  */
 public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<NativePacketPayload> {
-    static {
-        // Register our own SCRAM-SHA SASL Client provider.
-        Security.addProvider(new ScramShaSaslProvider());
-    }
-
     public static String PLUGIN_NAME = "authentication_ldap_sasl_client";
 
     private static final String LOGIN_CONFIG_ENTRY = "MySQLConnectorJ";
@@ -135,6 +130,9 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
     @Override
     public void init(Protocol<NativePacketPayload> prot) {
         this.protocol = prot;
+
+        // Register our own SCRAM-SHA SASL Client provider.
+        Security.addProvider(new ScramShaSaslProvider());
     }
 
     @Override
