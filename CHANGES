@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.25
+
 Version 8.0.24
 
   - Fix for Bug#102188 (32526663), AccessControlException with AuthenticationLdapSaslClientPlugin.
