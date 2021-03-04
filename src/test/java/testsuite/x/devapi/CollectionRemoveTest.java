@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,15 +32,25 @@ package testsuite.x.devapi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.Collection;
+import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.DbDocImpl;
 import com.mysql.cj.xdevapi.DocResult;
+import com.mysql.cj.xdevapi.JsonArray;
 import com.mysql.cj.xdevapi.JsonNumber;
+import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.RemoveStatement;
 import com.mysql.cj.xdevapi.RemoveStatementImpl;
 import com.mysql.cj.xdevapi.Result;
@@ -54,9 +64,7 @@ import com.mysql.cj.xdevapi.XDevAPIError;
 public class CollectionRemoveTest extends BaseCollectionTestCase {
     @Test
     public void deleteAll() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
@@ -96,9 +104,7 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
 
     @Test
     public void deleteSome() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
@@ -117,9 +123,7 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
 
     @Test
     public void removeOne() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":1}").execute(); // Requires manual _id.
@@ -154,9 +158,7 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
 
     @Test
     public void testPreparedStatements() {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
 
         try {
             // Prepare test data.
@@ -402,9 +404,7 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testDeprecateWhere() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         this.collection.add("{\"_id\":\"1\", \"ord\": 1}", "{\"_id\":\"2\", \"ord\": 2}", "{\"_id\":\"3\", \"ord\": 3}", "{\"_id\":\"4\", \"ord\": 4}",
                 "{\"_id\":\"5\", \"ord\": 5}", "{\"_id\":\"6\", \"ord\": 6}", "{\"_id\":\"7\", \"ord\": 7}", "{\"_id\":\"8\", \"ord\": 8}").execute();
@@ -415,5 +415,313 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
 
         assertEquals(2, testRemove.execute().getAffectedItemsCount());
         assertEquals(4, ((RemoveStatementImpl) testRemove).where("$.ord > 4").execute().getAffectedItemsCount());
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testCollectionRemoveBasic() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, j = 0, maxrec = 100, recCnt = 0, arraySize = 30;
+        Result res = null;
+        DocResult docs = null;
+        /* add(DbDoc[] docs) */
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+        long l1 = Long.MAX_VALUE, l2 = Long.MIN_VALUE;
+        double d1 = 100.4567;
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf(d1 + i)));
+            newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(l1 - i)));
+            newDoc2.add("F4", new JsonNumber().setValue(String.valueOf(l2 + i)));
+            newDoc2.add("F5", new JsonNumber().setValue(String.valueOf(1 + i)));
+            newDoc2.add("F6", new JsonString().setValue((2000 + i) + "-02-" + (i * 2 + 10)));
+            JsonArray jarray = new JsonArray();
+            for (j = 0; j < (arraySize); j++) {
+                jarray.addValue(new JsonString().setValue("String-" + i + "-" + j));
+            }
+            newDoc2.add("ARR1", jarray);
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+        }
+        this.collection.add(jsonlist).execute();
+        assertEquals((maxrec), this.collection.count());
+
+        /* find without Condition */
+        docs = this.collection.find("$.F4<0").fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
+        recCnt = count_data(docs);
+        assertEquals(maxrec, recCnt);
+
+        /* remove with condition */
+        res = this.collection.remove("CAST($.F5 as SIGNED) = 1").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED) = 1 ").fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
+        assertFalse(docs.hasNext());
+
+        /* remove with condition, limit and orderBy */
+        res = this.collection.remove("CAST($.F5 as SIGNED) < 10").limit(1).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED) = 2 ").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3+0 as f3").execute();
+        assertFalse(docs.hasNext());
+
+        /* remove with condition on string */
+        res = this.collection.remove("$.F1 = 'Field-1-Data-2'").limit(10).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("$.F1 = 'Field-1-Data-2'").fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
+        assertFalse(docs.hasNext());
+
+        /* remove with condition on BigInt */
+        res = this.collection.remove("CAST($.F3 as SIGNED) = " + (l1 - 3)).limit(10).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F3 as SIGNED) = " + (l1 - 3)).fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
+        assertFalse(docs.hasNext());
+
+        /* remove with condition on Double */
+        res = this.collection.remove("CAST($.F2 as DECIMAL(10,5)) = " + (d1 + 4)).limit(10).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F2 as SIGNED) = " + (d1 + 4)).fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
+        assertFalse(docs.hasNext());
+
+        /* remove with condition on Array */
+        res = this.collection.remove("$.ARR1[1]  like 'String-5-1' OR $.ARR1[0]  like 'String-5-0' AND $.ARR1[2]  like 'String-5-2'").limit(10)
+                .orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("$.ARR1[1]  like 'String-5-%'").fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
+        assertFalse(docs.hasNext());
+
+        /* Try to remove non-existing row with condition on Array */
+        res = this.collection.remove("$.ARR1[1]  like 'String-5-1' OR $.ARR1[0]  like 'String-5-0' AND $.ARR1[2]  like 'String-5-2'").limit(10)
+                .orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(0, res.getAffectedItemsCount());
+
+        /* remove with condition on Array */
+        res = this.collection.remove("$.ARR1[1] like concat(substr($.ARR1[0],1,7),'6','-1')").limit(10).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("$.ARR1[1]  like 'String-6-%'").fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
+        assertFalse(docs.hasNext());
+
+        /* remove with null condition */
+        i = (int) this.collection.count();
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", () -> this.collection.remove(null).execute());
+
+        /* remove with empty condition */
+        i = (int) this.collection.count();
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", () -> this.collection.remove(" ").execute());
+
+        /* remove All with a true condition */
+        i = (int) this.collection.count();
+        res = this.collection.remove("true").limit((maxrec * 10)).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(i, res.getAffectedItemsCount());
+        docs = this.collection.find("$.ARR1[1]  like 'S%'").fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
+        assertFalse(docs.hasNext());
+
+        /* remove with a false condition */
+        i = (int) this.collection.count();
+        res = this.collection.remove("false").limit((maxrec * 10)).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(0, res.getAffectedItemsCount());
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testCollectionRemoveBindComplex() throws Exception {
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+
+        int i = 0, j = 0, maxrec = 20, arraySize = 3;
+        DbDoc doc = null;
+        Result res = null;
+        DocResult docs = null;
+        /* add(DbDoc[] docs) */
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+        long l1 = Long.MAX_VALUE, l2 = Long.MIN_VALUE;
+        double d1 = 100.4567;
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf(d1 + i)));
+            newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(l1 - i)));
+            newDoc2.add("F4", new JsonNumber().setValue(String.valueOf(l2 + i)));
+            newDoc2.add("F5", new JsonNumber().setValue(String.valueOf(1 + i)));
+            newDoc2.add("F6", new JsonString().setValue((2000 + i) + "-02-" + (i * 2 + 10)));
+            JsonArray jarray = new JsonArray();
+            for (j = 0; j < (arraySize); j++) {
+                if (j == 1) {
+                    jarray.addValue(new JsonString().setValue("String-" + j));
+                } else {
+                    jarray.addValue(new JsonString().setValue("String-" + i + "-" + j));
+                }
+            }
+            newDoc2.add("ARR1", jarray);
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+        }
+        this.collection.add(jsonlist).execute();
+        /*
+         * coll.createIndex("index1",true).field(".F1","TEXT(128)",true).execute();
+         * coll.createIndex("index2",true).field(".ARR1["+(arraySize-1)+"]","TEXT(256)",true).execute();
+         * coll.createIndex("index3",true).field(".F5","INT",true).execute();
+         * coll.createIndex("index4",true).field(".F3","BIGINT",true).execute();
+         */
+
+        this.collection.createIndex("index1", "{\"fields\": [{\"field\": \"$.F1\", \"type\": \"TEXT(120)\", \"required\": true}],  \"type\" : \"INDEX\"}");
+        this.collection.createIndex("index2",
+                "{\"fields\": [{\"field\": \"$.ARR1[" + (arraySize - 1) + "]\", \"type\": \"TEXT(120)\", \"required\": true}],  \"type\" : \"INDEX\"}");
+        this.collection.createIndex("index3", "{\"fields\": [{\"field\": \"$.F5\", \"type\": \"INT\", \"required\": true}],  \"type\" : \"INDEX\"}");
+        this.collection.createIndex("index4", "{\"fields\": [{\"field\": \"$.F3\", \"type\": \"BIGINT\", \"required\": true}],  \"type\" : \"INDEX\"}");
+
+        assertEquals((maxrec), this.collection.count());
+
+        assertThrows(XProtocolError.class, "ERROR 5115 \\(HY000\\) Document is missing a required field",
+                () -> this.collection.modify("CAST($.F5 as SIGNED) = 1").unset("$.ARR1[0]").sort("$._id").execute()); //dropping an empty string as collection
+
+        // With Named parameter
+        docs = this.collection.find("CAST($.F5 as SIGNED) > :A  AND CAST($.F5 as SIGNED) < :B").bind("B", 2).bind("A", -1).orderBy(" CAST($.F5 as SIGNED) asc ")
+                .fields("$.F5 as F5").execute();
+        i = 1;
+        while (docs.hasNext()) {
+            doc = docs.next();
+            assertEquals((long) (i), (long) (((JsonNumber) doc.get("F5")).getInteger()));
+        }
+
+        /* Named Param */
+        res = this.collection.remove("CAST($.F5 as SIGNED) > :A  AND CAST($.F5 as SIGNED) < :B AND CAST($.F5 as SIGNED) > :C").bind("B", 2).bind("C", -2)
+                .bind("A", -1).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED)  <? ").bind(2).fields("$.F5 as F5").execute();
+        assertFalse(docs.hasNext());
+
+        /* Array */
+        res = this.collection.remove("CAST($.F5 as SIGNED) > ? and CAST($.F5 as SIGNED) < ?").bind(new Object[] { (-1), (3) }).orderBy("CAST($.F5 as SIGNED)")
+                .execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED)  <? ").bind(3).fields("$.F5 as F5").execute();
+        assertFalse(docs.hasNext());
+
+        /* Map */
+        Map<String, Object> params = new HashMap<>();
+        params.put("namedParam10001", -1);
+        params.put("namedParam10000", 4);
+
+        res = this.collection.remove("CAST($.F5 as SIGNED) < :namedParam10000 and CAST($.F5 as SIGNED) > :namedParam10001").bind(params)
+                .orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED)  <? ").bind(4).fields("$.F5 as F5").execute();
+        assertFalse(docs.hasNext());
+
+        res = this.collection.remove("CAST($.F5 as SIGNED)  < ?").bind(5).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED)  <? ").bind(5).fields("$.F5 as F5").execute();
+        assertFalse(docs.hasNext());
+
+        res = this.collection.remove("CAST($.F5 as SIGNED)  in (?,?,?,?,?,?)").bind(5, -3, -5, 4, l1, l2).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED)  <? ").bind(5).fields("$.F5 as F5").execute();
+        assertFalse(docs.hasNext());
+
+        /* Named Param with large param name */
+        res = this.collection
+                .remove("CAST($.F5 as SIGNED) > :" + buildString(1000, 'Y') + "  AND CAST($.F5 as SIGNED) <= :B AND CAST($.F5 as SIGNED) > :"
+                        + buildString(1001, 'Y'))
+                .bind("B", 6).bind(buildString(1001, 'Y'), -2).bind(buildString(1000, 'Y'), -1).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED)  <? ").bind(6).fields("$.F5 as F5").execute();
+        assertFalse(docs.hasNext());
+
+        /* List */
+        List<Object> ldata = new ArrayList<>();
+        ldata.add(-1);
+        ldata.add(7);
+        ldata.add(8);
+        ldata.add(-2147483648);
+        res = this.collection.remove("CAST($.F5 as SIGNED) > ?  AND CAST($.F5 as SIGNED) <= ?  AND CAST($.F5 as SIGNED) < ? AND CAST($.F5 as SIGNED) > ?")
+                .bind(ldata).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED)  <? ").bind(7).fields("$.F5 as F5").execute();
+        assertFalse(docs.hasNext());
+
+        /* STRESSSSS */
+        /* Many List Params Bug#21832388 */
+        ldata.clear();
+        int maxBind = 20;
+        String q = "";
+
+        for (i = 0; i < maxBind; i++) {
+            ldata.add(i + 9);
+            if (i > 0) {
+                q = q + " and ";
+            }
+            q = q + "CAST($.F5 as SIGNED) < ?";
+        }
+
+        res = this.collection.remove(q).bind(ldata).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED)  <? ").bind(8).fields("$.F5 as F5").execute();
+        assertFalse(docs.hasNext());
+
+        /* Many Map variables */
+        params.clear();
+        q = "";
+        params.clear();
+        for (i = 0; i < maxBind; i++) {
+            params.put("thePlaceholderName" + i, i + 10);
+            if (i > 0) {
+                q = q + " AND ";
+            }
+            q = q + "CAST($.F5 as SIGNED) < :thePlaceholderName" + i + " ";
+        }
+
+        res = this.collection.remove(q).bind(params).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED)  <? ").bind(9).fields("$.F5 as F5").execute();
+        assertFalse(docs.hasNext());
+
+        /* Many Array variables */
+        Object[] adata = new Object[maxBind];
+        q = "";
+        params.clear();
+
+        for (i = 0; i < maxBind; i++) {
+            adata[i] = i + 11;
+            if (i > 0) {
+                q = q + " AND ";
+            }
+            q = q + "CAST($.F5 as SIGNED) < ? ";
+        }
+
+        res = this.collection.remove(q).bind(adata).orderBy("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F5 as SIGNED)  <? ").bind(10).fields("$.F5 as F5").execute();
+        assertFalse(docs.hasNext());
+
+        this.collection.dropIndex("index4");
+        this.collection.dropIndex("index3");
+        this.collection.dropIndex("index2");
+        this.collection.dropIndex("index1");
+        this.schema.dropCollection("invalidColl");//dropping an invalid collection
+
+        assertThrows(XProtocolError.class, "Parameter 'collectionName' must not be null.", () -> {
+            this.schema.dropCollection(null);
+            return null;
+        });
+        try {
+            this.schema.dropCollection(null);
+        } catch (Exception e) {
+            System.out.println("ERROR : " + e.getMessage());
+            assertTrue(e.getMessage().contains("must not be null"));
+        }
+
+        // successfully dropped an invalid and null collection
+
+        assertThrows(XProtocolError.class, "ERROR 5113 \\(HY000\\) Invalid collection name", () -> {
+            this.schema.dropCollection("");//dropping an empty string as collection
+            return null;
+        });
+
+        assertThrows(XProtocolError.class, "ERROR 1103 \\(42000\\) Incorrect table name ' '", () -> {
+            this.schema.dropCollection(" ");
+            return null;
+        });
     }
 }

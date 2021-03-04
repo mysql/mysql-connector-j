@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,8 +29,10 @@
 
 package testsuite.x.devapi;
 
+import static com.mysql.cj.xdevapi.Expression.expr;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -44,34 +46,34 @@ import com.mysql.cj.xdevapi.DbDocImpl;
 import com.mysql.cj.xdevapi.InsertResult;
 import com.mysql.cj.xdevapi.JsonParser;
 import com.mysql.cj.xdevapi.JsonString;
+import com.mysql.cj.xdevapi.Result;
 import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.RowResult;
+import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.Table;
 
-/**
- * @todo
- */
 public class TableInsertTest extends BaseTableTestCase {
     @Test
     public void lastInsertId() {
-        if (!this.isSetForXTests) {
-            return;
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            sqlUpdate("drop table if exists lastInsertId");
+            sqlUpdate("create table lastInsertId (id int not null primary key auto_increment, name varchar(20) not null)");
+            Table table = this.schema.getTable("lastInsertId");
+            InsertResult res = table.insert("name").values("a").values("b").values("c").execute();
+            assertEquals(3, res.getAffectedItemsCount());
+            // the *first* ID
+            assertEquals(new Long(1), res.getAutoIncrementValue());
+        } finally {
+            sqlUpdate("drop table if exists lastInsertId");
         }
-        String tableName = "lastInsertId";
-        sqlUpdate("drop table if exists lastInsertId");
-        sqlUpdate("create table lastInsertId (id int not null primary key auto_increment, name varchar(20) not null)");
-        Table table = this.schema.getTable(tableName);
-        InsertResult res = table.insert("name").values("a").values("b").values("c").execute();
-        assertEquals(3, res.getAffectedItemsCount());
-        // the *first* ID
-        assertEquals(new Long(1), res.getAutoIncrementValue());
     }
 
     @Test
     public void basicInsert() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             sqlUpdate("drop table if exists basicInsert");
             sqlUpdate("drop view if exists basicInsertView");
@@ -140,9 +142,8 @@ public class TableInsertTest extends BaseTableTestCase {
 
     @Test
     public void jsonInsert() throws IOException {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             sqlUpdate("drop table if exists jsonInsert");
             sqlUpdate("create table jsonInsert (_id varchar(32), doc JSON)");
@@ -181,6 +182,176 @@ public class TableInsertTest extends BaseTableTestCase {
 
         } finally {
             sqlUpdate("drop table if exists jsonInsert");
+        }
+    }
+
+    @Test
+    public void testGetAutoIncrementValueAsync() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            SqlResult res = this.session.sql("drop table if exists mytab").executeAsync().get();
+            res = this.session.sql("create table mytab (x bigint auto_increment primary key,y int)").executeAsync().get();
+            res = this.session.sql("drop table if exists mytabtmp").executeAsync().get();
+            res = this.session.sql("create table mytabtmp (x bigint,y int)").executeAsync().get();
+            res = this.session.sql("insert into mytabtmp values(NULL,8)").executeAsync().get();
+            res = this.session.sql("insert into mytabtmp values(1111,9)").executeAsync().get();
+
+            res = this.session.sql("ALTER TABLE mytab AUTO_INCREMENT = 111").executeAsync().get();
+            res = this.session.sql("insert into mytab values(NULL,1)").executeAsync().get();
+            assertEquals((long) 111, (long) res.getAutoIncrementValue());
+
+            res = this.session.sql("insert into mytab values(-100,2)").executeAsync().get();
+            assertEquals((long) -100, (long) res.getAutoIncrementValue());
+
+            res = this.session.sql("insert into mytab (y)values(3)").executeAsync().get();
+            assertEquals((long) 112, (long) res.getAutoIncrementValue());
+
+            res = this.session.sql("insert into mytab values(NULL,4),(NULL,5),(887,6),(NULL,7)").executeAsync().get();
+            assertEquals((long) 113, (long) res.getAutoIncrementValue());
+
+            res = this.session.sql("insert into mytab select * from mytabtmp").executeAsync().get();
+            assertEquals((long) 889, (long) res.getAutoIncrementValue());
+
+            res = this.session.sql("insert into mytab (y) select (y+1) from mytabtmp").executeAsync().get();
+            assertEquals((long) 1112, (long) res.getAutoIncrementValue());
+
+            //Ignore duplicate
+            res = this.session.sql("insert IGNORE  mytab select * from mytabtmp").executeAsync().get();
+            assertEquals((long) 1115, (long) res.getAutoIncrementValue());
+
+            // ON DUPLICATE KEY
+            res = this.session.sql("insert into mytab values(-100,2) ON DUPLICATE KEY UPDATE Y=Y*-1").executeAsync().get();
+            assertEquals((long) -100, (long) res.getAutoIncrementValue());
+
+            // ON DUPLICATE KEY
+            res = this.session.sql("insert into mytab values(-100,2) ON DUPLICATE KEY UPDATE X=X*-2").executeAsync().get();
+            assertEquals((long) 200, (long) res.getAutoIncrementValue());
+
+            //Replace
+            res = this.session.sql("Replace into mytab (y)values(100000)").executeAsync().get();
+            assertEquals((long) 1116, (long) res.getAutoIncrementValue());
+        } finally {
+            sqlUpdate("drop table if exists mytabtmp");
+            sqlUpdate("drop table if exists mytab");
+        }
+    }
+
+    @Test
+    public void testExprInInsert() {
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            sqlUpdate("drop table if exists qatablex");
+            sqlUpdate("create table qatablex (x char(100),y bigint,z int)");
+
+            Table table = this.schema.getTable("qatablex");
+            Result res = table.insert("x", "y", "z").values(expr("concat('A','-1')"), expr("concat('1','100')"), 1).execute();
+            assertEquals(1L, res.getAffectedItemsCount());
+
+            res = table.insert("x", "y", "z").values("expr(\"concat('A','-1)\")", expr("length(concat('1','000'))+100"), 2).execute();
+            assertEquals(1L, res.getAffectedItemsCount());
+
+            res = table.insert("x", "y", "z").values(expr("STR_TO_DATE('1,1,2014','%d,%m,%Y')"), expr("length(concat('1','000'))+101"), 3).execute();
+            assertEquals(1L, res.getAffectedItemsCount());
+
+            res = table.insert("x", "y", "z").values("expr(\"concat('A','-2)\")", expr("length(concat('1','000'))+101"), 4)
+                    .values("expr(\"concat('A','-3)\")", expr("length(concat('1','000'))+102"), 5).execute();
+            assertEquals(2L, res.getAffectedItemsCount());
+
+            res = table.insert("x", "y", "z").values(expr("concat('A',length('abcd'))"), expr("length(concat('1','000'))+103"), 3).execute();
+            assertEquals(1L, res.getAffectedItemsCount());
+
+            Map<String, Object> row = new HashMap<>();
+            row.put("x", expr("concat('A','''\n-10\"')"));
+            row.put("y", expr("concat('1','000')+103"));
+            row.put("z", 6);
+            res = table.insert(row).execute();
+            assertEquals(1, res.getAffectedItemsCount());
+            row.clear();
+            row.put("x", "expr(\"concat('A','\n''-10\")\")");
+            row.put("y", expr("concat('1','000')+104"));
+            row.put("z", 7);
+            res = table.insert(row).execute();
+            assertEquals(1L, res.getAffectedItemsCount());
+        } finally {
+            sqlUpdate("drop table if exists qatablex");
+        }
+    }
+
+    @Test
+    public void testGetAutoIncrementValue() {
+        assumeTrue(this.isSetForXTests);
+
+        Table table = null;
+        InsertResult res = null;
+        try {
+            sqlUpdate("drop table if exists qatable1");
+            sqlUpdate("drop table if exists qatable2");
+            sqlUpdate("create table qatable1 (x bigint auto_increment primary key,y double)");
+            sqlUpdate("create table qatable2 (x double auto_increment primary key,y bigint)");
+
+            table = this.schema.getTable("qatable1", true);
+            res = table.insert("y").values(101.1).execute();
+            assertEquals(1L, (long) res.getAutoIncrementValue());
+            assertEquals(1L, res.getAffectedItemsCount());
+
+            res = table.insert("y").values(102.1).values(103.1).values(104.1).execute();
+            assertEquals(2L, (long) res.getAutoIncrementValue());
+            assertEquals(3L, res.getAffectedItemsCount());
+
+            Map<String, Object> row = new HashMap<>();
+            row.put("y", expr("concat('1','05.1')"));
+
+            res = table.insert(row).execute();
+            assertEquals(5L, (long) res.getAutoIncrementValue());
+            assertEquals(1L, res.getAffectedItemsCount());
+
+            res = table.insert("y").values(102.1).values(103.1).values(104.1).execute();
+            assertEquals(6L, (long) res.getAutoIncrementValue());
+            assertEquals(3L, res.getAffectedItemsCount());
+
+            res = table.insert("y").values(102.1).values(103.1).values(104.1).execute();
+            assertEquals(9L, (long) res.getAutoIncrementValue());
+            assertEquals(3L, res.getAffectedItemsCount());
+
+            this.session.sql("ALTER TABLE qatable1 AUTO_INCREMENT = 9223372036854775800").execute();
+            res = table.insert("y").values(102.1).values(103.1).values(104.1).execute();
+            assertEquals(9223372036854775800L, (long) res.getAutoIncrementValue());
+            assertEquals(3L, res.getAffectedItemsCount());
+
+            res = table.insert(row).execute();
+            assertEquals(9223372036854775803L, (long) res.getAutoIncrementValue());
+            assertEquals(1L, res.getAffectedItemsCount());
+
+            table = this.schema.getTable("qatable2");
+            res = table.insert("y").values(101.1).execute();
+            assertEquals(1L, (long) res.getAutoIncrementValue());
+            assertEquals(1L, res.getAffectedItemsCount());
+
+            res = table.insert("y").values(102.1).values(103.1).values(104.1).execute();
+            assertEquals(2L, (long) res.getAutoIncrementValue());
+            assertEquals(3L, res.getAffectedItemsCount());
+
+            row = new HashMap<>();
+            row.put("y", expr("concat('1','05.1')"));
+
+            res = table.insert(row).execute();
+            assertEquals(5L, (long) res.getAutoIncrementValue());
+            assertEquals(1L, res.getAffectedItemsCount());
+
+            this.session.sql("ALTER TABLE qatable2 AUTO_INCREMENT = 4294967299000000").execute();
+            res = table.insert("y").values(102.1).values(103.1).values(104.1).execute();
+            assertEquals(4294967299000000L, (long) res.getAutoIncrementValue());
+            assertEquals(3L, res.getAffectedItemsCount());
+
+            this.session.sql("ALTER TABLE qatable2 AUTO_INCREMENT = 4294967299000000").execute();
+            res = table.insert(row).execute();
+            assertEquals(4294967299000003L, (long) res.getAutoIncrementValue());
+            assertEquals(1L, res.getAffectedItemsCount());
+        } finally {
+            sqlUpdate("drop table if exists qatable1");
+            sqlUpdate("drop table if exists qatable2");
         }
     }
 }

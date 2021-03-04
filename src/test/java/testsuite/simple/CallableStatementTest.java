@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -259,9 +259,6 @@ public class CallableStatementTest extends BaseTestCase {
 
         assertTrue("abc".equals(this.rs.getString(1)));
 
-        // TODO: This does not yet work in MySQL 5.0
-        // assertTrue(!storedProc.getMoreResults());
-        // assertTrue(storedProc.getUpdateCount() == 2);
         assertTrue(storedProc.getMoreResults());
 
         ResultSet nextResultSet = storedProc.getResultSet();

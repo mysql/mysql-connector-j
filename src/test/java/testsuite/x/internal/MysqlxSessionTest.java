@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,6 +32,7 @@ package testsuite.x.internal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,9 +85,8 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
 
     @Test
     public void testCreateDropCollection() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = "toBeCreatedAndDropped";
         XMessageBuilder builder = (XMessageBuilder) this.session.<XMessage>getMessageBuilder();
         try {
@@ -113,9 +113,8 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
 
     @Test
     public void testGetObjects() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         XMessageBuilder builder = (XMessageBuilder) this.session.<XMessage>getMessageBuilder();
         ValueFactory<String> svf = new StringValueFactory(new DefaultPropertySet());
         String collName = "test_get_objects";
@@ -145,9 +144,8 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
 
     @Test
     public void testInterleavedResults() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         XMessageBuilder builder = (XMessageBuilder) this.session.<XMessage>getMessageBuilder();
         String collName = "testInterleavedResults";
         try {
@@ -203,9 +201,8 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
 
     @Test
     public void testGenericQuery() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         XMessageBuilder builder = (XMessageBuilder) this.session.<XMessage>getMessageBuilder();
         List<Integer> ints = this.session.query(builder.buildSqlStatement("select 2 union select 1"), null,
                 r -> r.getValue(0, new IntegerValueFactory(new DefaultPropertySet())), Collectors.toList());

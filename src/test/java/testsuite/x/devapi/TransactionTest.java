@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,6 +32,7 @@ package testsuite.x.devapi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.concurrent.Callable;
 
@@ -64,9 +65,7 @@ public class TransactionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicRollback() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").add("{\"_id\": \"2\"}").execute(); // Requires manual _id.
@@ -87,9 +86,7 @@ public class TransactionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicCommit() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").add("{\"_id\": \"2\"}").execute(); // Requires manual _id.
@@ -110,9 +107,7 @@ public class TransactionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicSavepoint() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.

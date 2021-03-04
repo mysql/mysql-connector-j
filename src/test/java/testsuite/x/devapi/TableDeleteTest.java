@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,6 +30,7 @@
 package testsuite.x.devapi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -47,9 +48,8 @@ import com.mysql.cj.xdevapi.Table;
 public class TableDeleteTest extends BaseTableTestCase {
     @Test
     public void testDelete() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             sqlUpdate("drop table if exists testDelete");
             sqlUpdate("drop view if exists testDeleteView");
@@ -80,9 +80,7 @@ public class TableDeleteTest extends BaseTableTestCase {
 
     @Test
     public void testPreparedStatements() {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
 
         try {
             // Prepare test data.

@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
@@ -45,6 +46,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -52,6 +54,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -80,7 +83,6 @@ import com.mysql.cj.protocol.SocketFactory;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
 import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
-import com.mysql.cj.x.protobuf.MysqlxNotice.Warning;
 import com.mysql.cj.xdevapi.Client;
 import com.mysql.cj.xdevapi.Client.ClientProperty;
 import com.mysql.cj.xdevapi.ClientFactory;
@@ -97,6 +99,7 @@ import com.mysql.cj.xdevapi.SessionImpl;
 import com.mysql.cj.xdevapi.SqlMultiResult;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.SqlStatement;
+import com.mysql.cj.xdevapi.Warning;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
 import testsuite.InjectedSocketFactory;
@@ -137,9 +140,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void urlWithDefaultSchema() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         try {
             // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
@@ -193,9 +194,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void urlWithoutDefaultSchema() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         try {
             // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
@@ -247,9 +246,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void invalidDefaultSchema() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         try {
             // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
@@ -296,9 +293,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void createDropSchema() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String testSchemaName = getRandomTestSchemaName();
         Schema newSchema = this.session.createSchema(testSchemaName);
         assertTrue(this.session.getSchemas().contains(newSchema));
@@ -308,9 +304,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void createAndReuseExistingSchema() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String testSchemaName = getRandomTestSchemaName();
         Schema newSchema = this.session.createSchema(testSchemaName);
         assertTrue(this.session.getSchemas().contains(newSchema));
@@ -320,9 +315,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void listSchemas() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         List<Schema> schemas = this.session.getSchemas();
         // we should have visibility of at least these two
         Schema infoSchema = this.session.getSchema("information_schema");
@@ -333,9 +327,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void createExistingSchemaError() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String testSchemaName = getRandomTestSchemaName();
         Schema newSchema = this.session.createSchema(testSchemaName);
         assertTrue(this.session.getSchemas().contains(newSchema));
@@ -352,9 +345,8 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void errorOnPacketTooBig() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             SqlStatement stmt = this.session.sql("select @@mysqlx_max_allowed_packet");
             SqlResult res = stmt.execute();
@@ -379,9 +371,7 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug21690043() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         try {
             this.session.sql("CREATE USER 'bug21690043user1'@'%' IDENTIFIED WITH mysql_native_password").execute();
@@ -401,9 +391,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicSql() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         SqlStatement stmt = this.session.sql("select 1,2,3 from dual");
         SqlResult res = stmt.execute();
         assertTrue(res.hasData());
@@ -426,9 +415,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void sqlUpdate() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         SqlStatement stmt = this.session.sql("set @cjTestVar = 1");
         SqlResult res = stmt.execute();
         assertFalse(res.hasData());
@@ -486,9 +474,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void sqlArguments() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         SqlStatement stmt = this.session.sql("select ? as a, 40 + ? as b, ? as c");
         SqlResult res = stmt.bind(1).bind(2).bind(3).execute();
         Row r = res.next();
@@ -499,55 +486,63 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicMultipleResults() {
-        if (!this.isSetForXTests) {
-            return;
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            sqlUpdate("drop procedure if exists basicMultipleResults");
+            sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
+            SqlStatement stmt = this.session.sql("call basicMultipleResults()");
+            SqlResult res = stmt.execute();
+            assertTrue(res.hasData());
+            /* Row r = */ res.next();
+            assertFalse(res.hasNext());
+            assertTrue(res.nextResult());
+            assertTrue(res.hasData());
+            assertFalse(res.nextResult());
+            assertFalse(res.nextResult());
+            assertFalse(res.nextResult());
+        } finally {
+            sqlUpdate("drop procedure if exists basicMultipleResults");
         }
-        sqlUpdate("drop procedure if exists basicMultipleResults");
-        sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
-        SqlStatement stmt = this.session.sql("call basicMultipleResults()");
-        SqlResult res = stmt.execute();
-        assertTrue(res.hasData());
-        /* Row r = */ res.next();
-        assertFalse(res.hasNext());
-        assertTrue(res.nextResult());
-        assertTrue(res.hasData());
-        assertFalse(res.nextResult());
-        assertFalse(res.nextResult());
-        assertFalse(res.nextResult());
     }
 
     @Test
     public void smartBufferMultipleResults() {
-        if (!this.isSetForXTests) {
-            return;
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            sqlUpdate("drop procedure if exists basicMultipleResults");
+            sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
+            SqlStatement stmt = this.session.sql("call basicMultipleResults()");
+            /* SqlResult res = */ stmt.execute();
+            // execute another statement, should work fine
+            this.session.sql("call basicMultipleResults()");
+            this.session.sql("call basicMultipleResults()");
+            this.session.sql("call basicMultipleResults()");
+        } finally {
+            sqlUpdate("drop procedure if exists basicMultipleResults");
         }
-        sqlUpdate("drop procedure if exists basicMultipleResults");
-        sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
-        SqlStatement stmt = this.session.sql("call basicMultipleResults()");
-        /* SqlResult res = */ stmt.execute();
-        // execute another statement, should work fine
-        this.session.sql("call basicMultipleResults()");
-        this.session.sql("call basicMultipleResults()");
-        this.session.sql("call basicMultipleResults()");
     }
 
     @Test
     public void sqlInsertAutoIncrementValue() {
-        if (!this.isSetForXTests) {
-            return;
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            sqlUpdate("drop table if exists lastInsertId");
+            sqlUpdate("create table lastInsertId (id int not null primary key auto_increment, name varchar(20) not null)");
+
+            SqlStatement stmt = this.session.sql("insert into lastInsertId values (null, 'a')");
+            SqlResult res = stmt.execute();
+
+            assertFalse(res.hasData());
+            assertEquals(1, res.getAffectedItemsCount());
+            assertEquals(0, res.getWarningsCount());
+            assertFalse(res.getWarnings().hasNext());
+            assertEquals(new Long(1), res.getAutoIncrementValue());
+        } finally {
+            sqlUpdate("drop table if exists lastInsertId");
         }
-
-        sqlUpdate("drop table if exists lastInsertId");
-        sqlUpdate("create table lastInsertId (id int not null primary key auto_increment, name varchar(20) not null)");
-
-        SqlStatement stmt = this.session.sql("insert into lastInsertId values (null, 'a')");
-        SqlResult res = stmt.execute();
-
-        assertFalse(res.hasData());
-        assertEquals(1, res.getAffectedItemsCount());
-        assertEquals(0, res.getWarningsCount());
-        assertFalse(res.getWarnings().hasNext());
-        assertEquals(new Long(1), res.getAutoIncrementValue());
     }
 
     /**
@@ -557,9 +552,7 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug27652379() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         Properties props = new Properties();
 
@@ -629,9 +622,7 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug23045604() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         String url = this.baseUrl;
         if (!url.contains("?")) {
@@ -649,9 +640,7 @@ public class SessionTest extends DevApiBaseTestCase {
     @SuppressWarnings("unchecked")
     @Test
     public void testPooledSessions() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         final ClientFactory cf = new ClientFactory();
         final String url = this.baseUrl;
@@ -1108,9 +1097,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testBug28616573() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         RowResult res = this.session.sql(
                 "select @@global.mysqlx_max_connections, VARIABLE_VALUE FROM performance_schema.global_status WHERE VARIABLE_NAME='Mysqlx_worker_threads_active'")
@@ -1150,9 +1137,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testBug28606708() throws Exception {
-        if (!this.isSetForXTests || !isServerRunningOnWindows()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && isServerRunningOnWindows());
 
         for (String path : new String[] { null, "\\\\.\\pipe\\MySQL80" }) {
             String url = this.baseUrl + makeParam(PropertyKey.socketFactory, "com.mysql.cj.protocol.NamedPipeSocketFactory");
@@ -1182,9 +1167,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testSessionAttributes() throws Exception {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.16"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.16")));
+
         ClientFactory cf = new ClientFactory();
         Map<String, String> userAttributes = new HashMap<>();
 
@@ -1414,9 +1398,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testPreparedStatementsCleanup() {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
 
         try {
             // Prepare test data.
@@ -1525,9 +1507,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testPreparedStatementsPooledConnections() {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
 
         Properties props = new Properties();
         props.setProperty(ClientProperty.POOLING_ENABLED.getKeyName(), "true");
@@ -1606,9 +1586,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testBug23721537() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             sqlUpdate("drop table if exists testBug23721537");
             sqlUpdate("create table testBug23721537 (id int, name varchar(20) not null)");
@@ -1697,9 +1676,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicSessionFailoverRandomSort() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -1740,9 +1718,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicSessionFailoverByPriorities() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -1791,9 +1768,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void pooledSessionFailoverRandomSortAndPooling() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -1849,9 +1825,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void pooledSessionFailoverRandomSortAndNoPooling() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -1901,9 +1876,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void pooledSessionFailoverByPrioritiesAndPooling() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -1974,9 +1948,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void pooledSessionFailoverByPrioritiesAndNoPooling() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -2042,9 +2015,7 @@ public class SessionTest extends DevApiBaseTestCase {
     @SuppressWarnings("unchecked")
     @Test
     public void testConnectionCloseNotification() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         String shutdownMessage = "Server shutdown in progress";
         String ioReadErrorMessage = "IO Read error: read_timeout exceeded";
@@ -2052,11 +2023,14 @@ public class SessionTest extends DevApiBaseTestCase {
 
         // create notice message buffers
         Frame.Builder shutdownNotice = Frame.newBuilder().setScope(Frame.Scope.GLOBAL).setType(Frame.Type.WARNING_VALUE)
-                .setPayload(Warning.newBuilder().setCode(MysqlErrorNumbers.ER_SERVER_SHUTDOWN).setMsg(shutdownMessage).build().toByteString());
+                .setPayload(com.mysql.cj.x.protobuf.MysqlxNotice.Warning.newBuilder().setCode(MysqlErrorNumbers.ER_SERVER_SHUTDOWN).setMsg(shutdownMessage)
+                        .build().toByteString());
         Frame.Builder ioReadErrorNotice = Frame.newBuilder().setScope(Frame.Scope.GLOBAL).setType(Frame.Type.WARNING_VALUE)
-                .setPayload(Warning.newBuilder().setCode(MysqlErrorNumbers.ER_IO_READ_ERROR).setMsg(ioReadErrorMessage).build().toByteString());
+                .setPayload(com.mysql.cj.x.protobuf.MysqlxNotice.Warning.newBuilder().setCode(MysqlErrorNumbers.ER_IO_READ_ERROR).setMsg(ioReadErrorMessage)
+                        .build().toByteString());
         Frame.Builder sessionWasKilledNotice = Frame.newBuilder().setScope(Frame.Scope.GLOBAL).setType(Frame.Type.WARNING_VALUE)
-                .setPayload(Warning.newBuilder().setCode(MysqlErrorNumbers.ER_SESSION_WAS_KILLED).setMsg(sessionWasKilledMessage).build().toByteString());
+                .setPayload(com.mysql.cj.x.protobuf.MysqlxNotice.Warning.newBuilder().setCode(MysqlErrorNumbers.ER_SESSION_WAS_KILLED)
+                        .setMsg(sessionWasKilledMessage).build().toByteString());
 
         byte[] shutdownNoticeBytes = makeNoticeBytes(shutdownNotice.build());
         byte[] ioReadErrorNoticeBytes = makeNoticeBytes(ioReadErrorNotice.build());
@@ -2302,9 +2276,7 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug97730() throws Throwable {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         for (String pooling : new String[] { "false", "true" }) {
             Properties props = new Properties();
@@ -2337,6 +2309,261 @@ public class SessionTest extends DevApiBaseTestCase {
             if (exception != null) {
                 throw exception.getCause();
             }
+        }
+    }
+
+    @Test
+    public void testExecAsync() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0;
+        int NUMBER_OF_QUERIES = 5000;
+        SqlResult sqlRes = null;
+        Row r = null;
+
+        CompletableFuture<SqlResult> asyncRes = null;
+        long l1 = Long.MAX_VALUE, l2 = Long.MIN_VALUE;
+        try {
+            asyncRes = this.session.sql("drop Procedure if exists testExecAsyncProc").executeAsync();
+            sqlRes = asyncRes.get();
+
+            asyncRes = this.session.sql("create procedure testExecAsyncProc (in p1 int,in p2 int) begin select 1; select p1; select p2; end;").executeAsync();
+            sqlRes = asyncRes.get();
+
+            asyncRes = this.session.sql("drop table if exists testExecAsync").executeAsync();
+            sqlRes = asyncRes.get();
+
+            asyncRes = this.session.sql(
+                    "create table testExecAsync (c1 int,c2 bigint,c3 double,c4 bool,c5 year,c6 float,c7 blob,c8 enum('xs','s','m','l','xl'),c9 set('a','b','c','d'))")
+                    .executeAsync();
+            sqlRes = asyncRes.get();
+
+            asyncRes = this.session.sql("insert into testExecAsync values(1," + l1 + ",100.11,true,2000,100.101,'v1','xs',('a,b'))").executeAsync();
+            sqlRes = asyncRes.get();
+            assertEquals(1, sqlRes.getAffectedItemsCount());
+
+            asyncRes = this.session.sql("insert into testExecAsync values(2," + (l1 - 1) + ",101.11,false,2001,101.101,'v2','s',('b,c')),(3," + (l2 - 2)
+                    + ",102.11,true,2002,102.101,'v3','m',('a,b,c'))").executeAsync();
+            sqlRes = asyncRes.get();
+            assertEquals(2, sqlRes.getAffectedItemsCount());
+
+            asyncRes = this.session.sql("insert into testExecAsync values(4," + (l1 - 4) + ",104.11,false,2004,104.101,'v4','s',('b,c,d')),(5," + (l2 - 5)
+                    + ",105.11,true,2005,105.101,'v5','m',('a,c'))").executeAsync();
+            sqlRes = asyncRes.get();
+            assertEquals(2, sqlRes.getAffectedItemsCount());
+
+            this.session.startTransaction();
+
+            asyncRes = this.session.sql("insert into testExecAsync select * from testExecAsync").executeAsync();
+            sqlRes = asyncRes.get();
+            assertEquals(5, sqlRes.getAffectedItemsCount());
+
+            asyncRes = this.session.sql(
+                    "select c1 as 'col1',c2 as 'col2', c3 as 'col3',c4 as 'col4',c5 as 'col5', c6 as 'col6', c7 as 'col7', c8 as 'col8' , c9 as 'col9' from testExecAsync order by c1 asc")
+                    .executeAsync();
+            sqlRes = asyncRes.get();
+            assertTrue(sqlRes.hasData());
+
+            while (sqlRes.hasNext()) {
+                r = sqlRes.next();
+                //                System.out.println("col1 :" + r.getInt("col1"));
+                //                System.out.println("col2 :" + r.getLong("col2"));
+                //                System.out.println("col3 :" + r.getBigDecimal("col3"));
+                //                System.out.println("col4 :" + r.getBoolean("col4"));
+                //                System.out.println("col5 :" + r.getInt("col5"));
+                //                System.out.println("col6 :" + r.getDouble("col6"));
+                //                System.out.println("col7 :" + r.getString("col7"));
+                //                System.out.println("col8 :" + r.getString("col8"));
+                //                System.out.println("col9 :" + r.getString("col9"));
+            }
+
+            asyncRes = this.session.sql("update testExecAsync set c2=c2-1").executeAsync();
+            sqlRes = asyncRes.get();
+            assertEquals(10, sqlRes.getAffectedItemsCount());
+
+            this.session.rollback();
+            asyncRes = this.session.sql("create  unique index idx on  testExecAsync(c1)").executeAsync();
+            sqlRes = asyncRes.get();
+
+            asyncRes = this.session.sql("select count(*) from testExecAsync").executeAsync();
+            sqlRes = asyncRes.get();
+            r = sqlRes.next();
+            assertEquals(5, r.getInt(0));
+
+            asyncRes = this.session.sql("Delete from testExecAsync where c1=5 ").executeAsync();
+            sqlRes = asyncRes.get();
+            assertEquals(1, sqlRes.getAffectedItemsCount());
+
+            /* WIth Bind */
+            asyncRes = this.session.sql("insert into testExecAsync values  (?,?,?,?,?,?,?,?,?)").bind(6).bind(l1 - 6).bind(106.11).bind(true).bind(2006)
+                    .bind(106.101).bind("v6").bind("xl").bind("a,a,a,a,a,a,a,a,a").executeAsync();
+            sqlRes = asyncRes.get();
+            assertEquals(1, sqlRes.getAffectedItemsCount());
+
+            List<CompletableFuture<SqlResult>> futures = new ArrayList<>();
+            for (i = 0; i < NUMBER_OF_QUERIES; ++i) {
+                if (i % 5 == 0) {
+                    futures.add(this.session.sql("insert into testExecAsync (c1,c2,c9) values  (?,?,?)").bind(10).bind(l1 - 10).bind("a,d,c").executeAsync());
+                } else if (i % 5 == 1) {
+                    futures.add(this.session.sql("REPLACE  DELAYED  into testExecAsync (c1,c2,c9) values  (?,?,?)").bind(10).bind(l1 - 100).bind("a,c")
+                            .executeAsync());
+                } else if (i % 5 == 2) {
+                    futures.add(this.session.sql("update  testExecAsync set c9 =? where c1 = (?+?+?)").bind("a,d,c,b").bind(3).bind(5).bind(2).executeAsync());
+                } else if (i % 5 == 3) {
+                    futures.add(this.session.sql("select * from testExecAsync where c9&8 and c9&1 and c1 = (?+?)").bind(9).bind(1).executeAsync());
+                } else {
+                    futures.add(this.session.sql("delete from testExecAsync where  c9 & ? and c9&1 and c1 = (?+?)").bind(8).bind(9).bind(1).executeAsync());
+                }
+
+            }
+
+            for (i = 0; i < NUMBER_OF_QUERIES; ++i) {
+                if (i % 5 == 0) {
+                    sqlRes = futures.get(i).get();
+                    assertEquals(1, sqlRes.getAffectedItemsCount());
+                } else if (i % 5 == 1) {
+                    sqlRes = futures.get(i).get();
+                    assertEquals(2, sqlRes.getAffectedItemsCount());
+                } else if (i % 5 == 2) {
+                    sqlRes = futures.get(i).get();
+                    assertEquals(1, sqlRes.getAffectedItemsCount());
+                } else if (i % 5 == 3) {
+                    sqlRes = futures.get(i).get();
+                    r = sqlRes.next();
+                    assertEquals(10, r.getInt(0));
+                    assertFalse(sqlRes.hasNext());
+                } else {
+                    sqlRes = futures.get(i).get();
+                    assertEquals(1, sqlRes.getAffectedItemsCount());
+                }
+            }
+        } finally {
+            sqlUpdate("drop Procedure if exists testExecAsyncProc");
+            sqlUpdate("drop table if exists testExecAsync");
+        }
+    }
+
+    @Test
+    public void testFetchOneFetchAllAsync() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        Row r = null;
+        List<Row> rowList = null;
+        try {
+            CompletableFuture<SqlResult> asyncSqlRes = this.session.sql("drop table if exists testFetchOneFetchAllAsync").executeAsync();
+            SqlResult sqlRes = asyncSqlRes.get();
+            asyncSqlRes = this.session.sql("create table testFetchOneFetchAllAsync(a int,b bigint,c double,d blob)").executeAsync();
+            sqlRes = asyncSqlRes.get();
+            asyncSqlRes = this.session.sql("insert into testFetchOneFetchAllAsync values(?,?,?,?)").bind(1, 11).bind(21, "A").executeAsync();
+            sqlRes = asyncSqlRes.get();
+            asyncSqlRes = this.session.sql("insert into testFetchOneFetchAllAsync values(?,?,?,?)").bind(2, 12).bind(22, "B").executeAsync();
+            sqlRes = asyncSqlRes.get();
+            asyncSqlRes = this.session.sql("insert into testFetchOneFetchAllAsync values(?,?,?,?)").bind(3, 13).bind(23, "C").executeAsync();
+            sqlRes = asyncSqlRes.get();
+            asyncSqlRes = this.session.sql("insert into testFetchOneFetchAllAsync values(?,?,?,?)").bind(4, 14).bind(23, "D").executeAsync();
+            sqlRes = asyncSqlRes.get();
+
+            //With FetchOne()
+            asyncSqlRes = this.session.sql("select * from testFetchOneFetchAllAsync where a<=? order by a asc").bind(5).executeAsync();
+            SqlResult sqlRes1 = asyncSqlRes.get();
+            int i = 0;
+            while (sqlRes1.hasNext()) {
+                r = sqlRes1.fetchOne();
+                assertEquals((long) (i + 1), r.getInt(0));
+                i++;
+            }
+            assertThrows(WrongArgumentException.class, "Cannot fetchAll\\(\\) after starting iteration", () -> sqlRes1.fetchAll());
+
+            asyncSqlRes = this.session.sql("select * from testFetchOneFetchAllAsync where a<=? order by a asc").bind(3).executeAsync();
+            sqlRes = asyncSqlRes.get();
+            rowList = sqlRes.fetchAll();
+            assertEquals((long) 3, (long) rowList.size());
+            for (i = 0; i < rowList.size(); i++) {
+                r = rowList.get(i);
+                assertEquals((long) (i + 1), r.getInt(0));
+                i++;
+            }
+        } finally {
+            sqlUpdate("drop table if exists testFetchOneFetchAllAsync");
+        }
+    }
+
+    /**
+     * Few Negative Scenarios
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testExecAsyncNegative() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0;
+        SqlResult sqlRes = null;
+        Row r = null;
+        try {
+            assertThrows(ExecutionException.class, ".*Unknown table '" + this.schema.getName() + ".non_existing'.*", () -> {
+                CompletableFuture<SqlResult> res = this.session.sql("drop table non_existing").executeAsync();
+                res.get();
+                return null;
+            });
+
+            assertThrows(ExecutionException.class, ".* BIGINT value is out of range .*", () -> {
+                CompletableFuture<SqlResult> res = this.session.sql("select 123456*123456722323289").executeAsync();
+                res.get();
+                return null;
+            });
+
+            sqlUpdate("drop table if exists testExecAsyncNegative");
+            sqlUpdate(
+                    "create table testExecAsyncNegative(a int,b bigint ,c bigint  GENERATED ALWAYS AS (b*1000) VIRTUAL COMMENT '1',d bigint  GENERATED ALWAYS AS (c*100000) STOred  COMMENT '2')");
+            sqlUpdate("Insert into  testExecAsyncNegative (a,b) values(1,100)");
+            sqlUpdate("create index id on testExecAsyncNegative(d)");
+            sqlUpdate("create unique index id2 on testExecAsyncNegative(a)");
+
+            int NUMBER_OF_QUERIES = 5000;
+            List<CompletableFuture<SqlResult>> futures = new ArrayList<>();
+            for (i = 0; i < NUMBER_OF_QUERIES; ++i) {
+                if (i % 6 == 0) {
+                    futures.add(this.session.sql("replace into testExecAsyncNegative (a,b) values(?,?)").bind(1).bind(1555666000000L).executeAsync());
+                } else if (i % 6 == 1) {
+                    futures.add(this.session.sql("insert into testExecAsyncNegative (a,b) values (?,?) ON DUPLICATE KEY UPDATE b= ?").bind(1).bind(2)
+                            .bind(1555666009990L).executeAsync());
+                } else if (i % 6 == 2) {
+                    futures.add(this.session.sql("alter table testExecAsyncNegative add d point").executeAsync());
+                } else if (i % 6 == 3) {
+                    futures.add(this.session.sql("insert into testExecAsyncNegative (a,b) values (?,?) ON DUPLICATE KEY UPDATE b=b/?").bind(1).bind(2).bind(0)
+                            .executeAsync());
+                } else if (i % 6 == 4) {
+                    futures.add(this.session.sql("SELECT /*+ max_execution_time (100) bad_hint */ SLEEP(0.5)").executeAsync());
+                } else {
+                    futures.add(this.session.sql("select /*+*/ * from testExecAsyncNegative").executeAsync());
+                }
+            }
+
+            for (i = 0; i < NUMBER_OF_QUERIES; ++i) {
+                int i1 = i;
+                if (i % 6 == 0) {
+                    assertThrows(ExecutionException.class, ".* BIGINT value is out of range .*", () -> futures.get(i1).get());
+                } else if (i % 6 == 1) {
+                    assertThrows(ExecutionException.class, ".* BIGINT value is out of range .*", () -> futures.get(i1).get());
+                } else if (i % 6 == 2) {
+                    assertThrows(ExecutionException.class, ".*Duplicate column name 'd'.*", () -> futures.get(i1).get());
+                } else if (i % 6 == 3) {
+                    assertThrows(ExecutionException.class, ".*Division by 0.*", () -> futures.get(i1).get());
+                } else {
+                    sqlRes = futures.get(i).get();
+                    r = sqlRes.next();
+                    assertEquals(1, r.getInt(0));
+                    assertFalse(sqlRes.hasNext());
+                    Iterator<Warning> w = sqlRes.getWarnings();
+                    while (w.hasNext()) {
+                        Warning element = w.next();
+                        assertTrue(element.getMessage().contains("Optimizer hint syntax error"));
+                    }
+                }
+            }
+        } finally {
+            sqlUpdate("drop table if exists testExecAsyncNegative");
         }
     }
 }

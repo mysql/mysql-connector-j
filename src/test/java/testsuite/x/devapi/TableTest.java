@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,10 +32,13 @@ package testsuite.x.devapi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.Test;
 
@@ -43,6 +46,7 @@ import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.RowResult;
+import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.Table;
 
 /**
@@ -51,15 +55,15 @@ import com.mysql.cj.xdevapi.Table;
 public class TableTest extends BaseTableTestCase {
     @Test
     public void tableBasics() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         sqlUpdate("drop table if exists tableBasics");
         Table table = this.schema.getTable("tableBasics");
         assertEquals(DbObjectStatus.NOT_EXISTS, table.existsInDatabase());
         sqlUpdate("create table tableBasics (name varchar(32), age int)");
         assertEquals(DbObjectStatus.EXISTS, table.existsInDatabase());
         assertEquals("Table(" + getTestDatabase() + ".tableBasics)", table.toString());
+        assertEquals(this.schema, table.getSchema());
         assertEquals(this.session, table.getSession());
         Table table2 = this.schema.getTable("tableBasics");
         assertFalse(table == table2);
@@ -68,9 +72,7 @@ public class TableTest extends BaseTableTestCase {
 
     @Test
     public void viewBasics() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         try {
             sqlUpdate("drop table if exists tableBasics");
@@ -123,9 +125,8 @@ public class TableTest extends BaseTableTestCase {
 
     @Test
     public void testCount() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             sqlUpdate("drop table if exists testCount");
             sqlUpdate("create table testCount (_id varchar(32), name varchar(20), birthday date, age int)");
@@ -154,9 +155,8 @@ public class TableTest extends BaseTableTestCase {
 
     @Test
     public void testBug25650912() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             sqlUpdate("drop table if exists testBug25650912");
             sqlUpdate("create table testBug25650912 (x bigint,y char(220))");
@@ -194,6 +194,56 @@ public class TableTest extends BaseTableTestCase {
 
         } finally {
             sqlUpdate("drop table if exists testBug25650912");
+        }
+    }
+
+    @Test
+    public void testAsyncBind() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            sqlUpdate("drop table if exists testAsyncBind");
+            sqlUpdate("create table testAsyncBind(a int,b bigint,c double,d blob)");
+
+            CompletableFuture<SqlResult> asyncSqlRes = null;
+            SqlResult sqlRes = null;
+            Row r = null;
+
+            //execute without bind()
+            assertThrows(ExecutionException.class, ".*You have an error in your SQL syntax.*",
+                    () -> this.session.sql("insert into testAsyncBind values(?,?,?,?)").executeAsync().get());
+
+            //execute with more bind()
+            assertThrows(ExecutionException.class, ".*Too many arguments.*",
+                    () -> this.session.sql("insert into testAsyncBind values(?,?,?,?)").bind(1, 2, 3, 4, 5).executeAsync().get());
+
+            //execute with less bind()
+            assertThrows(ExecutionException.class, ".*You have an error in your SQL syntax.*",
+                    () -> this.session.sql("insert into testAsyncBind values(?,?,?,?)").bind(1, 2, 3).executeAsync().get());
+
+            //Success
+            asyncSqlRes = this.session.sql("insert into testAsyncBind values(?,?,?,?)").bind(10, 2).bind(3, "S").executeAsync();
+            sqlRes = asyncSqlRes.get();
+            asyncSqlRes = this.session.sql("select * from testAsyncBind where a=?").bind(10).executeAsync();
+            sqlRes = asyncSqlRes.get();
+            r = sqlRes.next();
+            assertTrue(r.getBoolean(0));
+            assertEquals(10, r.getInt(0));
+            assertEquals(2, r.getLong(1));
+            assertEquals(3.0, r.getDouble(2), 1);
+            assertEquals("S", r.getString(3));
+            assertFalse(sqlRes.hasNext());
+
+            //bind in where and having
+            asyncSqlRes = this.session.sql("select b+? as Temp,a as Temp1 from testAsyncBind where a=?+? having a>?").bind(100, 9, 1, 0).executeAsync();
+            sqlRes = asyncSqlRes.get();
+            r = sqlRes.next();
+            assertTrue(r.getBoolean(0));
+            assertEquals(102, r.getInt("Temp"));
+            assertFalse(sqlRes.hasNext());
+
+        } finally {
+            sqlUpdate("drop table if exists testAsyncBind");
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -432,31 +432,26 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
     @Test
     public void testBug15121() throws Exception {
-        if (!this.DISABLED_testBug15121 /* needs to be fixed on server */) {
-            createProcedure("p_testBug15121", "()\nBEGIN\nSELECT * from idonotexist;\nEND");
+        createProcedure("p_testBug15121", "()\nBEGIN\nSELECT * from idonotexist;\nEND");
 
-            Properties props = new Properties();
-            props.setProperty(PropertyKey.DBNAME.getKeyName(), "");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.DBNAME.getKeyName(), "");
 
-            Connection noDbConn = null;
+        Connection noDbConn = getConnectionWithProps(props);
 
-            try {
-                noDbConn = getConnectionWithProps(props);
+        StringBuilder queryBuf = new StringBuilder("{call ");
+        String quotedId = this.conn.getMetaData().getIdentifierQuoteString();
+        queryBuf.append(quotedId);
+        queryBuf.append(this.conn.getCatalog());
+        queryBuf.append(quotedId);
+        queryBuf.append(".p_testBug15121()}");
 
-                StringBuilder queryBuf = new StringBuilder("{call ");
-                String quotedId = this.conn.getMetaData().getIdentifierQuoteString();
-                queryBuf.append(quotedId);
-                queryBuf.append(this.conn.getCatalog());
-                queryBuf.append(quotedId);
-                queryBuf.append(".p_testBug15121()}");
-
+        assertThrows(SQLException.class, "Table '" + this.conn.getCatalog() + ".idonotexist' doesn't exist", new Callable<Void>() {
+            public Void call() throws Exception {
                 noDbConn.prepareCall(queryBuf.toString()).execute();
-            } finally {
-                if (noDbConn != null) {
-                    noDbConn.close();
-                }
+                return null;
             }
-        }
+        });
     }
 
     /**
@@ -1531,6 +1526,88 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             if (callableStatement != null) {
                 callableStatement.close();
             }
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#20279641, CANNOT CALL A PROCEDURE USING `DATABASE`.PROCNAME FORMAT.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug20279641() throws Exception {
+        createDatabase("`abc1`");
+        createProcedure("`abc1`.procBug20279641", "(IN c1 int, INOUT c2 int, OUT c3  int)" + " BEGIN Set c3=c2+c1; END");
+
+        CallableStatement cstmt = this.conn.prepareCall("{ call `abc1`.procBug20279641(?, ?, ?) }");
+        cstmt.registerOutParameter(2, java.sql.Types.INTEGER);
+        cstmt.registerOutParameter(3, java.sql.Types.INTEGER);
+        cstmt.setInt(1, 113);
+        cstmt.setInt(2, 123);
+        cstmt.setNull(3, java.sql.Types.INTEGER);
+        cstmt.execute();
+
+        assertEquals("123", cstmt.getString(2));
+        assertEquals("236", cstmt.getString(3));
+    }
+
+    /**
+     * Tests fix for Bug#19857166, SET FUNCTIONS ON CALLABLESTATEMENT RETURNS EXCEPTION WHEN CALLED WITH PARAM NAME.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug19857166() throws Exception {
+        createProcedure("testBug19857166p", "(IN inp1 VARCHAR(10),INOUT inp2 VARCHAR(10)) begin" + " set inp2 = 'data'; END");
+        createFunction("testBug19857166f", "(a char(10),b varchar(10)) RETURNS CHAR(50) COMMENT 'Returns string' DETERMINISTIC BEGIN RETURN CONCAT(a, b); END");
+
+        Connection con = null;
+        try {
+            for (boolean getProcRetFuncs : new boolean[] { false, true }) {
+                Properties props = new Properties();
+                props.setProperty(PropertyKey.getProceduresReturnsFunctions.getKeyName(), "" + getProcRetFuncs);
+                con = getConnectionWithProps(props);
+
+                CallableStatement callSt1 = con.prepareCall(" call testBug19857166p(?, ?) ");
+                assertThrows(SQLException.class, "No parameter named 'iNp1'", () -> {
+                    callSt1.setString("iNp1", "xxx");
+                    return null;
+                });
+                assertThrows(SQLException.class, "No parameter named 'inP2'", () -> {
+                    callSt1.setString("inP2", "xxx");
+                    return null;
+                });
+                callSt1.setString("inp1", "xxx");
+                callSt1.registerOutParameter(2, java.sql.Types.VARCHAR);
+                callSt1.execute();
+                assertEquals("data", callSt1.getString(2));
+                callSt1.close();
+
+                CallableStatement callSt2 = con.prepareCall("{? = CALL testBug19857166f(?,?)}");
+                callSt2.registerOutParameter(1, java.sql.Types.VARCHAR);
+                if (getProcRetFuncs) {
+                    callSt2.setString("a", "abcd");
+                    callSt2.setString("b", "rr");
+                } else {
+                    assertThrows(SQLException.class, "No parameter named 'a'", () -> {
+                        callSt2.setString("a", "abcd");
+                        return null;
+                    });
+                    assertThrows(SQLException.class, "No parameter named 'b'", () -> {
+                        callSt2.setString("b", "rr");
+                        return null;
+                    });
+                    callSt2.setString(2, "abcd");
+                    callSt2.setString(3, "rr");
+                }
+                callSt2.execute();
+                assertEquals("abcdrr", callSt2.getString(1), "Data Comparison failed");
+                callSt2.close();
+            }
+        } finally {
             if (con != null) {
                 con.close();
             }

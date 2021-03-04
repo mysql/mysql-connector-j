@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -1432,9 +1433,7 @@ public class ConnectionTest extends BaseTestCase {
 
     @Test
     public void testUseLocalSessionStateRollback() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 0)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5, 0));
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.useLocalSessionState.getKeyName(), "true");
@@ -1740,9 +1739,8 @@ public class ConnectionTest extends BaseTestCase {
 
     @Test
     public void testReadOnly56() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 5)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 5));
+
         try {
             Connection notLocalState = getConnectionWithProps("profileSQL=true,logger=" + BufferingLogger.class.getName());
 
@@ -1801,10 +1799,7 @@ public class ConnectionTest extends BaseTestCase {
      */
     @Test
     public void testIPv6() throws Exception {
-        if (!versionMeetsMinimum(5, 6)) {
-            return;
-            // this test could work with MySQL 5.5 but requires specific server configuration, e.g. "--bind-address=::"
-        }
+        assumeTrue(versionMeetsMinimum(5, 6)); // this test could work with MySQL 5.5 but requires specific server configuration, e.g. "--bind-address=::"
 
         String testUser = "testIPv6User";
         createUser("'" + testUser + "'@'%'", "IDENTIFIED BY '" + testUser + "'");
@@ -2207,9 +2202,7 @@ public class ConnectionTest extends BaseTestCase {
      */
     @Test
     public void testUserRequireSSL() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 6));
 
         Connection testConn;
         Statement testStmt;
@@ -2300,9 +2293,7 @@ public class ConnectionTest extends BaseTestCase {
      */
     @Test
     public void testUserRequireX509() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 6));
 
         Connection testConn;
         Statement testStmt;
@@ -2538,9 +2529,7 @@ public class ConnectionTest extends BaseTestCase {
      */
     @Test
     public void testFallbackToSystemKeyStore() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 6));
 
         final String user = "testFbToSysKS";
         createUser(user, "IDENTIFIED BY 'password' REQUIRE X509");

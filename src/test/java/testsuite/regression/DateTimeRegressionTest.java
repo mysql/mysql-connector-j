@@ -32,6 +32,8 @@ package testsuite.regression;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -740,4 +742,123 @@ public class DateTimeRegressionTest extends BaseTestCase {
                 + "insert into testBug20391832 values(" + (targetType == MysqlType.YEAR ? exp : "'" + exp + "'") + ")", query);
     }
 
+    /**
+     * Tests fix for Bug#20316640, GETTIMESTAMP() CALL WITH CALANDER VALUE NULL RESULTS IN NULLPOINTEREXCEPTION.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug20316640() throws Exception {
+        createTable("testBug20316640", "(c1 timestamp, c2 time, c3 date)");
+        this.stmt.execute("insert into testBug20316640 values('2038-01-19 03:14:07','18:59:59','9999-12-31')");
+        this.rs = this.stmt.executeQuery("select * from testBug20316640");
+        this.rs.next();
+        System.out.println("Col 1 [" + this.rs.getTimestamp("c1", null) + "]");
+        System.out.println("Col 2 [" + this.rs.getTime("c2", null) + "]");
+        System.out.println("Col 3 [" + this.rs.getDate("c3", null) + "]");
+    }
+
+    /**
+     * Tests fix for Bug#20818678, GETFLOAT() AND GETDOUBLE() CALL ON YEAR COLUMN RESULTS IN EXCEPTION
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug20818678() throws Exception {
+        createTable("testBug20818678", "(c1 YEAR)");
+        this.stmt.execute("insert into testBug20818678 values(2155)");
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+
+            Properties props = new Properties();
+            for (boolean yearIsDateType : new boolean[] { true, false }) {
+                for (boolean useSSPS : new boolean[] { false, true }) {
+                    props.setProperty(PropertyKey.yearIsDateType.getKeyName(), "" + yearIsDateType);
+                    props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+
+                    con = getConnectionWithProps(props);
+                    ps = con.prepareStatement("select * from testBug20818678 ");
+                    this.rs = ps.executeQuery();
+                    this.rs.next();
+
+                    if (yearIsDateType) {
+                        assertEquals("2155-01-01", this.rs.getString("c1"));
+                    } else {
+                        assertEquals("2155", this.rs.getString("c1"));
+                    }
+                    assertEquals(Float.valueOf(2155), this.rs.getFloat("c1"));
+                    assertEquals(Double.valueOf(2155), this.rs.getDouble("c1"));
+
+                    ps.close();
+                    con.close();
+                }
+            }
+
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#21308907, NO WAY TO GET THE FRACTIONAL PART OF A TIME FIELD WHEN USESERVERPREPSTMTS=TRUE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug21308907() throws Exception {
+        createTable("testBug21308907", "(c1 time(6))");
+        this.stmt.execute("insert into testBug21308907 values('12:59:59.123456')");
+
+        Connection con = null;
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+            con = getConnectionWithProps(props);
+
+            this.stmt = con.createStatement();
+            this.rs = this.stmt.executeQuery("select * from testBug21308907");
+            this.rs.next();
+
+            assertEquals(123456000, this.rs.getTimestamp("c1").getNanos());
+            String s = this.rs.getString("c1");
+            assertEquals(".123456", s.substring(s.indexOf('.')));
+
+            this.rs.close();
+
+            this.pstmt = con.prepareStatement("select * from testBug21308907 ");
+            this.rs = this.pstmt.executeQuery();
+            this.rs.next();
+
+            assertEquals(123456000, this.rs.getTimestamp("c1").getNanos());
+            s = this.rs.getString("c1");
+            assertEquals(".123456", s.substring(s.indexOf('.')));
+
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#22305930, GETTIMESTAMP() CALL ON CLOSED RESULT SET PRODUCES NPE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug22305930() throws Exception {
+        ResultSet rs1 = this.stmt.executeQuery("select '2015-12-09 16:28:01' as tm");
+        rs1.next();
+        rs1.close();
+
+        assertThrows(SQLException.class, "Operation not allowed after ResultSet closed", () -> {
+            rs1.getTimestamp("tm");
+            return null;
+        });
+    }
 }

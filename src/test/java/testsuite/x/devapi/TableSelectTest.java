@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,6 +34,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -75,119 +76,131 @@ import com.mysql.cj.xdevapi.Type;
 public class TableSelectTest extends BaseTableTestCase {
     @Test
     public void basicQuery() {
-        if (!this.isSetForXTests) {
-            return;
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            sqlUpdate("drop table if exists basicQuery");
+            sqlUpdate("create table basicQuery (_id varchar(32), name varchar(20), birthday date, age int)");
+            sqlUpdate("insert into basicQuery values ('some long UUID', 'Sakila', '2000-05-27', 14)");
+            Table table = this.schema.getTable("basicQuery");
+            Map<String, Object> params = new HashMap<>();
+            params.put("name", "Saki%");
+            params.put("age", 20);
+            RowResult rows = table.select("birthday, `_id`, name").where("name like :name AND age < :age").bind(params).execute();
+
+            // verify metadata
+            List<String> columnNames = rows.getColumnNames();
+            assertEquals("birthday", columnNames.get(0));
+            assertEquals("_id", columnNames.get(1));
+            assertEquals("name", columnNames.get(2));
+
+            Row row = rows.next();
+            assertEquals("2000-05-27", row.getString(0));
+            assertEquals("2000-05-27", row.getString("birthday"));
+            assertEquals("Sakila", row.getString(2));
+            assertEquals("Sakila", row.getString("name"));
+            assertEquals("some long UUID", row.getString(1));
+            assertEquals("some long UUID", row.getString("_id"));
+
+            // select with multiple projection params
+            rows = table.select("`_id`", "name", "birthday").where("name like :name AND age < :age").bind(params).execute();
+            // verify metadata
+            columnNames = rows.getColumnNames();
+            assertEquals("_id", columnNames.get(0));
+            assertEquals("name", columnNames.get(1));
+            assertEquals("birthday", columnNames.get(2));
+        } finally {
+            sqlUpdate("drop table if exists basicQuery");
         }
-        sqlUpdate("drop table if exists basicQuery");
-        sqlUpdate("create table basicQuery (_id varchar(32), name varchar(20), birthday date, age int)");
-        sqlUpdate("insert into basicQuery values ('some long UUID', 'Sakila', '2000-05-27', 14)");
-        Table table = this.schema.getTable("basicQuery");
-        Map<String, Object> params = new HashMap<>();
-        params.put("name", "Saki%");
-        params.put("age", 20);
-        RowResult rows = table.select("birthday, `_id`, name").where("name like :name AND age < :age").bind(params).execute();
-
-        // verify metadata
-        List<String> columnNames = rows.getColumnNames();
-        assertEquals("birthday", columnNames.get(0));
-        assertEquals("_id", columnNames.get(1));
-        assertEquals("name", columnNames.get(2));
-
-        Row row = rows.next();
-        assertEquals("2000-05-27", row.getString(0));
-        assertEquals("2000-05-27", row.getString("birthday"));
-        assertEquals("Sakila", row.getString(2));
-        assertEquals("Sakila", row.getString("name"));
-        assertEquals("some long UUID", row.getString(1));
-        assertEquals("some long UUID", row.getString("_id"));
-
-        // select with multiple projection params
-        rows = table.select("`_id`", "name", "birthday").where("name like :name AND age < :age").bind(params).execute();
-        // verify metadata
-        columnNames = rows.getColumnNames();
-        assertEquals("_id", columnNames.get(0));
-        assertEquals("name", columnNames.get(1));
-        assertEquals("birthday", columnNames.get(2));
     }
 
     @Test
     public void testComplexQuery() {
-        if (!this.isSetForXTests) {
-            return;
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            sqlUpdate("drop table if exists complexQuery");
+            sqlUpdate("create table complexQuery (name varchar(32), age int, something int)");
+            sqlUpdate("insert into complexQuery values ('Mamie', 11, 0)");
+            sqlUpdate("insert into complexQuery values ('Eulalia', 11, 0)");
+            sqlUpdate("insert into complexQuery values ('Polly', 12, 0)");
+            sqlUpdate("insert into complexQuery values ('Rufus', 12, 0)");
+            sqlUpdate("insert into complexQuery values ('Cassidy', 13, 0)");
+            sqlUpdate("insert into complexQuery values ('Olympia', 14, 0)");
+            sqlUpdate("insert into complexQuery values ('Lev', 14, 0)");
+            sqlUpdate("insert into complexQuery values ('Tierney', 15, 0)");
+            sqlUpdate("insert into complexQuery values ('Octavia', 15, 0)");
+            sqlUpdate("insert into complexQuery values ('Vesper', 16, 0)");
+            sqlUpdate("insert into complexQuery values ('Caspian', 17, 0)");
+            sqlUpdate("insert into complexQuery values ('Romy', 17, 0)");
+            Table table = this.schema.getTable("complexQuery");
+            // Result:
+            // age_group | cnt
+            // 11        | 2   <-- filtered out by where
+            // 12        | 2   <-- filtered out by limit
+            // 13        | 1   <-- filtered out by having
+            // 14        | 2   * second row in result
+            // 15        | 2   * first row in result
+            // 16        | 1   <-- filtered out by having
+            // 17        | 2   <-- filtered out by offset
+            SelectStatement stmt = table.select("age as age_group, count(name) as cnt, something");
+            stmt.where("age > 11 and 1 < 2 and 40 between 30 and 900");
+            stmt.groupBy("something", "age_group");
+            stmt.having("cnt > 1");
+            stmt.orderBy("age_group desc");
+            RowResult rows = stmt.limit(2).offset(1).execute();
+            Row row = rows.next();
+            assertEquals(15, row.getInt(0));
+            assertEquals(2, row.getInt(1));
+            assertEquals(2, row.getByte(1));
+            assertEquals(2, row.getLong(1));
+            assertEquals(new BigDecimal("2"), row.getBigDecimal(1));
+            assertEquals(true, row.getBoolean(1));
+            row = rows.next();
+            assertEquals(14, row.getInt(0));
+            assertEquals(2, row.getInt(1));
+            assertFalse(rows.hasNext());
+        } finally {
+            sqlUpdate("drop table if exists complexQuery");
         }
-        sqlUpdate("drop table if exists complexQuery");
-        sqlUpdate("create table complexQuery (name varchar(32), age int, something int)");
-        sqlUpdate("insert into complexQuery values ('Mamie', 11, 0)");
-        sqlUpdate("insert into complexQuery values ('Eulalia', 11, 0)");
-        sqlUpdate("insert into complexQuery values ('Polly', 12, 0)");
-        sqlUpdate("insert into complexQuery values ('Rufus', 12, 0)");
-        sqlUpdate("insert into complexQuery values ('Cassidy', 13, 0)");
-        sqlUpdate("insert into complexQuery values ('Olympia', 14, 0)");
-        sqlUpdate("insert into complexQuery values ('Lev', 14, 0)");
-        sqlUpdate("insert into complexQuery values ('Tierney', 15, 0)");
-        sqlUpdate("insert into complexQuery values ('Octavia', 15, 0)");
-        sqlUpdate("insert into complexQuery values ('Vesper', 16, 0)");
-        sqlUpdate("insert into complexQuery values ('Caspian', 17, 0)");
-        sqlUpdate("insert into complexQuery values ('Romy', 17, 0)");
-        Table table = this.schema.getTable("complexQuery");
-        // Result:
-        // age_group | cnt
-        // 11        | 2   <-- filtered out by where
-        // 12        | 2   <-- filtered out by limit
-        // 13        | 1   <-- filtered out by having
-        // 14        | 2   * second row in result
-        // 15        | 2   * first row in result
-        // 16        | 1   <-- filtered out by having
-        // 17        | 2   <-- filtered out by offset
-        SelectStatement stmt = table.select("age as age_group, count(name) as cnt, something");
-        stmt.where("age > 11 and 1 < 2 and 40 between 30 and 900");
-        stmt.groupBy("something", "age_group");
-        stmt.having("cnt > 1");
-        stmt.orderBy("age_group desc");
-        RowResult rows = stmt.limit(2).offset(1).execute();
-        Row row = rows.next();
-        assertEquals(15, row.getInt(0));
-        assertEquals(2, row.getInt(1));
-        assertEquals(2, row.getByte(1));
-        assertEquals(2, row.getLong(1));
-        assertEquals(new BigDecimal("2"), row.getBigDecimal(1));
-        assertEquals(true, row.getBoolean(1));
-        row = rows.next();
-        assertEquals(14, row.getInt(0));
-        assertEquals(2, row.getInt(1));
-        assertFalse(rows.hasNext());
     }
 
     @Test
     public void allColumns() {
-        if (!this.isSetForXTests) {
-            return;
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            sqlUpdate("drop table if exists allColumns");
+            sqlUpdate("create table allColumns (x int, y int, z int)");
+            sqlUpdate("insert into allColumns values (1,2,3)");
+            Table table = this.schema.getTable("allColumns");
+            // * must come first, as with SQL
+            SelectStatement stmt = table.select("*, 42 as a_number, '43' as a_string");
+            Row row = stmt.execute().next();
+            assertEquals(42, row.getInt("a_number"));
+            assertEquals(1, row.getInt("x"));
+            assertEquals(2, row.getInt("y"));
+            assertEquals(3, row.getInt("z"));
+            assertEquals("43", row.getString("a_string"));
+        } finally {
+            sqlUpdate("drop table if exists allColumns");
         }
-        sqlUpdate("drop table if exists allColumns");
-        sqlUpdate("create table allColumns (x int, y int, z int)");
-        sqlUpdate("insert into allColumns values (1,2,3)");
-        Table table = this.schema.getTable("allColumns");
-        // * must come first, as with SQL
-        SelectStatement stmt = table.select("*, 42 as a_number, '43' as a_string");
-        Row row = stmt.execute().next();
-        assertEquals(42, row.getInt("a_number"));
-        assertEquals(1, row.getInt("x"));
-        assertEquals(2, row.getInt("y"));
-        assertEquals(3, row.getInt("z"));
-        assertEquals("43", row.getString("a_string"));
     }
 
     @Test
     public void countAllColumns() {
-        if (!this.isSetForXTests) {
-            return;
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            sqlUpdate("drop table if exists countAllColumns");
+            sqlUpdate("create table countAllColumns(x int, y int)");
+            sqlUpdate("insert into countAllColumns values (1,1), (2,2), (3,3), (4,4)");
+            Table table = this.schema.getTable("countAllColumns");
+            Row row = table.select("count(*) + 10").execute().next();
+            assertEquals(14, row.getInt(0));
+        } finally {
+            sqlUpdate("drop table if exists countAllColumns");
         }
-        sqlUpdate("drop table if exists countAllColumns");
-        sqlUpdate("create table countAllColumns(x int, y int)");
-        sqlUpdate("insert into countAllColumns values (1,1), (2,2), (3,3), (4,4)");
-        Table table = this.schema.getTable("countAllColumns");
-        Row row = table.select("count(*) + 10").execute().next();
-        assertEquals(14, row.getInt(0));
     }
 
     /**
@@ -195,9 +208,8 @@ public class TableSelectTest extends BaseTableTestCase {
      */
     @Test
     public void testBug22931433() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         sqlUpdate("drop table if exists testBug22931433");
         sqlUpdate(
                 "create table testBug22931433(c1 bit(8), c2 bit(16), c3 bit(24), c4 bit(32), c5 bit(40), c6 bit(48), c7 bit(56), c8 bit(64), cb1 bit(1), cb2 bit(64))");
@@ -359,9 +371,8 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void basicViewQuery() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             sqlUpdate("drop table if exists basicTable1");
             sqlUpdate("drop table if exists basicTable2");
@@ -403,35 +414,37 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void testOrderBy() {
-        if (!this.isSetForXTests) {
-            return;
-        }
-        sqlUpdate("drop table if exists testOrderBy");
-        sqlUpdate("create table testOrderBy (_id int, x int, y int)");
-        sqlUpdate("insert into testOrderBy values (2,20,21), (1,20,22), (4,10,40), (3,10,50)");
-        Table table = this.schema.getTable("testOrderBy");
+        assumeTrue(this.isSetForXTests);
 
-        RowResult rows = table.select("_id").orderBy("x desc, y desc").execute();
-        int i = 1;
-        while (rows.hasNext()) {
-            assertEquals(i++, rows.next().getInt("_id"));
-        }
-        assertEquals(5, i);
+        try {
+            sqlUpdate("drop table if exists testOrderBy");
+            sqlUpdate("create table testOrderBy (_id int, x int, y int)");
+            sqlUpdate("insert into testOrderBy values (2,20,21), (1,20,22), (4,10,40), (3,10,50)");
+            Table table = this.schema.getTable("testOrderBy");
 
-        // multiple SortExprStr
-        rows = table.select("_id").orderBy("x desc", "y desc").execute();
-        i = 1;
-        while (rows.hasNext()) {
-            assertEquals(i++, rows.next().getInt("_id"));
+            RowResult rows = table.select("_id").orderBy("x desc, y desc").execute();
+            int i = 1;
+            while (rows.hasNext()) {
+                assertEquals(i++, rows.next().getInt("_id"));
+            }
+            assertEquals(5, i);
+
+            // multiple SortExprStr
+            rows = table.select("_id").orderBy("x desc", "y desc").execute();
+            i = 1;
+            while (rows.hasNext()) {
+                assertEquals(i++, rows.next().getInt("_id"));
+            }
+            assertEquals(5, i);
+        } finally {
+            sqlUpdate("drop table if exists testOrderBy");
         }
-        assertEquals(5, i);
     }
 
     @Test
     public void testBug22988922() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         sqlUpdate("drop table if exists testBug22988922");
         sqlUpdate("create table testBug22988922 (g point,l longblob,t longtext)");
 
@@ -451,34 +464,35 @@ public class TableSelectTest extends BaseTableTestCase {
      */
     @Test
     public void testBug22931277() {
-        if (!this.isSetForXTests) {
-            return;
+        assumeTrue(this.isSetForXTests);
+
+        try {
+            sqlUpdate("drop table if exists testBug22931277");
+            sqlUpdate("create table testBug22931277 (j year,k datetime(3))");
+            Table table = this.schema.getTable("testBug22931277");
+
+            table = this.schema.getTable("testBug22931277");
+            table.insert("j", "k").values(2000, "2016-03-15 12:13:14").execute();
+
+            RowResult rows = table.select("1,j,k").execute();
+            List<Column> metadata = rows.getColumns();
+
+            Column myCol = metadata.get(0);
+            assertEquals(Type.TINYINT, myCol.getType());
+
+            myCol = metadata.get(1);
+            assertEquals(Type.SMALLINT, myCol.getType());
+
+            myCol = metadata.get(2);
+            assertEquals(Type.DATETIME, myCol.getType());
+        } finally {
+            sqlUpdate("drop table if exists testBug22931277");
         }
-        sqlUpdate("drop table if exists testBug22931277");
-        sqlUpdate("create table testBug22931277 (j year,k datetime(3))");
-        Table table = this.schema.getTable("testBug22931277");
-
-        table = this.schema.getTable("testBug22931277");
-        table.insert("j", "k").values(2000, "2016-03-15 12:13:14").execute();
-
-        RowResult rows = table.select("1,j,k").execute();
-        List<Column> metadata = rows.getColumns();
-
-        Column myCol = metadata.get(0);
-        assertEquals(Type.TINYINT, myCol.getType());
-
-        myCol = metadata.get(1);
-        assertEquals(Type.SMALLINT, myCol.getType());
-
-        myCol = metadata.get(2);
-        assertEquals(Type.DATETIME, myCol.getType());
     }
 
     @Test
     public void testTableRowLocks() throws Exception {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")));
 
         sqlUpdate("drop table if exists testTableRowLocks");
         sqlUpdate("create table testTableRowLocks (_id varchar(32), a varchar(20))");
@@ -582,9 +596,7 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void testTableRowLockOptions() throws Exception {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5")));
 
         Function<RowResult, List<String>> asStringList = rr -> rr.fetchAll().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
@@ -881,9 +893,7 @@ public class TableSelectTest extends BaseTableTestCase {
      */
     @Test
     public void testBug22038729() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         final Field pf = CoreSession.class.getDeclaredField("protocol");
         pf.setAccessible(true);
@@ -947,9 +957,7 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void testPreparedStatements() {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
 
         try {
             // Prepare test data.

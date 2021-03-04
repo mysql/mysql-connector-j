@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,10 +35,17 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.StringReader;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
@@ -48,6 +55,7 @@ import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DbDocImpl;
 import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.JsonArray;
+import com.mysql.cj.xdevapi.JsonLiteral;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonParser;
 import com.mysql.cj.xdevapi.JsonString;
@@ -64,9 +72,7 @@ import com.mysql.cj.xdevapi.XDevAPIError;
 public class CollectionModifyTest extends BaseCollectionTestCase {
     @Test
     public void testSet() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
@@ -89,9 +95,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testUnset() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":\"100\", \"y\":\"200\", \"z\":1}").execute(); // Requires manual _id.
             this.collection.add("{\"_id\": \"2\", \"a\":\"100\", \"b\":\"200\", \"c\":1}").execute();
@@ -113,9 +118,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testReplace() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":100}").execute(); // Requires manual _id.
         } else {
@@ -130,9 +134,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testArrayAppend() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":[8,16,32]}").execute(); // Requires manual _id.
@@ -154,9 +156,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testArrayInsert() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":[1,2]}").execute(); // Requires manual _id.
@@ -179,9 +179,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testJsonModify() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         DbDoc nestedDoc = new DbDocImpl().add("z", new JsonNumber().setValue("100"));
         DbDoc doc = new DbDocImpl().add("x", new JsonNumber().setValue("3")).add("y", nestedDoc);
@@ -243,9 +241,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testArrayModify() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         JsonArray xArray = new JsonArray().addValue(new JsonString().setValue("a")).addValue(new JsonNumber().setValue("1"));
         DbDoc doc = new DbDocImpl().add("x", new JsonNumber().setValue("3")).add("y", xArray);
@@ -284,9 +280,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug24471057() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         String docStr = "{\"B\" : 2, \"ID\" : 1, \"KEY\" : [1]}";
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
@@ -321,9 +315,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testMergePatch() throws Exception {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")));
 
         // 1. Update the name and zip code of match
         this.collection.add("{\"_id\": \"1\", \"name\": \"Alice\", \"address\": {\"zip\": \"12345\", \"street\": \"32 Main str\"}}").execute();
@@ -509,9 +501,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug27185332() throws Exception {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")));
 
         DbDoc doc = JsonParser.parseDoc("{\"_id\": \"qqq\", \"nullfield\": {}, \"theme\": {         }}");
         assertEquals("qqq", ((JsonString) doc.get("_id")).getString());
@@ -563,9 +553,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testReplaceOne() {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")));
 
         Result res = this.collection.replaceOne("someId", "{\"_id\":\"someId\",\"a\":3}");
         assertEquals(0, res.getAffectedItemsCount());
@@ -673,9 +661,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug27226293() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         this.collection.add("{ \"_id\" : \"doc1\" , \"name\" : \"bob\" , \"age\": 45 }").execute();
 
@@ -693,9 +679,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testPreparedStatements() {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
 
         try {
             // Prepare test data.
@@ -941,9 +925,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testDeprecateWhere() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         this.collection.add("{\"_id\":\"1\", \"ord\": 1}", "{\"_id\":\"2\", \"ord\": 2}", "{\"_id\":\"3\", \"ord\": 3}", "{\"_id\":\"4\", \"ord\": 4}",
                 "{\"_id\":\"5\", \"ord\": 5}", "{\"_id\":\"6\", \"ord\": 6}", "{\"_id\":\"7\", \"ord\": 7}", "{\"_id\":\"8\", \"ord\": 8}").execute();
@@ -954,5 +936,1013 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         assertEquals(2, testModify.set("$.one", "1").execute().getAffectedItemsCount());
         assertEquals(4, ((ModifyStatementImpl) testModify).where("$.ord > 4").set("$.two", "2").execute().getAffectedItemsCount());
+    }
+
+    @Test
+    public void testCollectionModifyBasic() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, maxrec = 30, recCnt = 0;
+        DbDoc doc = null;
+        Result res = null;
+        String s1 = buildString((10), 'X');
+        /* add(DbDoc[] docs) */
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf(10 * (i + 1))));
+            if (i % 3 == 2) {
+                newDoc2.add("F3", JsonLiteral.TRUE);
+            } else if (i % 3 == 1) {
+                newDoc2.add("F3", JsonLiteral.NULL);
+            } else {
+                newDoc2.add("F3", JsonLiteral.FALSE);
+            }
+            newDoc2.add("tmp1", new JsonString().setValue("tempdata-" + i));
+            newDoc2.add("tmp2", new JsonString().setValue("tempForChange-" + i));
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+        }
+        this.collection.add(jsonlist).execute();
+
+        assertEquals((maxrec), this.collection.count());
+
+        /* fetch all */
+        DocResult docs = this.collection.find("CAST($.F2 as SIGNED)> 0").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
+        i = 0;
+        while (docs.hasNext()) {
+            doc = docs.next();
+            assertEquals(String.valueOf(i + 1000), (((JsonString) doc.get("_id")).getString()));
+            assertEquals((long) (10 * (i + 1)), (long) (((JsonNumber) doc.get("f2")).getInteger()));
+            i++;
+        }
+        assertEquals((maxrec), i);
+
+        /* Modify using empty Condition */
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.",
+                () -> CollectionModifyTest.this.collection.modify("").set("$.F1", "Data_New").execute());
+
+        /* Modify using null Condition */
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.",
+                () -> CollectionModifyTest.this.collection.modify(null).set("$.F1", "Data_New").execute());
+
+        /* Modify with true Condition using Set */
+        res = this.collection.modify("true").set("$.F1", "Data_True").execute();
+        assertEquals(maxrec, res.getAffectedItemsCount());
+        docs = this.collection.find("$.F1 Like '%True'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
+        recCnt = count_data(docs);
+        assertEquals(maxrec, recCnt);
+
+        res = this.collection.modify("1 == 1").set("$.F1", "Data_New").execute();
+        assertEquals(maxrec, res.getAffectedItemsCount());
+        docs = this.collection.find("$.F1 Like '%New'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
+        recCnt = count_data(docs);
+        assertEquals(maxrec, recCnt);
+
+        /* Modify with a false Condition */
+        res = this.collection.modify("false").set("$.F1", "False_Data").execute();
+        assertEquals(0, res.getAffectedItemsCount());
+        // Modify with a Condition which results to false
+        res = this.collection.modify("0 == 1").set("$.F1", "False_Data").execute();
+        assertEquals(0, res.getAffectedItemsCount());
+
+        /* Un Set */
+        // Test UnSet with condition
+        docs = this.collection.find("$.tmp1 Like 'tempdata%'").fields("$._id as _id, $.tmp1 as tp").execute();
+        recCnt = count_data(docs);
+        // Total Rec with $.tmp1 Like 'tempdata%'
+        assertEquals(maxrec, recCnt);
+        res = this.collection.modify("CAST($._id as SIGNED) % 2").unset("$.tmp1").execute();
+        assertEquals(maxrec / 2, res.getAffectedItemsCount());
+        docs = this.collection.find("$.tmp1 Like 'tempdata%'").fields("$._id as _id, $.tmp1 as tp").execute();
+        recCnt = count_data(docs);
+        // Total records after Unset(with condition)
+        assertEquals(maxrec / 2, recCnt);
+        // Test true condition with unset
+        res = this.collection.modify("1 == 1").unset("$.tmp1").execute();
+        assertEquals(maxrec / 2, res.getAffectedItemsCount());
+        docs = this.collection.find("$.tmp1 Like 'tempdata%'").fields("$._id as _id, $.tmp1 as tp").execute();
+        recCnt = count_data(docs);
+        // Total records after Unset(without condition)
+        assertEquals(0, recCnt);
+
+        /* Test for Change().unset tmp2 for half of the total records.Call change without condition. */
+        res = this.collection.modify("CAST($._id as SIGNED) % 2").unset("$.tmp2").execute();
+        assertEquals(maxrec / 2, res.getAffectedItemsCount());
+        docs = this.collection.find("$.tmp2 Like 'tempForChange%'").fields("$._id as _id, $.tmp2 as tp").execute();
+        recCnt = count_data(docs);
+        // Total records after Unset(with condition)
+        assertEquals((maxrec / 2), recCnt);
+
+        // Test for Change()
+        res = this.collection.modify("true").change("$.tmp2", "Changedata").execute();
+        assertEquals(maxrec / 2, res.getAffectedItemsCount());
+        docs = this.collection.find("$.tmp2 Like 'Changedata'").fields("$._id as _id, $.tmp2 as tp").execute();
+        recCnt = count_data(docs);
+        // Total records Changed after modify().change(without condition)
+        assertEquals((maxrec / 2), recCnt);
+
+        // Test for set () after unset
+        res = this.collection.modify("true").set("$.tmp2", "Changedata1").execute();
+        assertEquals(maxrec, res.getAffectedItemsCount());
+        docs = this.collection.find("$.tmp2 Like 'Changedata1'").fields("$._id as _id, $.tmp2 as tp").execute();
+        recCnt = count_data(docs);
+        // Total Records Set when Half of the records were unset
+        assertEquals(maxrec, recCnt);
+
+        // Test for set () after unset All
+        res = this.collection.modify("true").unset("$.tmp2").execute();
+        assertEquals(maxrec, res.getAffectedItemsCount());
+        docs = this.collection.find("$.tmp2 IS Not NULL").fields("$._id as _id, $.tmp2 as tp").execute();
+        recCnt = count_data(docs);
+        // Total Records After unsetting all
+        assertEquals(0, recCnt);
+
+        res = this.collection.modify("1 == 1").set("$.tmp2", "Changedata3").execute();
+        assertEquals(maxrec, res.getAffectedItemsCount());
+        docs = this.collection.find("$.tmp2 Like 'Changedata3'").fields("$._id as _id, $.tmp2 as tp").execute();
+        recCnt = count_data(docs);
+        // Total Records Set when All the records were unset
+        assertEquals(maxrec, recCnt);
+
+        // Modify with Condition using Set
+        res = this.collection.modify("$._id = '1001' and  $.F1 Like '%New' ").set("$.F1", s1).execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("$.F1 = '" + s1 + "'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
+        recCnt = count_data(docs);
+        assertEquals(1, recCnt);
+    }
+
+    @Test
+    public void testCollectionModifySortLimit() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, maxrec = 30, recCnt = 0;
+        DbDoc doc = null;
+        Result res = null;
+        /* add(DbDoc[] docs) */
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1001)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf(10 * (i + 1))));
+            newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(1 + i)));
+            newDoc2.add("tmp1", new JsonString().setValue("tempdata-" + i));
+            newDoc2.add("tmp2", new JsonNumber().setValue(String.valueOf(-1)));
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+        }
+        this.collection.add(jsonlist).execute();
+
+        assertEquals((maxrec), this.collection.count());
+
+        /* fetch all */
+        DocResult docs = this.collection.find("CAST($.F3 as SIGNED)>= 0").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
+        i = 0;
+        while (docs.hasNext()) {
+            doc = docs.next();
+            assertEquals(String.valueOf(i + 1001), (((JsonString) doc.get("_id")).getString()));
+            assertEquals((long) (10 * (i + 1)), (long) (((JsonNumber) doc.get("f2")).getInteger()));
+            i++;
+        }
+        assertEquals((maxrec), i);
+
+        /* With Sort and limit */
+        res = this.collection.modify("$.F3 < 10 and  $.F1 Like 'Field-1%' and CAST($.F3 as SIGNED) > 2").set("$.tmp1", "UpdData").sort("$.F1 asc").limit(5)
+                .execute();
+        assertEquals(5, res.getAffectedItemsCount());
+        docs = this.collection.find("$.tmp1 = 'UpdData'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
+        i = 2;
+        while (docs.hasNext()) {
+            doc = docs.next();
+            assertEquals(String.valueOf(i + 1001), (((JsonString) doc.get("_id")).getString()));
+            assertEquals((long) (i + 1), (long) (((JsonNumber) doc.get("f3")).getInteger()));
+            i++;
+        }
+
+        // Unset with Condition using Set With Sort and limit
+        res = this.collection.modify("$.F3 < 10 and  $.F1 Like 'Field-1%' and CAST($.F3 as SIGNED) > 2").unset("$.tmp1").sort("$.F1 asc").limit(5).execute();
+        assertEquals(5, res.getAffectedItemsCount());
+        // Unset keys which is already unset
+        res = this.collection.modify("$.F3 < 11 and  $.F1 Like 'Field-1%' and CAST($.F3 as SIGNED) > 2").unset("$.tmp1").sort("$.F1 asc").limit(6).execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        // set keys which is already unset
+        res = this.collection.modify("$.F3 < 11 and  $.F1 Like 'Field-1%' and CAST($.F3 as SIGNED) > 2").set("$.tmp1", "UpdData").sort("$.F1 asc").limit(6)
+                .execute();
+        assertEquals(6, res.getAffectedItemsCount());
+
+        // set keys which is already unset
+        res = this.collection.modify("$.F3 < 11 and  $.F1 Like 'Field-1%' and CAST($.F3 as SIGNED) > 2").set("$.F2", -2147483648).sort("$.F1 asc").limit(6)
+                .execute();
+        assertEquals(6, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F2 as SIGNED) = -2147483648").fields("$._id as _id, $.F2 as f2").execute();
+        recCnt = count_data(docs);
+        assertEquals(6, recCnt);
+        res = this.collection.modify("CAST($.F3 as SIGNED) < 11 and  $.F1 Like 'Field-1%' and CAST($.F3 as SIGNED) > 2").set("$.tmp2", 2147483647)
+                .sort("$.F1 asc").limit(6).execute();
+        assertEquals(6, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F2 as SIGNED) = (CAST($.tmp2 as SIGNED)*-1)-1").fields("$._id as _id, $.F2 as f2").execute();
+        recCnt = count_data(docs);
+        assertEquals(6, recCnt);
+        docs = this.collection.find("(CAST($.F2 as SIGNED) * -1) - 1 = CAST($.tmp2 as SIGNED)").fields("$._id as _id, $.F2 as f2").execute();
+        recCnt = count_data(docs);
+        assertEquals(6, recCnt);
+
+        res = this.collection.modify("CAST($.F3 as SIGNED) < 11 and  $.F1 Like 'Field-1%'").set("$.tmp2", 9999).set("$.F2", 9999).sort("$.F1 asc").execute();
+        assertEquals(10, res.getAffectedItemsCount());
+
+        /* set,unset,change together */
+        //  res = coll.modify("CAST($.F3 as SIGNED) < 11").set("$.tmp2",$.tmp2+1).change("$.F1","concat($.F1,'Rajesh')").unset("$.tmp1").sort("$.F1 asc").execute();
+        res = this.collection.modify("CAST($.F3 as SIGNED) < 11").set("$.tmp2", 9898).change("$.F1", "'Rajesh'").unset("$.tmp1").sort("$.F1 asc").execute();
+        assertEquals(10, res.getAffectedItemsCount());
+
+        docs = this.collection.find("CAST($.tmp2 as SIGNED) = 9898").fields("$._id as _id, $.F2 as f2").execute();
+        recCnt = count_data(docs);
+        assertEquals(10, recCnt);
+
+        docs = this.collection.find("$.F1 like '%Rajesh'''").fields("$._id as _id, $.F1 as f1").execute();
+        recCnt = count_data(docs);
+        assertEquals(10, recCnt);
+
+        res = this.collection.modify("CAST($.F3 as SIGNED) < 11").unset("$.tmp1").set("$.tmp2", 9897).change("$.F1", "Rajesh").sort("$.F1 asc").execute();
+        assertEquals(10, res.getAffectedItemsCount());
+
+        res = this.collection.modify("true").unset("$.tmp1").set("$.tmp2", 9897).change("$.F1", "Rajesh").sort("$.F1 asc").limit(5).execute();
+        assertEquals(5, res.getAffectedItemsCount());
+
+        res = this.collection.modify("false").unset("$.tmp1").set("$.tmp2", 9897).change("$.F1", "Rajesh").sort("$.F1 asc").limit(5).execute();
+        assertEquals(0, res.getAffectedItemsCount());
+
+    }
+
+    @Test
+    @Disabled("$.F4 = 9223372036854775807 condition without quotes bind() not supported with modify.")
+    public void testCollectionModifyBind() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, maxrec = 10, recCnt = 0;
+        Result res = null;
+        /* add(DbDoc[] docs) */
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+        long l1 = Long.MAX_VALUE, l2 = Long.MIN_VALUE, l3 = 2147483647;
+        System.out.println("l = ===" + l1);
+
+        double d1 = 100.4567;
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf(d1 + i)));
+            newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(l1 - i)));
+            newDoc2.add("F4", new JsonNumber().setValue(String.valueOf(l2 + i)));
+            newDoc2.add("F5", new JsonNumber().setValue(String.valueOf(l3 + i)));
+            newDoc2.add("F6", new JsonString().setValue((2000 + i) + "-02-" + (i * 2 + 10)));
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+        }
+        this.collection.add(jsonlist).execute();
+        assertEquals((maxrec), this.collection.count());
+
+        /* find */
+        DocResult docs = this.collection.find("CAST($.F3 as SIGNED)=2147483649").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3+0 as f3").execute();
+        recCnt = count_data(docs);
+        assertEquals(maxrec, recCnt);
+
+        //  /*
+        res = this.collection.modify("$.F4 = ?").set("$.F4", 1).bind(new Object[] { l2 }).sort("$.F1 asc").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        //  */
+    }
+
+    /*
+     * Using Big int and Double
+     */
+    @Test
+    public void testCollectionModifyDataTypes() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, maxrec = 10, recCnt = 0;
+        DbDoc doc = null;
+        Result res = null;
+        /* add(DbDoc[] docs) */
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+        long l1 = Long.MAX_VALUE, l2 = Long.MIN_VALUE, l3 = 2147483647;
+        System.out.println("l = ===" + l1);
+
+        double d1 = 100.4567;
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf(d1 + i)));
+            newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(l1 - i)));
+            newDoc2.add("F4", new JsonNumber().setValue(String.valueOf(l2 + i)));
+            newDoc2.add("F5", new JsonNumber().setValue(String.valueOf(l3 + i)));
+            newDoc2.add("F6", new JsonString().setValue((2000 + i) + "-02-" + (i * 2 + 10)));
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+        }
+        this.collection.add(jsonlist).execute();
+        assertEquals((maxrec), this.collection.count());
+
+        /* find without Condition */
+        DocResult docs = this.collection.find("CAST($.F5 as SIGNED)=2147483649").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3+0 as f3").execute();
+        recCnt = count_data(docs);
+        assertEquals(1, recCnt);
+
+        /* condition on Double */
+        res = this.collection.modify("CAST($.F2 as DECIMAL(10,4)) =" + d1).set("$.F1", "UpdData1").sort("CAST($.F2 as DECIMAL(10,4))").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+
+        docs = this.collection.find("$.F1 = 'UpdData1'").fields("$._id as _id, $.F2 as f2").execute();
+        doc = docs.next();
+        assertEquals(new BigDecimal(String.valueOf(d1)), (((JsonNumber) doc.get("f2")).getBigDecimal()));
+        assertEquals(String.valueOf(1000), (((JsonString) doc.get("_id")).getString()));
+
+        /* condition on Big Int */
+        res = this.collection.modify("CAST($.F3 as SIGNED) =" + l1).set("$.F1", "UpdData2").sort("CAST($.F3 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+
+        docs = this.collection.find("$.F1 = 'UpdData2'").fields("$._id as _id, $.F3 as f3").execute();
+        doc = docs.next();
+        assertEquals(new BigDecimal(String.valueOf(l1)), (((JsonNumber) doc.get("f3")).getBigDecimal()));
+        assertEquals(String.valueOf(1000), (((JsonString) doc.get("_id")).getString()));
+
+        /* condition on Big Int */
+        res = this.collection.modify("CAST($.F5 as SIGNED) >= " + l3 + " and  CAST($.F5 as SIGNED) < " + l1 + " and CAST($.F5 as SIGNED) > " + l2)
+                .set("$.F1", "AllUpd").sort("CAST($.F5 as SIGNED)").execute();
+        assertEquals(maxrec, res.getAffectedItemsCount());
+
+        docs = this.collection.find("$.F1 = 'AllUpd'").fields("$._id as _id, $.F5 as f5").orderBy(" CAST($.F5 as SIGNED)").execute();
+
+        i = 0;
+        while (docs.hasNext()) {
+            doc = docs.next();
+            assertEquals(String.valueOf(i + 1000), (((JsonString) doc.get("_id")).getString()));
+            assertEquals(new BigDecimal(String.valueOf(i + l3)), (((JsonNumber) doc.get("f5")).getBigDecimal()));
+            i++;
+        }
+        assertEquals(maxrec, i);
+
+        /* condition on Double */
+        res = this.collection.modify("CAST($.F5 as SIGNED) =" + l3 + "+" + 3).set("$.F1", "UpdData3").sort("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+
+        docs = this.collection.find("$.F1 = 'UpdData3'").fields("$._id as _id, $.F5 as f5").execute();
+        doc = docs.next();
+        assertEquals(new BigDecimal(String.valueOf(3 + l3)), (((JsonNumber) doc.get("f5")).getBigDecimal()));
+        assertEquals(String.valueOf(1000 + 3), (((JsonString) doc.get("_id")).getString()));
+
+        /* condition on Double */
+        res = this.collection.modify("CAST($.F5 as SIGNED) - 3 =" + l3).set("$.F1", "UpdData4").sort("CAST($.F5 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+
+        docs = this.collection.find("$.F1 = 'UpdData4'").fields("$._id as _id, $.F5 as f5").execute();
+        doc = docs.next();
+        assertEquals(new BigDecimal(String.valueOf(3 + l3)), (((JsonNumber) doc.get("f5")).getBigDecimal()));
+        assertEquals(String.valueOf(1000 + 3), (((JsonString) doc.get("_id")).getString()));
+
+        /* condition on date */
+        res = this.collection.modify("$.F6 + interval 6 day = '2007-03-02' ").set("$.F1", "UpdData5").sort("$.F6").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+
+        docs = this.collection.find("$.F1 = 'UpdData5'").fields("$._id as _id, $.F6 as f6").execute();
+        doc = docs.next();
+        assertEquals("2007-02-24", (((JsonString) doc.get("f6")).getString()));
+        assertEquals(String.valueOf(1000 + 7), (((JsonString) doc.get("_id")).getString()));
+        assertFalse(docs.hasNext());
+    }
+
+    /*
+     * Update Using Expressions
+     */
+    @Test
+    public void testCollectionModifyExpr() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, maxrec = 10;
+        DbDoc doc = null;
+        Result res = null;
+        DocResult docs = null;
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+        long l1 = Long.MAX_VALUE, l2 = Long.MIN_VALUE, l3 = 2147483647;
+        double d1 = 100.4567;
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf(d1 + i)));
+            newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(l1 - i)));
+            newDoc2.add("F4", new JsonNumber().setValue(String.valueOf(l2 + i)));
+            newDoc2.add("F5", new JsonNumber().setValue(String.valueOf(l3 + i)));
+            newDoc2.add("F6", new JsonString().setValue((2000 + i) + "-02-" + (i * 2 + 10)));
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+        }
+        this.collection.add(jsonlist).execute();
+        assertEquals((maxrec), this.collection.count());
+
+        /* condition on Double */
+        res = this.collection.modify("CAST($.F2 as DECIMAL(10,4)) =" + d1).set("$.F1", expr("concat('data',$.F1,'UpdData1')"))
+                .sort("CAST($.F2 as DECIMAL(10,4))").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+
+        docs = this.collection.find("$.F1 like 'data%UpdData1'").fields("$._id as _id, $.F2 as f2").execute();
+        doc = docs.next();
+        assertEquals(new BigDecimal(String.valueOf(d1)), (((JsonNumber) doc.get("f2")).getBigDecimal()));
+        assertEquals(String.valueOf(1000), (((JsonString) doc.get("_id")).getString()));
+
+        res = this.collection.modify("CAST($.F2 as DECIMAL(10,4)) =" + d1).set("$.F6", expr("$.F6 + interval 6 day")).sort("CAST($.F2 as DECIMAL(10,4))")
+                .execute();
+        assertEquals(1, res.getAffectedItemsCount());
+
+        docs = this.collection.find("$.F6 + interval 6 day = '2000-02-22'").fields("$._id as _id, $.F6 as f6").execute();
+        doc = docs.next();
+        assertEquals("2000-02-16", (((JsonString) doc.get("f6")).getString()));
+        assertEquals(String.valueOf(1000), (((JsonString) doc.get("_id")).getString()));
+
+        res = this.collection.modify("$.F6= '2004-02-18'").set("$.F6", expr("$.F6 + interval 11 day")).set("$.F1", "NewData")
+                .sort("CAST($.F2 as DECIMAL(10,4))").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+
+        docs = this.collection.find("$.F1 = 'NewData'").fields("$._id as _id, $.F6 as f6").execute();
+        doc = docs.next();
+        assertEquals("2004-02-29", (((JsonString) doc.get("f6")).getString()));
+        assertEquals(String.valueOf(1004), (((JsonString) doc.get("_id")).getString()));
+
+        /* condition on Big Int */
+        res = this.collection.modify("CAST($.F3 as SIGNED) =" + l1).set("$.F3", expr("CAST($.F3 as SIGNED)  -1")).sort("CAST($.F3 as SIGNED)").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+
+        res = this.collection.modify("CAST($.F3 as SIGNED) + 1  =" + l1).set("$.F3", expr("CAST($.F3 as SIGNED) + 1")).sort("CAST($.F3 as SIGNED)").execute();
+        assertEquals(2, res.getAffectedItemsCount());
+
+        docs = this.collection.find("CAST($.F3 as SIGNED)=" + l1).fields("$._id as _id, $.F3 as f3").orderBy("$._id asc").execute();
+        doc = docs.next();
+        assertEquals(new BigDecimal(String.valueOf(l1)), (((JsonNumber) doc.get("f3")).getBigDecimal()));
+        assertEquals(String.valueOf(1000), (((JsonString) doc.get("_id")).getString()));
+
+        doc = docs.next();
+        assertEquals(new BigDecimal(String.valueOf(l1)), (((JsonNumber) doc.get("f3")).getBigDecimal()));
+        assertEquals(String.valueOf(1001), (((JsonString) doc.get("_id")).getString()));
+        assertFalse(docs.hasNext());
+
+        /* condition on Big Int.Compex Expression */
+        res = this.collection.modify("CAST($.F4 as SIGNED) < 0").set("$.F1", "Abcd")
+                .set("$.F4", expr("((CAST($.F4 as SIGNED) + CAST($.F3 as SIGNED)) * 1)/1.1 + 1 ")).execute();
+        assertEquals(maxrec, res.getAffectedItemsCount());
+
+        res = this.collection.modify("true").set("$.F1", expr("concat('data',$.F1,'UpdData1')")).sort("CAST($.F2 as DECIMAL(10,4))").execute();
+        assertEquals(10, res.getAffectedItemsCount());
+
+        res = this.collection.modify("false").set("$.F1", "Abcd").set("$.F4", expr("((CAST($.F4 as SIGNED) + CAST($.F3 as SIGNED)) * 1)/1.1 + 1 ")).execute();
+        assertEquals(0, res.getAffectedItemsCount());
+    }
+
+    @Test
+    public void testCollectionModifyArray() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, j = 0, maxrec = 8, arraySize = 30;
+        int lStr = 1024 * 800;
+        JsonArray yArray = null;
+        DbDoc doc = null;
+        DocResult docs = null;
+        Result res = null;
+        String s1 = buildString((lStr), 'X');
+        long l3 = 2147483647;
+        double d1 = 1000.1234;
+
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonNumber().setValue(String.valueOf(i + 1)));
+
+            JsonArray jarray = new JsonArray();
+            for (j = 0; j < (arraySize); j++) {
+                jarray.addValue(new JsonNumber().setValue(String.valueOf((l3 + j + i))));
+            }
+            newDoc2.add("ARR1", jarray);
+
+            JsonArray karray = new JsonArray();
+            for (j = 0; j < (arraySize); j++) {
+                karray.addValue(new JsonNumber().setValue(String.valueOf((d1 + j + i))));
+            }
+            newDoc2.add("ARR2", karray);
+            JsonArray larray = new JsonArray();
+            for (j = 0; j < (arraySize); j++) {
+                larray.addValue(new JsonString().setValue("St_" + i + "_" + j));
+            }
+            newDoc2.add("ARR3", larray);
+            this.collection.add(newDoc2).execute();
+            newDoc2 = null;
+            jarray = null;
+        }
+        assertEquals((maxrec), this.collection.count());
+
+        //Update Array data using expr
+        res = this.collection.modify("$.F1 = 1").change("$.ARR1[1]", expr("$.ARR1[1] / $.ARR1[1]")).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+
+        docs = this.collection.find("CAST($.ARR1[1] as SIGNED) = 1").orderBy("$._id").execute();
+        doc = docs.next();
+        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        /* Unset Array element */
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").unset("$.ARR1[1]").sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("$.F1 = 1").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR1");
+        assertEquals(arraySize - 1, yArray.size());
+        assertEquals(new BigDecimal("2147483647"), (((JsonNumber) yArray.get(0)).getBigDecimal()));
+        assertEquals(new BigDecimal("2147483649"), (((JsonNumber) yArray.get(1)).getBigDecimal()));
+        assertFalse(docs.hasNext());
+
+        /* set Array element */
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").set("$.ARR1[1]", 90).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("$.F1 = 1").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR1");
+        assertEquals(arraySize - 1, yArray.size());
+        assertEquals(new BigDecimal("2147483647"), (((JsonNumber) yArray.get(0)).getBigDecimal()));
+        assertEquals(new BigDecimal("90"), (((JsonNumber) yArray.get(1)).getBigDecimal()));
+        assertFalse(docs.hasNext());
+
+        /* set Array element */
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").set("$.ARR1[2]", 91).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("$.F1 = 1").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR1");
+        assertEquals(arraySize - 1, yArray.size());
+        assertEquals(new BigDecimal("2147483647"), (((JsonNumber) yArray.get(0)).getBigDecimal()));
+        assertEquals(new BigDecimal("90"), (((JsonNumber) yArray.get(1)).getBigDecimal()));
+        assertEquals(new BigDecimal("91"), (((JsonNumber) yArray.get(2)).getBigDecimal()));
+        assertFalse(docs.hasNext());
+
+        /* set Array element (String) */
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").set("$.ARR3[1]", s1).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("length($.ARR3[1]) = " + lStr).orderBy("$._id").execute();
+        doc = docs.next();
+        assertEquals((long) 1, (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        yArray = (JsonArray) doc.get("ARR3");
+        assertEquals(arraySize, yArray.size());
+        assertEquals("St_0_0", (((JsonString) yArray.get(0)).getString()));
+        assertEquals("St_0_2", (((JsonString) yArray.get(2)).getString()));
+        assertFalse(docs.hasNext());
+
+        /* set Array element (String) */
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").set("$.ARR3[1]", expr("concat($.ARR3[1], $.ARR3[1])")).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("length($.ARR3[1]) = " + (lStr * 2)).orderBy("$._id").execute();
+        doc = docs.next();
+        assertEquals((long) 1, (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        yArray = (JsonArray) doc.get("ARR3");
+        assertEquals(arraySize, yArray.size());
+        assertEquals("St_0_0", (((JsonString) yArray.get(0)).getString()));
+        assertEquals("St_0_2", (((JsonString) yArray.get(2)).getString()));
+        assertFalse(docs.hasNext());
+
+        /* Change Array elements of all rows (String) */
+        res = this.collection.modify("CAST($.F1 as SIGNED) >= 1").set("$.ARR3[1]", expr("concat($.ARR3[1], '" + s1 + "')")).sort("$._id").execute();
+        assertEquals(maxrec, res.getAffectedItemsCount());
+        docs = this.collection.find("length($.ARR3[1]) > " + (lStr)).orderBy("$._id").fields(expr("{'cnt':count($._id)}")).execute();
+        doc = docs.next();
+        assertEquals((long) maxrec, (long) ((JsonNumber) doc.get("cnt")).getInteger());
+        assertFalse(docs.hasNext());
+
+        /* Unset Array element(String) */
+        res = this.collection.modify("$.F1 = 1").unset("$.ARR3[1]").sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.F1 as SIGNED) = 1").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR3");
+        assertEquals(arraySize - 1, yArray.size());
+        assertEquals("St_0_0", (((JsonString) yArray.get(0)).getString()));
+        assertEquals("St_0_2", (((JsonString) yArray.get(1)).getString()));
+        assertFalse(docs.hasNext());
+
+        /* Unset Array element(String) */
+        res = this.collection.modify("CAST($.F1 as SIGNED) > 1").unset("$.ARR3[1]").sort("$._id").execute();
+        assertEquals((maxrec - 1), res.getAffectedItemsCount());
+        docs = this.collection.find("length($.ARR3[1]) < " + (lStr)).orderBy("$._id").fields(expr("{'cnt':count($._id)}")).execute();
+        doc = docs.next();
+        assertEquals((long) maxrec, (long) ((JsonNumber) doc.get("cnt")).getInteger());
+        assertFalse(docs.hasNext());
+    }
+
+    /* ArrayAppend() for int double and string */
+    @Test
+    public void testCollectionModifyArrayAppend() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, j = 0, maxrec = 8, arraySize = 30;
+        int lStr = 10;
+        JsonArray yArray = null;
+        DbDoc doc = null;
+        DocResult docs = null;
+        Result res = null;
+        String s1 = buildString((lStr), '.');
+        long l3 = 2147483647;
+        double d1 = 1000.1234;
+
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonNumber().setValue(String.valueOf(i + 1)));
+
+            JsonArray jarray = new JsonArray();
+            for (j = 0; j < (arraySize); j++) {
+                jarray.addValue(new JsonNumber().setValue(String.valueOf((l3 + j + i))));
+            }
+            newDoc2.add("ARR1", jarray);
+
+            JsonArray karray = new JsonArray();
+            for (j = 0; j < (arraySize); j++) {
+                karray.addValue(new JsonNumber().setValue(String.valueOf((d1 + j + i))));
+            }
+            newDoc2.add("ARR2", karray);
+            JsonArray larray = new JsonArray();
+            for (j = 0; j < (arraySize); j++) {
+                larray.addValue(new JsonString().setValue("St_" + i + "_" + j));
+            }
+            newDoc2.add("ARR3", larray);
+            this.collection.add(newDoc2).execute();
+            newDoc2 = null;
+            jarray = null;
+        }
+        assertEquals((maxrec), this.collection.count());
+
+        // Append 1 number in the array (ARR1) where $.F1 = 1
+        res = this.collection.modify("$.F1 = 1").arrayAppend("$.ARR1", -1).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.ARR1[" + (arraySize) + "] as SIGNED) = -1").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR1");
+        assertEquals(arraySize + 1, yArray.size());
+        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // Append 3 numbers in the array (ARR1) where $.F1 = 1
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayAppend("$.ARR1", -2).arrayAppend("$.ARR1", -3).arrayAppend("$.ARR1", -4).sort("$._id")
+                .execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.ARR1[" + (arraySize) + "] as SIGNED) = -1").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR1");
+        assertEquals(arraySize + 4, yArray.size());
+        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // Append 1 number in the array (ARR2) where $.F1 = 1
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayAppend("$.ARR2", -4321.4321).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.ARR2[" + (arraySize) + "] as DECIMAL(10,4)) = -4321.4321").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR2");
+        assertEquals(arraySize + 1, yArray.size());
+        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // Append 3 number in the array (ARR2) where $.F1 = 1
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayAppend("$.ARR2", 4321.1234).arrayAppend("$.ARR2", 4321.9847)
+                .arrayAppend("$.ARR2", -4321.9888).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.ARR2[" + (arraySize) + "] as  DECIMAL(10,4)) =  -4321.4321").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR2");
+        assertEquals(arraySize + 4, yArray.size());
+        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // Append 1 String in the array (ARR3) where $.F1 = 1
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayAppend("$.ARR3", s1).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("$.ARR3[" + (arraySize) + "] = '" + s1 + "'").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR3");
+        assertEquals(arraySize + 1, yArray.size());
+        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // Append 5 Strings in the array (ARR3) where $.F1 = 1
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayAppend("$.ARR3", s1 + "1").arrayAppend("$.ARR3", s1 + "2").arrayAppend("$.ARR3", s1 + "3")
+                .arrayAppend("$.ARR3", s1 + "4").arrayAppend("$.ARR3", s1 + "5").sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("$.ARR3[" + (arraySize) + "] = '" + s1 + "'").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR3");
+        assertEquals(arraySize + 6, yArray.size());
+        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertFalse(docs.hasNext());
+    }
+
+    /* ArrayInsert() for int , double and string */
+    @Test
+    public void testCollectionModifyArrayInsert() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, j = 0, maxrec = 8, arraySize = 30;
+        int lStr = 10;
+        JsonArray yArray = null;
+        DbDoc doc = null;
+        DocResult docs = null;
+        Result res = null;
+        String s1 = buildString((lStr), '.');
+        long l3 = 2147483647;
+        double d1 = 1000.1234;
+
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonNumber().setValue(String.valueOf(i + 1)));
+
+            JsonArray jarray = new JsonArray();
+            for (j = 0; j < (arraySize); j++) {
+                jarray.addValue(new JsonNumber().setValue(String.valueOf((l3 + j + i))));
+            }
+            newDoc2.add("ARR1", jarray);
+
+            JsonArray karray = new JsonArray();
+            for (j = 0; j < (arraySize); j++) {
+                karray.addValue(new JsonNumber().setValue(String.valueOf((d1 + j + i))));
+            }
+            newDoc2.add("ARR2", karray);
+            JsonArray larray = new JsonArray();
+            for (j = 0; j < (arraySize); j++) {
+                larray.addValue(new JsonString().setValue("St_" + i + "_" + j));
+            }
+            newDoc2.add("ARR3", larray);
+            this.collection.add(newDoc2).execute();
+            newDoc2 = null;
+            jarray = null;
+        }
+        assertEquals((maxrec), this.collection.count());
+
+        // Insert to a aposistion > arraySize Shld Work same as Append
+        // Insert 1 number in the array (ARR1) after position arraySize where $.F1 = 1
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayInsert("$.ARR1[" + (arraySize * 2) + "]", -1).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.ARR1[" + (arraySize) + "] as SIGNED) = -1").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR1");
+        assertEquals(arraySize + 1, yArray.size());
+        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // Insert 3 numbers in the array (ARR1) where $.F1 = 2
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 2").arrayInsert("$.ARR1[0]", -2).arrayInsert("$.ARR1[1]", -3).arrayInsert("$.ARR1[2]", -4)
+                .sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.ARR1[0] as SIGNED) = -2").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR1");
+        assertEquals((long) (arraySize + 3), (long) yArray.size());
+        assertEquals((long) (2), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) (-2), (long) (((JsonNumber) yArray.get(0)).getInteger()));
+        assertEquals((long) (-3), (long) (((JsonNumber) yArray.get(1)).getInteger()));
+        assertEquals((long) (-4), (long) (((JsonNumber) yArray.get(2)).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // Insert 3 numbers in the array (ARR1) where $.F1 = 3
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 3").arrayInsert("$.ARR1[2]", -4).arrayInsert("$.ARR1[1]", -3).arrayInsert("$.ARR1[0]", -2)
+                .sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.ARR1[2] as SIGNED) = -3").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR1");
+        assertEquals(arraySize + 3, yArray.size());
+        assertEquals((3), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) (-2), (long) (((JsonNumber) yArray.get(0)).getInteger()));
+        assertEquals((long) (-3), (long) (((JsonNumber) yArray.get(2)).getInteger()));
+        assertEquals((long) (-4), (long) (((JsonNumber) yArray.get(4)).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // Insert 1 number in the array (ARR2) where $.F1 = 1
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayInsert("$.ARR2[1]", -4321.4321).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.ARR2[1] as DECIMAL(10,4)) = -4321.4321").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR2");
+        assertEquals((long) (arraySize + 1), (long) yArray.size());
+        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // Insert 3 number in the array (ARR2) where $.F1 = 2
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 2").arrayInsert("$.ARR2[2]", 4321.1234).arrayInsert("$.ARR2[0]", 4321.9847)
+                .arrayInsert("$.ARR2[1]", -4321.9888).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("CAST($.ARR2[0] as  DECIMAL(10,4)) =  4321.9847").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR2");
+        assertEquals(arraySize + 3, yArray.size());
+        assertEquals((long) (2), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals(new BigDecimal(String.valueOf("4321.1234")), (((JsonNumber) yArray.get(4)).getBigDecimal()));
+        assertEquals(new BigDecimal(String.valueOf("4321.9847")), (((JsonNumber) yArray.get(0)).getBigDecimal()));
+        assertEquals(new BigDecimal(String.valueOf("-4321.9888")), (((JsonNumber) yArray.get(1)).getBigDecimal()));
+        assertFalse(docs.hasNext());
+
+        // Insert 1 String in the array (ARR3) where $.F1 = 1
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayInsert("$.ARR3[1]", s1).sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("$.ARR3[1]  = '" + s1 + "'").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR3");
+        assertEquals(arraySize + 1, yArray.size());
+        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // Insert 3 Strings in the array (ARR3) where $.F1 = 2
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 2").arrayInsert("$.ARR3[1]", s1).arrayInsert("$.ARR3[2]", s1).arrayInsert("$.ARR3[0]", "")
+                .sort("$._id").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        docs = this.collection.find("$.ARR3[0]  = ''").orderBy("$._id").execute();
+        doc = docs.next();
+        yArray = (JsonArray) doc.get("ARR3");
+        assertEquals(arraySize + 3, yArray.size());
+        assertEquals((long) (2), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // Insert 3 Strings in the array (ARR3) using an empty condition
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionModifyTest.this.collection.modify(" ").arrayInsert("$.ARR3[1]", s1).arrayInsert("$.ARR3[2]", s1).arrayInsert("$.ARR3[0]", "")
+                        .sort("$._id").execute();
+                return null;
+            }
+        });
+
+        // Insert 3 Strings in the array (ARR3) using null condition
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionModifyTest.this.collection.modify(null).arrayInsert("$.ARR3[1]", s1).arrayInsert("$.ARR3[2]", s1).arrayInsert("$.ARR3[0]", "")
+                        .sort("$._id").execute();
+                return null;
+            }
+        });
+    }
+
+    @Test
+    public void testCollectionModifyAsync() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, j = 0, maxrec = 10;
+        DbDoc doc = null;
+        AddResult res = null;
+        Result res2 = null;
+        CompletableFuture<AddResult> asyncRes = null;
+        CompletableFuture<Result> asyncRes2 = null;
+        CompletableFuture<DocResult> asyncDocs = null;
+        DocResult docs = null;
+        double d = 100.123;
+
+        /* add().executeAsync() maxrec num of records */
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf(d + i)));
+            newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(100 + i)));
+            newDoc2.add("T", new JsonNumber().setValue(String.valueOf(i)));
+            asyncRes = this.collection.add(newDoc2).executeAsync();
+            res = asyncRes.get();
+            assertEquals(1, res.getAffectedItemsCount());
+            newDoc2 = null;
+        }
+
+        assertEquals((maxrec), this.collection.count());
+
+        asyncDocs = this.collection.find("F3 >= ? and F3 < ?").bind(100, 100006).fields(expr("{'cnt':count($.F1)}")).executeAsync();
+        docs = asyncDocs.get();
+        doc = docs.next();
+        assertEquals((long) maxrec, (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+
+        /* Simple Update with executeAsync */
+        asyncRes2 = this.collection.modify("$.F3 > 100").unset("$.T").sort("$.F3 desc").executeAsync();
+        res2 = asyncRes2.get();
+        assertEquals((maxrec - 1), res2.getAffectedItemsCount());
+
+        asyncRes2 = this.collection.modify("$.F3 >= 100").change("$.T", expr("10000+1")).sort("$.F3 desc").executeAsync();
+        res2 = asyncRes2.get();
+        assertEquals((1), res2.getAffectedItemsCount());
+
+        asyncDocs = this.collection.find("$.T >= ? ").bind(10000).fields(expr("{'cnt':count($.T)}")).executeAsync();
+        docs = asyncDocs.get();
+        doc = docs.next();
+        assertEquals((long) (1), (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+
+        asyncRes2 = this.collection.modify("$.F3 >= 100").unset("$.T").sort("$.F3 desc").executeAsync();
+        res2 = asyncRes.get();
+        assertEquals(1, res2.getAffectedItemsCount());
+
+        asyncRes2 = this.collection.modify("$.F3 >= 100").set("$.T", expr("10000+3")).sort("$.F3 desc").executeAsync();
+        res2 = asyncRes2.get();
+        assertEquals(maxrec, res2.getAffectedItemsCount());
+
+        asyncDocs = this.collection.find("$.T >= ? ").bind(10000).fields(expr("{'cnt':count($.T)}")).executeAsync();
+        docs = asyncDocs.get();
+        doc = docs.next();
+        assertEquals((long) maxrec, (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+
+        CompletableFuture<?> futures[] = new CompletableFuture<?>[501];
+        //List <Object>futures =  new ArrayList<Object>();
+        j = 0;
+        for (i = 0; i < 500; ++i, j++) {
+            if (j >= maxrec) {
+                j = 0;
+            }
+            futures[i] = this.collection.modify("$.F3 = " + (100 + j)).change("$.T", i).executeAsync();
+        }
+        for (i = 0; i < 500; ++i, j++) {
+            // res = ((CompletableFuture<Result>) futures.get(i)).get();
+            res2 = (Result) futures[i].get();
+            assertEquals(1, res2.getAffectedItemsCount());
+        }
+
+        futures[i] = this.collection.modify("true").change("$.T", -1).executeAsync();
+
+        // wait for them all to finish
+        CompletableFuture.allOf(futures).get();
+
+        asyncDocs = this.collection.find("$.T = ? ").bind(-1).fields(expr("{'cnt':count($.T)}")).executeAsync();
+        docs = asyncDocs.get();
+        doc = docs.next();
+        assertEquals((long) maxrec, (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testCollectionModifyAsyncMany() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, maxrec = 10;
+        int NUMBER_OF_QUERIES = 1000;
+        DbDoc doc = null;
+        AddResult res = null;
+        Result res2 = null;
+        CompletableFuture<AddResult> asyncRes = null;
+        CompletableFuture<DocResult> asyncDocs = null;
+        DocResult docs = null;
+        double d = 100.123;
+
+        /* add().executeAsync() maxrec num of records */
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf(d + i)));
+            newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(1000 + i)));
+            newDoc2.add("T", new JsonNumber().setValue(String.valueOf(i)));
+            asyncRes = this.collection.add(newDoc2).executeAsync();
+            res = asyncRes.get();
+            assertEquals(1, res.getAffectedItemsCount());
+            newDoc2 = null;
+        }
+
+        assertEquals((maxrec), this.collection.count());
+
+        List<Object> futures = new ArrayList<>();
+        for (i = 0; i < NUMBER_OF_QUERIES; ++i) {
+            if (i % 3 == 0) {
+                futures.add(this.collection.modify("$.F3 % 2 = 0 ").change("$.T", expr("1000000+" + i)).sort("$.F3 desc").executeAsync());
+            } else if (i % 3 == 1) {
+                futures.add(this.collection.modify("$.F3 = " + (1000 + i)).change("$.T", expr("NON_EXISTING_FUNCTION()")).sort("$.F3 desc").executeAsync());//Error
+            } else {
+                futures.add(this.collection.modify("$.F3 % 2 = 1 ").change("$.T", expr("$.F3+" + i)).sort("$.F3 desc").executeAsync());
+            }
+        }
+
+        for (i = 0; i < NUMBER_OF_QUERIES; ++i) {
+            if (i % 3 == 0) {
+                res2 = ((CompletableFuture<AddResult>) futures.get(i)).get();
+                assertEquals((maxrec) / 2, res2.getAffectedItemsCount());
+            } else if (i % 3 == 1) {
+                int i1 = i;
+                assertThrows(ExecutionException.class, ".*FUNCTION " + this.schema.getName() + ".NON_EXISTING_FUNCTION does not exist.*",
+                        () -> ((CompletableFuture<Result>) futures.get(i1)).get());
+            } else {
+                res2 = ((CompletableFuture<Result>) futures.get(i)).get();
+                assertEquals((maxrec) / 2, res2.getAffectedItemsCount());
+            }
+        }
+
+        asyncDocs = this.collection.find("$.T > :X ").bind("X", 1000000).fields(expr("{'cnt':count($.T)}")).executeAsync();
+        docs = asyncDocs.get();
+        doc = docs.next();
+        assertEquals((long) (maxrec) / 2, (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+
+        asyncDocs = this.collection.find("$.T > :X and $.T < :Y").bind("X", 1000).bind("Y", 1000000).fields(expr("{'cnt':count($.T)}")).executeAsync();
+        docs = asyncDocs.get();
+        doc = docs.next();
+        assertEquals((long) (maxrec) / 2, (long) (((JsonNumber) doc.get("cnt")).getInteger()));
     }
 }

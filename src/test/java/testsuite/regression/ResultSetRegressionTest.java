@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -92,6 +93,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.rowset.CachedRowSet;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.Messages;
@@ -119,6 +121,7 @@ import com.mysql.cj.protocol.a.result.NativeResultset;
 import com.mysql.cj.protocol.a.result.ResultsetRowsCursor;
 import com.mysql.cj.protocol.a.result.ResultsetRowsStreaming;
 import com.mysql.cj.result.SqlDateValueFactory;
+import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TimeUtil;
 import com.mysql.cj.util.Util;
 
@@ -234,30 +237,29 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug2654() throws Exception {
-        if (!this.DISABLED_testBug2654) { // this is currently a server-level bug
+        createTable("foo", "(id tinyint(3) default NULL, data varchar(255) default NULL) DEFAULT CHARSET=latin1", "MyISAM ");
+        this.stmt.executeUpdate("INSERT INTO foo VALUES (2,'male'), (1,'female') ");
 
-            createTable("foo", "(id tinyint(3) default NULL, data varchar(255) default NULL) DEFAULT CHARSET=latin1", "MyISAM ");
-            this.stmt.executeUpdate("INSERT INTO foo VALUES (1,'male'),(2,'female')");
+        createTable("bar", "(id tinyint(3) unsigned default NULL, data char(3) default '0') DEFAULT CHARSET=latin1", "MyISAM ");
 
-            createTable("bar", "(id tinyint(3) unsigned default NULL, data char(3) default '0') DEFAULT CHARSET=latin1", "MyISAM ");
+        this.stmt.executeUpdate("INSERT INTO bar VALUES (1,'no'), (2,'yes')");
 
-            this.stmt.executeUpdate("INSERT INTO bar VALUES (1,'yes'),(2,'no')");
+        String statement = "select foo.id, foo.data, bar.data from foo, bar	where foo.id = bar.id order by foo.id";
 
-            String statement = "select foo.id, foo.data, bar.data from foo, bar	where foo.id = bar.id order by foo.id";
+        this.rs = this.stmt.executeQuery(statement);
 
-            String column = "foo.data";
+        ResultSetMetaData rsmd = this.rs.getMetaData();
+        assertEquals("foo", rsmd.getTableName(1));
+        assertEquals("id", rsmd.getColumnName(1));
 
-            this.rs = this.stmt.executeQuery(statement);
+        this.rs.next();
+        assertEquals("female", this.rs.getString("foo.data"));
+        assertEquals("no", this.rs.getString("bar.data"));
 
-            ResultSetMetaData rsmd = this.rs.getMetaData();
-            System.out.println(rsmd.getTableName(1));
-            System.out.println(rsmd.getColumnName(1));
+        this.rs.next();
+        assertEquals("male", this.rs.getString("foo.data"));
+        assertEquals("yes", this.rs.getString("bar.data"));
 
-            this.rs.next();
-
-            String fooData = this.rs.getString(column);
-            assertNotNull(fooData);
-        }
     }
 
     /**
@@ -920,37 +922,38 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug5136() throws Exception {
-        if (!this.DISABLED_testBug5136) {
-            PreparedStatement toGeom = this.conn.prepareStatement("select GeomFromText(?)");
-            PreparedStatement toText = this.conn.prepareStatement("select AsText(?)");
+        boolean useSTfunctions = versionMeetsMinimum(5, 6);
 
-            String inText = "POINT(146.67596278 -36.54368233)";
+        PreparedStatement toGeom = this.conn.prepareStatement(useSTfunctions ? "select ST_GeomFromText(?)" : "select GeomFromText(?)");
+        PreparedStatement toText = this.conn.prepareStatement(useSTfunctions ? "select ST_AsText(?)" : "select AsText(?)");
 
-            // First assert that the problem is not at the server end
-            this.rs = this.stmt.executeQuery("select AsText(GeomFromText('" + inText + "'))");
-            this.rs.next();
+        String inText = "POINT(146.67596278 -36.54368233)";
 
-            String outText = this.rs.getString(1);
-            this.rs.close();
-            assertTrue(inText.equals(outText), "Server side only\n In: " + inText + "\nOut: " + outText);
+        // First assert that the problem is not at the server end
+        this.rs = this.stmt
+                .executeQuery(useSTfunctions ? "select ST_AsText(ST_GeomFromText('" + inText + "'))" : "select AsText(GeomFromText('" + inText + "'))");
+        this.rs.next();
 
-            // Now bring a binary geometry object to the client and send it back
-            toGeom.setString(1, inText);
-            this.rs = toGeom.executeQuery();
-            this.rs.next();
+        String outText = this.rs.getString(1);
+        this.rs.close();
+        assertTrue(inText.equals(outText), "Server side only\n In: " + inText + "\nOut: " + outText);
 
-            // Return a binary geometry object from the WKT
-            Object geom = this.rs.getObject(1);
-            this.rs.close();
-            toText.setObject(1, geom);
-            this.rs = toText.executeQuery();
-            this.rs.next();
+        // Now bring a binary geometry object to the client and send it back
+        toGeom.setString(1, inText);
+        this.rs = toGeom.executeQuery();
+        this.rs.next();
 
-            // Return WKT from the binary geometry
-            outText = this.rs.getString(1);
-            this.rs.close();
-            assertTrue(inText.equals(outText), "Server to client and back\n In: " + inText + "\nOut: " + outText);
-        }
+        // Return a binary geometry object from the WKT
+        Object geom = this.rs.getObject(1);
+        this.rs.close();
+        toText.setObject(1, geom);
+        this.rs = toText.executeQuery();
+        this.rs.next();
+
+        // Return WKT from the binary geometry
+        outText = this.rs.getString(1);
+        this.rs.close();
+        assertTrue(inText.equals(outText), "Server to client and back\n In: " + inText + "\nOut: " + outText);
     }
 
     /**
@@ -2392,10 +2395,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug10485() throws Exception {
-        if (versionMeetsMinimum(5, 7, 5)) {
-            // Nothing to test, YEAR(2) is removed starting from 5.7.5
-            return;
-        }
+        assumeTrue(!versionMeetsMinimum(5, 7, 5), "Nothing to test, YEAR(2) is removed starting from 5.7.5");
 
         String tableName = "testBug10485";
 
@@ -4014,10 +4014,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
     @Test
     public void testBug48820() throws Exception {
-        if (versionMeetsMinimum(8, 0, 5)) {
-            // old_passwords and PASSWORD() were removed since MySQL 8.0.5
-            return;
-        }
+        assumeTrue(!versionMeetsMinimum(8, 0, 5), "Old_passwords and PASSWORD() were removed since MySQL 8.0.5");
 
         CachedRowSet crs;
 
@@ -4026,10 +4023,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         if (versionMeetsMinimum(5, 6, 6)) {
             this.rs = noBlobsConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'old_passwords'");
             if (this.rs.next()) {
-                if (this.rs.getInt(2) == 2) {
-                    System.out.println("Skip testBug48820 due to SHA-256 password hashing.");
-                    return;
-                }
+                assumeTrue(this.rs.getInt(2) != 2, "Skip testBug48820 due to SHA-256 password hashing.");
             }
         }
 
@@ -4082,34 +4076,32 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * Tests fix for BUG#65503 - ResultSets created by PreparedStatement.getGeneratedKeys() are not close()d.
      * 
      * To get results quicker add option -Xmx10M, with this option I got an out of memory failure after about 6500 passes.
-     * Since it's a very long test it is disabled by default.
      * 
      * @throws Exception
      */
     @Test
+    @Disabled("It's a very long test")
     public void testBug65503() throws Exception {
-        if (!this.DISABLED_testBug65503) {
-            createTable("testBug65503", "(id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, value INTEGER)");
+        createTable("testBug65503", "(id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, value INTEGER)");
 
-            PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO testBug65503 (value) VALUES (?)", Statement.RETURN_GENERATED_KEYS),
-                    stmt2 = this.conn.prepareStatement("SELECT * FROM testBug65503 LIMIT 6");
-            for (int i = 0; i < 100000000; ++i) {
-                pStmt.setString(1, "48");
-                pStmt.executeUpdate();
+        PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO testBug65503 (value) VALUES (?)", Statement.RETURN_GENERATED_KEYS),
+                stmt2 = this.conn.prepareStatement("SELECT * FROM testBug65503 LIMIT 6");
+        for (int i = 0; i < 100000000; ++i) {
+            pStmt.setString(1, "48");
+            pStmt.executeUpdate();
 
-                ResultSet result = pStmt.getGeneratedKeys();
-                result.next();
-                result.getInt(1);
-                result.next();
+            ResultSet result = pStmt.getGeneratedKeys();
+            result.next();
+            result.getInt(1);
+            result.next();
 
-                result = stmt2.executeQuery();
-                while (result.next()) {
-                }
+            result = stmt2.executeQuery();
+            while (result.next()) {
+            }
 
-                if (i % 500 == 0) {
-                    System.out.printf("free-mem: %d, id: %d\n", Runtime.getRuntime().freeMemory() / 1024 / 1024, i);
-                    this.conn.createStatement().execute("TRUNCATE TABLE testBug65503");
-                }
+            if (i % 500 == 0) {
+                System.out.printf("free-mem: %d, id: %d\n", Runtime.getRuntime().freeMemory() / 1024 / 1024, i);
+                this.conn.createStatement().execute("TRUNCATE TABLE testBug65503");
             }
         }
     }
@@ -4613,12 +4605,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug20804635() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 4)) {
-            return; // fractional seconds are not supported in previous versions
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 4), "Fractional seconds are not supported by server");
 
-        createTable("testBug20804635", "(c1 timestamp(2), c2 time(3), c3 datetime(4))");
-        this.stmt.executeUpdate("INSERT INTO testBug20804635 VALUES ('2031-01-15 03:14:07.339999','12:59:00.9889','2031-01-15 03:14:07.333399')");
+        createTable("testBug20804635", "(c1 timestamp(2), c2 time(3), c3 datetime(4), c4 time(6))");
+        this.stmt.executeUpdate(
+                "INSERT INTO testBug20804635 VALUES ('2031-01-15 03:14:07.339999','12:59:00.9889','2031-01-15 03:14:07.333399', '838:59:58.123456')");
 
         Calendar cal = Calendar.getInstance();
 
@@ -4655,6 +4646,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertEquals("03:14:07", this.rs.getTime(3, cal).toString());
         assertEquals("2031-01-15 03:14:07.3334", this.rs.getTimestamp(3).toString());
         assertEquals("2031-01-15 03:14:07.3334", this.rs.getTimestamp(3, cal).toString());
+
+        assertEquals("838:59:58.123456", StringUtils.toString(this.rs.getBytes("c4")));
+        assertEquals("838:59:58.123456", this.rs.getString("c4"));
     }
 
     /**
@@ -4705,9 +4699,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug56479() throws Exception {
-        if (!versionMeetsMinimum(5, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6));
 
         String tsStr1 = "2010-09-02 03:55:10";
         String tsStr2 = "2010-09-02 03:55:10.123456";
@@ -4823,179 +4815,187 @@ public class ResultSetRegressionTest extends BaseTestCase {
                         + " b'1100110011001100110011001100110011001100110011001100110011001100', 0x00, -2)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
-        Connection testConn = getConnectionWithProps(props);
-        Statement testStmt = testConn.createStatement();
+        props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false"); // TODO fails with jdbcCompliantTruncation=true 
 
-        ResultSet rs1 = testStmt.executeQuery("SELECT * FROM testBug22931433");
-        rs1.next();
+        for (String useSSPS : new String[] { "false", "true" }) {
+            for (String cacheResultSetMetadata : new String[] { "false", "true" }) {
+                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), useSSPS);
+                props.setProperty(PropertyKey.cacheResultSetMetadata.getKeyName(), cacheResultSetMetadata);
 
-        assertEquals('a', rs1.getByte("c1"));
-        assertEquals('a', rs1.getByte("c2"));
-        assertEquals('a', rs1.getByte("c3"));
-        assertEquals('a', rs1.getByte("c4"));
-        assertEquals('a', rs1.getByte("c5"));
-        assertEquals('a', rs1.getByte("c6"));
-        assertEquals('a', rs1.getByte("c7"));
-        assertEquals('a', rs1.getByte("c8"));
+                Connection testConn = getConnectionWithProps(props);
+                Statement testStmt = testConn.createStatement();
 
-        assertEquals(97, rs1.getShort("c1"));
-        assertEquals(25185, rs1.getShort("c2"));
-        assertEquals(25185, rs1.getShort("c3")); // truncated to 2 bytes
-        assertEquals(25185, rs1.getShort("c4")); // truncated to 2 bytes
-        assertEquals(25185, rs1.getShort("c5")); // truncated to 2 bytes
-        assertEquals(25185, rs1.getShort("c6")); // truncated to 2 bytes
-        assertEquals(25185, rs1.getShort("c7")); // truncated to 2 bytes
-        assertEquals(25185, rs1.getShort("c8")); // truncated to 2 bytes
+                ResultSet rs1 = testStmt.executeQuery("SELECT * FROM testBug22931433");
+                rs1.next();
 
-        assertEquals(97, rs1.getInt("c1"));
-        assertEquals(25185, rs1.getInt("c2"));
-        assertEquals(6513249, rs1.getInt("c3"));
-        assertEquals(1684234849, rs1.getInt("c4"));
-        assertEquals(1684234849, rs1.getInt("c5")); // truncated to 4 bytes
-        assertEquals(1684234849, rs1.getInt("c6")); // truncated to 4 bytes
-        assertEquals(1684234849, rs1.getInt("c7")); // truncated to 4 bytes
-        assertEquals(1684234849, rs1.getInt("c8")); // truncated to 4 bytes
+                assertEquals('a', rs1.getByte("c1"));
+                assertEquals('a', rs1.getByte("c2"));
+                assertEquals('a', rs1.getByte("c3"));
+                assertEquals('a', rs1.getByte("c4"));
+                assertEquals('a', rs1.getByte("c5"));
+                assertEquals('a', rs1.getByte("c6"));
+                assertEquals('a', rs1.getByte("c7"));
+                assertEquals('a', rs1.getByte("c8"));
 
-        assertEquals(97, rs1.getLong("c1"));
-        assertEquals(25185, rs1.getLong("c2"));
-        assertEquals(6513249, rs1.getLong("c3"));
-        assertEquals(1684234849, rs1.getLong("c4"));
-        assertEquals(435475931745L, rs1.getLong("c5"));
-        assertEquals(112585661964897L, rs1.getLong("c6"));
-        assertEquals(29104508263162465L, rs1.getLong("c7"));
-        assertEquals(7523094288207667809L, rs1.getLong("c8"));
+                assertEquals(97, rs1.getShort("c1"));
+                assertEquals(25185, rs1.getShort("c2"));
+                assertEquals(25185, rs1.getShort("c3")); // truncated to 2 bytes
+                assertEquals(25185, rs1.getShort("c4")); // truncated to 2 bytes
+                assertEquals(25185, rs1.getShort("c5")); // truncated to 2 bytes
+                assertEquals(25185, rs1.getShort("c6")); // truncated to 2 bytes
+                assertEquals(25185, rs1.getShort("c7")); // truncated to 2 bytes
+                assertEquals(25185, rs1.getShort("c8")); // truncated to 2 bytes
 
-        assertEquals(BigDecimal.valueOf(97), rs1.getBigDecimal("c1"));
-        assertEquals(BigDecimal.valueOf(25185), rs1.getBigDecimal("c2"));
-        assertEquals(BigDecimal.valueOf(6513249), rs1.getBigDecimal("c3"));
-        assertEquals(BigDecimal.valueOf(1684234849), rs1.getBigDecimal("c4"));
-        assertEquals(BigDecimal.valueOf(435475931745L), rs1.getBigDecimal("c5"));
-        assertEquals(BigDecimal.valueOf(112585661964897L), rs1.getBigDecimal("c6"));
-        assertEquals(BigDecimal.valueOf(29104508263162465L), rs1.getBigDecimal("c7"));
-        assertEquals(BigDecimal.valueOf(7523094288207667809L), rs1.getBigDecimal("c8"));
+                assertEquals(97, rs1.getInt("c1"));
+                assertEquals(25185, rs1.getInt("c2"));
+                assertEquals(6513249, rs1.getInt("c3"));
+                assertEquals(1684234849, rs1.getInt("c4"));
+                assertEquals(1684234849, rs1.getInt("c5")); // truncated to 4 bytes
+                assertEquals(1684234849, rs1.getInt("c6")); // truncated to 4 bytes
+                assertEquals(1684234849, rs1.getInt("c7")); // truncated to 4 bytes
+                assertEquals(1684234849, rs1.getInt("c8")); // truncated to 4 bytes
 
-        assertEquals(97f, rs1.getFloat("c1"));
-        assertEquals(25185f, rs1.getFloat("c2"));
-        assertEquals(6513249f, rs1.getFloat("c3"));
-        assertEquals(1684234849f, rs1.getFloat("c4"));
-        assertEquals(435475931745f, rs1.getFloat("c5"));
-        assertEquals(112585661964897f, rs1.getFloat("c6"));
-        assertEquals(29104508263162465f, rs1.getFloat("c7"));
-        assertEquals(7523094288207667809f, rs1.getFloat("c8"));
+                assertEquals(97, rs1.getLong("c1"));
+                assertEquals(25185, rs1.getLong("c2"));
+                assertEquals(6513249, rs1.getLong("c3"));
+                assertEquals(1684234849, rs1.getLong("c4"));
+                assertEquals(435475931745L, rs1.getLong("c5"));
+                assertEquals(112585661964897L, rs1.getLong("c6"));
+                assertEquals(29104508263162465L, rs1.getLong("c7"));
+                assertEquals(7523094288207667809L, rs1.getLong("c8"));
 
-        assertEquals(Double.valueOf(97), Double.valueOf(rs1.getDouble("c1")));
-        assertEquals(Double.valueOf(25185), Double.valueOf(rs1.getDouble("c2")));
-        assertEquals(Double.valueOf(6513249), Double.valueOf(rs1.getDouble("c3")));
-        assertEquals(Double.valueOf(1684234849), Double.valueOf(rs1.getDouble("c4")));
-        assertEquals(Double.valueOf(435475931745L), Double.valueOf(rs1.getDouble("c5")));
-        assertEquals(Double.valueOf(112585661964897L), Double.valueOf(rs1.getDouble("c6")));
-        assertEquals(Double.valueOf(29104508263162465L), Double.valueOf(rs1.getDouble("c7")));
-        assertEquals(Double.valueOf(7523094288207667809L), Double.valueOf(rs1.getDouble("c8")));
+                assertEquals(BigDecimal.valueOf(97), rs1.getBigDecimal("c1"));
+                assertEquals(BigDecimal.valueOf(25185), rs1.getBigDecimal("c2"));
+                assertEquals(BigDecimal.valueOf(6513249), rs1.getBigDecimal("c3"));
+                assertEquals(BigDecimal.valueOf(1684234849), rs1.getBigDecimal("c4"));
+                assertEquals(BigDecimal.valueOf(435475931745L), rs1.getBigDecimal("c5"));
+                assertEquals(BigDecimal.valueOf(112585661964897L), rs1.getBigDecimal("c6"));
+                assertEquals(BigDecimal.valueOf(29104508263162465L), rs1.getBigDecimal("c7"));
+                assertEquals(BigDecimal.valueOf(7523094288207667809L), rs1.getBigDecimal("c8"));
 
-        assertEquals(true, rs1.getBoolean("c1"));
-        assertEquals(true, rs1.getBoolean("cb1"));
-        assertEquals(true, rs1.getBoolean("cb2"));
+                assertEquals(97f, rs1.getFloat("c1"));
+                assertEquals(25185f, rs1.getFloat("c2"));
+                assertEquals(6513249f, rs1.getFloat("c3"));
+                assertEquals(1684234849f, rs1.getFloat("c4"));
+                assertEquals(435475931745f, rs1.getFloat("c5"));
+                assertEquals(112585661964897f, rs1.getFloat("c6"));
+                assertEquals(29104508263162465f, rs1.getFloat("c7"));
+                assertEquals(7523094288207667809f, rs1.getFloat("c8"));
 
-        assertEquals(BigDecimal.valueOf(97).toString(), rs1.getString("c1"));
-        assertEquals(BigDecimal.valueOf(25185).toString(), rs1.getString("c2"));
-        assertEquals(BigDecimal.valueOf(6513249).toString(), rs1.getString("c3"));
-        assertEquals(BigDecimal.valueOf(1684234849).toString(), rs1.getString("c4"));
-        assertEquals(BigDecimal.valueOf(435475931745L).toString(), rs1.getString("c5"));
-        assertEquals(BigDecimal.valueOf(112585661964897L).toString(), rs1.getString("c6"));
-        assertEquals(BigDecimal.valueOf(29104508263162465L).toString(), rs1.getString("c7"));
-        assertEquals(BigDecimal.valueOf(7523094288207667809L).toString(), rs1.getString("c8"));
+                assertEquals(Double.valueOf(97), Double.valueOf(rs1.getDouble("c1")));
+                assertEquals(Double.valueOf(25185), Double.valueOf(rs1.getDouble("c2")));
+                assertEquals(Double.valueOf(6513249), Double.valueOf(rs1.getDouble("c3")));
+                assertEquals(Double.valueOf(1684234849), Double.valueOf(rs1.getDouble("c4")));
+                assertEquals(Double.valueOf(435475931745L), Double.valueOf(rs1.getDouble("c5")));
+                assertEquals(Double.valueOf(112585661964897L), Double.valueOf(rs1.getDouble("c6")));
+                assertEquals(Double.valueOf(29104508263162465L), Double.valueOf(rs1.getDouble("c7")));
+                assertEquals(Double.valueOf(7523094288207667809L), Double.valueOf(rs1.getDouble("c8")));
 
-        assertThrows(SQLException.class, "Unsupported conversion from BIT to java.sql.Date", new Callable<Void>() {
-            public Void call() throws Exception {
-                rs1.getDate("c1");
-                return null;
+                assertEquals(true, rs1.getBoolean("c1"));
+                assertEquals(true, rs1.getBoolean("cb1"));
+                assertEquals(true, rs1.getBoolean("cb2"));
+
+                assertEquals(BigDecimal.valueOf(97).toString(), rs1.getString("c1"));
+                assertEquals(BigDecimal.valueOf(25185).toString(), rs1.getString("c2"));
+                assertEquals(BigDecimal.valueOf(6513249).toString(), rs1.getString("c3"));
+                assertEquals(BigDecimal.valueOf(1684234849).toString(), rs1.getString("c4"));
+                assertEquals(BigDecimal.valueOf(435475931745L).toString(), rs1.getString("c5"));
+                assertEquals(BigDecimal.valueOf(112585661964897L).toString(), rs1.getString("c6"));
+                assertEquals(BigDecimal.valueOf(29104508263162465L).toString(), rs1.getString("c7"));
+                assertEquals(BigDecimal.valueOf(7523094288207667809L).toString(), rs1.getString("c8"));
+
+                assertThrows(SQLException.class, "Unsupported conversion from BIT to java.sql.Date", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getDate("c1");
+                        return null;
+                    }
+                });
+
+                assertThrows(SQLException.class, "Unsupported conversion from BIT to java.sql.Time", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getTime("c1");
+                        return null;
+                    }
+                });
+
+                assertThrows(SQLException.class, "Unsupported conversion from BIT to java.sql.Timestamp", new Callable<Void>() {
+                    public Void call() throws Exception {
+                        rs1.getTimestamp("c1");
+                        return null;
+                    }
+                });
+
+                // test negative values
+                rs1.next();
+
+                assertEquals(-52, rs1.getByte("c1"));
+                assertEquals(-52, rs1.getByte("c2"));
+                assertEquals(-52, rs1.getByte("c3"));
+                assertEquals(-52, rs1.getByte("c4"));
+                assertEquals(-52, rs1.getByte("c5"));
+                assertEquals(-52, rs1.getByte("c6"));
+                assertEquals(-52, rs1.getByte("c7"));
+                assertEquals(-52, rs1.getByte("c8"));
+
+                assertEquals(204, rs1.getShort("c1"));
+                assertEquals(-13108, rs1.getShort("c2"));
+                assertEquals(-13108, rs1.getShort("c3")); // truncated to 2 bytes
+                assertEquals(-13108, rs1.getShort("c4")); // truncated to 2 bytes
+                assertEquals(-13108, rs1.getShort("c5")); // truncated to 2 bytes
+                assertEquals(-13108, rs1.getShort("c6")); // truncated to 2 bytes
+                assertEquals(-13108, rs1.getShort("c7")); // truncated to 2 bytes
+                assertEquals(-13108, rs1.getShort("c8")); // truncated to 2 bytes
+
+                assertEquals(204, rs1.getInt("c1"));
+                assertEquals(52428, rs1.getInt("c2"));
+                assertEquals(13421772, rs1.getInt("c3"));
+                assertEquals(-858993460, rs1.getInt("c4"));
+                assertEquals(-858993460, rs1.getInt("c5")); // truncated to 4 bytes
+                assertEquals(-858993460, rs1.getInt("c6")); // truncated to 4 bytes
+                assertEquals(-858993460, rs1.getInt("c7")); // truncated to 4 bytes
+                assertEquals(-858993460, rs1.getInt("c8")); // truncated to 4 bytes
+
+                assertEquals(204, rs1.getLong("c1"));
+                assertEquals(52428, rs1.getLong("c2"));
+                assertEquals(13421772, rs1.getLong("c3"));
+                assertEquals(3435973836L, rs1.getLong("c4"));
+                assertEquals(879609302220L, rs1.getLong("c5"));
+                assertEquals(225179981368524L, rs1.getLong("c6"));
+                assertEquals(57646075230342348L, rs1.getLong("c7"));
+                assertEquals(-3689348814741910324L, rs1.getLong("c8"));
+
+                assertEquals(BigDecimal.valueOf(204), rs1.getBigDecimal("c1"));
+                assertEquals(BigDecimal.valueOf(52428), rs1.getBigDecimal("c2"));
+                assertEquals(BigDecimal.valueOf(13421772), rs1.getBigDecimal("c3"));
+                assertEquals(BigDecimal.valueOf(3435973836L), rs1.getBigDecimal("c4"));
+                assertEquals(BigDecimal.valueOf(879609302220L), rs1.getBigDecimal("c5"));
+                assertEquals(BigDecimal.valueOf(225179981368524L), rs1.getBigDecimal("c6"));
+                assertEquals(BigDecimal.valueOf(57646075230342348L), rs1.getBigDecimal("c7"));
+                assertEquals(new BigDecimal(new BigInteger("14757395258967641292")), rs1.getBigDecimal("c8"));
+
+                assertEquals(204f, rs1.getFloat("c1"));
+                assertEquals(52428f, rs1.getFloat("c2"));
+                assertEquals(13421772f, rs1.getFloat("c3"));
+                assertEquals(3435973836f, rs1.getFloat("c4"));
+                assertEquals(879609302220f, rs1.getFloat("c5"));
+                assertEquals(225179981368524f, rs1.getFloat("c6"));
+                assertEquals(57646075230342348f, rs1.getFloat("c7"));
+                assertEquals(14757395258967641292f, rs1.getFloat("c8"));
+
+                assertEquals(Double.valueOf(204), Double.valueOf(rs1.getDouble("c1")));
+                assertEquals(Double.valueOf(52428), Double.valueOf(rs1.getDouble("c2")));
+                assertEquals(Double.valueOf(13421772), Double.valueOf(rs1.getDouble("c3")));
+                assertEquals(Double.valueOf(3435973836L), Double.valueOf(rs1.getDouble("c4")));
+                assertEquals(Double.valueOf(879609302220L), Double.valueOf(rs1.getDouble("c5")));
+                assertEquals(Double.valueOf(225179981368524L), Double.valueOf(rs1.getDouble("c6")));
+                assertEquals(Double.valueOf(57646075230342348L), Double.valueOf(rs1.getDouble("c7")));
+                assertEquals(Double.valueOf(new BigInteger("14757395258967641292").doubleValue()), Double.valueOf(rs1.getDouble("c8")));
+
+                assertEquals(false, rs1.getBoolean("c8"));
+                assertEquals(false, rs1.getBoolean("cb1"));
+                assertEquals(false, rs1.getBoolean("cb2"));
             }
-        });
-
-        assertThrows(SQLException.class, "Unsupported conversion from BIT to java.sql.Time", new Callable<Void>() {
-            public Void call() throws Exception {
-                rs1.getTime("c1");
-                return null;
-            }
-        });
-
-        assertThrows(SQLException.class, "Unsupported conversion from BIT to java.sql.Timestamp", new Callable<Void>() {
-            public Void call() throws Exception {
-                rs1.getTimestamp("c1");
-                return null;
-            }
-        });
-
-        // test negative values
-        rs1.next();
-
-        assertEquals(-52, rs1.getByte("c1"));
-        assertEquals(-52, rs1.getByte("c2"));
-        assertEquals(-52, rs1.getByte("c3"));
-        assertEquals(-52, rs1.getByte("c4"));
-        assertEquals(-52, rs1.getByte("c5"));
-        assertEquals(-52, rs1.getByte("c6"));
-        assertEquals(-52, rs1.getByte("c7"));
-        assertEquals(-52, rs1.getByte("c8"));
-
-        assertEquals(204, rs1.getShort("c1"));
-        assertEquals(-13108, rs1.getShort("c2"));
-        assertEquals(-13108, rs1.getShort("c3")); // truncated to 2 bytes
-        assertEquals(-13108, rs1.getShort("c4")); // truncated to 2 bytes
-        assertEquals(-13108, rs1.getShort("c5")); // truncated to 2 bytes
-        assertEquals(-13108, rs1.getShort("c6")); // truncated to 2 bytes
-        assertEquals(-13108, rs1.getShort("c7")); // truncated to 2 bytes
-        assertEquals(-13108, rs1.getShort("c8")); // truncated to 2 bytes
-
-        assertEquals(204, rs1.getInt("c1"));
-        assertEquals(52428, rs1.getInt("c2"));
-        assertEquals(13421772, rs1.getInt("c3"));
-        assertEquals(-858993460, rs1.getInt("c4"));
-        assertEquals(-858993460, rs1.getInt("c5")); // truncated to 4 bytes
-        assertEquals(-858993460, rs1.getInt("c6")); // truncated to 4 bytes
-        assertEquals(-858993460, rs1.getInt("c7")); // truncated to 4 bytes
-        assertEquals(-858993460, rs1.getInt("c8")); // truncated to 4 bytes
-
-        assertEquals(204, rs1.getLong("c1"));
-        assertEquals(52428, rs1.getLong("c2"));
-        assertEquals(13421772, rs1.getLong("c3"));
-        assertEquals(3435973836L, rs1.getLong("c4"));
-        assertEquals(879609302220L, rs1.getLong("c5"));
-        assertEquals(225179981368524L, rs1.getLong("c6"));
-        assertEquals(57646075230342348L, rs1.getLong("c7"));
-        assertEquals(-3689348814741910324L, rs1.getLong("c8"));
-
-        assertEquals(BigDecimal.valueOf(204), rs1.getBigDecimal("c1"));
-        assertEquals(BigDecimal.valueOf(52428), rs1.getBigDecimal("c2"));
-        assertEquals(BigDecimal.valueOf(13421772), rs1.getBigDecimal("c3"));
-        assertEquals(BigDecimal.valueOf(3435973836L), rs1.getBigDecimal("c4"));
-        assertEquals(BigDecimal.valueOf(879609302220L), rs1.getBigDecimal("c5"));
-        assertEquals(BigDecimal.valueOf(225179981368524L), rs1.getBigDecimal("c6"));
-        assertEquals(BigDecimal.valueOf(57646075230342348L), rs1.getBigDecimal("c7"));
-        assertEquals(new BigDecimal(new BigInteger("14757395258967641292")), rs1.getBigDecimal("c8"));
-
-        assertEquals(204f, rs1.getFloat("c1"));
-        assertEquals(52428f, rs1.getFloat("c2"));
-        assertEquals(13421772f, rs1.getFloat("c3"));
-        assertEquals(3435973836f, rs1.getFloat("c4"));
-        assertEquals(879609302220f, rs1.getFloat("c5"));
-        assertEquals(225179981368524f, rs1.getFloat("c6"));
-        assertEquals(57646075230342348f, rs1.getFloat("c7"));
-        assertEquals(14757395258967641292f, rs1.getFloat("c8"));
-
-        assertEquals(Double.valueOf(204), Double.valueOf(rs1.getDouble("c1")));
-        assertEquals(Double.valueOf(52428), Double.valueOf(rs1.getDouble("c2")));
-        assertEquals(Double.valueOf(13421772), Double.valueOf(rs1.getDouble("c3")));
-        assertEquals(Double.valueOf(3435973836L), Double.valueOf(rs1.getDouble("c4")));
-        assertEquals(Double.valueOf(879609302220L), Double.valueOf(rs1.getDouble("c5")));
-        assertEquals(Double.valueOf(225179981368524L), Double.valueOf(rs1.getDouble("c6")));
-        assertEquals(Double.valueOf(57646075230342348L), Double.valueOf(rs1.getDouble("c7")));
-        assertEquals(Double.valueOf(new BigInteger("14757395258967641292").doubleValue()), Double.valueOf(rs1.getDouble("c8")));
-
-        assertEquals(false, rs1.getBoolean("c8"));
-        assertEquals(false, rs1.getBoolean("cb1"));
-        assertEquals(false, rs1.getBoolean("cb2"));
+        }
     }
 
     /**
@@ -5169,9 +5169,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug80631() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 9)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 9));
 
         /*
          * \u4E2D\u56FD (Simplified Chinese): "China"
@@ -5253,9 +5251,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug23197238() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 9)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 9));
 
         createTable("testBug23197238", "(id INT AUTO_INCREMENT PRIMARY KEY, doc JSON DEFAULT NULL, field3 int DEFAULT 10)");
 
@@ -5837,9 +5833,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug82707() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 4)) {
-            return; // fractional seconds are not supported in previous versions
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 4), "Fractional seconds are not supported by server");
 
         List<String> ts = new ArrayList<>();
         ts.add("2016-08-24 07:47:46.057000");
@@ -6108,9 +6102,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug25650305() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 4)) {
-            return; // fractional seconds are not supported in previous versions
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 4), "Fractional seconds are not supported by server");
 
         createTable("testBug25650305", "(c1 timestamp(5))");
         this.stmt.executeUpdate("INSERT INTO testBug25650305 VALUES ('2031-01-15 03:14:07.339999')");
@@ -6155,9 +6147,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug26750705() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 4)) {
-            return; // fractional seconds are not supported in previous versions
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 4), "Fractional seconds are not supported by server");
 
         createTable("testBug26750705", "(c1 time(3), c2 time(3))");
         this.stmt.execute("insert into testBug26750705 values('80:59:59','8:59:59.01')");
@@ -6250,9 +6240,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug22305979() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 4)) {
-            return; // fractional seconds are not supported in previous versions
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 4), "Fractional seconds are not supported by server");
 
         /* Test from bug report */
         Connection testConn2;
@@ -6567,9 +6555,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
                     assertEquals(c_exp.get(Calendar.SECOND), c_res.get(Calendar.SECOND), testCase);
                     assertEquals(c_exp.get(Calendar.MILLISECOND), c_res.get(Calendar.MILLISECOND), testCase);
 
-                    // TODO java.sql.Time does not provide any way for setting/getting milliseconds and removes them from toString() method.
-                    // So the rs.updateTime(String columnName, java.sql.Time x) will always truncate milliseconds. Probably it is a bug because
-                    // java.sql.Time contains milliseconds internally. We have a Bug#76775 feature request about that.
                     c_exp.setTime(sendFractionalSeconds && sendFractionalSecondsForTime
                             ? (sqlModeTimeTruncateFractional ? t_ins_expected_truncate[len] : t_ins_expected_round[len])
                             : t_ins_expected_not_sendFractionalSeconds[len]);
@@ -7824,5 +7809,142 @@ public class ResultSetRegressionTest extends BaseTestCase {
         assertTrue(this.rs.next());
         assertEquals("a", this.rs.getString("name"));
         assertEquals(20, this.rs.getInt("age"));
+    }
+
+    /**
+     * Test fix for Bug#20391659, GETBYTE() CALL RESULTS IN EXCEPTION WHEN USEUSAGEADVISOR = TRUE.
+     * 
+     * @throws Exception
+     *             if the test fails
+     */
+    @Test
+    public void testBug20391659() throws Exception {
+        createTable("testBug20391659", "(c1 char(1),c2 char(1))");
+        this.stmt.executeUpdate("INSERT INTO testBug20391659 VALUES('1','0')");
+
+        Connection con = null;
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
+            props.setProperty(PropertyKey.useUsageAdvisor.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+            con = getConnectionWithProps(props);
+
+            PreparedStatement ps = con.prepareStatement("select * from testBug20391659 ", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            this.rs = ps.executeQuery();
+            while (this.rs.next()) {
+                assertEquals('1', this.rs.getByte(1)); // was issuing java.lang.ArrayIndexOutOfBoundsException
+                assertEquals('0', this.rs.getByte(2));
+            }
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
+
+    /**
+     * Test fix for Bug#20391631, GETBOOLEAN() CALL RESULTS IN EXCEPTION WHEN USEUSAGEADVISOR = TRUE.
+     * 
+     * @throws Exception
+     *             if the test fails
+     */
+    @Test
+    public void testBug20391631() throws Exception {
+        createTable("testBug20391631", "(c1 char(1),c2 char(1))");
+        this.stmt.executeUpdate("INSERT INTO testBug20391631 VALUES('1','0')");
+
+        Connection con = null;
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
+            props.setProperty(PropertyKey.useUsageAdvisor.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+            con = getConnectionWithProps(props);
+
+            this.rs = con.createStatement().executeQuery("select * from testBug20391631");
+            while (this.rs.next()) {
+                assertTrue(this.rs.getBoolean(1)); // was issuing java.lang.ArrayIndexOutOfBoundsException
+                assertFalse(this.rs.getBoolean(2));
+            }
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
+
+    /**
+     * Test fix for Bug#19805370, GETBINARYSTREAM() WITH INVALID COLUMN INDEX RETURNS EXCEPTION.
+     * 
+     * @throws Exception
+     *             if the test fails
+     */
+    @Test
+    public void testBug19805370() throws Exception {
+        Connection con = null;
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+            con = getConnectionWithProps(props);
+
+            PreparedStatement ps = con.prepareStatement("select 'abcd'");
+            this.rs = ps.executeQuery();
+            this.rs.next();
+
+            assertThrows(SQLException.class, "Column Index out of range, 0 < 1.*", () -> {
+                this.rs.getBinaryStream(0);
+                return null;
+            });
+            assertThrows(SQLException.class, "Column Index out of range, 0 < 1.*", () -> {
+                this.rs.getCharacterStream(0);
+                return null;
+            });
+            assertThrows(SQLException.class, "Column Index out of range, 0 < 1.*", () -> {
+                this.rs.getAsciiStream(0);
+                return null;
+            });
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
+
+    /**
+     * Test fix for Bug#20802947, RESULTSET UPDATE METHODS FAILS WHEN TABLENAME CONTAINS SPECIAL CHARACTERS.
+     * 
+     * @throws Exception
+     *             if the test fails
+     */
+    @Test
+    public void testBug20802947() throws Exception {
+        createTable("`test``Bug20802947`", "(id int,c char(10),primary key(id))");
+        this.stmt.executeUpdate("INSERT INTO `test``Bug20802947` VALUES(10,'a'),(20,'b'),(30,'c'),(40,'d'),(50,'e')");
+
+        Statement st = this.conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs1 = st.executeQuery("select * from `test``Bug20802947`");
+        rs1.absolute(1);
+        rs1.updateString(2, rs1.getString(2) + rs1.getString(2));
+        rs1.updateRow();
+        rs1.close();
+        this.rs = this.stmt.executeQuery("select * from  `test``Bug20802947` where id=10");
+        while (this.rs.next()) {
+            assertEquals(10, this.rs.getInt(1));
+            assertEquals("aa", this.rs.getString(2));
+        }
+        this.rs.close();
+
+        rs1 = st.executeQuery("select * from `test``Bug20802947`");
+        rs1.absolute(1);
+        rs1.updateNull(2);
+        rs1.updateRow();
+        rs1.close();
+        this.rs = this.stmt.executeQuery("select * from  `test``Bug20802947` where id=10");
+        while (this.rs.next()) {
+            assertEquals(10, this.rs.getInt(1));
+            assertNull(this.rs.getString(2));
+        }
+        rs1.close();
     }
 }

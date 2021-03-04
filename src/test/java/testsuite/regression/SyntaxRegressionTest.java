@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -91,9 +93,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testAlterTableAlgorithmLock() throws SQLException {
-        if (!versionMeetsMinimum(5, 6, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 6));
+
         Connection c = null;
         Properties props = new Properties();
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
@@ -152,9 +153,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testCreateTableDataDirectory() throws SQLException {
-        if (!versionMeetsMinimum(5, 6, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 6));
 
         try {
             String tmpdir = null;
@@ -169,12 +168,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
                     if (File.separatorChar == '\\') {
                         tmpdir = StringUtils.escapeQuote(tmpdir, File.separator);
                     }
-                    if (versionMeetsMinimum(8, 0, 21) && !getMysqlVariable("innodb_directories").contains(tmpdir)) {
-                        // The server is not configured properly, skip this test.
-                        System.err.println("testTransportableTablespaces: server must be initialized with '--innodb-directories=\"<dir>\"' "
-                                + "where <dir> is the same value as the system variable 'tmpdir'.");
-                        return;
-                    }
+                    assumeFalse(versionMeetsMinimum(8, 0, 21) && !getMysqlVariable("innodb_directories").contains(tmpdir),
+                            "testTransportableTablespaces: server must be initialized with '--innodb-directories=\"<dir>\"' "
+                                    + "where <dir> is the same value as the system variable 'tmpdir'.");
                 } else if ("innodb_file_per_table".equals(this.rs.getString(1))) {
                     if (!this.rs.getString(2).equals("ON")) {
                         fail("You need to set innodb_file_per_table to ON before running this test!");
@@ -236,13 +232,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testTransportableTablespaces() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 8)) {
-            return;
-        }
-        if (!isMysqlRunningLocally()) {
-            System.err.println("Skip test as client and server are running on different machines.");
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 8));
+        assumeTrue(isMysqlRunningLocally(), "Skip test as client and server are running on different machines.");
 
         String tmpdir = null;
         String uuid = null;
@@ -253,12 +244,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 if (tmpdir.endsWith(File.separator)) {
                     tmpdir = tmpdir.substring(0, tmpdir.length() - File.separator.length());
                 }
-                if (versionMeetsMinimum(8, 0, 21) && !getMysqlVariable("innodb_directories").contains(tmpdir)) {
-                    // The server is not configured properly, skip this test.
-                    System.err.println("testTransportableTablespaces: server must be initialized with '--innodb-directories=\"<dir>\"' "
-                            + "where <dir> is the same value as the system variable 'tmpdir'.");
-                    return;
-                }
+                assumeFalse(versionMeetsMinimum(8, 0, 21) && !getMysqlVariable("innodb_directories").contains(tmpdir),
+                        "testTransportableTablespaces: server must be initialized with '--innodb-directories=\"<dir>\"' "
+                                + "where <dir> is the same value as the system variable 'tmpdir'.");
             } else if ("innodb_file_per_table".equals(this.rs.getString(1))) {
                 if (!this.rs.getString(2).equals("ON")) {
                     fail("You need to set innodb_file_per_table to ON before running this test!");
@@ -370,9 +358,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testExchangePartition() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 6));
+
         createTable("testExchangePartition1", "(id int(11) NOT NULL AUTO_INCREMENT, year year(4) DEFAULT NULL,"
                 + " modified timestamp NOT NULL, PRIMARY KEY (id)) ENGINE=InnoDB ROW_FORMAT=COMPACT PARTITION BY HASH (id) PARTITIONS 2");
         createTable("testExchangePartition2", "LIKE testExchangePartition1");
@@ -454,9 +441,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testExplicitPartitions() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 5)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 5));
 
         String datadir = null;
         this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='datadir'");
@@ -721,10 +706,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testIPv6Functions() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 11)) {
-            // MySQL 5.6.11 includes a bug fix (Bug#68454) that is required to run this test successfully.
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 11), "MySQL 5.6.11 includes a bug fix (Bug#68454) that is required to run this test successfully.");
 
         String[][] dataSamples = new String[][] { { "127.0.0.1", "172.0.0.1" }, { "192.168.1.1", "::ffff:192.168.1.1" }, { "10.1", "::ffff:10.1" },
                 { "172.16.260.4", "172.16.260.4" }, { "::1", "::1" }, { "10AA:10bb:10CC:10dd:10EE:10FF:10aa:10BB", "10aa:10bb:10cc:10dd:10ee:10ff:10aa:10bb" },
@@ -787,9 +769,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testFULLTEXTSearchInnoDB() throws Exception {
-        if (!versionMeetsMinimum(5, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6));
 
         createTable("testFULLTEXTSearchInnoDB",
                 "(id INT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY, " + "title VARCHAR(200), body TEXT, FULLTEXT (title , body)) ENGINE=InnoDB");
@@ -826,9 +806,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testRenameIndex() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 1)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 1));
 
         createTable("testRenameIndex", "(col1 INT, col2 INT, INDEX (col1)) ENGINE=InnoDB");
         this.stmt.execute("CREATE INDEX testIdx ON testRenameIndex (col2)");
@@ -863,9 +841,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testGetStackedDiagnostics() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 2)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 2));
 
         // test calling GET STACKED DIAGNOSTICS outside an handler
         final Statement locallyScopedStmt = this.stmt;
@@ -957,9 +933,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testDiscardImportPartitions() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 4)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 4));
 
         createTable("testDiscardImportPartitions",
                 "(id INT) ENGINE = InnoDB PARTITION BY RANGE (id) (PARTITION p1 VALUES LESS THAN (0), PARTITION p2 VALUES LESS THAN MAXVALUE)");
@@ -1022,9 +996,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testJsonType() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 8)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 8));
 
         createTable("testJsonType", "(id INT PRIMARY KEY, jsonDoc JSON)");
         assertEquals(1, this.stmt.executeUpdate("INSERT INTO testJsonType VALUES (1, '{\"key1\": \"value1\"}')"));
@@ -1135,9 +1107,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testHints() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 7)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 7));
 
         /*
          * Test hints syntax variations.
@@ -1299,9 +1269,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testCreateTablespace() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 6));
 
         try {
             this.stmt.execute("CREATE TABLESPACE testTs1 ADD DATAFILE 'testTs1.ibd'");
@@ -1377,9 +1345,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testSetMergeThreshold() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 6));
 
         Map<String, Integer> keyMergeThresholds = new HashMap<>();
         keyMergeThresholds.put("k2", 45);
@@ -1446,9 +1412,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testTableCompression() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 8)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 8));
 
         // Create table with 'zlib' compression.
         createTable("testTableCompression", "(c VARCHAR(15000)) COMPRESSION='ZLIB'");
@@ -1859,9 +1823,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testGcsReplicationCmds() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 6));
+
         String expectedErrMsg = "The server is not configured properly to be an active member of the group\\. Please see more details on error log\\.";
         final Statement testStmt = this.stmt;
         assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
@@ -1909,9 +1872,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testUserAccountLocking() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 6));
 
         final String user = "testAccLck";
         final String pwd = "testAccLck";
@@ -1977,9 +1938,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testUserAccountPwdExpiration() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 6));
 
         final String user = "testAccPwdExp";
         final String pwd = "testAccPwdExp";
@@ -2051,9 +2010,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      */
     @Test
     public void testInnodbTablespaceEncryption() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 11)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 11));
 
         boolean keyringPluginIsActive = false;
         this.rs = this.stmt.executeQuery("SELECT (PLUGIN_STATUS='ACTIVE') AS `TRUE` FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME LIKE 'keyring_file'");

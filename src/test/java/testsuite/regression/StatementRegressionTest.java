@@ -37,6 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -105,6 +107,7 @@ import java.util.function.ToIntFunction;
 
 import javax.sql.XAConnection;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.CharsetMapping;
@@ -1238,9 +1241,7 @@ public class StatementRegressionTest extends BaseTestCase {
     @Test
     public void testBug3620() throws SQLException {
         // FIXME: This test is sensitive to being in CST/CDT it seems
-        if (!TimeZone.getDefault().equals(TimeZone.getTimeZone("America/Chicago"))) {
-            return;
-        }
+        assumeTrue(TimeZone.getDefault().equals(TimeZone.getTimeZone("America/Chicago")));
 
         long epsillon = 3000; // 3 seconds time difference
 
@@ -1345,13 +1346,8 @@ public class StatementRegressionTest extends BaseTestCase {
      *
      */
     @Test
-    public void testBug3620new() throws SQLException {
-        // TODO: should replace testBug3620()
-        if (this.DISABLED_testBug3620new) {
-            // TODO: this test is working in c/J 5.1 but fails here; disable for later analysis
-            return;
-        }
-
+    @Disabled("this test is working in c/J 5.1 but fails here; disabled for later analysis")
+    public void testBug3620new() throws SQLException { // TODO: should replace testBug3620()
         final long epsillon = 3000; // allow 3 seconds time difference
 
         TimeZone defaultTimeZone = TimeZone.getDefault();
@@ -6085,9 +6081,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug40279() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 4)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 4));
 
         createTable("testBug40279", "(f1 int, f2 timestamp(6))");
 
@@ -9021,9 +9015,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug77449() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 4)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 4));
 
         Timestamp originalTs = new Timestamp(TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss.SSS", null).parse("2014-12-31 23:59:59.999").getTime());
         Timestamp roundedTs = new Timestamp(originalTs.getTime() + 1);
@@ -9347,7 +9339,6 @@ public class StatementRegressionTest extends BaseTestCase {
 
         @Override
         public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
-            // TODO Auto-generated method stub
             super.init(conn, props, log);
             System.out.println("\nuseServerPrepStmts: " + props.getProperty(PropertyKey.useServerPrepStmts.getKeyName()) + " | rewriteBatchedStatements: "
                     + props.getProperty(PropertyKey.rewriteBatchedStatements.getKeyName()));
@@ -10681,9 +10672,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug87534() throws Exception {
-        if (versionMeetsMinimum(5, 7) && !versionMeetsMinimum(5, 7, 22)) {
-            return;
-        }
+        assumeFalse(versionMeetsMinimum(5, 7) && !versionMeetsMinimum(5, 7, 22));
 
         System.out.println("running");
 
@@ -11410,5 +11399,139 @@ public class StatementRegressionTest extends BaseTestCase {
                 });
 
         testConn.close();
+    }
+
+    /**
+     * Test fix for Bug#20453773, EXECUTEUPDATE() FAILS FOR SERVER SIDE STMT WHEN LOGSLOWQUERIES=TRUE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug20453773() throws Exception {
+        createTable("testBug20453773", "(c1 longblob)");
+        this.stmt.execute("insert into testBug20453773 values('xyz')");
+
+        Connection con = null;
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+            props.setProperty(PropertyKey.useNanosForElapsedTime.getKeyName(), "true");
+            props.setProperty(PropertyKey.logSlowQueries.getKeyName(), "true");
+            con = getConnectionWithProps(props);
+
+            this.rs = this.stmt.executeQuery("select * from testBug20453773");
+            this.rs.next();
+            Clob clob1 = this.rs.getClob(1);
+            this.rs.close();
+
+            PreparedStatement ps = con.prepareStatement("insert into testBug20453773 (c1) values(?) ", ResultSet.TYPE_SCROLL_SENSITIVE,
+                    ResultSet.CONCUR_READ_ONLY);
+            ps.setClob(1, clob1);
+            ps.executeUpdate();
+            ps.close();
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
+
+    /**
+     * Test fix for Bug#21132376, PSTMT->CLOSE() AFTER PSTMT->EXECUTEBATCH() CALL RETURNS ERROR.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug21132376() throws Exception {
+        createTable("testBug21132376", "(c1 longblob,c2 longblob)");
+
+        this.rs = this.stmt.executeQuery("show variables like 'max_allowed_packet'");
+        this.rs.next();
+        int initialPLen = this.rs.getInt(2);
+
+        try {
+            this.stmt.executeUpdate("set global max_allowed_packet=1024*1024");
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+            Connection con = getConnectionWithProps(props);
+            Statement st = con.createStatement();
+            con = getConnectionWithProps(props);
+            st = con.createStatement();
+            this.rs = st.executeQuery("show variables like 'max_allowed_packet'");
+            this.rs.next();
+            int pLen = this.rs.getInt(2);
+            this.rs.close();
+            assertEquals(1024 * 1024, pLen);
+            byte[] blobData = new byte[pLen + 1];
+            Arrays.fill(blobData, (byte) 'S');
+
+            PreparedStatement ps = con.prepareStatement("insert into testBug21132376 values(?,?) ", ResultSet.TYPE_SCROLL_SENSITIVE,
+                    ResultSet.CONCUR_UPDATABLE);
+            ps.setInt(1, 1);
+            ps.setBytes(2, blobData);
+            ps.addBatch();
+            ps.setInt(1, 2);
+            ps.setString(2, "2");
+            ps.addBatch();
+            ps.setInt(1, 3);
+            ps.setBytes(2, blobData);
+            ps.addBatch();
+
+            assertThrows(SQLException.class, "Packet for query is too large \\(1,048,597 > 1,048,576\\).*", () -> ps.executeBatch());
+            ps.close(); // was failing
+
+            this.rs = st.executeQuery("select c1 from testBug21132376 ");
+            assertTrue(this.rs.next());
+            assertEquals("2", this.rs.getString(1));
+            assertFalse(this.rs.next());
+
+        } finally {
+            this.stmt.executeUpdate("set global max_allowed_packet=" + initialPLen);
+        }
+    }
+
+    /**
+     * Test fix for Bug#20391550, SETSTRING() CALL AFTER CONNECTION CLOSE RESULTS IN NULLPOINTEREXCEPTION.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug20391550() throws Exception {
+        createTable("testBug20391550", "(c1 int,c2 varchar(100))");
+        this.stmt.execute("insert into testBug20391550 values(100,'strval')");
+
+        Connection con = null;
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
+            props.setProperty(PropertyKey.enableQueryTimeouts.getKeyName(), "true");
+            props.setProperty(PropertyKey.queryTimeoutKillsConnection.getKeyName(), "true");
+            con = getConnectionWithProps(props);
+
+            Statement st = con.createStatement();
+            st.setQueryTimeout(2);
+
+            PreparedStatement ps = con.prepareStatement("update testBug20391550 set c2=? where c1=?");
+            assertThrows(SQLException.class, "Statement cancelled due to timeout or client request", () -> st.executeQuery("select sleep(3)"));
+
+            assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+                ps.setInt(2, 100);
+                return null;
+            });
+            assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+                ps.setString(1, "NewData");
+                return null;
+            });
+            assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+                ps.executeUpdate();
+                return null;
+            });
+
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
     }
 }

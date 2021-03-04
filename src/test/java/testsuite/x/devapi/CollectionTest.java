@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,36 +29,47 @@
 
 package testsuite.x.devapi;
 
+import static com.mysql.cj.xdevapi.Expression.expr;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.AddResult;
 import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.DatabaseObject.DbObjectStatus;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DbDocImpl;
+import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.JsonArray;
 import com.mysql.cj.xdevapi.JsonLiteral;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
+import com.mysql.cj.xdevapi.Result;
 import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.RowResult;
+import com.mysql.cj.xdevapi.Schema;
+import com.mysql.cj.xdevapi.Session;
+import com.mysql.cj.xdevapi.SessionFactory;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
 public class CollectionTest extends BaseCollectionTestCase {
     @Test
     public void testCount() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{'_id': '1', 'a':'a'}".replaceAll("'", "\"")).execute(); // Requires manual _id.
@@ -86,9 +97,8 @@ public class CollectionTest extends BaseCollectionTestCase {
 
     @Test
     public void testGetSchema() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = "testExists";
         dropCollection(collName);
         Collection coll = this.schema.getCollection(collName);
@@ -98,9 +108,8 @@ public class CollectionTest extends BaseCollectionTestCase {
 
     @Test
     public void testGetSession() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = "testExists";
         dropCollection(collName);
         Collection coll = this.schema.getCollection(collName);
@@ -110,9 +119,8 @@ public class CollectionTest extends BaseCollectionTestCase {
 
     @Test
     public void testExists() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = "testExists";
         dropCollection(collName);
         Collection coll = this.schema.getCollection(collName);
@@ -124,9 +132,8 @@ public class CollectionTest extends BaseCollectionTestCase {
 
     @Test
     public void getNonExistentCollectionWithRequireExistsShouldThrow() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = "testRequireExists";
         dropCollection(collName);
         assertThrows(WrongArgumentException.class, () -> this.schema.getCollection(collName, true));
@@ -134,9 +141,8 @@ public class CollectionTest extends BaseCollectionTestCase {
 
     @Test
     public void getNonExistentCollectionWithoutRequireExistsShouldNotThrow() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = "testRequireExists";
         dropCollection(collName);
         this.schema.getCollection(collName, false);
@@ -144,9 +150,8 @@ public class CollectionTest extends BaseCollectionTestCase {
 
     @Test
     public void getExistentCollectionWithRequireExistsShouldNotThrow() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = "testRequireExists";
         dropCollection(collName);
         this.schema.createCollection(collName);
@@ -155,9 +160,7 @@ public class CollectionTest extends BaseCollectionTestCase {
 
     @Test
     public void createIndex() throws Exception {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4")));
 
         /*
          * WL#11208 - DevAPI: Collection.createIndex
@@ -368,9 +371,7 @@ public class CollectionTest extends BaseCollectionTestCase {
 
     @Test
     public void createArrayIndex() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         /*
          * WL#12247 - DevAPI: indexing array fields
@@ -675,6 +676,1876 @@ public class CollectionTest extends BaseCollectionTestCase {
 
         if (!indexFound) {
             throw new Exception("Index not found.");
+        }
+    }
+
+    private void validateArrayIndex(String keydName, String collName, int noFields) throws Exception {
+        int indexFound = 0;
+        boolean arrayExpr = false;
+
+        Session sess = new SessionFactory().getSession(this.baseOpensslUrl);
+        SqlResult res = sess.sql("show index from `" + collName + "`").execute();
+        assertTrue(res.hasNext());
+
+        for (Row row : res.fetchAll()) {
+            if (keydName.equals(row.getString("Key_name"))) {
+                indexFound++;
+                assertEquals(collName, row.getString("Table"));
+                String expr = row.getString("Expression");
+                System.out.println(expr);
+                if (expr != null) {
+                    arrayExpr = true;
+                }
+            }
+        }
+
+        if ((indexFound != noFields) || (!arrayExpr)) {
+            throw new Exception("Index not matching");
+        }
+
+    }
+
+    /**
+     * START testArrayIndexBasic tests
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testArrayIndex001() throws Exception {
+        System.out.println("testCreateIndexSanity");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        int i = 0;
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            coll.createIndex("intArrayIndex", "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"SIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("uintArrayIndex", "{\"fields\": [{\"field\": \"$.uintField\", \"type\": \"UNSIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("floatArrayIndex", "{\"fields\": [{\"field\": \"$.floatField\", \"type\": \"DECIMAL(10,2)\", \"array\": true}]}");
+            coll.createIndex("dateArrayIndex", "{\"fields\": [{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": true}]}");
+            coll.createIndex("datetimeArrayIndex", "{\"fields\": [{\"field\": \"$.datetimeField\", \"type\": \"DATETIME\", \"array\": true}]}");
+            coll.createIndex("timeArrayIndex", "{\"fields\": [{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": true}]}");
+            coll.createIndex("charArrayIndex", "{\"fields\": [{\"field\": \"$.charField\", \"type\": \"CHAR(256)\", \"array\": true}]}");
+            coll.createIndex("binaryArrayIndex", "{\"fields\": [{\"field\": \"$.binaryField\", \"type\": \"BINARY(256)\", \"array\": true}]}");
+
+            validateArrayIndex("intArrayIndex", "coll1", 1);
+            validateArrayIndex("uintArrayIndex", "coll1", 1);
+            validateArrayIndex("floatArrayIndex", "coll1", 1);
+            validateArrayIndex("dateArrayIndex", "coll1", 1);
+            validateArrayIndex("datetimeArrayIndex", "coll1", 1);
+            validateArrayIndex("timeArrayIndex", "coll1", 1);
+            validateArrayIndex("charArrayIndex", "coll1", 1);
+            validateArrayIndex("binaryArrayIndex", "coll1", 1);
+
+            coll.remove("true").execute();
+
+            coll.add(
+                    "{\"intField\" : [1,2,3], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"],\"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.4,53.6]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [11,12,3], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-29 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.1,52.9,53.0]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-7 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.7,53.6]}")
+                    .execute();
+
+            try {
+                coll.add(
+                        "{\"intField\" : \"[1,2,3]\", \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"],\"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.4,53.6]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("functional index"));
+            }
+
+            DocResult docs = coll.find(":intField in $.intField").bind("intField", 12).execute();
+            i = 0;
+            while (docs.hasNext()) {
+                docs.next();
+                i++;
+            }
+
+            assertTrue(i == 2);
+
+            docs = coll.find(":uintField in $.uintField").bind("uintField", 52).execute();
+            i = 0;
+            while (docs.hasNext()) {
+                docs.next();
+                i++;
+            }
+
+            assertTrue(i == 3);
+
+            docs = coll.find(":charField in $.charField").bind("charField", "abcd1").execute();
+            i = 0;
+            while (docs.hasNext()) {
+                docs.next();
+                i++;
+            }
+
+            assertTrue(i == 3);
+
+            docs = coll.find(":binaryField in $.binaryField").bind("binaryField", "abcd1").execute();
+            i = 0;
+            while (docs.hasNext()) {
+                docs.next();
+                i++;
+            }
+
+            assertTrue(i == 3);
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    /**
+     * START testArrayIndexBasic tests
+     * 
+     * @throws Exception
+     */
+
+    //@Test
+    public void testArrayIndex002() throws Exception {
+        System.out.println("testCreateIndexSanity");
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            coll.createIndex("intArrayIndex", "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"SIGNED INTEGER\", \"array\": true, \"required\": true}]}");
+            coll.createIndex("dateArrayIndex", "{\"fields\": [{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": true, \"required\": true}]}");
+            coll.createIndex("charArrayIndex", "{\"fields\": [{\"field\": \"$.charField\", \"type\": \"CHAR(256)\", \"array\": true, \"required\": true}]}");
+            coll.createIndex("timeArrayIndex", "{\"fields\": [{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": true, \"required\": true}]}");
+
+            validateArrayIndex("intArrayIndex", "coll1", 1);
+            validateArrayIndex("dateArrayIndex", "coll1", 1);
+            validateArrayIndex("charArrayIndex", "coll1", 1);
+            validateArrayIndex("timeArrayIndex", "coll1", 1);
+
+            coll.add(
+                    "{\"intField\" : [1,2,3], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [11,12,3], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+
+            try {
+                coll.add(
+                        "{\"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Document is missing a required field"));
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : [1,2,3], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Document is missing a required field"));
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : [11,12,3], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Document is missing a required field"));
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : [11,12,3], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Document is missing a required field"));
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : \"[12,23,34]\", \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("functional index"));
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : 12, \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("functional index"));
+            }
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex003() throws Exception {
+        System.out.println("testCreateIndexSanity");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            try {
+                coll.createIndex("multiArrayIndex",
+                        "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"SIGNED INTEGER\", \"array\": true}, {\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": true}, {\"field\": \"$.charField\", \"type\": \"CHAR(256)\", \"array\": true}, {\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": true}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("This version of MySQL doesn't yet support"));
+            }
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex004() throws Exception {
+        System.out.println("testArrayIndex004");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+            String indexString = "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"UNSIGNED INTEGER\", \"array\": true},"
+                    + "{\"field\": \"$.charField\", \"type\": \"CHAR(255)\", \"array\": false},"
+                    + "{\"field\": \"$.decimalField\", \"type\": \"DECIMAL\", \"array\": false},"
+                    + "{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": false},"
+                    + "{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": false},"
+                    + "{\"field\": \"$.datetimeField\", \"type\": \"DATETIME\", \"array\": false}]}";
+
+            coll.createIndex("multiArrayIndex", indexString);
+
+            //coll.createIndex("multiArrayIndex", "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"INT\", \"array\": false}, {\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": false}, {\"field\": \"$.charField\", \"type\": \"CHAR(256)\", \"array\": true}, {\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": false}]}");
+
+            validateArrayIndex("multiArrayIndex", "coll1", 6);
+
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,25,34], \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,35], \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [18,23,34], \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+
+            try {
+                coll.add(
+                        "{\"intField\" : [12,23,34], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : \"10.30\"}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Incorrect date value"));
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : 35, \"dateField\" : \"2019-1-1\", \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Incorrect time value"));
+            }
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex005() throws Exception {
+        System.out.println("testArrayIndex005");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            coll.createIndex("multiArrayIndex",
+                    "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"INTEGER\", \"array\": false},"
+                            + "{\"field\": \"$.charField\", \"type\": \"CHAR(255)\", \"array\": true},"
+                            + "{\"field\": \"$.decimalField\", \"type\": \"DECIMAL\", \"array\": false},"
+                            + "{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": false},"
+                            + "{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": false},"
+                            + "{\"field\": \"$.datetimeField\", \"type\": \"DATETIME\", \"array\": false}]}");
+
+            validateArrayIndex("multiArrayIndex", "coll1", 6);
+
+            coll.add(
+                    "{\"intField\" : 12, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : [\"abcd1\", \"abcd2\", \"abcd3\", \"abcd4\"], \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : 12, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : [\"abcd1\", \"abcd2\", \"abcd3\", \"abcd4\"], \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : 12, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : [\"abcd1\", \"abcd2\", \"abcd3\", \"abcd4\"], \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : 18, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : [\"abcd1\", \"abcd2\", \"abcd3\", \"abcd4\"], \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+
+            try {
+                coll.add(
+                        "{\"intField\" : \"[12,23,34]\", \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Invalid JSON value for CAST to INTEGER from column json_extract at row"));
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : 12, \"dateField\" : \"2019-1-1\", \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : \"10.30\"}")
+                        .execute();
+                // Behavior documented : assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Incorrect char value"));
+            }
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex006() throws Exception {
+        System.out.println("testCreateIndexSanity");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            coll.createIndex("multiArrayIndex",
+                    "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"INTEGER\", \"array\": false},"
+                            + "{\"field\": \"$.charField\", \"type\": \"CHAR(255)\", \"array\": false},"
+                            + "{\"field\": \"$.decimalField\", \"type\": \"DECIMAL\", \"array\": true},"
+                            + "{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": false},"
+                            + "{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": false},"
+                            + "{\"field\": \"$.datetimeField\", \"type\": \"DATETIME\", \"array\": false}]}");
+
+            validateArrayIndex("multiArrayIndex", "coll1", 6);
+
+            coll.add(
+                    "{\"intField\" : 12, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : [51.2, 57.6, 55.8]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : 12, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : [51.2, 57.6, 55.8]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : 12, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : [51.2, 57.6, 55.8]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : 18, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : \"9999-12-31 23:59:59\", \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : [51.2, 57.6, 55.8]}")
+                    .execute();
+
+            try {
+                coll.add(
+                        "{\"intField\" : \"[12,23,34]\", \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Invalid JSON value for CAST to INTEGER from column json_extract at row"));
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : 12, \"dateField\" : \"2019-1-1\", \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Incorrect time value"));
+            }
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex007() throws Exception {
+        System.out.println("testArrayIndex007");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            coll.createIndex("multiArrayIndex",
+                    "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"INTEGER\", \"array\": false},"
+                            + "{\"field\": \"$.charField\", \"type\": \"CHAR(255)\", \"array\": false},"
+                            + "{\"field\": \"$.decimalField\", \"type\": \"DECIMAL\", \"array\": false},"
+                            + "{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": false},"
+                            + "{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": false},"
+                            + "{\"field\": \"$.datetimeField\", \"type\": \"DATETIME\", \"array\": true}]}");
+
+            validateArrayIndex("multiArrayIndex", "coll1", 6);
+
+            coll.add(
+                    "{\"intField\" : 12, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : 12, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : 12, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : 18, \"uintField\" : [51,52,53], \"dateField\" : \"2019-1-1\", \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : \"abcd1\", \"binaryField\" : \"abcd1\", \"timeField\" : \"10.30\", \"decimalField\" : 51.2}")
+                    .execute();
+
+            try {
+                coll.add(
+                        "{\"intField\" : \"[12,23,34]\", \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Invalid JSON value for CAST to INTEGER from column json_extract at row"));
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : 12, \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Incorrect date value"));
+            }
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex008() throws Exception {
+        System.out.println("testCreateIndexSanity");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            try {
+                coll.createIndex("textArrayIndex", "{\"fields\": [{\"field\": \"$.textField\", \"type\": \"TEXT\", \"array\": true}]}");
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("index"));
+            }
+
+            try {
+                coll.createIndex("boolArrayIndex", "{\"fields\": [{\"field\": \"$.boolField\", \"type\": \"BOOL\", \"array\": true}]}");
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("index"));
+            }
+
+            try {
+                coll.createIndex("blobIndex", "{\"fields\": [{\"field\": \"$.blobField\", \"type\": \"BLOB\", \"array\": true}]}");
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("index"));
+            }
+
+            try {
+                coll.createIndex("sintIndex", "{\"fields\": [{\"field\": \"$.sinField\", \"type\": \"SMALLINT\", \"array\": true}]}");
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("index"));
+            }
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex009() throws Exception {
+        System.out.println("testArrayIndex009");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+            coll.createIndex("intArrayIndex", "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"UNSIGNED\", \"array\" : true}], \"type\" : \"INDEX\"}");
+            coll.createIndex("dateArrayIndex", "{\"fields\": [{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\" : true}], \"type\" : \"INDEX\"}");
+            coll.createIndex("charArrayIndex", "{\"fields\": [{\"field\": \"$.charField\", \"type\": \"CHAR(255)\", \"array\" : true}], \"type\" : \"INDEX\"}");
+            coll.createIndex("timeArrayIndex", "{\"fields\": [{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\" : true}], \"type\" : \"INDEX\"}");
+
+            validateArrayIndex("intArrayIndex", "coll1", 1);
+            validateArrayIndex("dateArrayIndex", "coll1", 1);
+            validateArrayIndex("charArrayIndex", "coll1", 1);
+            validateArrayIndex("timeArrayIndex", "coll1", 1);
+
+            coll.add(
+                    "{\"intField\" : [1,2,3], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [11,12,3], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+            coll.add(
+                    "{\"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [1,2,3], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [11,12,3], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [11,12,3], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"]}")
+                    .execute();
+
+            try {
+                coll.add(
+                        "{\"intField\" : \"[12,23,34]\", \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("functional index"));
+            }
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex010() throws Exception {
+        System.out.println("testArrayIndex007");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            try {
+                coll.createIndex("multiArrayIndex1", "{\"fields\": [{\"field\": \"$.charField\", \"type\":\"CHAR(128)\", \"array\": true},"
+                        + "{\"field\": \"$.binaryField\", \"type\":\"BINARY(128)\"}," + "{\"field\": \"$.intField\", \"type\":\"SIGNED INTEGER\"},"
+                        + "{\"field\": \"$.intField2\", \"type\":\"SIGNED\"}," + "{\"field\": \"$.uintField\", \"type\":\"UNSIGNED\"},"
+                        + "{\"field\": \"$.uintField2\", \"type\":\"UNSIGNED INTEGER\"}," + "{\"field\": \"$.dateField\", \"type\":\"DATE\"},"
+                        + "{\"field\": \"$.datetimeField\", \"type\":\"DATETIME\"}," + "{\"field\": \"$.decimalField\", \"type\":\"DECIMAL(20,9)\"}" + "]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Invalid or unsupported type specification 'BINARY(128)'"));
+            }
+
+            coll.add("{\"intField\" : 1, \"dateField\" : \"2019-3-1\", \"charField\" : \"abcd1\", \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+            coll.add("{\"intField\" : 2, \"dateField\" : \"2019-5-1\", \"charField\" : \"abcd2\", \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+            coll.add("{\"intField\" : 3, \"dateField\" : \"2019-7-1\", \"charField\" : \"abcd3\", \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"]}")
+                    .execute();
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex011() throws Exception {
+        System.out.println("testCreateIndexSanity");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            coll.createIndex("intArrayIndex", "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"SIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("uintArrayIndex", "{\"fields\": [{\"field\": \"$.uintField\", \"type\": \"UNSIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("floatArrayIndex", "{\"fields\": [{\"field\": \"$.floatField\", \"type\": \"DECIMAL(10,2)\", \"array\": true}]}");
+            coll.createIndex("dateArrayIndex", "{\"fields\": [{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": true}]}");
+            coll.createIndex("datetimeArrayIndex", "{\"fields\": [{\"field\": \"$.datetimeField\", \"type\": \"DATETIME\", \"array\": true}]}");
+            coll.createIndex("timeArrayIndex", "{\"fields\": [{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": true}]}");
+            coll.createIndex("charArrayIndex", "{\"fields\": [{\"field\": \"$.charField\", \"type\": \"CHAR(256)\", \"array\": true}]}");
+            coll.createIndex("binaryArrayIndex", "{\"fields\": [{\"field\": \"$.binaryField\", \"type\": \"BINARY(256)\", \"array\": true}]}");
+
+            validateArrayIndex("intArrayIndex", "coll1", 1);
+            validateArrayIndex("uintArrayIndex", "coll1", 1);
+            validateArrayIndex("floatArrayIndex", "coll1", 1);
+            validateArrayIndex("dateArrayIndex", "coll1", 1);
+            validateArrayIndex("datetimeArrayIndex", "coll1", 1);
+            validateArrayIndex("timeArrayIndex", "coll1", 1);
+            validateArrayIndex("charArrayIndex", "coll1", 1);
+            validateArrayIndex("binaryArrayIndex", "coll1", 1);
+
+            coll.add(
+                    "{\"intField\" : [], \"uintField\" : [], \"dateField\" : [], \"datetimeField\" : [], \"charField\" : [], \"binaryField\" : [],\"timeField\" : [], \"floatField\" : []}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-29 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.1,52.9,53.0]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-7 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.7,53.6]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [51,52,53], \"dateField\" : [], \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-7 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.7,53.6]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.7,53.6]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-7 23:59:59\"], \"charField\" : [], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.7,53.6]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-7 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.7,53.6]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-7 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [], \"floatField\" : [51.2,52.7,53.6]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-7 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : []}")
+                    .execute();
+
+            try {
+                coll.add(
+                        "{\"intField\" : [1,[2, 3],4], \"uintField\" : [51,[52, 53],54], \"dateField\" : [\"2019-1-1\", [\"2019-2-1\", \"2019-3-1\"], \"2019-4-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", [\"9999-12-31 23:59:59\"], \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", [\"abcd1\", \"abcd2\"], \"abcd4\"],\"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,[52.4],53.6]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Cannot store an array or an object in a scalar key part of the index"));
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : \"\", \"uintField\" : [51,[52, 53],54], \"dateField\" : [\"2019-1-1\", [\"2019-2-1\", \"2019-3-1\"], \"2019-4-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"],\"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.4,53.6]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                if (mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.18"))) {
+                    assertTrue(e.getMessage().contains("Cannot store an array or an object in a scalar key part of the index"));
+                } else {
+                    assertTrue(e.getMessage().contains("functional index"));
+                }
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : [1,5,4], \"dateField\" : \"\", \"datetimeField\" : \"\", \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"],\"timeField\" : \"\", \"floatField\" : [51.2,52.4,53.6]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("functional index"));
+            }
+
+            try {
+                coll.add(
+                        "{\"intField\" : [1,5,4], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\", \"2019-4-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : \"\", \"binaryField\" : \"\", \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.4,53.6]}")
+                        .execute();
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("functional index"));
+            }
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    /**
+     * START testArrayIndexBasic tests
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testArrayIndex012() throws Exception {
+        System.out.println("testCreateIndexSanity");
+
+        assumeTrue(this.isSetForXTests);
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            try {
+                coll.createIndex("intArrayIndex", "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"SIGNED INTEGER\", \"array\": \"\"}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("uintArrayIndex", "{\"fields\": [{\"field\": \"$.uintField\", \"type\": \"UNSIGNED INTEGER\", \"array\": \"\"}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("floatArrayIndex", "{\"fields\": [{\"field\": \"$.floatField\", \"type\": \"DECIMAL(10,2)\", \"array\": \"\"}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("dateArrayIndex", "{\"fields\": [{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": \"\"}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("datetimeArrayIndex", "{\"fields\": [{\"field\": \"$.datetimeField\", \"type\": \"DATETIME\", \"array\": \"\"}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("timeArrayIndex", "{\"fields\": [{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": \"\"}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("charArrayIndex", "{\"fields\": [{\"field\": \"$.charField\", \"type\": \"CHAR(256)\", \"array\": \"\"}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("binaryArrayIndex", "{\"fields\": [{\"field\": \"$.binaryField\", \"type\": \"BINARY(256)\", \"array\": \"\"}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("intArrayIndex", "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"SIGNED INTEGER\", \"array\": null}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("uintArrayIndex", "{\"fields\": [{\"field\": \"$.uintField\", \"type\": \"UNSIGNED INTEGER\", \"array\": null}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("floatArrayIndex", "{\"fields\": [{\"field\": \"$.floatField\", \"type\": \"DECIMAL(10,2)\", \"array\": null}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("dateArrayIndex", "{\"fields\": [{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": null}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("datetimeArrayIndex", "{\"fields\": [{\"field\": \"$.datetimeField\", \"type\": \"DATETIME\", \"array\": null}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("timeArrayIndex", "{\"fields\": [{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": null}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("charArrayIndex", "{\"fields\": [{\"field\": \"$.charField\", \"type\": \"CHAR(256)\", \"array\": null}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("binaryArrayIndex", "{\"fields\": [{\"field\": \"$.binaryField\", \"type\": \"BINARY(256)\", \"array\": null}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("intArrayIndex", "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"SIGNED INTEGER\", \"array\": []}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("uintArrayIndex", "{\"fields\": [{\"field\": \"$.uintField\", \"type\": \"UNSIGNED INTEGER\", \"array\": []}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("floatArrayIndex", "{\"fields\": [{\"field\": \"$.floatField\", \"type\": \"DECIMAL(10,2)\", \"array\": []}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("dateArrayIndex", "{\"fields\": [{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": []}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("datetimeArrayIndex", "{\"fields\": [{\"field\": \"$.datetimeField\", \"type\": \"DATETIME\", \"array\": []}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("timeArrayIndex", "{\"fields\": [{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": []}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("charArrayIndex", "{\"fields\": [{\"field\": \"$.charField\", \"type\": \"CHAR(256)\", \"array\": []}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            try {
+                coll.createIndex("binaryArrayIndex", "{\"fields\": [{\"field\": \"$.binaryField\", \"type\": \"BINARY(256)\", \"array\": []}]}");
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("Index field 'array' member must be boolean."));
+            }
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex013() throws Exception {
+        System.out.println("testCreateIndexSanity");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            coll.add(
+                    "{\"intField\" : [1,2,3], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"],\"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.4,53.6]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [11,12,3], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-29 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.1,52.9,53.0]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-7 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.7,53.6]}")
+                    .execute();
+
+            /* create basic index */
+
+            coll.createIndex("intArrayIndex", "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"SIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("uintArrayIndex", "{\"fields\": [{\"field\": \"$.uintField\", \"type\": \"UNSIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("floatArrayIndex", "{\"fields\": [{\"field\": \"$.floatField\", \"type\": \"DECIMAL(10,2)\", \"array\": true}]}");
+            coll.createIndex("dateArrayIndex", "{\"fields\": [{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": true}]}");
+            coll.createIndex("datetimeArrayIndex", "{\"fields\": [{\"field\": \"$.datetimeField\", \"type\": \"DATETIME\", \"array\": true}]}");
+            coll.createIndex("timeArrayIndex", "{\"fields\": [{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": true}]}");
+            coll.createIndex("charArrayIndex", "{\"fields\": [{\"field\": \"$.charField\", \"type\": \"CHAR(256)\", \"array\": true}]}");
+            coll.createIndex("binaryArrayIndex", "{\"fields\": [{\"field\": \"$.binaryField\", \"type\": \"BINARY(256)\", \"array\": true}]}");
+
+            validateArrayIndex("intArrayIndex", "coll1", 1);
+            validateArrayIndex("uintArrayIndex", "coll1", 1);
+            validateArrayIndex("floatArrayIndex", "coll1", 1);
+            validateArrayIndex("dateArrayIndex", "coll1", 1);
+            validateArrayIndex("datetimeArrayIndex", "coll1", 1);
+            validateArrayIndex("timeArrayIndex", "coll1", 1);
+            validateArrayIndex("charArrayIndex", "coll1", 1);
+            validateArrayIndex("binaryArrayIndex", "coll1", 1);
+
+            coll.remove("true").execute();
+
+            coll.add(
+                    "{\"intField\" : [1,2,3], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"],\"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.4,53.6]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [11,12,3], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-29 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.1,52.9,53.0]}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-7 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.7,53.6]}")
+                    .execute();
+
+            try {
+                coll.add(
+                        "{\"intField\" : \"[1,2,3]\", \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"],\"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.4,53.6]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("functional index"));
+            }
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex014() throws Exception {
+        System.out.println("testCreateIndexSanity");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        DbDoc doc = null;
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            coll.createIndex("intArrayIndex", "{\"fields\": [{\"field\": \"$.intField\", \"type\": \"SIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("uintArrayIndex", "{\"fields\": [{\"field\": \"$.uintField\", \"type\": \"UNSIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("floatArrayIndex", "{\"fields\": [{\"field\": \"$.floatField\", \"type\": \"DECIMAL(10,2)\", \"array\": true}]}");
+            coll.createIndex("dateArrayIndex", "{\"fields\": [{\"field\": \"$.dateField\", \"type\": \"DATE\", \"array\": true}]}");
+            coll.createIndex("datetimeArrayIndex", "{\"fields\": [{\"field\": \"$.datetimeField\", \"type\": \"DATETIME\", \"array\": true}]}");
+            coll.createIndex("timeArrayIndex", "{\"fields\": [{\"field\": \"$.timeField\", \"type\": \"TIME\", \"array\": true}]}");
+            coll.createIndex("charArrayIndex", "{\"fields\": [{\"field\": \"$.charField\", \"type\": \"CHAR(256)\", \"array\": true}]}");
+            coll.createIndex("binaryArrayIndex", "{\"fields\": [{\"field\": \"$.binaryField\", \"type\": \"BINARY(256)\", \"array\": true}]}");
+
+            validateArrayIndex("intArrayIndex", "coll1", 1);
+            validateArrayIndex("uintArrayIndex", "coll1", 1);
+            validateArrayIndex("floatArrayIndex", "coll1", 1);
+            validateArrayIndex("dateArrayIndex", "coll1", 1);
+            validateArrayIndex("datetimeArrayIndex", "coll1", 1);
+            validateArrayIndex("timeArrayIndex", "coll1", 1);
+            validateArrayIndex("charArrayIndex", "coll1", 1);
+            validateArrayIndex("binaryArrayIndex", "coll1", 1);
+
+            coll.remove("true").execute();
+
+            coll.add(
+                    "{\"intField\" : [1,2,3], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"],\"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.4,53.6],\"dateFieldWOI\" : \"2019-1-1\"}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [11,12,3], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-29 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.1,52.9,53.0],\"dateFieldWOI\" : \"2019-1-1\"}")
+                    .execute();
+            coll.add(
+                    "{\"intField\" : [12,23,34], \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-7 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"timeField\" : [\"10.30\", \"7.30\", \"12.30\"], \"floatField\" : [51.2,52.7,53.6],\"dateFieldWOI\" : \"2019-2-1\"}")
+                    .execute();
+
+            try {
+                coll.add(
+                        "{\"intField\" : \"[1,2,3]\", \"uintField\" : [51,52,53], \"dateField\" : [\"2019-1-1\", \"2019-2-1\", \"2019-3-1\"], \"datetimeField\" : [\"9999-12-30 23:59:59\", \"9999-12-31 23:59:59\", \"9999-12-31 23:59:59\"], \"charField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"], \"binaryField\" : [\"abcd1\", \"abcd1\", \"abcd2\", \"abcd4\"],\"timeField\" : [\"10.30\", \"11.30\", \"12.30\"], \"floatField\" : [51.2,52.4,53.6]}")
+                        .execute();
+                assertTrue(false);
+            } catch (Exception e) {
+                System.out.println("ERROR : " + e.getMessage());
+                assertTrue(e.getMessage().contains("functional index"));
+            }
+
+            DocResult docs = coll.find(":intField in $.intField").bind("intField", 12).execute();
+            doc = null;
+            int i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                i++;
+            }
+
+            assertTrue(i == 2);
+
+            docs = coll.find(":uintField in $.uintField").bind("uintField", 52).execute();
+            doc = null;
+            i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                i++;
+            }
+
+            assertTrue(i == 3);
+
+            docs = coll.find(":charField in $.charField").bind("charField", "abcd1").execute();
+            doc = null;
+            i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                i++;
+            }
+
+            assertTrue(i == 3);
+
+            docs = coll.find(":binaryField in $.binaryField").bind("binaryField", "abcd1").execute();
+            doc = null;
+            i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                i++;
+            }
+
+            assertTrue(i == 3);
+
+            docs = coll.find(":floatField in $.floatField").bind("floatField", 51.2).execute();
+            doc = null;
+            i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                i++;
+            }
+
+            System.out.println("Count = " + i);
+            assertTrue(i == 2);
+
+            docs = coll.find("CAST(CAST('2019-2-1' as DATE) as JSON) in $.dateField").execute();
+            doc = null;
+            i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                i++;
+            }
+
+            System.out.println("Count = " + i);
+            assertTrue(i == 3);
+
+            docs = coll.find("CAST(CAST('2019-2-1' as DATE) as JSON) not in $.dateField").execute();
+            doc = null;
+            i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                i++;
+            }
+            System.out.println("Using NOT IN");
+            System.out.println("Count = " + i);
+            //assertTrue(i == 0);
+
+            docs = coll.find("'2019-1-1' not in $.dateFieldWOI").execute();
+            doc = null;
+            i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                System.out.println((((JsonString) doc.get("dateFieldWOI")).getString()));
+                i++;
+            }
+            System.out.println("Using NOT IN Without Index");
+            System.out.println("Count = " + i);
+
+            docs = coll.find("CAST(CAST('2019-2-1' as DATE) as JSON) overlaps $.dateField").execute();
+            doc = null;
+            i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                i++;
+            }
+
+            System.out.println("Count = " + i);
+            assertTrue(i == 3);
+
+            docs = coll.find("CAST(CAST('2019-2-1' as DATE) as JSON) not overlaps $.dateField").execute();
+            doc = null;
+            i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                i++;
+            }
+            System.out.println("Using NOT OVERLAPS");
+            System.out.println("Count = " + i);
+            //assertTrue(i == 0);
+
+            docs = coll.find("CAST(CAST(:datetimeField as DATETIME) as JSON) in $.datetimeField").bind("datetimeField", "9999-12-30 23:59:59").execute();
+            doc = null;
+            i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                i++;
+            }
+
+            System.out.println("Count = " + i);
+            assertTrue(i == 2);
+
+            docs = coll.find("CAST(CAST(:timeField as TIME) as JSON) in $.timeField").bind("timeField", "7.30").execute();
+            doc = null;
+            i = 0;
+            while (docs.hasNext()) {
+                doc = docs.next();
+                i++;
+            }
+
+            System.out.println("Count = " + i);
+            assertTrue(i == 1);
+
+            //Integration scenarios between Index and Overlaps. Explicit casting added due to server Bug#29752056. NOT IN and NOT OVERLAPS doesn't require explicit casting
+            docs = coll.find("CAST(CAST('2019-2-1' as DATE) as JSON) in $.dateField").execute();
+            //System.out.println("Number of rows using IN with indexed array = "+docs.count());
+            assertTrue(docs.count() == 3);
+
+            docs = coll.find("'2019-2-1' not in $.dateField").execute();
+            //System.out.println("Number of rows using NOT IN without casting = "+docs.count());
+            assertTrue(docs.count() == 0);
+
+            docs = coll.find("CAST(CAST('2019-2-1' as DATE) as JSON) overlaps $.dateField").execute();
+            //System.out.println("Number of rows using OVERLAPS with indexed array = "+docs.count());
+            assertTrue(docs.count() == 3);
+
+            docs = coll.find("'2019-2-1' not overlaps $.dateField").execute();
+            //System.out.println("Number of rows using NOT OVERLAPS without casting = "+docs.count());
+            assertTrue(docs.count() == 0);
+
+            //Integration scenarios for time
+            docs = coll.find("CAST(CAST(:timeField as TIME) as JSON) in $.timeField").bind("timeField", "7.30").execute();
+            assertTrue(docs.count() == 1);
+
+            docs = coll.find(":timeField not in $.timeField").bind("timeField", "7.30").execute();
+            assertTrue(docs.count() == 2);
+
+            docs = coll.find("CAST(CAST(:timeField as TIME) as JSON) overlaps $.timeField").bind("timeField", "7.30").execute();
+            assertTrue(docs.count() == 1);
+
+            docs = coll.find(":timeField not overlaps $.timeField").bind("timeField", "7.30").execute();
+            assertTrue(docs.count() == 2);
+
+            //Integration scenarios for datetime
+            docs = coll.find("CAST(CAST(:datetimeField as DATETIME) as JSON) in $.datetimeField").bind("datetimeField", "9999-12-30 23:59:59").execute();
+            assertTrue(docs.count() == 2);
+
+            docs = coll.find(":datetimeField NOT IN $.datetimeField").bind("datetimeField", "9999-12-30 23:59:59").execute();
+            assertTrue(docs.count() == 1);
+
+            docs = coll.find("CAST(CAST(:datetimeField as DATETIME) as JSON) OVERLAPS $.datetimeField").bind("datetimeField", "9999-12-30 23:59:59").execute();
+            assertTrue(docs.count() == 2);
+
+            docs = coll.find(":datetimeField NOT OVERLAPS $.datetimeField").bind("datetimeField", "9999-12-30 23:59:59").execute();
+            assertTrue(docs.count() == 1);
+
+            //Integration scenaris of Integer
+            docs = coll.find(":intField not in $.intField").bind("intField", 12).execute();
+            assertTrue(docs.count() == 1);
+
+            docs = coll.find(":intField overlaps $.intField").bind("intField", 12).execute();
+            assertTrue(docs.count() == 2);
+
+            docs = coll.find(":intField not overlaps $.intField").bind("intField", 12).execute();
+            assertTrue(docs.count() == 1);
+
+            //Integration scenaris of unsigned integer
+            docs = coll.find(":uintField not in $.uintField").bind("uintField", 52).execute();
+            assertTrue(docs.count() == 0);
+
+            docs = coll.find(":uintField overlaps $.uintField").bind("uintField", 52).execute();
+            assertTrue(docs.count() == 3);
+
+            docs = coll.find(":uintField not overlaps $.uintField").bind("uintField", 52).execute();
+            assertTrue(docs.count() == 0);
+
+            //Integration scenaris of character type
+            docs = coll.find(":charField not in $.charField").bind("charField", "abcd1").execute();
+            assertTrue(docs.count() == 0);
+
+            docs = coll.find(":charField overlaps $.charField").bind("charField", "abcd1").execute();
+            assertTrue(docs.count() == 3);
+
+            docs = coll.find(":charField not overlaps $.charField").bind("charField", "abcd1").execute();
+            assertTrue(docs.count() == 0);
+
+            //Integration scenarios of binary type
+            docs = coll.find(":binaryField not in $.binaryField").bind("binaryField", "abcd1").execute();
+            assertTrue(docs.count() == 0);
+
+            docs = coll.find(":binaryField overlaps $.binaryField").bind("binaryField", "abcd1").execute();
+            assertTrue(docs.count() == 3);
+
+            docs = coll.find(":binaryField not overlaps $.binaryField").bind("binaryField", "abcd1").execute();
+            assertTrue(docs.count() == 0);
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testArrayIndex015() throws Exception {
+        System.out.println("Integration scenarios with both operands as keys and index created on them");
+
+        assumeTrue(this.isSetForXTests);
+        assumeTrue(mysqlVersionMeetsMinimum(this.baseOpensslUrl, ServerVersion.parseVersion("8.0.17")));
+
+        String collname = "coll1";
+        DbDoc doc = null;
+        Session sess = null;
+        try {
+            sess = new SessionFactory().getSession(this.baseOpensslUrl);
+            Schema sch = sess.getDefaultSchema();
+            sch.dropCollection(collname);
+            Collection coll = sch.createCollection(collname, true);
+
+            /* create basic index */
+
+            coll.remove("true").execute();
+
+            coll.add(
+                    "{\"_id\":1,\"name\":\"decimalArray1\",\"decimalField1\":[835975.76,87349829932749.67,89248481498149882498141.12],\"decimalField2\":[835975.76,87349829932.839],\"decimalField3\":[835977.76,87349829932.839]}")
+                    .execute();
+            coll.add(
+                    "{\"_id\":2,\"name\":\"dateArray1\",\"dateField1\" : [\"2017-12-12\",\"2018-12-12\",\"2019-12-12\"],\"dateField2\" : [\"2017-12-12\",\"2018-11-11\",\"2019-11-11\"],\"dateField3\" : [\"2017-12-12\",\"2018-10-10\",\"2019-10-10\"]}")
+                    .execute();
+            coll.add(
+                    "{\"_id\":3,\"name\":\"timeArray1\",\"timeField1\" : [\"12:20\",\"11:20\",\"10:20\"], \"timeField2\" : [\"12:00\",\"11:00\",\"10:20\"], \"timeField3\" : [\"12:10\",\"11:10\",\"10:00\"]}")
+                    .execute();
+            coll.add(
+                    "{\"_id\":4,\"name\":\"timestampArray1\",\"timestampField1\" : [\"2017-12-12 20:12:07\", \"2018-12-12 20:12:07\",\"2019-12-12 20:12:07\"], \"timestampField2\" : [\"2017-12-12 20:12:07\", \"2018-11-11 20:12:07\",\"2019-11-11 20:12:07\"], \"timestampField3\" : [\"2017-12-12 20:12:07\", \"2018-10-11 20:12:07\",\"2019-12-12 20:12:07\"]}")
+                    .execute();
+            coll.add(
+                    "{\"_id\":5,\"name\":\"datetimeArray1\", \"datetimeField1\" : [\"2017-12-12 20:12:07\", \"2018-12-12 20:12:07\",\"2019-12-12 20:12:07\"], \"datetimeField2\" : [\"2017-12-12 20:12:07\", \"2018-11-11 20:12:07\",\"2019-11-11 20:12:07\"],\"datetimeField3\" : [\"2017-10-10 20:12:07\", \"2018-10-10 20:12:07\",\"2019-10-10 20:12:07\"]}")
+                    .execute();
+            coll.add(
+                    "{\"_id\":6,\"name\":\"binaryArray1\", \"binaryField1\":[\"0xe240\",\"0x0001e240\"],\"binaryField2\":[\"0xe240\",\"0x0001e240\"],\"binaryField3\":[\"0xe240\",\"0x0001e240\"]}")
+                    .execute();
+            coll.add(
+                    "{\"_id\":7,\"name\":\"dateArray2\",\"dateField1\" : [\"2017-12-12\",\"2018-12-12\",\"2019-12-12\"],\"dateField2\" : [\"2017-11-11\",\"2018-11-11\",\"2019-11-11\"],\"dateField3\" : [\"2017-10-10\",\"2018-10-10\",\"2019-10-10\"]}")
+                    .execute();
+            coll.add(
+                    "{\"_id\":8,\"name\":\"timeArray2\",\"timeField1\" : [\"12:20\",\"11:20\",\"10:20\"], \"timeField2\" : [\"12:00\",\"11:00\",\"10:00\"], \"timeField3\" : [\"12:10\",\"11:10\",\"10:10\"]}")
+                    .execute();
+            coll.add(
+                    "{\"_id\":9,\"name\":\"datetimeArray2\", \"datetimeField1\" : [\"2017-12-12 20:12:07\", \"2018-12-12 20:12:07\",\"2019-12-12 20:12:07\"], \"datetimeField2\" : [\"2017-11-11 20:12:07\", \"2018-11-11 20:12:07\",\"2019-11-11 20:12:07\"],\"datetimeField3\" : [\"2017-10-10 20:12:07\", \"2018-10-10 20:12:07\",\"2019-10-10 20:12:07\"]}")
+                    .execute();
+            coll.add(
+                    "{\"_id\":10,\"name\":\"binaryArray2\", \"binaryField1\":[\"0xe240\",\"0x0001e240\"],\"binaryField2\":[\"0xe2040\",\"0x0001e2040\"],\"binaryField3\":[\"0xe02040\",\"0x0001e02040\"]}")
+                    .execute();
+            coll.add(
+                    "{\"_id\":11,\"name\":\"charArray1\", \"charField1\":[\"char1\",\"char2\"],\"charField2\":[\"char1\",\"char3\"],\"charField3\":[\"char1\",\"char2\"]}")
+                    .execute();
+            coll.add(
+                    "{\"_id\":12,\"name\":\"charArray2\", \"charField1\":[\"char1\",\"char2\"],\"charField2\":[\"char3\",\"char4\"],\"charField3\":[\"char5\",\"char6\"]}")
+                    .execute();
+            coll.add("{\"_id\":13,\"name\":\"intArray1\", \"intField1\":[-15,-25],\"intField2\":[-15,-20],\"intField3\":[-10,-20]}").execute();
+            coll.add("{\"_id\":14,\"name\":\"intArray2\", \"intField1\":[-10,-20],\"intField2\":[-30,-40],\"intField3\":[-50,-60]}").execute();
+
+            coll.add("{\"_id\":15,\"name\":\"uintArray1\", \"uintField1\":[15,25],\"uintField2\":[15,20],\"uintField3\":[10,20]}").execute();
+            coll.add("{\"_id\":16,\"name\":\"uintArray2\", \"uintField1\":[10,20],\"uintField2\":[30,40],\"uintField3\":[50,60]}").execute();
+
+            coll.createIndex("intArrayIndex1", "{\"fields\": [{\"field\": \"$.intField1\", \"type\": \"SIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("intArrayIndex2", "{\"fields\": [{\"field\": \"$.intField2\", \"type\": \"SIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("uintArrayIndex1", "{\"fields\": [{\"field\": \"$.uintField1\", \"type\": \"UNSIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("uintArrayIndex2", "{\"fields\": [{\"field\": \"$.uintField2\", \"type\": \"UNSIGNED INTEGER\", \"array\": true}]}");
+            coll.createIndex("decimalArrayIndex1", "{\"fields\": [{\"field\": \"$.decimalField1\", \"type\": \"DECIMAL(65,2)\", \"array\": true}]}");
+            coll.createIndex("decimalArrayIndex2", "{\"fields\": [{\"field\": \"$.decimalField2\", \"type\": \"DECIMAL(65,2)\", \"array\": true}]}");
+            coll.createIndex("dateArrayIndex1", "{\"fields\": [{\"field\": \"$.dateField1\", \"type\": \"DATE\", \"array\": true}]}");
+            coll.createIndex("dateArrayIndex2", "{\"fields\": [{\"field\": \"$.dateField2\", \"type\": \"DATE\", \"array\": true}]}");
+            coll.createIndex("datetimeArrayIndex1", "{\"fields\": [{\"field\": \"$.datetimeField1\", \"type\": \"DATETIME\", \"array\": true}]}");
+            coll.createIndex("datetimeArrayIndex2", "{\"fields\": [{\"field\": \"$.datetimeField2\", \"type\": \"DATETIME\", \"array\": true}]}");
+            coll.createIndex("timeArrayIndex1", "{\"fields\": [{\"field\": \"$.timeField1\", \"type\": \"TIME\", \"array\": true}]}");
+            coll.createIndex("timeArrayIndex2", "{\"fields\": [{\"field\": \"$.timeField2\", \"type\": \"TIME\", \"array\": true}]}");
+            coll.createIndex("charArrayIndex1", "{\"fields\": [{\"field\": \"$.charField1\", \"type\": \"CHAR(256)\", \"array\": true}]}");
+            coll.createIndex("charArrayIndex2", "{\"fields\": [{\"field\": \"$.charField2\", \"type\": \"CHAR(256)\", \"array\": true}]}");
+            coll.createIndex("binaryArrayIndex1", "{\"fields\": [{\"field\": \"$.binaryField1\", \"type\": \"BINARY(256)\", \"array\": true}]}");
+            coll.createIndex("binaryArrayIndex2", "{\"fields\": [{\"field\": \"$.binaryField2\", \"type\": \"BINARY(256)\", \"array\": true}]}");
+            validateArrayIndex("intArrayIndex1", "coll1", 1);
+            validateArrayIndex("uintArrayIndex1", "coll1", 1);
+            validateArrayIndex("decimalArrayIndex1", "coll1", 1);
+            validateArrayIndex("dateArrayIndex1", "coll1", 1);
+            validateArrayIndex("datetimeArrayIndex1", "coll1", 1);
+            validateArrayIndex("timeArrayIndex1", "coll1", 1);
+            validateArrayIndex("charArrayIndex1", "coll1", 1);
+            validateArrayIndex("binaryArrayIndex1", "coll1", 1);
+            validateArrayIndex("intArrayIndex2", "coll1", 1);
+            validateArrayIndex("uintArrayIndex2", "coll1", 1);
+            validateArrayIndex("decimalArrayIndex2", "coll1", 1);
+            validateArrayIndex("dateArrayIndex2", "coll1", 1);
+            validateArrayIndex("datetimeArrayIndex2", "coll1", 1);
+            validateArrayIndex("timeArrayIndex2", "coll1", 1);
+            validateArrayIndex("charArrayIndex2", "coll1", 1);
+            validateArrayIndex("binaryArrayIndex2", "coll1", 1);
+
+            DocResult docs = coll.find("$.intField1 overlaps $.intField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("intArray1", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.intField1 not overlaps $.intField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("intArray2", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.uintField1 overlaps $.uintField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("uintArray1", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.uintField1 not overlaps $.uintField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("uintArray2", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.charField1 overlaps $.charField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("charArray1", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.charField1 not overlaps $.charField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("charArray2", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.decimalField1 overlaps $.decimalField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("decimalArray1", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.decimalField1 not overlaps $.decimalField2").execute();
+            assertTrue(docs.count() == 0);
+
+            docs = coll.find("$.binaryField1 overlaps $.binaryField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("binaryArray1", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.binaryField1 not overlaps $.binaryField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("binaryArray2", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.timeField1 overlaps $.timeField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("timeArray1", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.timeField1 not overlaps $.timeField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("timeArray2", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.datetimeField1 overlaps $.datetimeField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("datetimeArray1", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.datetimeField1 not overlaps $.datetimeField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("datetimeArray2", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.dateField1 overlaps $.dateField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("dateArray1", ((JsonString) doc.get("name")).getString());
+
+            docs = coll.find("$.dateField1 not overlaps $.dateField2").execute();
+            assertTrue(docs.count() == 1);
+            doc = docs.next();
+            assertEquals("dateArray2", ((JsonString) doc.get("name")).getString());
+
+            sch.dropCollection(collname);
+        } finally {
+            if (sess != null) {
+                sess.close();
+            }
+        }
+    }
+
+    @Test
+    public void testAsyncBind() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, maxrec = 10;
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf((100 + i) * 10)));
+            newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(100 + i)));
+            newDoc2.add("F4", new JsonNumber().setValue(String.valueOf(1 + i)));
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+        }
+
+        CompletableFuture<AddResult> asyncRes = this.collection.add(jsonlist).executeAsync();
+        asyncRes.get();
+
+        // 1. Incorrect PlaceHolder Name in bind
+        assertThrows(WrongArgumentException.class, "Unknown placeholder: F", () -> this.collection.find("F1 like :X").bind("F", "Field-1-%-3").executeAsync());
+
+        // 2. PlaceHolder Name in small letter
+        assertThrows(WrongArgumentException.class, "Unknown placeholder: x", () -> this.collection.find("F1 like :X").bind("x", "Field-1-%-3").executeAsync());
+
+        // 3. No bind
+        assertThrows(WrongArgumentException.class, "Placeholder 'X' is not bound", () -> this.collection.find("F1 like :X").executeAsync());
+
+        // 4. bind 2 times
+        assertThrows(WrongArgumentException.class, "Unknown placeholder: x",
+                () -> this.collection.find("F1 like :X").bind("X", "Field-1-%-4").bind("x", "Field-1-%-3").bind("X", "Field-1-%-3").executeAsync());
+
+        // 5. bind same variable 2 times (Success)
+        CompletableFuture<DocResult> asyncDocs = this.collection.find("F1 like :X").bind("X", "Field-1-%-4").bind("X", "Field-1-%-3").executeAsync();
+
+        DocResult docs = asyncDocs.get();
+        DbDoc doc = docs.next();
+        assertEquals((long) 103, (long) (((JsonNumber) doc.get("F3")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // 6. bind In different order (Success)
+        asyncDocs = this.collection.find("F1 like :X and $.F3 =:Y and  $.F3 !=:Z").bind("Y", 103).bind("Z", 104).bind("X", "Field-1-%-3").executeAsync();
+        docs = asyncDocs.get();
+        doc = docs.next();
+        assertEquals((long) 103, (long) (((JsonNumber) doc.get("F3")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // 7. Using same Bind Variables many times(Success)
+        asyncDocs = this.collection.find("F1 like :F1 and $.F3 in (:F3,:F2,:F3) and  $.F2 =(:F3*10)").bind("F3", 103).bind("F2", 102).bind("F1", "Field-1-%-3")
+                .executeAsync();
+        docs = asyncDocs.get();
+        doc = docs.next();
+        assertEquals((long) 103, (long) (((JsonNumber) doc.get("F3")).getInteger()));
+        assertFalse(docs.hasNext());
+
+        // 1. Incorrect PlaceHolder Name in bind
+        assertThrows(WrongArgumentException.class, "Unknown placeholder: F",
+                () -> this.collection.modify("F1 like :X").set("$.F4", 1).bind("F", "Field-1-%-3").executeAsync());
+
+        // 2. PlaceHolder Name in small letter
+        assertThrows(WrongArgumentException.class, "Unknown placeholder: x",
+                () -> this.collection.modify("F1 like :X").set("$.F4", 1).bind("x", "Field-1-%-3").executeAsync());
+
+        // 3. No bind
+        assertThrows(WrongArgumentException.class, "Placeholder 'X' is not bound", () -> this.collection.modify("F1 like :X").set("$.F4", 1).executeAsync());
+
+        // 4. bind 2 times
+        assertThrows(WrongArgumentException.class, "Unknown placeholder: x", () -> this.collection.modify("F1 like :X").set("$.F4", 1).bind("X", "Field-1-%-4")
+                .bind("x", "Field-1-%-3").bind("X", "Field-1-%-3").executeAsync());
+
+        // 5. bind same variable 2 times (Success)
+        CompletableFuture<Result> asyncRes2 = this.collection.modify("F1 like :X").set("$.F4", -1).bind("X", "Field-1-%-4").bind("X", "Field-1-%-3")
+                .executeAsync();
+        Result res2 = asyncRes2.get();
+        assertEquals(1, res2.getAffectedItemsCount());
+
+        // 6. bind In different order (Success)
+        asyncRes2 = this.collection.modify("F1 like :X and $.F3 =:Y and  $.F3 !=:Z").set("$.F4", -2).bind("Y", 103).bind("Z", 104).bind("X", "Field-1-%-3")
+                .executeAsync();
+        res2 = asyncRes2.get();
+        assertEquals(1, res2.getAffectedItemsCount());
+
+        // 7. Using same Bind Variables many times(Success)
+        asyncRes2 = this.collection.modify("F1 like :F1 and $.F3 in (:F3,:F2,:F3) and  $.F2 =(:F3*10)").set("$.F4", -3).bind("F3", 103).bind("F2", 102)
+                .bind("F1", "Field-1-%-3").executeAsync();
+        res2 = asyncRes2.get();
+        assertEquals(1, res2.getAffectedItemsCount());
+
+        asyncRes2 = this.collection.modify("$.F3 = :X").set("$.F4", 1).bind("X", 101).sort("$.F1 asc").executeAsync();
+        res2 = asyncRes2.get();
+        assertEquals(1, res2.getAffectedItemsCount());
+
+        asyncRes2 = this.collection.modify("$.F3 = :X+:Y+:X+:Y").set("$.F4", -4).bind("X", 50).bind("Y", 2).sort("$.F1 asc").executeAsync();
+        res2 = asyncRes2.get();
+        assertEquals(1, res2.getAffectedItemsCount());
+
+        // 1. Incorrect PlaceHolder Name in bind
+        assertThrows(WrongArgumentException.class, "Unknown placeholder: F",
+                () -> this.collection.remove("F1 like :X").bind("F", "Field-1-%-3").executeAsync());
+
+        // 2. PlaceHolder Name in small letter
+        assertThrows(WrongArgumentException.class, "Unknown placeholder: x",
+                () -> this.collection.remove("F1 like :X").bind("x", "Field-1-%-3").executeAsync());
+
+        // 3. No bind
+        assertThrows(WrongArgumentException.class, "Placeholder 'X' is not bound", () -> this.collection.remove("F1 like :X").executeAsync());
+
+        // 4. bind 2 times
+        assertThrows(WrongArgumentException.class, "Unknown placeholder: x",
+                () -> this.collection.remove("F1 like :X").bind("X", "Field-1-%-4").bind("x", "Field-1-%-3").bind("X", "Field-1-%-3").executeAsync());
+
+        // 5. bind same variable 2 times (Success)
+        asyncRes2 = this.collection.remove("F1 like :X").bind("X", "Field-1-%-4").bind("X", "Field-1-%-0").executeAsync();
+        res2 = asyncRes2.get();
+        assertEquals(1, res2.getAffectedItemsCount());
+
+        // 6. bind In different order (Success)
+        asyncRes2 = this.collection.remove("F1 like :X and $.F3 =:Y and  $.F3 !=:Z").bind("Y", 101).bind("Z", 104).bind("X", "Field-1-%-1").executeAsync();
+        res2 = asyncRes2.get();
+        assertEquals(1, res2.getAffectedItemsCount());
+
+        // 7. Using same Bind Variables many times(Success)
+        asyncRes2 = this.collection.remove("F1 like :F1 and $.F3 in (:F3,:F2,:F3) and  $.F2 =(:F3*10)").bind("F3", 102).bind("F2", 107)
+                .bind("F1", "Field-1-%-2").executeAsync();
+        res2 = asyncRes2.get();
+        assertEquals(1, res2.getAffectedItemsCount());
+    }
+
+    @Test
+    public void testFetchOneFetchAllAsync() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, maxrec = 10;
+        CompletableFuture<DocResult> asyncDocs = null;
+        List<DbDoc> rowDoc = null;
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf((100 + i) * 10)));
+            newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(100 + i)));
+            newDoc2.add("F4", new JsonNumber().setValue(String.valueOf(1 + i)));
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+        }
+
+        CompletableFuture<AddResult> asyncRes = this.collection.add(jsonlist).executeAsync();
+        asyncRes.get();
+
+        // fetchAll() after fetchOne (Error)
+        asyncDocs = this.collection.find("F1 like :X and $.F3 <=:Y and  $.F3 !=:Z").bind("Y", 105).bind("Z", 105).bind("X", "Field-1-%").orderBy("F1 asc")
+                .executeAsync();
+        DocResult docs1 = asyncDocs.get();
+        DbDoc doc = docs1.fetchOne();
+        assertThrows(WrongArgumentException.class, "Cannot fetchAll\\(\\) after starting iteration", () -> docs1.fetchAll());
+
+        i = 0;
+        while (doc != null) {
+            assertEquals((long) (100 + i), (long) (((JsonNumber) doc.get("F3")).getInteger()));
+            i = i + 1;
+            doc = docs1.fetchOne();
+        }
+        assertThrows(WrongArgumentException.class, "Cannot fetchAll\\(\\) after starting iteration", () -> docs1.fetchAll());
+
+        // fetchAll() after next (Error)
+        asyncDocs = this.collection.find("F1 like :X and $.F3 <=:Y and  $.F3 !=:Z").bind("Y", 105).bind("Z", 105).bind("X", "Field-1-%").orderBy("F1 asc")
+                .executeAsync();
+        DocResult docs2 = asyncDocs.get();
+        doc = docs2.next();
+        assertThrows(WrongArgumentException.class, "Cannot fetchAll\\(\\) after starting iteration", () -> docs2.fetchAll());
+        i = 0;
+        do {
+            assertEquals((long) (100 + i), (long) (((JsonNumber) doc.get("F3")).getInteger()));
+            i = i + 1;
+            doc = docs2.next();
+        } while (docs2.hasNext());
+        assertThrows(WrongArgumentException.class, "Cannot fetchAll\\(\\) after starting iteration", () -> docs2.fetchAll());
+
+        // fetchOne() and next(Success)
+        asyncDocs = this.collection.find("F1 like :X and $.F3 <=:Y and  $.F3 !=:Z").bind("Y", 108).bind("Z", 108).bind("X", "Field-1-%").orderBy("F3 asc")
+                .executeAsync();
+        DocResult docs3 = asyncDocs.get();
+        i = 0;
+        while (docs3.hasNext()) {
+            if (i % 2 == 1) {
+                doc = docs3.next();
+            } else {
+                doc = docs3.fetchOne();
+            }
+            assertEquals((long) (100 + i), (long) (((JsonNumber) doc.get("F3")).getInteger()));
+            i = i + 1;
+
+        }
+        assertThrows(WrongArgumentException.class, "Cannot fetchAll\\(\\) after starting iteration", () -> docs3.fetchAll());
+
+        //fetchAll (Success)
+        asyncDocs = this.collection.find("F1 like :X and $.F3 <=:Y and  $.F3 !=:Z").bind("Y", 105).bind("Z", 105).bind("X", "Field-1-%").orderBy("F1 asc")
+                .executeAsync();
+        DocResult docs = asyncDocs.get();
+        rowDoc = docs.fetchAll();
+        assertEquals((long) 5, (long) rowDoc.size());
+        for (i = 0; i < rowDoc.size(); i++) {
+            doc = rowDoc.get(i);
+            assertEquals((long) (100 + i), (long) (((JsonNumber) doc.get("F3")).getInteger()));
+        }
+        doc = docs.fetchOne();
+    }
+
+    @SuppressWarnings({ "deprecation", "unchecked" })
+    @Test
+    public void testCollectionAddModifyRemoveAsync() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0;
+        int NUMBER_OF_QUERIES = 5000;
+        DbDoc doc = null;
+        AddResult res = null;
+        SqlResult res1 = null;
+        CompletableFuture<DocResult> asyncDocs = null;
+        DocResult docs = null;
+        DbDoc newDoc1 = new DbDocImpl();
+        newDoc1.add("_id", new JsonString().setValue(String.valueOf(1000)));
+        newDoc1.add("F1", new JsonString().setValue("Field-1-Data-1"));
+        newDoc1.add("F2", new JsonNumber().setValue(String.valueOf(1000)));
+        newDoc1.add("T", new JsonNumber().setValue(String.valueOf(10)));
+
+        DbDoc newDoc2 = new DbDocImpl();
+        newDoc2.add("_id", new JsonString().setValue(String.valueOf(1000)));
+
+        // add(), modify(),find(),  remove() Success And Failure
+        List<Object> futures = new ArrayList<>();
+        for (i = 0; i < NUMBER_OF_QUERIES; ++i) {
+            if (i % 10 == 0) {
+                futures.add(this.collection.add(newDoc1).executeAsync());
+            } else if (i % 10 == 1) {
+                futures.add(this.collection.find("NON_EXISTING_FUNCTION1()").fields("$._id as _id, $.F1 as F1, $.F2 as F2, $.F3 as F3").executeAsync()); //Error
+            } else if (i % 10 == 2) {
+                futures.add(this.collection.find("$.F2 = 1000").fields("$._id as _id, $.F1 as F1, $.F2 as F2, $.T as T").executeAsync());
+            } else if (i % 10 == 3) {
+                futures.add(this.collection.add(newDoc2).executeAsync()); //Error
+            } else if (i % 10 == 4) {
+                futures.add(this.collection.modify("$.F2 = 1000").change("$.T", expr("$.T+1")).sort("$.F3 desc").executeAsync());
+            } else if (i % 10 == 5) {
+                futures.add(this.collection.modify("$.F2 = 1000").change("$.T", expr("NON_EXISTING_FUNCTION2()")).sort("$.F3 desc").executeAsync());//Error
+            } else if (i % 10 == 6) {
+                futures.add(this.collection.remove("NON_EXISTING_FUNCTION3()=:PARAM").bind("PARAM", 1000).orderBy("$.F3 desc").executeAsync());//Error
+            } else if (i % 10 == 7) {
+                futures.add(this.session.sql(
+                        "SELECT JSON_OBJECT('_id', JSON_EXTRACT(doc,'$._id'),'F1', JSON_EXTRACT(doc,'$.F1'),'F2', JSON_EXTRACT(doc,'$.F2'),'T', JSON_EXTRACT(doc,'$.T')) AS doc FROM `"
+                                + this.collectionName + "` WHERE (JSON_EXTRACT(doc,'$.F2') = 1000) ")
+                        .executeAsync());
+            } else if (i % 10 == 8) {
+                futures.add(this.session.sql("select non_existingfun() /* loop : " + i + "*/").executeAsync());//Error
+            } else {
+                futures.add(this.collection.remove("$.F2 = :PARAM").bind("PARAM", 1000).orderBy("$.F3 desc").executeAsync());
+            }
+        }
+
+        for (i = 0; i < NUMBER_OF_QUERIES; ++i) {
+            int i1 = i;
+            if (i % 10 == 0) {
+                res = ((CompletableFuture<AddResult>) futures.get(i)).get();
+                assertEquals(1, res.getAffectedItemsCount());
+            } else if (i % 10 == 1) {
+                assertThrows(ExecutionException.class, ".*FUNCTION " + this.schema.getName() + ".NON_EXISTING_FUNCTION1 does not exist.*",
+                        () -> ((CompletableFuture<DocResult>) futures.get(i1)).get());
+            } else if (i % 10 == 2) {
+                docs = ((CompletableFuture<DocResult>) futures.get(i)).get();
+                assertTrue(docs.hasNext());
+                doc = docs.next();
+                assertEquals((long) (10), (long) (((JsonNumber) doc.get("T")).getInteger()));
+                assertFalse(docs.hasNext());
+            } else if (i % 10 == 3) {
+                assertThrows(ExecutionException.class, ".*Document contains a field value that is not unique but required to be.*",
+                        () -> ((CompletableFuture<AddResult>) futures.get(i1)).get());
+            } else if (i % 10 == 4) {
+                Result res2 = ((CompletableFuture<AddResult>) futures.get(i)).get();
+                assertEquals(1, res2.getAffectedItemsCount());
+            } else if (i % 10 == 5) {
+                assertThrows(ExecutionException.class, ".*FUNCTION " + this.schema.getName() + ".NON_EXISTING_FUNCTION2 does not exist.*",
+                        () -> ((CompletableFuture<Result>) futures.get(i1)).get());
+            } else if (i % 10 == 6) {
+                assertThrows(ExecutionException.class, ".*FUNCTION " + this.schema.getName() + ".NON_EXISTING_FUNCTION3 does not exist.*",
+                        () -> ((CompletableFuture<Result>) futures.get(i1)).get());
+            } else if (i % 10 == 7) {
+                res1 = ((CompletableFuture<SqlResult>) futures.get(i)).get();
+                res1.next();
+                assertFalse(res1.hasNext());
+            } else if (i % 10 == 8) {
+                assertThrows(ExecutionException.class, ".*FUNCTION " + this.schema.getName() + ".non_existingfun does not exist.*",
+                        () -> ((CompletableFuture<SqlResult>) futures.get(i1)).get());
+            } else {
+                Result res2 = ((CompletableFuture<AddResult>) futures.get(i)).get();
+                assertEquals(1, res2.getAffectedItemsCount());
+            }
+        }
+
+        if ((NUMBER_OF_QUERIES - 1) % 10 < 9) {
+            assertEquals((1), this.collection.count());
+            asyncDocs = this.collection.find("$.T = :X ").bind("X", 10).fields(expr("{'cnt':count($.T)}")).executeAsync();
+            docs = asyncDocs.get();
+            doc = docs.next();
+            assertEquals((long) (1), (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+        } else {
+            assertEquals((0), this.collection.count());
         }
     }
 }

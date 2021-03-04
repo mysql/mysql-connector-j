@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,11 +35,13 @@ import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 import com.mysql.cj.MysqlxSession;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.PreparableStatement;
 import com.mysql.cj.xdevapi.Schema;
 import com.mysql.cj.xdevapi.Session;
@@ -237,5 +239,27 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
         assertSecureSession(sess);
         SqlResult res = sess.sql("SELECT CURRENT_USER()").execute();
         assertEquals(user, res.fetchOne().getString(0).split("@")[0]);
+    }
+
+    public String buildString(int length, char charToFill) {
+        if (length > 0) {
+            char[] array = new char[length];
+            Arrays.fill(array, charToFill);
+            return new String(array);
+        }
+        return "";
+    }
+
+    public int count_data(DocResult docs1) {
+        int recCnt = 0;
+        while (true) {
+            try {
+                docs1.next();
+                recCnt++;
+            } catch (java.util.NoSuchElementException sqlEx) {
+                break;
+            }
+        }
+        return recCnt;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -27,7 +27,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package testsuite.simple;
+package com.mysql.cj.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -44,8 +44,6 @@ import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
-import com.mysql.cj.util.LazyString;
-import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.StringUtils.SearchMode;
 
 import testsuite.BaseTestCase;
@@ -1357,5 +1355,63 @@ public class StringUtilsTest extends BaseTestCase {
         for (int i = 0; i < unquotedBytes.length; i++) {
             assertEquals(origBytes[i], unquotedBytes[i]);
         }
+    }
+
+    @Test
+    public void testStringUtils001() throws Exception {
+        char[] cdata = new char[26];
+        byte[] bdata = new byte[26];
+        String s1 = "String Consist of some small Sample Data";
+        for (int i = 0; i < 26; i++) {
+            cdata[i] = (char) ('A' + i);
+        }
+
+        byte[] bdata3 = new byte[26];
+        for (int i = 0; i < 26; i++) {
+            bdata3[i] = (byte) ('a' + i % 6);
+        }
+
+        System.out.print("\n StringUtils.escapeQuote(XabXcX) :" + StringUtils.escapeQuote("XXabcX", "X"));
+        System.out.print("\n StringUtils.escapeQuote('ab'c') :" + StringUtils.escapeQuote("'ab'c'", "'"));
+        System.out.print("\n StringUtils.escapeQuote('select \\1\\, \\6\\') :" + StringUtils.escapeQuote("select \\1\\, \\6\\", "\\"));
+
+        assertEquals("''abc", StringUtils.escapeQuote("''abc'", "'"), "escapeQuote() returns Wrong result");
+        assertEquals('R', StringUtils.firstNonWsCharUc("  \t  Raj"), "firstNonWsCharUc() returns Wrong result");
+        assertEquals("select \\\\1\\\\, \\\\6\\\\", StringUtils.escapeQuote("select \\1\\, \\6\\", "\\"), "escapeQuote() returns Wrong result");
+        String s2 = null;
+        assertEquals(null, StringUtils.escapeQuote(s2, "'"), "escapeQuote() returns Wrong result");
+        bdata = StringUtils.getBytes(cdata, 5, 5);
+
+        System.out.print("\n indexOf(bdata2,'F') (0):" + StringUtils.indexOf(bdata, 'F'));
+        System.out.print("\n indexOf(bdata2,'I') (3):" + StringUtils.indexOf(bdata, 'I'));
+        System.out.print("\n isValidIdChar('+') (false) : " + StringUtils.isValidIdChar('+'));
+        System.out.print("\n isValidIdChar('X')(true) : " + StringUtils.isValidIdChar('X'));
+        System.out.print("\n lastIndexOf(bdata3,'d')(21) :" + StringUtils.lastIndexOf(bdata3, 'd'));
+        System.out.print("\n indexOf(bdata3,'d') (3):" + StringUtils.indexOf(bdata3, 'd'));
+        System.out.print("\n wildCompareIgnoreCase(s1,'some%mal') (false):" + StringUtils.wildCompareIgnoreCase(s1, "some%mal"));
+        System.out.print("\n wildCompareIgnoreCase(s1,'some_s_al_') (false):" + StringUtils.wildCompareIgnoreCase(s1, "some_s_al_"));
+        System.out.print("\n wildCompareIgnoreCase(s1,'some') (false):" + StringUtils.wildCompareIgnoreCase(s1, "some"));
+        System.out.print("\n wildCompareIgnoreCase(s1,'S_%s_%S_%Da%'):" + StringUtils.wildCompareIgnoreCase(s1, "S_%s_%S_%Da%"));
+        System.out.print("\n wildCompareIgnoreCase(s1,'S_r_n_ C_n_i_t%'):" + StringUtils.wildCompareIgnoreCase(s1, "S_r_n_ C_n_i_t%"));
+        assertEquals(0, StringUtils.indexOf(bdata, 'F'), "indexOf() returns Wrong result");
+        assertEquals(false, StringUtils.isValidIdChar('+'), "isValidIdChar() returns Wrong result");
+        assertEquals(true, StringUtils.isValidIdChar('X'), "isValidIdChar() returns Wrong result");
+        assertEquals(21, StringUtils.lastIndexOf(bdata3, 'd'), "lastIndexOf() returns Wrong result");
+        assertEquals(3, StringUtils.indexOf(bdata3, 'd'), "indexOf() returns Wrong result");
+
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "some"), "wildCompareIgnoreCase() returns Wrong result");
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "small"), "wildCompareIgnoreCase() returns Wrong result");
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "Data"), "wildCompareIgnoreCase() returns Wrong result");
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "amp"), "wildCompareIgnoreCase() returns Wrong result");
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, " "), "wildCompareIgnoreCase() returns Wrong result");
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "some_s_al_"), "wildCompareIgnoreCase() returns Wrong result");
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "some%mal"), "wildCompareIgnoreCase() returns Wrong result");
+
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "some_s_al_"), "wildCompareIgnoreCase() returns Wrong result");
+        assertTrue(StringUtils.wildCompareIgnoreCase(s1, "S_r_n_ C_n_i_t%"), "wildCompareIgnoreCase() returns Wrong result");
+
+        System.out.print("\n firstNonWsCharUc('  \t  Raj') : " + StringUtils.firstNonWsCharUc("  \t  Raj"));
+        System.out.print("\n escapeQuote('select '1', '6'') : " + StringUtils.escapeQuote("select '1', '6'", "'"));
+
     }
 }

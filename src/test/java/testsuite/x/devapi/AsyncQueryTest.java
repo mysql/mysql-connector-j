@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,9 +63,8 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
 
     @Test
     public void basicAsyncQuery() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             json = json.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
@@ -85,9 +85,8 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
 
     @Test
     public void overlappedAsyncQueries() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         final int NUMBER_OF_QUERIES = 1000;
         Session sess = new SessionFactory().getSession(this.baseUrl);
         Collection coll = sess.getSchema(this.schema.getName()).getCollection(this.collection.getName());
@@ -134,9 +133,8 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
 
     @Test
     public void syntaxErrorEntireResult() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         CompletableFuture<DocResult> res = this.collection.find("NON_EXISTING_FUNCTION()").executeAsync();
         try {
             res.get();
@@ -150,9 +148,8 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
 
     @Test
     public void insertDocs() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             json = json.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
@@ -174,9 +171,8 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
 
     @Test
     public void manyModifications() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         // we guarantee serial execution
         String json = "{'n':1}".replaceAll("'", "\"");
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
@@ -200,9 +196,8 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
 
     @Test
     public void sqlUpdate() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         CompletableFuture<SqlResult> resF = this.session.sql("set @cjTestVar = 1").executeAsync();
         resF.thenAccept(res -> {
             assertFalse(res.hasData());
@@ -215,9 +210,8 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
 
     @Test
     public void sqlQuery() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         CompletableFuture<SqlResult> resF = this.session.sql("select 1,2,3 from dual").executeAsync();
         resF.thenAccept(res -> {
             assertTrue(res.hasData());
@@ -234,9 +228,8 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
 
     @Test
     public void sqlError() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             CompletableFuture<SqlResult> resF = this.session.sql("select x from dont_create_this_table").executeAsync();
             resF.get();
@@ -253,9 +246,8 @@ public class AsyncQueryTest extends BaseCollectionTestCase {
      */
     @Test
     public void manyFutures() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         int MANY = 10;//100000;
         Collection coll = this.collection;
         List<CompletableFuture<DocResult>> futures = new ArrayList<>();

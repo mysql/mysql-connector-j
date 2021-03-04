@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -201,9 +202,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testNonSecureSession() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             Session testSession = this.fact.getSession(this.baseUrl);
             testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuth'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd'").execute();
@@ -242,9 +242,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testSecureSessionDefaultAndRequired() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         Session testSession = this.fact.getSession(this.sslFreeBaseUrl);
         assertSecureSession(testSession);
@@ -270,9 +268,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testSecureSessionDefaultAndRequiredWithSystemPropsPresent() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         System.setProperty("javax.net.ssl.trustStore", this.trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword", this.trustStorePassword);
@@ -301,9 +297,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testSecureSessionVerifyServerCertificate() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         Session testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.VERIFY_CA)
                 + makeParam(PropertyKey.xdevapiSslTrustStoreUrl, this.trustStoreUrl)
@@ -325,9 +319,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testSecureSessionVerifyServerCertificateUsingSystemProps() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         System.setProperty("javax.net.ssl.trustStore", this.trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword", this.trustStorePassword);
@@ -350,9 +342,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
     @Test
     @Disabled("requires a certificate with CN=<host_name> equals to the host name in the test URL")
     public void testSecureSessionVerifyServerCertificateIdentity() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         Session testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.VERIFY_IDENTITY)
                 + makeParam(PropertyKey.xdevapiSslTrustStoreUrl, this.trustStoreUrl)
@@ -374,9 +364,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testSecureSessionMissingTrustStore() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         assertThrows(CJCommunicationsException.class, "No truststore provided to verify the Server certificate\\.",
                 () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiFallbackToSystemTrustStore, "false")
@@ -401,9 +389,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testSecureSessionVerifyServerCertificateIdentityFailure() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         // Meaningful error message is deep inside the stack trace.
         assertThrows(CJCommunicationsException.class,
@@ -424,9 +410,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testSecureSessionIncompatibleSettings() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         String expectedError = "Incompatible security settings\\. "
                 + "The property 'xdevapi.ssl-truststore' requires 'xdevapi.ssl-mode' as 'VERIFY_CA' or 'VERIFY_IDENTITY'\\.";
@@ -459,9 +443,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testAuthMechanisms() throws Throwable {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         try {
             this.session.sql("CREATE USER IF NOT EXISTS 'testAuthMechNative'@'%' IDENTIFIED WITH mysql_native_password BY 'mysqlnative'").execute();
@@ -801,9 +783,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testTLSv1_2() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         // newer GPL servers, like 8.0.4+, are using OpenSSL and can use RSA encryption, while old ones compiled with yaSSL cannot
         boolean gplWithRSA = allowsRsa(this.fact.getSession(this.sslFreeBaseUrl));
@@ -925,9 +905,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug25494338() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         Session testSession = null;
 
@@ -980,9 +958,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug23597281() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         Properties props = new Properties(this.sslFreeTestProperties);
         props.setProperty(PropertyKey.xdevapiSslMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.VERIFY_CA.toString());
@@ -1004,9 +980,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug26227653() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         System.setProperty("javax.net.ssl.trustStore", "dummy_truststore");
         System.setProperty("javax.net.ssl.trustStorePassword", "some_password");
@@ -1036,9 +1010,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug27629553() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         Session testSession = this.fact.getSession(this.baseUrl);
         testSession.sql("CREATE USER IF NOT EXISTS 'testBug27629553'@'%' IDENTIFIED WITH mysql_native_password").execute();
@@ -1059,9 +1031,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testXdevapiTlsVersionsAndCiphersuites() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         // newer GPL servers, like 8.0.4+, are using OpenSSL and can use RSA encryption, while old ones compiled with yaSSL cannot
         boolean gplWithRSA = allowsRsa(this.fact.getSession(this.sslFreeBaseUrl));
@@ -1446,9 +1416,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testXdevapiSslConnectionOptions() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         Session testSess;
         PropertySet propSet;
@@ -1630,9 +1598,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testFallbackToSystemTrustStore() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         Session testSess;
 
@@ -1726,9 +1692,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testFallbackToSystemKeyStore() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         final String user = "testFbToSysKS";
         try {

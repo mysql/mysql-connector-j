@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,6 +32,7 @@ package testsuite.x.internal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -103,9 +104,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
      */
     @Test
     public void testCreateAndDropCollection() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             this.protocol.send(this.messageBuilder.buildCreateCollection(getTestDatabase(), "testCreateAndDropCollection"), 0);
             this.protocol.readQueryResult(new StatementExecuteOkBuilder());
@@ -128,9 +128,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
 
     @Test
     public void testTrivialSqlQuery() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         this.protocol.send(this.messageBuilder.buildSqlStatement("select 'x' as y"), 0);
         assertTrue(this.protocol.hasResults());
         ColumnDefinition metadata = this.protocol.readMetadata();
@@ -148,9 +147,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
 
     @Test
     public void testAnotherBasicSqlQuery() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         this.protocol.send(this.messageBuilder
                 .buildSqlStatement("select 'x' as a_string, 42 as a_long, 7.6 as a_decimal union select 'y' as a_string, 11 as a_long, .1111 as a_decimal"), 0);
         assertTrue(this.protocol.hasResults());
@@ -193,9 +191,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
      */
     @Test
     public void testDecodingAllTypes() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         // some types depend on this table
         this.protocol.send(this.messageBuilder.buildSqlStatement("drop table if exists xprotocol_types_test"), 0);
         this.protocol.readQueryResult(new StatementExecuteOkBuilder());
@@ -301,9 +298,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
      */
     @Test
     public void testSqlDml() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         this.protocol.send(this.messageBuilder.buildSqlStatement("drop table if exists mysqlx_sqlDmlTest"), 0);
         assertFalse(this.protocol.hasResults());
         SqlResult res = this.protocol
@@ -329,9 +325,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
 
     @Test
     public void testBasicCrudInsertFind() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': 1, 'insertedBy': 'Jess'}".replaceAll("'", "\"");
@@ -351,9 +346,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
 
     @Test
     public void testMultiInsert() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = createTempTestCollection(this.protocol);
 
         List<String> stringDocs = new ArrayList<>();
@@ -381,9 +375,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
 
     @Test
     public void testDocUpdate() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = createTempTestCollection(this.protocol);
 
         String json = "{'_id': '85983efc2a9a11e5b345feff819cdc9f', 'testVal': '1', 'insertedBy': 'Jess'}".replaceAll("'", "\"");
@@ -408,9 +401,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
 
     @Test
     public void tableInsert() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         this.protocol.send(this.messageBuilder.buildSqlStatement("drop table if exists tableInsert"), 0);
         this.protocol.readQueryResult(new StatementExecuteOkBuilder());
         this.protocol.send(this.messageBuilder.buildSqlStatement("create table tableInsert (x int, y varchar(20), z decimal(10, 2))"), 0);
@@ -447,9 +439,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
 
     @Test
     public void testWarnings() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         this.protocol.send(this.messageBuilder.buildSqlStatement("explain select 1"), 0);
         this.protocol.readMetadata();
         this.protocol.drainRows();
@@ -468,9 +459,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
 
     @Test
     public void testEnableDisableNotices() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         this.protocol.send(this.messageBuilder.buildDisableNotices("warnings"), 0); // TODO currently only "warnings" are allowed to be disabled
         this.protocol.readQueryResult(new StatementExecuteOkBuilder());
 
@@ -496,9 +486,8 @@ public class XProtocolTest extends InternalXBaseTestCase {
      */
     @Test
     public void testResultSet() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         // begin "send" stage, change this as necessary
         this.protocol.send(this.messageBuilder.buildListNotices(), 0);
 
@@ -524,9 +513,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
 
     @Test
     public void testCapabilities() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         XServerCapabilities capabilities = (XServerCapabilities) this.protocol.getServerSession().getCapabilities();
 

@@ -118,6 +118,7 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.CharsetMapping;
@@ -1448,14 +1449,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     @Test
+    @Disabled("'elideSetAutoCommits' feature was turned off due to Server Bug#66884. Turn this test back on as soon as the server bug is fixed. Consider making it version specific.")
     public void testBug24706() throws Exception {
-        // 'elideSetAutoCommits' feature was turned off due to Server Bug#66884. See also ConnectionPropertiesImpl#getElideSetAutoCommits().
-        // TODO Turn this test back on as soon as the server bug is fixed. Consider making it version specific.
-        boolean ignoreTest = true;
-        if (ignoreTest) {
-            return;
-        }
-
         Properties props = new Properties();
         props.setProperty(PropertyKey.elideSetAutoCommits.getKeyName(), "true");
         props.setProperty(PropertyKey.logger.getKeyName(), BufferingLogger.class.getName());
@@ -3292,9 +3287,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testDefaultPlugin() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5, 7));
+
         Properties props = new Properties();
 
         props.setProperty(PropertyKey.defaultAuthenticationPlugin.getKeyName(), "");
@@ -3319,9 +3313,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testDisabledPlugins() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5, 7));
+
         Properties props = new Properties();
 
         // Disable the built-in default authentication plugin, by name.
@@ -3369,9 +3362,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testAuthTestPlugin() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7) || isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5, 7) && !isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite));
+
         boolean installPluginInRuntime = false;
         try {
             // Install plugin if required.
@@ -3423,9 +3415,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testTwoQuestionsPlugin() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7) || isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5, 7) && !isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite));
+
         boolean installPluginInRuntime = false;
         try {
             // Install plugin if required.
@@ -3474,9 +3465,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testThreeAttemptsPlugin() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7) || isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5, 7) && !isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite));
+
         boolean installPluginInRuntime = false;
         try {
             // Install plugin if required.
@@ -3640,11 +3630,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testOldPasswordPlugin() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7) || versionMeetsMinimum(5, 7, 5)) {
-            // As of 5.7.5, support for mysql_old_password is removed.
-            System.out.println("testOldPasswordPlugin was skipped: This test is only run for 5.5.7 - 5.7.4 server versions.");
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5, 7) && !versionMeetsMinimum(5, 7, 5),
+                "testOldPasswordPlugin was skipped: This test only run for 5.5.7 - 5.7.4 server versions.");
 
         Connection testConn = null;
         try {
@@ -3749,9 +3736,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testAuthCleartextPlugin() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7) || isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5, 7) && !isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite));
+
         boolean installPluginInRuntime = false;
         try {
             // Install plugin if required.
@@ -4583,9 +4569,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     public void testExpiredPassword() throws Exception {
-        if (!versionMeetsMinimum(5, 6, 10)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6, 10));
+
         Connection testConn = null;
         Statement testSt = null;
         ResultSet testRs = null;
@@ -4600,7 +4585,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             createUser("'must_change2'@'%'", "IDENTIFIED BY 'aha'");
             this.stmt.executeUpdate("grant all on `" + dbname + "`.* to 'must_change2'@'%'");
 
-            // TODO workaround for Bug#77732, should be fixed in 5.7.9
+            // workaround for Bug#77732
             if (versionMeetsMinimum(5, 7, 6) && !versionMeetsMinimum(8, 0, 5)) {
                 this.stmt.executeUpdate("GRANT SELECT ON `performance_schema`.`session_variables` TO 'must_change1'@'%'");
                 this.stmt.executeUpdate("GRANT SELECT ON `performance_schema`.`session_variables` TO 'must_change2'@'%'");
@@ -4753,9 +4738,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     @Test
     private void testConnectionAttributes(String url) throws Exception {
-        if (!versionMeetsMinimum(5, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 6));
+
         Properties props = new Properties();
         props.setProperty(PropertyKey.connectionAttributes.getKeyName(), "first:one,again:two");
         props.setProperty(PropertyKey.USER.getKeyName(), getPropertiesFromTestsuiteUrl().getProperty(PropertyKey.USER.getKeyName()));
@@ -6069,10 +6053,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug72712() throws Exception {
-        // this test is only run when character_set_server=latin1
-        if (!((MysqlConnection) this.conn).getSession().getServerSession().getServerVariable("character_set_server").equals("latin1")) {
-            return;
-        }
+        assumeTrue(((MysqlConnection) this.conn).getSession().getServerSession().getServerVariable("character_set_server").equals("latin1"),
+                "This test only run when character_set_server=latin1");
 
         Properties p = new Properties();
         p.setProperty(PropertyKey.characterEncoding.getKeyName(), "cp1252");
@@ -6694,9 +6676,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug19354014() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5, 7));
+
         Connection con = null;
         createUser("'bug19354014user'@'%'", "identified WITH mysql_native_password");
         this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%'");
@@ -6924,9 +6905,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug20685022() throws Exception {
-        if (!isCommunityEdition()) {
-            return;
-        }
+        assumeTrue(isCommunityEdition());
 
         final Properties props = new Properties();
 
@@ -7105,9 +7084,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug20825727() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7) || isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5, 7) && !isSysPropDefined(PropertyDefinitions.SYSP_testsuite_no_server_testsuite));
 
         final String[] testDbUrls;
         Properties props = new Properties();
@@ -9612,17 +9589,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug74711() throws Exception {
-        if (!((MysqlConnection) this.conn).getSession().getServerSession().isQueryCacheEnabled()) {
-            System.err.println("Warning! testBug77411() requires a server supporting a query cache.");
-            return;
-        }
+        assumeTrue(((MysqlConnection) this.conn).getSession().getServerSession().isQueryCacheEnabled(),
+                "testBug77411() requires a server supporting a query cache.");
+
         this.rs = this.stmt.executeQuery("SELECT @@global.query_cache_type, @@global.query_cache_size");
         this.rs.next();
-        if (!"ON".equalsIgnoreCase(this.rs.getString(1)) || "0".equals(this.rs.getString(2))) {
-            System.err
-                    .println("Warning! testBug77411() requires a server started with the options '--query_cache_type=1' and '--query_cache_size=N', (N > 0).");
-            return;
-        }
+        assumeTrue("ON".equalsIgnoreCase(this.rs.getString(1)) && !"0".equals(this.rs.getString(2)),
+                "testBug77411() requires a server started with the options '--query_cache_type=1' and '--query_cache_size=N', (N > 0).");
 
         boolean useLocTransSt = false;
         boolean useElideSetAC = false;
@@ -9747,9 +9720,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         this.rs.next();
         assertTrue(this.rs.getBoolean(1));
 
-        if (!versionMeetsMinimum(5, 5)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5));
+
         this.rs = this.stmt.executeQuery("SELECT @@global.init_connect");
         this.rs.next();
         String originalInitConnect = this.rs.getString(1);
@@ -11580,14 +11552,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug99076() throws Exception {
-        if (!versionMeetsMinimum(8, 0, 16)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(8, 0, 16));
 
         String xUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
-        if (xUrl == null || xUrl.length() == 0) {
-            return;
-        }
+        assumeTrue(xUrl != null && xUrl.length() != 0);
 
         final ConnectionUrl conUrl = ConnectionUrl.getConnectionUrlInstance(xUrl, null);
         final HostInfo hostInfo = conUrl.getMainHost();
@@ -11608,9 +11576,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     @Test
     public void testBug98667() throws Exception {
         this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'named_pipe'");
-        if (!this.rs.next() || !this.rs.getString(2).equalsIgnoreCase("on")) {
-            return; // Only runs on Windows with named pipes enabled.
-        }
+        assumeTrue(this.rs.next() && this.rs.getString(2).equalsIgnoreCase("on"), "Only runs on Windows with named pipes enabled.");
 
         this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'socket'");
         assumeTrue(this.rs.next());
@@ -11689,14 +11655,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     @Test
     public void testDefaultUserWithoutPasswordAuthentication() throws Exception {
-        if (!versionMeetsMinimum(5, 5, 7)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 5, 7));
 
         String systemUsername = System.getProperty("user.name");
-        if (StringUtils.isNullOrEmpty(systemUsername)) {
-            return;
-        }
+        assumeTrue(!StringUtils.isNullOrEmpty(systemUsername));
 
         this.rs = this.stmt.executeQuery("SELECT user FROM mysql.user WHERE user = '" + systemUsername + "'");
         assumeFalse(this.rs.next()); // Probably user 'root' and there is one already. This test can't mess with it.
@@ -11734,14 +11696,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     @Test
     public void testDefaultUserWithPasswordAuthentication() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 6)) { // New CREATE USER options.
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 6));
 
         String systemUsername = System.getProperty("user.name");
-        if (StringUtils.isNullOrEmpty(systemUsername)) {
-            return;
-        }
+        assumeTrue(!StringUtils.isNullOrEmpty(systemUsername));
 
         this.rs = this.stmt.executeQuery("SELECT user FROM mysql.user WHERE user = '" + systemUsername + "'");
         assumeFalse(this.rs.next()); // Probably user 'root' and there is one already. This test can't mess with it.

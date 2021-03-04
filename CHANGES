@@ -3,6 +3,8 @@
 
 Version 8.0.26
 
+  - WL#14391, Migrate QA tests to main repo.
+
 Version 8.0.25
 
   - This release contains no functional changes and is published to align the version number with the MySQL Server 8.0.25 release.

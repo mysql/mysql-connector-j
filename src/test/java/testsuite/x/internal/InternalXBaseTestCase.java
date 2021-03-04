@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -69,7 +69,7 @@ public class InternalXBaseTestCase {
      */
     protected static final String DEFAULT_METADATA_CHARSET = "latin1";
 
-    protected String baseUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
+    public String baseUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx);
     protected String baseOpensslUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url_mysqlx_openssl);
     protected boolean isSetForXTests = this.baseUrl != null && this.baseUrl.length() > 0;
     protected boolean isSetForOpensslXTests = this.baseOpensslUrl != null && this.baseOpensslUrl.length() > 0;
@@ -273,6 +273,27 @@ public class InternalXBaseTestCase {
         if (this.isSetForXTests) {
             if (this.mysqlVersion == null) {
                 Session session = new SessionImpl(this.testHostInfo);
+                this.mysqlVersion = ServerVersion.parseVersion(session.sql("SELECT version()").execute().fetchOne().getString(0));
+                session.close();
+            }
+            return this.mysqlVersion.meetsMinimum(version);
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the MySQL version we are connected to meets the minimum {@link ServerVersion} provided.
+     * 
+     * @param url
+     *            server URL
+     * @param version
+     *            the minimum {@link ServerVersion} accepted
+     * @return true or false according to versions comparison
+     */
+    protected boolean mysqlVersionMeetsMinimum(String url, ServerVersion version) {
+        if (this.isSetForXTests) {
+            if (this.mysqlVersion == null) {
+                Session session = new SessionFactory().getSession(url);
                 this.mysqlVersion = ServerVersion.parseVersion(session.sql("SELECT version()").execute().fetchOne().getString(0));
                 session.close();
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,6 +30,7 @@
 package testsuite.perf;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,9 +67,8 @@ public class RetrievalPerfTest extends BaseTestCase {
      */
     @Test
     public void testRetrievalCached() throws Exception {
-        if (!((MysqlConnection) this.conn).getSession().getServerSession().isQueryCacheEnabled()) {
-            return;
-        }
+        assumeTrue(((MysqlConnection) this.conn).getSession().getServerSession().isQueryCacheEnabled());
+
         this.stmt.executeUpdate("SET QUERY_CACHE_TYPE = DEMAND");
 
         double fullBegin = System.currentTimeMillis();

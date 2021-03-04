@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,10 +73,17 @@ public class SchemaTest extends DevApiBaseTestCase {
     }
 
     @Test
+    public void testBasics() {
+        assumeTrue(this.isSetForXTests);
+
+        assertEquals(this.schema, this.schema.getSchema());
+        assertEquals(this.session, this.schema.getSession());
+    }
+
+    @Test
     public void testEquals() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         Schema otherDefaultSchema = this.session.getDefaultSchema();
         assertFalse(otherDefaultSchema == this.schema);
         assertTrue(otherDefaultSchema.equals(this.schema));
@@ -91,9 +99,8 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testToString() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         // this will pass as long as the test database doesn't require identifier quoting
         assertEquals("Schema(" + getTestDatabase() + ")", this.schema.toString());
         Schema needsQuoted = this.session.getSchema("terrible'schema`name");
@@ -102,30 +109,33 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testListCollections() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName1 = "test_list_collections1";
         String collName2 = "test_list_collections2";
-        dropCollection(collName1);
-        dropCollection(collName2);
-        Collection coll1 = this.schema.createCollection(collName1);
-        Collection coll2 = this.schema.createCollection(collName2);
+        try {
+            dropCollection(collName1);
+            dropCollection(collName2);
+            Collection coll1 = this.schema.createCollection(collName1);
+            Collection coll2 = this.schema.createCollection(collName2);
 
-        List<Collection> colls = this.schema.getCollections();
-        assertTrue(colls.contains(coll1));
-        assertTrue(colls.contains(coll2));
+            List<Collection> colls = this.schema.getCollections();
+            assertTrue(colls.contains(coll1));
+            assertTrue(colls.contains(coll2));
 
-        colls = this.schema.getCollections("%ions2");
-        assertFalse(colls.contains(coll1));
-        assertTrue(colls.contains(coll2));
+            colls = this.schema.getCollections("%ions2");
+            assertFalse(colls.contains(coll1));
+            assertTrue(colls.contains(coll2));
+        } finally {
+            dropCollection(collName1);
+            dropCollection(collName2);
+        }
     }
 
     @Test
     public void testExists() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         assertEquals(DbObjectStatus.EXISTS, this.schema.existsInDatabase());
         Schema nonExistingSchema = this.session.getSchema(getTestDatabase() + "_SHOULD_NOT_EXIST_0xCAFEBABE");
         assertEquals(DbObjectStatus.NOT_EXISTS, nonExistingSchema.existsInDatabase());
@@ -133,35 +143,37 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testCreateCollection() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = "testCreateCollection";
-        dropCollection(collName);
-        Collection coll = this.schema.createCollection(collName);
         try {
-            this.schema.createCollection(collName);
-            fail("Exception should be thrown trying to create a collection that already exists");
-        } catch (XProtocolError ex) {
-            // expected
-            assertEquals(MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR, ex.getErrorCode());
+            dropCollection(collName);
+            Collection coll = this.schema.createCollection(collName);
+            try {
+                this.schema.createCollection(collName);
+                fail("Exception should be thrown trying to create a collection that already exists");
+            } catch (XProtocolError ex) {
+                // expected
+                assertEquals(MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR, ex.getErrorCode());
+            }
+            try {
+                this.schema.createCollection(collName, false);
+                fail("Exception should be thrown trying to create a collection that already exists");
+            } catch (XProtocolError ex) {
+                // expected
+                assertEquals(MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR, ex.getErrorCode());
+            }
+            Collection coll2 = this.schema.createCollection(collName, true);
+            assertEquals(coll, coll2);
+        } finally {
+            dropCollection(collName);
         }
-        try {
-            this.schema.createCollection(collName, false);
-            fail("Exception should be thrown trying to create a collection that already exists");
-        } catch (XProtocolError ex) {
-            // expected
-            assertEquals(MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR, ex.getErrorCode());
-        }
-        Collection coll2 = this.schema.createCollection(collName, true);
-        assertEquals(coll, coll2);
     }
 
     @Test
     public void testDropCollection() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = "testDropCollection";
         dropCollection(collName);
         Collection coll = this.schema.getCollection(collName);
@@ -188,9 +200,8 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testListTables() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName = "test_list_tables_collection";
         String tableName = "test_list_tables_table";
         String viewName = "test_list_tables_view";
@@ -228,9 +239,8 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testCreateCollectionWithOptions() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String collName1 = "testCreateCollection1";
         String collName2 = "testCreateCollection2";
         dropCollection(collName1);

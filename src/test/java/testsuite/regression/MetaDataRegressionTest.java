@@ -725,49 +725,47 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug7033() throws Exception {
-        if (!this.DISABLED_testBug7033) { // disabled for now
-            Connection big5Conn = null;
-            Statement big5Stmt = null;
-            PreparedStatement big5PrepStmt = null;
+        Connection big5Conn = null;
+        Statement big5Stmt = null;
+        PreparedStatement big5PrepStmt = null;
 
-            String testString = "\u5957 \u9910";
+        String testString = "\u5957 \u9910";
 
-            try {
-                Properties props = new Properties();
-                props.setProperty(PropertyKey.characterEncoding.getKeyName(), "Big5");
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.characterEncoding.getKeyName(), "Big5");
 
-                big5Conn = getConnectionWithProps(props);
-                big5Stmt = big5Conn.createStatement();
+            big5Conn = getConnectionWithProps(props);
+            big5Stmt = big5Conn.createStatement();
 
-                byte[] foobar = testString.getBytes("Big5");
-                System.out.println(Arrays.toString(foobar));
+            byte[] foobar = testString.getBytes("Big5");
+            System.out.println(Arrays.toString(foobar));
 
-                this.rs = big5Stmt.executeQuery("select 1 as '\u5957 \u9910'");
-                String retrString = this.rs.getMetaData().getColumnName(1);
-                assertTrue(testString.equals(retrString));
+            this.rs = big5Stmt.executeQuery("select 1 as '\u5957 \u9910'");
+            String retrString = this.rs.getMetaData().getColumnName(1);
+            assertTrue(testString.equals(retrString));
 
-                big5PrepStmt = big5Conn.prepareStatement("select 1 as '\u5957 \u9910'");
-                this.rs = big5PrepStmt.executeQuery();
-                retrString = this.rs.getMetaData().getColumnName(1);
-                assertTrue(testString.equals(retrString));
-            } finally {
-                if (this.rs != null) {
-                    this.rs.close();
-                    this.rs = null;
-                }
+            big5PrepStmt = big5Conn.prepareStatement("select 1 as '\u5957 \u9910'");
+            this.rs = big5PrepStmt.executeQuery();
+            retrString = this.rs.getMetaData().getColumnName(1);
+            assertTrue(testString.equals(retrString));
+        } finally {
+            if (this.rs != null) {
+                this.rs.close();
+                this.rs = null;
+            }
 
-                if (big5Stmt != null) {
-                    big5Stmt.close();
+            if (big5Stmt != null) {
+                big5Stmt.close();
 
-                }
+            }
 
-                if (big5PrepStmt != null) {
-                    big5PrepStmt.close();
-                }
+            if (big5PrepStmt != null) {
+                big5PrepStmt.close();
+            }
 
-                if (big5Conn != null) {
-                    big5Conn.close();
-                }
+            if (big5Conn != null) {
+                big5Conn.close();
             }
         }
     }

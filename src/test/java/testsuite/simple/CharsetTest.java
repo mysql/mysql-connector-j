@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
@@ -318,9 +319,7 @@ public class CharsetTest extends BaseTestCase {
     public void testGB18030() throws Exception {
         // check that server supports this character set
         this.rs = this.stmt.executeQuery("show collation like 'gb18030_chinese_ci'");
-        if (!this.rs.next()) {
-            return;
-        }
+        assumeTrue(this.rs.next());
 
         // phrases to check
         String[][] str = new String[][] {

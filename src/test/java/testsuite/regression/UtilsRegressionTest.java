@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -46,6 +47,7 @@ import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.log.Log;
+import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TimeUtil;
 
 import testsuite.BaseTestCase;
@@ -641,5 +643,29 @@ public class UtilsRegressionTest extends BaseTestCase {
         });
         assertEquals("INTERCEPT_EXCEPTION", ex.getMessage());
         assertEquals("INTERCEPT_CAUSE", ex.getCause().getMessage());
+    }
+
+    /**
+     * Test fix for Bug#20913114, STRINGUTILS.WILDCOMPARE() FAILS WITH STACKOVERFLOWERROR ERROR.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug20913114() throws Exception {
+        String s1 = "String Consist of some small Sample Data";
+
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "St%no"));
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "Srin"));
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "Dae"));
+
+        assertTrue(StringUtils.wildCompareIgnoreCase(s1, "St%so%Sa%Da%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "St%so%Sp%Da%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase(s1, "S_%s_%S_%Da%"));
+        assertTrue(StringUtils.wildCompareIgnoreCase(s1, "S_r_n_ C_n_i_t%"));
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "St%so%Sp%Da%"));
+
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "Dae"));
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "Srin"));
+        assertFalse(StringUtils.wildCompareIgnoreCase(s1, "St%no"));
     }
 }

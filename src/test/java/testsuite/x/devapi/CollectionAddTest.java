@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,6 +32,7 @@ package testsuite.x.devapi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -48,7 +49,10 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.xdevapi.AddResult;
 import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.DbDocImpl;
 import com.mysql.cj.xdevapi.DocResult;
+import com.mysql.cj.xdevapi.JsonArray;
+import com.mysql.cj.xdevapi.JsonLiteral;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.Result;
@@ -57,9 +61,8 @@ import com.mysql.cj.xdevapi.XDevAPIError;
 public class CollectionAddTest extends BaseCollectionTestCase {
     @Test
     public void testBasicAddString() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             json = json.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
@@ -79,9 +82,8 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testBasicAddStringArray() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         this.collection.add("{\"_id\": 1}", "{\"_id\": 2}").execute();
         assertEquals(true, this.collection.find("_id = 1").execute().hasNext());
         assertEquals(true, this.collection.find("_id = 2").execute().hasNext());
@@ -97,9 +99,8 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testBasicAddDoc() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         DbDoc doc = this.collection.newDoc().add("firstName", new JsonString().setValue("Georgia"));
         doc.add("middleName", new JsonString().setValue("Totto"));
         doc.add("lastName", new JsonString().setValue("O'Keeffe"));
@@ -121,9 +122,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testBasicAddDocArray() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion(("8.0.5")))) {
             AddResult res1 = this.collection.add(this.collection.newDoc().add("f1", new JsonString().setValue("doc1")),
@@ -157,11 +156,10 @@ public class CollectionAddTest extends BaseCollectionTestCase {
     }
 
     @Test
-    @Disabled("needs implemented")
+    @Disabled("Collection.add(Map<String, ?> doc) is not implemented yet.")
     public void testBasicAddMap() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         Map<String, Object> doc = new HashMap<>();
         doc.put("x", 1);
         doc.put("y", "this is y");
@@ -177,9 +175,8 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testAddWithAssignedId() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String json1 = "{'_id': 'Id#1', 'name': 'assignedId'}".replaceAll("'", "\"");
         String json2 = "{'name': 'autoId'}".replaceAll("'", "\"");
         AddResult res;
@@ -210,9 +207,8 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testChainedAdd() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         String json = "{'_id': 1}".replaceAll("'", "\"");
         this.collection.add(json).add(json.replaceAll("1", "2")).execute();
 
@@ -223,9 +219,8 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testAddLargeDocument() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         int docSize = 255 * 1024;
         StringBuilder b = new StringBuilder("{\"_id\": \"large_doc\", \"large_field\":\"");
         for (int i = 0; i < docSize; ++i) {
@@ -241,9 +236,8 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testAddNoDocs() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         Result res = this.collection.add(new DbDoc[] {}).execute();
         assertEquals(0, res.getAffectedItemsCount());
         assertEquals(0, res.getWarningsCount());
@@ -256,9 +250,8 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testAddOrReplaceOne() {
-        if (!this.isSetForXTests || !mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")));
+
         this.collection.add("{\"_id\": \"id1\", \"a\": 1}").execute();
 
         // new _id
@@ -328,9 +321,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug21914769() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         assertThrows(WrongArgumentException.class, "Invalid whitespace character ']'.", new Callable<Void>() {
             public Void call() throws Exception {
@@ -347,9 +338,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug92264() throws Exception {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         this.collection.add("{\"_id\":\"1\",\"dataCreated\": 1546300800000}").execute();
 
@@ -365,14 +354,508 @@ public class CollectionAddTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug92819() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
 
         this.collection.add("{\"_id\":\"1\",\"emptyArray\": []}").execute();
         DocResult docs = this.collection.find("_id = '1'").execute();
         assertTrue(docs.hasNext());
         DbDoc doc = docs.next();
         assertEquals("[]", doc.get("emptyArray").toString());
+    }
+
+    @Test
+    public void testCollectionAddBasic() throws Exception {
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+
+        int i = 0, maxrec = 100;
+
+        /* add(DbDoc[] docs) */
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonString().setValue(String.valueOf(i + 1000)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonString().setValue("Field-2-Data-" + i));
+            newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(300 + i)));
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+        }
+        this.collection.add(jsonlist).execute();
+
+        /* add(DbDoc doc) */
+        DbDoc newDoc = new DbDocImpl();
+        newDoc.add("_id", new JsonString().setValue(String.valueOf(maxrec + 1000)));
+        newDoc.add("F1", new JsonString().setValue("Field-1-Data-" + maxrec));
+        newDoc.add("F2", new JsonString().setValue("Field-2-Data-" + maxrec));
+        newDoc.add("F3", new JsonNumber().setValue(String.valueOf(300 + maxrec)));
+        this.collection.add(newDoc).execute();
+
+        /* add(String jsonString) */
+        String json = "{'_id':'" + (maxrec + 1000 + 1) + "','F1':'Field-1-Data-" + (maxrec + 1) + "','F2':'Field-2-Data-" + (maxrec + 1) + "','F3':"
+                + (300 + maxrec + 1) + "}";
+        json = json.replaceAll("'", "\"");
+        this.collection.add(json).execute();
+
+        /* No _Id Field and chained add() */
+        json = "{'F1': 'Field-1-Data-9999','F2': 'Field-2-Data-9999','F3': 'Field-3-Data-9999'}".replaceAll("'", "\"");
+        this.collection.add(json).add(json.replaceAll("9", "8")).execute();
+
+        assertEquals((maxrec + 4), this.collection.count());
+        DocResult docs = this.collection.find("$._id = '1000'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
+        DbDoc doc = null;
+        doc = docs.next();
+        assertEquals("1000", ((JsonString) doc.get("_id")).getString());
+        System.out.println("ID :" + ((JsonString) doc.get("_id")).getString());
+        System.out.println("F1 :" + ((JsonString) doc.get("f1")).getString());
+        System.out.println("F2 :" + ((JsonString) doc.get("f2")).getString());
+        System.out.println("F3 :" + ((JsonNumber) doc.get("f3")).getInteger());
+    }
+
+    @Test
+    public void testCollectionAddStrings() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        DbDoc doc = null;
+        DocResult docs = null;
+        String json = "";
+
+        json = "{'_id':'1001','F1':'{Open Brace','F2':'}Close Brace','F3':'$Dollor Sign'}".replaceAll("'", "\"");
+        this.collection.add(json).execute();
+        json = "{'_id':'1002','F1':'{Open and }Close Brace','F2':'}Close and {Open Brace','F3':'$Dollor and << Shift Sign'}".replaceAll("'", "\"");
+        this.collection.add(json).execute();
+        json = "{'_id':'1003','F1':'{{2Open and }}2Close Brace','F2':'}}2Close and {{2Open Brace','F3':'$.Dollor dot and $$2Dollor'}".replaceAll("'", "\"");
+        this.collection.add(json).execute();
+        json = "{'_id':'1004','F1':'{{{3Open and }}}3Close Brace','F2':'}}}3Close and {{{3Open Brace','F3':'$.Dollor dot and ,Comma'}".replaceAll("'", "\"");
+        this.collection.add(json).execute();
+
+        json = "{'_id':'1005','F1':'[Square Open','F2':']Square Close','F3':'$.Dollor dot and :Colon'}".replaceAll("'", "\"");
+        this.collection.add(json).execute();
+
+        json = "{'_id':'1006','F1':'[Square Open ]Square Close','F2':']Square Close [Square Open','F3':'$.,:{[}] '}".replaceAll("'", "\"");
+        this.collection.add(json).execute();
+
+        /* find with Condition */
+        docs = this.collection.find("$.F1 Like '{{2%}%2%'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
+        doc = docs.next();
+        assertEquals("{{2Open and }}2Close Brace", (((JsonString) doc.get("f1")).getString()));
+        assertEquals("}}2Close and {{2Open Brace", (((JsonString) doc.get("f2")).getString()));
+        assertEquals("$.Dollor dot and $$2Dollor", (((JsonString) doc.get("f3")).getString()));
+        assertFalse(docs.hasNext());
+
+        docs = this.collection.find("$.F1 Like '[%]%'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
+        doc = docs.next();
+        assertEquals("[Square Open ]Square Close", (((JsonString) doc.get("f1")).getString()));
+        assertEquals("]Square Close [Square Open", (((JsonString) doc.get("f2")).getString()));
+        assertEquals("$.,:{[}] ", (((JsonString) doc.get("f3")).getString()));
+        assertFalse(docs.hasNext());
+
+        docs = this.collection.find("$.F3 Like '$%]%'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
+        doc = docs.next();
+        assertEquals("[Square Open ]Square Close", (((JsonString) doc.get("f1")).getString()));
+        assertEquals("]Square Close [Square Open", (((JsonString) doc.get("f2")).getString()));
+        assertEquals("$.,:{[}] ", (((JsonString) doc.get("f3")).getString()));
+        assertFalse(docs.hasNext());
+    }
+
+    @Test
+    public void testCollectionAddBigKeys() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, j = 0;
+        int maxkey = 10;
+        int maxrec = 5;
+        int keylen = (1024);
+        String key_sub = buildString(keylen, 'X');
+        String data_sub = "Data";
+
+        /* Insert maxrec records with maxkey (key,value) pairs with key length=keylen */
+        String key, data, query;
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc = new DbDocImpl();
+            newDoc.add("_id", new JsonNumber().setValue(String.valueOf(i)));
+            for (j = 0; j < maxkey; j++) {
+                key = key_sub + j;
+                data = data_sub + j;
+                newDoc.add(key, new JsonString().setValue(data));
+            }
+            this.collection.add(newDoc).execute();
+            newDoc = null;
+        }
+        assertEquals((maxrec), this.collection.count());
+
+        /* Fetch all keys */
+        query = "$._id as _id";
+        for (j = 0; j < maxkey; j++) {
+            key = key_sub + j;
+            query = query + ",$." + key + " as " + key;
+        }
+        DocResult docs = this.collection.find().orderBy("$._id").fields(query).execute();
+        DbDoc doc = null;
+        i = 0;
+        while (docs.hasNext()) {
+            doc = docs.next();
+            for (j = 0; j < maxkey; j++) {
+                key = key_sub + j;
+                data = data_sub + j;
+                assertEquals((data), ((JsonString) doc.get(key)).getString());
+            }
+            i++;
+        }
+        assertEquals((maxrec), i);
+    }
+
+    @Test
+    public void testCollectionAddBigKeyData() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, j = 0;
+        int maxkey = 10;
+        int maxrec = 5;
+        int keylen = (10);
+        int datalen = (1 * 5);
+        String key_sub = buildString(keylen, 'X');
+        String data_sub = buildString(datalen, 'X');
+
+        /* Insert maxrec records with maxkey (key,value) pairs with key length=keylen and datalength=datalen */
+        String key, data, query;
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc = new DbDocImpl();
+            newDoc.add("_id", new JsonNumber().setValue(String.valueOf(i)));
+            for (j = 0; j < maxkey; j++) {
+                key = key_sub + j;
+                data = data_sub + j;
+                newDoc.add(key, new JsonString().setValue(data));
+            }
+            this.collection.add(newDoc).execute();
+            newDoc = null;
+        }
+        assertEquals((maxrec), this.collection.count());
+
+        /* Fetch all keys */
+        query = "$._id as _id";
+        for (j = 0; j < maxkey; j++) {
+            key = key_sub + j;
+            query = query + ",$." + key + " as " + key;
+        }
+        DocResult docs = this.collection.find().orderBy("$._id").fields(query).execute();
+        DbDoc doc = null;
+        i = 0;
+        while (docs.hasNext()) {
+            doc = docs.next();
+            for (j = 0; j < maxkey; j++) {
+                key = key_sub + j;
+                data = data_sub + j;
+                assertEquals((data), ((JsonString) doc.get(key)).getString());
+            }
+            i++;
+        }
+        assertEquals((maxrec), i);
+    }
+
+    @Test
+    public void testCollectionAddBigKeyDataString() throws Exception {
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+
+        int i = 0;
+        int maxrec = 5;
+        int datalen = (1 * 5);
+        String longdata = "";
+        String json = "";
+
+        /* Insert maxrec (key,value) pairs with datalength=datalen */
+        AddResult res = null;
+        for (i = 0; i < maxrec; i++) {
+            json = "{\"F1\":\"Field-6-Data-" + (i) + "\",\"F2\":\"";
+            longdata = buildString(datalen + i, 'X');
+            json = json + longdata + "\"}";
+            res = this.collection.add(json).add(json.replaceAll("6", "7")).add(json.replaceAll("6", "8")).execute();
+            System.out.println("getGeneratedIds: " + res.getGeneratedIds());
+
+        }
+        assertEquals((maxrec * 3), this.collection.count());
+
+        /* Fetch all keys */
+        DocResult docs = this.collection.find("$.F1 like '%-6-%'").orderBy("$.F2 asc").fields("$._id as _id, $.F1 as fld1, $.F2 as fld2").execute();
+        DbDoc doc = null;
+        i = 0;
+        while (docs.hasNext()) {
+            doc = docs.next();
+            longdata = buildString(datalen + i, 'X');
+            assertEquals((longdata), ((JsonString) doc.get("fld2")).getString());
+            i++;
+        }
+        assertEquals((maxrec), i);
+    }
+
+    @Test
+    public void testCollectionAddManyKeys() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, j = 0;
+        int maxkey = 500;
+        int maxrec = 5;
+        String key_sub = "keyname_";
+        String data_sub = "Data";
+
+        /* Insert maxrec each with maxkey number of (key,value) pairs */
+        String key, data, query;
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc = new DbDocImpl();
+            newDoc.add("_id", new JsonNumber().setValue(String.valueOf(i)));
+            for (j = 0; j < maxkey; j++) {
+                key = key_sub + j;
+                data = data_sub + j;
+                newDoc.add(key, new JsonString().setValue(data));
+            }
+            this.collection.add(newDoc).execute();
+            newDoc = null;
+        }
+        assertEquals((maxrec), this.collection.count());
+
+        /* Fetch all keys */
+        query = "$._id as _id";
+        for (j = 0; j < maxkey; j++) {
+            key = key_sub + j;
+            query = query + ",$." + key + " as " + key;
+        }
+        DocResult docs = this.collection.find().orderBy("$._id").fields(query).execute();
+        i = 0;
+        while (docs.hasNext()) {
+            docs.next();
+            i++;
+        }
+        assertEquals((maxrec), i);
+
+        /* fetch maxrec-1 records */
+        docs = this.collection.find("$._id < " + (maxrec - 1)).orderBy("$._id").fields("$._id as _id, $." + key_sub + (maxkey - 1) + " as Key1").execute();
+        i = 0;
+        while (docs.hasNext()) {
+            docs.next();
+            i++;
+        }
+        assertEquals((maxrec - 1), i);
+    }
+
+    @Test
+    public void testCollectionAddManyRecords() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, maxrec = 10;
+
+        /* add(DbDoc[] docs) -> Insert maxrec number of records in ne execution */
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+
+        for (i = 0; i < maxrec; i++) {
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonNumber().setValue(String.valueOf(i)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            newDoc2.add("F2", new JsonNumber().setValue(String.valueOf(300 + i)));
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+        }
+        this.collection.add(jsonlist).execute();
+
+        assertEquals((maxrec), this.collection.count());
+        DocResult docs = this.collection.find("$._id >= 0").orderBy("$._id").fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
+        DbDoc doc = null;
+        i = 0;
+        while (docs.hasNext()) {
+            doc = docs.next();
+            assertEquals((long) i, (long) (((JsonNumber) doc.get("_id")).getInteger()));
+            i++;
+        }
+        assertEquals((maxrec), i);
+    }
+
+    /**/
+    @Test
+    public void testCollectionAddArray() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        int i = 0, j = 0, k = 0, maxrec = 5, arraySize = 9;
+
+        /* add(DbDoc[] docs) -> Array data */
+        DbDoc[] jsonlist = new DbDocImpl[maxrec];
+
+        for (i = 0; i < maxrec; i++) {
+            JsonArray jarray1 = new JsonArray();
+            JsonArray jarray2 = new JsonArray();
+            JsonArray jarray3 = new JsonArray();
+            JsonArray jarray4 = new JsonArray();
+            JsonArray jarray5 = new JsonArray();
+            DbDoc newDoc2 = new DbDocImpl();
+            newDoc2.add("_id", new JsonNumber().setValue(String.valueOf(i)));
+            newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
+            for (j = 0; j < (arraySize); j++) {
+                jarray1.addValue(new JsonNumber().setValue(String.valueOf((j))));
+            }
+            newDoc2.add("ARR_INT", jarray1);
+
+            for (j = 0; j < (arraySize); j++) {
+                jarray2.addValue(new JsonString().setValue("Data-" + j));
+            }
+            newDoc2.add("ARR_STR", jarray2);
+
+            for (j = 0; j < (arraySize); j++) {
+                if (j % 3 == 2) {
+                    jarray3.addValue(JsonLiteral.FALSE);
+                } else if (j % 3 == 1) {
+                    jarray3.addValue(JsonLiteral.TRUE);
+                } else {
+                    jarray3.addValue(JsonLiteral.NULL);
+                }
+            }
+            newDoc2.add("ARR_LIT", jarray3);
+
+            for (j = 0; j < (arraySize); j++) {
+                JsonArray subarray = new JsonArray();
+
+                for (k = 0; k < 5; k++) {
+                    subarray.addValue(new JsonNumber().setValue(String.valueOf((j))));
+                }
+                jarray4.addValue(subarray);
+                subarray = null;
+            }
+            newDoc2.add("ARR_ARR", jarray4);
+
+            for (j = 0; j < (arraySize); j++) {
+                if (j % 3 == 2) {
+                    jarray5.addValue(JsonLiteral.FALSE);
+                } else if (j % 3 == 1) {
+                    jarray5.addValue(new JsonString().setValue("Data-" + j));
+                } else {
+                    jarray5.addValue(new JsonNumber().setValue(String.valueOf((j))));
+                }
+
+            }
+            newDoc2.add("ARR_MIX", jarray5);
+            this.collection.add(newDoc2).execute();
+            jsonlist[i] = newDoc2;
+            newDoc2 = null;
+            jarray1 = null;
+            jarray2 = null;
+            jarray3 = null;
+            jarray4 = null;
+            jarray5 = null;
+        }
+        //coll.add(jsonlist).execute();
+        jsonlist = null;
+        assertEquals((maxrec), this.collection.count());
+        DocResult docs = this.collection.find("$._id >= 0").orderBy("$._id").fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
+        DbDoc doc = null;
+        i = 0;
+        while (docs.hasNext()) {
+            doc = docs.next();
+            assertEquals((long) i, (long) (((JsonNumber) doc.get("_id")).getInteger()));
+            i++;
+        }
+        assertEquals((maxrec), i);
+    }
+
+    @Test
+    public void testGetGeneratedIds() throws Exception {
+        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+
+        AddResult res = null;
+        DbDoc doc = null;
+        DocResult docs = null;
+        int i = 0;
+
+        //One record using String
+        String json = "{\"FLD1\":\"Data1\"}";
+        res = this.collection.add(json).execute();
+        List<String> docIds = res.getGeneratedIds();
+        assertTrue(docIds.get(0).matches("[a-f0-9]{28}"));
+        assertEquals(1, this.collection.count());
+        assertEquals(1, docIds.size());
+
+        //More than One record using String
+        json = "{\"FLD1\":\"Data2\"}";
+        res = this.collection.add(json).add("{}").add("{\"_id\":\"id1\"}").add("{\"FLD1\":\"Data3\"}").execute();
+        docIds = res.getGeneratedIds();
+        assertEquals(5, this.collection.count());
+        assertEquals(3, docIds.size());
+
+        //More than One record using String, and single add()
+        json = "{\"FLD1\":\"Data15\"}";
+        res = this.collection.add(json, "{}", "{\"_id\":\"id2\"}", "{\"FLD1\":\"Data16\"}").execute();
+        docIds = res.getGeneratedIds();
+        assertEquals(9, this.collection.count());
+        assertEquals(3, docIds.size());
+
+        //One record using DbDoc
+        DbDoc newDoc2 = new DbDocImpl();
+        newDoc2.add("FLD1", new JsonString().setValue("Data4"));
+        res = this.collection.add(newDoc2).execute();
+        docIds = res.getGeneratedIds();
+        assertEquals(10, this.collection.count());
+        assertEquals(1, docIds.size());
+        assertTrue(docIds.get(0).matches("[a-f0-9]{28}"));
+
+        //More Than One record using DbDoc
+        newDoc2.clear();
+        newDoc2.add("FLD1", new JsonString().setValue("Data5"));
+        DbDoc newDoc3 = new DbDocImpl();
+        newDoc3.add("FLD1", new JsonString().setValue("Data6"));
+        res = this.collection.add(newDoc2).add(newDoc3).execute();
+        docIds = res.getGeneratedIds();
+        assertEquals(12, this.collection.count());
+        assertEquals(2, docIds.size());
+        assertTrue(docIds.get(0).compareTo(docIds.get(1)) < 0);
+
+        //One record using DbDoc[]
+        DbDoc[] jsonlist1 = new DbDocImpl[1];
+        newDoc2.clear();
+        newDoc2.add("FLD1", new JsonString().setValue("Data7"));
+        jsonlist1[0] = newDoc2;
+        res = this.collection.add(jsonlist1).execute();
+        docIds = res.getGeneratedIds();
+        assertEquals(13, this.collection.count());
+        assertEquals(1, docIds.size());
+        assertTrue(docIds.get(0).matches("[a-f0-9]{28}"));
+
+        //More Than One record using DbDoc[]
+        DbDoc[] jsonlist = new DbDocImpl[5];
+        for (i = 0; i < 5; i++) {
+            DbDoc newDoc = new DbDocImpl();
+            newDoc.add("FLD1", new JsonString().setValue("Data" + (i + 8)));
+            if (i % 2 == 0) {
+                newDoc.add("_id", new JsonString().setValue("id-" + (i + 8)));
+            }
+            jsonlist[i] = newDoc;
+            newDoc = null;
+        }
+        res = this.collection.add(jsonlist).execute();
+        docIds = res.getGeneratedIds();
+        assertEquals(18, this.collection.count());
+        assertEquals(2, docIds.size());
+
+        json = "{}";
+        res = this.collection.add(json).execute();
+        docIds = res.getGeneratedIds();
+        assertTrue(docIds.get(0).matches("[a-f0-9]{28}"));
+        assertEquals(19, this.collection.count());
+        assertEquals(1, docIds.size());
+
+        //Verify that when _id is provided by client, getGeneratedIds() will return empty
+        res = this.collection.add("{\"_id\":\"00001273834abcdfe\",\"FLD1\":\"Data1\",\"name\":\"name1\"}",
+                "{\"_id\":\"000012738uyie98rjdeje\",\"FLD2\":\"Data2\",\"name\":\"name1\"}",
+                "{\"_id\":\"00001273y834uhf489fe\",\"FLD3\":\"Data3\",\"name\":\"name1\"}").execute();
+        docIds = res.getGeneratedIds();
+        assertEquals(22, this.collection.count());
+        assertEquals(0, docIds.size());
+
+        res = this.collection.add("{\"_id\":null,\"FLD1\":\"nulldata\"}").execute();
+        docIds = res.getGeneratedIds();
+        assertEquals(23, this.collection.count());
+        assertEquals(0, docIds.size());
+        docs = this.collection.find("$.FLD1 == 'nulldata'").execute();
+        doc = docs.next();
+        assertEquals("null", ((JsonLiteral) doc.get("_id")).toString());
+
+        //Try inserting duplicate _ids. User should get error
+        assertThrows(XProtocolError.class, "ERROR 5116 \\(HY000\\) Document contains a field value that is not unique but required to be",
+                () -> this.collection.add("{\"_id\":\"abcd1234\",\"FLD1\":\"Data1\"}").add("{\"_id\":\"abcd1234\",\"FLD1\":\"Data2\"}").execute());
     }
 }

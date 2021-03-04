@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.FilterInputStream;
 import java.io.InputStream;
@@ -264,9 +265,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void compressionNegotiationServerSideRestricted() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         String[] algorithms = new String[] { "", "zstd_stream", "lz4_message", "deflate_stream" };
         boolean[] expected = new boolean[] { false, false, false, true }; // Only "deflate_stream" is supported by default.
@@ -321,9 +320,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void compressionNegotiationClientSideSelectionNativelySupported() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         /*
          * Default negotiation is always "deflate_stream" as only "deflate_stream" is supported by default.
@@ -346,9 +343,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void compressionNegotiationClientSideSelectionOtherThanNative() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         String[] algorithmsOpts = new String[] { "zstd_stream,lz4_message,deflate_stream", "lz4_message,zstd_stream,deflate_stream" };
         for (String algorithms : algorithmsOpts) {
@@ -371,9 +366,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void compressionNegotiationClientSideSelectionUnknownIds() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         String[] algorithmsOpts = new String[] { "foo_message,bar_stream,deflate_stream", "foo_message,deflate_stream,bar_stream",
                 "deflate_stream,foo_message,bar_stream" };
@@ -392,9 +385,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void compressionNegotiationClientSideSelectionNoCommon() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         String[] algorithmsOpts = new String[] { "", "foo_message,bar_stream" };
         for (String algorithms : algorithmsOpts) {
@@ -436,9 +427,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void compressionDisabled() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         dropCollection("compressionDisabled");
         this.schema.createCollection("compressionDisabled");
@@ -475,9 +464,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void downlinkCompression() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         dropCollection("downlinkCompression");
         this.schema.createCollection("downlinkCompression");
@@ -519,9 +506,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void uplinkCompression() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         dropCollection("uplinkCompression");
 
@@ -564,9 +549,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void compressionThreshold() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         dropCollection("compressionThreshold");
         this.schema.createCollection("compressionThreshold");
@@ -617,9 +600,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void invalidCompressionOptions() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         assertThrows(WrongArgumentException.class,
                 "The connection property 'xdevapi.compression' acceptable values are: 'DISABLED', 'PREFERRED' or 'REQUIRED'\\. The value 'true' is not acceptable\\.",
@@ -701,9 +682,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void validCompressionExtensionsOption() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         dropCollection("validCompressionAlgorithmOption");
         this.schema.createCollection("validCompressionAlgorithmOption");
@@ -746,9 +725,7 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void compressionNegotiationClientSideSelectionWithAliases() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
         Session testSession = this.fact.getSession(this.compressFreeBaseUrl + makeParam(PropertyKey.xdevapiCompressionAlgorithms, "zstd,lz4,deflate")
                 + makeParam(PropertyKey.xdevapiCompressionExtensions,
@@ -815,26 +792,26 @@ public class CompressionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug99708() {
-        if (!this.isSetForXTests || !this.compressionSettings.serverSupportsCompression()) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests && this.compressionSettings.serverSupportsCompression());
 
-        dropCollection("testBug99708");
-        Collection col = this.schema.createCollection("testBug99708");
-        String docId = "1";
-        DbDoc doc = JsonParser.parseDoc("{ \"product\": \"MySQL Connector/J\" }");
-        col.addOrReplaceOne(docId, doc);
-
-        for (int i = 1; i <= 150; i++) {
-            Session testSession = this.fact.getSession(this.compressFreeBaseUrl + makeParam(PropertyKey.xdevapiCompressionAlgorithms, "deflate")
-                    + makeParam(PropertyKey.xdevapiCompression, "required"));
-            col = testSession.getDefaultSchema().getCollection("testBug99708");
-            doc = col.find("_id = :id").bind("id", docId).execute().fetchOne();
-            doc.add("Iteration-" + i, new JsonString().setValue("" + System.nanoTime()));
+        try {
+            dropCollection("testBug99708");
+            Collection col = this.schema.createCollection("testBug99708");
+            String docId = "1";
+            DbDoc doc = JsonParser.parseDoc("{ \"product\": \"MySQL Connector/J\" }");
             col.addOrReplaceOne(docId, doc);
-            testSession.close();
-        }
 
-        dropCollection("TestBug99708");
+            for (int i = 1; i <= 150; i++) {
+                Session testSession = this.fact.getSession(this.compressFreeBaseUrl + makeParam(PropertyKey.xdevapiCompressionAlgorithms, "deflate")
+                        + makeParam(PropertyKey.xdevapiCompression, "required"));
+                col = testSession.getDefaultSchema().getCollection("testBug99708");
+                doc = col.find("_id = :id").bind("id", docId).execute().fetchOne();
+                doc.add("Iteration-" + i, new JsonString().setValue("" + System.nanoTime()));
+                col.addOrReplaceOne(docId, doc);
+                testSession.close();
+            }
+        } finally {
+            dropCollection("testBug99708");
+        }
     }
 }

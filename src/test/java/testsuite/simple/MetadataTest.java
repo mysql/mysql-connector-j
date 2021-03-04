@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -1519,9 +1520,7 @@ public class MetadataTest extends BaseTestCase {
      */
     @Test
     public void testGeneratedColumns() throws Exception {
-        if (!versionMeetsMinimum(5, 7, 6)) {
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(5, 7, 6));
 
         // Test GENERATED columns syntax.
         createTable("pythagorean_triple", "(side_a DOUBLE NULL, side_b DOUBLE NULL, "
@@ -1644,10 +1643,7 @@ public class MetadataTest extends BaseTestCase {
      */
     @Test
     public void testGetSqlKeywordsDynamic() throws Exception {
-        if (!versionMeetsMinimum(8, 0, 11)) {
-            // Tested in testGetSqlKeywordsStatic();
-            return;
-        }
+        assumeTrue(versionMeetsMinimum(8, 0, 11)); // Tested in testGetSqlKeywordsStatic();
 
         /*
          * Setup test case.

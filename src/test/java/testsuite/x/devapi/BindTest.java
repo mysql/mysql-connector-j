@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,9 +46,8 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 public class BindTest extends BaseCollectionTestCase {
     @Test
     public void removeWithBind() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": 1, \"x\":1}").execute();
             this.collection.add("{\"_id\": 2, \"x\":2}").execute();
@@ -68,9 +68,8 @@ public class BindTest extends BaseCollectionTestCase {
 
     @Test
     public void removeWithNamedBinds() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": 1, \"x\":1}").execute();
             this.collection.add("{\"_id\": 2, \"x\":2}").execute();
@@ -93,9 +92,8 @@ public class BindTest extends BaseCollectionTestCase {
 
     @Test
     public void bug21798850() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         Map<String, Object> params = new HashMap<>();
         params.put("thePlaceholder1", 1);
         params.put("thePlaceholder2", 2);
@@ -106,9 +104,8 @@ public class BindTest extends BaseCollectionTestCase {
 
     @Test
     public void properExceptionUnboundParams() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         try {
             this.collection.find("a = :arg1 or b = :arg2").bind("arg1", 1).execute();
             fail("Should raise an exception on unbound placeholder arguments");
@@ -119,9 +116,8 @@ public class BindTest extends BaseCollectionTestCase {
 
     @Test
     public void bindArgsOrder() {
-        if (!this.isSetForXTests) {
-            return;
-        }
+        assumeTrue(this.isSetForXTests);
+
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{'_id': 1, 'x':1,'y':2}".replaceAll("'", "\"")).execute();
         } else {

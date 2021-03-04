@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -48,6 +48,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import testsuite.BaseTestCase;
@@ -59,63 +60,62 @@ public class StressRegressionTest extends BaseTestCase {
     private int numThreadsStarted;
 
     @Test
+    @Disabled("It's a very long test")
     public synchronized void testContention() throws Exception {
-        if (!this.DISABLED_testContention) {
-            System.out.println("Calculating baseline elapsed time...");
+        System.out.println("Calculating baseline elapsed time...");
 
-            long start = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
 
-            contentiousWork(this.conn, this.stmt, 0);
+        contentiousWork(this.conn, this.stmt, 0);
 
-            long singleThreadElapsedTimeMillis = System.currentTimeMillis() - start;
+        long singleThreadElapsedTimeMillis = System.currentTimeMillis() - start;
 
-            System.out.println("Single threaded execution took " + singleThreadElapsedTimeMillis + " ms.");
+        System.out.println("Single threaded execution took " + singleThreadElapsedTimeMillis + " ms.");
 
-            int numThreadsToStart = 95;
+        int numThreadsToStart = 95;
 
-            System.out.println("\nStarting " + numThreadsToStart + " threads.");
+        System.out.println("\nStarting " + numThreadsToStart + " threads.");
 
-            this.numThreadsStarted = numThreadsToStart;
+        this.numThreadsStarted = numThreadsToStart;
 
-            ContentionThread[] threads = new ContentionThread[this.numThreadsStarted];
+        ContentionThread[] threads = new ContentionThread[this.numThreadsStarted];
 
-            for (int i = 0; i < numThreadsToStart; i++) {
-                threads[i] = new ContentionThread(i);
-                threads[i].start();
-            }
-
-            for (;;) {
-                try {
-                    wait();
-
-                    if (this.numThreadsStarted == 0) {
-                        break;
-                    }
-                } catch (InterruptedException ie) {
-                    // ignore
-                }
-            }
-
-            // Collect statistics...
-            System.out.println("Done!");
-
-            double avgElapsedTimeMillis = 0;
-
-            List<Long> elapsedTimes = new ArrayList<>();
-
-            for (int i = 0; i < numThreadsToStart; i++) {
-                elapsedTimes.add(new Long(threads[i].elapsedTimeMillis));
-
-                avgElapsedTimeMillis += ((double) threads[i].elapsedTimeMillis / numThreadsToStart);
-            }
-
-            Collections.sort(elapsedTimes);
-
-            System.out.println("Average elapsed time per-thread was " + avgElapsedTimeMillis + " ms.");
-            System.out.println("Median elapsed time per-thread was " + elapsedTimes.get(elapsedTimes.size() / 2) + " ms.");
-            System.out.println("Minimum elapsed time per-thread was " + elapsedTimes.get(0) + " ms.");
-            System.out.println("Maximum elapsed time per-thread was " + elapsedTimes.get(elapsedTimes.size() - 1) + " ms.");
+        for (int i = 0; i < numThreadsToStart; i++) {
+            threads[i] = new ContentionThread(i);
+            threads[i].start();
         }
+
+        for (;;) {
+            try {
+                wait();
+
+                if (this.numThreadsStarted == 0) {
+                    break;
+                }
+            } catch (InterruptedException ie) {
+                // ignore
+            }
+        }
+
+        // Collect statistics...
+        System.out.println("Done!");
+
+        double avgElapsedTimeMillis = 0;
+
+        List<Long> elapsedTimes = new ArrayList<>();
+
+        for (int i = 0; i < numThreadsToStart; i++) {
+            elapsedTimes.add(new Long(threads[i].elapsedTimeMillis));
+
+            avgElapsedTimeMillis += ((double) threads[i].elapsedTimeMillis / numThreadsToStart);
+        }
+
+        Collections.sort(elapsedTimes);
+
+        System.out.println("Average elapsed time per-thread was " + avgElapsedTimeMillis + " ms.");
+        System.out.println("Median elapsed time per-thread was " + elapsedTimes.get(elapsedTimes.size() / 2) + " ms.");
+        System.out.println("Minimum elapsed time per-thread was " + elapsedTimes.get(0) + " ms.");
+        System.out.println("Maximum elapsed time per-thread was " + elapsedTimes.get(elapsedTimes.size() - 1) + " ms.");
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -81,14 +81,6 @@ import com.mysql.cj.util.Util;
  * Base class for all test cases. Creates connections, statements, etc. and closes them.
  */
 public abstract class BaseTestCase {
-    // next variables disable some tests
-    protected boolean DISABLED_testBug15121 = true; // TODO needs to be fixed on server
-    protected boolean DISABLED_testBug7033 = true; // TODO disabled for unknown reason
-    protected boolean DISABLED_testBug2654 = true; // TODO check if it's still a server-level bug
-    protected boolean DISABLED_testBug5136 = true; // TODO disabled for unknown reason
-    protected boolean DISABLED_testBug65503 = true; // TODO disabled for unknown reason
-    protected boolean DISABLED_testContention = true; // TODO disabled for unknown reason
-    protected boolean DISABLED_testBug3620new = true; // TODO this test is working in c/J 5.1 but fails here; disabled for later analysis
 
     /**
      * JDBC URL, initialized from com.mysql.cj.testsuite.url system property, or defaults to jdbc:mysql:///test and its connection URL.
