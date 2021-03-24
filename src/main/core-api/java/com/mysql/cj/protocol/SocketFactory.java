@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,7 @@ import java.io.Closeable;
 import java.io.IOException;
 
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.log.Log;
 
 /**
  * Interface to allow pluggable socket creation in the driver
@@ -93,6 +94,26 @@ public interface SocketFactory extends SocketMetadata {
      *             if an I/O error occurs
      */
     <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession) throws IOException;
+
+    /**
+     * If required, called by the driver during MySQL protocol handshake to transform
+     * original socket to SSL socket and perform TLS handshake.
+     * 
+     * @param socketConnection
+     *            current SocketConnection
+     * @param serverSession
+     *            current ServerSession
+     * @param <T>
+     *            result type
+     * @param log
+     *            logger
+     * @return SSL socket
+     * @throws IOException
+     *             if an I/O error occurs
+     */
+    default <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession, Log log) throws IOException {
+        return performTlsHandshake(socketConnection, serverSession);
+    }
 
     /**
      * Called by the driver after completing the MySQL protocol handshake and

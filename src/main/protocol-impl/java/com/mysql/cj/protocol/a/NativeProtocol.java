@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -330,7 +330,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         send(packet, packet.getPosition());
 
         try {
-            this.socketConnection.performTlsHandshake(this.serverSession);
+            this.socketConnection.performTlsHandshake(this.serverSession, this.log);
 
             // i/o streams were replaced, build new packet sender/reader
             this.packetSender = new SimplePacketSender(this.socketConnection.getMysqlOutput());

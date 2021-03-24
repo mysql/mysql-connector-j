@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -74,6 +74,8 @@ import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.log.Log;
+import com.mysql.cj.log.LogFactory;
 import com.mysql.cj.protocol.AbstractProtocol;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ExportControlled;
@@ -187,6 +189,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public void init(Session sess, SocketConnection socketConn, PropertySet propSet, TransactionEventHandler trManager) {
         super.init(sess, socketConn, propSet, trManager);
 
+        // Session is not kept, so we need to do this
+        this.log = LogFactory.getLogger(getPropertySet().getStringProperty(PropertyKey.logger).getStringValue(), Log.LOGGER_INSTANCE_NAME);
+
         this.messageBuilder = new XMessageBuilder();
 
         this.authProvider = new XAuthenticationProvider();
@@ -237,7 +242,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         sendCapabilities(tlsCapabilities);
 
         try {
-            this.socketConnection.performTlsHandshake(null); //(this.serverSession);
+            this.socketConnection.performTlsHandshake(null, this.log);
         } catch (SSLParamsException | FeatureNotAvailableException | IOException e) {
             throw new CJCommunicationsException(e);
         }

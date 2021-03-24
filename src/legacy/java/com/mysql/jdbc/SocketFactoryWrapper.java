@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,7 @@ import java.io.Closeable;
 import java.io.IOException;
 
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.log.Log;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.SocketConnection;
 import com.mysql.cj.protocol.SocketFactory;
@@ -60,8 +61,8 @@ public class SocketFactoryWrapper extends StandardSocketFactory implements Socke
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession) throws IOException {
-        return (T) super.performTlsHandshake(socketConnection, serverSession);
+    public <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession, Log log) throws IOException {
+        return (T) super.performTlsHandshake(socketConnection, serverSession, log);
     }
 
     @SuppressWarnings("deprecation")

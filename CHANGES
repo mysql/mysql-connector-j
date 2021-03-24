@@ -3,6 +3,8 @@
 
 Version 8.0.26
 
+  - WL#14559, Deprecate TLS 1.0 and 1.1.
+
   - WL#14391, Migrate QA tests to main repo.
 
 Version 8.0.25

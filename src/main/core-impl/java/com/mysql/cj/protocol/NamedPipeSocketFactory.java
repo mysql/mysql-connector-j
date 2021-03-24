@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,6 +44,7 @@ import com.mysql.cj.Session;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
+import com.mysql.cj.log.Log;
 
 /**
  * A socket factory for named pipes (on Windows)
@@ -228,9 +229,14 @@ public class NamedPipeSocketFactory implements SocketFactory {
         super();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession) throws IOException {
+        return performTlsHandshake(socketConnection, serverSession, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession, Log log) throws IOException {
         return (T) this.namedPipeSocket;
     }
 

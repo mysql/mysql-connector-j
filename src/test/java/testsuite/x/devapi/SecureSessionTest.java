@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLContext;
 
@@ -68,6 +69,8 @@ import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionImpl;
 import com.mysql.cj.xdevapi.SqlResult;
+
+import testsuite.BufferingLogger;
 
 public class SecureSessionTest extends DevApiBaseTestCase {
     final String trustStoreUrl = "file:src/test/config/ssl-test-certs/ca-truststore";
@@ -1785,5 +1788,52 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             testSession.sql("DROP USER IF EXISTS " + user).execute();
             testSession.close();
         }
+    }
+
+    /**
+     * Tests fix for WL#14559, Deprecate TLS 1.0 and 1.1.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testTLSVersionDeprecation() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        Properties props = new Properties(this.sslFreeTestProperties);
+        props.setProperty(PropertyKey.logger.getKeyName(), BufferingLogger.class.getName());
+
+        Session testSession = null;
+        try {
+
+            // TS.FR1_3.
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "REQUIRED");
+            props.setProperty(PropertyKey.enabledTLSProtocols.getKeyName(), "TLSv1,TLSv1.1");
+
+            BufferingLogger.startLoggingToBuffer();
+            testSession = this.fact.getSession(props);
+            assertTrue(Pattern.matches(".+ This connection is using TLSv.+ which is now deprecated and will be removed in a future release of Connector/J.",
+                    BufferingLogger.getBuffer().toString()));
+            BufferingLogger.dropBuffer();
+            testSession.close();
+
+            // TS.FR1_4.
+            props.remove(PropertyKey.sslMode.getKeyName());
+            props.remove(PropertyKey.enabledTLSProtocols.getKeyName());
+            props.setProperty(PropertyKey.xdevapiSslMode.getKeyName(), "REQUIRED");
+            props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "TLSv1,TLSv1.1");
+
+            BufferingLogger.startLoggingToBuffer();
+            testSession = this.fact.getSession(props);
+            assertTrue(Pattern.matches(".+ This connection is using TLSv.+ which is now deprecated and will be removed in a future release of Connector/J.",
+                    BufferingLogger.getBuffer().toString()));
+            BufferingLogger.dropBuffer();
+
+        } finally {
+            BufferingLogger.dropBuffer();
+            if (testSession != null) {
+                testSession.close();
+            }
+        }
+
     }
 }

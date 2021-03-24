@@ -78,6 +78,7 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -2946,6 +2947,52 @@ public class ConnectionTest extends BaseTestCase {
                 "The last packet successfully received from the server was .+ milliseconds ago."
                         + " The last packet sent successfully to the server was .+ milliseconds ago.+",
                 () -> toBeKilledConn.createStatement().executeQuery("SELECT 1"));
+    }
+
+    /**
+     * Tests fix for WL#14559, Deprecate TLS 1.0 and 1.1.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testTLSVersionDeprecation() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "REQUIRED");
+        props.setProperty(PropertyKey.logger.getKeyName(), BufferingLogger.class.getName());
+
+        // TS.FR1_3. Create X DevAPI connection with "sslMode=REQUIRED & enabledTLSProtocols=TLSv1,TLSv1.1".
+        //           Ensure that the deprecation warning "This connection is using TLSvX[.Y] which is now deprecated and will be removed in a future release of Connector/J." was logged.
+        // TS.FR1_4. Create X DevAPI connection with "xdevapi.ssl-mode=REQUIRED & xdevapi.tls-versions=TLSv1,TLSv1.1".
+        //           Ensure that the deprecation warning "This connection is using TLSvX[.Y] which is now deprecated and will be removed in a future release of Connector/J." was logged.
+
+        Connection con = null;
+        try {
+            // TS.FR1_1.
+            if (!versionMeetsMinimum(5, 6)) {
+                BufferingLogger.startLoggingToBuffer();
+                con = getConnectionWithProps(props);
+                assertTrue(Pattern.matches(".+ This connection is using TLSv.+ which is now deprecated and will be removed in a future release of Connector/J.",
+                        BufferingLogger.getBuffer().toString()));
+                BufferingLogger.dropBuffer();
+                con.close();
+            }
+
+            // TS.FR1_2.
+            BufferingLogger.startLoggingToBuffer();
+            props.setProperty(PropertyKey.enabledTLSProtocols.getKeyName(), "TLSv1,TLSv1.1");
+            con = getConnectionWithProps(props);
+            assertTrue(Pattern.matches(".+ This connection is using TLSv.+ which is now deprecated and will be removed in a future release of Connector/J.",
+                    BufferingLogger.getBuffer().toString()));
+            BufferingLogger.dropBuffer();
+            con.close();
+
+        } finally {
+            BufferingLogger.dropBuffer();
+            if (con != null) {
+                con.close();
+            }
+        }
+
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -63,6 +63,21 @@ public interface SocketConnection {
     void connect(String host, int port, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log, int loginTimeout);
 
     void performTlsHandshake(ServerSession serverSession) throws SSLParamsException, FeatureNotAvailableException, IOException;
+
+    /**
+     * Start a TLS handshake
+     * 
+     * @param serverSession
+     *            server session state object
+     * @param log
+     *            logger
+     * @throws SSLParamsException
+     * @throws FeatureNotAvailableException
+     * @throws IOException
+     */
+    default void performTlsHandshake(ServerSession serverSession, Log log) throws SSLParamsException, FeatureNotAvailableException, IOException {
+        performTlsHandshake(serverSession);
+    }
 
     void forceClose();
 

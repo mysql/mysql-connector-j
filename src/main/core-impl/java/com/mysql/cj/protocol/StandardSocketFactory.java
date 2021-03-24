@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,6 +39,7 @@ import java.net.SocketException;
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
+import com.mysql.cj.log.Log;
 
 /**
  * Socket factory for vanilla TCP/IP sockets (the standard)
@@ -182,11 +183,16 @@ public class StandardSocketFactory implements SocketFactory {
         this.rawSocket.setSoTimeout(getRealTimeout(this.socketTimeoutBackup));
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession) throws IOException {
-        this.sslSocket = ExportControlled.performTlsHandshake(this.rawSocket, socketConnection,
-                serverSession == null ? null : serverSession.getServerVersion());
+        return performTlsHandshake(socketConnection, serverSession, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T extends Closeable> T performTlsHandshake(SocketConnection socketConnection, ServerSession serverSession, Log log) throws IOException {
+        this.sslSocket = ExportControlled.performTlsHandshake(this.rawSocket, socketConnection, serverSession == null ? null : serverSession.getServerVersion(),
+                log);
         return (T) this.sslSocket;
     }
 

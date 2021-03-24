@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -93,8 +93,12 @@ public class NativeSocketConnection extends AbstractSocketConnection implements 
 
     @Override
     public void performTlsHandshake(ServerSession serverSession) throws SSLParamsException, FeatureNotAvailableException, IOException {
+        performTlsHandshake(serverSession, null);
+    }
 
-        this.mysqlSocket = this.socketFactory.performTlsHandshake(this, serverSession);
+    @Override
+    public void performTlsHandshake(ServerSession serverSession, Log log) throws SSLParamsException, FeatureNotAvailableException, IOException {
+        this.mysqlSocket = this.socketFactory.performTlsHandshake(this, serverSession, log);
 
         this.mysqlInput = new FullReadInputStream(
                 this.propertySet.getBooleanProperty(PropertyKey.useUnbufferedInput).getValue() ? getMysqlSocket().getInputStream()

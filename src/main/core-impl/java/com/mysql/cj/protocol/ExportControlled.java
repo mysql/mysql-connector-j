@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -94,6 +94,7 @@ import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.RSAException;
 import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.log.Log;
 import com.mysql.cj.util.Base64Decoder;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
@@ -163,7 +164,7 @@ public class ExportControlled {
         // TLSv1.2 yaSSL just closes the socket instead of re-attempting handshake with lower TLS version. So here we allow all protocols only
         // for server versions which are known to be compiled with OpenSSL.
         else if (serverVersion == null) {
-            // X Protocol doesn't provide server version, but we prefer to use most recent TLS version, though it also mean that X Protocol
+            // X Protocol doesn't provide server version, but we prefer to use most recent TLS version, though it also means that X Protocol
             // connection to old MySQL 5.7 GPL releases will fail by default, user must use enabledTLSProtocols=TLSv1.1 to connect them.
             tryProtocols = TLS_PROTOCOLS;
         } else if (serverVersion.meetsMinimum(new ServerVersion(5, 7, 28))
@@ -279,6 +280,8 @@ public class ExportControlled {
      *            the Protocol instance containing the socket to convert to an SSLSocket.
      * @param serverVersion
      *            ServerVersion object
+     * @param log
+     *            Logger
      * @return SSL socket
      * @throws IOException
      *             if i/o exception occurs
@@ -287,7 +290,7 @@ public class ExportControlled {
      * @throws FeatureNotAvailableException
      *             if TLS is not supported
      */
-    public static Socket performTlsHandshake(Socket rawSocket, SocketConnection socketConnection, ServerVersion serverVersion)
+    public static Socket performTlsHandshake(Socket rawSocket, SocketConnection socketConnection, ServerVersion serverVersion, Log log)
             throws IOException, SSLParamsException, FeatureNotAvailableException {
         PropertySet pset = socketConnection.getPropertySet();
 
@@ -315,6 +318,13 @@ public class ExportControlled {
         }
 
         sslSocket.startHandshake();
+
+        if (log != null) {
+            String tlsVersion = sslSocket.getSession().getProtocol();
+            if (TLSv1.equalsIgnoreCase(tlsVersion) || TLSv1_1.equalsIgnoreCase(tlsVersion)) {
+                log.logWarn("This connection is using " + tlsVersion + " which is now deprecated and will be removed in a future release of Connector/J.");
+            }
+        }
 
         return sslSocket;
     }
