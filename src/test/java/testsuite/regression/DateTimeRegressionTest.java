@@ -30,6 +30,7 @@
 package testsuite.regression;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -811,6 +812,8 @@ public class DateTimeRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug21308907() throws Exception {
+        assumeTrue(versionMeetsMinimum(5, 6, 4), "Fractional seconds are not supported in this server version.");
+
         createTable("testBug21308907", "(c1 time(6))");
         this.stmt.execute("insert into testBug21308907 values('12:59:59.123456')");
 
