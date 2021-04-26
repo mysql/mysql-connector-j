@@ -3,6 +3,8 @@
 
 Version 8.0.25
 
+  - This release contains no functional changes and is published to align the version number with the MySQL Server 8.0.25 release.
+
 Version 8.0.24
 
   - Fix for Bug#102188 (32526663), AccessControlException with AuthenticationLdapSaslClientPlugin.
