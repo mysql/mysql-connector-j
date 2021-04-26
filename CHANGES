@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.26
+
 Version 8.0.25
 
   - This release contains no functional changes and is published to align the version number with the MySQL Server 8.0.25 release.
