@@ -11852,4 +11852,31 @@ public class ConnectionRegressionTest extends BaseTestCase {
         getConnectionWithProps("defaultAuthenticationPlugin=authentication_ldap_sasl_client").close();
         assertNotNull(Security.getProvider("MySQLScramShaSasl"));
     }
+
+    /**
+     * Tests fix for Bug#95564, createDatabaseIfNotExist is not working for databases with hyphen in name.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug95564() throws Exception {
+        String databaseName = "test-bug95564";
+
+        this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + StringUtils.quoteIdentifier(databaseName, true));
+
+        Properties props = getPropertiesFromTestsuiteUrl();
+        props.setProperty(PropertyKey.createDatabaseIfNotExist.getKeyName(), "true");
+        props.setProperty(PropertyKey.DBNAME.getKeyName(), databaseName);
+
+        Connection con = getConnectionWithProps(props);
+
+        this.rs = this.stmt.executeQuery("SHOW DATABASES LIKE '" + databaseName + "'");
+        if (this.rs.next()) {
+            assertEquals(databaseName, this.rs.getString(1));
+        } else {
+            fail("Database " + databaseName + " is not found.");
+        }
+
+        con.close();
+    }
 }
