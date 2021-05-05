@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,12 +40,20 @@ public class ClientPreparedQuery extends AbstractPreparedQuery<ClientPreparedQue
     /**
      * Computes the maximum parameter set size, and entire batch size given
      * the number of arguments in the batch.
-     * 
      */
     @Override
     protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) {
-        long sizeOfEntireBatch = 0;
+        long sizeOfEntireBatch = 1 /* com_query */;
         long maxSizeOfParameterSet = 0;
+
+        if (this.session.getServerSession().supportsQueryAttributes()) {
+            sizeOfEntireBatch += 9 /* parameter_count */ + 1 /* parameter_set_count */;
+            sizeOfEntireBatch += (this.queryAttributesBindings.getCount() + 7) / 8 /* null_bitmap */ + 1 /* new_params_bind_flag */;
+            for (int i = 0; i < this.queryAttributesBindings.getCount(); i++) {
+                QueryAttributesBindValue queryAttribute = this.queryAttributesBindings.getAttributeValue(i);
+                sizeOfEntireBatch += 2 /* parameter_type */ + queryAttribute.getName().length() /* parameter_name */ + queryAttribute.getBoundLength();
+            }
+        }
 
         for (int i = 0; i < numBatchedArgs; i++) {
             ClientPreparedQueryBindings qBindings = (ClientPreparedQueryBindings) this.batchedArgs.get(i);

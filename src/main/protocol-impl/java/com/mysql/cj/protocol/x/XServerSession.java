@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -54,7 +54,6 @@ public class XServerSession implements ServerSession {
     @Override
     public void setCapabilities(ServerCapabilities capabilities) {
         this.serverCapabilities = (XServerCapabilities) capabilities;
-
     }
 
     @Override
@@ -148,6 +147,11 @@ public class XServerSession implements ServerSession {
     }
 
     @Override
+    public boolean hasLongColumnInfo() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
+    @Override
     public boolean useMultiResults() {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
@@ -158,7 +162,7 @@ public class XServerSession implements ServerSession {
     }
 
     @Override
-    public boolean hasLongColumnInfo() {
+    public boolean supportsQueryAttributes() {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 

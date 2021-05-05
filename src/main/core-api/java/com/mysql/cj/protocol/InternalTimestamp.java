@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,6 +36,7 @@ public class InternalTimestamp extends InternalDate {
     private int seconds = 0;
     private int nanos = 0;
     private int scale = 0;
+    private int offset = 0;
 
     /**
      * Constructs a zero datetime
@@ -87,16 +88,24 @@ public class InternalTimestamp extends InternalDate {
         this.nanos = nanos;
     }
 
-    @Override
-    public boolean isZero() {
-        return super.isZero() && this.hours == 0 && this.minutes == 0 && this.seconds == 0 && this.nanos == 0;
-    }
-
     public int getScale() {
         return this.scale;
     }
 
     public void setScale(int scale) {
         this.scale = scale;
+    }
+
+    public int getOffset() {
+        return this.offset;
+    }
+
+    public void setOffset(int offset) {
+        this.offset = offset;
+    }
+
+    @Override
+    public boolean isZero() {
+        return super.isZero() && this.hours == 0 && this.minutes == 0 && this.seconds == 0 && this.nanos == 0;
     }
 }

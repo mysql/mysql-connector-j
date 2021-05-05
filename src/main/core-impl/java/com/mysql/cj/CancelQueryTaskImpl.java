@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -100,8 +100,8 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
                                 public void transactionBegun() {
                                 }
                             });
-                            newSession.sendCommand(new NativeMessageBuilder().buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + origConnId),
-                                    false, 0);
+                            newSession.sendCommand(new NativeMessageBuilder(newSession.getServerSession().supportsQueryAttributes())
+                                    .buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + origConnId), false, 0);
 
                             localQueryToCancel.setCancelStatus(CancelStatus.CANCELED_BY_TIMEOUT);
                         }

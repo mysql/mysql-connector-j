@@ -272,6 +272,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
             if (this.isCacheable && isPoolable()) {
                 clearParameters();
+                clearAttributes();
 
                 this.isClosed = true;
 
@@ -801,6 +802,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                 ClientPreparedStatement pstmt = ((Wrapper) localConn.prepareStatement(((PreparedQuery<?>) this.query).getParseInfo().getSqlForBatch(numBatches),
                         this.resultSetConcurrency, this.query.getResultType().getIntValue())).unwrap(ClientPreparedStatement.class);
                 pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
+
+                getQueryAttributesBindings().runThroughAll(a -> ((JdbcStatement) pstmt).setAttribute(a.getName(), a.getValue()));
 
                 return pstmt;
             } catch (UnsupportedEncodingException e) {

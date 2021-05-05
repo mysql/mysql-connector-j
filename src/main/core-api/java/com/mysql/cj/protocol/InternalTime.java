@@ -33,6 +33,7 @@ import com.mysql.cj.util.TimeUtil;
 
 public class InternalTime {
 
+    private boolean negative = false;
     private int hours = 0;
     private int minutes = 0;
     private int seconds = 0;
@@ -51,6 +52,14 @@ public class InternalTime {
         this.seconds = seconds;
         this.nanos = nanos;
         this.scale = scale;
+    }
+
+    public boolean isNegative() {
+        return this.negative;
+    }
+
+    public void setNegative(boolean negative) {
+        this.negative = negative;
     }
 
     public int getHours() {

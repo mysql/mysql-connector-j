@@ -174,6 +174,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                 | (capabilityFlags & NativeServerSession.CLIENT_LONG_FLAG)      //
                 | (capabilityFlags & NativeServerSession.CLIENT_DEPRECATE_EOF)  //
                 | (capabilityFlags & NativeServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA)
+                | (capabilityFlags & NativeServerSession.CLIENT_QUERY_ATTRIBUTES)
                 | (this.propertySet.getBooleanProperty(PropertyKey.useCompression).getValue() ? (capabilityFlags & NativeServerSession.CLIENT_COMPRESS) : 0)
                 | (this.useConnectWithDb ? (capabilityFlags & NativeServerSession.CLIENT_CONNECT_WITH_DB) : 0)
                 | (this.propertySet.getBooleanProperty(PropertyKey.useAffectedRows).getValue() ? 0 : (capabilityFlags & NativeServerSession.CLIENT_FOUND_ROWS))

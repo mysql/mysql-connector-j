@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -61,7 +61,7 @@ public class NativeServerSession implements ServerSession {
     public static final int CLIENT_FOUND_ROWS = 0x00000002;
     public static final int CLIENT_LONG_FLAG = 0x00000004; /* Get all column flags */
     public static final int CLIENT_CONNECT_WITH_DB = 0x00000008;
-    public static final int CLIENT_COMPRESS = 0x00000020; /* Can use compression protcol */
+    public static final int CLIENT_COMPRESS = 0x00000020; /* Can use compression protocol */
     public static final int CLIENT_LOCAL_FILES = 0x00000080; /* Can use LOAD DATA LOCAL */
     public static final int CLIENT_PROTOCOL_41 = 0x00000200; // for > 4.1.1
     public static final int CLIENT_INTERACTIVE = 0x00000400;
@@ -78,6 +78,7 @@ public class NativeServerSession implements ServerSession {
     public static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 0x00400000;
     public static final int CLIENT_SESSION_TRACK = 0x00800000;
     public static final int CLIENT_DEPRECATE_EOF = 0x01000000;
+    public static final int CLIENT_QUERY_ATTRIBUTES = 0x08000000;
 
     private PropertySet propertySet;
     private NativeCapabilities capabilities;
@@ -232,12 +233,23 @@ public class NativeServerSession implements ServerSession {
     }
 
     @Override
+    public boolean hasLongColumnInfo() {
+        return (this.clientParam & CLIENT_LONG_FLAG) != 0;
+    }
+
+    @Override
     public boolean useMultiResults() {
         return (this.clientParam & CLIENT_MULTI_RESULTS) != 0 || (this.clientParam & CLIENT_PS_MULTI_RESULTS) != 0;
     }
 
+    @Override
     public boolean isEOFDeprecated() {
         return (this.clientParam & CLIENT_DEPRECATE_EOF) != 0;
+    }
+
+    @Override
+    public boolean supportsQueryAttributes() {
+        return (this.clientParam & CLIENT_QUERY_ATTRIBUTES) != 0;
     }
 
     @Override
@@ -248,11 +260,6 @@ public class NativeServerSession implements ServerSession {
     @Override
     public void setServerDefaultCollationIndex(int serverDefaultCollationIndex) {
         this.serverDefaultCollationIndex = serverDefaultCollationIndex;
-    }
-
-    @Override
-    public boolean hasLongColumnInfo() {
-        return (this.clientParam & CLIENT_LONG_FLAG) != 0;
     }
 
     @Override

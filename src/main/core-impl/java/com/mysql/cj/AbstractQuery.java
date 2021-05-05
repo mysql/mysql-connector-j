@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -90,11 +90,15 @@ public abstract class AbstractQuery implements Query {
     /** Elapsed time of the execution */
     private long executeTime = -1;
 
+    /** Query attributes bindings */
+    protected QueryAttributesBindings queryAttributesBindings;
+
     public AbstractQuery(NativeSession sess) {
         statementCounter++;
         this.session = sess;
         this.maxAllowedPacket = sess.getPropertySet().getIntegerProperty(PropertyKey.maxAllowedPacket);
         this.charEncoding = sess.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
+        this.queryAttributesBindings = new QueryAttributesBindings();
     }
 
     @Override
@@ -170,6 +174,11 @@ public abstract class AbstractQuery implements Query {
         if (this.batchedArgs != null) {
             this.batchedArgs.clear();
         }
+    }
+
+    @Override
+    public QueryAttributesBindings getQueryAttributesBindings() {
+        return this.queryAttributesBindings;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,9 @@
 
 package com.mysql.cj.protocol.a;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -49,7 +52,6 @@ import com.mysql.cj.util.StringUtils;
  * A position is maintained for reading/writing data. A payload length is
  * maintained allowing the PacketPayload to be decoupled from the size of
  * the underlying buffer.
- * 
  */
 public class NativePacketPayload implements Message {
     static final int NO_LENGTH_LIMIT = -1;
@@ -70,6 +72,8 @@ public class NativePacketPayload implements Message {
     private int position = 0;
 
     static final int MAX_BYTES_TO_DUMP = 1024;
+
+    private Map<String, Integer> tags = new HashMap<>();
 
     @Override
     public String toString() {
@@ -659,4 +663,29 @@ public class NativePacketPayload implements Message {
         return extractedSql;
     }
 
+    /**
+     * Tag current position with the given key for future reference.
+     * 
+     * @param key
+     *            the position tag key name.
+     * @return
+     *         the previous value of this tag, if there was one, or -1.
+     */
+    public int setTag(String key) {
+        Integer pos = this.tags.put(key, getPosition());
+        return pos == null ? -1 : pos;
+    }
+
+    /**
+     * Gets the value of the position tag for the given key.
+     * 
+     * @param key
+     *            the position tag key name.
+     * @return
+     *         the position value of this tag, if there was one, or -1.
+     */
+    public int getTag(String key) {
+        Integer pos = this.tags.get(key);
+        return pos == null ? -1 : pos;
+    }
 }

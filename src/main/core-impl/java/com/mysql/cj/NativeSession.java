@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -115,7 +115,7 @@ public class NativeSession extends CoreSession implements Serializable {
     /** Does this connection need to be tested? */
     private boolean needsPing = false;
 
-    private NativeMessageBuilder commandBuilder = new NativeMessageBuilder(); // TODO use shared builder
+    private NativeMessageBuilder commandBuilder = null;
 
     /** Has this session been closed? */
     private boolean isClosed = true;
@@ -160,6 +160,8 @@ public class NativeSession extends CoreSession implements Serializable {
         this.protocol.getServerSession().setErrorMessageEncoding(this.protocol.getAuthenticationProvider().getEncodingForHandshake());
 
         this.isClosed = false;
+
+        this.commandBuilder = new NativeMessageBuilder(this.getServerSession().supportsQueryAttributes());
     }
 
     // TODO: this method should not be used in user-level APIs

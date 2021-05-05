@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -50,6 +50,7 @@ import com.mysql.cj.NativeSession;
 import com.mysql.cj.ParseInfo;
 import com.mysql.cj.PingTarget;
 import com.mysql.cj.Query;
+import com.mysql.cj.QueryAttributesBindings;
 import com.mysql.cj.Session;
 import com.mysql.cj.SimpleQuery;
 import com.mysql.cj.TransactionEventHandler;
@@ -99,13 +100,13 @@ import com.mysql.cj.util.Util;
 public class StatementImpl implements JdbcStatement {
     protected static final String PING_MARKER = "/* ping */";
 
-    protected NativeMessageBuilder commandBuilder = new NativeMessageBuilder(); // TODO use shared builder
-
     public final static byte USES_VARIABLES_FALSE = 0;
 
     public final static byte USES_VARIABLES_TRUE = 1;
 
     public final static byte USES_VARIABLES_UNKNOWN = -1;
+
+    protected NativeMessageBuilder commandBuilder = null; // TODO use shared builder
 
     /** The character encoding to use (if available) */
     protected String charEncoding = null;
@@ -211,6 +212,8 @@ public class StatementImpl implements JdbcStatement {
         this.session = (NativeSession) c.getSession();
         this.exceptionInterceptor = c.getExceptionInterceptor();
 
+        this.commandBuilder = new NativeMessageBuilder(this.session.getServerSession().supportsQueryAttributes());
+
         try {
             initQuery();
         } catch (CJException e) {
@@ -304,8 +307,8 @@ public class StatementImpl implements JdbcStatement {
                     public void transactionBegun() {
                     }
                 });
-                newSession.sendCommand(new NativeMessageBuilder().buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + this.session.getThreadId()),
-                        false, 0);
+                newSession.sendCommand(new NativeMessageBuilder(newSession.getServerSession().supportsQueryAttributes())
+                        .buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + this.session.getThreadId()), false, 0);
                 setCancelStatus(CancelStatus.CANCELED_BY_USER);
             } catch (IOException e) {
                 throw SQLExceptionsMapping.translateException(e, this.exceptionInterceptor);
@@ -968,6 +971,8 @@ public class StatementImpl implements JdbcStatement {
                 StringBuilder queryBuf = new StringBuilder();
 
                 batchStmt = locallyScopedConn.createStatement();
+                JdbcStatement jdbcBatchedStmt = (JdbcStatement) batchStmt;
+                getQueryAttributesBindings().runThroughAll(a -> jdbcBatchedStmt.setAttribute(a.getName(), a.getValue()));
 
                 timeoutTask = startQueryTimer((StatementImpl) batchStmt, individualStatementTimeout);
 
@@ -983,7 +988,7 @@ public class StatementImpl implements JdbcStatement {
                 batchStmt.setEscapeProcessing(this.doEscapeProcessing);
 
                 if (this.doEscapeProcessing) {
-                    escapeAdjust = 2; // We assume packet _could_ grow by this amount, as we're not sure how big statement will end up after  escape processing
+                    escapeAdjust = 2; // We assume packet _could_ grow by this amount, as we're not sure how big statement will end up after escape processing
                 }
 
                 SQLException sqlEx = null;
@@ -1794,6 +1799,8 @@ public class StatementImpl implements JdbcStatement {
             closeAllOpenResults();
         }
 
+        clearAttributes();
+
         this.isClosed = true;
 
         closeQuery();
@@ -2268,5 +2275,20 @@ public class StatementImpl implements JdbcStatement {
     @Override
     public Query getQuery() {
         return this.query;
+    }
+
+    @Override
+    public QueryAttributesBindings getQueryAttributesBindings() {
+        return this.query.getQueryAttributesBindings();
+    }
+
+    @Override
+    public void setAttribute(String name, Object value) {
+        getQueryAttributesBindings().setAttribute(name, value);
+    }
+
+    @Override
+    public void clearAttributes() {
+        getQueryAttributesBindings().clearAttributes();
     }
 }

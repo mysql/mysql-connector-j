@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,6 +39,11 @@ import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
 import com.mysql.cj.util.StringUtils;
 
 public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload> {
+    private boolean supportsQueryAttributes = true;
+
+    public NativeMessageBuilder(boolean supportsQueryAttributes) {
+        this.supportsQueryAttributes = supportsQueryAttributes;
+    }
 
     @Override
     public NativePacketPayload buildSqlStatement(String statement) {
@@ -58,6 +63,14 @@ public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload>
     public NativePacketPayload buildComQuery(NativePacketPayload sharedPacket, byte[] query) {
         NativePacketPayload packet = sharedPacket != null ? sharedPacket : new NativePacketPayload(query.length + 1);
         packet.writeInteger(IntegerDataType.INT1, NativeConstants.COM_QUERY);
+
+        if (this.supportsQueryAttributes) {
+            // CLIENT_QUERY_ATTRIBUTES capability has been negotiated but, since this method is used solely to run queries internally and it is not bound to any
+            // Statement object, no query attributes are ever set.
+            packet.writeInteger(IntegerDataType.INT_LENENC, 0);
+            packet.writeInteger(IntegerDataType.INT_LENENC, 1); // parameter_set_count (always 1)
+        }
+
         packet.writeBytes(StringLengthDataType.STRING_FIXED, query);
         return packet;
     }

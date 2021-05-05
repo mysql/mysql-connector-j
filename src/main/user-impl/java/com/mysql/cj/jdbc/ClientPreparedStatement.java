@@ -1137,6 +1137,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
             pstmt.rewrittenBatchSize = numBatches;
 
+            getQueryAttributesBindings().runThroughAll(a -> ((JdbcStatement) pstmt).setAttribute(a.getName(), a.getValue()));
+
             return pstmt;
         }
     }

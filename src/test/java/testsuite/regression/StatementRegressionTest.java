@@ -11478,7 +11478,11 @@ public class StatementRegressionTest extends BaseTestCase {
             ps.setBytes(2, blobData);
             ps.addBatch();
 
-            assertThrows(SQLException.class, "Packet for query is too large \\(1,048,597 > 1,048,576\\).*", () -> ps.executeBatch());
+            if (versionMeetsMinimum(8, 0, 26)) {
+                assertThrows(SQLException.class, "Packet for query is too large \\(1.048.598 > 1.048.576\\).*", () -> ps.executeBatch());
+            } else {
+                assertThrows(SQLException.class, "Packet for query is too large \\(1.048.597 > 1.048.576\\).*", () -> ps.executeBatch());
+            }
             ps.close(); // was failing
 
             this.rs = st.executeQuery("select c1 from testBug21132376 ");

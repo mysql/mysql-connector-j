@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -135,11 +135,13 @@ public interface ServerSession {
 
     void setClientParam(long clientParam);
 
+    boolean hasLongColumnInfo();
+
     boolean useMultiResults();
 
     boolean isEOFDeprecated();
 
-    boolean hasLongColumnInfo();
+    boolean supportsQueryAttributes();
 
     Map<String, String> getServerVariables();
 
@@ -240,7 +242,7 @@ public interface ServerSession {
     void setSessionTimeZone(TimeZone sessionTimeZone);
 
     /**
-     * The default time zone used to marshall date/time values to/from the server. This is used when getDate(), etc methods are called without a calendar
+     * The default time zone used to marshal date/time values to/from the server. This is used when methods like getDate() are called without a calendar
      * argument.
      *
      * @return The default JVM time zone
