@@ -720,10 +720,21 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                 if (paramArg[j].isStream()) {
                     Object value = paramArg[j].value;
 
-                    if (value instanceof InputStream) {
+                    if (value instanceof byte[]) {
+                        batchedStatement.setBytes(batchedParamIndex++, (byte[]) value);
+                    } else if (value instanceof InputStream) {
                         batchedStatement.setBinaryStream(batchedParamIndex++, (InputStream) value, paramArg[j].getStreamLength());
-                    } else {
+                    } else if (value instanceof java.sql.Blob) {
+                        try {
+                            batchedStatement.setBinaryStream(batchedParamIndex++, ((java.sql.Blob) value).getBinaryStream(), paramArg[j].getStreamLength());
+                        } catch (Throwable t) {
+                            throw ExceptionFactory.createException(t.getMessage(), this.session.getExceptionInterceptor());
+                        }
+                    } else if (value instanceof Reader) {
                         batchedStatement.setCharacterStream(batchedParamIndex++, (Reader) value, paramArg[j].getStreamLength());
+                    } else {
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("ServerPreparedStatement.18") + value.getClass().getName() + "'", this.session.getExceptionInterceptor());
                     }
                 } else {
                     switch (paramArg[j].bufferType) {

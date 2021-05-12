@@ -182,7 +182,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
             setNull(parameterIndex);
         } else {
             try {
-                setBinaryStream(parameterIndex, x.getBinaryStream());
+                setBinaryStream(parameterIndex, x.getBinaryStream(), x.length());
             } catch (Throwable t) {
                 throw ExceptionFactory.createException(t.getMessage(), t, this.session.getExceptionInterceptor());
             }

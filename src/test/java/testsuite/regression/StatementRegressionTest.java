@@ -106,6 +106,7 @@ import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
 import javax.sql.XAConnection;
+import javax.sql.rowset.serial.SerialBlob;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -11535,6 +11536,51 @@ public class StatementRegressionTest extends BaseTestCase {
         } finally {
             if (con != null) {
                 con.close();
+            }
+        }
+    }
+
+    /**
+     * Test fix for Bug#103303 (32766143), JAVA.LANG.CLASSCASTEXCEPTION WHEN INSERTING BLOB WITH SERVER PREPARED STATEMENT.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug103303() throws Exception {
+        createTable("testBug103303", "(id INT AUTO_INCREMENT PRIMARY KEY, blob1 MEDIUMBLOB)");
+
+        Connection con = null;
+        Properties props = new Properties();
+
+        for (boolean rewriteBS : new boolean[] { true, false }) {
+            for (boolean useSSPS : new boolean[] { true, false }) {
+                props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "" + rewriteBS);
+                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+
+                try {
+                    this.stmt.executeUpdate("truncate table testBug103303");
+
+                    con = getConnectionWithProps(props);
+
+                    PreparedStatement statement = con.prepareStatement("INSERT INTO testBug103303(blob1) VALUES(?)", PreparedStatement.RETURN_GENERATED_KEYS);
+                    statement.setBlob(1, new SerialBlob("test1".getBytes()));
+                    statement.addBatch();
+                    statement.setBlob(1, new SerialBlob("test2".getBytes()));
+                    statement.addBatch();
+                    statement.executeBatch();
+
+                    this.rs = this.stmt.executeQuery("select blob1 from testBug103303 order by id");
+                    assertTrue(this.rs.next());
+                    assertEquals("test1", this.rs.getString(1));
+                    assertTrue(this.rs.next());
+                    assertEquals("test2", this.rs.getString(1));
+                    assertFalse(this.rs.next());
+
+                } finally {
+                    if (con != null) {
+                        con.close();
+                    }
+                }
             }
         }
     }
