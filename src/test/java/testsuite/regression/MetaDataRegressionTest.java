@@ -1063,27 +1063,38 @@ public class MetaDataRegressionTest extends BaseTestCase {
          * this.conn.getCatalog(), null, "app tab", this.conn.getCatalog(),
          * null, "app tab");
          */
-        String db = ((JdbcConnection) this.conn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA
-                ? this.conn.getSchema()
-                : this.conn.getCatalog();
-        this.rs = ((com.mysql.cj.jdbc.DatabaseMetaData) this.conn.getMetaData()).extractForeignKeyFromCreateTable(db, "app tab");
-        assertTrue(this.rs.next(), "must return a row");
 
-        assertEquals(("comment; APPFK(`C1`) REFER `" + db + "`/ `app tab` (`C1`)").toUpperCase(), this.rs.getString(3).toUpperCase());
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (String databaseTerm : new String[] { "CATALOG", "SCHEMA" }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), databaseTerm);
 
-        this.rs.close();
+                System.out.println("useInformationSchema=" + useIS + ", databaseTerm=" + databaseTerm);
 
-        this.rs = ((JdbcConnection) this.conn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA
-                ? this.conn.getMetaData().getImportedKeys(null, this.conn.getCatalog(), "app tab")
-                : this.conn.getMetaData().getImportedKeys(this.conn.getCatalog(), null, "app tab");
+                Connection con = getConnectionWithProps(props);
 
-        assertTrue(this.rs.next());
+                String db = databaseTerm.contentEquals("SCHEMA") ? con.getSchema() : con.getCatalog();
+                this.rs = ((com.mysql.cj.jdbc.DatabaseMetaData) con.getMetaData()).extractForeignKeyFromCreateTable(db, "app tab");
+                assertTrue(this.rs.next(), "must return a row");
 
-        this.rs = ((JdbcConnection) this.conn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA
-                ? this.conn.getMetaData().getExportedKeys(null, this.conn.getCatalog(), "app tab")
-                : this.conn.getMetaData().getExportedKeys(this.conn.getCatalog(), null, "app tab");
+                assertEquals(("comment; APPFK(`C1`) REFER `" + db + "`/ `app tab` (`C1`)").toUpperCase(), this.rs.getString(3).toUpperCase());
 
-        assertTrue(this.rs.next());
+                this.rs.close();
+
+                this.rs = databaseTerm.contentEquals("SCHEMA") ? con.getMetaData().getImportedKeys(null, con.getSchema(), "app tab")
+                        : con.getMetaData().getImportedKeys(con.getCatalog(), null, "app tab");
+
+                assertTrue(this.rs.next());
+
+                this.rs = databaseTerm.contentEquals("SCHEMA") ? con.getMetaData().getExportedKeys(null, con.getSchema(), "app tab")
+                        : con.getMetaData().getExportedKeys(con.getCatalog(), null, "app tab");
+
+                assertTrue(this.rs.next());
+
+            }
+        }
+
     }
 
     /**
@@ -5145,5 +5156,49 @@ public class MetaDataRegressionTest extends BaseTestCase {
             assertEquals(Integer.MAX_VALUE, this.rs.getLong(14)); // CHAR_OCTET_LENGTH
         } while (this.rs.next());
 
+    }
+
+    /**
+     * Tests fix for Bug#95280 (29757140), DATABASEMETADATA.GETIMPORTEDKEYS RETURNS DOUBLE THE ROWS.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug95280() throws Exception {
+        String databaseName1 = "dbBug95280_1";
+        createDatabase(databaseName1);
+        createTable(databaseName1 + ".table1",
+                "(cat_id int not null auto_increment primary key, cat_name varchar(255) not null, cat_description text) ENGINE=InnoDB;");
+        createTable(databaseName1 + ".table2",
+                "(prd_id int not null auto_increment primary key, prd_name varchar(355) not null, prd_price decimal, cat_id int not null,"
+                        + " FOREIGN KEY fk_cat(cat_id) REFERENCES table1(cat_id) ON UPDATE CASCADE ON DELETE RESTRICT) ENGINE=InnoDB;");
+
+        String databaseName2 = "dbBug95280_2";
+        createDatabase(databaseName2);
+        createTable(databaseName2 + ".table1",
+                "(cat_id int not null auto_increment primary key, cat_name varchar(255) not null, cat_description text) ENGINE=InnoDB;");
+        createTable(databaseName2 + ".table2",
+                "(prd_id int not null auto_increment primary key, prd_name varchar(355) not null, prd_price decimal, cat_id int not null,"
+                        + " FOREIGN KEY fk_cat(cat_id) REFERENCES table1(cat_id) ON UPDATE CASCADE ON DELETE RESTRICT) ENGINE=InnoDB;");
+
+        Properties props = new Properties();
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (String databaseTerm : new String[] { "CATALOG", "SCHEMA" }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), databaseTerm);
+
+                Connection con = getConnectionWithProps(props);
+                DatabaseMetaData meta = con.getMetaData();
+
+                this.rs = databaseTerm.contentEquals("SCHEMA") ? meta.getImportedKeys(null, databaseName1, "table2")
+                        : meta.getImportedKeys(databaseName1, null, "table2");
+                assertTrue(this.rs.next());
+                assertEquals("table2", this.rs.getString("FKTABLE_NAME"));
+                assertEquals("cat_id", this.rs.getString("FKCOLUMN_NAME"));
+                assertEquals(1, this.rs.getInt("KEY_SEQ"));
+                assertFalse(this.rs.next());
+                con.close();
+            }
+        }
     }
 }

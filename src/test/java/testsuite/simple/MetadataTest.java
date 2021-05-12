@@ -1366,11 +1366,12 @@ public class MetadataTest extends BaseTestCase {
             conn1 = getConnectionWithProps(props);
             DatabaseMetaData metaData = conn1.getMetaData();
             this.rs = metaData.getCrossReference(null, null, "parent", null, null, "child");
-            this.rs.next();
+            assertTrue(this.rs.next());
             assertEquals("parent", this.rs.getString("PKTABLE_NAME"));
             assertEquals("id", this.rs.getString("PKCOLUMN_NAME"));
             assertEquals("child", this.rs.getString("FKTABLE_NAME"));
             assertEquals("parent_id", this.rs.getString("FKCOLUMN_NAME"));
+            assertFalse(this.rs.next());
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
             this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
