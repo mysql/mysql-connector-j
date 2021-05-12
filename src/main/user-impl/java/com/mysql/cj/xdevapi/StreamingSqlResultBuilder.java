@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -102,7 +102,7 @@ public class StreamingSqlResultBuilder implements ResultBuilder<SqlResult> {
                     });
                     this.lastEntity = null;
                 } else {
-                    cd = this.protocol.readMetadata();
+                    cd = this.protocol.readMetadata(this.statementExecuteOkBuilder::addProtocolEntity);
                 }
                 return new SqlSingleResult(cd, this.protocol.getServerSession().getDefaultTimeZone(), new XProtocolRowInputStream(cd, this.protocol, (n) -> {
                     this.statementExecuteOkBuilder.addProtocolEntity(n);

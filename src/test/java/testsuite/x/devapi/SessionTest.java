@@ -88,7 +88,12 @@ import com.mysql.cj.xdevapi.Client.ClientProperty;
 import com.mysql.cj.xdevapi.ClientFactory;
 import com.mysql.cj.xdevapi.ClientImpl;
 import com.mysql.cj.xdevapi.ClientImpl.PooledXProtocol;
+import com.mysql.cj.xdevapi.Collection;
+import com.mysql.cj.xdevapi.DbDoc;
+import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.FindStatement;
+import com.mysql.cj.xdevapi.JsonNumber;
+import com.mysql.cj.xdevapi.JsonString;
 import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.RowResult;
 import com.mysql.cj.xdevapi.Schema;
@@ -2565,5 +2570,91 @@ public class SessionTest extends DevApiBaseTestCase {
         } finally {
             sqlUpdate("drop table if exists testExecAsyncNegative");
         }
+    }
+
+    /**
+     * Test fix for Bug#97269 (30438500), POSSIBLE BUG IN COM.MYSQL.CJ.XDEVAPI.STREAMINGDOCRESULTBUILDER.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug97269() throws Exception {
+        assumeTrue(this.isSetForXTests);
+
+        Session sess = null;
+        try {
+            String message1 = "W1";
+            String message2 = "W2";
+
+            // create notice message buffers
+            Frame.Builder notice1 = Frame.newBuilder().setScope(Frame.Scope.LOCAL).setType(Frame.Type.WARNING_VALUE)
+                    .setPayload(com.mysql.cj.x.protobuf.MysqlxNotice.Warning.newBuilder().setCode(MysqlErrorNumbers.ER_BAD_DB_ERROR).setMsg(message1).build()
+                            .toByteString());
+            Frame.Builder notice2 = Frame.newBuilder().setScope(Frame.Scope.GLOBAL).setType(Frame.Type.WARNING_VALUE)
+                    .setPayload(com.mysql.cj.x.protobuf.MysqlxNotice.Warning.newBuilder().setCode(MysqlErrorNumbers.ER_BAD_DB_ERROR).setMsg(message2).build()
+                            .toByteString());
+
+            byte[] notice1Bytes = makeNoticeBytes(notice1.build());
+            byte[] notice2Bytes = makeNoticeBytes(notice2.build());
+            int size = notice1Bytes.length + notice2Bytes.length;
+            byte[] noticesBytes = new byte[size];
+            System.arraycopy(notice1Bytes, 0, noticesBytes, 0, notice1Bytes.length);
+            System.arraycopy(notice2Bytes, 0, noticesBytes, notice1Bytes.length, notice2Bytes.length);
+
+            InjectedSocketFactory.flushAllStaticData();
+
+            String url = this.baseUrl + (this.baseUrl.contains("?") ? "" : "?")
+                    + makeParam(PropertyKey.socketFactory, InjectedSocketFactory.class.getName(), !this.baseUrl.contains("?") || this.baseUrl.endsWith("?"))
+                    + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.DISABLED.toString())
+                    + makeParam(PropertyKey.xdevapiCompression, Compression.DISABLED.toString())
+                    // to allow injection between result rows
+                    + makeParam(PropertyKey.useReadAheadInput, "false");
+
+            sess = this.fact.getSession(url);
+            SocketFactory sf = ((SessionImpl) sess).getSession().getProtocol().getSocketConnection().getSocketFactory();
+            assertTrue(InjectedSocketFactory.class.isAssignableFrom(sf.getClass()));
+
+            Collection collection = sess.getDefaultSchema().createCollection("testBug97269");
+            collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
+
+            // StreamingDocResultBuilder
+            InjectedSocketFactory.injectedBuffer = noticesBytes;
+            DocResult docs = collection.find().fields("$._id as _id, $.g as g, 1 + 1 as q").execute();
+            DbDoc doc = docs.next();
+            assertEquals("the_id", ((JsonString) doc.get("_id")).getString());
+            assertEquals(new Integer(1), ((JsonNumber) doc.get("g")).getInteger());
+            assertEquals(new Integer(2), ((JsonNumber) doc.get("q")).getInteger());
+
+            int cnt = 0;
+            for (Iterator<Warning> warn = docs.getWarnings(); warn.hasNext();) {
+                Warning w = warn.next();
+                if (w.getMessage().equals(message1) || w.getMessage().equals(message2)) {
+                    cnt++;
+                }
+            }
+            assertEquals(2, cnt);
+
+            InjectedSocketFactory.flushAllStaticData();
+            InjectedSocketFactory.injectedBuffer = noticesBytes;
+
+            SqlResult rs1 = sess.sql("select 1").execute();
+            assertEquals(1, rs1.fetchOne().getInt(0));
+            cnt = 0;
+            for (Iterator<Warning> warn = rs1.getWarnings(); warn.hasNext();) {
+                Warning w = warn.next();
+                if (w.getMessage().equals(message1) || w.getMessage().equals(message2)) {
+                    cnt++;
+                }
+            }
+            assertEquals(2, cnt);
+
+        } finally {
+            InjectedSocketFactory.flushAllStaticData();
+            dropCollection("testBug97269");
+            if (sess != null) {
+                sess.close();
+            }
+        }
+
     }
 }

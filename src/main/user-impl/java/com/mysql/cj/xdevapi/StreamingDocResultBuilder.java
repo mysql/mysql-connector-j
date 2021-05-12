@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -70,6 +70,7 @@ public class StreamingDocResultBuilder implements ResultBuilder<DocResult> {
 
         } else if (entity instanceof Notice) {
             this.statementExecuteOkBuilder.addProtocolEntity(entity);
+            return false;
         }
 
         if (this.metadata == null) {

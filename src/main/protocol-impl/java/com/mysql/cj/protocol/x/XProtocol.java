@@ -698,11 +698,19 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     }
 
     public ColumnDefinition readMetadata() {
+        return readMetadata(null);
+    }
+
+    public ColumnDefinition readMetadata(Consumer<Notice> noticeConsumer) {
         try {
+            List<Notice> notices;
             List<ColumnMetaData> fromServer = new LinkedList<>();
             do { // use this construct to read at least one
-                fromServer.add((ColumnMetaData) this.reader.readMessage(null, ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE).getMessage());
-                // TODO put notices somewhere like it's done eg. in readStatementExecuteOk(): builder.addNotice(this.reader.read(Frame.class));
+                XMessage mess = this.reader.readMessage(null, ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE);
+                if (noticeConsumer != null && (notices = mess.getNotices()) != null) {
+                    notices.stream().forEach(noticeConsumer::accept);
+                }
+                fromServer.add((ColumnMetaData) mess.getMessage());
             } while (((SyncMessageReader) this.reader).getNextNonNoticeMessageType() == ServerMessages.Type.RESULTSET_COLUMN_META_DATA_VALUE);
             ArrayList<Field> metadata = new ArrayList<>(fromServer.size());
             @SuppressWarnings("unchecked")
