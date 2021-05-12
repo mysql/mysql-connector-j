@@ -2444,6 +2444,9 @@ public class DateTimeTest extends BaseTestCase {
     public void testOffsetDatetimeSetters() throws Exception {
         boolean withFract = versionMeetsMinimum(5, 6, 4); // fractional seconds are not supported in previous versions
         boolean allowsOffset = versionMeetsMinimum(8, 0, 19);
+        // Starting from MySQL 8.0.22 server also converts TIMESTAMP_WITH_TIMEZONE value to the server time zone for column types other than TIMESTAMP and DATETIME.
+        // In MySQL 8.0.26 it was reverted.
+        boolean serverConvertsTzForAllTypes = versionMeetsMinimum(8, 0, 22) && !versionMeetsMinimum(8, 0, 26);
 
         createTable(tYear, "(id INT, d YEAR)");
         createTable(tDate, "(id INT, d DATE)");
@@ -2463,6 +2466,8 @@ public class DateTimeTest extends BaseTestCase {
         TimeZone serverTz;
         try (Connection testConn = getConnectionWithProps(props)) {
             serverTz = ((MysqlConnection) testConn).getSession().getServerSession().getSessionTimeZone();
+            System.out.println("Local tz: " + TimeZone.getDefault());
+            System.out.println("Server tz: " + serverTz);
         }
 
         OffsetDateTime odt_20200101_120000_123456_05_00 = OffsetDateTime.of(2020, 1, 1, 12, 00, 00, withFract ? 123456000 : 0, ZoneOffset.ofHours(5));
@@ -2531,7 +2536,7 @@ public class DateTimeTest extends BaseTestCase {
                                                 .format(useSSPS ? TimeUtil.DATE_FORMATTER : DateTimeFormatter.ofPattern("20HH-mm-ss"));
                                         // Starting from MySQL 8.0.22 TIMESTAMP_WITH_TIMEZONE value is also converted to the server time zone by server
                                         // for column types other than TIMESTAMP or DATETIME
-                                        String expDateChar = versionMeetsMinimum(8, 0, 22)
+                                        String expDateChar = serverConvertsTzForAllTypes
                                                 ? odt_20200101_120000_123456_05_00.atZoneSameInstant(sessionTz.toZoneId()).format(TimeUtil.DATE_FORMATTER)
                                                 : odt_20200101_120000_123456_05_00.format(TimeUtil.DATE_FORMATTER);
                                         String expDateTS = zdt_TS_on_wire.format(TimeUtil.DATE_FORMATTER);
@@ -2539,7 +2544,7 @@ public class DateTimeTest extends BaseTestCase {
                                         String expTimeNoMs = zdt_20200101_120000_123456_on_wire.format(TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET);
                                         String expTime = zdt_20200101_120000_123456_on_wire.format(timeFmt);
 
-                                        String expTime2 = versionMeetsMinimum(8, 0, 22)
+                                        String expTime2 = serverConvertsTzForAllTypes
                                                 ? odt_20200101_120000_123456_05_00.atZoneSameInstant(sessionTz.toZoneId()).format(timeFmt)
                                                 : odt_20200101_120000_123456_05_00.format(timeFmt);
                                         String expTimeTS = zdt_TS_on_wire.format(timeFmt);
@@ -2815,6 +2820,9 @@ public class DateTimeTest extends BaseTestCase {
     public void testZonedDatetimeSetters() throws Exception {
         boolean withFract = versionMeetsMinimum(5, 6, 4); // fractional seconds are not supported in previous versions
         boolean allowsOffset = versionMeetsMinimum(8, 0, 19);
+        // Starting from MySQL 8.0.22 server also converts TIMESTAMP_WITH_TIMEZONE value to the server time zone for column types other than TIMESTAMP and DATETIME.
+        // In MySQL 8.0.26 it was reverted.
+        boolean serverConvertsTzForAllTypes = versionMeetsMinimum(8, 0, 22) && !versionMeetsMinimum(8, 0, 26);
 
         createTable(tYear, "(id INT, d YEAR)");
         createTable(tDate, "(id INT, d DATE)");
@@ -2832,6 +2840,8 @@ public class DateTimeTest extends BaseTestCase {
         TimeZone serverTz;
         try (Connection testConn = getConnectionWithProps(props)) {
             serverTz = ((MysqlConnection) testConn).getSession().getServerSession().getSessionTimeZone();
+            System.out.println("Local tz: " + TimeZone.getDefault());
+            System.out.println("Server tz: " + serverTz);
         }
 
         ZonedDateTime zdt_20200101_120000_123456_05_00 = ZonedDateTime.of(withFract ? ldt_20200101_120000_123456 : ldt_20200101_120000_123456.withNano(0),
@@ -2900,14 +2910,14 @@ public class DateTimeTest extends BaseTestCase {
                                                 .format(useSSPS ? TimeUtil.DATE_FORMATTER : DateTimeFormatter.ofPattern("20HH-mm-ss"));
                                         // Starting from MySQL 8.0.22 TIMESTAMP_WITH_TIMEZONE value is also converted to the server time zone by server
                                         // for column types other than TIMESTAMP or DATETIME
-                                        String expDateChar = versionMeetsMinimum(8, 0, 22)
+                                        String expDateChar = serverConvertsTzForAllTypes
                                                 ? zdt_20200101_120000_123456_05_00.withZoneSameInstant(sessionTz.toZoneId()).format(TimeUtil.DATE_FORMATTER)
                                                 : zdt_20200101_120000_123456_05_00.format(TimeUtil.DATE_FORMATTER);
                                         String expDateTS = zdt_TS_on_wire.format(TimeUtil.DATE_FORMATTER);
 
                                         String expTimeNoMs = zdt_20200101_120000_123456_on_wire.format(TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET);
                                         String expTime = zdt_20200101_120000_123456_on_wire.format(timeFmt);
-                                        String expTime2 = versionMeetsMinimum(8, 0, 22)
+                                        String expTime2 = serverConvertsTzForAllTypes
                                                 ? zdt_20200101_120000_123456_05_00.withZoneSameInstant(sessionTz.toZoneId()).format(timeFmt)
                                                 : zdt_20200101_120000_123456_05_00.format(timeFmt);
                                         String expTimeTS = zdt_TS_on_wire.format(timeFmt);
@@ -3389,9 +3399,10 @@ public class DateTimeTest extends BaseTestCase {
                 testConn = this.utcConnections.get(getKey(props));
                 Statement localStmt = testConn.createStatement();
                 localStmt.execute("set @@time_zone='+00:00'");
-                ResultSet localRs = localStmt.executeQuery("SELECT * FROM " + tableName + " WHERE id = " + id + " AND d = '" + expectedUTCValue + "'"
-                        + (expectedUnixTimestamp != null ? " AND unix_timestamp(d) = " + expectedUnixTimestamp : ""));
-                assertTrue(localRs.next());
+                String sql = "SELECT * FROM " + tableName + " WHERE id = " + id + " AND d = '" + expectedUTCValue + "'"
+                        + (expectedUnixTimestamp != null ? " AND unix_timestamp(d) = " + expectedUnixTimestamp : "");
+                ResultSet localRs = localStmt.executeQuery(sql);
+                assertTrue(localRs.next(), parameter + "\n" + targetSqlType + "\n" + senderTz + "\n" + useMethod + "\n" + sql);
                 localStmt.close();
             }
         } finally {
