@@ -44,9 +44,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.mysql.cj.protocol.a.NativeConstants;
-import com.mysql.cj.util.StringUtils;
 
-public class QueryAttributesBindValue {
+public class NativeQueryAttributesBindValue implements QueryAttributesBindValue {
     private static final Map<Class<?>, Integer> JAVA_TO_MYSQL_FIELD_TYPE = new HashMap<>();
     static {
         JAVA_TO_MYSQL_FIELD_TYPE.put(String.class, MysqlType.FIELD_TYPE_STRING);
@@ -83,7 +82,7 @@ public class QueryAttributesBindValue {
     /** The attribute MySQL type */
     protected int type = MysqlType.FIELD_TYPE_NULL;
 
-    protected QueryAttributesBindValue(String name, Object value) {
+    protected NativeQueryAttributesBindValue(String name, Object value) {
         this.name = name;
         this.value = value;
         this.type = getMysqlFieldType(value);
@@ -109,27 +108,27 @@ public class QueryAttributesBindValue {
         return MysqlType.FIELD_TYPE_STRING;
     }
 
+    @Override
     public boolean isNull() {
         return this.type == MysqlType.FIELD_TYPE_NULL;
     }
 
+    @Override
     public String getName() {
         return this.name;
     }
 
+    @Override
     public int getType() {
         return this.type;
     }
 
+    @Override
     public Object getValue() {
         return this.value;
     }
 
-    public byte[] getByteValue() {
-        String charEncoding = null;
-        return charEncoding != null ? StringUtils.getBytes(toString(), charEncoding) : toString().getBytes();
-    }
-
+    @Override
     public long getBoundLength() {
         if (isNull()) {
             return 0;

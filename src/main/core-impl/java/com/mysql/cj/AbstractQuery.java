@@ -98,7 +98,7 @@ public abstract class AbstractQuery implements Query {
         this.session = sess;
         this.maxAllowedPacket = sess.getPropertySet().getIntegerProperty(PropertyKey.maxAllowedPacket);
         this.charEncoding = sess.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
-        this.queryAttributesBindings = new QueryAttributesBindings();
+        this.queryAttributesBindings = new NativeQueryAttributesBindings();
     }
 
     @Override
