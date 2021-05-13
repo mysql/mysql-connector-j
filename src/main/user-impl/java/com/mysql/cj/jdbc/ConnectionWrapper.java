@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -59,6 +59,7 @@ import com.mysql.cj.interceptors.QueryInterceptor;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.ResultSetInternalMethods;
+import com.mysql.cj.protocol.ServerSessionStateController;
 
 /**
  * This class serves as a wrapper for the connection object. It is returned to the application server which may wrap it again and then return it to the
@@ -1243,4 +1244,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         this.mc.cleanup(whyCleanedUp);
     }
 
+    @Override
+    public ServerSessionStateController getServerSessionStateController() {
+        return this.mc.getServerSessionStateController();
+    }
 }

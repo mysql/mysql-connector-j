@@ -31,6 +31,7 @@ package testsuite.regression;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -185,6 +186,10 @@ import com.mysql.cj.protocol.PacketReceivedTimeHolder;
 import com.mysql.cj.protocol.PacketSentTimeHolder;
 import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.protocol.ServerSession;
+import com.mysql.cj.protocol.ServerSessionStateController;
+import com.mysql.cj.protocol.ServerSessionStateController.ServerSessionStateChanges;
+import com.mysql.cj.protocol.ServerSessionStateController.SessionStateChange;
+import com.mysql.cj.protocol.ServerSessionStateController.SessionStateChangesListener;
 import com.mysql.cj.protocol.StandardSocketFactory;
 import com.mysql.cj.protocol.a.DebugBufferingPacketReader;
 import com.mysql.cj.protocol.a.DebugBufferingPacketSender;
@@ -11810,4 +11815,206 @@ public class ConnectionRegressionTest extends BaseTestCase {
         getConnectionWithProps("defaultAuthenticationPlugin=authentication_ldap_sasl_client").close();
         assertNotNull(Security.getProvider("MySQLScramShaSasl"));
     }
+
+    /**
+     * Tests fix for Bug#102404 (32435618), CONTRIBUTION: ADD TRACK SESSION STATE CHANGE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug102404() throws Exception {
+        assumeTrue(versionMeetsMinimum(5, 7, 6), "Session state tracking requires at least MySQL 5.7.6");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.trackSessionState.getKeyName(), "true");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1");
+        Connection c = getConnectionWithProps(props);
+
+        TestBug102404Listener listener = new TestBug102404Listener();
+
+        ((MysqlConnection) c).getServerSessionStateController().addSessionStateChangesListener(listener);
+
+        Statement testStmt = c.createStatement();
+
+        /*
+         * SET NAMES should generate three SESSION_TRACK_SYSTEM_VARIABLES changes,
+         * for character_set_client, character_set_connection and character_set_results system variables
+         */
+        System.out.println("\n=== Test SESSION_TRACK_SYSTEM_VARIABLES ===");
+        testStmt.executeUpdate("SET NAMES latin5");
+        int cnt1 = 0;
+
+        assertEquals(listener.changes, ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges());
+
+        for (SessionStateChange change : ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges().getSessionStateChangesList()) {
+            if (change.getType() == ServerSessionStateController.SESSION_TRACK_SYSTEM_VARIABLES) {
+                cnt1++;
+                assertTrue(
+                        "character_set_client".contentEquals(change.getValues().get(0)) || "character_set_connection".contentEquals(change.getValues().get(0))
+                                || "character_set_results".contentEquals(change.getValues().get(0)));
+                assertEquals("latin5", change.getValues().get(1));
+            }
+        }
+        assertEquals(3, cnt1);
+
+        /*
+         * Check SESSION_TRACK_SCHEMA and SESSION_TRACK_STATE_CHANGE
+         */
+        System.out.println("\n=== Test SESSION_TRACK_SCHEMA and SESSION_TRACK_STATE_CHANGE ===");
+        testStmt.executeUpdate("SET SESSION session_track_state_change=1"); // this statement itself does not produce SESSION_TRACK_STATE_CHANGE
+        testStmt.executeUpdate("USE " + this.dbName); // should produce both SESSION_TRACK_SCHEMA and SESSION_TRACK_STATE_CHANGE
+        cnt1 = 0;
+        int cnt2 = 0;
+
+        assertEquals(listener.changes, ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges());
+
+        for (SessionStateChange change : ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges().getSessionStateChangesList()) {
+            if (change.getType() == ServerSessionStateController.SESSION_TRACK_SCHEMA) {
+                cnt1++;
+                assertEquals(this.dbName, change.getValues().get(0));
+            } else if (change.getType() == ServerSessionStateController.SESSION_TRACK_STATE_CHANGE) {
+                cnt2++;
+                assertEquals("1", change.getValues().get(0));
+            }
+        }
+        assertEquals(1, cnt1);
+        assertEquals(1, cnt2);
+
+        /*
+         * Check SESSION_TRACK_TRANSACTION_STATE, SESSION_TRACK_TRANSACTION_CHARACTERISTICS and SESSION_TRACK_GTIDS.
+         * SESSION_TRACK_GTIDS requires the server configured for replication with GTIDs.
+         */
+        this.rs = testStmt.executeQuery("SELECT @@gtid_mode, @@log_bin, @@enforce_gtid_consistency");
+        this.rs.next();
+        boolean checkGTIDs = "ON".equalsIgnoreCase(this.rs.getString(1)) && "1".equalsIgnoreCase(this.rs.getString(2))
+                && "ON".equalsIgnoreCase(this.rs.getString(3));
+        System.out.println("\n=== Test SESSION_TRACK_TRANSACTION_STATE, SESSION_TRACK_TRANSACTION_CHARACTERISTICS and SESSION_TRACK_GTIDS ===");
+
+        createTable(testStmt, "testBug102404", "(val varchar(10))");
+        c.createStatement().executeUpdate("SET @@session.session_track_gtids='OWN_GTID'");
+
+        c.createStatement().executeUpdate("SET @@SESSION.session_track_transaction_info='CHARACTERISTICS'");
+        c.createStatement().executeUpdate("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+        cnt1 = 0;
+
+        assertEquals(listener.changes, ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges());
+
+        for (SessionStateChange change : ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges().getSessionStateChangesList()) {
+            if (change.getType() == ServerSessionStateController.SESSION_TRACK_TRANSACTION_CHARACTERISTICS) {
+                cnt1++;
+                assertEquals("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;", change.getValues().get(0));
+            }
+        }
+        assertEquals(1, cnt1);
+
+        cnt1 = 0;
+        c.createStatement().executeUpdate("SET TRANSACTION READ WRITE");
+        for (SessionStateChange change : ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges().getSessionStateChangesList()) {
+            if (change.getType() == ServerSessionStateController.SESSION_TRACK_TRANSACTION_CHARACTERISTICS) {
+                cnt1++;
+                assertEquals("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE; SET TRANSACTION READ WRITE;", change.getValues().get(0));
+            }
+        }
+        assertEquals(1, cnt1);
+
+        System.out.println("START TRANSACTION");
+        cnt1 = 0;
+        cnt2 = 0;
+        testStmt.execute("START TRANSACTION");
+
+        assertEquals(listener.changes, ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges());
+
+        for (SessionStateChange change : ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges().getSessionStateChangesList()) {
+            if (change.getType() == ServerSessionStateController.SESSION_TRACK_TRANSACTION_STATE) {
+                cnt1++;
+                assertTrue(change.getValues().get(0).startsWith("T"));
+            } else if (change.getType() == ServerSessionStateController.SESSION_TRACK_TRANSACTION_CHARACTERISTICS) {
+                cnt2++;
+                assertEquals("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE; START TRANSACTION READ WRITE;", change.getValues().get(0));
+            }
+        }
+        assertEquals(1, cnt1);
+        assertEquals(1, cnt2);
+
+        System.out.println("insert into testBug102404 values('abc')");
+        ((MysqlConnection) c).getServerSessionStateController().removeSessionStateChangesListener(listener);
+
+        cnt1 = 0;
+        testStmt.executeUpdate("insert into testBug102404 values('abc')");
+
+        assertNotEquals(listener.changes, ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges());
+
+        for (SessionStateChange change : ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges().getSessionStateChangesList()) {
+            if (change.getType() == ServerSessionStateController.SESSION_TRACK_TRANSACTION_STATE) {
+                cnt1++;
+                assertTrue(change.getValues().get(0).startsWith("T") && change.getValues().get(0).contains("W"));
+            }
+        }
+        assertEquals(1, cnt1);
+
+        System.out.println("COMMIT");
+        ((MysqlConnection) c).getServerSessionStateController().addSessionStateChangesListener(listener);
+        cnt1 = 0;
+        cnt2 = 0;
+        int cnt3 = 0;
+        testStmt.execute("COMMIT");
+
+        assertEquals(listener.changes, ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges());
+
+        for (SessionStateChange change : ((MysqlConnection) c).getServerSessionStateController().getSessionStateChanges().getSessionStateChangesList()) {
+            if (change.getType() == ServerSessionStateController.SESSION_TRACK_GTIDS) {
+                String gtid = change.getValues().get(0);
+                int colonPos = gtid.indexOf(":");
+                assertTrue(colonPos > 0);
+                gtid = gtid.substring(0, colonPos);
+
+                this.rs = this.stmt.executeQuery("show global variables like 'gtid_executed'");
+                while (this.rs.next()) {
+                    if (this.rs.getString(2).startsWith(gtid)) {
+                        cnt1++;
+                        break;
+                    }
+                }
+
+            } else if (change.getType() == ServerSessionStateController.SESSION_TRACK_TRANSACTION_STATE) {
+                cnt2++;
+                assertTrue(change.getValues().get(0).startsWith("_"));
+
+            } else if (change.getType() == ServerSessionStateController.SESSION_TRACK_TRANSACTION_CHARACTERISTICS) {
+                cnt3++;
+                assertEquals("", change.getValues().get(0));
+            }
+
+        }
+        assertEquals(checkGTIDs ? 1 : 0, cnt1);
+        assertEquals(1, cnt2);
+        assertEquals(1, cnt3);
+
+    }
+
+    class TestBug102404Listener implements SessionStateChangesListener {
+
+        ServerSessionStateChanges changes = null;
+
+        @Override
+        public void handleSessionStateChanges(ServerSessionStateChanges ch) {
+            this.changes = ch;
+            for (SessionStateChange change : ch.getSessionStateChangesList()) {
+                printChange(change);
+            }
+        }
+
+        private void printChange(SessionStateChange change) {
+            System.out.print(change.getType() + " == > ");
+            int pos = 0;
+            if (change.getType() == ServerSessionStateController.SESSION_TRACK_SYSTEM_VARIABLES) {
+                System.out.print(change.getValues().get(pos++) + "=");
+            }
+            System.out.println(change.getValues().get(pos));
+        }
+
+    }
+
 }

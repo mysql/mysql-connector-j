@@ -193,10 +193,9 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                         : (capabilityFlags & NativeServerSession.CLIENT_CONNECT_ATTRS))
                 | (this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode).getValue() != SslMode.DISABLED
                         ? (capabilityFlags & NativeServerSession.CLIENT_SSL)
+                        : 0)
+                | (this.propertySet.getBooleanProperty(PropertyKey.trackSessionState).getValue() ? (capabilityFlags & NativeServerSession.CLIENT_SESSION_TRACK)
                         : 0);
-
-        // TODO MYSQLCONNJ-437
-        // clientParam |= (capabilityFlags & NativeServerSession.CLIENT_SESSION_TRACK);
 
         sessState.setClientParam(clientParam);
 
@@ -467,6 +466,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                 // read OK packet
                 OkPacket ok = OkPacket.parse(last_received, null);
                 serverSession.setStatusFlags(ok.getStatusFlags(), true);
+                serverSession.getServerSessionStateController().setSessionStateChanges(ok.getSessionStateChanges());
 
                 // if OK packet then finish handshake
                 plugin.destroy();

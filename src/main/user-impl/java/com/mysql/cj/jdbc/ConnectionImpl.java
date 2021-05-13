@@ -89,6 +89,7 @@ import com.mysql.cj.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.jdbc.result.UpdatableResultSet;
 import com.mysql.cj.log.ProfilerEvent;
 import com.mysql.cj.log.StandardLogger;
+import com.mysql.cj.protocol.ServerSessionStateController;
 import com.mysql.cj.protocol.SocksProxySocketFactory;
 import com.mysql.cj.util.LRUCache;
 import com.mysql.cj.util.StringUtils;
@@ -2698,6 +2699,11 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public void handleCleanup(Throwable whyCleanedUp) {
         cleanup(whyCleanedUp);
+    }
+
+    @Override
+    public ServerSessionStateController getServerSessionStateController() {
+        return this.session.getServerSession().getServerSessionStateController();
     }
 
 }

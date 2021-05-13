@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,14 +33,16 @@ import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.protocol.a.NativePacketPayload;
+import com.mysql.cj.protocol.a.NativeServerSessionStateController;
+import com.mysql.cj.protocol.a.NativeServerSessionStateController.NativeServerSessionStateChanges;
 
 public class OkPacket implements ProtocolEntity {
-
     private long updateCount = -1;
     private long updateID = -1;
     private int statusFlags = 0;
     private int warningCount = 0;
     private String info = null;
+    private NativeServerSessionStateChanges sessionStateChanges = new NativeServerSessionStateChanges();
 
     public OkPacket() {
     }
@@ -56,6 +58,11 @@ public class OkPacket implements ProtocolEntity {
         ok.setStatusFlags((int) buf.readInteger(IntegerDataType.INT2));
         ok.setWarningCount((int) buf.readInteger(IntegerDataType.INT2));
         ok.setInfo(buf.readString(StringSelfDataType.STRING_TERM, errorMessageEncoding)); // info
+
+        // read session state changes info
+        if ((ok.getStatusFlags() & NativeServerSessionStateController.SERVER_SESSION_STATE_CHANGED) > 0) {
+            ok.sessionStateChanges.init(buf, errorMessageEncoding);
+        }
         return ok;
     }
 
@@ -98,4 +105,9 @@ public class OkPacket implements ProtocolEntity {
     public void setWarningCount(int warningCount) {
         this.warningCount = warningCount;
     }
+
+    public NativeServerSessionStateChanges getSessionStateChanges() {
+        return this.sessionStateChanges;
+    }
+
 }

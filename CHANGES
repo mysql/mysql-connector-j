@@ -3,6 +3,9 @@
 
 Version 8.0.26
 
+  - Fix for Bug#102404 (32435618), CONTRIBUTION: ADD TRACK SESSION STATE CHANGE.
+    Thanks to William Lee for his contribution.
+
   - Fix for Bug#95280 (29757140), DATABASEMETADATA.GETIMPORTEDKEYS RETURNS DOUBLE THE ROWS.
     Thanks to Miron Balcerzak for his contribution.
 

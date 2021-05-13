@@ -1747,6 +1747,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             result = (T) ok;
 
             this.serverSession.setStatusFlags(ok.getStatusFlags(), saveOldStatus);
+            this.serverSession.getServerSessionStateController().setSessionStateChanges(ok.getSessionStateChanges());
             checkTransactionState();
 
             this.warningCount = ok.getWarningCount();

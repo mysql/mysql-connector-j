@@ -43,6 +43,7 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.ServerCapabilities;
 import com.mysql.cj.protocol.ServerSession;
+import com.mysql.cj.protocol.ServerSessionStateController;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TimeUtil;
 
@@ -86,6 +87,7 @@ public class NativeServerSession implements ServerSession {
     private int statusFlags = 0;
     private int serverDefaultCollationIndex;
     private long clientParam = 0;
+    private NativeServerSessionStateController serverSessionStateController;
 
     /** The map of server variables that we retrieve at connection init. */
     private Map<String, String> serverVariables = new HashMap<>();
@@ -125,6 +127,7 @@ public class NativeServerSession implements ServerSession {
     public NativeServerSession(PropertySet propertySet) {
         this.propertySet = propertySet;
         this.cacheDefaultTimeZone = this.propertySet.getBooleanProperty(PropertyKey.cacheDefaultTimeZone);
+        this.serverSessionStateController = new NativeServerSessionStateController();
 
         // preconfigure some server variables which are consulted before their initialization from server
         this.serverVariables.put("character_set_server", "utf8");
@@ -570,4 +573,10 @@ public class NativeServerSession implements ServerSession {
         }
         return TimeZone.getDefault();
     }
+
+    @Override
+    public ServerSessionStateController getServerSessionStateController() {
+        return this.serverSessionStateController;
+    }
+
 }

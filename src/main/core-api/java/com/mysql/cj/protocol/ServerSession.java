@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.exceptions.CJOperationNotSupportedException;
+import com.mysql.cj.exceptions.ExceptionFactory;
 
 /**
  * Keeps the effective states of server/session variables,
@@ -248,4 +250,9 @@ public interface ServerSession {
      * @return The default JVM time zone
      */
     TimeZone getDefaultTimeZone();
+
+    default ServerSessionStateController getServerSessionStateController() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
 }
