@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -107,7 +107,7 @@ public class ParameterBindingsImpl implements ParameterBindings {
                     break;
                 default:
                     try {
-                        charsetIndex = CharsetMapping.getCollationIndexForJavaEncoding(
+                        charsetIndex = session.getServerSession().getCharsetSettings().getCollationIndexForJavaEncoding(
                                 this.propertySet.getStringProperty(PropertyKey.characterEncoding).getValue(), session.getServerSession().getServerVersion());
                     } catch (RuntimeException ex) {
                         throw SQLError.createSQLException(ex.toString(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);

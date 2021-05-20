@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -65,7 +65,6 @@ import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
-import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.PropertyKey;
@@ -88,13 +87,7 @@ public class ResultSetTest extends BaseTestCase {
         this.rs = this.stmt.executeQuery("SHOW COLLATION");
         while (this.rs.next()) {
             int index = ((Number) this.rs.getObject(3)).intValue();
-            String charsetName = null;
-            if (((ConnectionImpl) c).getSession().getProtocol().getServerSession().indexToCustomMysqlCharset != null) {
-                charsetName = ((ConnectionImpl) c).getSession().getProtocol().getServerSession().indexToCustomMysqlCharset.get(index);
-            }
-            if (charsetName == null) {
-                charsetName = CharsetMapping.getMysqlCharsetNameForCollationIndex(index);
-            }
+            String charsetName = ((ConnectionImpl) c).getSession().getServerSession().getCharsetSettings().getMysqlCharsetNameForCollationIndex(index);
             if (charsetName != null) {
                 charsetsMap.put(charsetName, index);
             }

@@ -875,7 +875,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         String stringVal = this.thisRow.getValue(columnIndex - 1, vf);
 
         if (this.padCharsWithSpace && stringVal != null && f.getMysqlTypeId() == MysqlType.FIELD_TYPE_STRING) {
-            int maxBytesPerChar = this.session.getServerSession().getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
+            int maxBytesPerChar = this.session.getServerSession().getCharsetSettings().getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
             int fieldLength = (int) f.getLength() /* safe, bytes in a CHAR <= 1024 */ / maxBytesPerChar; /* safe, this will never be 0 */
             return StringUtils.padString(stringVal, fieldLength);
         }

@@ -2045,9 +2045,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
         } else { // Syntax can still be tested by with different outcome.
             System.out.println("Although not required it is recommended that the 'keyring_file' plugin is properly installed and configured to run this test.");
 
-            String err = versionMeetsMinimum(8, 0, 4) || versionMeetsMinimum(5, 7, 22) && !versionMeetsMinimum(8, 0, 0)
-                    ? "Can't find master key from keyring, please check in the server log if a keyring.* is loaded and initialized successfully."
-                    : "Can't find master key from keyring, please check keyring plugin is loaded.";
+            String err = "Can't find master key from keyring.*";
 
             final Statement testStmt = this.conn.createStatement();
             assertThrows(SQLException.class, err, new Callable<Void>() {

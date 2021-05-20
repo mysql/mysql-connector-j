@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2012, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -90,8 +90,8 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin<NativePac
         if (fromServer == null || pwd == null || pwd.length() == 0) {
             bresp = new NativePacketPayload(new byte[0]);
         } else {
-            bresp = new NativePacketPayload(
-                    Security.scramble411(pwd, fromServer.readBytes(StringSelfDataType.STRING_TERM), this.protocol.getPasswordCharacterEncoding()));
+            bresp = new NativePacketPayload(Security.scramble411(pwd, fromServer.readBytes(StringSelfDataType.STRING_TERM),
+                    this.protocol.getServerSession().getCharsetSettings().getPasswordCharacterEncoding()));
         }
         toServer.add(bresp);
 

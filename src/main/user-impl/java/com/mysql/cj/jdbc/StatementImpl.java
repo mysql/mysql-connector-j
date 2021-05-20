@@ -43,7 +43,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mysql.cj.CancelQueryTask;
-import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeSession;
@@ -981,7 +980,7 @@ public class StatementImpl implements JdbcStatement {
                 String connectionEncoding = locallyScopedConn.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
 
                 int numberOfBytesPerChar = StringUtils.startsWithIgnoreCase(connectionEncoding, "utf") ? 3
-                        : (CharsetMapping.isMultibyteCharset(connectionEncoding) ? 2 : 1);
+                        : (this.session.getServerSession().getCharsetSettings().isMultibyteCharset(connectionEncoding) ? 2 : 1);
 
                 int escapeAdjust = 1;
 
@@ -1224,8 +1223,8 @@ public class StatementImpl implements JdbcStatement {
 
     protected ResultSetInternalMethods generatePingResultSet() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            String encoding = this.session.getServerSession().getCharacterSetMetadata();
-            int collationIndex = this.session.getServerSession().getMetadataCollationIndex();
+            String encoding = this.session.getServerSession().getCharsetSettings().getMetadataEncoding();
+            int collationIndex = this.session.getServerSession().getCharsetSettings().getMetadataCollationIndex();
             Field[] fields = { new Field(null, "1", collationIndex, encoding, MysqlType.BIGINT, 1) };
             ArrayList<Row> rows = new ArrayList<>();
             byte[] colVal = new byte[] { (byte) '1' };
@@ -1387,8 +1386,8 @@ public class StatementImpl implements JdbcStatement {
                 return this.generatedKeysResults = getGeneratedKeysInternal();
             }
 
-            String encoding = this.session.getServerSession().getCharacterSetMetadata();
-            int collationIndex = this.session.getServerSession().getMetadataCollationIndex();
+            String encoding = this.session.getServerSession().getCharsetSettings().getMetadataEncoding();
+            int collationIndex = this.session.getServerSession().getCharsetSettings().getMetadataCollationIndex();
             Field[] fields = new Field[1];
             fields[0] = new Field("", "GENERATED_KEY", collationIndex, encoding, MysqlType.BIGINT_UNSIGNED, 20);
 
@@ -1411,8 +1410,8 @@ public class StatementImpl implements JdbcStatement {
 
     protected ResultSetInternalMethods getGeneratedKeysInternal(long numKeys) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            String encoding = this.session.getServerSession().getCharacterSetMetadata();
-            int collationIndex = this.session.getServerSession().getMetadataCollationIndex();
+            String encoding = this.session.getServerSession().getCharsetSettings().getMetadataEncoding();
+            int collationIndex = this.session.getServerSession().getCharsetSettings().getMetadataCollationIndex();
             Field[] fields = new Field[1];
             fields[0] = new Field("", "GENERATED_KEY", collationIndex, encoding, MysqlType.BIGINT_UNSIGNED, 20);
 

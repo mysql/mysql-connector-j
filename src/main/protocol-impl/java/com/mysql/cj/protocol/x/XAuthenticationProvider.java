@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,7 +43,6 @@ import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.AuthenticationProvider;
 import com.mysql.cj.protocol.Protocol;
-import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
@@ -59,12 +58,12 @@ public class XAuthenticationProvider implements AuthenticationProvider<XMessage>
     }
 
     @Override
-    public void connect(ServerSession serverSession, String userName, String password, String database) {
-        changeUser(serverSession, userName, password, database);
+    public void connect(String userName, String password, String database) {
+        changeUser(userName, password, database);
     }
 
     @Override
-    public void changeUser(ServerSession serverSession, String userName, String password, String database) {
+    public void changeUser(String userName, String password, String database) {
         boolean overTLS = ((XServerCapabilities) this.protocol.getServerSession().getCapabilities()).getTls();
         RuntimeProperty<AuthMech> authMechProp = this.protocol.getPropertySet().<AuthMech>getEnumProperty(PropertyKey.xdevapiAuth);
         List<AuthMech> tryAuthMech;
@@ -139,8 +138,4 @@ public class XAuthenticationProvider implements AuthenticationProvider<XMessage>
         this.protocol.afterHandshake();
     }
 
-    @Override
-    public String getEncodingForHandshake() {
-        return null; // TODO
-    }
 }

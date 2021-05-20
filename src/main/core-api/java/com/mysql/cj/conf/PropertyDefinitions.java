@@ -259,6 +259,9 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PropertyKey.characterSetResults, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.characterSetResults"), "3.0.13", CATEGORY_SESSION, Integer.MIN_VALUE),
 
+                new StringPropertyDefinition(PropertyKey.customCharsetMapping, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.customCharsetMapping"), "8.0.26", CATEGORY_SESSION, Integer.MIN_VALUE),
+
                 new StringPropertyDefinition(PropertyKey.connectionCollation, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.connectionCollation"), "3.0.13", CATEGORY_SESSION, Integer.MIN_VALUE),
 

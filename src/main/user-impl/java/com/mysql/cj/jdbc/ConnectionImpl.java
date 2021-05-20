@@ -202,12 +202,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
     }
 
-    /**
-     * The mapping between MySQL charset names and Java charset names.
-     * Initialized by loadCharacterSetMapping()
-     */
-    public static Map<?, ?> charsetMap;
-
     /** Default logger class name */
     protected static final String DEFAULT_LOGGER_CLASS = StandardLogger.class.getName();
 
@@ -561,7 +555,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             this.user = userName;
             this.password = newPassword;
 
-            this.session.configureClientCharacterSet(true);
+            this.session.getServerSession().getCharsetSettings().configurePostHandshake(true);
 
             this.session.setSessionVariables();
 
@@ -1134,7 +1128,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public String getCharacterSetMetadata() {
         synchronized (getConnectionMutex()) {
-            return this.session.getServerSession().getCharacterSetMetadata();
+            return this.session.getServerSession().getCharsetSettings().getMetadataEncoding();
         }
     }
 
@@ -1177,8 +1171,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 this.nullStatementResultSetFactory);
 
         if (getSession() != null && getSession().getProtocol() != null) {
-            dbmeta.setMetadataEncoding(getSession().getServerSession().getCharacterSetMetadata());
-            dbmeta.setMetadataCollationIndex(getSession().getServerSession().getMetadataCollationIndex());
+            dbmeta.setMetadataEncoding(getSession().getServerSession().getCharsetSettings().getMetadataEncoding());
+            dbmeta.setMetadataCollationIndex(getSession().getServerSession().getCharsetSettings().getMetadataCollationIndex());
         }
 
         return dbmeta;
@@ -1305,8 +1299,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
         this.autoIncrementIncrement = this.session.getServerSession().getServerVariable("auto_increment_increment", 1);
 
-        this.session.buildCollationMapping();
-
         try {
             LicenseConfiguration.checkLicenseType(this.session.getServerSession().getServerVariables());
         } catch (CJException e) {
@@ -1317,20 +1309,11 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
         checkTransactionIsolationLevel();
 
-        this.session.checkForCharsetMismatch();
-
-        this.session.configureClientCharacterSet(false);
-
         handleAutoCommitDefaults();
 
-        //
-        // We need to figure out what character set metadata and error messages will be returned in, and then map them to Java encoding names
-        //
-        // We've already set it, and it might be different than what was originally on the server, which is why we use the "special" key to retrieve it
-        this.session.getServerSession().configureCharacterSets();
-
-        ((com.mysql.cj.jdbc.DatabaseMetaData) this.dbmd).setMetadataEncoding(getSession().getServerSession().getCharacterSetMetadata());
-        ((com.mysql.cj.jdbc.DatabaseMetaData) this.dbmd).setMetadataCollationIndex(getSession().getServerSession().getMetadataCollationIndex());
+        ((com.mysql.cj.jdbc.DatabaseMetaData) this.dbmd).setMetadataEncoding(this.session.getServerSession().getCharsetSettings().getMetadataEncoding());
+        ((com.mysql.cj.jdbc.DatabaseMetaData) this.dbmd)
+                .setMetadataCollationIndex(this.session.getServerSession().getCharsetSettings().getMetadataCollationIndex());
 
         //
         // Server can do this more efficiently for us

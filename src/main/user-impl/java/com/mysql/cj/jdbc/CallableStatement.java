@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -705,8 +705,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      */
     private void fakeParameterTypes(boolean isReallyProcedure) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            String encoding = this.connection.getSession().getServerSession().getCharacterSetMetadata();
-            int collationIndex = this.connection.getSession().getServerSession().getMetadataCollationIndex();
+            String encoding = this.connection.getSession().getServerSession().getCharsetSettings().getMetadataEncoding();
+            int collationIndex = this.connection.getSession().getServerSession().getCharsetSettings().getMetadataCollationIndex();
             Field[] fields = new Field[13];
 
             fields[0] = new Field("", "PROCEDURE_CAT", collationIndex, encoding, MysqlType.CHAR, 0);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,6 +32,8 @@ package testsuite.regression;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -43,12 +45,15 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
-import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
 import com.mysql.cj.conf.PropertyKey;
-import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.interceptors.QueryInterceptor;
+import com.mysql.cj.log.Log;
+import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.Resultset;
+import com.mysql.cj.util.StringUtils;
 
 import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
@@ -68,18 +73,17 @@ public class CharsetRegressionTest extends BaseTestCase {
         this.rs.next();
         String collation = this.rs.getString(2);
 
-        if (collation != null && collation.startsWith("utf8mb4")
-                && "utf8mb4".equals(((MysqlConnection) this.conn).getSession().getServerSession().getServerVariable("character_set_server"))) {
-            Properties p = new Properties();
-            p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
-            p.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug73663QueryInterceptor.class.getName());
+        assumeTrue(
+                collation != null && collation.startsWith("utf8mb4")
+                        && "utf8mb4".equals(((MysqlConnection) this.conn).getSession().getServerSession().getServerVariable("character_set_server")),
+                "This test requires server configured with character_set_server=utf8mb4 and collation-server set to one of utf8mb4 collations.");
 
-            getConnectionWithProps(p);
-            // exception will be thrown from the statement interceptor if any "SET NAMES utf8" statement is issued instead of "SET NAMES utf8mb4"
-        } else {
-            System.out.println(
-                    "testBug73663 was skipped: This test is only run when character_set_server=utf8mb4 and collation-server set to one of utf8mb4 collations.");
-        }
+        Properties p = new Properties();
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+        p.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug73663QueryInterceptor.class.getName());
+
+        getConnectionWithProps(p);
+        // failure will be thrown from the statement interceptor if any "SET NAMES utf8" statement is issued instead of "SET NAMES utf8mb4"
     }
 
     /**
@@ -87,10 +91,19 @@ public class CharsetRegressionTest extends BaseTestCase {
      */
     public static class Bug73663QueryInterceptor extends BaseQueryInterceptor {
         @Override
+        public <M extends Message> M preProcess(M queryPacket) {
+            String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
+            if (sql.contains("SET NAMES utf8") && !sql.contains("utf8mb4")) {
+                fail("Character set statement issued: " + sql);
+            }
+            return null;
+        }
+
+        @Override
         public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
             String sql = str.get();
             if (sql.contains("SET NAMES utf8") && !sql.contains("utf8mb4")) {
-                throw ExceptionFactory.createException("Character set statement issued: " + sql);
+                fail("Character set statement issued: " + sql);
             }
             return null;
         }
@@ -152,7 +165,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     public void testBug25504578() throws Exception {
 
         Properties p = new Properties();
-        String cjCharset = CharsetMapping.getJavaEncodingForMysqlCharset("latin7");
+        String cjCharset = CharsetMappingWrapper.getStaticJavaEncodingForMysqlCharset("latin7");
         p.setProperty(PropertyKey.characterEncoding.getKeyName(), cjCharset);
 
         getConnectionWithProps(p);
@@ -176,7 +189,7 @@ public class CharsetRegressionTest extends BaseTestCase {
             Properties p = new Properties();
 
             /* With a single-byte encoding */
-            p.setProperty(PropertyKey.characterEncoding.getKeyName(), CharsetMapping.getJavaEncodingForMysqlCharset("latin1"));
+            p.setProperty(PropertyKey.characterEncoding.getKeyName(), CharsetMappingWrapper.getStaticJavaEncodingForMysqlCharset("latin1"));
             Connection conn1 = getConnectionWithProps(p);
             Statement st1 = conn1.createStatement();
             st1.executeUpdate("INSERT INTO testBug81196(name) VALUES ('" + fourBytesValue + "')");
@@ -219,5 +232,214 @@ public class CharsetRegressionTest extends BaseTestCase {
                 }
             });
         }
+    }
+
+    /**
+     * Tests fix for Bug#100606 (31818423), UNECESARY CALL TO "SET NAMES 'UTF8' COLLATE 'UTF8_GENERAL_CI'".
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug100606() throws Exception {
+        this.rs = this.stmt.executeQuery("show variables like 'collation_server'");
+        this.rs.next();
+        String collation = this.rs.getString(2);
+
+        assumeTrue(
+                collation != null && collation.startsWith("utf8_general_ci")
+                        && ((MysqlConnection) this.conn).getSession().getServerSession().getServerVariable("character_set_server").startsWith("utf8"),
+                "This test requires server configured with character_set_server=utf8 and collation-server=utf8_general_ci.");
+
+        String fallbackCollation = versionMeetsMinimum(8, 0, 1) ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci";
+
+        Properties p = new Properties();
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+        p.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestSetNamesQueryInterceptor.class.getName());
+        checkCollationConnection(p, "SET NAMES", false, fallbackCollation);
+
+        p.setProperty(PropertyKey.connectionCollation.getKeyName(), "utf8_general_ci");
+        checkCollationConnection(p, "SET NAMES", false, "utf8_general_ci");
+    }
+
+    /**
+     * Tests fix for Bug#25554464, CONNECT FAILS WITH NPE WHEN THE SERVER STARTED WITH CUSTOM COLLATION.
+     * 
+     * This test requires a special server configuration with:
+     * <ul>
+     * <li>character-set-server = custom
+     * <li>collation-server = custom_bin
+     * </ul>
+     * where 'custom_bin' is not a primary collation for 'custom' character set and has an index == 1024 on MySQL 8.0+ or index == 253 for older servers.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug25554464_1() throws Exception {
+        this.rs = this.stmt.executeQuery("show variables like 'collation_server'");
+        this.rs.next();
+        String collation = this.rs.getString(2);
+        this.rs = this.stmt.executeQuery("select ID from INFORMATION_SCHEMA.COLLATIONS where COLLATION_NAME='custom_bin'");
+
+        assumeTrue(
+                collation != null && collation.startsWith("custom_bin") && this.rs.next() && this.rs.getInt(1) == (versionMeetsMinimum(8, 0, 1) ? 1024 : 253),
+                "This test requires server configured with custom character set and custom_bin collation.");
+
+        String fallbackCollation = versionMeetsMinimum(8, 0, 1) ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci";
+
+        Properties p = new Properties();
+        p.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestSetNamesQueryInterceptor.class.getName());
+
+        // With no specific properties c/J is using a predefined fallback collation 'utf8mb4_0900_ai_ci' or 'utf8mb4_general_ci' depending on server version.
+        // Post-handshake does not issue a SET NAMES because the predefined collation should still be used.
+        checkCollationConnection(p, "SET NAMES", false, fallbackCollation);
+
+        // 'detectCustomCollations' itself doesn't change the expected collation, the predefined one should still be used.
+        p.setProperty(PropertyKey.detectCustomCollations.getKeyName(), "true");
+        checkCollationConnection(p, "SET NAMES", false, fallbackCollation);
+
+        // The predefined collation should still be used
+        p.setProperty(PropertyKey.customCharsetMapping.getKeyName(), "custom:Cp1252");
+        checkCollationConnection(p, "SET NAMES", false, fallbackCollation);
+
+        // Handshake collation is still 'utf8mb4_0900_ai_ci' because 'custom_bin' index > 255, then c/J sends the SET NAMES for the requested collation in a post-handshake.
+        p.setProperty(PropertyKey.connectionCollation.getKeyName(), "custom_bin");
+        checkCollationConnection(p, "SET NAMES custom COLLATE custom_bin", true, "custom_bin");
+
+        p.setProperty(PropertyKey.connectionCollation.getKeyName(), "custom_general_ci");
+        checkCollationConnection(p, "SET NAMES custom COLLATE custom_general_ci", true, "custom_general_ci");
+
+        // Handshake collation is still 'utf8mb4_0900_ai_ci' because 'Cp1252' is mapped to 'custom' charset via the 'customCharsetMapping' property.
+        // C/J sends the SET NAMES for the requested collation in a post-handshake.
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), "Cp1252");
+        p.remove(PropertyKey.connectionCollation.getKeyName());
+        checkCollationConnection(p, "SET NAMES custom", true, "custom_general_ci");
+    }
+
+    /**
+     * Tests fix for Bug#25554464, CONNECT FAILS WITH NPE WHEN THE SERVER STARTED WITH CUSTOM COLLATION.
+     * 
+     * This test requires a special server configuration with:
+     * <ul>
+     * <li>character-set-server = custom
+     * <li>collation-server = custom_general_ci
+     * </ul>
+     * where 'custom_general_ci' is a primary collation for 'custom' character set and has an index == 1025 on MySQL 8.0+ or index == 254 for older servers.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug25554464_2() throws Exception {
+        this.rs = this.stmt.executeQuery("show variables like 'collation_server'");
+        this.rs.next();
+        String collation = this.rs.getString(2);
+
+        this.rs = this.stmt.executeQuery("select ID from INFORMATION_SCHEMA.COLLATIONS where COLLATION_NAME='custom_general_ci'");
+
+        assumeTrue(
+                collation != null && collation.startsWith("custom_general_ci") && this.rs.next()
+                        && this.rs.getInt(1) == (versionMeetsMinimum(8, 0, 1) ? 1025 : 254),
+                "This test requires server configured with custom character set and custom_general_ci collation.");
+
+        String fallbackCollation = versionMeetsMinimum(8, 0, 1) ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci";
+
+        Properties p = new Properties();
+        p.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestSetNamesQueryInterceptor.class.getName());
+
+        // With no specific properties c/J is using a predefined fallback collation 'utf8mb4_0900_ai_ci' or 'utf8mb4_general_ci' depending on server version.
+        // Post-handshake does not issue a SET NAMES because the predefined collation should still be used.
+        checkCollationConnection(p, "SET NAMES", false, fallbackCollation);
+
+        // The predefined one should still be used.
+        p.setProperty(PropertyKey.detectCustomCollations.getKeyName(), "true");
+        p.setProperty(PropertyKey.customCharsetMapping.getKeyName(), "custom:Cp1252");
+        checkCollationConnection(p, "SET NAMES", false, fallbackCollation);
+
+        // Sets the predefined collation via the handshake response, but, in a post-handshake, issues the SET NAMES setting the required 'connectionCollation'.
+        p.setProperty(PropertyKey.connectionCollation.getKeyName(), "custom_general_ci");
+        checkCollationConnection(p, "SET NAMES custom COLLATE custom_general_ci", true, "custom_general_ci");
+
+        // Sets the predefined collation via the handshake response, but, in a post-handshake, issues the SET NAMES setting the required 'characterEncoding'.
+        // The chosen collation then is 'custom_general_ci' because it's a primary one for 'custom' character set.
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), "Cp1252");
+        p.remove(PropertyKey.connectionCollation.getKeyName());
+        checkCollationConnection(p, "SET NAMES custom", true, "custom_general_ci");
+    }
+
+    public static class TestSetNamesQueryInterceptor extends BaseQueryInterceptor {
+        public static String query = "";
+        public static boolean usedSetNames = false;
+
+        @Override
+        public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
+            usedSetNames = false;
+            return super.init(conn, props, log);
+        }
+
+        @Override
+        public <M extends Message> M preProcess(M queryPacket) {
+            String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
+            if (sql.contains(query)) {
+                usedSetNames = true;
+            }
+            return null;
+        }
+
+        @Override
+        public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
+            String sql = str.get();
+            if (sql.contains(query)) {
+                usedSetNames = true;
+            }
+            return null;
+        }
+    }
+
+    @Test
+    public void testPasswordCharacterEncoding() throws Exception {
+        this.rs = this.stmt.executeQuery("show variables like 'collation_server'");
+        this.rs.next();
+        String collation = this.rs.getString(2);
+        assumeTrue(collation != null && collation.startsWith("latin1"), "This test requires a server configured with latin1 character set.");
+
+        Properties p = new Properties();
+        p.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestSetNamesQueryInterceptor.class.getName());
+
+        String requestedCollation = "latin1_swedish_ci";
+        String fallbackCollation = versionMeetsMinimum(8, 0, 1) ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci";
+
+        checkCollationConnection(p, "SET NAMES", false, fallbackCollation);
+
+        p.setProperty(PropertyKey.passwordCharacterEncoding.getKeyName(), "UTF-8");
+        checkCollationConnection(p, "SET NAMES", false, fallbackCollation);
+
+        p.setProperty(PropertyKey.connectionCollation.getKeyName(), requestedCollation);
+        checkCollationConnection(p, "SET NAMES latin1 COLLATE " + requestedCollation, true, requestedCollation);
+
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), "Cp1252");
+        p.remove(PropertyKey.connectionCollation.getKeyName());
+        checkCollationConnection(p, "SET NAMES latin1", true, requestedCollation);
+
+        requestedCollation = versionMeetsMinimum(8, 0, 1) ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci";
+
+        p.setProperty(PropertyKey.connectionCollation.getKeyName(), requestedCollation);
+        checkCollationConnection(p, "SET NAMES", false, requestedCollation);
+
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+        p.remove(PropertyKey.connectionCollation.getKeyName());
+        checkCollationConnection(p, "SET NAMES", false, requestedCollation);
+    }
+
+    private void checkCollationConnection(Properties props, String query, boolean expectQueryIsIssued, String expectedCollation) throws Exception {
+        TestSetNamesQueryInterceptor.query = query;
+        Connection c = getConnectionWithProps(props);
+        if (expectQueryIsIssued) {
+            assertTrue(TestSetNamesQueryInterceptor.usedSetNames);
+        } else {
+            assertFalse(TestSetNamesQueryInterceptor.usedSetNames);
+        }
+        this.rs = c.createStatement().executeQuery("show variables like 'collation_connection'");
+        this.rs.next();
+        assertEquals(expectedCollation, this.rs.getString(2));
+        c.close();
     }
 }

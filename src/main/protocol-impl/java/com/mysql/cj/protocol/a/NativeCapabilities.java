@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,27 +52,20 @@ public class NativeCapabilities implements ServerCapabilities {
     private int authPluginDataLength = 0;
     private boolean serverHasFracSecsSupport = true;
 
-    public NativeCapabilities() {
-    }
-
-    public NativePacketPayload getInitialHandshakePacket() {
-        return this.initialHandshakePacket;
-    }
-
-    public void setInitialHandshakePacket(NativePacketPayload initialHandshakePacket) {
+    public NativeCapabilities(NativePacketPayload initialHandshakePacket) {
         this.initialHandshakePacket = initialHandshakePacket;
 
         // Get the protocol version
-        setProtocolVersion((byte) initialHandshakePacket.readInteger(IntegerDataType.INT1));
+        this.protocolVersion = (byte) initialHandshakePacket.readInteger(IntegerDataType.INT1);
 
         try {
-            setServerVersion(ServerVersion.parseVersion(initialHandshakePacket.readString(StringSelfDataType.STRING_TERM, "ASCII")));
+            this.serverVersion = ServerVersion.parseVersion(initialHandshakePacket.readString(StringSelfDataType.STRING_TERM, "ASCII"));
 
             // read connection id
-            setThreadId(initialHandshakePacket.readInteger(IntegerDataType.INT4));
+            this.threadId = initialHandshakePacket.readInteger(IntegerDataType.INT4);
 
             // read auth-plugin-data-part-1 (string[8])
-            setSeed(initialHandshakePacket.readString(StringLengthDataType.STRING_FIXED, "ASCII", 8));
+            this.seed = initialHandshakePacket.readString(StringLengthDataType.STRING_FIXED, "ASCII", 8);
 
             // read filler ([00])
             initialHandshakePacket.readInteger(IntegerDataType.INT1);
@@ -85,9 +78,9 @@ public class NativeCapabilities implements ServerCapabilities {
             }
 
             // read character set (1 byte)
-            setServerDefaultCollationIndex((int) initialHandshakePacket.readInteger(IntegerDataType.INT1));
+            this.serverDefaultCollationIndex = (int) initialHandshakePacket.readInteger(IntegerDataType.INT1);
             // read status flags (2 bytes)
-            setStatusFlags((int) initialHandshakePacket.readInteger(IntegerDataType.INT2));
+            this.statusFlags = (int) initialHandshakePacket.readInteger(IntegerDataType.INT2);
 
             // read capability flags (upper 2 bytes)
             flags |= (int) initialHandshakePacket.readInteger(IntegerDataType.INT2) << 16;
@@ -117,6 +110,10 @@ public class NativeCapabilities implements ServerCapabilities {
         }
     }
 
+    public NativePacketPayload getInitialHandshakePacket() {
+        return this.initialHandshakePacket;
+    }
+
     @Override
     public int getCapabilityFlags() {
         return this.capabilityFlags;
@@ -127,20 +124,8 @@ public class NativeCapabilities implements ServerCapabilities {
         this.capabilityFlags = capabilityFlags;
     }
 
-    public byte getProtocolVersion() {
-        return this.protocolVersion;
-    }
-
-    public void setProtocolVersion(byte protocolVersion) {
-        this.protocolVersion = protocolVersion;
-    }
-
     public ServerVersion getServerVersion() {
         return this.serverVersion;
-    }
-
-    public void setServerVersion(ServerVersion serverVersion) {
-        this.serverVersion = serverVersion;
     }
 
     public long getThreadId() {
@@ -155,10 +140,6 @@ public class NativeCapabilities implements ServerCapabilities {
         return this.seed;
     }
 
-    public void setSeed(String seed) {
-        this.seed = seed;
-    }
-
     /**
      * 
      * @return Collation index which server provided in handshake greeting packet
@@ -167,30 +148,12 @@ public class NativeCapabilities implements ServerCapabilities {
         return this.serverDefaultCollationIndex;
     }
 
-    /**
-     * Stores collation index which server provided in handshake greeting packet.
-     * 
-     * @param serverDefaultCollationIndex
-     *            server default collation index
-     */
-    public void setServerDefaultCollationIndex(int serverDefaultCollationIndex) {
-        this.serverDefaultCollationIndex = serverDefaultCollationIndex;
-    }
-
     public int getStatusFlags() {
         return this.statusFlags;
     }
 
-    public void setStatusFlags(int statusFlags) {
-        this.statusFlags = statusFlags;
-    }
-
     public int getAuthPluginDataLength() {
         return this.authPluginDataLength;
-    }
-
-    public void setAuthPluginDataLength(int authPluginDataLength) {
-        this.authPluginDataLength = authPluginDataLength;
     }
 
     @Override

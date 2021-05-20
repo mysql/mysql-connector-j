@@ -633,7 +633,7 @@ public class ServerPreparedQuery extends AbstractPreparedQuery<ServerPreparedQue
 
             if (clobEncoding != null) {
                 if (!clobEncoding.equals("UTF-16")) {
-                    maxBytesChar = this.session.getServerSession().getMaxBytesPerChar(clobEncoding);
+                    maxBytesChar = this.session.getServerSession().getCharsetSettings().getMaxBytesPerChar(clobEncoding);
 
                     if (maxBytesChar == 1) {
                         maxBytesChar = 2; // for safety

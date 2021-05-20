@@ -121,8 +121,6 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      * Initialize communications with the MySQL server. Handles logging on, and
      * handling initial connection errors.
      * 
-     * @param sessState
-     *            The session state object. It's intended to be updated from the handshake
      * @param user
      *            user name
      * @param pass
@@ -131,7 +129,8 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      *            database name
      */
     @Override
-    public void connect(ServerSession sessState, String user, String pass, String db) {
+    public void connect(String user, String pass, String db) {
+        ServerSession sessState = this.protocol.getServerSession();
         this.username = user;
         this.password = pass;
         this.database = db;
@@ -152,7 +151,6 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
             throw ExceptionFactory.createException(UnableToConnectException.class, "CLIENT_PLUGIN_AUTH is required", getExceptionInterceptor());
         }
 
-        sessState.setServerDefaultCollationIndex(capabilities.getServerDefaultCollationIndex()); // read character set (1 byte)
         sessState.setStatusFlags(capabilities.getStatusFlags()); // read status flags (2 bytes)
         int authPluginDataLength = capabilities.getAuthPluginDataLength();
 
@@ -208,7 +206,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
             throw ExceptionFactory.createException(Messages.getString("AuthenticationProvider.UnexpectedAuthenticationApproval"), getExceptionInterceptor());
         }
 
-        proceedHandshakeWithPluggableAuthentication(sessState, buf);
+        proceedHandshakeWithPluggableAuthentication(buf);
 
         this.password = null;
     }
@@ -359,14 +357,14 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      * 
      * This method will use registered authentication plugins as requested by the server.
      * 
-     * @param serverSession
-     *            The current state of the session
      * @param challenge
      *            the Auth Challenge Packet received from server if
      *            this method is used during the initial connection.
      *            Otherwise null.
      */
-    private void proceedHandshakeWithPluggableAuthentication(ServerSession serverSession, final NativePacketPayload challenge) {
+    private void proceedHandshakeWithPluggableAuthentication(final NativePacketPayload challenge) {
+        ServerSession serverSession = this.protocol.getServerSession();
+
         if (this.authenticationPlugins == null) {
             loadAuthenticationPlugins();
         }
@@ -376,6 +374,8 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
             this.serverDefaultAuthenticationPluginName = challenge.readString(StringSelfDataType.STRING_TERM, "ASCII");
             forChangeUser = false;
         }
+
+        serverSession.getCharsetSettings().configurePreHandshake(forChangeUser);
 
         /*
          * Select the initial plugin:
@@ -556,20 +556,6 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         buf.writeBytes(StringLengthDataType.STRING_FIXED, lb.getByteBuffer(), 0, lb.getPosition());
     }
 
-    /**
-     * Get the Java encoding to be used for the handshake
-     * response. Defaults to UTF-8.
-     * 
-     * @return encoding name
-     */
-    public String getEncodingForHandshake() {
-        String enc = this.propertySet.getStringProperty(PropertyKey.characterEncoding).getValue();
-        if (enc == null) {
-            enc = "UTF-8";
-        }
-        return enc;
-    }
-
     public ExceptionInterceptor getExceptionInterceptor() {
         return this.exceptionInterceptor;
     }
@@ -577,8 +563,6 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     /**
      * Re-authenticates as the given user and password
      * 
-     * @param serverSession
-     *            current {@link ServerSession}
      * @param user
      *            user name
      * @param pass
@@ -587,18 +571,19 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      *            database name
      */
     @Override
-    public void changeUser(ServerSession serverSession, String user, String pass, String db) {
+    public void changeUser(String user, String pass, String db) {
         this.username = user;
         this.password = pass;
         this.database = db;
-        proceedHandshakeWithPluggableAuthentication(serverSession, null);
+        proceedHandshakeWithPluggableAuthentication(null);
         this.password = null;
     }
 
     private NativePacketPayload createHandshakeResponsePacket(ServerSession serverSession, String pluginName, ArrayList<NativePacketPayload> toServer) {
 
         long clientParam = serverSession.getClientParam();
-        String enc = getEncodingForHandshake();
+        int collationIndex = serverSession.getCharsetSettings().configurePreHandshake(false);
+        String enc = serverSession.getCharsetSettings().getPasswordCharacterEncoding();
 
         int userLength = this.username == null ? 0 : this.username.length();
         NativePacketPayload last_sent = new NativePacketPayload(AUTH_411_OVERHEAD + 7 //
@@ -608,7 +593,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         );
         last_sent.writeInteger(IntegerDataType.INT4, clientParam);
         last_sent.writeInteger(IntegerDataType.INT4, NativeConstants.MAX_PACKET_SIZE);
-        last_sent.writeInteger(IntegerDataType.INT1, AuthenticationProvider.getCharsetForHandshake(enc, serverSession.getCapabilities().getServerVersion()));
+        last_sent.writeInteger(IntegerDataType.INT1, collationIndex);
         last_sent.writeBytes(StringLengthDataType.STRING_FIXED, new byte[23]);   // Set of bytes reserved for future use.
 
         // User/Password data
@@ -638,7 +623,8 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     private NativePacketPayload createChangeUserPacket(ServerSession serverSession, String pluginName, ArrayList<NativePacketPayload> toServer) {
         // write Auth Response Packet
         long clientParam = serverSession.getClientParam();
-        String enc = getEncodingForHandshake();
+        int collationIndex = serverSession.getCharsetSettings().configurePreHandshake(false);
+        String enc = serverSession.getCharsetSettings().getPasswordCharacterEncoding();
 
         NativePacketPayload last_sent = new NativePacketPayload(AUTH_411_OVERHEAD + 7 //
                 + 48                // passwordLength
@@ -665,7 +651,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
             last_sent.writeInteger(IntegerDataType.INT1, 0);
         }
 
-        last_sent.writeInteger(IntegerDataType.INT1, AuthenticationProvider.getCharsetForHandshake(enc, serverSession.getCapabilities().getServerVersion()));
+        last_sent.writeInteger(IntegerDataType.INT1, collationIndex);
         last_sent.writeInteger(IntegerDataType.INT1, 0); // two (little-endian) bytes for charset in this packet
 
         // plugin name

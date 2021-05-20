@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2012, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -92,8 +92,8 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin<NativePacket
         if (fromServer == null || pwd == null || pwd.length() == 0) {
             bresp = new NativePacketPayload(new byte[0]);
         } else {
-            bresp = new NativePacketPayload(StringUtils.getBytes(
-                    newCrypt(pwd, fromServer.readString(StringSelfDataType.STRING_TERM, null).substring(0, 8), this.protocol.getPasswordCharacterEncoding())));
+            bresp = new NativePacketPayload(StringUtils.getBytes(newCrypt(pwd, fromServer.readString(StringSelfDataType.STRING_TERM, null).substring(0, 8),
+                    this.protocol.getServerSession().getCharsetSettings().getPasswordCharacterEncoding())));
 
             bresp.setPosition(bresp.getPayloadLength());
             bresp.writeInteger(IntegerDataType.INT1, 0);

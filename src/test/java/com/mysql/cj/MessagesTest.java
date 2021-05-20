@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -104,9 +104,10 @@ public class MessagesTest {
 
         assertEquals("Illegal starting position for search, '10'", Messages.getString("Clob.8", new Object[] { 10 }));
 
-        assertEquals("Java does not support the MySQL character encoding 'Test'.", Messages.getString("Connection.5", new Object[] { "Test" }));
+        assertEquals("Unknown Java encoding for the character set with index '1234'. Use the 'customCharsetMapping' property to force it.",
+                Messages.getString("Connection.5", new Object[] { "1234" }));
         assertEquals(
-                "Unknown initial character set index 'Test' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
+                "Unknown character set index 'Test' received from server. The appropriate client character set can be forced via the 'characterEncoding' property.",
                 Messages.getString("Connection.6", new Object[] { "Test" }));
         assertEquals("Can't map Test given for characterSetResults to a supported MySQL encoding.",
                 Messages.getString("Connection.7", new Object[] { "Test" }));

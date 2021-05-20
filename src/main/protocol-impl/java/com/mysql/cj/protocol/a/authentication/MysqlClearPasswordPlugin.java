@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2012, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -82,7 +82,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePack
     public boolean nextAuthenticationStep(NativePacketPayload fromServer, List<NativePacketPayload> toServer) {
         toServer.clear();
 
-        String encoding = this.protocol.versionMeetsMinimum(5, 7, 6) ? this.protocol.getPasswordCharacterEncoding() : "UTF-8";
+        String encoding = this.protocol.getServerSession().getCharsetSettings().getPasswordCharacterEncoding();
         NativePacketPayload bresp = new NativePacketPayload(StringUtils.getBytes(this.password != null ? this.password : "", encoding));
 
         bresp.setPosition(bresp.getPayloadLength());

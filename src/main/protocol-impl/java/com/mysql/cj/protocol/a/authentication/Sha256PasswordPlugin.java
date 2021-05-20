@@ -117,7 +117,8 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
             try {
                 if (this.protocol.getSocketConnection().isSSLEstablished()) {
                     // allow plain text over SSL
-                    NativePacketPayload bresp = new NativePacketPayload(StringUtils.getBytes(this.password, this.protocol.getPasswordCharacterEncoding()));
+                    NativePacketPayload bresp = new NativePacketPayload(
+                            StringUtils.getBytes(this.password, this.protocol.getServerSession().getCharsetSettings().getPasswordCharacterEncoding()));
                     bresp.setPosition(bresp.getPayloadLength());
                     bresp.writeInteger(IntegerDataType.INT1, 0);
                     bresp.setPosition(0);
@@ -167,7 +168,9 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
 
     protected byte[] encryptPassword(String transformation) {
         byte[] input = null;
-        input = this.password != null ? StringUtils.getBytesNullTerminated(this.password, this.protocol.getPasswordCharacterEncoding()) : new byte[] { 0 };
+        input = this.password != null
+                ? StringUtils.getBytesNullTerminated(this.password, this.protocol.getServerSession().getCharsetSettings().getPasswordCharacterEncoding())
+                : new byte[] { 0 };
         byte[] mysqlScrambleBuff = new byte[input.length];
         Security.xorString(input, mysqlScrambleBuff, this.seed.getBytes(), input.length);
         return ExportControlled.encryptWithRSAPublicKey(mysqlScrambleBuff, ExportControlled.decodeRSAPublicKey(this.publicKeyString), transformation);

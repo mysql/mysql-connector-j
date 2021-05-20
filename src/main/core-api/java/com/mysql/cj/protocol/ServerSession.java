@@ -32,6 +32,7 @@ package com.mysql.cj.protocol;
 import java.util.Map;
 import java.util.TimeZone;
 
+import com.mysql.cj.CharsetSettings;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -62,8 +63,6 @@ public interface ServerSession {
      */
     public static int TRANSACTION_COMPLETED = 3;
 
-    public static final String LOCAL_CHARACTER_SET_RESULTS = "local.character_set_results";
-
     ServerCapabilities getCapabilities();
 
     void setCapabilities(ServerCapabilities capabilities);
@@ -91,20 +90,6 @@ public interface ServerSession {
     int getOldStatusFlags();
 
     void setOldStatusFlags(int statusFlags);
-
-    /**
-     * 
-     * @return Collation index which server provided in handshake greeting packet
-     */
-    int getServerDefaultCollationIndex();
-
-    /**
-     * Stores collation index which server provided in handshake greeting packet.
-     * 
-     * @param serverDefaultCollationIndex
-     *            collation index
-     */
-    void setServerDefaultCollationIndex(int serverDefaultCollationIndex);
 
     /**
      * 
@@ -153,8 +138,6 @@ public interface ServerSession {
 
     void setServerVariables(Map<String, String> serverVariables);
 
-    boolean characterSetNamesMatches(String mysqlEncodingName);
-
     /**
      * Get the version of the MySQL server we are talking to.
      * 
@@ -175,46 +158,6 @@ public interface ServerSession {
     boolean isVersion(ServerVersion version);
 
     /**
-     * 
-     * @return the server's default character set name according to collation index from server greeting,
-     *         or value of 'character_set_server' variable if there is no mapping for that index
-     */
-    String getServerDefaultCharset();
-
-    String getErrorMessageEncoding();
-
-    void setErrorMessageEncoding(String errorMessageEncoding);
-
-    int getMaxBytesPerChar(String javaCharsetName);
-
-    int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName);
-
-    /**
-     * Returns the Java character encoding name for the given MySQL server
-     * collation index
-     * 
-     * @param collationIndex
-     *            collation index
-     * @return the Java character encoding name for the given MySQL server
-     *         collation index
-     */
-    String getEncodingForIndex(int collationIndex);
-
-    void configureCharacterSets();
-
-    String getCharacterSetMetadata();
-
-    void setCharacterSetMetadata(String characterSetMetadata);
-
-    int getMetadataCollationIndex();
-
-    void setMetadataCollationIndex(int metadataCollationIndex);
-
-    String getCharacterSetResultsOnServer();
-
-    void setCharacterSetResultsOnServer(String characterSetResultsOnServer);
-
-    /**
      * Is the server configured to use lower-case table names only?
      * 
      * @return true if lower_case_table_names is 'on'
@@ -230,10 +173,6 @@ public interface ServerSession {
     boolean useAnsiQuotedIdentifiers();
 
     public boolean isServerTruncatesFracSecs();
-
-    long getThreadId();
-
-    public void setThreadId(long threadId);
 
     boolean isAutoCommit();
 
@@ -255,4 +194,7 @@ public interface ServerSession {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
+    CharsetSettings getCharsetSettings();
+
+    void setCharsetSettings(CharsetSettings charsetSettings);
 }

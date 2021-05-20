@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -54,6 +54,9 @@ public class XServerCapabilities implements ServerCapabilities {
     static String SUBKEY_COMPRESSION_ALGORITHM = "algorithm";
     static String SUBKEY_COMPRESSION_SERVER_COMBINE_MIXED_MESSAGES = "server_combine_mixed_messages";
     static String SUBKEY_COMPRESSION_SERVER_MAX_COMBINE_MESSAGES = "server_max_combine_messages";
+
+    /** Server-assigned client-id. */
+    private long clientId = -1;
 
     public XServerCapabilities(Map<String, Any> capabilities) {
         this.capabilities = capabilities;
@@ -118,13 +121,23 @@ public class XServerCapabilities implements ServerCapabilities {
     }
 
     @Override
-    public void setServerVersion(ServerVersion serverVersion) {
-        // TODO Auto-generated method stub
-
+    public boolean serverSupportsFracSecs() {
+        return true;
     }
 
     @Override
-    public boolean serverSupportsFracSecs() {
-        return true;
+    public int getServerDefaultCollationIndex() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public long getThreadId() {
+        return this.clientId;
+    }
+
+    @Override
+    public void setThreadId(long threadId) {
+        this.clientId = threadId;
     }
 }

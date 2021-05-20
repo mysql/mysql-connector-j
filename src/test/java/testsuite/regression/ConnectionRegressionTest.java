@@ -122,7 +122,8 @@ import javax.transaction.xa.Xid;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.CharsetMappingWrapper;
+import com.mysql.cj.CharsetSettings;
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlConnection;
@@ -4207,7 +4208,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             _conn = getConnectionWithProps(props);
             assertTrue(false, "This point should not be reached.");
         } catch (Exception e) {
-            assertEquals("Can't map ISO88591 given for characterSetResults to a supported MySQL encoding.", e.getMessage());
+            assertEquals("Unsupported character encoding 'ISO88591'", e.getMessage());
         } finally {
             if (_conn != null) {
                 _conn.close();
@@ -4554,7 +4555,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         Statement stmt1 = conn1.createStatement();
 
         int updateCount = stmt1.executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE testBug11237 CHARACTER SET "
-                + CharsetMapping.getMysqlCharsetForJavaEncoding(
+                + CharsetMappingWrapper.getStaticMysqlCharsetForJavaEncoding(
                         ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
                         ((JdbcConnection) conn1).getServerVersion()));
 
@@ -5367,6 +5368,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } catch (SQLException e) {
             assertFalse(e.getCause() instanceof java.lang.ArrayIndexOutOfBoundsException, "e.getCause() instanceof java.lang.ArrayIndexOutOfBoundsException");
 
+            props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
             props.setProperty(PropertyKey.USER.getKeyName(), "\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8");
             c2 = DriverManager.getConnection(url + "/\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8", props);
             this.rs = c2.createStatement().executeQuery("select 1");
@@ -5819,7 +5821,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         JdbcConnection c = (JdbcConnection) getConnectionWithProps(p);
         Bug71038QueryInterceptor si = (Bug71038QueryInterceptor) c.getQueryInterceptorsInstances().get(0);
-        assertTrue(si.cnt == 0, "SHOW COLLATION was issued when detectCustomCollations=false");
+        assertTrue(si.cnt == 0, "SELECT from INFORMATION_SCHEMA.COLLATIONS was issued when detectCustomCollations=false");
         c.close();
 
         p.setProperty(PropertyKey.detectCustomCollations.getKeyName(), "true");
@@ -5827,7 +5829,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         c = (JdbcConnection) getConnectionWithProps(p);
         si = (Bug71038QueryInterceptor) c.getQueryInterceptorsInstances().get(0);
-        assertTrue(si.cnt > 0, "SHOW COLLATION wasn't issued when detectCustomCollations=true");
+        assertTrue(si.cnt > 0, "SELECT from INFORMATION_SCHEMA.COLLATIONS wasn't issued when detectCustomCollations=true");
         c.close();
     }
 
@@ -5840,7 +5842,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         @Override
         public <M extends Message> M preProcess(M queryPacket) {
             String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
-            if (sql.contains("SHOW COLLATION")) {
+            if (sql.contains("from INFORMATION_SCHEMA.COLLATIONS")) {
                 this.cnt++;
             }
             return null;
@@ -6077,7 +6079,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
         @Override
         public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
             String sql = str.get();
-            if (sql.contains("SET NAMES") || sql.contains("character_set_results") && !(sql.contains("SHOW VARIABLES") || sql.contains("SELECT  @@"))) {
+            if (sql.contains("SET NAMES")
+                    || sql.contains(CharsetSettings.CHARACTER_SET_RESULTS) && !(sql.contains("SHOW VARIABLES") || sql.contains("SELECT  @@"))) {
                 throw ExceptionFactory.createException("Wrongt statement issued: " + sql);
             }
             return null;
@@ -6969,7 +6972,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             Map<String, String> serverVariables = new HashMap<>();
             this.rs = con.createStatement().executeQuery("SHOW VARIABLES");
             while (this.rs.next()) {
-                serverVariables.put(this.rs.getString(1), this.rs.getString(2));
+                String val = this.rs.getString(2);
+                serverVariables.put(this.rs.getString(1), "utf8mb3".equals(val) ? "utf8" : val);
             }
 
             // fix the renaming of "tx_isolation" to "transaction_isolation" that is made in NativeSession.loadServerVariables().
@@ -6980,15 +6984,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             // check values from "select @@var..."
             assertEquals(serverVariables.get("auto_increment_increment"), session.getServerSession().getServerVariable("auto_increment_increment"));
-            assertEquals(serverVariables.get("character_set_client"), session.getServerSession().getServerVariable("character_set_client"));
-            assertEquals(serverVariables.get("character_set_connection"), session.getServerSession().getServerVariable("character_set_connection"));
+            assertEquals(serverVariables.get(CharsetSettings.CHARACTER_SET_CLIENT),
+                    session.getServerSession().getServerVariable(CharsetSettings.CHARACTER_SET_CLIENT));
+            assertEquals(serverVariables.get(CharsetSettings.CHARACTER_SET_CONNECTION),
+                    session.getServerSession().getServerVariable(CharsetSettings.CHARACTER_SET_CONNECTION));
 
             // we override character_set_results sometimes when configuring client charsets, thus need to check against actual value
-            if (session.getServerSession().getServerVariable(ServerSession.LOCAL_CHARACTER_SET_RESULTS) == null) {
-                assertEquals("", serverVariables.get("character_set_results"));
+            if (session.getServerSession().getServerVariable(CharsetSettings.CHARACTER_SET_RESULTS) == null) {
+                assertEquals("", serverVariables.get(CharsetSettings.CHARACTER_SET_RESULTS));
             } else {
-                assertEquals(serverVariables.get("character_set_results"),
-                        session.getServerSession().getServerVariable(ServerSession.LOCAL_CHARACTER_SET_RESULTS));
+                assertEquals(serverVariables.get(CharsetSettings.CHARACTER_SET_RESULTS),
+                        session.getServerSession().getServerVariable(CharsetSettings.CHARACTER_SET_RESULTS));
             }
 
             assertEquals(serverVariables.get("character_set_server"), session.getServerSession().getServerVariable("character_set_server"));
@@ -7161,13 +7167,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
                         String testStep = "";
                         try {
                             testStep = "create user";
-                            testBug20825727CreateUser(testDbUrl, "testBug20825727", simplePwd, encoding, pluginName, pwdHashingMethod);
+                            testBug20825727CreateUser(testDbUrl, "testBug20825727", simplePwd, pluginName, pwdHashingMethod);
                             testStep = "login with simple password";
                             testBug20825727TestLogin(testDbUrl, testConn.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
                                     sslEnabled, rsaEnabled, "testBug20825727", simplePwd, encoding, pluginName);
 
                             testStep = "change password";
-                            testBug20825727ChangePassword(testDbUrl, "testBug20825727", complexPwd, encoding, pluginName, pwdHashingMethod);
+                            testBug20825727ChangePassword(testDbUrl, "testBug20825727", complexPwd, pluginName, pwdHashingMethod);
                             testStep = "login with complex password";
                             testBug20825727TestLogin(testDbUrl, testConn.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
                                     sslEnabled, rsaEnabled, "testBug20825727", complexPwd, encoding, pluginName);
@@ -7197,15 +7203,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
     }
 
-    private void testBug20825727CreateUser(String testDbUrl, String user, String password, String encoding, String pluginName, int pwdHashingMethod)
-            throws SQLException {
+    private void testBug20825727CreateUser(String testDbUrl, String user, String password, String pluginName, int pwdHashingMethod) throws SQLException {
         JdbcConnection testConn = null;
         try {
             Properties props = new Properties();
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-            if (encoding.length() > 0) {
-                props.setProperty(PropertyKey.characterEncoding.getKeyName(), encoding);
-            }
+            props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
             testConn = (JdbcConnection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
@@ -7234,15 +7237,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
     }
 
-    private void testBug20825727ChangePassword(String testDbUrl, String user, String password, String encoding, String pluginName, int pwdHashingMethod)
-            throws SQLException {
+    private void testBug20825727ChangePassword(String testDbUrl, String user, String password, String pluginName, int pwdHashingMethod) throws SQLException {
         JdbcConnection testConn = null;
         try {
             Properties props = new Properties();
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-            if (encoding.length() > 0) {
-                props.setProperty(PropertyKey.characterEncoding.getKeyName(), encoding);
-            }
+            props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
             testConn = (JdbcConnection) getConnectionWithProps(testDbUrl, props);
             Statement testStmt = testConn.createStatement();
 
@@ -7348,13 +7348,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
                 boolean testShouldPass = true;
                 if (pwdIsComplex) {
-                    // if no encoding is specifically defined then our default password encoding ('UTF-8') and server's encoding must coincide
-                    testShouldPass = encoding.length() > 0 || defaultServerEncoding.equalsIgnoreCase("UTF-8");
-
-                    if (!testBaseConn.getSession().versionMeetsMinimum(5, 7, 6) && pluginName.equals("cleartext_plugin_server")) {
-                        // 'cleartext_plugin_server' from servers below version 5.7.6 requires UTF-8 encoding
-                        testShouldPass = encoding.equals("UTF-8") || (encoding.length() == 0 && defaultServerEncoding.equals("UTF-8"));
-                    }
+                    // if no encoding is specifically defined then our default password encoding is set to server's encoding
+                    testShouldPass = encoding.equals("UTF-8") || (encoding.length() == 0 && defaultServerEncoding.equals("UTF-8"));
                 }
 
                 System.out.printf("%-25s : %-25s : %s : %-25s : %-18s : %-18s [%s]%n", testCaseMsg, pluginName, pwdIsComplex ? "cplx" : "smpl", encProp,
@@ -10910,13 +10905,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testBug91317() throws Exception {
         Map<String, String> defaultCollations = new HashMap<>();
 
+        Properties p = new Properties();
+        p.setProperty(PropertyKey.detectCustomCollations.getKeyName(), "true");
+        p.setProperty(PropertyKey.customCharsetMapping.getKeyName(), "custom:Cp1252");
+        Connection c = getConnectionWithProps(p);
+
         // Compare server-side and client-side collation defaults.
         this.rs = this.stmt.executeQuery("SELECT COLLATION_NAME, CHARACTER_SET_NAME, ID FROM INFORMATION_SCHEMA.COLLATIONS WHERE IS_DEFAULT = 'Yes'");
         while (this.rs.next()) {
             String collationName = this.rs.getString(1);
             String charsetName = this.rs.getString(2);
             int collationId = this.rs.getInt(3);
-            int mappedCollationId = CharsetMapping.CHARSET_NAME_TO_COLLATION_INDEX.get(charsetName);
+
+            int mappedCollationId = ((MysqlConnection) c).getSession().getServerSession().getCharsetSettings()
+                    .getCollationIndexForMysqlCharsetName(charsetName);
 
             defaultCollations.put(charsetName, collationName);
 
@@ -10926,7 +10928,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
 
             assertEquals(collationId, mappedCollationId);
-            assertEquals(collationName, CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[mappedCollationId]);
+            assertEquals(collationName,
+                    ((MysqlConnection) c).getSession().getServerSession().getCharsetSettings().getCollationNameForCollationIndex(mappedCollationId));
         }
 
         ServerVersion sv = ((JdbcConnection) this.conn).getServerVersion();
@@ -10944,8 +10947,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 continue;
             }
 
-            String javaEnc = CharsetMapping.getJavaEncodingForMysqlCharset(cs);
-            String charsetForJavaEnc = CharsetMapping.getMysqlCharsetForJavaEncoding(javaEnc, sv);
+            String javaEnc = ((MysqlConnection) c).getSession().getServerSession().getCharsetSettings().getJavaEncodingForMysqlCharset(cs);
+            System.out.println(cs + "->" + javaEnc);
+            String charsetForJavaEnc = ((MysqlConnection) c).getSession().getServerSession().getCharsetSettings().getMysqlCharsetForJavaEncoding(javaEnc, sv);
             String expectedCollation = defaultCollations.get(charsetForJavaEnc);
 
             if ("UTF-8".equalsIgnoreCase(javaEnc)) {
@@ -10953,7 +10957,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 expectedCollation = versionMeetsMinimum(8, 0, 1) ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci";
             }
 
-            Connection testConn = getConnectionWithProps("characterEncoding=" + javaEnc);
+            Properties p2 = new Properties();
+            p2.setProperty(PropertyKey.detectCustomCollations.getKeyName(), "true");
+            p2.setProperty(PropertyKey.customCharsetMapping.getKeyName(), "custom:Cp1252");
+            p2.setProperty(PropertyKey.characterEncoding.getKeyName(), javaEnc);
+
+            Connection testConn = getConnectionWithProps(p2);
             ResultSet testRs = testConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'collation_connection'");
             assertTrue(testRs.next());
             assertEquals(expectedCollation, testRs.getString(2));

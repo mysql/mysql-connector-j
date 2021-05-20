@@ -30,7 +30,6 @@
 package testsuite.simple;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -54,6 +53,7 @@ import java.util.SortedMap;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.conf.PropertyKey;
 
 import testsuite.BaseTestCase;
@@ -244,15 +244,6 @@ public class CharsetTest extends BaseTestCase {
         }
     }
 
-    @Test
-    public void testStaticCharsetMappingConsistency() {
-        for (int i = 1; i < CharsetMapping.MAP_SIZE; i++) {
-            assertNotNull(CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i],
-                    "Assertion failure: No mapping from charset index " + i + " to a mysql collation");
-            assertNotNull(CharsetMapping.COLLATION_INDEX_TO_CHARSET[i], "Assertion failure: No mapping from charset index " + i + " to a Java character set");
-        }
-    }
-
     /**
      * Prints static mappings for analysis.
      * 
@@ -270,43 +261,48 @@ public class CharsetTest extends BaseTestCase {
             java.nio.charset.Charset cs = availableCharsets.get(canonicalName);
             canonicalName = cs.name();
 
-            int index = CharsetMapping.getCollationIndexForJavaEncoding(canonicalName, this.serverVersion);
-            String csname = CharsetMapping.getMysqlCharsetNameForCollationIndex(index);
+            int index = CharsetMappingWrapper.getStaticCollationIndexForJavaEncoding(canonicalName, this.serverVersion);
+            String csname = CharsetMappingWrapper.getStaticMysqlCharsetNameForCollationIndex(index);
 
             System.out.println((canonicalName + "                              ").substring(0, 26) + " (" + cs.canEncode() + ") --> "
-                    + CharsetMapping.getJavaEncodingForCollationIndex(index) + "  :  " + index + "  :  "
-                    + CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[index] + "  :  " + CharsetMapping.getMysqlCharsetNameForCollationIndex(index) + "  :  "
-                    + CharsetMapping.CHARSET_NAME_TO_CHARSET.get(csname) + "  :  " + CharsetMapping.getJavaEncodingForMysqlCharset(csname) + "  :  "
-                    + CharsetMapping.getMysqlCharsetForJavaEncoding(canonicalName, this.serverVersion) + "  :  "
-                    + CharsetMapping.getCollationIndexForJavaEncoding(canonicalName, this.serverVersion) + "  :  "
-                    + CharsetMapping.isMultibyteCharset(canonicalName));
+                    + CharsetMappingWrapper.getStaticJavaEncodingForCollationIndex(index) + "  :  " + index + "  :  "
+                    + CharsetMappingWrapper.getStaticCollationNameForCollationIndex(index) + "  :  "
+                    + CharsetMappingWrapper.getStaticMysqlCharsetNameForCollationIndex(index) + "  :  "
+                    + CharsetMappingWrapper.getStaticMysqlCharsetByName(csname) + "  :  " + CharsetMappingWrapper.getStaticJavaEncodingForMysqlCharset(csname)
+                    + "  :  " + CharsetMappingWrapper.getStaticMysqlCharsetForJavaEncoding(canonicalName, this.serverVersion) + "  :  "
+                    + CharsetMappingWrapper.getStaticCollationIndexForJavaEncoding(canonicalName, this.serverVersion) + "  :  "
+                    + CharsetMappingWrapper.isStaticMultibyteCharset(canonicalName));
 
             Set<String> s = cs.aliases();
             Iterator<String> j = s.iterator();
             while (j.hasNext()) {
                 String alias = j.next();
-                index = CharsetMapping.getCollationIndexForJavaEncoding(alias, this.serverVersion);
-                csname = CharsetMapping.getMysqlCharsetNameForCollationIndex(index);
+                index = CharsetMappingWrapper.getStaticCollationIndexForJavaEncoding(alias, this.serverVersion);
+                csname = CharsetMappingWrapper.getStaticMysqlCharsetNameForCollationIndex(index);
                 System.out.println("   " + (alias + "                              ").substring(0, 30) + " --> "
-                        + CharsetMapping.getJavaEncodingForCollationIndex(index) + "  :  " + index + "  :  "
-                        + CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[index] + "  :  " + CharsetMapping.getMysqlCharsetNameForCollationIndex(index)
-                        + "  :  " + CharsetMapping.CHARSET_NAME_TO_CHARSET.get(csname) + "  :  " + CharsetMapping.getJavaEncodingForMysqlCharset(csname)
-                        + "  :  " + CharsetMapping.getMysqlCharsetForJavaEncoding(alias, this.serverVersion) + "  :  "
-                        + CharsetMapping.getCollationIndexForJavaEncoding(alias, this.serverVersion) + "  :  " + CharsetMapping.isMultibyteCharset(alias));
+                        + CharsetMappingWrapper.getStaticJavaEncodingForCollationIndex(index) + "  :  " + index + "  :  "
+                        + CharsetMappingWrapper.getStaticCollationNameForCollationIndex(index) + "  :  "
+                        + CharsetMappingWrapper.getStaticMysqlCharsetNameForCollationIndex(index) + "  :  "
+                        + CharsetMappingWrapper.getStaticMysqlCharsetByName(csname) + "  :  "
+                        + CharsetMappingWrapper.getStaticJavaEncodingForMysqlCharset(csname) + "  :  "
+                        + CharsetMappingWrapper.getStaticMysqlCharsetForJavaEncoding(alias, this.serverVersion) + "  :  "
+                        + CharsetMappingWrapper.getStaticCollationIndexForJavaEncoding(alias, this.serverVersion) + "  :  "
+                        + CharsetMappingWrapper.isStaticMultibyteCharset(alias));
             }
             System.out.println("===================================");
         }
         for (int i = 1; i < CharsetMapping.MAP_SIZE; i++) {
-            String csname = CharsetMapping.getMysqlCharsetNameForCollationIndex(i);
-            String enc = CharsetMapping.getJavaEncodingForCollationIndex(i);
-            System.out.println((i + "   ").substring(0, 4) + " by index--> "
-                    + (CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i] + "                    ").substring(0, 20) + "  :  "
-                    + (csname + "          ").substring(0, 10) + "  :  " + (enc + "                    ").substring(0, 20)
+            String csname = CharsetMappingWrapper.getStaticMysqlCharsetNameForCollationIndex(i);
+            if (csname != null) {
+                String enc = CharsetMappingWrapper.getStaticJavaEncodingForCollationIndex(i);
+                System.out.println((i + "   ").substring(0, 4) + " by index--> "
+                        + (CharsetMappingWrapper.getStaticCollationNameForCollationIndex(i) + "                    ").substring(0, 20) + "  :  "
+                        + (csname + "          ").substring(0, 10) + "  :  " + (enc + "                    ").substring(0, 20)
 
-                    + " by charset--> " + (CharsetMapping.getJavaEncodingForMysqlCharset(csname) + "                  ").substring(0, 20)
-
-                    + " by encoding--> " + (CharsetMapping.getCollationIndexForJavaEncoding(enc, this.serverVersion) + "   ").substring(0, 4) + "  :  "
-                    + (CharsetMapping.getMysqlCharsetForJavaEncoding(enc, this.serverVersion) + "               ").substring(0, 15));
+                        + " by charset--> " + (CharsetMappingWrapper.getStaticJavaEncodingForMysqlCharset(csname) + "                  ").substring(0, 20)
+                        + " by encoding--> " + (CharsetMappingWrapper.getStaticCollationIndexForJavaEncoding(enc, this.serverVersion) + "   ").substring(0, 4)
+                        + "  :  " + (CharsetMappingWrapper.getStaticMysqlCharsetForJavaEncoding(enc, this.serverVersion) + "               ").substring(0, 15));
+            }
         }
     }
 

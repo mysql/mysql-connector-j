@@ -100,6 +100,7 @@ public enum PropertyKey {
     connectTimeout("connectTimeout", true), //
     continueBatchOnError("continueBatchOnError", true), //
     createDatabaseIfNotExist("createDatabaseIfNotExist", true), //
+    customCharsetMapping("customCharsetMapping", true), //
     databaseTerm("databaseTerm", true), //
     defaultAuthenticationPlugin("defaultAuthenticationPlugin", true), //
     defaultFetchSize("defaultFetchSize", true), //

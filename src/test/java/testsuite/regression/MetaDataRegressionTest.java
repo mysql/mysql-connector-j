@@ -64,9 +64,10 @@ import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 
-import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.NativeCharsetSettings;
 import com.mysql.cj.Query;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
@@ -1341,8 +1342,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
     }
 
     private void checkRsmdForBug13277(ResultSetMetaData rsmd) throws SQLException {
-        int i = ((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getSession().getServerSession().getMaxBytesPerChar(CharsetMapping
-                .getJavaEncodingForMysqlCharset(((com.mysql.cj.jdbc.JdbcConnection) this.conn).getSession().getServerSession().getServerDefaultCharset()));
+        int i = ((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getSession().getServerSession().getCharsetSettings()
+                .getMaxBytesPerChar(CharsetMappingWrapper.getStaticJavaEncodingForMysqlCharset(
+                        ((NativeCharsetSettings) ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getSession().getServerSession().getCharsetSettings())
+                                .getServerDefaultCharset()));
         if (i == 1) {
             // This is INT field but still processed in
             // ResultsetMetaData.getColumnDisplaySize
@@ -1759,9 +1762,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
                     }
 
                     if ("CHAR_OCTET_LENGTH".equals(metadataExpected.getColumnName(i + 1))) {
-                        if (((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getSession().getServerSession()
-                                .getMaxBytesPerChar(CharsetMapping.getJavaEncodingForMysqlCharset(
-                                        ((com.mysql.cj.jdbc.JdbcConnection) this.conn).getSession().getServerSession().getServerDefaultCharset())) > 1) {
+                        if (((com.mysql.cj.jdbc.ConnectionImpl) this.conn).getSession().getServerSession().getCharsetSettings()
+                                .getMaxBytesPerChar(CharsetMappingWrapper
+                                        .getStaticJavaEncodingForMysqlCharset(((NativeCharsetSettings) ((com.mysql.cj.jdbc.JdbcConnection) this.conn)
+                                                .getSession().getServerSession().getCharsetSettings()).getServerDefaultCharset())) > 1) {
                             continue; // SHOW CREATE and CHAR_OCT *will* differ
                         }
                     }

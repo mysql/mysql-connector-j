@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -100,7 +100,7 @@ public class FieldFactory implements ProtocolEntityFactory<Field, XMessage> {
                 collationIndex = (int) col.getCollation();
             }
 
-            String encoding = CharsetMapping.getJavaEncodingForCollationIndex(collationIndex);
+            String encoding = CharsetMapping.getStaticJavaEncodingForCollationIndex(collationIndex);
 
             MysqlType mysqlType = findMysqlType(col.getType(), col.getContentType(), col.getFlags(), collationIndex);
             int mysqlTypeId = xProtocolTypeToMysqlType(col.getType(), col.getContentType());
@@ -174,7 +174,7 @@ public class FieldFactory implements ProtocolEntityFactory<Field, XMessage> {
                     case XPROTOCOL_COLUMN_BYTES_CONTENT_TYPE_JSON:
                         return MysqlType.JSON;
                     default:
-                        if (collationIndex == 33) {
+                        if (collationIndex == 33) { // TODO what if other utf8 or utf8mb4 collation ?
                             return MysqlType.VARBINARY;
                         }
                         return MysqlType.VARCHAR;

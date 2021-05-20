@@ -85,7 +85,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.NativeSession;
 import com.mysql.cj.PreparedQuery;
@@ -822,7 +822,7 @@ public class ConnectionTest extends BaseTestCase {
         Connection loadConn = getConnectionWithProps(props);
         Statement loadStmt = loadConn.createStatement();
 
-        String charset = " CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(
+        String charset = " CHARACTER SET " + CharsetMappingWrapper.getStaticMysqlCharsetForJavaEncoding(
                 ((MysqlConnection) loadConn).getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
                 ((JdbcConnection) loadConn).getServerVersion());
 

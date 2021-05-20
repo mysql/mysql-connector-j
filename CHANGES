@@ -3,6 +3,11 @@
 
 Version 8.0.26
 
+  - Fix for Bug#25554464, CONNECT FAILS WITH NPE WHEN THE SERVER STARTED WITH CUSTOM COLLATION.
+
+  - Fix for Bug#100606 (31818423), UNECESARY CALL TO "SET NAMES 'UTF8' COLLATE 'UTF8_GENERAL_CI'".
+    Thanks to Marc Fletcher for his contribution.
+
   - Fix for Bug#102404 (32435618), CONTRIBUTION: ADD TRACK SESSION STATE CHANGE.
     Thanks to William Lee for his contribution.
 

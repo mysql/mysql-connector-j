@@ -91,8 +91,9 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
                 if (this.stage == AuthStage.FAST_AUTH_SEND_SCRAMBLE) {
                     // send a scramble for fast auth
                     this.seed = fromServer.readString(StringSelfDataType.STRING_TERM, null);
-                    toServer.add(new NativePacketPayload(Security
-                            .scrambleCachingSha2(StringUtils.getBytes(this.password, this.protocol.getPasswordCharacterEncoding()), this.seed.getBytes())));
+                    toServer.add(new NativePacketPayload(Security.scrambleCachingSha2(
+                            StringUtils.getBytes(this.password, this.protocol.getServerSession().getCharsetSettings().getPasswordCharacterEncoding()),
+                            this.seed.getBytes())));
                     this.stage = AuthStage.FAST_AUTH_READ_RESULT;
                     return true;
 
@@ -112,7 +113,8 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
 
                 if (this.protocol.getSocketConnection().isSSLEstablished()) {
                     // allow plain text over SSL
-                    NativePacketPayload bresp = new NativePacketPayload(StringUtils.getBytes(this.password, this.protocol.getPasswordCharacterEncoding()));
+                    NativePacketPayload bresp = new NativePacketPayload(
+                            StringUtils.getBytes(this.password, this.protocol.getServerSession().getCharsetSettings().getPasswordCharacterEncoding()));
                     bresp.setPosition(bresp.getPayloadLength());
                     bresp.writeInteger(IntegerDataType.INT1, 0);
                     bresp.setPosition(0);

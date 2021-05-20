@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -103,7 +103,8 @@ public class TextResultsetReader implements ProtocolEntityReader<Resultset, Nati
             // check for file request
             if (columnCount == NativePacketPayload.NULL_LENGTH) {
                 String charEncoding = this.protocol.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
-                String fileName = resultPacket.readString(StringSelfDataType.STRING_TERM, this.protocol.doesPlatformDbCharsetMatches() ? charEncoding : null);
+                String fileName = resultPacket.readString(StringSelfDataType.STRING_TERM,
+                        this.protocol.getServerSession().getCharsetSettings().doesPlatformDbCharsetMatches() ? charEncoding : null);
                 resultPacket = this.protocol.sendFileToServer(fileName);
             }
 

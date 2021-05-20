@@ -30,11 +30,9 @@
 package com.mysql.cj.protocol.a;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -68,6 +66,8 @@ import com.mysql.cj.Constants;
 import com.mysql.cj.MessageBuilder;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
+import com.mysql.cj.NativeCharsetSettings;
+import com.mysql.cj.NativeSession;
 import com.mysql.cj.Query;
 import com.mysql.cj.QueryAttributesBindValue;
 import com.mysql.cj.QueryAttributesBindings;
@@ -99,7 +99,6 @@ import com.mysql.cj.log.Log;
 import com.mysql.cj.log.ProfilerEvent;
 import com.mysql.cj.log.ProfilerEventHandler;
 import com.mysql.cj.protocol.AbstractProtocol;
-import com.mysql.cj.protocol.AuthenticationProvider;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ExportControlled;
 import com.mysql.cj.protocol.FullReadInputStream;
@@ -189,12 +188,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     protected Map<Class<? extends ProtocolEntity>, ProtocolEntityReader<? extends ProtocolEntity, ? extends Message>> PROTOCOL_ENTITY_CLASS_TO_TEXT_READER;
     protected Map<Class<? extends ProtocolEntity>, ProtocolEntityReader<? extends ProtocolEntity, ? extends Message>> PROTOCOL_ENTITY_CLASS_TO_BINARY_READER;
 
-    /**
-     * Does the character set of this connection match the character set of the
-     * platform
-     */
-    protected boolean platformDbCharsetMatches = true; // changed once we've connected.
-
     private int statementExecutionDepth = 0;
     private List<QueryInterceptor> queryInterceptors;
 
@@ -211,33 +204,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      */
     private String queryComment = null;
 
-    /**
-     * We store the platform 'encoding' here, only used to avoid munging filenames for LOAD DATA LOCAL INFILE...
-     */
-    private static String jvmPlatformCharset = null;
-
     private NativeMessageBuilder commandBuilder = null;
-
-    static {
-        OutputStreamWriter outWriter = null;
-
-        //
-        // Use the I/O system to get the encoding (if possible), to avoid security restrictions on System.getProperty("file.encoding") in applets (why is that
-        // restricted?)
-        //
-        try {
-            outWriter = new OutputStreamWriter(new ByteArrayOutputStream());
-            jvmPlatformCharset = outWriter.getEncoding();
-        } finally {
-            try {
-                if (outWriter != null) {
-                    outWriter.close();
-                }
-            } catch (IOException ioEx) {
-                // ignore
-            }
-        }
-    }
 
     public static NativeProtocol getInstance(Session session, SocketConnection socketConnection, PropertySet propertySet, Log log,
             TransactionEventHandler transactionManager) {
@@ -332,8 +299,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         NativePacketPayload packet = new NativePacketPayload(SSL_REQUEST_LENGTH);
         packet.writeInteger(IntegerDataType.INT4, clientParam);
         packet.writeInteger(IntegerDataType.INT4, NativeConstants.MAX_PACKET_SIZE);
-        packet.writeInteger(IntegerDataType.INT1, AuthenticationProvider.getCharsetForHandshake(this.authProvider.getEncodingForHandshake(),
-                this.serverSession.getCapabilities().getServerVersion()));
+        packet.writeInteger(IntegerDataType.INT1, this.serverSession.getCharsetSettings().configurePreHandshake(false));
         packet.writeBytes(StringLengthDataType.STRING_FIXED, new byte[23]);  // Set of bytes reserved for future use.
 
         send(packet, packet.getPosition());
@@ -389,6 +355,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         // Create session state
         this.serverSession = new NativeServerSession(this.propertySet);
+
+        this.serverSession.setCharsetSettings(new NativeCharsetSettings((NativeSession) this.session));
 
         // Read the first packet
         this.serverSession.setCapabilities(readServerCapabilities());
@@ -511,11 +479,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             rejectProtocol(buf);
         }
 
-        NativeCapabilities serverCapabilities = new NativeCapabilities();
-        serverCapabilities.setInitialHandshakePacket(buf);
-
-        return serverCapabilities;
-
+        return new NativeCapabilities(buf);
     }
 
     @Override
@@ -744,7 +708,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             String xOpen = null;
 
-            serverErrorMessage = resultPacket.readString(StringSelfDataType.STRING_TERM, this.serverSession.getErrorMessageEncoding());
+            serverErrorMessage = resultPacket.readString(StringSelfDataType.STRING_TERM, this.serverSession.getCharsetSettings().getErrorMessageEncoding());
 
             if (serverErrorMessage.charAt(0) == '#') {
 
@@ -943,7 +907,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
         }
 
-        if (!this.platformDbCharsetMatches && StringUtils.startsWithIgnoreCaseAndWs(query, "LOAD DATA")) {
+        if (!this.session.getServerSession().getCharsetSettings().doesPlatformDbCharsetMatches() && StringUtils.startsWithIgnoreCaseAndWs(query, "LOAD DATA")) {
             sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query));
         } else {
             sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query, characterEncoding));
@@ -1340,27 +1304,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         this.packetSender = this.packetSender.undecorateAll();
         this.packetReader = this.packetReader.undecorateAll();
 
-        this.authProvider.changeUser(this.serverSession, user, password, database);
-    }
-
-    /**
-     * Determines if the database charset is the same as the platform charset
-     */
-    public void checkForCharsetMismatch() {
-        String characterEncoding = this.propertySet.getStringProperty(PropertyKey.characterEncoding).getValue();
-        if (characterEncoding != null) {
-            String encodingToCheck = jvmPlatformCharset;
-
-            if (encodingToCheck == null) {
-                encodingToCheck = Constants.PLATFORM_ENCODING;
-            }
-
-            if (encodingToCheck == null) {
-                this.platformDbCharsetMatches = false;
-            } else {
-                this.platformDbCharsetMatches = encodingToCheck.equals(characterEncoding);
-            }
-        }
+        this.authProvider.changeUser(user, password, database);
     }
 
     protected boolean useNanosForElapsedTime() {
@@ -1405,7 +1349,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         beforeHandshake();
 
-        this.authProvider.connect(this.serverSession, user, password, database);
+        this.authProvider.connect(user, password, database);
     }
 
     protected boolean isDataAvailable() {
@@ -1445,22 +1389,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             this.log.logTrace(dumpBuffer.toString());
         }
-    }
-
-    public boolean doesPlatformDbCharsetMatches() {
-        return this.platformDbCharsetMatches;
-    }
-
-    public String getPasswordCharacterEncoding() {
-        String encoding;
-        if ((encoding = this.propertySet.getStringProperty(PropertyKey.passwordCharacterEncoding).getStringValue()) != null) {
-            return encoding;
-        }
-        if ((encoding = this.propertySet.getStringProperty(PropertyKey.characterEncoding).getValue()) != null) {
-            return encoding;
-        }
-        return "UTF-8";
-
     }
 
     public boolean versionMeetsMinimum(int major, int minor, int subminor) {
@@ -1743,7 +1671,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             checkTransactionState();
         } else {
             // read OK packet
-            OkPacket ok = OkPacket.parse(rowPacket, this.serverSession.getErrorMessageEncoding());
+            OkPacket ok = OkPacket.parse(rowPacket, this.serverSession.getCharsetSettings().getErrorMessageEncoding());
             result = (T) ok;
 
             this.serverSession.setStatusFlags(ok.getStatusFlags(), saveOldStatus);
@@ -2272,8 +2200,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     public void initServerSession() {
         configureTimeZone();
 
-        if (this.session.getServerSession().getServerVariables().containsKey("max_allowed_packet")) {
-            int serverMaxAllowedPacket = this.session.getServerSession().getServerVariable("max_allowed_packet", -1);
+        if (this.serverSession.getServerVariables().containsKey("max_allowed_packet")) {
+            int serverMaxAllowedPacket = this.serverSession.getServerVariable("max_allowed_packet", -1);
 
             // use server value if maxAllowedPacket hasn't been given, or max_allowed_packet is smaller
             if (serverMaxAllowedPacket != -1 && (!this.maxAllowedPacket.isExplicitlySet() || serverMaxAllowedPacket < this.maxAllowedPacket.getValue())) {
@@ -2296,5 +2224,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 blobSendChunkSize.setValue(allowedBlobSendChunkSize);
             }
         }
+
+        this.serverSession.getCharsetSettings().configurePostHandshake(false);
     }
 }

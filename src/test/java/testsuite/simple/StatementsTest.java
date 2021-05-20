@@ -77,7 +77,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.PropertyKey;
@@ -1872,8 +1872,8 @@ public class StatementsTest extends BaseTestCase {
 
         try {
             ((com.mysql.cj.jdbc.JdbcStatement) testStmt).setLocalInfileInputStream(stream);
-            testStmt.execute(
-                    "LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET " + CharsetMapping.getMysqlCharsetForJavaEncoding(
+            testStmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked CHARACTER SET "
+                    + CharsetMappingWrapper.getStaticMysqlCharsetForJavaEncoding(
                             ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(), this.serverVersion));
             assertEquals(-1, stream.read());
             this.rs = testStmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");

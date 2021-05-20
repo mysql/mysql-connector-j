@@ -111,7 +111,7 @@ import javax.sql.rowset.serial.SerialBlob;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import com.mysql.cj.CharsetMapping;
+import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.ClientPreparedQuery;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
@@ -2388,7 +2388,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertThrows(SQLSyntaxErrorException.class,
                     versionMeetsMinimum(8, 0, 19) ? "Loading local data is disabled;.*" : "The used command is not allowed with this MySQL version", () -> {
                         this.stmt.executeUpdate("LOAD DATA LOCAL INFILE '" + fileName + "' INTO TABLE loadDataRegress CHARACTER SET "
-                                + CharsetMapping.getMysqlCharsetForJavaEncoding(
+                                + CharsetMappingWrapper.getStaticMysqlCharsetForJavaEncoding(
                                         ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
                                         this.serverVersion));
                         return null;
@@ -2399,7 +2399,7 @@ public class StatementRegressionTest extends BaseTestCase {
             Connection testConn = getConnectionWithProps(props);
             int updateCount = testConn.createStatement()
                     .executeUpdate("LOAD DATA LOCAL INFILE '" + fileNameBuf.toString() + "' INTO TABLE loadDataRegress CHARACTER SET "
-                            + CharsetMapping.getMysqlCharsetForJavaEncoding(
+                            + CharsetMappingWrapper.getStaticMysqlCharsetForJavaEncoding(
                                     ((MysqlConnection) this.conn).getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue(),
                                     this.serverVersion));
             assertTrue(updateCount == rowCount);

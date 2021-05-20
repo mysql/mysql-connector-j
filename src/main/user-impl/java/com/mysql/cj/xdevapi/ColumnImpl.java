@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -151,11 +151,11 @@ public class ColumnImpl implements Column {
     }
 
     public String getCollationName() {
-        return CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[this.field.getCollationIndex()];
+        return CharsetMapping.getStaticCollationNameForCollationIndex(this.field.getCollationIndex()); // TODO use CharsetSettings method
     }
 
     public String getCharacterSetName() {
-        return CharsetMapping.getMysqlCharsetNameForCollationIndex(this.field.getCollationIndex());
+        return CharsetMapping.getStaticMysqlCharsetNameForCollationIndex(this.field.getCollationIndex()); // TODO use CharsetSettings method
     }
 
     public boolean isPadded() {

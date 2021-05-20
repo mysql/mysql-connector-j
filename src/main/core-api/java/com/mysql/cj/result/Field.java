@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,7 @@
 
 package com.mysql.cj.result;
 
-import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.ServerVersion;
 import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.util.LazyString;
 
@@ -180,12 +178,6 @@ public class Field implements ProtocolEntity {
      */
     public String getEncoding() {
         return this.encoding;
-    }
-
-    // TODO Remove this after DBMD isn't using ByteArrayRow results.
-    public void setEncoding(String javaEncodingName, ServerVersion version) {
-        this.encoding = javaEncodingName;
-        this.collationIndex = CharsetMapping.getCollationIndexForJavaEncoding(javaEncodingName, version);
     }
 
     public String getColumnLabel() {

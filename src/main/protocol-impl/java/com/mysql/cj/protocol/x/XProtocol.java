@@ -49,7 +49,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import com.google.protobuf.GeneratedMessageV3;
-import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.QueryResult;
@@ -524,7 +523,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         this.currDatabase = database;
 
         beforeHandshake();
-        this.authProvider.connect(null, user, password, database);
+        this.authProvider.connect(user, password, database);
     }
 
     public void changeUser(String user, String password, String database) {
@@ -532,7 +531,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         this.currPassword = password;
         this.currDatabase = database;
 
-        this.authProvider.changeUser(null, user, password, database);
+        this.authProvider.changeUser(user, password, database);
     }
 
     public void afterHandshake() {
@@ -582,7 +581,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
                     if (notice instanceof XSessionStateChanged) {
                         switch (((XSessionStateChanged) notice).getParamType()) {
                             case Notice.SessionStateChanged_CLIENT_ID_ASSIGNED:
-                                this.getServerSession().setThreadId(((XSessionStateChanged) notice).getValue().getVUnsignedInt());
+                                this.getServerSession().getCapabilities().setThreadId(((XSessionStateChanged) notice).getValue().getVUnsignedInt());
                                 break;
                             case Notice.SessionStateChanged_ACCOUNT_EXPIRED:
                                 // TODO
@@ -685,15 +684,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         } catch (IOException e) {
             this.currentResultStreamer = null;
             throw new XProtocolError(e.getMessage(), e);
-        }
-    }
-
-    // TODO: put this in CharsetMapping..
-    public static Map<String, Integer> COLLATION_NAME_TO_COLLATION_INDEX = new java.util.HashMap<>();
-
-    static {
-        for (int i = 0; i < CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME.length; ++i) {
-            COLLATION_NAME_TO_COLLATION_INDEX.put(CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[i], i);
         }
     }
 
@@ -1012,7 +1002,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
                 }
             }
 
-            this.authProvider.changeUser(null, this.currUser, this.currPassword, this.currDatabase);
+            this.authProvider.changeUser(this.currUser, this.currPassword, this.currDatabase);
         }
 
         // No prepared statements survived to Mysqlx.Session.Reset. Reset all related control structures.
@@ -1032,10 +1022,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public void changeDatabase(String database) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
         // TODO: Figure out how this is relevant for X Protocol client Session
-    }
-
-    public String getPasswordCharacterEncoding() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
     public boolean versionMeetsMinimum(int major, int minor, int subminor) {

@@ -32,6 +32,7 @@ package com.mysql.cj.protocol.x;
 import java.util.Map;
 import java.util.TimeZone;
 
+import com.mysql.cj.CharsetSettings;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -41,8 +42,6 @@ import com.mysql.cj.protocol.ServerSession;
 public class XServerSession implements ServerSession {
 
     XServerCapabilities serverCapabilities = null;
-    /** Server-assigned client-id. */
-    private long clientId = -1;
 
     private TimeZone defaultTimeZone = TimeZone.getDefault();
 
@@ -78,16 +77,6 @@ public class XServerSession implements ServerSession {
 
     @Override
     public void setOldStatusFlags(int statusFlags) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public int getServerDefaultCollationIndex() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public void setServerDefaultCollationIndex(int serverDefaultCollationIndex) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
@@ -187,82 +176,12 @@ public class XServerSession implements ServerSession {
     }
 
     @Override
-    public boolean characterSetNamesMatches(String mysqlEncodingName) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
     public ServerVersion getServerVersion() {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
     @Override
     public boolean isVersion(ServerVersion version) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public String getServerDefaultCharset() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public String getErrorMessageEncoding() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public void setErrorMessageEncoding(String errorMessageEncoding) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public int getMaxBytesPerChar(String javaCharsetName) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public String getEncodingForIndex(int collationIndex) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public void configureCharacterSets() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public String getCharacterSetMetadata() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public void setCharacterSetMetadata(String characterSetMetadata) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public int getMetadataCollationIndex() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public void setMetadataCollationIndex(int metadataCollationIndex) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public String getCharacterSetResultsOnServer() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public void setCharacterSetResultsOnServer(String characterSetResultsOnServer) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
@@ -297,16 +216,6 @@ public class XServerSession implements ServerSession {
     }
 
     @Override
-    public long getThreadId() {
-        return this.clientId;
-    }
-
-    @Override
-    public void setThreadId(long threadId) {
-        this.clientId = threadId;
-    }
-
-    @Override
     public boolean isAutoCommit() {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
@@ -326,5 +235,17 @@ public class XServerSession implements ServerSession {
 
     public TimeZone getDefaultTimeZone() {
         return this.defaultTimeZone;
+    }
+
+    @Override
+    public CharsetSettings getCharsetSettings() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setCharsetSettings(CharsetSettings charsetSettings) {
+        // TODO Auto-generated method stub
+
     }
 }

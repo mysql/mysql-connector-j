@@ -77,7 +77,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
 
     public ClientPreparedQueryBindings(int parameterCount, Session sess) {
         super(parameterCount, sess);
-        if (((NativeSession) this.session).getRequiresEscapingEncoder()) {
+        if (((NativeSession) this.session).getServerSession().getCharsetSettings().getRequiresEscapingEncoder()) {
             this.charsetEncoder = Charset.forName(this.charEncoding).newEncoder();
         }
     }
@@ -211,7 +211,8 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
         if (x == null) {
             setNull(parameterIndex); // setNull(parameterIndex, MysqlType.BINARY);
         } else {
-            if (this.session.getServerSession().isNoBackslashEscapesSet() || (escapeForMBChars && CharsetMapping.isMultibyteCharset(this.charEncoding))) {
+            if (this.session.getServerSession().isNoBackslashEscapesSet()
+                    || (escapeForMBChars && this.session.getServerSession().getCharsetSettings().isMultibyteCharset(this.charEncoding))) {
 
                 // Send as hex
 

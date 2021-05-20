@@ -1021,8 +1021,8 @@ public class SessionTest extends DevApiBaseTestCase {
         cli0 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true, \"maxSize\" : 2}}");
         s0 = cli0.getSession();
         s1 = cli0.getSession();
-        long id0 = ((SessionImpl) s0).getSession().getServerSession().getThreadId();
-        long id1 = ((SessionImpl) s1).getSession().getServerSession().getThreadId();
+        long id0 = ((SessionImpl) s0).getSession().getServerSession().getCapabilities().getThreadId();
+        long id1 = ((SessionImpl) s1).getSession().getServerSession().getCapabilities().getThreadId();
 
         s0.sql("SET @a='s0'").execute();
         s0.sql("CREATE TEMPORARY TABLE testpooledsessionstmps0(x int)").execute();
@@ -1050,8 +1050,8 @@ public class SessionTest extends DevApiBaseTestCase {
         Session s0_new = cli0.getSession();
         Session s1_new = cli0.getSession();
 
-        assertEquals(id0, ((SessionImpl) s0_new).getSession().getServerSession().getThreadId());
-        assertEquals(id1, ((SessionImpl) s1_new).getSession().getServerSession().getThreadId());
+        assertEquals(id0, ((SessionImpl) s0_new).getSession().getServerSession().getCapabilities().getThreadId());
+        assertEquals(id1, ((SessionImpl) s1_new).getSession().getServerSession().getCapabilities().getThreadId());
 
         res = s0_new.sql("SELECT @a as a").execute();
         assertTrue(res.hasNext());

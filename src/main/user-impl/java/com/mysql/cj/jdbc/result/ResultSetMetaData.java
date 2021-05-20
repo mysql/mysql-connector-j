@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,10 +31,8 @@ package com.mysql.cj.jdbc.result;
 
 import java.sql.SQLException;
 
-import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.NativeSession;
 import com.mysql.cj.Session;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
@@ -127,18 +125,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      *             if an invalid column index is given.
      */
     public String getColumnCharacterSet(int column) throws SQLException {
-        int index = getField(column).getCollationIndex();
-
-        String charsetName = null;
-
-        if (((NativeSession) this.session).getProtocol().getServerSession().indexToCustomMysqlCharset != null) {
-            charsetName = ((NativeSession) this.session).getProtocol().getServerSession().indexToCustomMysqlCharset.get(index);
-        }
-        if (charsetName == null) {
-            charsetName = CharsetMapping.getMysqlCharsetNameForCollationIndex(index);
-        }
-
-        return charsetName;
+        return this.session.getServerSession().getCharsetSettings().getMysqlCharsetNameForCollationIndex(getField(column).getCollationIndex());
     }
 
     @Override
@@ -169,7 +156,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
         int lengthInBytes = clampedGetLength(f);
 
-        return lengthInBytes / this.session.getServerSession().getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
+        return lengthInBytes / this.session.getServerSession().getCharsetSettings().getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
     }
 
     @Override
@@ -241,7 +228,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
             default:
                 return f.getMysqlType().isDecimal() ? clampedGetLength(f)
-                        : clampedGetLength(f) / this.session.getServerSession().getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
+                        : clampedGetLength(f) / this.session.getServerSession().getCharsetSettings().getMaxBytesPerChar(f.getCollationIndex(), f.getEncoding());
 
         }
     }
@@ -315,7 +302,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             case JSON:
             case ENUM:
             case SET:
-                String collationName = CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME[field.getCollationIndex()];
+                String collationName = this.session.getServerSession().getCharsetSettings().getCollationNameForCollationIndex(field.getCollationIndex());
                 return ((collationName != null) && !collationName.endsWith("_ci"));
 
             default:
