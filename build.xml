@@ -747,15 +747,18 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <property name="com.mysql.cj.build.meta-inf.osgid-version"
                   value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}.${com.mysql.cj.build.driver.version.subminor}" />
 
-        <property name="com.mysql.cj.build.meta-inf.crypto-imports" value="javax.net.ssl;javax.crypto;resolution:=optional" />
+        <property name="com.mysql.cj.build.meta-inf.crypto-imports" value="javax.net.ssl;javax.crypto;javax.crypto.spec;resolution:=optional" />
+        <property name="com.mysql.cj.build.meta-inf.security-imports"
+                  value="javax.security.auth;javax.security.auth.callback;javax.security.auth.login;javax.security.auth.x500;javax.security.sasl;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.jdbc4-imports"
                   value="javax.xml.parsers;javax.xml.stream;javax.xml.transform;javax.xml.transform.dom;javax.xml.transform.sax;javax.xml.transform.stax;javax.xml.transform.stream;org.w3c.dom;org.xml.sax;org.xml.sax.helpers;resolution:=optional" />
-        <property name="com.mysql.cj.build.meta-inf.jee-imports" value="javax.sql;javax.naming;javax.naming.spi;javax.transaction.xa;resolution:=optional" />
+        <property name="com.mysql.cj.build.meta-inf.jee-imports"
+                  value="javax.sql;javax.naming;javax.naming.directory;javax.naming.ldap;javax.naming.spi;javax.transaction.xa;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.jmx-imports" value="javax.management;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.integration-imports" value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2,1.0.0)&quot;;resolution:=optional" />
         <property name="com.mysql.cj.build.meta-inf.logging-imports" value="org.slf4j;resolution:=optional" />
-        <property name="com.mysql.cj.build.meta-inf.xdevapi-imports"
-                  value="com.google.protobuf;javax.security.auth.callback;javax.security.sasl;resolution:=optional" />
+        <property name="com.mysql.cj.build.meta-inf.xdevapi-imports" value="com.google.protobuf;resolution:=optional" />
+
 
         <property name="com.mysql.cj.build.meta-inf.driver-exports"
                   value="com.mysql.cj.jdbc;version=&quot;${com.mysql.cj.build.meta-inf.osgid-version}&quot;;uses:=&quot;javax.management,javax.naming,javax.naming.spi,javax.net.ssl,javax.sql,javax.transaction.xa,javax.xml.parsers,javax.xml.stream,javax.xml.transform,javax.xml.transform.dom,javax.xml.transform.sax,javax.xml.transform.stax,javax.xml.transform.stream,org.xml.sax&quot;" />
@@ -807,7 +810,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <attribute name="Export-Package"
                        value="${com.mysql.cj.build.meta-inf.driver-exports},${com.mysql.cj.build.meta-inf.core-exports},${com.mysql.cj.build.meta-inf.protocol-exports},${com.mysql.cj.build.meta-inf.generated-exports},${com.mysql.cj.build.meta-inf.logging-exports},${com.mysql.cj.build.meta-inf.util-exports},${com.mysql.cj.build.meta-inf.exceptions-exports},${com.mysql.cj.build.meta-inf.ha-exports},${com.mysql.cj.build.meta-inf.interceptors-exports},${com.mysql.cj.build.meta-inf.integration-exports},${com.mysql.cj.build.meta-inf.configs-exports},${com.mysql.cj.build.meta-inf.legacy-exports},${com.mysql.cj.build.meta-inf.jdbc-exports},${com.mysql.cj.build.meta-inf.xdevapi-exports},${com.mysql.cj.build.meta-inf.admin-exports}" />
             <attribute name="Import-Package"
-                       value="${com.mysql.cj.build.meta-inf.crypto-imports},${com.mysql.cj.build.meta-inf.jdbc4-imports},${com.mysql.cj.build.meta-inf.jee-imports},${com.mysql.cj.build.meta-inf.jmx-imports},${com.mysql.cj.build.meta-inf.integration-imports},${com.mysql.cj.build.meta-inf.logging-imports},${com.mysql.cj.build.meta-inf.xdevapi-imports}" />
+                       value="${com.mysql.cj.build.meta-inf.crypto-imports},${com.mysql.cj.build.meta-inf.security-imports},${com.mysql.cj.build.meta-inf.jdbc4-imports},${com.mysql.cj.build.meta-inf.jee-imports},${com.mysql.cj.build.meta-inf.jmx-imports},${com.mysql.cj.build.meta-inf.integration-imports},${com.mysql.cj.build.meta-inf.logging-imports},${com.mysql.cj.build.meta-inf.xdevapi-imports}" />
         </manifest>
 
         <!-- Add legal notices and INFO files to META-INF -->
@@ -1353,9 +1356,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- ********************************* -->
 
 
-    <target name="test-coverage"
-            description="Runs tests collecting coverage results."
-            depends="-setup-test-coverage-agent, test" />
+    <target name="test-coverage" description="Runs tests collecting coverage results." depends="-setup-test-coverage-agent, test" />
 
 
     <target name="-set-test-coverage-defaults" depends="-extra-libs-check">
