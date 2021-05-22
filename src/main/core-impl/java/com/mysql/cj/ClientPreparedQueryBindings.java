@@ -414,6 +414,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
         if (x == null) {
             setNull(parameterIndex);
         } else if (cal != null) {
+            cal = (Calendar) cal.clone();
             setValue(parameterIndex, TimeUtil.getSimpleDateFormat("''yyyy-MM-dd''", cal).format(x), MysqlType.DATE);
         } else {
             this.ddf = TimeUtil.getSimpleDateFormat(this.ddf, "''yyyy-MM-dd''", this.session.getServerSession().getDefaultTimeZone());
@@ -879,6 +880,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
                 && this.sendFractionalSecondsForTime.getValue() && TimeUtil.hasFractionalSeconds(x) ? "''HH:mm:ss.SSS''" : "''HH:mm:ss''";
 
         if (cal != null) {
+            cal = (Calendar) cal.clone();
             setValue(parameterIndex, TimeUtil.getSimpleDateFormat(formatStr, cal).format(x), MysqlType.TIME);
         } else {
             this.tdf = TimeUtil.getSimpleDateFormat(this.tdf, formatStr, this.session.getServerSession().getDefaultTimeZone());
@@ -902,6 +904,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
         StringBuffer buf = new StringBuffer();
 
         if (targetCalendar != null) {
+            targetCalendar = (Calendar) targetCalendar.clone();
             buf.append(TimeUtil.getSimpleDateFormat("''yyyy-MM-dd HH:mm:ss", targetCalendar).format(x));
         } else {
             this.tsdf = TimeUtil.getSimpleDateFormat(this.tsdf, "''yyyy-MM-dd HH:mm:ss",
