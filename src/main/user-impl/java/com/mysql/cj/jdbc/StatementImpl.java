@@ -553,6 +553,10 @@ public class StatementImpl implements JdbcStatement {
             java.sql.PreparedStatement pStmt = this.connection.prepareStatement(sql, this.query.getResultType().getIntValue(), this.resultSetConcurrency);
 
             pStmt.setFetchSize(this.query.getResultFetchSize());
+            
+            if (this.getQueryTimeout() > 0) {
+                pStmt.setQueryTimeout(this.getQueryTimeout());
+            }
 
             if (this.maxRows > -1) {
                 pStmt.setMaxRows(this.maxRows);
