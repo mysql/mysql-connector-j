@@ -155,8 +155,8 @@ public class QueryAttributesTest extends BaseTestCase {
         assertEquals("42", this.rs.getString("qa04"));
         assertEquals("-42", this.rs.getString("qa05"));
         assertEquals("2147483647", this.rs.getString("qa06"));
-        //      assertEquals("9223372036854775807", rs.getString("qa07")); // Bug#32847269 
-        //      assertEquals("351910092110", rs.getString("qa08")); // Bug#32847269
+        assertEquals("9223372036854775807", this.rs.getString("qa07"));
+        assertEquals("351910092110", this.rs.getString("qa08"));
         assertTrue(this.rs.getString("qa09").startsWith("2.71828"));
         assertTrue(this.rs.getString("qa10").startsWith("3.14159"));
         assertTrue(this.rs.getString("qa11").startsWith("1.61803"));
@@ -249,8 +249,8 @@ public class QueryAttributesTest extends BaseTestCase {
         assertEquals("42", this.rs.getString("qa04"));
         assertEquals("-42", this.rs.getString("qa05"));
         assertEquals("2147483647", this.rs.getString("qa06"));
-        //      assertEquals("9223372036854775807", rs.getString("qa07")); // Bug#32847269 
-        //      assertEquals("351910092110", rs.getString("qa08")); // Bug#32847269
+        assertEquals("9223372036854775807", this.rs.getString("qa07"));
+        assertEquals("351910092110", this.rs.getString("qa08"));
         assertTrue(this.rs.getString("qa09").startsWith("2.71828"));
         assertTrue(this.rs.getString("qa10").startsWith("3.14159"));
         assertTrue(this.rs.getString("qa11").startsWith("1.61803"));
@@ -345,8 +345,8 @@ public class QueryAttributesTest extends BaseTestCase {
         assertEquals("42", this.rs.getString("qa04"));
         assertEquals("-42", this.rs.getString("qa05"));
         assertEquals("2147483647", this.rs.getString("qa06"));
-        //      assertEquals("9223372036854775807", rs.getString("qa07")); // Bug#32847269 
-        //      assertEquals("351910092110", rs.getString("qa08")); // Bug#32847269
+        assertEquals("9223372036854775807", this.rs.getString("qa07"));
+        assertEquals("351910092110", this.rs.getString("qa08"));
         assertTrue(this.rs.getString("qa09").startsWith("2.71828"));
         assertTrue(this.rs.getString("qa10").startsWith("3.14159"));
         assertTrue(this.rs.getString("qa11").startsWith("1.61803"));
@@ -441,8 +441,8 @@ public class QueryAttributesTest extends BaseTestCase {
         assertEquals("42", this.rs.getString("qa04"));
         assertEquals("-42", this.rs.getString("qa05"));
         assertEquals("2147483647", this.rs.getString("qa06"));
-        //      assertEquals("9223372036854775807", rs.getString("qa07")); // Bug#32847269 
-        //      assertEquals("351910092110", rs.getString("qa08")); // Bug#32847269
+        assertEquals("9223372036854775807", this.rs.getString("qa07"));
+        assertEquals("351910092110", this.rs.getString("qa08"));
         assertTrue(this.rs.getString("qa09").startsWith("2.71828"));
         assertTrue(this.rs.getString("qa10").startsWith("3.14159"));
         assertTrue(this.rs.getString("qa11").startsWith("1.61803"));
