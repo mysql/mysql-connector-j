@@ -1871,6 +1871,9 @@ public class StringUtils {
         return asBytes;
     }
 
+    private static final Pattern SERVER_PREPARE_STATEMENT_PATTERN =
+            Pattern.compile("^(\\s*\\/\\*([^\\*]|\\*[^\\/])*\\*\\/)*\\s*(SELECT|UPDATE|INSERT|DELETE|REPLACE|CALL|WITH)", Pattern.CASE_INSENSITIVE);
+
     public static boolean canHandleAsServerPreparedStatementNoCache(String sql, ServerVersion serverVersion, boolean allowMultiQueries,
             boolean noBackslashEscapes, boolean useAnsiQuotes) {
 
@@ -1879,27 +1882,19 @@ public class StringUtils {
             return false;
         }
 
-        boolean canHandleAsStatement = true;
+        boolean canHandleAsStatement = false;
+
+        if (SERVER_PREPARE_STATEMENT_PATTERN.matcher(sql).find()) {
+            canHandleAsStatement = true;
+        }
+        if (canHandleAsStatement && sql.startsWith("/* ping */")) {
+            canHandleAsStatement = false;
+        }
 
         boolean allowBackslashEscapes = !noBackslashEscapes;
         String quoteChar = useAnsiQuotes ? "\"" : "'";
-
-        if (allowMultiQueries) {
-            if (StringUtils.indexOfIgnoreCase(0, sql, ";", quoteChar, quoteChar,
-                    allowBackslashEscapes ? StringUtils.SEARCH_MODE__ALL : StringUtils.SEARCH_MODE__MRK_COM_WS) != -1) {
-                canHandleAsStatement = false;
-            }
-        } else if (startsWithIgnoreCaseAndWs(sql, "XA ")) {
-            canHandleAsStatement = false;
-        } else if (startsWithIgnoreCaseAndWs(sql, "CREATE TABLE")) {
-            canHandleAsStatement = false;
-        } else if (startsWithIgnoreCaseAndWs(sql, "DO")) {
-            canHandleAsStatement = false;
-        } else if (startsWithIgnoreCaseAndWs(sql, "SET")) {
-            canHandleAsStatement = false;
-        } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "SHOW WARNINGS") && serverVersion.meetsMinimum(ServerVersion.parseVersion("5.7.2"))) {
-            canHandleAsStatement = false;
-        } else if (sql.startsWith("/* ping */")) {
+        if (canHandleAsStatement && (allowMultiQueries && (StringUtils.indexOfIgnoreCase(0, sql, ";", quoteChar, quoteChar,
+                allowBackslashEscapes ? StringUtils.SEARCH_MODE__ALL : StringUtils.SEARCH_MODE__MRK_COM_WS) != -1))) {
             canHandleAsStatement = false;
         }
 
