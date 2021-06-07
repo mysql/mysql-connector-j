@@ -2032,7 +2032,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (this.autoReconnectForPools.getValue()) {
                 this.autoReconnect.setValue(true);
             }
-
+            boolean autoCommitOld = this.session.getServerSession().isAutoCommit();
             try {
                 boolean needsSetOnServer = true;
 
@@ -2051,6 +2051,13 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     this.session.execSQL(null, autoCommitFlag ? "SET autocommit=1" : "SET autocommit=0", -1, null, false, this.nullStatementResultSetFactory,
                             null, false);
                 }
+            } catch (CJException sqlE) {
+                // If an unknown exception other than a network exception occurs when executing setAutoCommit SQL,
+                // the auto commit value of server session should be reset to the previous value
+                if (!(sqlE instanceof CJCommunicationsException) && ER_UNKNOWN_ERROR == sqlE.getVendorCode()){
+                    this.session.getServerSession().setAutoCommit(autoCommitOld);
+                }
+                throw sqlE;
             } finally {
                 if (this.autoReconnectForPools.getValue()) {
                     this.autoReconnect.setValue(false);
