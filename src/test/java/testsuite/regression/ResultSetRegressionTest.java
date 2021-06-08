@@ -6979,6 +6979,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 assertEquals('a', rs1.getBytes(2)[0]);
                 assertEquals('a', rs1.getByte(2));
                 assertThrows(SQLDataException.class, "Cannot determine value type from string 'a'", new Callable<Void>() {
+
                     public Void call() throws Exception {
                         rs1.getInt(2);
                         return null;
@@ -7074,6 +7075,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 });
                 assertTrue(rs1.getString(5).startsWith("23"));
             }
+
         }
     }
 
@@ -7946,5 +7948,34 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertNull(this.rs.getString(2));
         }
         rs1.close();
+    }
+
+    /**
+     * Test fix for Bug#32954396, EXECUTEQUERY HANGS WITH USECURSORFETCH=TRUE & SETFETCHSIZE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug32954396() throws Exception {
+        createTable("testBug32954396", "(id INT, name VARCHAR(10))");
+
+        this.stmt.executeUpdate("INSERT INTO testBug32954396 VALUES (1, 'value1'), (2, 'value2')");
+
+        boolean useCursorFetch = false;
+        boolean setFetchSize = false;
+        do {
+            String testCase = String.format("Case: [useCursorFetch=%s, setFetchSize=%s]", useCursorFetch ? "Y" : "N", setFetchSize ? "Y" : "N");
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.socketTimeout.getKeyName(), "1000");
+            props.setProperty(PropertyKey.useCursorFetch.getKeyName(), Boolean.toString(useCursorFetch));
+            Connection testConn = getConnectionWithProps(props);
+
+            this.pstmt = testConn.prepareStatement("SELECT id, name, (SELECT id FROM testBug32954396) FROM testBug32954396");
+            if (setFetchSize) {
+                this.pstmt.setFetchSize(1);
+            }
+            assertThrows(testCase, SQLException.class, "Subquery returns more than 1 row", this.pstmt::executeQuery);
+            testConn.close();
+        } while ((useCursorFetch = !useCursorFetch) || (setFetchSize = !setFetchSize));
     }
 }

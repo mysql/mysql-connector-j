@@ -1661,7 +1661,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         T result = null;
         if (rowPacket.isEOFPacket()) {
             // read EOF packet
-            rowPacket.readInteger(IntegerDataType.INT1); // skips the 'last packet' flag (packet signature)
+            rowPacket.setPosition(1); // skip the packet signature header
             this.warningCount = (int) rowPacket.readInteger(IntegerDataType.INT2);
             if (this.warningCount > 0) {
                 this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
