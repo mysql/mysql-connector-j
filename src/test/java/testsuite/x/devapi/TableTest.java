@@ -32,7 +32,6 @@ package testsuite.x.devapi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -55,8 +54,6 @@ import com.mysql.cj.xdevapi.Table;
 public class TableTest extends BaseTableTestCase {
     @Test
     public void tableBasics() {
-        assumeTrue(this.isSetForXTests);
-
         sqlUpdate("drop table if exists tableBasics");
         Table table = this.schema.getTable("tableBasics");
         assertEquals(DbObjectStatus.NOT_EXISTS, table.existsInDatabase());
@@ -72,8 +69,6 @@ public class TableTest extends BaseTableTestCase {
 
     @Test
     public void viewBasics() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists tableBasics");
             sqlUpdate("drop view if exists viewBasics");
@@ -125,8 +120,6 @@ public class TableTest extends BaseTableTestCase {
 
     @Test
     public void testCount() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists testCount");
             sqlUpdate("create table testCount (_id varchar(32), name varchar(20), birthday date, age int)");
@@ -155,8 +148,6 @@ public class TableTest extends BaseTableTestCase {
 
     @Test
     public void testBug25650912() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists testBug25650912");
             sqlUpdate("create table testBug25650912 (x bigint,y char(220))");
@@ -199,8 +190,6 @@ public class TableTest extends BaseTableTestCase {
 
     @Test
     public void testAsyncBind() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists testAsyncBind");
             sqlUpdate("create table testAsyncBind(a int,b bigint,c double,d blob)");

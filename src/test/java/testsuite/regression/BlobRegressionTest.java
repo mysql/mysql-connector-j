@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,7 +32,7 @@ package testsuite.regression;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -107,18 +107,44 @@ public class BlobRegressionTest extends BaseTestCase {
      */
     @Test
     public void testUpdateLongBlobGT16M() throws Exception {
-        byte[] blobData = new byte[18 * 1024 * 1024]; // 18M blob
+        this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
+        this.rs.next();
+        long len = 4 + 1024 * 1024 * 36 + "UPDATE testUpdateLongBlob SET blobField=".length();
+        long defaultMaxAllowedPacket = this.rs.getInt(2);
+        boolean changeMaxAllowedPacket = defaultMaxAllowedPacket < len;
 
-        createTable("testUpdateLongBlob", "(blobField LONGBLOB)");
-        this.stmt.executeUpdate("INSERT INTO testUpdateLongBlob (blobField) VALUES (NULL)");
-
-        this.pstmt = this.conn.prepareStatement("UPDATE testUpdateLongBlob SET blobField=?");
-        this.pstmt.setBytes(1, blobData);
+        Connection con1 = null;
+        Connection con2 = null;
         try {
-            this.pstmt.executeUpdate();
-        } catch (SQLException sqlEx) {
-            if (sqlEx.getMessage().indexOf("max_allowed_packet") != -1) {
-                fail("You need to increase max_allowed_packet to at least 18M before running this test!");
+            if (changeMaxAllowedPacket) {
+                this.stmt.executeUpdate("SET GLOBAL max_allowed_packet=" + 1024 * 1024 * 37);
+            }
+            byte[] blobData = new byte[18 * 1024 * 1024]; // 18M blob
+
+            createTable("testUpdateLongBlob", "(blobField LONGBLOB)");
+            this.stmt.executeUpdate("INSERT INTO testUpdateLongBlob (blobField) VALUES (NULL)");
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            con1 = getConnectionWithProps(props);
+            this.pstmt = con1.prepareStatement("UPDATE testUpdateLongBlob SET blobField=?");
+            this.pstmt.setBytes(1, blobData);
+            try {
+                this.pstmt.executeUpdate();
+            } catch (SQLException sqlEx) {
+                assertTrue(sqlEx.getMessage().indexOf("max_allowed_packet") == -1,
+                        "You need to increase max_allowed_packet to at least 18M before running this test!");
+            }
+        } finally {
+            if (changeMaxAllowedPacket) {
+                this.stmt.executeUpdate("SET GLOBAL max_allowed_packet=" + defaultMaxAllowedPacket);
+            }
+            if (con1 != null) {
+                con1.close();
+            }
+            if (con2 != null) {
+                con2.close();
             }
         }
     }
@@ -202,6 +228,8 @@ public class BlobRegressionTest extends BaseTestCase {
         int dataSize = 256;
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.emulateLocators.getKeyName(), "true");
         Connection locatorConn = getConnectionWithProps(props);
 
@@ -406,25 +434,60 @@ public class BlobRegressionTest extends BaseTestCase {
     @Test
     public void testBug23535571() throws Exception {
 
+        this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
+        this.rs.next();
+        long len = 4 + 1024 * 1024 * 36 + "UPDATE testBug23535571 SET blobField=".length();
+        long defaultMaxAllowedPacket = this.rs.getInt(2);
+        boolean changeMaxAllowedPacket = defaultMaxAllowedPacket < len;
+
+        if (!versionMeetsMinimum(5, 7)) {
+            this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'innodb_log_file_size'");
+            this.rs.next();
+            long defaultInnodbLogFileSize = this.rs.getInt(2);
+            assumeFalse(defaultInnodbLogFileSize < 1024 * 1024 * 36 * 10, "This test requires innodb_log_file_size > " + (1024 * 1024 * 36 * 10));
+        }
+
         createTable("testBug23535571", "(blobField LONGBLOB)");
         this.stmt.executeUpdate("INSERT INTO testBug23535571 (blobField) VALUES (NULL)");
 
-        // Insert 1 record with 18M data
-        byte[] blobData = new byte[18 * 1024 * 1024];
-        this.pstmt = this.conn.prepareStatement("UPDATE testBug23535571 SET blobField=?");
-        this.pstmt.setBytes(1, blobData);
-        this.pstmt.executeUpdate();
+        Connection con1 = null;
+        Connection con2 = null;
+        try {
+            if (changeMaxAllowedPacket) {
+                this.stmt.executeUpdate("SET GLOBAL max_allowed_packet=" + 1024 * 1024 * 37);
+            }
 
-        Properties props = new Properties();
-        props.setProperty(PropertyKey.enablePacketDebug.getKeyName(), "true");
-        Connection con = getConnectionWithProps(props);
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            con1 = getConnectionWithProps(props);
 
-        for (int i = 0; i < 100; i++) {
-            this.pstmt = con.prepareStatement("select * from testBug23535571");
-            this.rs = this.pstmt.executeQuery();
-            this.rs.close();
-            this.pstmt.close();
-            Thread.sleep(100);
+            // Insert 1 record with 18M data
+            byte[] blobData = new byte[18 * 1024 * 1024];
+            this.pstmt = con1.prepareStatement("UPDATE testBug23535571 SET blobField=?");
+            this.pstmt.setBytes(1, blobData);
+            this.pstmt.executeUpdate();
+
+            props.setProperty(PropertyKey.enablePacketDebug.getKeyName(), "true");
+            con2 = getConnectionWithProps(props);
+
+            for (int i = 0; i < 100; i++) {
+                this.pstmt = con2.prepareStatement("select * from testBug23535571");
+                this.rs = this.pstmt.executeQuery();
+                this.rs.close();
+                this.pstmt.close();
+                Thread.sleep(100);
+            }
+        } finally {
+            if (changeMaxAllowedPacket) {
+                this.stmt.executeUpdate("SET GLOBAL max_allowed_packet=" + defaultMaxAllowedPacket);
+            }
+            if (con1 != null) {
+                con1.close();
+            }
+            if (con2 != null) {
+                con2.close();
+            }
         }
 
     }
@@ -440,6 +503,8 @@ public class BlobRegressionTest extends BaseTestCase {
         this.stmt.executeUpdate("INSERT INTO testBug95210 (ID, DATA) VALUES (1, '111')");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false"); // testsuite is built upon non-SSL default connection
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.emulateLocators.getKeyName(), "true");
         Connection locatorConn = getSourceReplicaReplicationConnection(props);
 

@@ -75,7 +75,7 @@ import testsuite.BaseTestCase;
 public class QueryAttributesTest extends BaseTestCase {
     @BeforeEach
     public void setUp() throws Exception {
-        assumeTrue(versionMeetsMinimum(8, 0, 26));
+        assumeTrue(versionMeetsMinimum(8, 0, 26), "MySQL 8.0.26+ is required to run this test.");
 
         this.rs = this.stmt.executeQuery("SELECT * FROM mysql.component WHERE component_urn = 'file://component_query_attributes'");
         if (!this.rs.next()) {
@@ -85,9 +85,9 @@ public class QueryAttributesTest extends BaseTestCase {
 
     @AfterEach
     public void teardown() throws Exception {
-        assumeTrue(versionMeetsMinimum(8, 0, 26));
-
-        this.stmt.execute("UNINSTALL COMPONENT 'file://component_query_attributes'");
+        if (versionMeetsMinimum(8, 0, 26)) {
+            this.stmt.execute("UNINSTALL COMPONENT 'file://component_query_attributes'");
+        }
     }
 
     /**

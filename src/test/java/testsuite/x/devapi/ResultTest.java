@@ -31,7 +31,6 @@ package testsuite.x.devapi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.sql.Date;
@@ -45,6 +44,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.exceptions.DataReadException;
 import com.mysql.cj.util.TimeUtil;
 import com.mysql.cj.xdevapi.Row;
@@ -55,6 +55,7 @@ import com.mysql.cj.xdevapi.Warning;
 public class ResultTest extends DevApiBaseTestCase {
     @BeforeEach
     public void setupTableTest() {
+        assumeTrue(this.isSetForXTests, PropertyDefinitions.SYSP_testsuite_url_mysqlx + " must be set to run this test.");
         super.setupTestSession();
     }
 
@@ -65,8 +66,6 @@ public class ResultTest extends DevApiBaseTestCase {
 
     @Test
     public void testForceBuffering() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists testx");
             sqlUpdate("create table testx (x int)");
@@ -85,12 +84,7 @@ public class ResultTest extends DevApiBaseTestCase {
             assertEquals(null, r.getString("bad_x"));
             r = rows.next();
             assertEquals(null, r.getString("bad_x"));
-            try {
-                rows.next();
-                fail("should throw");
-            } catch (NoSuchElementException ex) {
-                // expected, end of results
-            }
+            assertThrows(NoSuchElementException.class, () -> rows.next());
         } finally {
             sqlUpdate("drop table if exists testx");
         }
@@ -98,8 +92,6 @@ public class ResultTest extends DevApiBaseTestCase {
 
     @Test
     public void testMars() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists testx");
             sqlUpdate("create table testx (x int)");
@@ -119,8 +111,6 @@ public class ResultTest extends DevApiBaseTestCase {
 
     @Test
     public void exceptionForNonExistingColumns() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists testx");
             sqlUpdate("create table testx (x int)");
@@ -147,8 +137,6 @@ public class ResultTest extends DevApiBaseTestCase {
 
     @Test
     public void testDateTimeTypes() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists testx");
             sqlUpdate("create table testx (w date, x datetime(6), y timestamp(6), z time)");

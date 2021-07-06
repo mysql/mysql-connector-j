@@ -3,6 +3,8 @@
 
 Version 8.0.27
 
+  - WL#14660, Testsuite with support for single MySQL server instance.
+
   - Fix for Bug#103878 (32954449), CONNECTOR/J 8 : QUERY WITH 'SHOW XXX' WILL GET EXCEPTION WHEN USE CURSOR.
 
   - Fix for Bug#103796 (32922715), CONNECTOR/J 8 STMT SETQUERYTIMEOUT CAN NOT WORK.

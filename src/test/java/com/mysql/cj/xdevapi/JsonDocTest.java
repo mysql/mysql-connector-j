@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -719,10 +719,8 @@ public class JsonDocTest {
         try {
             testRoutine.call();
         } catch (Throwable t) {
-            if (!throwable.isAssignableFrom(t.getClass())) {
-                fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
-            }
-
+            assertTrue(throwable.isAssignableFrom(t.getClass()),
+                    "Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
             return throwable.cast(t);
         }
         fail("Expected exception of type '" + throwable.getName() + "'.");
@@ -735,14 +733,9 @@ public class JsonDocTest {
         try {
             testRoutine.call();
         } catch (Throwable t) {
-            if (!throwable.isAssignableFrom(t.getClass())) {
-                fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
-            }
-
-            if (!t.getMessage().matches(msgMatchesRegex)) {
-                fail("The error message [" + t.getMessage() + "] was expected to match [" + msgMatchesRegex + "].");
-            }
-
+            assertTrue(throwable.isAssignableFrom(t.getClass()),
+                    "Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
+            assertTrue(t.getMessage().matches(msgMatchesRegex), "The error message [" + t.getMessage() + "] was expected to match [" + msgMatchesRegex + "].");
             return throwable.cast(t);
         }
         fail("Expected exception of type '" + throwable.getName() + "'.");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -96,14 +96,10 @@ public class ConnectionUrlTest {
         try {
             testRoutine.call();
         } catch (Throwable t) {
-            if (!throwable.isAssignableFrom(t.getClass())) {
-                fail(message + "expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName()
-                        + "' was thrown.");
-            }
-
-            if (msgMatchesRegex != null && !t.getMessage().matches(msgMatchesRegex)) {
-                fail(message + "the error message «" + t.getMessage() + "» was expected to match «" + msgMatchesRegex + "».");
-            }
+            assertTrue(throwable.isAssignableFrom(t.getClass()), message + "expected exception of type '" + throwable.getName()
+                    + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
+            assertFalse(msgMatchesRegex != null && !t.getMessage().matches(msgMatchesRegex),
+                    message + "the error message «" + t.getMessage() + "» was expected to match «" + msgMatchesRegex + "».");
 
             return throwable.cast(t);
         }
@@ -662,9 +658,7 @@ public class ConnectionUrlTest {
                             ok = true;
                         }
                     }
-                    if (!ok) {
-                        fail(cs + ": unexpected " + e.getClass().getName() + " thrown with message: " + e.getMessage());
-                    }
+                    assertTrue(ok, cs + ": unexpected " + e.getClass().getName() + " thrown with message: " + e.getMessage());
                 }
             }
         }
@@ -861,12 +855,10 @@ public class ConnectionUrlTest {
         connStr.add("jdbc:mysql://johndoe:secret@myhost:1234/db?=value");
 
         for (String cs : connStr) {
-            try {
+            assertThrows(WrongArgumentException.class, () -> {
                 System.out.println(ConnectionUrl.getConnectionUrlInstance(cs, null));
-                fail(cs + ": expected to throw a " + WrongArgumentException.class.getName());
-            } catch (Exception e) {
-                assertTrue(WrongArgumentException.class.isAssignableFrom(e.getClass()), cs + ": expected to throw a " + WrongArgumentException.class.getName());
-            }
+                return null;
+            });
         }
     }
 

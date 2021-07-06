@@ -30,22 +30,249 @@
 package testsuite.regression;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.Calendar;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.util.TimeUtil;
 
 import testsuite.BaseTestCase;
 
 public class DateTimeRegressionTest extends BaseTestCase {
+
+    /**
+     * Tests fix for BUG#3620 -- Timezone not respected correctly.
+     * 
+     * @throws SQLException
+     */
+    @Test
+    public void testBug3620() throws SQLException {
+        // FIXME: This test is sensitive to being in CST/CDT it seems
+        assumeTrue(TimeZone.getDefault().equals(TimeZone.getTimeZone("America/Chicago")), "This test is running only in America/Chicago time zone.");
+
+        long epsillon = 3000; // 3 seconds time difference
+
+        try {
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3620");
+            this.stmt.executeUpdate("CREATE TABLE testBug3620 (field1 TIMESTAMP)");
+
+            PreparedStatement tsPstmt = this.conn.prepareStatement("INSERT INTO testBug3620 VALUES (?)");
+
+            Calendar pointInTime = Calendar.getInstance();
+            pointInTime.set(2004, 02, 29, 10, 0, 0);
+
+            long pointInTimeOffset = pointInTime.getTimeZone().getRawOffset();
+
+            java.sql.Timestamp ts = new java.sql.Timestamp(pointInTime.getTime().getTime());
+
+            tsPstmt.setTimestamp(1, ts);
+            tsPstmt.executeUpdate();
+
+            String tsValueAsString = getSingleValue("testBug3620", "field1", null).toString();
+
+            System.out.println("Timestamp as string with no calendar: " + tsValueAsString.toString());
+
+            Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+
+            this.stmt.executeUpdate("DELETE FROM testBug3620");
+
+            Statement tsStmt = this.conn.createStatement();
+
+            tsPstmt = this.conn.prepareStatement("INSERT INTO testBug3620 VALUES (?)");
+
+            tsPstmt.setTimestamp(1, ts, cal);
+            tsPstmt.executeUpdate();
+
+            tsValueAsString = getSingleValue("testBug3620", "field1", null).toString();
+
+            Timestamp tsValueAsTimestamp = (Timestamp) getSingleValue("testBug3620", "field1", null);
+
+            System.out.println("Timestamp as string with UTC calendar: " + tsValueAsString.toString());
+            System.out.println("Timestamp as Timestamp with UTC calendar: " + tsValueAsTimestamp);
+
+            this.rs = tsStmt.executeQuery("SELECT field1 FROM testBug3620");
+            this.rs.next();
+
+            Timestamp tsValueUTC = this.rs.getTimestamp(1, cal);
+
+            //
+            // We use this testcase with other vendors, JDBC spec requires result set fields can only be read once, although MySQL doesn't require this ;)
+            //
+            this.rs = tsStmt.executeQuery("SELECT field1 FROM testBug3620");
+            this.rs.next();
+
+            Timestamp tsValueStmtNoCal = this.rs.getTimestamp(1);
+
+            System.out.println("Timestamp specifying UTC calendar from normal statement: " + tsValueUTC.toString());
+
+            PreparedStatement tsPstmtRetr = this.conn.prepareStatement("SELECT field1 FROM testBug3620");
+
+            this.rs = tsPstmtRetr.executeQuery();
+            this.rs.next();
+
+            Timestamp tsValuePstmtUTC = this.rs.getTimestamp(1, cal);
+
+            System.out.println("Timestamp specifying UTC calendar from prepared statement: " + tsValuePstmtUTC.toString());
+
+            //
+            // We use this testcase with other vendors, JDBC spec requires result set fields can only be read once, although MySQL doesn't require this ;)
+            //
+            this.rs = tsPstmtRetr.executeQuery();
+            this.rs.next();
+
+            Timestamp tsValuePstmtNoCal = this.rs.getTimestamp(1);
+
+            System.out.println("Timestamp specifying no calendar from prepared statement: " + tsValuePstmtNoCal.toString());
+
+            long stmtDeltaTWithCal = (ts.getTime() - tsValueStmtNoCal.getTime());
+
+            long deltaOrig = Math.abs(stmtDeltaTWithCal - pointInTimeOffset);
+
+            assertTrue((deltaOrig < epsillon), "Difference between original timestamp and timestamp retrieved using java.sql.Statement "
+                    + "set in database using UTC calendar is not ~= " + epsillon + ", it is actually " + deltaOrig);
+
+            long pStmtDeltaTWithCal = (ts.getTime() - tsValuePstmtNoCal.getTime());
+
+            System.out.println(
+                    Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) + " < " + epsillon + (Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) < epsillon));
+            assertTrue((Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) < epsillon),
+                    "Difference between original timestamp and timestamp retrieved using java.sql.PreparedStatement "
+                            + "set in database using UTC calendar is not ~= " + epsillon + ", it is actually " + pStmtDeltaTWithCal);
+
+            System.out.println("Difference between original ts and ts with no calendar: " + (ts.getTime() - tsValuePstmtNoCal.getTime()) + ", offset should be "
+                    + pointInTimeOffset);
+        } finally {
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3620");
+        }
+    }
+
+    /**
+     * Tests fix for Bug#5874, Timezone conversion goes in the wrong direction
+     * (when useTimezone=true and server timezone differs from client timezone).
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug5874() throws Exception {
+        assumeTrue(supportsTimeZoneNames(this.stmt), "This test requies the server with populated time zone tables.");
+
+        TimeZone defaultTimeZone = TimeZone.getDefault();
+
+        try {
+            String clientTimeZoneName = "America/Los_Angeles";
+            String connectionTimeZoneName = "America/Chicago";
+
+            TimeZone.setDefault(TimeZone.getTimeZone(clientTimeZoneName));
+
+            long offsetDifference = TimeZone.getDefault().getRawOffset() - TimeZone.getTimeZone(connectionTimeZoneName).getRawOffset();
+
+            SimpleDateFormat timestampFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd HH:mm:ss", null);
+            SimpleDateFormat timeFormat = TimeUtil.getSimpleDateFormat(null, "HH:mm:ss", null);
+
+            long pointInTime = timestampFormat.parse("2004-10-04 09:19:00").getTime();
+
+            Properties props = new Properties();
+            props.put("useTimezone", "true");
+            props.put(PropertyKey.connectionTimeZone.getKeyName(), connectionTimeZoneName);
+            props.put(PropertyKey.forceConnectionTimeZoneToSession.getKeyName(), "true");
+            props.put(PropertyKey.cacheDefaultTimeZone.getKeyName(), "false");
+            props.setProperty(PropertyKey.preserveInstants.getKeyName(), "true");
+
+            Connection tzConn = getConnectionWithProps(props);
+            Statement tzStmt = tzConn.createStatement();
+            createTable("testBug5874", "(tstamp DATETIME, t TIME)");
+
+            PreparedStatement tsPstmt = tzConn.prepareStatement("INSERT INTO testBug5874 VALUES (?, ?)");
+
+            tsPstmt.setTimestamp(1, new Timestamp(pointInTime));
+            tsPstmt.setTime(2, new Time(pointInTime));
+            tsPstmt.executeUpdate();
+
+            this.rs = tzStmt.executeQuery("SELECT * from testBug5874");
+
+            while (this.rs.next()) { // Driver now converts/checks DATE/TIME/TIMESTAMP/DATETIME types when calling getString()...
+                String retrTimestampString = new String(this.rs.getBytes(1));
+                Timestamp retrTimestamp = this.rs.getTimestamp(1);
+
+                java.util.Date timestampOnServer = timestampFormat.parse(retrTimestampString);
+
+                long retrievedOffsetForTimestamp = retrTimestamp.getTime() - timestampOnServer.getTime();
+
+                assertEquals(offsetDifference, retrievedOffsetForTimestamp,
+                        "Original timestamp and timestamp retrieved using client timezone are not the same");
+
+                String retrTimeString = new String(this.rs.getBytes(2));
+                Time retrTime = this.rs.getTime(2);
+
+                java.util.Date timeOnServerAsDate = timeFormat.parse(retrTimeString);
+                Time timeOnServer = new Time(timeOnServerAsDate.getTime());
+
+                long retrievedOffsetForTime = retrTime.getTime() - timeOnServer.getTime();
+
+                assertEquals(0, retrievedOffsetForTime, "Original time and time retrieved using client timezone are not the same");
+            }
+
+            tzConn.close();
+        } finally {
+            TimeZone.setDefault(defaultTimeZone);
+        }
+    }
+
+    /**
+     * Tests fix for Bug#15604 (11745460), TIMEZONE DISCARDED STORING JAVA.UTIL.CALENDAR INTO DATETIME.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug15604() throws Exception {
+        assumeTrue(supportsTimeZoneNames(this.stmt), "This test requies the server with populated time zone tables.");
+
+        createTable("testBug15604_date_cal", "(field1 DATE)");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sessionVariables.getKeyName(), "time_zone='America/Chicago'");
+
+        Connection nonLegacyConn = getConnectionWithProps(props);
+
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+
+        cal.set(Calendar.YEAR, 2005);
+        cal.set(Calendar.MONTH, 4);
+        cal.set(Calendar.DAY_OF_MONTH, 15);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+        java.sql.Date sqlDate = new java.sql.Date(cal.getTime().getTime());
+
+        Calendar cal2 = Calendar.getInstance();
+        cal2.setTime(sqlDate);
+        System.out.println(new java.sql.Date(cal2.getTime().getTime()));
+        this.pstmt = nonLegacyConn.prepareStatement("INSERT INTO testBug15604_date_cal VALUES (?)");
+
+        this.pstmt.setDate(1, sqlDate, cal);
+        this.pstmt.executeUpdate();
+        this.rs = nonLegacyConn.createStatement().executeQuery("SELECT field1 FROM testBug15604_date_cal");
+        this.rs.next();
+
+        assertEquals(sqlDate.getTime(), this.rs.getDate(1, cal).getTime());
+    }
 
     /**
      * Tests fix for Bug#20391832, SETOBJECT() FOR TYPES.TIME RESULTS IN EXCEPTION WHEN VALUE HAS FRACTIONAL PART.
@@ -59,6 +286,8 @@ public class DateTimeRegressionTest extends BaseTestCase {
         boolean withFract = versionMeetsMinimum(5, 6, 4); // fractional seconds are not supported in previous versions
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "LOCAL");
         for (boolean useSSPS : new boolean[] { false, true }) {
             for (boolean sendFr : new boolean[] { false, true }) {
@@ -775,6 +1004,8 @@ public class DateTimeRegressionTest extends BaseTestCase {
         try {
 
             Properties props = new Properties();
+            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             for (boolean yearIsDateType : new boolean[] { true, false }) {
                 for (boolean useSSPS : new boolean[] { false, true }) {
                     props.setProperty(PropertyKey.yearIsDateType.getKeyName(), "" + yearIsDateType);
@@ -820,6 +1051,8 @@ public class DateTimeRegressionTest extends BaseTestCase {
         Connection con = null;
         try {
             Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
             con = getConnectionWithProps(props);
 
@@ -863,5 +1096,44 @@ public class DateTimeRegressionTest extends BaseTestCase {
             rs1.getTimestamp("tm");
             return null;
         });
+    }
+
+    /**
+     * Tests fix for Bug#101413 (32099505), JAVA.TIME.LOCALDATETIME CANNOT BE CAST TO JAVA.SQL.TIMESTAMP.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug101413() throws Exception {
+        assumeTrue(supportsTimeZoneNames(this.stmt), "This test requies the server with populated time zone tables.");
+
+        createTable("testBug101413", "(createtime1 TIMESTAMP, createtime2 DATETIME)");
+
+        Properties props = new Properties();
+        for (boolean forceConnectionTimeZoneToSession : new boolean[] { false, true }) {
+            for (boolean preserveInstants : new boolean[] { false, true }) {
+                for (boolean useSSPS : new boolean[] { false, true }) {
+                    props.setProperty(PropertyKey.forceConnectionTimeZoneToSession.getKeyName(), "" + forceConnectionTimeZoneToSession);
+                    props.setProperty(PropertyKey.preserveInstants.getKeyName(), "" + preserveInstants);
+                    props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+                    props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+
+                    Connection con = getConnectionWithProps(props);
+                    PreparedStatement ps = con.prepareStatement("insert into testBug101413(createtime1, createtime2) values(?, ?)");
+
+                    con.setAutoCommit(false);
+                    for (int i = 1; i <= 20000; i++) {
+                        ps.setObject(1, LocalDateTime.now());
+                        ps.setObject(2, LocalDateTime.now());
+                        ps.addBatch();
+                        if (i % 500 == 0) {
+                            ps.executeBatch();
+                            ps.clearBatch();
+                        }
+                    }
+                    con.commit();
+                }
+            }
+        }
     }
 }

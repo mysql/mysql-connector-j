@@ -463,7 +463,7 @@ public class RowLockingTest extends BaseCollectionTestCase {
 
     @Test
     public void testFindRowLockingValid() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0;
         try {
@@ -601,7 +601,7 @@ public class RowLockingTest extends BaseCollectionTestCase {
 
     @Test
     public void testSelectRowLockingValid() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0;
         try {
@@ -760,8 +760,6 @@ public class RowLockingTest extends BaseCollectionTestCase {
     /* Simulate deadlock using table select */
     @Test
     public void testSelectRowLockingDeadlock() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0;
         try {
             this.session.sql("drop table if exists newtable").execute();

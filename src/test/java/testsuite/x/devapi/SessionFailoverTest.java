@@ -94,11 +94,10 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
 
     @BeforeEach
     public void setupFailoverTest() {
-        if (this.isSetForXTests) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(getEncodedTestHost()).append(":").append(getTestPort());
-            this.testsHost = sb.toString();
-        }
+        assumeTrue(this.isSetForXTests, PropertyDefinitions.SYSP_testsuite_url_mysqlx + " must be set to run this test.");
+        StringBuilder sb = new StringBuilder();
+        sb.append(getEncodedTestHost()).append(":").append(getTestPort());
+        this.testsHost = sb.toString();
     }
 
     /**
@@ -108,8 +107,6 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
      */
     @Test
     public void testGetSessionForSingleHost() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         ConnectionsCounterFakeServer fakeServer = new ConnectionsCounterFakeServer();
         String fakeHost = fakeServer.getHostPortPair();
 
@@ -129,8 +126,6 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
      */
     @Test
     public void testGetSessionForMultipleHostsWithFailover() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         ConnectionsCounterFakeServer fakeServer = new ConnectionsCounterFakeServer();
         String fakeHost = fakeServer.getHostPortPair();
 
@@ -219,8 +214,6 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
     @Test
     @Disabled("This test doesn't execute deterministically on some systems. It can be run manually in local systems when needed.")
     public void testConnectionTimeout() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         String customFakeHost = System.getProperty(PropertyDefinitions.SYSP_testsuite_unavailable_host);
         String fakeHost = (customFakeHost != null && customFakeHost.trim().length() != 0) ? customFakeHost : "10.77.77.77:37070";
 
@@ -260,6 +253,7 @@ public class SessionFailoverTest extends DevApiBaseTestCase {
         sess.sql("SELECT SLEEP(11)").execute();
         long end = System.currentTimeMillis() - begin;
         assertTrue(end >= 11000 && end < 12000, "Expected: " + 11000 + ".." + 12000 + ". Got " + end);
+        sess.close();
 
         // TS11_1 Set connection property xdevapi.connect-timeout=null, try to create Session, check that WrongArgumentException is thrown
         // with message "The connection property 'xdevapi.connect-timeout' only accepts integer values. The value 'null' can not be converted to an integer."

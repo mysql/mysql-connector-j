@@ -72,8 +72,6 @@ import com.mysql.cj.xdevapi.XDevAPIError;
 public class CollectionModifyTest extends BaseCollectionTestCase {
     @Test
     public void testSet() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
         } else {
@@ -95,8 +93,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testUnset() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":\"100\", \"y\":\"200\", \"z\":1}").execute(); // Requires manual _id.
             this.collection.add("{\"_id\": \"2\", \"a\":\"100\", \"b\":\"200\", \"c\":1}").execute();
@@ -118,8 +114,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testReplace() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":100}").execute(); // Requires manual _id.
         } else {
@@ -134,8 +128,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testArrayAppend() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":[8,16,32]}").execute(); // Requires manual _id.
         } else {
@@ -156,8 +148,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testArrayInsert() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":[1,2]}").execute(); // Requires manual _id.
         } else {
@@ -179,8 +169,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testJsonModify() {
-        assumeTrue(this.isSetForXTests);
-
         DbDoc nestedDoc = new DbDocImpl().add("z", new JsonNumber().setValue("100"));
         DbDoc doc = new DbDocImpl().add("x", new JsonNumber().setValue("3")).add("y", nestedDoc);
 
@@ -241,8 +229,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testArrayModify() {
-        assumeTrue(this.isSetForXTests);
-
         JsonArray xArray = new JsonArray().addValue(new JsonString().setValue("a")).addValue(new JsonNumber().setValue("1"));
         DbDoc doc = new DbDocImpl().add("x", new JsonNumber().setValue("3")).add("y", xArray);
 
@@ -280,8 +266,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug24471057() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         String docStr = "{\"B\" : 2, \"ID\" : 1, \"KEY\" : [1]}";
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             docStr = docStr.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
@@ -315,7 +299,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testMergePatch() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")), "MySQL 8.0.3+ is required to run this test.");
 
         // 1. Update the name and zip code of match
         this.collection.add("{\"_id\": \"1\", \"name\": \"Alice\", \"address\": {\"zip\": \"12345\", \"street\": \"32 Main str\"}}").execute();
@@ -501,7 +485,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug27185332() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")), "MySQL 8.0.3+ is required to run this test.");
 
         DbDoc doc = JsonParser.parseDoc("{\"_id\": \"qqq\", \"nullfield\": {}, \"theme\": {         }}");
         assertEquals("qqq", ((JsonString) doc.get("_id")).getString());
@@ -553,7 +537,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testReplaceOne() {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")), "MySQL 8.0.3+ is required to run this test.");
 
         Result res = this.collection.replaceOne("someId", "{\"_id\":\"someId\",\"a\":3}");
         assertEquals(0, res.getAffectedItemsCount());
@@ -661,8 +645,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug27226293() {
-        assumeTrue(this.isSetForXTests);
-
         this.collection.add("{ \"_id\" : \"doc1\" , \"name\" : \"bob\" , \"age\": 45 }").execute();
 
         DocResult result = this.collection.find("name = 'bob'").execute();
@@ -679,7 +661,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testPreparedStatements() {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")), "MySQL 8.0.14+ is required to run this test.");
 
         try {
             // Prepare test data.
@@ -925,8 +907,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testDeprecateWhere() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         this.collection.add("{\"_id\":\"1\", \"ord\": 1}", "{\"_id\":\"2\", \"ord\": 2}", "{\"_id\":\"3\", \"ord\": 3}", "{\"_id\":\"4\", \"ord\": 4}",
                 "{\"_id\":\"5\", \"ord\": 5}", "{\"_id\":\"6\", \"ord\": 6}", "{\"_id\":\"7\", \"ord\": 7}", "{\"_id\":\"8\", \"ord\": 8}").execute();
 
@@ -940,8 +920,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionModifyBasic() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 30, recCnt = 0;
         DbDoc doc = null;
         Result res = null;
@@ -1078,8 +1056,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionModifySortLimit() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 30, recCnt = 0;
         DbDoc doc = null;
         Result res = null;
@@ -1183,8 +1159,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
     @Test
     @Disabled("$.F4 = 9223372036854775807 condition without quotes bind() not supported with modify.")
     public void testCollectionModifyBind() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10, recCnt = 0;
         Result res = null;
         /* add(DbDoc[] docs) */
@@ -1224,8 +1198,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      */
     @Test
     public void testCollectionModifyDataTypes() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10, recCnt = 0;
         DbDoc doc = null;
         Result res = null;
@@ -1323,8 +1295,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      */
     @Test
     public void testCollectionModifyExpr() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10;
         DbDoc doc = null;
         Result res = null;
@@ -1406,8 +1376,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionModifyArray() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0, maxrec = 8, arraySize = 30;
         int lStr = 1024 * 800;
         JsonArray yArray = null;
@@ -1543,8 +1511,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
     /* ArrayAppend() for int double and string */
     @Test
     public void testCollectionModifyArrayAppend() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0, maxrec = 8, arraySize = 30;
         int lStr = 10;
         JsonArray yArray = null;
@@ -1649,8 +1615,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
     /* ArrayInsert() for int , double and string */
     @Test
     public void testCollectionModifyArrayInsert() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0, maxrec = 8, arraySize = 30;
         int lStr = 10;
         JsonArray yArray = null;
@@ -1793,8 +1757,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionModifyAsync() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0, maxrec = 10;
         DbDoc doc = null;
         AddResult res = null;
@@ -1882,8 +1844,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
     @SuppressWarnings("unchecked")
     @Test
     public void testCollectionModifyAsyncMany() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10;
         int NUMBER_OF_QUERIES = 1000;
         DbDoc doc = null;

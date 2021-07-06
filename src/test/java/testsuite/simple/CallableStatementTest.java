@@ -108,7 +108,13 @@ public class CallableStatementTest extends BaseTestCase {
 
             executeBatchedStoredProc(this.conn);
 
-            batchedConn = getConnectionWithProps("logger=" + BufferingLogger.class.getName() + ",rewriteBatchedStatements=true,profileSQL=true");
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.logger.getKeyName(), BufferingLogger.class.getName());
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+            props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
+            batchedConn = getConnectionWithProps(props);
 
             BufferingLogger.startLoggingToBuffer();
             executeBatchedStoredProc(batchedConn);
@@ -343,6 +349,8 @@ public class CallableStatementTest extends BaseTestCase {
         assertTrue(this.rs.getInt(1) == 1);
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.cacheCallableStmts.getKeyName(), "true");
 
         Connection cachedSpConn = getConnectionWithProps(props);
@@ -371,6 +379,8 @@ public class CallableStatementTest extends BaseTestCase {
         CallableStatement storedProc = null;
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.noAccessToProcedureBodies.getKeyName(), "true");
 
         Connection spConn = getConnectionWithProps(props);

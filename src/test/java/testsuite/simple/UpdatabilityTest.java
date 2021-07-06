@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,7 +30,6 @@
 package testsuite.simple;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -118,12 +117,10 @@ public class UpdatabilityTest extends BaseTestCase {
             scrollableStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             this.rs = scrollableStmt.executeQuery("SELECT * FROM BOGUS_UPDATABLE");
 
-            try {
+            assertThrows("ResultSet.moveToInsertRow() should not succeed on non-updatable table", NotUpdatable.class, () -> {
                 this.rs.moveToInsertRow();
-                fail("ResultSet.moveToInsertRow() should not succeed on non-updatable table");
-            } catch (NotUpdatable noUpdate) {
-                // ignore
-            }
+                return null;
+            });
         } finally {
             if (scrollableStmt != null) {
                 try {
@@ -153,12 +150,10 @@ public class UpdatabilityTest extends BaseTestCase {
             scrollableStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             this.rs = scrollableStmt.executeQuery("SELECT field1 FROM MULTI_UPDATABLE");
 
-            try {
+            assertThrows("ResultSet.moveToInsertRow() should not succeed on query that does not select all primary keys", NotUpdatable.class, () -> {
                 this.rs.moveToInsertRow();
-                fail("ResultSet.moveToInsertRow() should not succeed on query that does not select all primary keys");
-            } catch (NotUpdatable noUpdate) {
-                // ignore
-            }
+                return null;
+            });
         } finally {
             if (scrollableStmt != null) {
                 try {

@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -187,79 +188,53 @@ public class StatementsTest extends BaseTestCase {
         assertTrue(this.stmt.getConnection() == this.conn, "Connection can not be null, and must be same connection");
 
         // Set max rows, to exercise code in execute(), executeQuery() and executeUpdate()
-        Statement accessorStmt = null;
+        Statement accessorStmt = this.conn.createStatement();
+        accessorStmt.setMaxRows(1);
+        accessorStmt.setMaxRows(0); // FIXME, test that this actually affects rows returned
+        accessorStmt.setMaxFieldSize(255);
+        assertTrue(accessorStmt.getMaxFieldSize() == 255, "Max field size should match what was set");
 
-        try {
-            accessorStmt = this.conn.createStatement();
-            accessorStmt.setMaxRows(1);
-            accessorStmt.setMaxRows(0); // FIXME, test that this actually affects rows returned
-            accessorStmt.setMaxFieldSize(255);
-            assertTrue(accessorStmt.getMaxFieldSize() == 255, "Max field size should match what was set");
+        assertThrows("Should not be able to set max field size > max_packet_size", SQLException.class, () -> {
+            accessorStmt.setMaxFieldSize(Integer.MAX_VALUE);
+            return null;
+        });
 
-            try {
-                accessorStmt.setMaxFieldSize(Integer.MAX_VALUE);
-                fail("Should not be able to set max field size > max_packet_size");
-            } catch (SQLException sqlEx) {
-                // ignore
-            }
+        accessorStmt.setCursorName("undef");
+        accessorStmt.setEscapeProcessing(true);
+        accessorStmt.setFetchDirection(java.sql.ResultSet.FETCH_FORWARD);
 
-            accessorStmt.setCursorName("undef");
-            accessorStmt.setEscapeProcessing(true);
-            accessorStmt.setFetchDirection(java.sql.ResultSet.FETCH_FORWARD);
+        int fetchDirection = accessorStmt.getFetchDirection();
+        assertTrue(fetchDirection == java.sql.ResultSet.FETCH_FORWARD, "Set fetch direction != get fetch direction");
 
-            int fetchDirection = accessorStmt.getFetchDirection();
-            assertTrue(fetchDirection == java.sql.ResultSet.FETCH_FORWARD, "Set fetch direction != get fetch direction");
+        assertThrows("Should not be able to set fetch direction to invalid value", SQLException.class, () -> {
+            accessorStmt.setFetchDirection(Integer.MAX_VALUE);
+            return null;
+        });
 
-            try {
-                accessorStmt.setFetchDirection(Integer.MAX_VALUE);
-                fail("Should not be able to set fetch direction to invalid value");
-            } catch (SQLException sqlEx) {
-                // ignore
-            }
+        assertThrows("Should not be able to set max rows > 50000000", SQLException.class, () -> {
+            accessorStmt.setMaxRows(50000000 + 10);
+            return null;
+        });
 
-            try {
-                accessorStmt.setMaxRows(50000000 + 10);
-                fail("Should not be able to set max rows > 50000000");
-            } catch (SQLException sqlEx) {
-                // ignore
-            }
+        assertThrows("Should not be able to set max rows < 0", SQLException.class, () -> {
+            accessorStmt.setMaxRows(Integer.MIN_VALUE);
+            return null;
+        });
 
-            try {
-                accessorStmt.setMaxRows(Integer.MIN_VALUE);
-                fail("Should not be able to set max rows < 0");
-            } catch (SQLException sqlEx) {
-                // ignore
-            }
+        int fetchSize = this.stmt.getFetchSize();
 
-            int fetchSize = this.stmt.getFetchSize();
+        accessorStmt.setMaxRows(4);
+        assertThrows("Should not be able to set FetchSize > max rows", SQLException.class, () -> {
+            accessorStmt.setFetchSize(Integer.MAX_VALUE);
+            return null;
+        });
 
-            try {
-                accessorStmt.setMaxRows(4);
-                accessorStmt.setFetchSize(Integer.MAX_VALUE);
-                fail("Should not be able to set FetchSize > max rows");
-            } catch (SQLException sqlEx) {
-                // ignore
-            }
+        assertThrows("Should not be able to set FetchSize < 0", SQLException.class, () -> {
+            accessorStmt.setFetchSize(-2);
+            return null;
+        });
 
-            try {
-                accessorStmt.setFetchSize(-2);
-                fail("Should not be able to set FetchSize < 0");
-            } catch (SQLException sqlEx) {
-                // ignore
-            }
-
-            assertTrue(fetchSize == this.stmt.getFetchSize(), "Fetch size before invalid setFetchSize() calls should match fetch size now");
-        } finally {
-            if (accessorStmt != null) {
-                try {
-                    accessorStmt.close();
-                } catch (SQLException sqlEx) {
-                    // ignore
-                }
-
-                accessorStmt = null;
-            }
-        }
+        assertTrue(fetchSize == this.stmt.getFetchSize(), "Fetch size before invalid setFetchSize() calls should match fetch size now");
     }
 
     @Test
@@ -272,29 +247,20 @@ public class StatementsTest extends BaseTestCase {
             int autoIncKeyFromApi = -1;
             this.rs = this.stmt.getGeneratedKeys();
 
-            if (this.rs.next()) {
-                autoIncKeyFromApi = this.rs.getInt(1);
-            } else {
-                fail("Failed to retrieve AUTO_INCREMENT using Statement.getGeneratedKeys()");
-            }
+            assertTrue(this.rs.next(), "Failed to retrieve AUTO_INCREMENT using Statement.getGeneratedKeys()");
+            autoIncKeyFromApi = this.rs.getInt(1);
 
             this.rs.close();
 
             int autoIncKeyFromFunc = -1;
             this.rs = this.stmt.executeQuery("SELECT LAST_INSERT_ID()");
 
-            if (this.rs.next()) {
-                autoIncKeyFromFunc = this.rs.getInt(1);
-            } else {
-                fail("Failed to retrieve AUTO_INCREMENT using LAST_INSERT_ID()");
-            }
+            assertTrue(this.rs.next(), "Failed to retrieve AUTO_INCREMENT using LAST_INSERT_ID()");
+            autoIncKeyFromFunc = this.rs.getInt(1);
 
-            if ((autoIncKeyFromApi != -1) && (autoIncKeyFromFunc != -1)) {
-                assertTrue(autoIncKeyFromApi == autoIncKeyFromFunc, "Key retrieved from API (" + autoIncKeyFromApi
-                        + ") does not match key retrieved from LAST_INSERT_ID() " + autoIncKeyFromFunc + ") function");
-            } else {
-                fail("AutoIncrement keys were '0'");
-            }
+            assertTrue((autoIncKeyFromApi != -1) && (autoIncKeyFromFunc != -1), "AutoIncrement keys were '0'");
+            assertTrue(autoIncKeyFromApi == autoIncKeyFromFunc, "Key retrieved from API (" + autoIncKeyFromApi
+                    + ") does not match key retrieved from LAST_INSERT_ID() " + autoIncKeyFromFunc + ") function");
         } finally {
             if (this.rs != null) {
                 try {
@@ -316,7 +282,11 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testBinaryResultSetNumericTypes() throws Exception {
         testBinaryResultSetNumericTypesInternal(this.conn);
-        Connection sspsConn = getConnectionWithProps("useServerPrepStmts=true");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        Connection sspsConn = getConnectionWithProps(props);
         testBinaryResultSetNumericTypesInternal(sspsConn);
         sspsConn.close();
     }
@@ -490,10 +460,13 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testCancelStatement() throws Exception {
 
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         Connection cancelConn = null;
 
         try {
-            cancelConn = getConnectionWithProps((String) null);
+            cancelConn = getConnectionWithProps(props);
             final Statement cancelStmt = cancelConn.createStatement();
 
             cancelStmt.setQueryTimeout(1);
@@ -708,7 +681,11 @@ public class StatementsTest extends BaseTestCase {
             assertTrue(this.rs.next());
             assertEquals(1, this.rs.getInt(1));
 
-            final Connection forceCancel = getConnectionWithProps("queryTimeoutKillsConnection=true");
+            Properties props2 = new Properties();
+            props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props2.setProperty(PropertyKey.queryTimeoutKillsConnection.getKeyName(), "true");
+            final Connection forceCancel = getConnectionWithProps(props2);
             final Statement forceStmt = forceCancel.createStatement();
             forceStmt.setQueryTimeout(1);
 
@@ -729,9 +706,7 @@ public class StatementsTest extends BaseTestCase {
                 Thread.sleep(100);
             }
 
-            if (count == 0) {
-                fail("Connection was never killed");
-            }
+            assertFalse(count == 0, "Connection was never killed");
 
             assertThrows(MySQLStatementCancelledException.class, new Callable<Void>() {
                 public Void call() throws Exception {
@@ -793,6 +768,8 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testHoldingResultSetsOverClose() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.holdResultsOpenOverStatementClose.getKeyName(), "true");
 
         Connection conn2 = getConnectionWithProps(props);
@@ -949,6 +926,8 @@ public class StatementsTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.allowMultiQueries.getKeyName(), "true");
 
             multiStmtConn = getConnectionWithProps(props);
@@ -1038,6 +1017,8 @@ public class StatementsTest extends BaseTestCase {
     public void testParsedConversionWarning() throws Exception {
         try {
             Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useUsageAdvisor.getKeyName(), "true");
             Connection warnConn = getConnectionWithProps(props);
 
@@ -1103,6 +1084,8 @@ public class StatementsTest extends BaseTestCase {
         Connection fetchConn = null;
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
 
         try {
@@ -1157,6 +1140,8 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testSetObject() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.noDatetimeStringSync.getKeyName(), "true"); // value=true for #5
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
         Connection conn1 = getConnectionWithProps(props);
@@ -1266,6 +1251,8 @@ public class StatementsTest extends BaseTestCase {
     public void testStatementRewriteBatch() throws Exception {
         for (int j = 0; j < 2; j++) {
             Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
             if (j == 0) {
                 props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
@@ -1311,6 +1298,8 @@ public class StatementsTest extends BaseTestCase {
 
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
             props.clear();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
             props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "1024");
             multiConn = getConnectionWithProps(props);
@@ -1332,6 +1321,8 @@ public class StatementsTest extends BaseTestCase {
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
 
             props.clear();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), j == 0 ? "true" : "false");
             props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
             multiConn = getConnectionWithProps(props);
@@ -1526,6 +1517,8 @@ public class StatementsTest extends BaseTestCase {
         createTable("rewriteErrors", "(field1 int not null primary key) ENGINE=MyISAM");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
         props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "5660");
         props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
@@ -1792,6 +1785,8 @@ public class StatementsTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.queryInterceptors.getKeyName(), ServerStatusDiffInterceptor.class.getName());
 
             interceptedConn = getConnectionWithProps(props);
@@ -1806,6 +1801,8 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testParameterBindings() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
         props.setProperty(PropertyKey.treatUtilDateAsTimestamp.getKeyName(), "false");
         props.setProperty(PropertyKey.autoDeserialize.getKeyName(), "true");
@@ -1861,11 +1858,17 @@ public class StatementsTest extends BaseTestCase {
 
     @Test
     public void testLocalInfileHooked() throws Exception {
+        this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'local_infile'");
+        assumeTrue(this.rs.next() && "ON".equalsIgnoreCase(this.rs.getString(2)), "This test requires the server started with --local-infile=ON");
+        this.rs.close();
+
         createTable("localInfileHooked", "(field1 int, field2 varchar(255))");
         String streamData = "1\tabcd\n2\tefgh\n3\tijkl";
         InputStream stream = new ByteArrayInputStream(streamData.getBytes());
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
         Statement testStmt = testConn.createStatement();
@@ -1970,6 +1973,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
@@ -1989,6 +1994,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props2 = new Properties();
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
@@ -2016,6 +2023,8 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNCharacterStreamServer() throws Exception {
         createTable("testSetNCharacterStreamServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
@@ -2032,6 +2041,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNCharacterStreamServer", "(c1 LONGTEXT charset utf8) ENGINE=InnoDB");
         Properties props2 = new Properties();
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
@@ -2056,48 +2067,34 @@ public class StatementsTest extends BaseTestCase {
         // suppose sql_mode don't include "NO_BACKSLASH_ESCAPES"
 
         createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
-        Properties props1 = new Properties();
-        props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
-        props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1"); // ensure charset isn't utf8 here
-        Connection conn1 = getConnectionWithProps(props1);
-        PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testSetNClob (c1, c2, c3) VALUES (?, ?, ?)");
-        pstmt1.setNClob(1, (NClob) null);
-        NClob nclob2 = conn1.createNClob();
-        nclob2.setString(1, "aaa");
-        pstmt1.setNClob(2, nclob2);                   // for setNClob(int, NClob)
-        Reader reader3 = new StringReader("\'aaa\'");
-        pstmt1.setNClob(3, reader3, 5);               // for setNClob(int, Reader, long)
-        pstmt1.execute();
-        ResultSet rs1 = this.stmt.executeQuery("SELECT c1, c2, c3 FROM testSetNClob");
-        rs1.next();
-        assertEquals(null, rs1.getString(1));
-        assertEquals("aaa", rs1.getString(2));
-        assertEquals("\'aaa\'", rs1.getString(3));
-        rs1.close();
-        pstmt1.close();
-        conn1.close();
 
-        createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
-        Properties props2 = new Properties();
-        props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
-        props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
-        Connection conn2 = getConnectionWithProps(props2);
-        PreparedStatement pstmt2 = conn2.prepareStatement("INSERT INTO testSetNClob (c1, c2, c3) VALUES (?, ?, ?)");
-        pstmt2.setNClob(1, (NClob) null);
-        nclob2 = conn2.createNClob();
-        nclob2.setString(1, "aaa");
-        pstmt2.setNClob(2, nclob2);             // for setNClob(int, NClob)
-        reader3 = new StringReader("\'aaa\'");
-        pstmt2.setNClob(3, reader3, 5);         // for setNClob(int, Reader, long)
-        pstmt2.execute();
-        ResultSet rs2 = this.stmt.executeQuery("SELECT c1, c2, c3 FROM testSetNClob");
-        rs2.next();
-        assertEquals(null, rs2.getString(1));
-        assertEquals("aaa", rs2.getString(2));
-        assertEquals("\'aaa\'", rs2.getString(3));
-        rs2.close();
-        pstmt2.close();
-        conn2.close();
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
+
+        for (String enc : new String[] { "latin1", "UTF-8" }) {
+            this.stmt.execute("TRUNCATE TABLE testSetNClob");
+            props.setProperty(PropertyKey.characterEncoding.getKeyName(), enc); // ensure charset isn't utf8 here
+            Connection conn1 = getConnectionWithProps(props);
+            PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testSetNClob (c1, c2, c3) VALUES (?, ?, ?)");
+            pstmt1.setNClob(1, (NClob) null);
+            NClob nclob2 = conn1.createNClob();
+            nclob2.setString(1, "aaa");
+            pstmt1.setNClob(2, nclob2);                   // for setNClob(int, NClob)
+            Reader reader3 = new StringReader("\'aaa\'");
+            pstmt1.setNClob(3, reader3, 5);               // for setNClob(int, Reader, long)
+            pstmt1.execute();
+
+            ResultSet rs1 = this.stmt.executeQuery("SELECT c1, c2, c3 FROM testSetNClob");
+            rs1.next();
+            assertEquals(null, rs1.getString(1));
+            assertEquals("aaa", rs1.getString(2));
+            assertEquals("\'aaa\'", rs1.getString(3));
+            rs1.close();
+            pstmt1.close();
+            conn1.close();
+        }
     }
 
     /**
@@ -2109,6 +2106,8 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNClobServer() throws Exception {
         createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
@@ -2135,6 +2134,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 LONGTEXT charset utf8) ENGINE=InnoDB");
         Properties props2 = new Properties();
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
@@ -2165,6 +2166,8 @@ public class StatementsTest extends BaseTestCase {
         createTable("testSetNString",
                 "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932 ENGINE=InnoDB");
         Properties props1 = new Properties();
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "MS932"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
@@ -2185,6 +2188,8 @@ public class StatementsTest extends BaseTestCase {
         createTable("testSetNString",
                 "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932 ENGINE=InnoDB");
         Properties props2 = new Properties();
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
@@ -2212,6 +2217,8 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNStringServer() throws Exception {
         createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
@@ -2228,6 +2235,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props2 = new Properties();
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
         Connection conn2 = getConnectionWithProps(props2);
@@ -2251,6 +2260,8 @@ public class StatementsTest extends BaseTestCase {
     public void testUpdateNCharacterStream() throws Exception {
         createTable("testUpdateNCharacterStream", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
@@ -2280,6 +2291,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testUpdateNCharacterStream", "(c1 CHAR(10) PRIMARY KEY, c2 CHAR(10)) default character set sjis"); // sjis field
         Properties props2 = new Properties();
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "SJIS"); // ensure charset isn't utf8 here
         Connection conn2 = getConnectionWithProps(props2);
@@ -2311,6 +2324,8 @@ public class StatementsTest extends BaseTestCase {
     public void testUpdateNClob() throws Exception {
         createTable("testUpdateNChlob", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
@@ -2346,6 +2361,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testUpdateNChlob", "(c1 CHAR(10) PRIMARY KEY, c2 CHAR(10)) default character set sjis"); // sjis field
         Properties props2 = new Properties();
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "SJIS"); // ensure charset isn't utf8 here
         Connection conn2 = getConnectionWithProps(props2);
@@ -2379,6 +2396,8 @@ public class StatementsTest extends BaseTestCase {
     public void testUpdateNString() throws Exception {
         createTable("testUpdateNString", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
         Connection conn1 = getConnectionWithProps(props1);
@@ -2408,6 +2427,8 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testUpdateNString", "(c1 CHAR(10) PRIMARY KEY, c2 CHAR(10)) default character set sjis"); // sjis field
         Properties props2 = new Properties();
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "SJIS"); // ensure charset isn't utf8 here
         Connection conn2 = getConnectionWithProps(props2);
@@ -2433,6 +2454,8 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testJdbc4LoadBalancing() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.ha_loadBalanceStrategy.getKeyName(), CountingReBalanceStrategy.class.getName());
         props.setProperty(PropertyKey.loadBalanceAutoCommitStatementThreshold.getKeyName(), "3");
 
@@ -2970,7 +2993,11 @@ public class StatementsTest extends BaseTestCase {
          */
         createTable("testExecuteLargeBatch", "(id BIGINT AUTO_INCREMENT PRIMARY KEY, n INT)");
 
-        Connection testConn = getConnectionWithProps("useServerPrepStmts=true");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        Connection testConn = getConnectionWithProps(props);
 
         this.pstmt = testConn.prepareStatement("INSERT INTO testExecuteLargeBatch (n) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
         this.pstmt.setInt(1, 1);
@@ -3111,6 +3138,8 @@ public class StatementsTest extends BaseTestCase {
         createTable("testSetObjectPS1", "(id INT, d DATE, t TIME, dt DATETIME, ts TIMESTAMP)");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
 
         Connection testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
@@ -3150,6 +3179,8 @@ public class StatementsTest extends BaseTestCase {
                 "(IN id INT, IN d DATE, IN t TIME, IN dt DATETIME, IN ts TIMESTAMP) BEGIN " + "INSERT INTO testSetObjectCS1 VALUES (id, d, t, dt, ts); END");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
 
         Connection testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
@@ -3191,6 +3222,8 @@ public class StatementsTest extends BaseTestCase {
         createTable("testSetObjectSPS1", "(id INT, d DATE, t TIME, dt DATETIME, ts TIMESTAMP)");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
 
@@ -3213,7 +3246,11 @@ public class StatementsTest extends BaseTestCase {
      */
     @Test
     public void testServPrepStmtSetObjectAndNewUnsupportedTypes() throws Exception {
-        Connection testConn = getConnectionWithProps("useServerPrepStmts=true");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        Connection testConn = getConnectionWithProps(props);
         checkUnsupportedTypesBehavior(testConn.prepareStatement("SELECT ?"));
         testConn.close();
     }
@@ -3441,6 +3478,8 @@ public class StatementsTest extends BaseTestCase {
      */
     private void validateTestDataOffsetDTTypes(String tableName, int expectedRowCount) throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
         Connection testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
         Statement testStmt = testConn.createStatement();
@@ -3856,6 +3895,8 @@ public class StatementsTest extends BaseTestCase {
         boolean cachePS = false;
         do {
             Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
             props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), Boolean.toString(cachePS));
             props.setProperty(PropertyKey.prepStmtCacheSize.getKeyName(), "5");

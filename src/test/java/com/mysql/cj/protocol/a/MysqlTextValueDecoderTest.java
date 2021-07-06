@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,8 +31,8 @@ package com.mysql.cj.protocol.a;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
 
@@ -96,12 +96,10 @@ public class MysqlTextValueDecoderTest {
         assertEquals(String.valueOf(Integer.MAX_VALUE), this.valueDecoder.decodeUInt4(String.valueOf(Integer.MAX_VALUE).getBytes(), 0, 10, vf));
         assertEquals("2147483648",
                 this.valueDecoder.decodeUInt4(Constants.BIG_INTEGER_MAX_INTEGER_VALUE.add(Constants.BIG_INTEGER_ONE).toString().getBytes(), 0, 10, vf));
-        try {
+
+        assertThrows(NumberOutOfRange.class, () -> {
             this.valueDecoder.decodeInt4(Constants.BIG_INTEGER_MAX_INTEGER_VALUE.add(Constants.BIG_INTEGER_ONE).toString().getBytes(), 0, 10, vf);
-            fail("Exception should be thrown for decodeInt4(Integer.MAX_VALUE + 1)");
-        } catch (NumberOutOfRange ex) {
-            // expected
-        }
+        }, "Exception should be thrown for decodeInt4(Integer.MAX_VALUE + 1)");
 
         byte[] uint8LessThanMaxLong = "8223372036854775807".getBytes();
         ValueFactory<String> fromLongOnly = new DefaultValueFactory<String>(new DefaultPropertySet()) {

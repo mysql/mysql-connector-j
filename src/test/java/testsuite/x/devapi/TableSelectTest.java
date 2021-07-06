@@ -76,8 +76,6 @@ import com.mysql.cj.xdevapi.Type;
 public class TableSelectTest extends BaseTableTestCase {
     @Test
     public void basicQuery() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists basicQuery");
             sqlUpdate("create table basicQuery (_id varchar(32), name varchar(20), birthday date, age int)");
@@ -116,8 +114,6 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void testComplexQuery() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists complexQuery");
             sqlUpdate("create table complexQuery (name varchar(32), age int, something int)");
@@ -167,8 +163,6 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void allColumns() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists allColumns");
             sqlUpdate("create table allColumns (x int, y int, z int)");
@@ -189,8 +183,6 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void countAllColumns() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists countAllColumns");
             sqlUpdate("create table countAllColumns(x int, y int)");
@@ -208,8 +200,6 @@ public class TableSelectTest extends BaseTableTestCase {
      */
     @Test
     public void testBug22931433() {
-        assumeTrue(this.isSetForXTests);
-
         sqlUpdate("drop table if exists testBug22931433");
         sqlUpdate(
                 "create table testBug22931433(c1 bit(8), c2 bit(16), c3 bit(24), c4 bit(32), c5 bit(40), c6 bit(48), c7 bit(56), c8 bit(64), cb1 bit(1), cb2 bit(64))");
@@ -367,12 +357,11 @@ public class TableSelectTest extends BaseTableTestCase {
         assertEquals(false, row2.getBoolean("cb2"));
 
         sqlUpdate("drop table if exists testBug22931433");
+        s1.close();
     }
 
     @Test
     public void basicViewQuery() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists basicTable1");
             sqlUpdate("drop table if exists basicTable2");
@@ -414,8 +403,6 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void testOrderBy() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists testOrderBy");
             sqlUpdate("create table testOrderBy (_id int, x int, y int)");
@@ -443,8 +430,6 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void testBug22988922() {
-        assumeTrue(this.isSetForXTests);
-
         sqlUpdate("drop table if exists testBug22988922");
         sqlUpdate("create table testBug22988922 (g point,l longblob,t longtext)");
 
@@ -464,8 +449,6 @@ public class TableSelectTest extends BaseTableTestCase {
      */
     @Test
     public void testBug22931277() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists testBug22931277");
             sqlUpdate("create table testBug22931277 (j year,k datetime(3))");
@@ -492,7 +475,7 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void testTableRowLocks() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")), "MySQL 8.0.3+ is required to run this test.");
 
         sqlUpdate("drop table if exists testTableRowLocks");
         sqlUpdate("create table testTableRowLocks (_id varchar(32), a varchar(20))");
@@ -596,7 +579,7 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void testTableRowLockOptions() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5")), "MySQL 8.0.5+ is required to run this test.");
 
         Function<RowResult, List<String>> asStringList = rr -> rr.fetchAll().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
@@ -893,8 +876,6 @@ public class TableSelectTest extends BaseTableTestCase {
      */
     @Test
     public void testBug22038729() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         final Field pf = CoreSession.class.getDeclaredField("protocol");
         pf.setAccessible(true);
 
@@ -957,7 +938,7 @@ public class TableSelectTest extends BaseTableTestCase {
 
     @Test
     public void testPreparedStatements() {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")), "MySQL 8.0.14+ is required to run this test.");
 
         try {
             // Prepare test data.

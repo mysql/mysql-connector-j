@@ -67,7 +67,8 @@ public class RetrievalPerfTest extends BaseTestCase {
      */
     @Test
     public void testRetrievalCached() throws Exception {
-        assumeTrue(((MysqlConnection) this.conn).getSession().getServerSession().isQueryCacheEnabled());
+        assumeTrue(((MysqlConnection) this.conn).getSession().getServerSession().isQueryCacheEnabled(),
+                "This test requires the server with enabled query cache.");
 
         this.stmt.executeUpdate("SET QUERY_CACHE_TYPE = DEMAND");
 

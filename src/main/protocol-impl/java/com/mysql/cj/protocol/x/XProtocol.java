@@ -145,22 +145,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     private Map<Class<? extends GeneratedMessageV3>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory = new HashMap<>();
 
-    public XProtocol(String host, int port, String defaultSchema, PropertySet propertySet) {
-
-        this.defaultSchemaName = defaultSchema;
-
-        // Override common connectTimeout with xdevapi.connect-timeout to provide unified logic in StandardSocketFactory
-        RuntimeProperty<Integer> connectTimeout = propertySet.getIntegerProperty(PropertyKey.connectTimeout);
-        RuntimeProperty<Integer> xdevapiConnectTimeout = propertySet.getIntegerProperty(PropertyKey.xdevapiConnectTimeout);
-        if (xdevapiConnectTimeout.isExplicitlySet() || !connectTimeout.isExplicitlySet()) {
-            connectTimeout.setValue(xdevapiConnectTimeout.getValue());
-        }
-
-        SocketConnection socketConn = new NativeSocketConnection();
-        socketConn.connect(host, port, propertySet, null, null, 0);
-        init(null, socketConn, propertySet, null);
-    }
-
     public XProtocol(HostInfo hostInfo, PropertySet propertySet) {
         String host = hostInfo.getHost();
         if (host == null || StringUtils.isEmptyOrWhitespaceOnly(host)) {

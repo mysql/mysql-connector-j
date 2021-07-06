@@ -45,6 +45,7 @@ import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XProtocolError;
@@ -64,6 +65,7 @@ import com.mysql.cj.xdevapi.Table;
 public class SchemaTest extends DevApiBaseTestCase {
     @BeforeEach
     public void setupCollectionTest() {
+        assumeTrue(this.isSetForXTests, PropertyDefinitions.SYSP_testsuite_url_mysqlx + " must be set to run this test.");
         setupTestSession();
     }
 
@@ -74,16 +76,12 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testBasics() {
-        assumeTrue(this.isSetForXTests);
-
         assertEquals(this.schema, this.schema.getSchema());
         assertEquals(this.session, this.schema.getSession());
     }
 
     @Test
     public void testEquals() {
-        assumeTrue(this.isSetForXTests);
-
         Schema otherDefaultSchema = this.session.getDefaultSchema();
         assertFalse(otherDefaultSchema == this.schema);
         assertTrue(otherDefaultSchema.equals(this.schema));
@@ -99,8 +97,6 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testToString() {
-        assumeTrue(this.isSetForXTests);
-
         // this will pass as long as the test database doesn't require identifier quoting
         assertEquals("Schema(" + getTestDatabase() + ")", this.schema.toString());
         Schema needsQuoted = this.session.getSchema("terrible'schema`name");
@@ -109,8 +105,6 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testListCollections() {
-        assumeTrue(this.isSetForXTests);
-
         String collName1 = "test_list_collections1";
         String collName2 = "test_list_collections2";
         try {
@@ -134,8 +128,6 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testExists() {
-        assumeTrue(this.isSetForXTests);
-
         assertEquals(DbObjectStatus.EXISTS, this.schema.existsInDatabase());
         Schema nonExistingSchema = this.session.getSchema(getTestDatabase() + "_SHOULD_NOT_EXIST_0xCAFEBABE");
         assertEquals(DbObjectStatus.NOT_EXISTS, nonExistingSchema.existsInDatabase());
@@ -143,8 +135,6 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testCreateCollection() {
-        assumeTrue(this.isSetForXTests);
-
         String collName = "testCreateCollection";
         try {
             dropCollection(collName);
@@ -172,8 +162,6 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testDropCollection() {
-        assumeTrue(this.isSetForXTests);
-
         String collName = "testDropCollection";
         dropCollection(collName);
         Collection coll = this.schema.getCollection(collName);
@@ -200,8 +188,6 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testListTables() {
-        assumeTrue(this.isSetForXTests);
-
         String collName = "test_list_tables_collection";
         String tableName = "test_list_tables_table";
         String viewName = "test_list_tables_view";
@@ -239,8 +225,6 @@ public class SchemaTest extends DevApiBaseTestCase {
 
     @Test
     public void testCreateCollectionWithOptions() {
-        assumeTrue(this.isSetForXTests);
-
         String collName1 = "testCreateCollection1";
         String collName2 = "testCreateCollection2";
         dropCollection(collName1);

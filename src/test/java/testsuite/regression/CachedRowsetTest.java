@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,6 +32,7 @@ package testsuite.regression;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
@@ -54,13 +55,12 @@ public class CachedRowsetTest extends BaseTestCase {
     @Test
     public void testBug5188() throws Exception {
         String implClass = "com.sun.rowset.CachedRowSetImpl";
-        Class<?> c;
+        Class<?> c = null;
         Method populate;
         try {
             c = Class.forName(implClass);
         } catch (ClassNotFoundException e) {
-            System.out.println("skipping testBug5188. Requires: " + implClass);
-            return;
+            assumeFalse(true, "Requires: " + implClass);
         }
         populate = c.getMethod("populate", new Class<?>[] { ResultSet.class });
 

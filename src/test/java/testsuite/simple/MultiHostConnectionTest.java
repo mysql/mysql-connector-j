@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -151,6 +151,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
         final String allDownURL = testURL.toString();
 
         final Properties testConnProps = getHostFreePropertiesFromTestsuiteUrl();
+        testConnProps.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        testConnProps.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         testConnProps.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
 
         // all hosts down
@@ -244,6 +246,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
     private void testFailoverTransition(String fromHost, String toHost, Set<String> downedHosts, String recoverHost, String... expectedConnectionsHistory)
             throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
 
         String fromHostOk = UnreliableSocketFactory.STATUS_CONNECTED + fromHost;
@@ -313,6 +317,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
     @Test
     public void testFailoverDefaultSettings() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
 
         Connection testConn = getUnreliableFailoverConnection(new String[] { HOST_1, HOST_2, HOST_3 }, props);
@@ -443,6 +449,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
     @Test
     public void testFailoverCombinations() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
 
         for (int run = 1; run <= 3; run++) {
@@ -601,6 +609,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
         downedHosts.add(HOST_1);
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
 
         for (boolean foReadOnly : new boolean[] { true, false }) {
@@ -703,6 +713,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
     @Test
     public void testFailoverQueriesBeforeRetrySource() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
 
         for (boolean setQueriesBeforeRetrySource : new boolean[] { true, false }) {
@@ -790,6 +802,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
     @Test
     public void testFailoverSecondsBeforeRetrySource() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
 
         for (boolean setSecondsBeforeRetrySource : new boolean[] { true, false }) {
@@ -894,6 +908,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
         downedHosts.add(HOST_3);
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
 
         // test fall back on ('queriesBeforeRetrySource' > 0 || 'secondsBeforeRetrySource' > 0)
@@ -1056,6 +1072,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
         downedHosts.add(HOST_2);
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
         props.setProperty(PropertyKey.maxReconnects.getKeyName(), "2");
         props.setProperty(PropertyKey.initialTimeout.getKeyName(), "1");
@@ -1189,6 +1207,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
         downedHosts.add(HOST_3);
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
         props.setProperty(PropertyKey.failOverReadOnly.getKeyName(), "false");
 
@@ -1318,6 +1338,8 @@ public class MultiHostConnectionTest extends BaseTestCase {
 
         final String[] hosts = new String[] { HOST_1, HOST_2, HOST_3, HOST_4, HOST_5 };
         final Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.ha_loadBalanceStrategy.getKeyName(), "serverAffinity");
         props.setProperty(PropertyKey.retriesAllDown.getKeyName(), "2");
         props.setProperty(PropertyKey.maxReconnects.getKeyName(), "2");

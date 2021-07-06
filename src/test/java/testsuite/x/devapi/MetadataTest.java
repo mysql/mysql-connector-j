@@ -69,8 +69,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void example_metadata() {
-        assumeTrue(this.isSetForXTests);
-
         Table table = this.schema.getTable("example_metadata");
         RowResult rows = table.select("_id, name, birthday, age").execute();
         List<Column> metadata = rows.getColumns();
@@ -183,8 +181,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void renameCol() {
-        assumeTrue(this.isSetForXTests);
-
         Table table = this.schema.getTable("example_metadata");
         RowResult rows = table.select("_id as TheId").execute();
         List<Column> metadata = rows.getColumns();
@@ -226,8 +222,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void derivedCol() {
-        assumeTrue(this.isSetForXTests);
-
         Table table = this.schema.getTable("example_metadata");
         RowResult rows = table.select("_id + 1 as TheId").execute();
         List<Column> metadata = rows.getColumns();
@@ -255,8 +249,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void docAsTableIsJSON() {
-        assumeTrue(this.isSetForXTests);
-
         String collName = "doc_as_table";
         try {
             dropCollection(collName);
@@ -360,8 +352,6 @@ public class MetadataTest extends BaseTableTestCase {
      */
     @Test
     public void exhaustTypes() {
-        assumeTrue(this.isSetForXTests);
-
         String tableName = "exhaust_types";
         try {
             sqlUpdate("drop table if exists " + tableName);
@@ -661,8 +651,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testGetColumnInfoFromnSession() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         Column myCol = null;
         List<Column> metadata = null;
         try {
@@ -805,8 +793,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testGetSchemaName() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         try {
@@ -857,8 +843,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testGetTableName() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         try {
@@ -891,8 +875,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testGetTableLabel() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         try {
@@ -925,8 +907,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testGetColumnName() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         try {
@@ -958,8 +938,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testGetColumnLabel() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         try {
@@ -995,8 +973,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testGetType() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         try {
@@ -1066,8 +1042,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testGetFractionalDigits() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         try {
@@ -1135,8 +1109,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testIsNumberSigned() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         try {
@@ -1204,16 +1176,18 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testGetLength() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         RowResult rows = null;
         Table table = null;
         try {
-            sqlUpdate("drop table if exists qatable");
-            sqlUpdate("create table qatable (_id varchar(32), a char(20), b date, c int,d double,e datetime,f time,"
+            sqlUpdate("drop database if exists lengthTest");
+            sqlUpdate("create database lengthTest DEFAULT CHARACTER SET latin1");
+            sqlUpdate("drop table if exists lengthTest.qatable");
+            sqlUpdate("create table lengthTest.qatable (_id varchar(32), a char(20), b date, c int,d double,e datetime,f time,"
                     + "g linestring,h tinyint,i mediumint,j bigint,k float, l set('1','2'), m enum('1','2'),n decimal(20,10),o bit(3))");
 
-            table = this.schema.getTable("qatable");
+            table = this.session.getSchema("lengthTest").getTable("qatable");
             table.insert("k").values(10).execute();
             rows = table.select("*").execute();
             List<Column> metadata = rows.getColumns();
@@ -1225,7 +1199,7 @@ public class MetadataTest extends BaseTableTestCase {
                 assertEquals(fLen[i], myCol.getLength());
             }
         } finally {
-            sqlUpdate("drop table if exists qatable");
+            sqlUpdate("drop database if exists lengthTest");
         }
     }
 
@@ -1236,8 +1210,6 @@ public class MetadataTest extends BaseTableTestCase {
      */
     @Test
     public void testIsPrimaryKeyAndisUniqueKeyAndisPartKey() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         try {
@@ -1306,8 +1278,6 @@ public class MetadataTest extends BaseTableTestCase {
      */
     @Test
     public void testGetColumnNameAndgetColumnLabel() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         try {
@@ -1358,8 +1328,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testMultiSelects() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table1 = null;
         Table table2 = null;
@@ -1439,8 +1407,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testMultiSelectsAsync() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table1 = null;
         Table table2 = null;
@@ -1532,8 +1498,6 @@ public class MetadataTest extends BaseTableTestCase {
      */
     @Test
     public void testIsPaddedAndisNullableAndisAutoIncrement() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         try {
@@ -1572,8 +1536,6 @@ public class MetadataTest extends BaseTableTestCase {
 
     @Test
     public void testWithUnsignedData() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult rows = null;
         Table table = null;
         Column myCol = null;

@@ -41,6 +41,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
@@ -49,6 +50,7 @@ public class TransactionTest extends DevApiBaseTestCase {
 
     @BeforeEach
     public void setupCollectionTest() {
+        assumeTrue(this.isSetForXTests, PropertyDefinitions.SYSP_testsuite_url_mysqlx + " must be set to run this test.");
         if (setupTestSession()) {
             dropCollection("txTest");
             this.collection = this.schema.createCollection("txTest");
@@ -65,8 +67,6 @@ public class TransactionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicRollback() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").add("{\"_id\": \"2\"}").execute(); // Requires manual _id.
         } else {
@@ -86,8 +86,6 @@ public class TransactionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicCommit() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").add("{\"_id\": \"2\"}").execute(); // Requires manual _id.
         } else {
@@ -107,8 +105,6 @@ public class TransactionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicSavepoint() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
         } else {

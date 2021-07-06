@@ -61,8 +61,6 @@ import com.mysql.cj.xdevapi.XDevAPIError;
 public class CollectionAddTest extends BaseCollectionTestCase {
     @Test
     public void testBasicAddString() {
-        assumeTrue(this.isSetForXTests);
-
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             json = json.replace("{", "{\"_id\": \"1\", "); // Inject an _id.
@@ -82,8 +80,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testBasicAddStringArray() {
-        assumeTrue(this.isSetForXTests);
-
         this.collection.add("{\"_id\": 1}", "{\"_id\": 2}").execute();
         assertEquals(true, this.collection.find("_id = 1").execute().hasNext());
         assertEquals(true, this.collection.find("_id = 2").execute().hasNext());
@@ -99,8 +95,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testBasicAddDoc() {
-        assumeTrue(this.isSetForXTests);
-
         DbDoc doc = this.collection.newDoc().add("firstName", new JsonString().setValue("Georgia"));
         doc.add("middleName", new JsonString().setValue("Totto"));
         doc.add("lastName", new JsonString().setValue("O'Keeffe"));
@@ -122,8 +116,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testBasicAddDocArray() {
-        assumeTrue(this.isSetForXTests);
-
         if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion(("8.0.5")))) {
             AddResult res1 = this.collection.add(this.collection.newDoc().add("f1", new JsonString().setValue("doc1")),
                     this.collection.newDoc().add("f1", new JsonString().setValue("doc2"))).execute();
@@ -158,8 +150,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
     @Test
     @Disabled("Collection.add(Map<String, ?> doc) is not implemented yet.")
     public void testBasicAddMap() {
-        assumeTrue(this.isSetForXTests);
-
         Map<String, Object> doc = new HashMap<>();
         doc.put("x", 1);
         doc.put("y", "this is y");
@@ -175,8 +165,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testAddWithAssignedId() {
-        assumeTrue(this.isSetForXTests);
-
         String json1 = "{'_id': 'Id#1', 'name': 'assignedId'}".replaceAll("'", "\"");
         String json2 = "{'name': 'autoId'}".replaceAll("'", "\"");
         AddResult res;
@@ -207,8 +195,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testChainedAdd() {
-        assumeTrue(this.isSetForXTests);
-
         String json = "{'_id': 1}".replaceAll("'", "\"");
         this.collection.add(json).add(json.replaceAll("1", "2")).execute();
 
@@ -219,8 +205,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testAddLargeDocument() {
-        assumeTrue(this.isSetForXTests);
-
         int docSize = 255 * 1024;
         StringBuilder b = new StringBuilder("{\"_id\": \"large_doc\", \"large_field\":\"");
         for (int i = 0; i < docSize; ++i) {
@@ -236,8 +220,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testAddNoDocs() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         Result res = this.collection.add(new DbDoc[] {}).execute();
         assertEquals(0, res.getAffectedItemsCount());
         assertEquals(0, res.getWarningsCount());
@@ -250,7 +232,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testAddOrReplaceOne() {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")), "MySQL 8.0.3+ is required to run this test.");
 
         this.collection.add("{\"_id\": \"id1\", \"a\": 1}").execute();
 
@@ -321,8 +303,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug21914769() {
-        assumeTrue(this.isSetForXTests);
-
         assertThrows(WrongArgumentException.class, "Invalid whitespace character ']'.", new Callable<Void>() {
             public Void call() throws Exception {
                 CollectionAddTest.this.collection.add("{\"_id\":\"1004\",\"F1\": ] }").execute();
@@ -338,8 +318,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug92264() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         this.collection.add("{\"_id\":\"1\",\"dataCreated\": 1546300800000}").execute();
 
         DocResult docs = this.collection.find("dataCreated = 1546300800000").execute();
@@ -354,8 +332,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug92819() {
-        assumeTrue(this.isSetForXTests);
-
         this.collection.add("{\"_id\":\"1\",\"emptyArray\": []}").execute();
         DocResult docs = this.collection.find("_id = '1'").execute();
         assertTrue(docs.hasNext());
@@ -365,7 +341,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionAddBasic() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, maxrec = 100;
 
@@ -414,8 +390,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionAddStrings() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         DbDoc doc = null;
         DocResult docs = null;
         String json = "";
@@ -460,8 +434,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionAddBigKeys() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0;
         int maxkey = 10;
         int maxrec = 5;
@@ -507,8 +479,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionAddBigKeyData() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0;
         int maxkey = 10;
         int maxrec = 5;
@@ -555,7 +525,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionAddBigKeyDataString() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0;
         int maxrec = 5;
@@ -590,8 +560,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionAddManyKeys() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0;
         int maxkey = 500;
         int maxrec = 5;
@@ -639,8 +607,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionAddManyRecords() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10;
 
         /* add(DbDoc[] docs) -> Insert maxrec number of records in ne execution */
@@ -671,8 +637,6 @@ public class CollectionAddTest extends BaseCollectionTestCase {
     /**/
     @Test
     public void testCollectionAddArray() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0, k = 0, maxrec = 5, arraySize = 9;
 
         /* add(DbDoc[] docs) -> Array data */
@@ -755,7 +719,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testGetGeneratedIds() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         AddResult res = null;
         DbDoc doc = null;

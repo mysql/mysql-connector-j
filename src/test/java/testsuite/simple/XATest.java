@@ -66,6 +66,8 @@ public class XATest extends BaseTestCase {
     public void setup() {
         this.xaDs = new MysqlXADataSource();
         this.xaDs.setUrl(BaseTestCase.dbUrl);
+        this.xaDs.getStringProperty(PropertyKey.sslMode.getKeyName()).setValue("DISABLED");
+        this.xaDs.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
         this.xaDs.getProperty(PropertyKey.rollbackOnPooledClose).setValue(true);
     }
 
@@ -181,7 +183,8 @@ public class XATest extends BaseTestCase {
     public void testRecover() throws Exception {
         // Test is broken in 5.7.0 - 5.7.4 after server bug#14670465 fix which changed the XA RECOVER output format.
         // Fixed in 5.7.5 server version
-        assumeFalse(versionMeetsMinimum(5, 7) && !versionMeetsMinimum(5, 7, 5));
+        assumeFalse(versionMeetsMinimum(5, 7) && !versionMeetsMinimum(5, 7, 5),
+                "This test doesn't work with MySQL 5.7.0-5.7.4 because of server Bug#14670465.");
 
         XAConnection xaConn = null, recoverConn = null;
 
@@ -374,6 +377,8 @@ public class XATest extends BaseTestCase {
 
         MysqlXADataSource suspXaDs = new MysqlXADataSource();
         suspXaDs.setUrl(BaseTestCase.dbUrl);
+        suspXaDs.getStringProperty(PropertyKey.sslMode.getKeyName()).setValue("DISABLED");
+        suspXaDs.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
         suspXaDs.<Boolean>getProperty(PropertyKey.pinGlobalTxToPhysicalConnection).setValue(true);
         suspXaDs.<Boolean>getProperty(PropertyKey.rollbackOnPooledClose).setValue(true);
 

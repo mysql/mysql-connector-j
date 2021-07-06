@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -132,6 +133,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testBug4808() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
+        ds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
+        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
         PooledConnection closeMeTwice = ds.getPooledConnection();
         closeMeTwice.close();
         closeMeTwice.close();
@@ -212,62 +215,64 @@ public class DataSourceRegressionTest extends BaseTestCase {
         String port = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_port);
         String serverName = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_host);
 
-        // Only run this test if at least one of the above are set
-        if ((databaseName != null) || (serverName != null) || (userName != null) || (password != null) || (port != null)) {
-            MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
+        assumeTrue((databaseName != null) || (serverName != null) || (userName != null) || (password != null) || (port != null),
+                "This test requires that at least one of the following properties is set:\n" + PropertyDefinitions.SYSP_testsuite_ds_db + ",\n"
+                        + PropertyDefinitions.SYSP_testsuite_ds_user + ",\n" + PropertyDefinitions.SYSP_testsuite_ds_password + ",\n"
+                        + PropertyDefinitions.SYSP_testsuite_ds_port + ",\n" + PropertyDefinitions.SYSP_testsuite_ds_host);
 
-            if (databaseName != null) {
-                ds.setDatabaseName(databaseName);
-            }
+        MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
 
-            if (userName != null) {
-                ds.setUser(userName);
-            }
+        if (databaseName != null) {
+            ds.setDatabaseName(databaseName);
+        }
 
-            if (password != null) {
-                ds.setPassword(password);
-            }
+        if (userName != null) {
+            ds.setUser(userName);
+        }
 
-            if (port != null) {
-                ds.setPortNumber(Integer.parseInt(port));
-            }
+        if (password != null) {
+            ds.setPassword(password);
+        }
 
-            if (serverName != null) {
-                ds.setServerName(serverName);
-            }
+        if (port != null) {
+            ds.setPortNumber(Integer.parseInt(port));
+        }
 
-            bindDataSource(jndiName, ds);
+        if (serverName != null) {
+            ds.setServerName(serverName);
+        }
 
-            ConnectionPoolDataSource boundDs = null;
+        bindDataSource(jndiName, ds);
+
+        ConnectionPoolDataSource boundDs = null;
+
+        try {
+            boundDs = (ConnectionPoolDataSource) lookupDatasourceInJNDI(jndiName);
+
+            assertNotNull(boundDs, "Datasource not bound");
+
+            Connection dsCon = null;
+            Statement dsStmt = null;
 
             try {
-                boundDs = (ConnectionPoolDataSource) lookupDatasourceInJNDI(jndiName);
+                dsCon = boundDs.getPooledConnection().getConnection();
+                dsStmt = dsCon.createStatement();
+                dsStmt.executeUpdate("DROP TABLE IF EXISTS testBug3920");
+                dsStmt.executeUpdate("CREATE TABLE testBug3920 (field1 varchar(32))");
 
-                assertNotNull(boundDs, "Datasource not bound");
-
-                Connection dsCon = null;
-                Statement dsStmt = null;
-
-                try {
-                    dsCon = boundDs.getPooledConnection().getConnection();
-                    dsStmt = dsCon.createStatement();
-                    dsStmt.executeUpdate("DROP TABLE IF EXISTS testBug3920");
-                    dsStmt.executeUpdate("CREATE TABLE testBug3920 (field1 varchar(32))");
-
-                    assertNotNull(dsCon, "Connection can not be obtained from data source");
-                } finally {
-                    if (dsStmt != null) {
-                        dsStmt.executeUpdate("DROP TABLE IF EXISTS testBug3920");
-                        dsStmt.close();
-                    }
-                    if (dsCon != null) {
-                        dsCon.close();
-                    }
-                }
+                assertNotNull(dsCon, "Connection can not be obtained from data source");
             } finally {
-                if (boundDs != null) {
-                    this.ctx.unbind(jndiName);
+                if (dsStmt != null) {
+                    dsStmt.executeUpdate("DROP TABLE IF EXISTS testBug3920");
+                    dsStmt.close();
                 }
+                if (dsCon != null) {
+                    dsCon.close();
+                }
+            }
+        } finally {
+            if (boundDs != null) {
+                this.ctx.unbind(jndiName);
             }
         }
     }
@@ -336,6 +341,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testCSC4616() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
+        ds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
+        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
         PooledConnection pooledConn = ds.getPooledConnection();
         Connection physConn = pooledConn.getConnection();
         Statement physStatement = physConn.createStatement();
@@ -419,6 +426,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testBug32101() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
+        ds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
+        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
         PooledConnection pc = ds.getPooledConnection();
         assertNotNull(pc.getConnection().prepareStatement("SELECT 1"));
         assertNotNull(pc.getConnection().prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
@@ -443,6 +452,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
         dsUrl += "connectTimeout=" + nonDefaultConnectTimeout;
         cpds.setUrl(dsUrl);
+        cpds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
+        cpds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
 
         Connection dsConn = cpds.getPooledConnection().getConnection();
         int configuredConnectTimeout = ((JdbcConnection) dsConn).getPropertySet().getIntegerProperty(PropertyKey.connectTimeout).getValue();
@@ -455,6 +466,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testBug42267() throws Exception {
         MysqlDataSource ds = new MysqlDataSource();
         ds.setUrl(dbUrl);
+        ds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
+        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
         Connection c = ds.getConnection();
         String query = "select 1,2,345";
         PreparedStatement ps = c.prepareStatement(query);
@@ -474,6 +487,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testBug72890() throws Exception {
         MysqlXADataSource myDs = new MysqlXADataSource();
         myDs.setUrl(BaseTestCase.dbUrl);
+        myDs.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
+        myDs.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
 
         try {
             final Xid xid = new MysqlXid("72890".getBytes(), "72890".getBytes(), 1);
@@ -508,9 +523,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
                     connAliveChecks = -1;
                 }
             }
-            if (connAliveChecks == 0) {
-                fail("Failed to kill the Connection id " + connId + " in a timely manner.");
-            }
+            assertFalse(connAliveChecks == 0, "Failed to kill the Connection id " + connId + " in a timely manner.");
 
             XAException xaEx = assertThrows(XAException.class, "Undetermined error occurred in the underlying Connection - check your data for consistency",
                     new Callable<Void>() {

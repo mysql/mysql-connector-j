@@ -78,6 +78,7 @@ import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.RowResult;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
+import com.mysql.cj.xdevapi.SessionImpl;
 import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.Statement;
 import com.mysql.cj.xdevapi.Table;
@@ -90,8 +91,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testProjection() {
-        assumeTrue(this.isSetForXTests);
-
         // TODO: the "1" is coming back from the server as a string. checking with xplugin team if this is ok
         this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
 
@@ -111,8 +110,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testDocumentProjection() {
-        assumeTrue(this.isSetForXTests);
-
         // use a document as a projection
         this.collection.add("{\"_id\":\"the_id\",\"g\":1}").execute();
 
@@ -128,8 +125,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
      */
     @Test
     public void outOfRange() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             this.collection.add("{\"_id\": \"1\"}").execute();
             DocResult docs = this.collection.find().fields(expr(
@@ -147,8 +142,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
      */
     @Test
     public void testIterable() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
             this.collection.add("{\"_id\": \"2\"}").execute();
@@ -170,8 +163,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void basicCollectionAsTable() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"xyz\":1}").execute(); // Requires manual _id.
         } else {
@@ -186,8 +177,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     @SuppressWarnings("deprecation")
     @Test
     public void testLimitOffset() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
             this.collection.add("{\"_id\": \"2\"}").execute();
@@ -229,8 +218,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testNumericExpressions() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":1, \"y\":2}").execute(); // Requires manual _id.
         } else {
@@ -265,8 +252,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testBitwiseExpressions() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x1\":31, \"x2\":13, \"x3\":8, \"x4\":\"18446744073709551614\"}").execute(); // Requires manual _id.
         } else {
@@ -291,8 +276,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testIntervalExpressions() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"aDate\":\"2000-01-01\", \"aDatetime\":\"2000-01-01 12:00:01\"}").execute(); // Requires manual _id.
         } else {
@@ -346,8 +329,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     @Test
     // these are important to test the "operator" (BETWEEN/REGEXP/etc) to function representation in the protocol
     public void testIlriExpressions() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"a\":\"some text with 5432\", \"b\":\"100\", \"c\":true}").execute(); // Requires manual _id.
         } else {
@@ -423,8 +404,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void cast() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":100}").execute();
         } else {
@@ -437,8 +416,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testOrderBy() {
-        assumeTrue(this.isSetForXTests);
-
         this.collection.add("{\"_id\":1, \"x\":20, \"y\":22}").execute();
         this.collection.add("{\"_id\":2, \"x\":20, \"y\":21}").execute();
         this.collection.add("{\"_id\":3, \"x\":10, \"y\":40}").execute();
@@ -470,7 +447,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionRowLocks() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3")), "MySQL 8.0.3+ is required to run this test.");
 
         this.collection.add("{\"_id\":\"1\", \"a\":1}").execute();
         this.collection.add("{\"_id\":\"2\", \"a\":1}").execute();
@@ -570,7 +547,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionRowLockOptions() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5")), "MySQL 8.0.5+ is required to run this test.");
 
         Function<DocResult, List<String>> asStringList = rr -> rr.fetchAll().stream().map(d -> ((JsonString) d.get("_id")).getString())
                 .collect(Collectors.toList());
@@ -858,8 +835,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void getOne() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"a\":1}").execute();
             this.collection.add("{\"_id\": \"2\", \"a\":2}").execute();
@@ -882,8 +857,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testGroupingQuery() {
-        assumeTrue(this.isSetForXTests);
-
         this.collection.add("{\"_id\": \"01\", \"name\":\"Mamie\", \"age\":11, \"something\":0}").execute();
         this.collection.add("{\"_id\": \"02\", \"name\":\"Eulalia\", \"age\":11, \"something\":0}").execute();
         this.collection.add("{\"_id\": \"03\", \"name\":\"Polly\", \"age\":12, \"something\":0}").execute();
@@ -932,8 +905,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug21921956() {
-        assumeTrue(this.isSetForXTests);
-
         this.collection.add("{\"_id\": \"1004\", \"F1\": 123}").execute();
 
         DocResult res = this.collection.find().fields(expr("{'X':4<< -(1-2)}")).execute();
@@ -965,7 +936,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testPreparedStatements() {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")), "MySQL 8.0.14+ is required to run this test.");
 
         // Prepare test data.
         this.collection.add("{\"_id\":\"1\", \"ord\": 1}", "{\"_id\":\"2\", \"ord\": 2}", "{\"_id\":\"3\", \"ord\": 3}", "{\"_id\":\"4\", \"ord\": 4}",
@@ -1180,8 +1151,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testDeprecateWhere() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         this.collection.add("{\"_id\":\"1\", \"ord\": 1}", "{\"_id\":\"2\", \"ord\": 2}", "{\"_id\":\"3\", \"ord\": 3}", "{\"_id\":\"4\", \"ord\": 4}",
                 "{\"_id\":\"5\", \"ord\": 5}", "{\"_id\":\"6\", \"ord\": 6}", "{\"_id\":\"7\", \"ord\": 7}", "{\"_id\":\"8\", \"ord\": 8}").execute();
 
@@ -1195,8 +1164,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testOverlaps() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.17"))) {
             // TSFR6
             assertThrows(XProtocolError.class, "ERROR 5150 \\(HY000\\) Invalid operator overlaps",
@@ -1287,7 +1254,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindInSanity() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, maxrec = 10;
         DbDoc doc = null;
@@ -1402,7 +1369,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindInValidArray() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, j = 0, maxrec = 8, minArraySize = 3;
         DbDoc doc = null;
@@ -1465,7 +1432,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindInValidMax() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, j = 0, maxFld = 100;
         DbDoc doc = null;
@@ -1631,7 +1598,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindInValidFunction() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         DbDoc doc = null;
         DocResult docs = null;
@@ -1677,7 +1644,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindInValidMix() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, j = 0, maxrec = 8, minArraySize = 3;
         DbDoc doc = null;
@@ -1727,7 +1694,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindInInvalid() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, j = 0, maxrec = 8, minArraySize = 3;
         DocResult docs = null;
@@ -1797,7 +1764,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindInUpdate() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, maxrec = 10;
         DbDoc doc = null;
@@ -1922,7 +1889,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     @SuppressWarnings("deprecation")
     @Test
     public void testCollectionFindInDelete() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, maxrec = 10;
         DocResult docs = null;
@@ -2043,7 +2010,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindOverlapsSanity() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, maxrec = 10;
         DbDoc doc = null;
@@ -2159,7 +2126,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindOverlaps() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         try {
             int i = 0, j = 0, maxrec = 8, minArraySize = 3;
@@ -2426,7 +2393,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindOverlapsWithExpr() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         DbDoc doc = null;
         DocResult docs = null;
@@ -2507,7 +2474,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindOverlapsValidMix() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, j = 0, maxrec = 8, minArraySize = 3;
         DbDoc doc = null;
@@ -2562,7 +2529,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollModifyTabUpdateWithOverlaps() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, maxrec = 10;
         DbDoc doc = null;
@@ -2688,7 +2655,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     @SuppressWarnings("deprecation")
     @Test
     public void testCollRemoveTabDeleteWithOverlaps() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, maxrec = 10;
         DocResult docs = null;
@@ -2810,8 +2777,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     /* 64k length key */
     @Test
     public void testCollectionFindStress_002() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 5;
         int maxLen = 1024 * 64 - 1;
         SqlResult res1 = null;
@@ -2879,8 +2844,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     @Test
     //@Ignore("Wait for 1M Data issue Fix in Plugin")
     public void testCollectionFindStress_003() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 5;
         int maxLen = 1024 * 1024 + 4;
         SqlResult res1 = null;
@@ -2901,6 +2864,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
             tmpSess.sql("set Global mysqlx_max_allowed_packet=128*1024*1024 ").execute();
             tmpSess.sql("set Global max_allowed_packet=128*1024*1024 ").execute();
+            ((SessionImpl) this.session).getSession().getProtocol().setMaxAllowedPacket(128 * 1024 * 1024);
 
             String s1 = "";
 
@@ -2933,8 +2897,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
      */
     @Test
     public void testCollectionFindStress_004() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0, maxrec = 5;
         int maxKey = 1024 * 8;
         String key, key_sub = "key_", query;
@@ -2990,8 +2952,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
      */
     @Test
     public void testCollectionFindDatatypes() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10;
         DbDoc doc = null;
         DbDoc[] jsonlist = new DbDocImpl[maxrec];
@@ -3068,8 +3028,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     /* OPerators =,!=,<,>,<=,>= IN, NOT IN,Like , Not Like, Between, REGEXP,NOT REGEXP , interval,|,&,^,<<,>>,~ */
     @Test
     public void testCollectionFindBasic() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10;
         DbDoc doc = null;
         DocResult docs = null;
@@ -3143,8 +3101,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindGroupBy() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0, maxrec = 10, grpcnt = 50;
         DbDoc doc = null;
 
@@ -3218,8 +3174,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     @SuppressWarnings("deprecation")
     @Test
     public void testCollectionFindSkipWarning() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10;
         DbDoc doc = null;
         DocResult docs = null;
@@ -3264,8 +3218,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     /* REGEXP,NOT REGEXP,LIKE, NOT LIKE, */
     @Test
     public void testCollectionFindWithStringComparison() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10;
         int SLen = 1024;
         DbDoc doc = null;
@@ -3354,7 +3306,7 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     /* |,&,^,<<,>>,~ */
     @Test
     public void testCollectionFindWithBitOperation() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, maxrec = 10;
         int SLen = 1;
@@ -3447,8 +3399,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
     /* interval, In, NOT IN */
     @Test
     public void testCollectionFindWithIntervalOperation() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10;
         int SLen = 1;
         DbDoc doc = null;
@@ -3561,8 +3511,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
      */
     @Test
     public void testCollectionFindWithBind() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 15;
         int SLen = 500;
         DbDoc doc = null;
@@ -3695,8 +3643,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindArray() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0, maxrec = 8, minArraySize = 3;
         JsonArray yArray = null;
         DbDoc doc = null;
@@ -3777,7 +3723,8 @@ public class CollectionFindTest extends BaseCollectionTestCase {
      */
     @Test
     public void testGetWarningsFromCollection() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
+
         String collname = "coll1";
         Collection coll = null;
         Warning w = null;
@@ -3838,8 +3785,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindAsyncMany() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10;
         int NUMBER_OF_QUERIES = 1000;
         DbDoc doc = null;
@@ -3904,8 +3849,6 @@ public class CollectionFindTest extends BaseCollectionTestCase {
 
     @Test
     public void testCollectionFindAsyncExt() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, maxrec = 10;
         DbDoc doc = null;
         AddResult res = null;

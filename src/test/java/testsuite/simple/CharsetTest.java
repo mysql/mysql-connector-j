@@ -30,15 +30,19 @@
 package testsuite.simple;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,7 +58,9 @@ import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.CharsetMappingWrapper;
+import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.util.StringUtils;
 
 import testsuite.BaseTestCase;
 
@@ -64,10 +70,12 @@ public class CharsetTest extends BaseTestCase {
         try {
             "".getBytes("WINDOWS-31J");
         } catch (UnsupportedEncodingException uee) {
-            return;
+            assumeFalse(true, "Test requires JVM with WINDOWS-31J support.");
         }
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "WINDOWS-31J");
         getConnectionWithProps(props).close();
     }
@@ -77,7 +85,7 @@ public class CharsetTest extends BaseTestCase {
         try {
             "".getBytes("EUC_JP_Solaris");
         } catch (UnsupportedEncodingException uee) {
-            return;
+            assumeFalse(true, "Test requires JVM with EUC_JP_Solaris support.");
         }
 
         char necExtendedChar = 0x3231; // 0x878A of WINDOWS-31J, NEC
@@ -85,6 +93,8 @@ public class CharsetTest extends BaseTestCase {
         String necExtendedCharString = String.valueOf(necExtendedChar);
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "EUC_JP_Solaris");
 
@@ -160,7 +170,7 @@ public class CharsetTest extends BaseTestCase {
         try {
             "".getBytes("SJIS");
         } catch (UnsupportedEncodingException uee) {
-            return;
+            assumeFalse(true, "Test requires JVM with SJIS support.");
         }
 
         Map<String, char[]> testDataMap = new HashMap<>();
@@ -209,6 +219,8 @@ public class CharsetTest extends BaseTestCase {
 
         for (String charset : charsetList) {
             Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), charset);
             Connection conn2 = getConnectionWithProps(props);
@@ -315,7 +327,7 @@ public class CharsetTest extends BaseTestCase {
     public void testGB18030() throws Exception {
         // check that server supports this character set
         this.rs = this.stmt.executeQuery("show collation like 'gb18030_chinese_ci'");
-        assumeTrue(this.rs.next());
+        assumeTrue(this.rs.next(), "This test requires the server suporting gb18030 character set.");
 
         // phrases to check
         String[][] str = new String[][] {
@@ -399,5 +411,859 @@ public class CharsetTest extends BaseTestCase {
 
         st.executeUpdate("DROP TABLE IF EXISTS testGB18030");
         con.close();
+    }
+
+    /**
+     * Tests the ability to set the connection collation via properties.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testNonStandardConnectionCollation() throws Exception {
+        String collationToSet = "utf8_bin";
+        String characterSet = "utf-8";
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.connectionCollation.getKeyName(), collationToSet);
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), characterSet);
+
+        Connection collConn = null;
+        Statement collStmt = null;
+        ResultSet collRs = null;
+
+        try {
+            collConn = getConnectionWithProps(props);
+
+            collStmt = collConn.createStatement();
+
+            collRs = collStmt.executeQuery("SHOW VARIABLES LIKE 'collation_connection'");
+
+            assertTrue(collRs.next());
+            assertTrue(collationToSet.equalsIgnoreCase(collRs.getString(2)));
+        } finally {
+            if (collConn != null) {
+                collConn.close();
+            }
+        }
+    }
+
+    @Test
+    public void testCharsets() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+
+        Connection utfConn = getConnectionWithProps(props);
+
+        this.stmt = utfConn.createStatement();
+
+        createTable("t1", "(comment CHAR(32) ASCII NOT NULL,koi8_ru_f CHAR(32) CHARACTER SET koi8r NOT NULL) CHARSET=latin5");
+
+        this.stmt.executeUpdate("ALTER TABLE t1 CHANGE comment comment CHAR(32) CHARACTER SET latin2 NOT NULL");
+        this.stmt.executeUpdate("ALTER TABLE t1 ADD latin5_f CHAR(32) NOT NULL");
+        this.stmt.executeUpdate("ALTER TABLE t1 CHARSET=latin2");
+        this.stmt.executeUpdate("ALTER TABLE t1 ADD latin2_f CHAR(32) NOT NULL");
+        this.stmt.executeUpdate("ALTER TABLE t1 DROP latin2_f, DROP latin5_f");
+
+        this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment) VALUES ('a','LAT SMALL A')");
+        /*
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('b','LAT SMALL B')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('c','LAT SMALL C')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('d','LAT SMALL D')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('e','LAT SMALL E')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('f','LAT SMALL F')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('g','LAT SMALL G')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('h','LAT SMALL H')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('i','LAT SMALL I')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('j','LAT SMALL J')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('k','LAT SMALL K')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('l','LAT SMALL L')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('m','LAT SMALL M')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('n','LAT SMALL N')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('o','LAT SMALL O')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('p','LAT SMALL P')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('q','LAT SMALL Q')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('r','LAT SMALL R')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('s','LAT SMALL S')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('t','LAT SMALL T')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('u','LAT SMALL U')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('v','LAT SMALL V')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('w','LAT SMALL W')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('x','LAT SMALL X')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('y','LAT SMALL Y')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('z','LAT SMALL Z')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('A','LAT CAPIT A')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('B','LAT CAPIT B')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('C','LAT CAPIT C')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('D','LAT CAPIT D')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('E','LAT CAPIT E')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('F','LAT CAPIT F')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('G','LAT CAPIT G')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('H','LAT CAPIT H')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('I','LAT CAPIT I')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('J','LAT CAPIT J')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('K','LAT CAPIT K')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('L','LAT CAPIT L')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('M','LAT CAPIT M')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('N','LAT CAPIT N')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('O','LAT CAPIT O')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('P','LAT CAPIT P')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('Q','LAT CAPIT Q')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('R','LAT CAPIT R')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('S','LAT CAPIT S')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('T','LAT CAPIT T')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('U','LAT CAPIT U')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('V','LAT CAPIT V')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('W','LAT CAPIT W')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('X','LAT CAPIT X')"); this.stmt.executeUpdate("INSERT
+         * INTO t1 (koi8_ru_f,comment) VALUES ('Y','LAT CAPIT Y')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES ('Z','LAT CAPIT Z')");
+         */
+
+        String cyrillicSmallA = "\u0430";
+        this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment) VALUES ('" + cyrillicSmallA + "','CYR SMALL A')");
+
+        /*
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL BE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL VE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL GE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL DE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL IE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL IO')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL ZHE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL ZE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL I')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL KA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL EL')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL EM')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL EN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL O')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL PE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL ER')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL ES')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL TE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL U')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL EF')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL HA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL TSE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL CHE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL SHA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL SCHA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL HARD SIGN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL YERU')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL SOFT SIGN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL E')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL YU')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR SMALL YA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT A')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT BE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT VE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT GE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT DE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT IE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT IO')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT ZHE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT ZE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT I')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT KA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT EL')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT EM')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT EN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT O')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT PE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT ER')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT ES')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT TE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT U')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT EF')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT HA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT TSE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT CHE')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT SHA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT SCHA')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT HARD SIGN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT YERU')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT SOFT SIGN')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT E')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT YU')");
+         * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+         * VALUES (_koi8r'?��','CYR CAPIT YA')");
+         */
+
+        this.stmt.executeUpdate("ALTER TABLE t1 ADD utf8_f CHAR(32) CHARACTER SET utf8 NOT NULL");
+        this.stmt.executeUpdate("UPDATE t1 SET utf8_f=CONVERT(koi8_ru_f USING utf8)");
+        this.stmt.executeUpdate("SET CHARACTER SET koi8r");
+        // this.stmt.executeUpdate("SET CHARACTER SET UTF8");
+        this.rs = this.stmt.executeQuery("SELECT * FROM t1");
+
+        ResultSetMetaData rsmd = this.rs.getMetaData();
+
+        int numColumns = rsmd.getColumnCount();
+
+        for (int i = 0; i < numColumns; i++) {
+            System.out.print(rsmd.getColumnName(i + 1));
+            System.out.print("\t\t");
+        }
+
+        System.out.println();
+
+        while (this.rs.next()) {
+            System.out.println(this.rs.getString(1) + "\t\t" + this.rs.getString(2) + "\t\t" + this.rs.getString(3));
+
+            if (this.rs.getString(1).equals("CYR SMALL A")) {
+                this.rs.getString(2);
+            }
+        }
+
+        System.out.println();
+
+        this.stmt.executeUpdate("SET NAMES utf8");
+        this.rs = this.stmt.executeQuery("SELECT _koi8r 0xC1;");
+
+        rsmd = this.rs.getMetaData();
+
+        numColumns = rsmd.getColumnCount();
+
+        for (int i = 0; i < numColumns; i++) {
+            System.out.print(rsmd.getColumnName(i + 1));
+            System.out.print("\t\t");
+        }
+
+        System.out.println();
+
+        while (this.rs.next()) {
+            System.out.println(this.rs.getString(1).equals("\u0430") + "\t\t");
+            System.out.println(new String(this.rs.getBytes(1), "KOI8_R"));
+
+        }
+
+        char[] c = new char[] { 0xd0b0 };
+
+        System.out.println(new String(c));
+        System.out.println("\u0430");
+    }
+
+    /**
+     * Tests if the driver configures character sets correctly for 4.1.x servers. Requires that the 'admin connection' is configured, as this test needs to
+     * create/drop databases.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testCollation41() throws Exception {
+        Map<String, String> charsetsAndCollations = getCharacterSetsAndCollations();
+        charsetsAndCollations.remove("latin7"); // Maps to multiple Java
+        // charsets
+        charsetsAndCollations.remove("ucs2"); // can't be used as a
+        // connection charset
+
+        for (String charsetName : charsetsAndCollations.keySet()) {
+            String enc = ((MysqlConnection) this.conn).getSession().getServerSession().getCharsetSettings().getJavaEncodingForMysqlCharset(charsetName);
+            if (enc == null) {
+                continue;
+            }
+            Connection charsetConn = null;
+            Statement charsetStmt = null;
+
+            try {
+                System.out.print("Testing character set " + charsetName);
+
+                Properties props = new Properties();
+                props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+                props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+                props.setProperty(PropertyKey.characterEncoding.getKeyName(), enc);
+
+                System.out.println(", Java encoding " + enc);
+
+                charsetConn = getConnectionWithProps(props);
+
+                charsetStmt = charsetConn.createStatement();
+
+                charsetStmt.executeUpdate("DROP DATABASE IF EXISTS testCollation41");
+                charsetStmt.executeUpdate("DROP TABLE IF EXISTS testCollation41");
+                charsetStmt.executeUpdate("CREATE DATABASE testCollation41 DEFAULT CHARACTER SET " + charsetName);
+                charsetStmt.close();
+
+                charsetConn.setCatalog("testCollation41");
+
+                // We've switched catalogs, so we need to recreate the
+                // statement to pick this up...
+                charsetStmt = charsetConn.createStatement();
+
+                StringBuilder createTableCommand = new StringBuilder("CREATE TABLE testCollation41(field1 VARCHAR(255), field2 INT)");
+
+                charsetStmt.executeUpdate(createTableCommand.toString());
+
+                charsetStmt.executeUpdate("INSERT INTO testCollation41 VALUES ('abc', 0)");
+
+                int updateCount = charsetStmt.executeUpdate("UPDATE testCollation41 SET field2=1 WHERE field1='abc'");
+                assertTrue(updateCount == 1);
+            } finally {
+                if (charsetStmt != null) {
+                    charsetStmt.executeUpdate("DROP TABLE IF EXISTS testCollation41");
+                    charsetStmt.executeUpdate("DROP DATABASE IF EXISTS testCollation41");
+                    charsetStmt.close();
+                }
+
+                if (charsetConn != null) {
+                    charsetConn.close();
+                }
+            }
+        }
+    }
+
+    private Map<String, String> getCharacterSetsAndCollations() throws Exception {
+        Map<String, String> charsetsToLoad = new HashMap<>();
+
+        try {
+            this.rs = this.stmt.executeQuery("SHOW character set");
+
+            while (this.rs.next()) {
+                charsetsToLoad.put(this.rs.getString("Charset"), this.rs.getString("Default collation"));
+            }
+
+            //
+            // These don't have mappings in Java...
+            //
+            charsetsToLoad.remove("swe7");
+            charsetsToLoad.remove("hp8");
+            charsetsToLoad.remove("dec8");
+            charsetsToLoad.remove("koi8u");
+            charsetsToLoad.remove("keybcs2");
+            charsetsToLoad.remove("geostd8");
+            charsetsToLoad.remove("armscii8");
+        } finally {
+            if (this.rs != null) {
+                this.rs.close();
+            }
+        }
+
+        return charsetsToLoad;
+    }
+
+    @Test
+    public void testCSC5765() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf8");
+        props.setProperty(PropertyKey.characterSetResults.getKeyName(), "utf8");
+        props.setProperty(PropertyKey.connectionCollation.getKeyName(), "utf8_bin");
+
+        Connection utf8Conn = null;
+
+        try {
+            utf8Conn = getConnectionWithProps(props);
+            this.rs = utf8Conn.createStatement().executeQuery("SHOW VARIABLES LIKE 'character_%'");
+            while (this.rs.next()) {
+                System.out.println(this.rs.getString(1) + " = " + this.rs.getString(2));
+            }
+
+            this.rs = utf8Conn.createStatement().executeQuery("SHOW VARIABLES LIKE 'collation_%'");
+            while (this.rs.next()) {
+                System.out.println(this.rs.getString(1) + " = " + this.rs.getString(2));
+            }
+        } finally {
+            if (utf8Conn != null) {
+                utf8Conn.close();
+            }
+        }
+    }
+
+    /**
+     * These two charsets have different names depending on version of MySQL server.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testNewCharsetsConfiguration() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "EUC_KR");
+        getConnectionWithProps(props).close();
+
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "KOI8_R");
+        getConnectionWithProps(props).close();
+    }
+
+    /**
+     * Tests that 'latin1' character conversion works correctly.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testLatin1Encoding() throws Exception {
+        char[] latin1Charset = { 0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
+                0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017, 0x0018, 0x0019, 0x001A, 0x001B, 0x001C, 0x001D, 0x001E, 0x001F, 0x0020, 0x0021,
+                0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027, 0x0028, 0x0029, 0x002A, 0x002B, 0x002C, 0x002D, 0x002E, 0x002F, 0x0030, 0x0031, 0x0032, 0x0033,
+                0x0034, 0x0035, 0x0036, 0x0037, 0x0038, 0x0039, 0x003A, 0x003B, 0x003C, 0x003D, 0x003E, 0x003F, 0x0040, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045,
+                0x0046, 0x0047, 0x0048, 0x0049, 0x004A, 0x004B, 0x004C, 0x004D, 0x004E, 0x004F, 0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057,
+                0x0058, 0x0059, 0x005A, 0x005B, 0x005C, 0x005D, 0x005E, 0x005F, 0x0060, 0x0061, 0x0062, 0x0063, 0x0064, 0x0065, 0x0066, 0x0067, 0x0068, 0x0069,
+                0x006A, 0x006B, 0x006C, 0x006D, 0x006E, 0x006F, 0x0070, 0x0071, 0x0072, 0x0073, 0x0074, 0x0075, 0x0076, 0x0077, 0x0078, 0x0079, 0x007A, 0x007B,
+                0x007C, 0x007D, 0x007E, 0x007F, 0x0080, 0x0081, 0x0082, 0x0083, 0x0084, 0x0085, 0x0086, 0x0087, 0x0088, 0x0089, 0x008A, 0x008B, 0x008C, 0x008D,
+                0x008E, 0x008F, 0x0090, 0x0091, 0x0092, 0x0093, 0x0094, 0x0095, 0x0096, 0x0097, 0x0098, 0x0099, 0x009A, 0x009B, 0x009C, 0x009D, 0x009E, 0x009F,
+                0x00A0, 0x00A1, 0x00A2, 0x00A3, 0x00A4, 0x00A5, 0x00A6, 0x00A7, 0x00A8, 0x00A9, 0x00AA, 0x00AB, 0x00AC, 0x00AD, 0x00AE, 0x00AF, 0x00B0, 0x00B1,
+                0x00B2, 0x00B3, 0x00B4, 0x00B5, 0x00B6, 0x00B7, 0x00B8, 0x00B9, 0x00BA, 0x00BB, 0x00BC, 0x00BD, 0x00BE, 0x00BF, 0x00C0, 0x00C1, 0x00C2, 0x00C3,
+                0x00C4, 0x00C5, 0x00C6, 0x00C7, 0x00C8, 0x00C9, 0x00CA, 0x00CB, 0x00CC, 0x00CD, 0x00CE, 0x00CF, 0x00D0, 0x00D1, 0x00D2, 0x00D3, 0x00D4, 0x00D5,
+                0x00D6, 0x00D7, 0x00D8, 0x00D9, 0x00DA, 0x00DB, 0x00DC, 0x00DD, 0x00DE, 0x00DF, 0x00E0, 0x00E1, 0x00E2, 0x00E3, 0x00E4, 0x00E5, 0x00E6, 0x00E7,
+                0x00E8, 0x00E9, 0x00EA, 0x00EB, 0x00EC, 0x00ED, 0x00EE, 0x00EF, 0x00F0, 0x00F1, 0x00F2, 0x00F3, 0x00F4, 0x00F5, 0x00F6, 0x00F7, 0x00F8, 0x00F9,
+                0x00FA, 0x00FB, 0x00FC, 0x00FD, 0x00FE, 0x00FF };
+
+        String latin1String = new String(latin1Charset);
+        Connection latin1Conn = null;
+        PreparedStatement pStmt = null;
+
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.characterEncoding.getKeyName(), "cp1252");
+            latin1Conn = getConnectionWithProps(props);
+
+            createTable("latin1RegressTest", "(stringField TEXT)");
+
+            pStmt = latin1Conn.prepareStatement("INSERT INTO latin1RegressTest VALUES (?)");
+            pStmt.setString(1, latin1String);
+            pStmt.executeUpdate();
+
+            ((com.mysql.cj.jdbc.JdbcConnection) latin1Conn).getPropertySet().getProperty(PropertyKey.traceProtocol).setValue(true);
+
+            this.rs = latin1Conn.createStatement().executeQuery("SELECT * FROM latin1RegressTest");
+            ((com.mysql.cj.jdbc.JdbcConnection) latin1Conn).getPropertySet().getProperty(PropertyKey.traceProtocol).setValue(false);
+
+            this.rs.next();
+
+            String retrievedString = this.rs.getString(1);
+
+            System.out.println(latin1String);
+            System.out.println(retrievedString);
+
+            if (!retrievedString.equals(latin1String)) {
+                int stringLength = Math.min(retrievedString.length(), latin1String.length());
+
+                for (int i = 0; i < stringLength; i++) {
+                    char rChar = retrievedString.charAt(i);
+                    char origChar = latin1String.charAt(i);
+
+                    assertFalse((rChar != '?') && (rChar != origChar),
+                            "characters differ at position " + i + "'" + rChar + "' retrieved from database, original char was '" + origChar + "'");
+                }
+            }
+        } finally {
+            if (latin1Conn != null) {
+                latin1Conn.close();
+            }
+        }
+    }
+
+    /**
+     * Tests that the 0x5c escaping works (we didn't use to have this).
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testSjis5c() throws Exception {
+        byte[] origByteStream = new byte[] { (byte) 0x95, (byte) 0x5c, (byte) 0x8e, (byte) 0x96 };
+
+        //
+        // Print the hex values of the string
+        //
+        StringBuilder bytesOut = new StringBuilder();
+
+        for (int i = 0; i < origByteStream.length; i++) {
+            bytesOut.append(Integer.toHexString(origByteStream[i] & 255));
+            bytesOut.append(" ");
+        }
+
+        System.out.println(bytesOut.toString());
+
+        String origString = new String(origByteStream, "SJIS");
+        byte[] newByteStream = StringUtils.getBytes(origString, "SJIS");
+
+        //
+        // Print the hex values of the string (should have an extra 0x5c)
+        //
+        bytesOut = new StringBuilder();
+
+        for (int i = 0; i < newByteStream.length; i++) {
+            bytesOut.append(Integer.toHexString(newByteStream[i] & 255));
+            bytesOut.append(" ");
+        }
+
+        System.out.println(bytesOut.toString());
+
+        //
+        // Now, insert and retrieve the value from the database
+        //
+        Connection sjisConn = null;
+        Statement sjisStmt = null;
+
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.characterEncoding.getKeyName(), "SJIS");
+            sjisConn = getConnectionWithProps(props);
+
+            sjisStmt = sjisConn.createStatement();
+
+            this.rs = sjisStmt.executeQuery("SHOW VARIABLES LIKE 'character_set%'");
+
+            while (this.rs.next()) {
+                System.out.println(this.rs.getString(1) + " = " + this.rs.getString(2));
+            }
+
+            sjisStmt.executeUpdate("DROP TABLE IF EXISTS sjisTest");
+
+            sjisStmt.executeUpdate("CREATE TABLE sjisTest (field1 char(50)) DEFAULT CHARACTER SET SJIS");
+
+            this.pstmt = sjisConn.prepareStatement("INSERT INTO sjisTest VALUES (?)");
+            this.pstmt.setString(1, origString);
+            this.pstmt.executeUpdate();
+
+            this.rs = sjisStmt.executeQuery("SELECT * FROM sjisTest");
+
+            while (this.rs.next()) {
+                byte[] testValueAsBytes = this.rs.getBytes(1);
+
+                bytesOut = new StringBuilder();
+
+                for (int i = 0; i < testValueAsBytes.length; i++) {
+                    bytesOut.append(Integer.toHexString(testValueAsBytes[i] & 255));
+                    bytesOut.append(" ");
+                }
+
+                System.out.println("Value retrieved from database: " + bytesOut.toString());
+
+                String testValue = this.rs.getString(1);
+
+                assertTrue(testValue.equals(origString));
+            }
+        } finally {
+            this.stmt.executeUpdate("DROP TABLE IF EXISTS sjisTest");
+        }
+    }
+
+    /**
+     * Tests that UTF-8 character conversion works correctly.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testUtf8Encoding() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF8");
+        props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
+
+        Connection utfConn = DriverManager.getConnection(dbUrl, props);
+        testConversionForString("UTF8", utfConn, "\u043c\u0438\u0445\u0438");
+    }
+
+    @Test
+    public void testUtf8Encoding2() throws Exception {
+        String field1 = "K��sel";
+        String field2 = "B�b";
+        byte[] field1AsBytes = field1.getBytes("utf-8");
+        byte[] field2AsBytes = field2.getBytes("utf-8");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF8");
+
+        Connection utfConn = DriverManager.getConnection(dbUrl, props);
+        Statement utfStmt = utfConn.createStatement();
+
+        try {
+            utfStmt.executeUpdate("DROP TABLE IF EXISTS testUtf8");
+            utfStmt.executeUpdate("CREATE TABLE testUtf8 (field1 varchar(32), field2 varchar(32)) CHARACTER SET UTF8");
+            utfStmt.executeUpdate("INSERT INTO testUtf8 VALUES ('" + field1 + "','" + field2 + "')");
+
+            PreparedStatement pStmt = utfConn.prepareStatement("INSERT INTO testUtf8 VALUES (?, ?)");
+            pStmt.setString(1, field1);
+            pStmt.setString(2, field2);
+            pStmt.executeUpdate();
+
+            this.rs = utfStmt.executeQuery("SELECT * FROM testUtf8");
+            assertTrue(this.rs.next());
+
+            // Compare results stored using direct statement
+            // Compare to original string
+            assertTrue(field1.equals(this.rs.getString(1)));
+            assertTrue(field2.equals(this.rs.getString(2)));
+
+            // Compare byte-for-byte, ignoring encoding
+            assertTrue(bytesAreSame(field1AsBytes, this.rs.getBytes(1)));
+            assertTrue(bytesAreSame(field2AsBytes, this.rs.getBytes(2)));
+
+            assertTrue(this.rs.next());
+
+            // Compare to original string
+            assertTrue(field1.equals(this.rs.getString(1)));
+            assertTrue(field2.equals(this.rs.getString(2)));
+
+            // Compare byte-for-byte, ignoring encoding
+            assertTrue(bytesAreSame(field1AsBytes, this.rs.getBytes(1)));
+            assertTrue(bytesAreSame(field2AsBytes, this.rs.getBytes(2)));
+        } finally {
+            utfStmt.executeUpdate("DROP TABLE IF EXISTS testUtf8");
+        }
+    }
+
+    private boolean bytesAreSame(byte[] byte1, byte[] byte2) {
+        if (byte1.length != byte2.length) {
+            return false;
+        }
+
+        for (int i = 0; i < byte1.length; i++) {
+            if (byte1[i] != byte2[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void testConversionForString(String charsetName, Connection convConn, String charsToTest) throws Exception {
+        PreparedStatement pStmt = null;
+
+        this.stmt = convConn.createStatement();
+
+        createTable("charConvTest_" + charsetName, "(field1 CHAR(50) CHARACTER SET " + charsetName + ")");
+
+        this.stmt.executeUpdate("INSERT INTO charConvTest_" + charsetName + " VALUES ('" + charsToTest + "')");
+        pStmt = convConn.prepareStatement("INSERT INTO charConvTest_" + charsetName + " VALUES (?)");
+        pStmt.setString(1, charsToTest);
+        pStmt.executeUpdate();
+        this.rs = this.stmt.executeQuery("SELECT * FROM charConvTest_" + charsetName);
+
+        assertTrue(this.rs.next());
+
+        String testValue = this.rs.getString(1);
+        System.out.println(testValue);
+        assertTrue(testValue.equals(charsToTest));
+
+    }
+
+    @Test
+    public void testCsc4194() throws Exception {
+        try {
+            "".getBytes("Windows-31J");
+        } catch (UnsupportedEncodingException ex) {
+            assumeFalse(true, "Test requires JVM with Windows-31J support.");
+        }
+
+        Connection sjisConn = null;
+        Connection windows31JConn = null;
+
+        try {
+            String tableNameText = "testCsc4194Text";
+            String tableNameBlob = "testCsc4194Blob";
+
+            createTable(tableNameBlob, "(field1 BLOB)");
+            String charset = "";
+
+            charset = " CHARACTER SET cp932";
+
+            createTable(tableNameText, "(field1 TEXT)" + charset);
+
+            Properties windows31JProps = new Properties();
+            windows31JProps.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            windows31JProps.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            windows31JProps.setProperty(PropertyKey.characterEncoding.getKeyName(), "Windows-31J");
+
+            windows31JConn = getConnectionWithProps(windows31JProps);
+            testCsc4194InsertCheckBlob(windows31JConn, tableNameBlob);
+
+            testCsc4194InsertCheckText(windows31JConn, tableNameText, "Windows-31J");
+
+            Properties sjisProps = new Properties();
+            sjisProps.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            sjisProps.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            sjisProps.setProperty(PropertyKey.characterEncoding.getKeyName(), "sjis");
+
+            sjisConn = getConnectionWithProps(sjisProps);
+            testCsc4194InsertCheckBlob(sjisConn, tableNameBlob);
+            testCsc4194InsertCheckText(sjisConn, tableNameText, "Windows-31J");
+
+        } finally {
+
+            if (windows31JConn != null) {
+                windows31JConn.close();
+            }
+
+            if (sjisConn != null) {
+                sjisConn.close();
+            }
+        }
+    }
+
+    private void testCsc4194InsertCheckBlob(Connection c, String tableName) throws Exception {
+        byte[] bArray = new byte[] { (byte) 0xac, (byte) 0xed, (byte) 0x00, (byte) 0x05 };
+
+        PreparedStatement testStmt = c.prepareStatement("INSERT INTO " + tableName + " VALUES (?)");
+        testStmt.setBytes(1, bArray);
+        testStmt.executeUpdate();
+
+        this.rs = c.createStatement().executeQuery("SELECT field1 FROM " + tableName);
+        assertTrue(this.rs.next());
+        assertEquals(getByteArrayString(bArray), getByteArrayString(this.rs.getBytes(1)));
+        this.rs.close();
+    }
+
+    private void testCsc4194InsertCheckText(Connection c, String tableName, String encoding) throws Exception {
+        byte[] kabuInShiftJIS = { (byte) 0x87, // a double-byte charater("kabu") in Shift JIS
+                (byte) 0x8a, };
+
+        String expected = new String(kabuInShiftJIS, encoding);
+        PreparedStatement testStmt = c.prepareStatement("INSERT INTO " + tableName + " VALUES (?)");
+        testStmt.setString(1, expected);
+        testStmt.executeUpdate();
+
+        this.rs = c.createStatement().executeQuery("SELECT field1 FROM " + tableName);
+        assertTrue(this.rs.next());
+        assertEquals(expected, this.rs.getString(1));
+        this.rs.close();
+    }
+
+    private String getByteArrayString(byte[] ba) {
+        StringBuilder buffer = new StringBuilder();
+        if (ba != null) {
+            for (int i = 0; i < ba.length; i++) {
+                buffer.append("0x" + Integer.toHexString(ba[i] & 0xff) + " ");
+            }
+        } else {
+            buffer.append("null");
+        }
+        return buffer.toString();
+    }
+
+    @Test
+    public void testCodePage1252() throws Exception {
+        /*
+         * from
+         * ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/
+         * CP1252.TXT
+         * 
+         * 0x80 0x20AC #EURO SIGN 0x81 #UNDEFINED 0x82 0x201A #SINGLE LOW-9
+         * QUOTATION MARK 0x83 0x0192 #LATIN SMALL LETTER F WITH HOOK 0x84
+         * 0x201E #DOUBLE LOW-9 QUOTATION MARK 0x85 0x2026 #HORIZONTAL
+         * ELLIPSIS 0x86 0x2020 #DAGGER 0x87 0x2021 #DOUBLE DAGGER 0x88
+         * 0x02C6 #MODIFIER LETTER CIRCUMFLEX ACCENT 0x89 0x2030 #PER MILLE
+         * SIGN 0x8A 0x0160 #LATIN CAPITAL LETTER S WITH CARON 0x8B 0x2039
+         * #SINGLE LEFT-POINTING ANGLE QUOTATION MARK 0x8C 0x0152 #LATIN
+         * CAPITAL LIGATURE OE 0x8D #UNDEFINED 0x8E 0x017D #LATIN CAPITAL
+         * LETTER Z WITH CARON 0x8F #UNDEFINED 0x90 #UNDEFINED
+         */
+        String codePage1252 = new String(new byte[] { (byte) 0x80, (byte) 0x82, (byte) 0x83, (byte) 0x84, (byte) 0x85, (byte) 0x86, (byte) 0x87, (byte) 0x88,
+                (byte) 0x89, (byte) 0x8a, (byte) 0x8b, (byte) 0x8c, (byte) 0x8e }, "Cp1252");
+
+        System.out.println(codePage1252);
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "Cp1252");
+        Connection cp1252Conn = getConnectionWithProps(props);
+        createTable("testCp1252", "(field1 varchar(32) CHARACTER SET latin1)");
+        cp1252Conn.createStatement().executeUpdate("INSERT INTO testCp1252 VALUES ('" + codePage1252 + "')");
+        this.rs = cp1252Conn.createStatement().executeQuery("SELECT field1 FROM testCp1252");
+        this.rs.next();
+        assertEquals(this.rs.getString(1), codePage1252);
     }
 }

@@ -41,8 +41,10 @@ import com.mysql.cj.MysqlxSession;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.XProtocolError;
+import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.PreparableStatement;
+import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.Schema;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionImpl;
@@ -74,6 +76,32 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
             this.dbCharset = rs.fetchOne().getString(1);
             rs = this.session.sql("SHOW VARIABLES LIKE 'collation_database'").execute();
             this.dbCollation = rs.fetchOne().getString(1);
+
+            // ensure max_connections value is enough to run tests
+            int maxConnections = 0;
+            int mysqlxMaxConnections = 0;
+
+            rs = this.session.sql("SHOW VARIABLES LIKE '%max_connections'").execute();
+            Row r = rs.fetchOne();
+            if (r.getString(0).contains("mysqlx")) {
+                mysqlxMaxConnections = r.getInt(1);
+                maxConnections = rs.fetchOne().getInt(1);
+            } else {
+                maxConnections = r.getInt(1);
+                mysqlxMaxConnections = rs.fetchOne().getInt(1);
+            }
+
+            rs = this.session.sql("show status like 'threads_connected'").execute();
+            int usedConnections = rs.fetchOne().getInt(1);
+
+            if (maxConnections - usedConnections < 200) {
+                maxConnections += 200;
+                this.session.sql("SET GLOBAL max_connections=" + maxConnections).execute();
+                if (mysqlxMaxConnections < maxConnections) {
+                    this.session.sql("SET GLOBAL mysqlx_max_connections=" + maxConnections).execute();
+                }
+            }
+
             return true;
         }
         return false;
@@ -187,6 +215,15 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
             return res.next().getInt(0);
         }
         return -1;
+    }
+
+    protected boolean supportsTestCertificates(Session sess) {
+        SqlResult res = sess.sql("SELECT @@mysqlx_ssl_ca, @@ssl_ca").execute();
+        if (res.hasNext()) {
+            Row r = res.next();
+            return (StringUtils.isNullOrEmpty(r.getString(1)) && r.getString(2).contains("ssl-test-certs") || r.getString(1).contains("ssl-test-certs"));
+        }
+        return false;
     }
 
     int getPreparedStatementId(PreparableStatement<?> stmt) {

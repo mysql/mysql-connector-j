@@ -64,8 +64,6 @@ import com.mysql.cj.xdevapi.XDevAPIError;
 public class CollectionRemoveTest extends BaseCollectionTestCase {
     @Test
     public void deleteAll() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
             this.collection.add("{\"_id\": \"2\"}").execute();
@@ -104,8 +102,6 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
 
     @Test
     public void deleteSome() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\"}").execute(); // Requires manual _id.
             this.collection.add("{\"_id\": \"2\"}").execute();
@@ -123,8 +119,6 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
 
     @Test
     public void removeOne() {
-        assumeTrue(this.isSetForXTests);
-
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             this.collection.add("{\"_id\": \"1\", \"x\":1}").execute(); // Requires manual _id.
             this.collection.add("{\"_id\": \"2\", \"x\":2}").execute();
@@ -158,7 +152,7 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
 
     @Test
     public void testPreparedStatements() {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")), "MySQL 8.0.14+ is required to run this test.");
 
         try {
             // Prepare test data.
@@ -404,8 +398,6 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testDeprecateWhere() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         this.collection.add("{\"_id\":\"1\", \"ord\": 1}", "{\"_id\":\"2\", \"ord\": 2}", "{\"_id\":\"3\", \"ord\": 3}", "{\"_id\":\"4\", \"ord\": 4}",
                 "{\"_id\":\"5\", \"ord\": 5}", "{\"_id\":\"6\", \"ord\": 6}", "{\"_id\":\"7\", \"ord\": 7}", "{\"_id\":\"8\", \"ord\": 8}").execute();
 
@@ -420,8 +412,6 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
     @SuppressWarnings("deprecation")
     @Test
     public void testCollectionRemoveBasic() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0, j = 0, maxrec = 100, recCnt = 0, arraySize = 30;
         Result res = null;
         DocResult docs = null;
@@ -526,7 +516,7 @@ public class CollectionRemoveTest extends BaseCollectionTestCase {
     @SuppressWarnings("deprecation")
     @Test
     public void testCollectionRemoveBindComplex() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0+ is required to run this test.");
 
         int i = 0, j = 0, maxrec = 20, arraySize = 3;
         DbDoc doc = null;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -130,6 +130,11 @@ public class DataSourceTest extends BaseTestCase {
 
         assertNotNull(boundDs, "Datasource not bound");
 
+        if (boundDs instanceof MysqlDataSource) {
+            ((MysqlDataSource) boundDs).getStringProperty(PropertyKey.sslMode.getKeyName()).setValue("DISABLED");
+            ((MysqlDataSource) boundDs).getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
+        }
+
         Connection con = boundDs.getConnection();
         assertNotNull(con, "Connection can not be obtained from data source");
         con.close();
@@ -144,6 +149,8 @@ public class DataSourceTest extends BaseTestCase {
     public void testChangeUserAndCharsets() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
+        ds.getStringProperty(PropertyKey.sslMode.getKeyName()).setValue("DISABLED");
+        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
         ds.getProperty(PropertyKey.characterEncoding).setValue("utf-8");
         PooledConnection pooledConnection = ds.getPooledConnection();
 

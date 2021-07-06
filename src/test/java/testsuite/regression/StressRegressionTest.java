@@ -29,6 +29,7 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -50,6 +51,8 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import com.mysql.cj.conf.PropertyKey;
 
 import testsuite.BaseTestCase;
 
@@ -312,7 +315,10 @@ public class StressRegressionTest extends BaseTestCase {
         /*
          * Use a brand new Connection not shared by anyone else, otherwise it may block later on test teardown.
          */
-        final Connection testConn = getConnectionWithProps("");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        final Connection testConn = getConnectionWithProps(props);
 
         /*
          * Thread to execute set[Timestamp|Date|Time]() methods in an instance of a PreparedStatement constructed from a shared Connection.
@@ -397,9 +403,8 @@ public class StressRegressionTest extends BaseTestCase {
             Thread.sleep(recheckWaitTimeUnit);
 
             delta0IterationsCountdown = SharedInfoForTestBug67760.iterationsChanged() ? delta0IterationsCountdownSize : delta0IterationsCountdown - 1;
-            if (SharedInfoForTestBug67760.running && (!job1.isAlive() || !job2.isAlive())) {
-                fail("Something as failed. At least one of the threads has died.");
-            }
+            assertFalse(SharedInfoForTestBug67760.running && (!job1.isAlive() || !job2.isAlive()),
+                    "Something has failed. At least one of the threads has died.");
 
             if (delta0IterationsCountdown == 0 || !SharedInfoForTestBug67760.running) {
                 if (!SharedInfoForTestBug67760.running && (job1.isAlive() || job2.isAlive())) {

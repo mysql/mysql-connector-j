@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,7 @@
 
 package testsuite;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -363,9 +363,7 @@ public class InjectedSocketFactory extends StandardSocketFactory {
                 return readCount;
             } catch (SocketTimeoutException e) {
                 this.loopCount++;
-                if (this.loopCount > 10) {
-                    fail("Probable infinite loop at MySQLIO.clearInputStream().");
-                }
+                assertFalse(this.loopCount > 10, "Probable infinite loop at MySQLIO.clearInputStream().");
                 return -1;
             }
         }

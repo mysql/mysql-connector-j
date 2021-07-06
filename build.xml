@@ -182,13 +182,10 @@ com.mysql.cj.testsuite.build.dir - root directory for building testsuite, defaul
 com.mysql.cj.testsuite.junit.results - where to put junit reports, default '${com.mysql.cj.testsuite.junit.results}'
 com.mysql.cj.testsuite.jvm - run testsuite under this one JVM, default '${com.mysql.cj.testsuite.jvm}'
 com.mysql.cj.testsuite.url - connection string to the main test server, default _unset_
-com.mysql.cj.testsuite.url.openssl - connection string to the test server compiled with OpenSSL, used in sha256 tests, default _unset_
 com.mysql.cj.testsuite.mysqlx.url - connection string to the test server with xplugin, default _unset_
-com.mysql.cj.testsuite.mysqlx.url.openssl - connection string to the test server compiled with OpenSSL and enabled xplugin, default _unset_
 com.mysql.cj.testsuite.test.class - testcase class name to run, default _unset_
 com.mysql.cj.testsuite.test.methods - a comma separated list of test names existing in class defined by 'com.mysql.cj.testsuite.test.class', default _unset_
 com.mysql.cj.testsuite.unavailable.host - a host:port pair used for tests checking socket connection timeout
-com.mysql.cj.testsuite.no.server.testsuite - Option to indicate that the server was installed without the test package, default _unset_
 
 See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test options.
 
@@ -1239,11 +1236,30 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- ***** TESTING ***** -->
     <!-- ******************* -->
 
+    <condition property="junit.styledir" value="${com.mysql.cj.build.dir.driver}" else="${ant.home}/etc">
+        <available file="${com.mysql.cj.extra.libs}/ant/junit-frames.xsl" type="file"/>
+    </condition>
+    
+    <target name="-check-custom-xslt" unless="file.exists">
+        <available property="custom.xslt.exists" file="${com.mysql.cj.extra.libs}/ant/junit-frames.xsl" type="file"/>
+    </target>
+    
+    <target name="-init-custom-xslt" depends="-check-custom-xslt" if="${custom.xslt.exists}">
+        <copy file="${com.mysql.cj.extra.libs}/ant/junit-frames.xsl"
+              tofile="${com.mysql.cj.build.dir.driver}/junit-frames.xsl"
+              overwrite="true" />
+
+        <replaceregexp match="extralibs"
+                       replace="file:${ant.home}/etc/junit-frames.xsl"
+                       flags="s">
+            <fileset file="${com.mysql.cj.build.dir.driver}/junit-frames.xsl"/>
+        </replaceregexp>
+    </target>
 
     <!-- Run the full test suite, single test set or named tests against one JVM and one server config. -->
     <target name="test"
             description="Runs the full test suite, single test set (variable 'com.mysql.cj.testsuite.test.class') or named tests (variables 'com.mysql.cj.testsuite.test.class' and 'com.mysql.cj.testsuite.test.methods') against one JVM and one server config."
-            depends="-testsuite-jvm-check, compile-testsuite">
+            depends="-testsuite-jvm-check, compile-testsuite, -init-custom-xslt">
 
         <mkdir dir="${com.mysql.cj.testsuite.junit.results}/report" />
 
@@ -1337,7 +1353,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <fileset dir="${com.mysql.cj.testsuite.junit.results}">
                 <include name="**/TEST-*.xml" />
             </fileset>
-            <report format="frames" todir="${com.mysql.cj.testsuite.junit.results}/report" />
+            <report styledir="${junit.styledir}" format="frames" todir="${com.mysql.cj.testsuite.junit.results}/report" />
         </junitreport>
 
         <!-- Don't fail the build if we're doing coverage test. -->

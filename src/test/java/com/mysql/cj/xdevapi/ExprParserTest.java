@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,8 +31,8 @@ package com.mysql.cj.xdevapi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -62,13 +62,10 @@ public class ExprParserTest {
      * @param s
      */
     private void checkBadParse(String s) {
-        try {
+        assertThrows(WrongArgumentException.class, () -> {
             Expr e = new ExprParser(s).parse();
             System.err.println("Parsed as: " + e);
-            fail("Expected exception while parsing: '" + s + "'");
-        } catch (WrongArgumentException ex) {
-            // expected
-        }
+        }, "Expected exception while parsing: '" + s + "'");
     }
 
     @Test

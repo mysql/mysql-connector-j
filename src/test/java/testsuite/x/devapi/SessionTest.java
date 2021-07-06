@@ -71,6 +71,7 @@ import com.google.protobuf.MessageLite;
 import com.mysql.cj.Constants;
 import com.mysql.cj.CoreSession;
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.Compression;
 import com.mysql.cj.conf.PropertyDefinitions.XdevapiSslMode;
 import com.mysql.cj.conf.PropertyKey;
@@ -113,6 +114,7 @@ import testsuite.UnreliableSocketFactory;
 public class SessionTest extends DevApiBaseTestCase {
     @BeforeEach
     public void setupSessionTest() {
+        assumeTrue(this.isSetForXTests, PropertyDefinitions.SYSP_testsuite_url_mysqlx + " must be set to run this test.");
         setupTestSession();
     }
 
@@ -145,8 +147,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void urlWithDefaultSchema() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
             this.session.sql("CREATE USER IF NOT EXISTS 'testUserN'@'%' IDENTIFIED WITH mysql_native_password BY 'testUserN'").execute();
@@ -199,8 +199,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void urlWithoutDefaultSchema() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
             this.session.sql("CREATE USER IF NOT EXISTS 'testUserN'@'%' IDENTIFIED WITH mysql_native_password BY 'testUserN'").execute();
@@ -251,8 +249,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void invalidDefaultSchema() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
             this.session.sql("CREATE USER IF NOT EXISTS 'testUserN'@'%' IDENTIFIED WITH mysql_native_password BY 'testUserN'").execute();
@@ -298,8 +294,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void createDropSchema() {
-        assumeTrue(this.isSetForXTests);
-
         String testSchemaName = getRandomTestSchemaName();
         Schema newSchema = this.session.createSchema(testSchemaName);
         assertTrue(this.session.getSchemas().contains(newSchema));
@@ -309,8 +303,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void createAndReuseExistingSchema() {
-        assumeTrue(this.isSetForXTests);
-
         String testSchemaName = getRandomTestSchemaName();
         Schema newSchema = this.session.createSchema(testSchemaName);
         assertTrue(this.session.getSchemas().contains(newSchema));
@@ -320,8 +312,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void listSchemas() {
-        assumeTrue(this.isSetForXTests);
-
         List<Schema> schemas = this.session.getSchemas();
         // we should have visibility of at least these two
         Schema infoSchema = this.session.getSchema("information_schema");
@@ -332,8 +322,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void createExistingSchemaError() {
-        assumeTrue(this.isSetForXTests);
-
         String testSchemaName = getRandomTestSchemaName();
         Schema newSchema = this.session.createSchema(testSchemaName);
         assertTrue(this.session.getSchemas().contains(newSchema));
@@ -350,25 +338,22 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void errorOnPacketTooBig() {
-        assumeTrue(this.isSetForXTests);
+        System.gc(); // to free the memory from previous tests artifacts
+        SqlStatement stmt = this.session.sql("select @@mysqlx_max_allowed_packet");
+        SqlResult res = stmt.execute();
+        Row r = res.next();
+        long mysqlxMaxAllowedPacket = r.getLong(0);
 
-        try {
-            SqlStatement stmt = this.session.sql("select @@mysqlx_max_allowed_packet");
-            SqlResult res = stmt.execute();
-            Row r = res.next();
-            long mysqlxMaxAllowedPacket = r.getLong(0);
-
-            long size = 100 + mysqlxMaxAllowedPacket;
-            StringBuilder b = new StringBuilder();
-            for (int i = 0; i < size; ++i) {
-                b.append('a');
-            }
-            String s = b.append("\"}").toString();
-            this.session.dropSchema(s);
-            fail("Large packet should cause an exception");
-        } catch (CJPacketTooBigException ex) {
-            // expected
+        long size = 100 + mysqlxMaxAllowedPacket;
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < size; ++i) {
+            b.append('a');
         }
+        String s = b.append("\"}").toString();
+        assertThrows("Large packet should cause an exception", CJPacketTooBigException.class, () -> {
+            this.session.dropSchema(s);
+            return null;
+        });
     }
 
     /**
@@ -376,8 +361,6 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug21690043() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             this.session.sql("CREATE USER 'bug21690043user1'@'%' IDENTIFIED WITH mysql_native_password").execute();
             this.session.sql("GRANT SELECT ON *.* TO 'bug21690043user1'@'%'").execute();
@@ -396,8 +379,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicSql() {
-        assumeTrue(this.isSetForXTests);
-
         SqlStatement stmt = this.session.sql("select 1,2,3 from dual");
         SqlResult res = stmt.execute();
         assertTrue(res.hasData());
@@ -420,8 +401,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void sqlUpdate() {
-        assumeTrue(this.isSetForXTests);
-
         SqlStatement stmt = this.session.sql("set @cjTestVar = 1");
         SqlResult res = stmt.execute();
         assertFalse(res.hasData());
@@ -479,8 +458,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void sqlArguments() {
-        assumeTrue(this.isSetForXTests);
-
         SqlStatement stmt = this.session.sql("select ? as a, 40 + ? as b, ? as c");
         SqlResult res = stmt.bind(1).bind(2).bind(3).execute();
         Row r = res.next();
@@ -491,8 +468,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicMultipleResults() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop procedure if exists basicMultipleResults");
             sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
@@ -513,8 +488,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void smartBufferMultipleResults() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop procedure if exists basicMultipleResults");
             sqlUpdate("create procedure basicMultipleResults() begin explain select 1; explain select 2; end");
@@ -531,8 +504,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void sqlInsertAutoIncrementValue() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists lastInsertId");
             sqlUpdate("create table lastInsertId (id int not null primary key auto_increment, name varchar(20) not null)");
@@ -557,8 +528,6 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug27652379() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         Properties props = new Properties();
 
         // Upper case keys.
@@ -627,8 +596,6 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug23045604() {
-        assumeTrue(this.isSetForXTests);
-
         String url = this.baseUrl;
         if (!url.contains("?")) {
             url += "?";
@@ -640,13 +607,12 @@ public class SessionTest extends DevApiBaseTestCase {
         assertTrue(uri.contains("connectionTimeZone=Asia/Calcutta"));
         assertTrue(uri.contains("serverConfigCacheFactory="));
         assertFalse(uri.contains(","));
+        sess.close();
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void testPooledSessions() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         final ClientFactory cf = new ClientFactory();
         final String url = this.baseUrl;
         final Properties props = new Properties();
@@ -1102,8 +1068,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testBug28616573() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         RowResult res = this.session.sql(
                 "select @@global.mysqlx_max_connections, VARIABLE_VALUE FROM performance_schema.global_status WHERE VARIABLE_NAME='Mysqlx_worker_threads_active'")
                 .execute();
@@ -1142,7 +1106,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testBug28606708() throws Exception {
-        assumeTrue(this.isSetForXTests && isServerRunningOnWindows());
+        assumeTrue(isServerRunningOnWindows() && isMysqlRunningLocally(),
+                "This test can run only when client and server are running on the same Windows host.");
 
         for (String path : new String[] { null, "\\\\.\\pipe\\MySQL80" }) {
             String url = this.baseUrl + makeParam(PropertyKey.socketFactory, "com.mysql.cj.protocol.NamedPipeSocketFactory");
@@ -1172,7 +1137,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testSessionAttributes() throws Exception {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.16")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.16")), "MySQL 8.0.16+ is required to run this test.");
 
         ClientFactory cf = new ClientFactory();
         Map<String, String> userAttributes = new HashMap<>();
@@ -1357,9 +1322,7 @@ public class SessionTest extends DevApiBaseTestCase {
             Row r = res.next();
             String key = r.getString(1);
             String val = r.getString(2);
-            if (!matchValues.containsKey(key)) {
-                fail("Unexpected connection attribute key:  " + key);
-            }
+            assertTrue(matchValues.containsKey(key), "Unexpected connection attribute key:  " + key);
             Integer cnt = matchedCounts.get(key);
             matchedCounts.put(key, cnt == null ? 1 : cnt++);
 
@@ -1371,11 +1334,8 @@ public class SessionTest extends DevApiBaseTestCase {
             assertEquals(expected, val);
         }
         for (String key : matchValues.keySet()) {
-            if (!matchedCounts.containsKey(key)) {
-                fail("Incorrect number of entries for key \"" + key + "\": 0");
-            } else if (matchedCounts.get(key) != 1) {
-                fail("Incorrect number of entries for key \"" + key + "\": " + matchedCounts.get(key));
-            }
+            assertTrue(matchedCounts.containsKey(key), "Incorrect number of entries for key \"" + key + "\": 0");
+            assertTrue(matchedCounts.get(key) == 1, "Incorrect number of entries for key \"" + key + "\": " + matchedCounts.get(key));
         }
     }
 
@@ -1403,7 +1363,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testPreparedStatementsCleanup() {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")), "MySQL 8.0.14+ is required to run this test.");
 
         try {
             // Prepare test data.
@@ -1512,7 +1472,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testPreparedStatementsPooledConnections() {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")), "MySQL 8.0.14+ is required to run this test.");
 
         Properties props = new Properties();
         props.setProperty(ClientProperty.POOLING_ENABLED.getKeyName(), "true");
@@ -1591,8 +1551,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testBug23721537() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists testBug23721537");
             sqlUpdate("create table testBug23721537 (id int, name varchar(20) not null)");
@@ -1681,8 +1639,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicSessionFailoverRandomSort() {
-        assumeTrue(this.isSetForXTests);
-
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -1723,8 +1679,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void basicSessionFailoverByPriorities() {
-        assumeTrue(this.isSetForXTests);
-
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -1773,8 +1727,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void pooledSessionFailoverRandomSortAndPooling() {
-        assumeTrue(this.isSetForXTests);
-
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -1830,8 +1782,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void pooledSessionFailoverRandomSortAndNoPooling() {
-        assumeTrue(this.isSetForXTests);
-
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -1881,8 +1831,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void pooledSessionFailoverByPrioritiesAndPooling() {
-        assumeTrue(this.isSetForXTests);
-
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -1953,8 +1901,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void pooledSessionFailoverByPrioritiesAndNoPooling() {
-        assumeTrue(this.isSetForXTests);
-
         UnreliableSocketFactory.flushAllStaticData();
 
         final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + PropertyKey.xdevapiConnectTimeout.getKeyName() + "=100&"
@@ -2017,11 +1963,8 @@ public class SessionTest extends DevApiBaseTestCase {
         client.close();
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testConnectionCloseNotification() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         String shutdownMessage = "Server shutdown in progress";
         String ioReadErrorMessage = "IO Read error: read_timeout exceeded";
         String sessionWasKilledMessage = "Session was killed";
@@ -2149,120 +2092,123 @@ public class SessionTest extends DevApiBaseTestCase {
         assertFalse(res1.hasNext());
         assertThrows(CJCommunicationsException.class, sessionWasKilledMessage, () -> sess34.getSchemas());
 
-        /*
-         * With pooling.
-         */
-
-        this.fact.getSession(this.baseOpensslUrl);
-
-        final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + makeParam(PropertyKey.socketFactory, InjectedSocketFactory.class.getName())
-                + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.DISABLED.toString()) + makeParam(PropertyKey.allowPublicKeyRetrieval, "true")
-                + makeParam(PropertyKey.xdevapiCompression, Compression.DISABLED.toString())
-                // to allow injection between result rows
-                + makeParam(PropertyKey.useReadAheadInput, "false");
-
-        String testHosts = "(address=" + getTestHost() + ":" + getTestPort() + "),(address=" + getTestSslHost() + ":" + getTestSslPort() + ")";
-        url = String.format(testUriPattern, getTestUser() == null ? "" : getTestUser(), getTestPassword() == null ? "" : getTestPassword(), testHosts,
-                getTestDatabase());
-
-        Field fProtocol = CoreSession.class.getDeclaredField("protocol");
-        fProtocol.setAccessible(true);
-
-        Field idleProtocols = ClientImpl.class.getDeclaredField("idleProtocols");
-        idleProtocols.setAccessible(true);
-        Field activeProtocols = ClientImpl.class.getDeclaredField("activeProtocols");
-        activeProtocols.setAccessible(true);
-        Field nonPooledSessions = ClientImpl.class.getDeclaredField("nonPooledSessions");
-        nonPooledSessions.setAccessible(true);
-
-        String host1 = getTestHost();
-        String host2 = getTestSslHost();
-        int port1 = getTestPort();
-        int port2 = getTestSslPort();
-
-        final ClientFactory cf = new ClientFactory();
-        Client cli0 = cf.getClient(url, "{\"pooling\": {\"enabled\": true}}");
-
-        InjectedSocketFactory.downHost(getTestSslHost() + ":" + getTestSslPort());
-        Session s1_1 = cli0.getSession();
-        Session s1_2 = cli0.getSession();
-        Session s1_3 = cli0.getSession();
-
-        assertEquals(host1, ((SessionImpl) s1_1).getSession().getProcessHost());
-        assertEquals(host1, ((SessionImpl) s1_2).getSession().getProcessHost());
-        assertEquals(host1, ((SessionImpl) s1_3).getSession().getProcessHost());
-        assertEquals(port1, ((SessionImpl) s1_1).getSession().getPort());
-        assertEquals(port1, ((SessionImpl) s1_2).getSession().getPort());
-        assertEquals(port1, ((SessionImpl) s1_3).getSession().getPort());
-
-        InjectedSocketFactory.dontDownHost(getTestSslHost() + ":" + getTestSslPort());
-        InjectedSocketFactory.downHost(getTestHost() + ":" + getTestPort());
-        Session s2_1 = cli0.getSession();
-        Session s2_2 = cli0.getSession();
-        Session s2_3 = cli0.getSession();
-
-        assertEquals(host2, ((SessionImpl) s2_1).getSession().getProcessHost());
-        assertEquals(host2, ((SessionImpl) s2_2).getSession().getProcessHost());
-        assertEquals(host2, ((SessionImpl) s2_3).getSession().getProcessHost());
-        assertEquals(port2, ((SessionImpl) s2_1).getSession().getPort());
-        assertEquals(port2, ((SessionImpl) s2_2).getSession().getPort());
-        assertEquals(port2, ((SessionImpl) s2_3).getSession().getPort());
-
-        InjectedSocketFactory.dontDownHost(getTestHost() + ":" + getTestPort());
-        InjectedSocketFactory.downHost(getTestSslHost() + ":" + getTestSslPort());
-        Session s1 = cli0.getSession();
-
-        assertEquals(host1, ((SessionImpl) s1).getSession().getProcessHost());
-        assertEquals(port1, ((SessionImpl) s1).getSession().getPort());
-
-        s1_1.close();
-        s1_2.close();
-        s1_3.close();
-        s2_1.close();
-        s2_2.close();
-        s2_3.close();
-
-        assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
-        assertEquals(6, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
-
-        // ER_IO_READ_ERROR
-
-        InjectedSocketFactory.injectedBuffer = ioReadErrorNoticeBytes;
-        assertThrows(CJCommunicationsException.class, ioReadErrorMessage, () -> s1.sql("SELECT 1").execute());
-
-        assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
-        assertEquals(6, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
-        assertThrows(CJCommunicationsException.class, "Unable to write message", () -> s1.sql("SELECT 1").execute());
-
-        // ER_SESSION_WAS_KILLED
-
-        Session s2 = cli0.getSession();
-        assertEquals(host1, ((SessionImpl) s2).getSession().getProcessHost());
-        assertEquals(port1, ((SessionImpl) s2).getSession().getPort());
-        assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
-        assertEquals(5, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
-
-        InjectedSocketFactory.injectedBuffer = sessionWasKilledNoticeBytes;
-        assertThrows(CJCommunicationsException.class, sessionWasKilledMessage, () -> s2.sql("SELECT 1").execute());
-
-        assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
-        assertEquals(5, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
-        assertThrows(CJCommunicationsException.class, "Unable to write message", () -> s2.sql("SELECT 1").execute());
-
-        // ER_SERVER_SHUTDOWN
-
-        Session s3 = cli0.getSession();
-        assertEquals(host1, ((SessionImpl) s3).getSession().getProcessHost());
-        assertEquals(port1, ((SessionImpl) s3).getSession().getPort());
-        assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
-        assertEquals(4, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
-
-        InjectedSocketFactory.injectedBuffer = shutdownNoticeBytes;
-        assertThrows(CJCommunicationsException.class, shutdownMessage, () -> s3.sql("SELECT 1").execute());
-
-        assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
-        assertEquals(3, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
-
+        // TODO use a mock server instead of a real second server instance
+        //        /*
+        //         * With pooling.
+        //         */
+        //
+        //        if (this.isSetForOpensslXTests) {
+        //
+        //            this.fact.getSession(this.baseOpensslUrl);
+        //
+        //            final String testUriPattern = "mysqlx://%s:%s@[%s]/%s?" + makeParam(PropertyKey.socketFactory, InjectedSocketFactory.class.getName())
+        //                    + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.DISABLED.toString()) + makeParam(PropertyKey.allowPublicKeyRetrieval, "true")
+        //                    + makeParam(PropertyKey.xdevapiCompression, Compression.DISABLED.toString())
+        //                    // to allow injection between result rows
+        //                    + makeParam(PropertyKey.useReadAheadInput, "false");
+        //
+        //            String testHosts = "(address=" + getTestHost() + ":" + getTestPort() + "),(address=" + getTestSslHost() + ":" + getTestSslPort() + ")";
+        //            url = String.format(testUriPattern, getTestUser() == null ? "" : getTestUser(), getTestPassword() == null ? "" : getTestPassword(), testHosts,
+        //                    getTestDatabase());
+        //
+        //            Field fProtocol = CoreSession.class.getDeclaredField("protocol");
+        //            fProtocol.setAccessible(true);
+        //
+        //            Field idleProtocols = ClientImpl.class.getDeclaredField("idleProtocols");
+        //            idleProtocols.setAccessible(true);
+        //            Field activeProtocols = ClientImpl.class.getDeclaredField("activeProtocols");
+        //            activeProtocols.setAccessible(true);
+        //            Field nonPooledSessions = ClientImpl.class.getDeclaredField("nonPooledSessions");
+        //            nonPooledSessions.setAccessible(true);
+        //
+        //            String host1 = getTestHost();
+        //            String host2 = getTestSslHost();
+        //            int port1 = getTestPort();
+        //            int port2 = getTestSslPort();
+        //
+        //            final ClientFactory cf = new ClientFactory();
+        //            Client cli0 = cf.getClient(url, "{\"pooling\": {\"enabled\": true}}");
+        //
+        //            InjectedSocketFactory.downHost(getTestSslHost() + ":" + getTestSslPort());
+        //            Session s1_1 = cli0.getSession();
+        //            Session s1_2 = cli0.getSession();
+        //            Session s1_3 = cli0.getSession();
+        //
+        //            assertEquals(host1, ((SessionImpl) s1_1).getSession().getProcessHost());
+        //            assertEquals(host1, ((SessionImpl) s1_2).getSession().getProcessHost());
+        //            assertEquals(host1, ((SessionImpl) s1_3).getSession().getProcessHost());
+        //            assertEquals(port1, ((SessionImpl) s1_1).getSession().getPort());
+        //            assertEquals(port1, ((SessionImpl) s1_2).getSession().getPort());
+        //            assertEquals(port1, ((SessionImpl) s1_3).getSession().getPort());
+        //
+        //            InjectedSocketFactory.dontDownHost(getTestSslHost() + ":" + getTestSslPort());
+        //            InjectedSocketFactory.downHost(getTestHost() + ":" + getTestPort());
+        //            Session s2_1 = cli0.getSession();
+        //            Session s2_2 = cli0.getSession();
+        //            Session s2_3 = cli0.getSession();
+        //
+        //            assertEquals(host2, ((SessionImpl) s2_1).getSession().getProcessHost());
+        //            assertEquals(host2, ((SessionImpl) s2_2).getSession().getProcessHost());
+        //            assertEquals(host2, ((SessionImpl) s2_3).getSession().getProcessHost());
+        //            assertEquals(port2, ((SessionImpl) s2_1).getSession().getPort());
+        //            assertEquals(port2, ((SessionImpl) s2_2).getSession().getPort());
+        //            assertEquals(port2, ((SessionImpl) s2_3).getSession().getPort());
+        //
+        //            InjectedSocketFactory.dontDownHost(getTestHost() + ":" + getTestPort());
+        //            InjectedSocketFactory.downHost(getTestSslHost() + ":" + getTestSslPort());
+        //            Session s1 = cli0.getSession();
+        //
+        //            assertEquals(host1, ((SessionImpl) s1).getSession().getProcessHost());
+        //            assertEquals(port1, ((SessionImpl) s1).getSession().getPort());
+        //
+        //            s1_1.close();
+        //            s1_2.close();
+        //            s1_3.close();
+        //            s2_1.close();
+        //            s2_2.close();
+        //            s2_3.close();
+        //
+        //            assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        //            assertEquals(6, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+        //
+        //            // ER_IO_READ_ERROR
+        //
+        //            InjectedSocketFactory.injectedBuffer = ioReadErrorNoticeBytes;
+        //            assertThrows(CJCommunicationsException.class, ioReadErrorMessage, () -> s1.sql("SELECT 1").execute());
+        //
+        //            assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        //            assertEquals(6, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+        //            assertThrows(CJCommunicationsException.class, "Unable to write message", () -> s1.sql("SELECT 1").execute());
+        //
+        //            // ER_SESSION_WAS_KILLED
+        //
+        //            Session s2 = cli0.getSession();
+        //            assertEquals(host1, ((SessionImpl) s2).getSession().getProcessHost());
+        //            assertEquals(port1, ((SessionImpl) s2).getSession().getPort());
+        //            assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        //            assertEquals(5, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+        //
+        //            InjectedSocketFactory.injectedBuffer = sessionWasKilledNoticeBytes;
+        //            assertThrows(CJCommunicationsException.class, sessionWasKilledMessage, () -> s2.sql("SELECT 1").execute());
+        //
+        //            assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        //            assertEquals(5, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+        //            assertThrows(CJCommunicationsException.class, "Unable to write message", () -> s2.sql("SELECT 1").execute());
+        //
+        //            // ER_SERVER_SHUTDOWN
+        //
+        //            Session s3 = cli0.getSession();
+        //            assertEquals(host1, ((SessionImpl) s3).getSession().getProcessHost());
+        //            assertEquals(port1, ((SessionImpl) s3).getSession().getPort());
+        //            assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        //            assertEquals(4, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+        //
+        //            InjectedSocketFactory.injectedBuffer = shutdownNoticeBytes;
+        //            assertThrows(CJCommunicationsException.class, shutdownMessage, () -> s3.sql("SELECT 1").execute());
+        //
+        //            assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) activeProtocols.get(cli0)).size());
+        //            assertEquals(3, ((BlockingQueue<PooledXProtocol>) idleProtocols.get(cli0)).size());
+        //        }
     }
 
     private byte[] makeNoticeBytes(MessageLite msg) {
@@ -2281,8 +2227,6 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug97730() throws Throwable {
-        assumeTrue(this.isSetForXTests);
-
         for (String pooling : new String[] { "false", "true" }) {
             Properties props = new Properties();
             props.setProperty(ClientProperty.POOLING_ENABLED.getKeyName(), pooling);
@@ -2319,8 +2263,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testExecAsync() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0;
         int NUMBER_OF_QUERIES = 5000;
         SqlResult sqlRes = null;
@@ -2450,8 +2392,6 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testFetchOneFetchAllAsync() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         Row r = null;
         List<Row> rowList = null;
         try {
@@ -2500,8 +2440,6 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testExecAsyncNegative() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         int i = 0;
         SqlResult sqlRes = null;
         Row r = null;
@@ -2579,8 +2517,6 @@ public class SessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testBug97269() throws Exception {
-        assumeTrue(this.isSetForXTests);
-
         Session sess = null;
         try {
             String message1 = "W1";

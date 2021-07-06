@@ -82,7 +82,11 @@ public class ResultSetTest extends BaseTestCase {
         int numChars = 32;
 
         // build map of charsets supported by server
-        Connection c = getConnectionWithProps("detectCustomCollations=true");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.detectCustomCollations.getKeyName(), "true");
+        Connection c = getConnectionWithProps(props);
         Map<String, Integer> charsetsMap = new HashMap<>();
         this.rs = this.stmt.executeQuery("SHOW COLLATION");
         while (this.rs.next()) {
@@ -149,10 +153,12 @@ public class ResultSetTest extends BaseTestCase {
                 "INSERT INTO testPadding VALUES (" + emptyBuf.toString() + ", 1), (" + abcBuf.toString() + ", 2), (" + repeatBuf.toString() + ", 3)");
 
         try {
-            Properties props = new Properties();
-            props.setProperty(PropertyKey.padCharsWithSpace.getKeyName(), "true");
+            Properties props2 = new Properties();
+            props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props2.setProperty(PropertyKey.padCharsWithSpace.getKeyName(), "true");
 
-            paddedConn = getConnectionWithProps(props);
+            paddedConn = getConnectionWithProps(props2);
 
             testPaddingForConnection(paddedConn, numChars, selectBuf);
         } finally {
@@ -273,10 +279,14 @@ public class ResultSetTest extends BaseTestCase {
     @Test
     public void testDateTimeRetrieval() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "LOCAL");
         Connection testConn = getConnectionWithProps(props);
         testDateTimeRetrieval_internal(testConn);
-        Connection sspsConn = getConnectionWithProps("connectionTimeZone=LOCAL,useServerPrepStmts=true");
+
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        Connection sspsConn = getConnectionWithProps(props);
         testDateTimeRetrieval_internal(sspsConn);
         sspsConn.close();
     }
@@ -401,6 +411,8 @@ public class ResultSetTest extends BaseTestCase {
         createTable("testUpdateObject1", "(id INT PRIMARY KEY, d DATE, t TIME, dt DATETIME, ts TIMESTAMP)");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
 
         Connection testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
@@ -418,7 +430,10 @@ public class ResultSetTest extends BaseTestCase {
         LocalTime testLocalTime = LocalTime.parse(testTimeString);
         LocalDateTime testLocalDateTime = LocalDateTime.parse(testISODateTimeString);
 
-        Connection testConn2 = getConnectionWithProps(timeZoneFreeDbUrl, new Properties());
+        Properties props2 = new Properties();
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        Connection testConn2 = getConnectionWithProps(timeZoneFreeDbUrl, props2);
         TimeZone sessionTz = ((MysqlConnection) testConn2).getSession().getServerSession().getSessionTimeZone();
 
         Date testSqlDate = Date.valueOf(testDateString);
@@ -669,7 +684,7 @@ public class ResultSetTest extends BaseTestCase {
         this.rs.updateObject("odt2", testOffsetDateTime);
         this.rs.insertRow();
 
-        testConn = getConnectionWithProps(timeZoneFreeDbUrl, new Properties());
+        testConn = getConnectionWithProps(timeZoneFreeDbUrl, props2);
         testStmt = testConn.createStatement();
 
         long expTimeSeconds = testOffsetTime.atDate(LocalDate.now()).toEpochSecond();

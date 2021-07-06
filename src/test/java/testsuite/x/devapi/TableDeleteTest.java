@@ -48,8 +48,6 @@ import com.mysql.cj.xdevapi.Table;
 public class TableDeleteTest extends BaseTableTestCase {
     @Test
     public void testDelete() {
-        assumeTrue(this.isSetForXTests);
-
         try {
             sqlUpdate("drop table if exists testDelete");
             sqlUpdate("drop view if exists testDeleteView");
@@ -80,7 +78,7 @@ public class TableDeleteTest extends BaseTableTestCase {
 
     @Test
     public void testPreparedStatements() {
-        assumeTrue(this.isSetForXTests && mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")));
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")), "MySQL 8.0.14+ is required to run this test.");
 
         try {
             // Prepare test data.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,7 +30,8 @@
 package testsuite.simple;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -86,6 +87,11 @@ public class BlobTest extends BaseTestCase {
 
     @Test
     public void testByteStreamInsert() throws Exception {
+        this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
+        this.rs.next();
+        long len = 4 + testBlobFile.length() * 2;
+        assumeTrue(this.rs.getInt(2) >= len, "You need to increase max_allowed_packet to at least " + (len) + " before running this test!");
+
         if (versionMeetsMinimum(5, 6, 20) && !versionMeetsMinimum(5, 7)) {
             /*
              * The 5.6.20 patch for Bug #16963396, Bug #19030353, Bug #69477 limits the size of redo log BLOB writes
@@ -96,9 +102,8 @@ public class BlobTest extends BaseTestCase {
              */
             this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'innodb_log_file_size'");
             this.rs.next();
-            if (this.rs.getInt(2) < 10 * testBlobFile.length()) {
-                fail("You need to increase innodb_log_file_size to at least " + (10 * testBlobFile.length()) + " before running this test!");
-            }
+            assumeFalse(this.rs.getInt(2) < 10 * testBlobFile.length(),
+                    "You need to increase innodb_log_file_size to at least " + (10 * testBlobFile.length()) + " before running this test!");
         }
         testByteStreamInsert(this.conn);
     }

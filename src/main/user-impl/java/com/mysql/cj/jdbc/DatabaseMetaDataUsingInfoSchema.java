@@ -326,7 +326,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             sqlBuf.append(" AND A.TABLE_SCHEMA = ?");
         }
         sqlBuf.append(" AND A.TABLE_NAME=?");
-        sqlBuf.append(" ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION");
+        sqlBuf.append(" ORDER BY FKTABLE_NAME, FKTABLE_NAME, KEY_SEQ");
 
         java.sql.PreparedStatement pStmt = null;
 
@@ -387,7 +387,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             sqlBuf.append(" AND A.REFERENCED_TABLE_SCHEMA = ?");
         }
         sqlBuf.append(" AND A.REFERENCED_TABLE_NAME=?");
-        sqlBuf.append(" ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION");
+        sqlBuf.append(" ORDER BY FKTABLE_NAME, FKTABLE_NAME, KEY_SEQ");
 
         java.sql.PreparedStatement pStmt = null;
 
