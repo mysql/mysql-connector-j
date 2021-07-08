@@ -497,7 +497,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             sendCommand(getCommandBuilder().buildComInitDb(getSharedSendPacket(), database), false, 0);
         } catch (CJException ex) {
             if (this.getPropertySet().getBooleanProperty(PropertyKey.createDatabaseIfNotExist).getValue()) {
-                sendCommand(getCommandBuilder().buildComQuery(getSharedSendPacket(), "CREATE DATABASE IF NOT EXISTS " + database), false, 0);
+                sendCommand(getCommandBuilder().buildComQuery(getSharedSendPacket(),
+                        "CREATE DATABASE IF NOT EXISTS " + StringUtils.quoteIdentifier(database, true)), false, 0);
 
                 sendCommand(getCommandBuilder().buildComInitDb(getSharedSendPacket(), database), false, 0);
             } else {

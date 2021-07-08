@@ -3,6 +3,9 @@
 
 Version 8.0.27
 
+  - Fix for Bug#95564 (29894324), createDatabaseIfNotExist is not working for databases with hyphen in name.
+    Thanks to Lukasz Sanek for his contribution.
+
 Version 8.0.26
 
   - Fix for Bug#32954396, EXECUTEQUERY HANGS WITH USECURSORFETCH=TRUE & SETFETCHSIZE.

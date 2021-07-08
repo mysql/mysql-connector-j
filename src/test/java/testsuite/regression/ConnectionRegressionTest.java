@@ -12026,4 +12026,33 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     }
 
+    /**
+     * Tests fix for Bug#95564 (29894324), createDatabaseIfNotExist is not working for databases with hyphen in name.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug95564() throws Exception {
+        String databaseName = "test-bug95564";
+
+        try {
+            this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + StringUtils.quoteIdentifier(databaseName, true));
+
+            Properties props = getPropertiesFromTestsuiteUrl();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.createDatabaseIfNotExist.getKeyName(), "true");
+            props.setProperty(PropertyKey.DBNAME.getKeyName(), databaseName);
+
+            Connection con = getConnectionWithProps(props);
+
+            this.rs = this.stmt.executeQuery("SHOW DATABASES LIKE '" + databaseName + "'");
+            assertTrue(this.rs.next(), "Database " + databaseName + " was not found.");
+            assertEquals(databaseName, this.rs.getString(1));
+
+            con.close();
+        } finally {
+            this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + StringUtils.quoteIdentifier(databaseName, true));
+        }
+    }
 }
