@@ -11584,4 +11584,37 @@ public class StatementRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests fix for Bug#103796 (32922715), CONNECTOR/J 8 STMT SETQUERYTIMEOUT CAN NOT WORK.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug103796() throws Exception {
+        Connection con = null;
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
+
+        try {
+            con = getConnectionWithProps(props);
+            Statement timeoutStmt = con.createStatement();
+            timeoutStmt.setFetchSize(10);
+            timeoutStmt.setQueryTimeout(2);
+
+            long begin = System.currentTimeMillis();
+
+            try {
+                timeoutStmt.execute("SELECT SLEEP(5)");
+                fail("Query didn't time out");
+            } catch (MySQLTimeoutException timeoutEx) {
+                long duration = System.currentTimeMillis() - begin;
+                assertTrue(duration > 1000 && duration < 3000);
+            }
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
 }

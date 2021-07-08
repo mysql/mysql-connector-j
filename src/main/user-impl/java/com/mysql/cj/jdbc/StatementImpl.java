@@ -556,6 +556,10 @@ public class StatementImpl implements JdbcStatement {
 
             pStmt.setFetchSize(this.query.getResultFetchSize());
 
+            if (this.getQueryTimeout() > 0) {
+                pStmt.setQueryTimeout(this.getQueryTimeout());
+            }
+
             if (this.maxRows > -1) {
                 pStmt.setMaxRows(this.maxRows);
             }

@@ -3,6 +3,9 @@
 
 Version 8.0.27
 
+  - Fix for Bug#103796 (32922715), CONNECTOR/J 8 STMT SETQUERYTIMEOUT CAN NOT WORK.
+    Thanks to Hong Wang for his contribution.
+
   - Fix for Bug#104170 (33064455), CONTRIBUTION: CLIENTPREPAREDSTMT: LEAVE CALENDAR UNTOUCHED.
     Thanks to Björn Michael for his contribution.
 
