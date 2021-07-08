@@ -377,7 +377,7 @@ public class TimeUtil {
     }
 
     /**
-     * Get SimpleDateFormat where a default Calendar is replaced with the provided one.
+     * Get SimpleDateFormat where a default Calendar is replaced with a clone of the provided one.
      * <p>
      * Note: Don't cache the SimpleDateFormat object returned by this method. Other methods could rely on assumption that the cached SimpleDateFormat has a
      * default Calendar and that it is safe to change only it's time zone (see {@link #getSimpleDateFormat(SimpleDateFormat, String, TimeZone)}.
@@ -385,12 +385,13 @@ public class TimeUtil {
      * @param pattern
      *            format pattern
      * @param cal
-     *            {@link Calendar} object replacing the default one
+     *            {@link Calendar} object which clone is replacing the default Calendar
      * @return {@link SimpleDateFormat} object
      */
     public static SimpleDateFormat getSimpleDateFormat(String pattern, Calendar cal) {
         SimpleDateFormat sdf = new SimpleDateFormat(pattern, Locale.US);
         if (cal != null) {
+            cal = (Calendar) cal.clone();
             sdf.setCalendar(cal);
         }
         return sdf;

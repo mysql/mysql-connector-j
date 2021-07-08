@@ -36,6 +36,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -667,5 +670,20 @@ public class UtilsRegressionTest extends BaseTestCase {
         assertFalse(StringUtils.wildCompareIgnoreCase(s1, "Dae"));
         assertFalse(StringUtils.wildCompareIgnoreCase(s1, "Srin"));
         assertFalse(StringUtils.wildCompareIgnoreCase(s1, "St%no"));
+    }
+
+    /**
+     * Tests fix for Bug#104170 (33064455), CONTRIBUTION: CLIENTPREPAREDSTMT: LEAVE CALENDAR UNTOUCHED.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug104170() throws Exception {
+        Calendar cal = Calendar.getInstance();
+        long orig = cal.getTimeInMillis();
+
+        TimeUtil.getSimpleDateFormat("''yyyy-MM-dd''", cal).format(java.util.Date.from(LocalDateTime.of(1980, 1, 1, 0, 0).toInstant(ZoneOffset.UTC)));
+
+        assertEquals(orig, cal.getTimeInMillis());
     }
 }

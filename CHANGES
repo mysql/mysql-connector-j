@@ -3,6 +3,9 @@
 
 Version 8.0.27
 
+  - Fix for Bug#104170 (33064455), CONTRIBUTION: CLIENTPREPAREDSTMT: LEAVE CALENDAR UNTOUCHED.
+    Thanks to Björn Michael for his contribution.
+
   - Fix for Bug#95564 (29894324), createDatabaseIfNotExist is not working for databases with hyphen in name.
     Thanks to Lukasz Sanek for his contribution.
 
