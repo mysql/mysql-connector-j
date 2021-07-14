@@ -62,11 +62,11 @@ public enum PropertyKey {
 
     allowLoadLocalInfile("allowLoadLocalInfile", true), //
     allowLoadLocalInfileInPath("allowLoadLocalInfileInPath", true), //
-    allowSourceDownConnections("allowSourceDownConnections", "allowMasterDownConnections", true), //
     allowMultiQueries("allowMultiQueries", true), //
     allowNanAndInf("allowNanAndInf", true), //
     allowPublicKeyRetrieval("allowPublicKeyRetrieval", true), //
     allowReplicaDownConnections("allowReplicaDownConnections", "allowSlaveDownConnections", true), //
+    allowSourceDownConnections("allowSourceDownConnections", "allowMasterDownConnections", true), //
     allowUrlInLocalInfile("allowUrlInLocalInfile", true), //
     alwaysSendSetIsolation("alwaysSendSetIsolation", true), //
     authenticationPlugins("authenticationPlugins", true), //
@@ -125,13 +125,14 @@ public enum PropertyKey {
     failOverReadOnly("failOverReadOnly", true), //
     fallbackToSystemKeyStore("fallbackToSystemKeyStore", true), //
     fallbackToSystemTrustStore("fallbackToSystemTrustStore", true), //
+    forceConnectionTimeZoneToSession("forceConnectionTimeZoneToSession", true), //
     functionsNeverReturnBlobs("functionsNeverReturnBlobs", true), //
     gatherPerfMetrics("gatherPerfMetrics", true), //
     generateSimpleParameterMetadata("generateSimpleParameterMetadata", true), //
     getProceduresReturnsFunctions("getProceduresReturnsFunctions", true), //
-    holdResultsOpenOverStatementClose("holdResultsOpenOverStatementClose", true), //
     ha_enableJMX("ha.enableJMX", "haEnableJMX", true), //
     ha_loadBalanceStrategy("ha.loadBalanceStrategy", "haLoadBalanceStrategy", true), //
+    holdResultsOpenOverStatementClose("holdResultsOpenOverStatementClose", true), //
     ignoreNonTxTables("ignoreNonTxTables", true), //
     includeInnodbStatusInDeadlockExceptions("includeInnodbStatusInDeadlockExceptions", true), //
     includeThreadDumpInDeadlockExceptions("includeThreadDumpInDeadlockExceptions", true), //
@@ -148,8 +149,8 @@ public enum PropertyKey {
     loadBalanceExceptionChecker("loadBalanceExceptionChecker", true), //
     loadBalanceHostRemovalGracePeriod("loadBalanceHostRemovalGracePeriod", true), //
     loadBalancePingTimeout("loadBalancePingTimeout", true), //
-    loadBalanceSQLStateFailover("loadBalanceSQLStateFailover", true), //
     loadBalanceSQLExceptionSubclassFailover("loadBalanceSQLExceptionSubclassFailover", true), //
+    loadBalanceSQLStateFailover("loadBalanceSQLStateFailover", true), //
     loadBalanceValidateConnectionOnSwapServer("loadBalanceValidateConnectionOnSwapServer", true), //
     localSocketAddress("localSocketAddress", true), //
     locatorFetchBufferSize("locatorFetchBufferSize", true), //
@@ -172,6 +173,9 @@ public enum PropertyKey {
     padCharsWithSpace("padCharsWithSpace", true), //
     paranoid("paranoid", false), //
     parseInfoCacheFactory("parseInfoCacheFactory", true), //
+    password1("password1", true), //
+    password2("password2", true), //
+    password3("password3", true), //
     passwordCharacterEncoding("passwordCharacterEncoding", true), //
     pedantic("pedantic", true), //
     pinGlobalTxToPhysicalConnection("pinGlobalTxToPhysicalConnection", true), //
@@ -182,7 +186,6 @@ public enum PropertyKey {
     processEscapeCodesForPrepStmts("processEscapeCodesForPrepStmts", true), //
     profilerEventHandler("profilerEventHandler", true), //
     profileSQL("profileSQL", true), //
-    forceConnectionTimeZoneToSession("forceConnectionTimeZoneToSession", true), //
     propertiesTransform("propertiesTransform", true), //
     queriesBeforeRetrySource("queriesBeforeRetrySource", "queriesBeforeRetryMaster", true), //
     queryInterceptors("queryInterceptors", true), //
@@ -208,7 +211,6 @@ public enum PropertyKey {
     serverConfigCacheFactory("serverConfigCacheFactory", true), //
     serverRSAPublicKeyFile("serverRSAPublicKeyFile", true), //
     sessionVariables("sessionVariables", true), //
-    trackSessionState("trackSessionState", true), //
     slowQueryThresholdMillis("slowQueryThresholdMillis", true), //
     slowQueryThresholdNanos("slowQueryThresholdNanos", true), //
     socketFactory("socketFactory", true), //
@@ -224,6 +226,7 @@ public enum PropertyKey {
     tcpTrafficClass("tcpTrafficClass", true), //
     tinyInt1isBit("tinyInt1isBit", true), //
     traceProtocol("traceProtocol", true), //
+    trackSessionState("trackSessionState", true), //
     transformedBitIsBoolean("transformedBitIsBoolean", true), //
     treatUtilDateAsTimestamp("treatUtilDateAsTimestamp", true), //
     trustCertificateKeyStorePassword("trustCertificateKeyStorePassword", true), //

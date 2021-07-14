@@ -64,6 +64,8 @@ public class NativePacketPayload implements Message {
     public static final short TYPE_ID_AUTH_SWITCH = 0xFE;
     public static final short TYPE_ID_LOCAL_INFILE = 0xFB;
     public static final short TYPE_ID_OK = 0;
+    public static final short TYPE_ID_AUTH_MORE_DATA = 0x01;
+    public static final short TYPE_ID_AUTH_NEXT_FACTOR = 0x02;
 
     private int payloadLength = 0;
 
@@ -212,7 +214,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Is it a EOF packet.
-     * See http://dev.mysql.com/doc/internals/en/packet-EOF_Packet.html
+     * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_eof_packet.html
      * 
      * @return true if it is a EOF packet
      */
@@ -222,7 +224,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Is it a Protocol::AuthSwitchRequest packet.
-     * See http://dev.mysql.com/doc/internals/en/connection-phase-packets.html
+     * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_auth_switch_request.html
      * 
      * @return true if it is a Protocol::AuthSwitchRequest packet
      */
@@ -232,7 +234,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Is it an OK packet.
-     * See http://dev.mysql.com/doc/internals/en/packet-OK_Packet.html
+     * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_ok_packet.html
      * 
      * @return true if it is an OK packet
      */
@@ -242,7 +244,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Is it an OK packet for ResultSet. Unlike usual 0x00 signature it has 0xfe signature.
-     * See http://dev.mysql.com/doc/internals/en/packet-OK_Packet.html
+     * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_ok_packet.html
      * 
      * @return true if it is an OK packet for ResultSet
      */
@@ -252,12 +254,22 @@ public class NativePacketPayload implements Message {
 
     /**
      * Is it a Protocol::AuthMoreData packet.
-     * See http://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::AuthMoreData
+     * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_auth_more_data.html
      * 
      * @return true if it is a Protocol::AuthMoreData packet
      */
-    public final boolean isAuthMoreData() {
-        return ((this.byteBuffer[0] & 0xff) == 1);
+    public final boolean isAuthMoreDataPacket() {
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_AUTH_MORE_DATA;
+    }
+
+    /**
+     * Is it a Protocol::AuthNextFactor packet.
+     * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_auth_next_factor_request.html
+     * 
+     * @return true if it is a Protocol::AuthNextFactor packet
+     */
+    public final boolean isAuthNextFactorPacket() {
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_AUTH_NEXT_FACTOR;
     }
 
     /**

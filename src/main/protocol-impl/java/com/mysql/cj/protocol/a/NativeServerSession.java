@@ -55,6 +55,7 @@ public class NativeServerSession implements ServerSession {
     public static final int SERVER_STATUS_CURSOR_EXISTS = 64;
     public static final int SERVER_STATUS_LAST_ROW_SENT = 128; // The server status for 'last-row-sent'
     public static final int SERVER_QUERY_WAS_SLOW = 2048;
+    public static final int SERVER_SESSION_STATE_CHANGED = 1 << 14; // 16384
 
     public static final int CLIENT_LONG_PASSWORD = 0x00000001; /* new more secure passwords */
     public static final int CLIENT_FOUND_ROWS = 0x00000002;
@@ -78,6 +79,7 @@ public class NativeServerSession implements ServerSession {
     public static final int CLIENT_SESSION_TRACK = 0x00800000;
     public static final int CLIENT_DEPRECATE_EOF = 0x01000000;
     public static final int CLIENT_QUERY_ATTRIBUTES = 0x08000000;
+    public static final int CLIENT_MULTI_FACTOR_AUTHENTICATION = 0x10000000;
 
     private PropertySet propertySet;
     private NativeCapabilities capabilities;

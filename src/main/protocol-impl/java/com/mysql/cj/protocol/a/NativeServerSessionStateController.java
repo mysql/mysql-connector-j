@@ -39,9 +39,6 @@ import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 
 public class NativeServerSessionStateController implements ServerSessionStateController {
-
-    public static final long SERVER_SESSION_STATE_CHANGED = 1 << 14;
-
     private NativeServerSessionStateChanges sessionStateChanges;
     private List<WeakReference<SessionStateChangesListener>> listeners;
 
@@ -92,8 +89,6 @@ public class NativeServerSessionStateController implements ServerSessionStateCon
     }
 
     public static class NativeServerSessionStateChanges implements ServerSessionStateChanges {
-
-        //private SessionStateChanges sessionStateChanges;
         private List<SessionStateChange> sessionStateChanges = new ArrayList<>();
 
         @Override
@@ -114,23 +109,25 @@ public class NativeServerSessionStateController implements ServerSessionStateCon
                 switch (type) {
                     case SESSION_TRACK_SYSTEM_VARIABLES:
                         this.sessionStateChanges.add(new SessionStateChange(type) //
-                                .addValue(b.readString(StringSelfDataType.STRING_LENENC, encoding))
+                                .addValue(b.readString(StringSelfDataType.STRING_LENENC, encoding)) //
                                 .addValue(b.readString(StringSelfDataType.STRING_LENENC, encoding)));
                         break;
                     case SESSION_TRACK_SCHEMA:
                     case SESSION_TRACK_TRANSACTION_CHARACTERISTICS:
                     case SESSION_TRACK_TRANSACTION_STATE:
-                        this.sessionStateChanges.add(new SessionStateChange(type).addValue(b.readString(StringSelfDataType.STRING_LENENC, encoding)));
+                        this.sessionStateChanges.add(new SessionStateChange(type) //
+                                .addValue(b.readString(StringSelfDataType.STRING_LENENC, encoding)));
                         break;
                     case SESSION_TRACK_GTIDS:
                         b.readInteger(IntegerDataType.INT1); // skip the byte reserved for the encoding specification, see WL#6128
-                        this.sessionStateChanges.add(new SessionStateChange(type).addValue(b.readString(StringSelfDataType.STRING_LENENC, encoding)));
+                        this.sessionStateChanges.add(new SessionStateChange(type) //
+                                .addValue(b.readString(StringSelfDataType.STRING_LENENC, encoding)));
                         break;
                     case SESSION_TRACK_STATE_CHANGE:
                     default:
-                        // send the payload as it is
-                        this.sessionStateChanges
-                                .add(new SessionStateChange(type).addValue(b.readString(StringLengthDataType.STRING_FIXED, encoding, b.getPayloadLength())));
+                        // store the payload as it is
+                        this.sessionStateChanges.add(new SessionStateChange(type) //
+                                .addValue(b.readString(StringLengthDataType.STRING_FIXED, encoding, b.getPayloadLength())));
                 }
                 start = buf.getPosition();
             }

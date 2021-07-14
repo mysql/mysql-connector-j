@@ -36,7 +36,6 @@ import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 
 public interface ServerSessionStateController {
-
     public static int SESSION_TRACK_SYSTEM_VARIABLES = 0x00;
     public static int SESSION_TRACK_SCHEMA = 0x01;
     public static int SESSION_TRACK_STATE_CHANGE = 0x02;

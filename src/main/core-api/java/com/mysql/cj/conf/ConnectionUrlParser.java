@@ -292,9 +292,6 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
      */
     private HostInfo buildHostInfoForEmptyHost(String user, String password, String hostInfo) {
         if (isNullOrEmpty(hostInfo)) {
-            if (isNullOrEmpty(user) && isNullOrEmpty(password)) {
-                return new HostInfo();
-            }
             return new HostInfo(this, null, HostInfo.NO_PORT, user, password);
         }
         return null;

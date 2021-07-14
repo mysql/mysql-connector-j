@@ -209,8 +209,7 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
                 if (this.firstPass) {
                     this.firstPass = false;
                     // Payload could be a salt (auth-plugin-data) value instead of an authentication mechanism identifier.
-                    // Give it another try in the expectation of receiving an AuthSwitchRequest next time.
-                    toServer.add(new NativePacketPayload(new byte[0]));
+                    // Give it another try in the expectation of receiving a Protocol::AuthSwitchRequest or a Protocol::AuthNextFactor next time.
                     return true;
                 }
                 throw e;

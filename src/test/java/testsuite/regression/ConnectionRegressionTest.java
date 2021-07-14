@@ -3630,8 +3630,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     this.stmt.executeUpdate("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin" + ext + "'");
                 } catch (SQLException e) {
                     if (e.getErrorCode() == MysqlErrorNumbers.ER_CANT_OPEN_LIBRARY) {
-                        installPluginInRuntime = false; // to disable plugin deinstallation attempt in a finally block
-                        assumeTrue(false, "This test requires the server installed with the test package.");
+                        installPluginInRuntime = false; // To disable plugin deinstallation attempt in the finally block.
+                        assumeTrue(false, "This test requires a server installed with the test package.");
                     } else {
                         throw e;
                     }
@@ -6719,7 +6719,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                     testStmt.execute("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin" + ext + "'");
                 } catch (SQLException e) {
                     if (e.getErrorCode() == MysqlErrorNumbers.ER_CANT_OPEN_LIBRARY) {
-                        assumeTrue(false, "This test requires the server installed with the test package.");
+                        assumeTrue(false, "This test requires a server installed with the test package.");
                     } else {
                         throw e;
                     }

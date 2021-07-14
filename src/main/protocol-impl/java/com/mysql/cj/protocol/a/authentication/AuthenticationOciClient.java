@@ -116,7 +116,7 @@ public class AuthenticationOciClient implements AuthenticationPlugin<NativePacke
 
         if (!this.sourceOfAuthData.equals(PLUGIN_NAME) || fromServer.getPayloadLength() == 0) {
             // Cannot do anything with whatever payload comes from the server, so just skip this iteration and wait for a Protocol::AuthSwitchRequest or a
-            // Protocol::AuthMoreData.
+            // Protocol::AuthNextFactor.
             toServer.add(new NativePacketPayload(0));
             return true;
         }

@@ -171,9 +171,9 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
     public boolean nextAuthenticationStep(NativePacketPayload fromServer, List<NativePacketPayload> toServer) {
         toServer.clear();
 
-        if (!this.sourceOfAuthData.equals(PLUGIN_NAME)) {
-            // Cannot do anything with whatever payload comes from the server, so just skip this iteration and wait for a Protocol::AuthSwitchRequest.
-            toServer.add(new NativePacketPayload(new byte[0]));
+        if (!this.sourceOfAuthData.equals(PLUGIN_NAME) || fromServer.getPayloadLength() == 0) {
+            // Cannot do anything with whatever payload comes from the server, so just skip this iteration and wait for a Protocol::AuthSwitchRequest or a
+            // Protocol::AuthNextFactor.
             return true;
         }
 

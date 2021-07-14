@@ -33,16 +33,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import javax.security.sasl.SaslException;
 
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.AuthenticationPlugin;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.protocol.a.NativePacketPayload;
@@ -535,5 +543,201 @@ public class AuthenticationTest extends BaseTestCase {
             ap.nextAuthenticationStep(new NativePacketPayload("UNKNOWN-MECH".getBytes("ASCII")), new ArrayList<>());
             return null;
         });
+    }
+
+    /**
+     * Test for WL#14650 - Support for MFA (multi factor authentication) authentication
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testWl14650() throws Exception {
+        assumeTrue(versionMeetsMinimum(8, 0, 27), "MySQL 8.0.27+ is required to run this test.");
+
+        boolean installPluginInRuntime = false;
+        try {
+            // Install plugin if required.
+            this.rs = this.stmt.executeQuery("SELECT (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') AS installed FROM INFORMATION_SCHEMA.PLUGINS "
+                    + "WHERE PLUGIN_NAME='cleartext_plugin_server'");
+            installPluginInRuntime = !this.rs.next() || !this.rs.getBoolean(1);
+
+            if (installPluginInRuntime) {
+                try {
+                    String ext = isServerRunningOnWindows() ? ".dll" : ".so";
+                    this.stmt.executeUpdate("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin" + ext + "'");
+                } catch (SQLException e) {
+                    if (e.getErrorCode() == MysqlErrorNumbers.ER_CANT_OPEN_LIBRARY) {
+                        installPluginInRuntime = false; // To disable plugin deinstallation attempt in the finally block.
+                        assumeTrue(false, "This test requires a server installed with the test package.");
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+
+            // Create test users.            
+            createUser("'wl14650_1fa'@'%'", "IDENTIFIED BY 'testpwd1'");
+            this.stmt.executeUpdate("GRANT ALL ON * TO wl14650_1fa");
+            createUser("'wl14650_2fa'@'%'", "IDENTIFIED BY 'testpwd1' AND IDENTIFIED WITH cleartext_plugin_server AS 'testpwd2'");
+            this.stmt.executeUpdate("GRANT ALL ON * TO wl14650_2fa");
+            createUser("'wl14650_3fa'@'%'", "IDENTIFIED BY 'testpwd1' AND IDENTIFIED WITH cleartext_plugin_server AS 'testpwd2' "
+                    + "AND IDENTIFIED WITH cleartext_plugin_server AS 'testpwd3'");
+            this.stmt.executeUpdate("GRANT ALL ON * TO wl14650_3fa");
+            this.stmt.executeUpdate("FLUSH PRIVILEGES");
+
+            final StringBuilder urlBuilder1 = new StringBuilder("jdbc:mysql://").append(getHostFromTestsuiteUrl()).append(":").append(getPortFromTestsuiteUrl())
+                    .append("/");
+            final String url1 = urlBuilder1.toString();
+
+            // TS.1.1: 2FA successful.
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.USER.getKeyName(), "wl14650_2fa");
+            props.setProperty(PropertyKey.password1.getKeyName(), "testpwd1");
+            props.setProperty(PropertyKey.password2.getKeyName(), "testpwd2");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "REQUIRED");
+            try (Connection testConn = getConnectionWithProps(url1, props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("wl14650_2fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("wl14650_2fa", this.rs.getString(2).split("@")[0]);
+            }
+
+            // TS.1.2: 2FA fail - 1st password wrong.
+            props.setProperty(PropertyKey.password1.getKeyName(), "wrongpwd");
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_2fa'@'localhost' \\(using password: YES\\)",
+                    () -> getConnectionWithProps(url1, props));
+
+            // TS.1.3: 2FA fail - 2nd password wrong.
+            props.setProperty(PropertyKey.password1.getKeyName(), "testpwd1");
+            props.setProperty(PropertyKey.password2.getKeyName(), "wrongpwd");
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_2fa'@'localhost' \\(using password: YES\\)",
+                    () -> getConnectionWithProps(url1, props));
+
+            // TS.1.4: 2FA fail - missing required password.
+            props.remove(PropertyKey.password2.getKeyName());
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_2fa'@'localhost' \\(using password: YES\\)",
+                    () -> getConnectionWithProps(url1, props));
+
+            // TS.2.1: 3FA successful.
+            props.setProperty(PropertyKey.USER.getKeyName(), "wl14650_3fa");
+            props.setProperty(PropertyKey.password1.getKeyName(), "testpwd1");
+            props.setProperty(PropertyKey.password2.getKeyName(), "testpwd2");
+            props.setProperty(PropertyKey.password3.getKeyName(), "testpwd3");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "REQUIRED");
+            try (Connection testConn = getConnectionWithProps(url1, props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("wl14650_3fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("wl14650_3fa", this.rs.getString(2).split("@")[0]);
+            }
+
+            // TS.2.2: 2FA fail - 1st password wrong.
+            props.setProperty(PropertyKey.password1.getKeyName(), "wrongpwd");
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@'localhost' \\(using password: YES\\)",
+                    () -> getConnectionWithProps(url1, props));
+
+            // TS.2.3: 2FA fail - 2nd password wrong.
+            props.setProperty(PropertyKey.password1.getKeyName(), "testpwd1");
+            props.setProperty(PropertyKey.password2.getKeyName(), "wrongpwd");
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@'localhost' \\(using password: YES\\)",
+                    () -> getConnectionWithProps(url1, props));
+
+            // TS.2.4: 2FA fail - 3rd password wrong.
+            props.setProperty(PropertyKey.password2.getKeyName(), "testpwd2");
+            props.setProperty(PropertyKey.password3.getKeyName(), "wrongpwd");
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@'localhost' \\(using password: YES\\)",
+                    () -> getConnectionWithProps(url1, props));
+
+            // TS.2.5: 2FA fail - missing required password.
+            props.remove(PropertyKey.password3.getKeyName());
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@'localhost' \\(using password: YES\\)",
+                    () -> getConnectionWithProps(url1, props));
+
+            // TS.3/TS.4/TS.5: new password options don't pollute original ones.
+            props.setProperty(PropertyKey.USER.getKeyName(), "wl14650_1fa");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "testpwd1");
+            props.setProperty(PropertyKey.password1.getKeyName(), "wrongpwd");
+            props.setProperty(PropertyKey.password2.getKeyName(), "wrongpwd");
+            props.setProperty(PropertyKey.password3.getKeyName(), "wrongpwd");
+            final StringBuilder urlBuilder2 = new StringBuilder("jdbc:mysql://").append(getHostFromTestsuiteUrl()).append(":").append(getPortFromTestsuiteUrl())
+                    .append("/?").append("password1=wrongpwd&password2=wrongpwd&password3=wrongpwd");
+            final String url2 = urlBuilder2.toString();
+            try (Connection testConn = getConnectionWithProps(url2, props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("wl14650_1fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("wl14650_1fa", this.rs.getString(2).split("@")[0]);
+            }
+
+            props.remove(PropertyKey.USER.getKeyName());
+            props.remove(PropertyKey.PASSWORD.getKeyName());
+            final StringBuilder urlBuilder3 = new StringBuilder("jdbc:mysql://").append("wl14650_1fa:testpwd1@").append(getHostFromTestsuiteUrl()).append(":")
+                    .append(getPortFromTestsuiteUrl()).append("/?").append("password1=wrongpwd&password2=wrongpwd&password3=wrongpwd");
+            final String url3 = urlBuilder3.toString();
+            try (Connection testConn = getConnectionWithProps(url3, props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("wl14650_1fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("wl14650_1fa", this.rs.getString(2).split("@")[0]);
+            }
+
+            props.remove(PropertyKey.USER.getKeyName());
+            props.remove(PropertyKey.PASSWORD.getKeyName());
+            final StringBuilder urlBuilder4 = new StringBuilder("jdbc:mysql://").append(getHostFromTestsuiteUrl()).append(":").append(getPortFromTestsuiteUrl())
+                    .append("/?").append("user=wl14650_1fa&password=testpwd1&password1=wrongpwd&password2=wrongpwd&password3=wrongpwd");
+            final String url4 = urlBuilder4.toString();
+            try (Connection testConn = getConnectionWithProps(url4, props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("wl14650_1fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("wl14650_1fa", this.rs.getString(2).split("@")[0]);
+            }
+
+            final StringBuilder urlBuilder5 = new StringBuilder("jdbc:mysql://").append(getHostFromTestsuiteUrl()).append(":").append(getPortFromTestsuiteUrl())
+                    .append("/?").append("password1=wrongpwd&password2=wrongpwd&password3=wrongpwd&sslMode=REQUIRED");
+            final String url5 = urlBuilder5.toString();
+            try (Connection testConn = DriverManager.getConnection(url5, "wl14650_1fa", "testpwd1")) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("wl14650_1fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("wl14650_1fa", this.rs.getString(2).split("@")[0]);
+            }
+
+            // TS.6: 1FA successful with password given in 'password1'.
+            props.setProperty(PropertyKey.USER.getKeyName(), "wl14650_1fa");
+            props.remove(PropertyKey.password1.getKeyName());
+            props.remove(PropertyKey.password2.getKeyName());
+            props.remove(PropertyKey.password3.getKeyName());
+            final StringBuilder urlBuilder6 = new StringBuilder("jdbc:mysql://").append(getHostFromTestsuiteUrl()).append(":").append(getPortFromTestsuiteUrl())
+                    .append("/?").append("password1=testpwd1&password2=wrongpwd&password3=wrongpwd");
+            final String url6 = urlBuilder6.toString();
+            try (Connection testConn = getConnectionWithProps(url6, props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("wl14650_1fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("wl14650_1fa", this.rs.getString(2).split("@")[0]);
+            }
+
+            // TS.7: 1FA fail with 'password' wrong and 'password1' correct.
+            props.setProperty(PropertyKey.USER.getKeyName(), "wl14650_1fa");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "wrongpwd");
+            props.setProperty(PropertyKey.password1.getKeyName(), "testpwd1");
+            final StringBuilder urlBuilder7 = new StringBuilder("jdbc:mysql://").append(getHostFromTestsuiteUrl()).append(":").append(getPortFromTestsuiteUrl())
+                    .append("/");
+            final String url7 = urlBuilder7.toString();
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_1fa'@'localhost' \\(using password: YES\\)",
+                    () -> getConnectionWithProps(url7, props));
+        } finally {
+            if (installPluginInRuntime) {
+                this.stmt.executeUpdate("UNINSTALL PLUGIN cleartext_plugin_server");
+            }
+        }
     }
 }

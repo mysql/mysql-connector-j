@@ -477,7 +477,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         hostProps.putAll(this.properties);
         // Add/override host specific connection arguments.
         hi.getHostProperties().entrySet().stream().forEach(e -> hostProps.put(PropertyKey.normalizeCase(e.getKey()), e.getValue()));
-        // Add the database name
+        // Add the database name.
         if (!hostProps.containsKey(PropertyKey.DBNAME.getKeyName())) {
             hostProps.put(PropertyKey.DBNAME.getKeyName(), getDatabase());
         }
@@ -513,7 +513,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         }
 
         String password = hostProps.remove(PropertyKey.PASSWORD.getKeyName());
-        if (!isNullOrEmpty(hi.getPassword())) {
+        if (hi.getPassword() != null) { // Password can be specified as empty string.
             password = hi.getPassword();
         } else if (isNullOrEmpty(password)) {
             password = getDefaultPassword();

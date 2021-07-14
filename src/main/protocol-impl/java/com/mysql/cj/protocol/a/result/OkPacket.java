@@ -29,11 +29,12 @@
 
 package com.mysql.cj.protocol.a.result;
 
+import static com.mysql.cj.protocol.a.NativeServerSession.SERVER_SESSION_STATE_CHANGED;
+
 import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.protocol.a.NativePacketPayload;
-import com.mysql.cj.protocol.a.NativeServerSessionStateController;
 import com.mysql.cj.protocol.a.NativeServerSessionStateController.NativeServerSessionStateChanges;
 
 public class OkPacket implements ProtocolEntity {
@@ -42,9 +43,10 @@ public class OkPacket implements ProtocolEntity {
     private int statusFlags = 0;
     private int warningCount = 0;
     private String info = null;
-    private NativeServerSessionStateChanges sessionStateChanges = new NativeServerSessionStateChanges();
+    private NativeServerSessionStateChanges sessionStateChanges;
 
-    public OkPacket() {
+    private OkPacket() {
+        this.sessionStateChanges = new NativeServerSessionStateChanges();
     }
 
     public static OkPacket parse(NativePacketPayload buf, String errorMessageEncoding) {
@@ -60,7 +62,7 @@ public class OkPacket implements ProtocolEntity {
         ok.setInfo(buf.readString(StringSelfDataType.STRING_TERM, errorMessageEncoding)); // info
 
         // read session state changes info
-        if ((ok.getStatusFlags() & NativeServerSessionStateController.SERVER_SESSION_STATE_CHANGED) > 0) {
+        if ((ok.getStatusFlags() & SERVER_SESSION_STATE_CHANGED) > 0) {
             ok.sessionStateChanges.init(buf, errorMessageEncoding);
         }
         return ok;
