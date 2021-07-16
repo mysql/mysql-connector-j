@@ -4912,7 +4912,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     @Test
     public void testBug34518() throws Exception {
-        Connection fetchConn = getConnectionWithProps("useCursorFetch=true");
+        Connection fetchConn = getConnectionWithProps("useCursorFetch=true,useSSL=false,allowPublicKeyRetrieval=true");
         Statement fetchStmt = fetchConn.createStatement();
 
         int stmtCount = ((com.mysql.cj.jdbc.JdbcConnection) fetchConn).getActiveStatementCount();
@@ -11610,6 +11610,64 @@ public class StatementRegressionTest extends BaseTestCase {
             } catch (MySQLTimeoutException timeoutEx) {
                 long duration = System.currentTimeMillis() - begin;
                 assertTrue(duration > 1000 && duration < 3000);
+            }
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#103878 (32954449), CONNECTOR/J 8 : QUERY WITH 'SHOW XXX' WILL GET EXCEPTION WHEN USE CURSOR.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug103878() throws Exception {
+        createTable("testBug103878", "(`fid` bigint(20) DEFAULT NULL, `ftext` longtext COLLATE utf8mb4_unicode_ci)"
+                + " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        createView("testBug103878_view", "AS SELECT * FROM testBug103878 WHERE fid > 1");
+
+        Connection con = null;
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
+        props.setProperty(PropertyKey.defaultFetchSize.getKeyName(), "100");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+
+        try {
+            con = getConnectionWithProps(props);
+            PreparedStatement ps = con.prepareStatement("SHOW CREATE TABLE testBug103878");
+            this.rs = ps.executeQuery();
+            assertTrue(this.rs.next());
+            assertTrue(this.rs.getString(2).startsWith("CREATE TABLE"));
+            System.out.println(this.rs.getString(2));
+            ps.close();
+
+            ps = con.prepareStatement("SHOW CREATE VIEW testBug103878_view");
+            this.rs = ps.executeQuery();
+            assertTrue(this.rs.next());
+            assertTrue(this.rs.getString(2).startsWith("CREATE"));
+            assertTrue(this.rs.getString(2).contains("testBug103878_view"));
+            System.out.println(this.rs.getString(2));
+            ps.close();
+
+            ps = con.prepareStatement("SHOW PROCESSLIST");
+            this.rs = ps.executeQuery();
+            assertTrue(this.rs.next());
+            ps.close();
+
+            if (versionMeetsMinimum(5, 7)) {
+                createUser("'testBug103878User'@'%'", "IDENTIFIED BY 'abc'");
+
+                ps = con.prepareStatement("SHOW CREATE USER testBug103878User");
+                this.rs = ps.executeQuery();
+                assertTrue(this.rs.next());
+                assertTrue(this.rs.getString(1).startsWith("CREATE USER"));
+                System.out.println(this.rs.getString(1));
+                ps.close();
             }
         } finally {
             if (con != null) {

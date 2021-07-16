@@ -525,6 +525,22 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         }
     }
 
+    public final NativePacketPayload probeMessage(NativePacketPayload reuse) {
+        try {
+            NativePacketHeader header = this.packetReader.probeHeader();
+            NativePacketPayload buf = this.packetReader.probeMessage(Optional.ofNullable(reuse), header);
+            this.packetSequence = header.getMessageSequence();
+            return buf;
+
+        } catch (IOException ioEx) {
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder(),
+                    this.getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+        } catch (OutOfMemoryError oom) {
+            throw ExceptionFactory.createException(oom.getMessage(), MysqlErrorNumbers.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom,
+                    this.exceptionInterceptor);
+        }
+    }
+
     /**
      * @param packet
      *            {@link Message}

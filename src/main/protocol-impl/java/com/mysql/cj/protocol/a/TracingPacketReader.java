@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -55,8 +55,15 @@ public class TracingPacketReader implements MessageReader<NativePacketHeader, Na
 
     @Override
     public NativePacketHeader readHeader() throws IOException {
-        NativePacketHeader hdr = this.packetReader.readHeader();
+        return traceHeader(this.packetReader.readHeader());
+    }
 
+    @Override
+    public NativePacketHeader probeHeader() throws IOException {
+        return traceHeader(this.packetReader.probeHeader());
+    }
+
+    private NativePacketHeader traceHeader(NativePacketHeader hdr) throws IOException {
         StringBuilder traceMessageBuf = new StringBuilder();
 
         traceMessageBuf.append(Messages.getString("PacketReader.3"));
@@ -71,12 +78,18 @@ public class TracingPacketReader implements MessageReader<NativePacketHeader, Na
 
     @Override
     public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
-        int packetLength = header.getMessageSize();
-        NativePacketPayload buf = this.packetReader.readMessage(reuse, header);
+        return traceMessage(this.packetReader.readMessage(reuse, header), header.getMessageSize(), reuse.isPresent());
+    }
 
+    @Override
+    public NativePacketPayload probeMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
+        return traceMessage(this.packetReader.probeMessage(reuse, header), header.getMessageSize(), reuse.isPresent());
+    }
+
+    private NativePacketPayload traceMessage(NativePacketPayload buf, int packetLength, boolean reuse) throws IOException {
         StringBuilder traceMessageBuf = new StringBuilder();
 
-        traceMessageBuf.append(Messages.getString(reuse.isPresent() ? "PacketReader.5" : "PacketReader.6"));
+        traceMessageBuf.append(Messages.getString(reuse ? "PacketReader.5" : "PacketReader.6"));
         traceMessageBuf.append(StringUtils.dumpAsHex(buf.getByteBuffer(), packetLength < MAX_PACKET_DUMP_LENGTH ? packetLength : MAX_PACKET_DUMP_LENGTH));
 
         if (packetLength > MAX_PACKET_DUMP_LENGTH) {

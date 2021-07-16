@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,6 +49,9 @@ public class SimplePacketReader implements MessageReader<NativePacketHeader, Nat
 
     private byte readPacketSequence = -1;
 
+    NativePacketHeader lastHeader = null;
+    NativePacketPayload lastMessage = null;
+
     public SimplePacketReader(SocketConnection socketConnection, RuntimeProperty<Integer> maxAllowedPacket) {
         this.socketConnection = socketConnection;
         this.maxAllowedPacket = maxAllowedPacket;
@@ -56,18 +59,30 @@ public class SimplePacketReader implements MessageReader<NativePacketHeader, Nat
 
     @Override
     public NativePacketHeader readHeader() throws IOException {
+        if (this.lastHeader == null) {
+            return readHeaderLocal();
+        }
+        NativePacketHeader hdr = this.lastHeader;
+        this.lastHeader = null;
+        this.readPacketSequence = hdr.getMessageSequence();
+        return hdr;
+    }
 
+    @Override
+    public NativePacketHeader probeHeader() throws IOException {
+        this.lastHeader = readHeaderLocal();
+        return this.lastHeader;
+    }
+
+    private NativePacketHeader readHeaderLocal() throws IOException {
         NativePacketHeader hdr = new NativePacketHeader();
 
         try {
             this.socketConnection.getMysqlInput().readFully(hdr.getBuffer().array(), 0, NativeConstants.HEADER_LENGTH);
-
             int packetLength = hdr.getMessageSize();
-
             if (packetLength > this.maxAllowedPacket.getValue()) {
                 throw new CJPacketTooBigException(packetLength, this.maxAllowedPacket.getValue());
             }
-
         } catch (IOException | CJPacketTooBigException e) {
             try {
                 this.socketConnection.forceClose();
@@ -78,38 +93,52 @@ public class SimplePacketReader implements MessageReader<NativePacketHeader, Nat
         }
 
         this.readPacketSequence = hdr.getMessageSequence();
-
         return hdr;
     }
 
     @Override
     public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
+        if (this.lastMessage == null) {
+            return readMessageLocal(reuse, header);
+        }
+        NativePacketPayload buf = this.lastMessage;
+        this.lastMessage = null;
+        return buf;
+    }
+
+    @Override
+    public NativePacketPayload probeMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
+        this.lastMessage = readMessageLocal(reuse, header);
+        return this.lastMessage;
+    }
+
+    private NativePacketPayload readMessageLocal(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
         try {
             int packetLength = header.getMessageSize();
-            NativePacketPayload buf;
+            NativePacketPayload message;
             if (reuse.isPresent()) {
-                buf = reuse.get();
+                message = reuse.get();
                 // Set the Buffer to it's original state
-                buf.setPosition(0);
+                message.setPosition(0);
                 // Do we need to re-alloc the byte buffer?
-                if (buf.getByteBuffer().length < packetLength) {
+                if (message.getByteBuffer().length < packetLength) {
                     // Note: We actually check the length of the buffer, rather than getBufLength(), because getBufLength()
                     // is not necessarily the actual length of the byte array used as the buffer
-                    buf.setByteBuffer(new byte[packetLength]);
+                    message.setByteBuffer(new byte[packetLength]);
                 }
 
                 // Set the new length
-                buf.setPayloadLength(packetLength);
+                message.setPayloadLength(packetLength);
             } else {
-                buf = new NativePacketPayload(new byte[packetLength]);
+                message = new NativePacketPayload(new byte[packetLength]);
             }
 
             // Read the data from the server
-            int numBytesRead = this.socketConnection.getMysqlInput().readFully(buf.getByteBuffer(), 0, packetLength);
+            int numBytesRead = this.socketConnection.getMysqlInput().readFully(message.getByteBuffer(), 0, packetLength);
             if (numBytesRead != packetLength) {
                 throw new IOException(Messages.getString("PacketReader.1", new Object[] { packetLength, numBytesRead }));
             }
-            return buf;
+            return message;
 
         } catch (IOException e) {
             try {

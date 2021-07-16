@@ -217,7 +217,7 @@ public class NativePacketPayload implements Message {
      * @return true if it is a EOF packet
      */
     public final boolean isEOFPacket() {
-        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (getPayloadLength() <= 5);
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (this.payloadLength <= 5);
     }
 
     /**
@@ -247,7 +247,7 @@ public class NativePacketPayload implements Message {
      * @return true if it is an OK packet for ResultSet
      */
     public final boolean isResultSetOKPacket() {
-        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (getPayloadLength() < 16777215);
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (this.payloadLength > 5) && (this.payloadLength < 16777215);
     }
 
     /**

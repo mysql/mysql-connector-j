@@ -72,12 +72,25 @@ public class BinaryResultsetReader implements ProtocolEntityReader<Resultset, Na
             boolean isCursorPossible = this.protocol.getPropertySet().getBooleanProperty(PropertyKey.useCursorFetch).getValue()
                     && resultSetFactory.getResultSetType() == Type.FORWARD_ONLY && resultSetFactory.getFetchSize() > 0;
 
-            // There is no EOF packet after fields when CLIENT_DEPRECATE_EOF is set;
-            // if we asked to use cursor then there should be an OK or an ERR packet here
+            // At this point 3 types of packets are expected:
+            // 1. If CLIENT_DEPRECATE_EOF is not set then an EOF packet is always expected to be the next one.
+            // 2. If CLIENT_DEPRECATE_EOF is set and a cursor was created then the next packet is an OK with 0xFE signature.
+            // 3. If CLIENT_DEPRECATE_EOF is set and a cursor was not created then the next packet is a ProtocolBinary::ResultsetRow.
+            // If CLIENT_DEPRECATE_EOF is set, there is no way to tell which one, OK or ResultsetRow, is the next packet, so it should be read with a special caching method.
             if (isCursorPossible || !this.protocol.getServerSession().isEOFDeprecated()) {
-                NativePacketPayload rowPacket = this.protocol.readMessage(this.protocol.getReusablePacket());
+                // Read the next packet but leave it in the reader cache. In case it's not the OK or EOF one it will be read again by ResultSet factories.
+                NativePacketPayload rowPacket = this.protocol.probeMessage(this.protocol.getReusablePacket());
                 this.protocol.checkErrorMessage(rowPacket);
-                this.protocol.readServerStatusForResultSets(rowPacket, true);
+                if (rowPacket.isResultSetOKPacket() || rowPacket.isEOFPacket()) {
+                    // Consume the OK/EOF packet from the reader cache and read the status flags from it;
+                    // The SERVER_STATUS_CURSOR_EXISTS flag should indicate the cursor state in this case.
+                    rowPacket = this.protocol.readMessage(this.protocol.getReusablePacket());
+                    this.protocol.readServerStatusForResultSets(rowPacket, true);
+                } else {
+                    // If it's not an OK/EOF then the cursor is not created and this recent packet is a row.
+                    // Retain the packet in the reader cache.
+                    isCursorPossible = false;
+                }
             }
 
             ResultsetRows rows = null;

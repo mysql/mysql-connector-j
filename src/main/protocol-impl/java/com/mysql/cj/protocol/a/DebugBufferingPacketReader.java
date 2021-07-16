@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -63,11 +63,17 @@ public class DebugBufferingPacketReader implements MessageReader<NativePacketHea
 
     @Override
     public NativePacketHeader readHeader() throws IOException {
-
         byte prevPacketSeq = this.packetReader.getMessageSequence();
+        return readHeaderLocal(prevPacketSeq, this.packetReader.readHeader());
+    }
 
-        NativePacketHeader hdr = this.packetReader.readHeader();
+    @Override
+    public NativePacketHeader probeHeader() throws IOException {
+        byte prevPacketSeq = this.packetReader.getMessageSequence();
+        return readHeaderLocal(prevPacketSeq, this.packetReader.probeHeader());
+    }
 
+    private NativePacketHeader readHeaderLocal(byte prevPacketSeq, NativePacketHeader hdr) throws IOException {
         // Normally we shouldn't get into situation of getting packets out of order from server,
         // so we do this check only in debug mode.
         byte currPacketSeq = hdr.getMessageSequence();
@@ -98,6 +104,36 @@ public class DebugBufferingPacketReader implements MessageReader<NativePacketHea
     public NativePacketPayload readMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
         int packetLength = header.getMessageSize();
         NativePacketPayload buf = this.packetReader.readMessage(reuse, header);
+
+        int bytesToDump = Math.min(MAX_PACKET_DUMP_LENGTH, packetLength);
+        String PacketPayloadImpl = StringUtils.dumpAsHex(buf.getByteBuffer(), bytesToDump);
+
+        StringBuilder packetDump = new StringBuilder(DEBUG_MSG_LEN + NativeConstants.HEADER_LENGTH + PacketPayloadImpl.length());
+        packetDump.append("Server ");
+        packetDump.append(reuse.isPresent() ? "(re-used) " : "(new) ");
+        packetDump.append(buf.toString());
+        packetDump.append(" --------------------> Client\n");
+        packetDump.append("\nPacket payload:\n\n");
+        packetDump.append(this.lastHeaderPayload);
+        packetDump.append(PacketPayloadImpl);
+
+        if (bytesToDump == MAX_PACKET_DUMP_LENGTH) {
+            packetDump.append("\nNote: Packet of " + packetLength + " bytes truncated to " + MAX_PACKET_DUMP_LENGTH + " bytes.\n");
+        }
+
+        if ((this.packetDebugBuffer.size() + 1) > this.packetDebugBufferSize.getValue()) {
+            this.packetDebugBuffer.removeFirst();
+        }
+
+        this.packetDebugBuffer.addLast(packetDump);
+
+        return buf;
+    }
+
+    @Override
+    public NativePacketPayload probeMessage(Optional<NativePacketPayload> reuse, NativePacketHeader header) throws IOException {
+        int packetLength = header.getMessageSize();
+        NativePacketPayload buf = this.packetReader.probeMessage(reuse, header);
 
         int bytesToDump = Math.min(MAX_PACKET_DUMP_LENGTH, packetLength);
         String PacketPayloadImpl = StringUtils.dumpAsHex(buf.getByteBuffer(), bytesToDump);
