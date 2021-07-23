@@ -166,6 +166,7 @@ public enum PropertyKey {
     noAccessToProcedureBodies("noAccessToProcedureBodies", true), //
     noDatetimeStringSync("noDatetimeStringSync", true), //
     nullDatabaseMeansCurrent("nullDatabaseMeansCurrent", "nullCatalogMeansCurrent", true), //
+    ociConfigFile("ociConfigFile", true), //
     overrideSupportsIntegrityEnhancementFacility("overrideSupportsIntegrityEnhancementFacility", true), //
     packetDebugBufferSize("packetDebugBufferSize", true), //
     padCharsWithSpace("padCharsWithSpace", true), //

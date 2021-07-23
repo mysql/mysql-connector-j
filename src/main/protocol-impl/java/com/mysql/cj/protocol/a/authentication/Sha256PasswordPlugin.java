@@ -59,8 +59,8 @@ import com.mysql.cj.util.StringUtils;
 public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPayload> {
     public static String PLUGIN_NAME = "sha256_password";
 
-    protected Protocol<NativePacketPayload> protocol;
-    protected MysqlCallbackHandler usernameCallbackHandler;
+    protected Protocol<NativePacketPayload> protocol = null;
+    protected MysqlCallbackHandler usernameCallbackHandler = null;
     protected String password = null;
     protected String seed = null;
     protected boolean publicKeyRequested = false;
@@ -68,9 +68,9 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
     protected RuntimeProperty<String> serverRSAPublicKeyFile = null;
 
     @Override
-    public void init(Protocol<NativePacketPayload> prot, MysqlCallbackHandler mch) {
+    public void init(Protocol<NativePacketPayload> prot, MysqlCallbackHandler cbh) {
         this.protocol = prot;
-        this.usernameCallbackHandler = mch;
+        this.usernameCallbackHandler = cbh;
         this.serverRSAPublicKeyFile = this.protocol.getPropertySet().getStringProperty(PropertyKey.serverRSAPublicKeyFile);
 
         String pkURL = this.serverRSAPublicKeyFile.getValue();
@@ -99,7 +99,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
 
     public void setAuthenticationParameters(String user, String password) {
         this.password = password;
-        if (user == null) {
+        if (user == null && this.usernameCallbackHandler != null) {
             // Fall-back to system login user.
             this.usernameCallbackHandler.handle(new UsernameCallback(System.getProperty("user.name")));
         }

@@ -45,8 +45,8 @@ import com.mysql.cj.protocol.a.NativePacketPayload;
 public class MysqlNativePasswordPlugin implements AuthenticationPlugin<NativePacketPayload> {
     public static String PLUGIN_NAME = "mysql_native_password";
 
-    private Protocol<NativePacketPayload> protocol;
-    private MysqlCallbackHandler usernameCallbackHandler;
+    private Protocol<NativePacketPayload> protocol = null;
+    private MysqlCallbackHandler usernameCallbackHandler = null;
     private String password = null;
 
     @Override
@@ -73,14 +73,13 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin<NativePac
 
     public void setAuthenticationParameters(String user, String password) {
         this.password = password;
-        if (user == null) {
+        if (user == null && this.usernameCallbackHandler != null) {
             // Fall-back to system login user.
             this.usernameCallbackHandler.handle(new UsernameCallback(System.getProperty("user.name")));
         }
     }
 
     public boolean nextAuthenticationStep(NativePacketPayload fromServer, List<NativePacketPayload> toServer) {
-
         toServer.clear();
 
         NativePacketPayload bresp = null;
@@ -97,5 +96,4 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin<NativePac
 
         return true;
     }
-
 }

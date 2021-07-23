@@ -73,9 +73,9 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
 
     private String sourceOfAuthData = PLUGIN_NAME;
 
-    private MysqlCallbackHandler usernameCallbackHandler;
-    private String user;
-    private String password;
+    private MysqlCallbackHandler usernameCallbackHandler = null;
+    private String user = null;
+    private String password = null;
     private String userPrincipalName = null;
 
     private Subject subject = null;
@@ -93,7 +93,7 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
         }
     };
 
-    private SaslClient saslClient;
+    private SaslClient saslClient = null;
 
     @Override
     public void init(Protocol<NativePacketPayload> prot, MysqlCallbackHandler cbh) {
@@ -156,7 +156,9 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
                 // Fall-back to system login user.
                 this.user = System.getProperty("user.name");
             }
-            this.usernameCallbackHandler.handle(new UsernameCallback(this.user));
+            if (this.usernameCallbackHandler != null) {
+                this.usernameCallbackHandler.handle(new UsernameCallback(this.user));
+            }
         }
     }
 
@@ -170,7 +172,7 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
         toServer.clear();
 
         if (!this.sourceOfAuthData.equals(PLUGIN_NAME)) {
-            // Couldn't do anything with whatever payload comes from the server, so just skip this iteration and wait for a Protocol::AuthSwitchRequest.
+            // Cannot do anything with whatever payload comes from the server, so just skip this iteration and wait for a Protocol::AuthSwitchRequest.
             toServer.add(new NativePacketPayload(new byte[0]));
             return true;
         }

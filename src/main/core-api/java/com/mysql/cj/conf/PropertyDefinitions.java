@@ -199,6 +199,9 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PropertyKey.ldapServerHostname, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.ldapServerHostname"), "8.0.23", CATEGORY_AUTH, Integer.MIN_VALUE + 6),
 
+                new StringPropertyDefinition(PropertyKey.ociConfigFile, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.ociConfigFile"), "8.0.27", CATEGORY_AUTH, Integer.MIN_VALUE + 7),
+
                 //
                 // CATEGORY_CONNECTION
                 //

@@ -55,6 +55,7 @@ import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
+import com.mysql.cj.protocol.a.authentication.AuthenticationOciClient;
 import com.mysql.cj.protocol.a.authentication.AuthenticationKerberosClient;
 import com.mysql.cj.protocol.a.authentication.AuthenticationLdapSaslClientPlugin;
 import com.mysql.cj.protocol.a.authentication.CachingSha2PasswordPlugin;
@@ -253,6 +254,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         pluginsToInit.add(new MysqlOldPasswordPlugin());
         pluginsToInit.add(new AuthenticationLdapSaslClientPlugin());
         pluginsToInit.add(new AuthenticationKerberosClient());
+        pluginsToInit.add(new AuthenticationOciClient());
 
         // plugins from authenticationPluginClasses connection parameter
         String authenticationPluginClasses = this.propertySet.getStringProperty(PropertyKey.authenticationPlugins).getValue();
@@ -322,7 +324,11 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     private AuthenticationPlugin<NativePacketPayload> getAuthenticationPlugin(String pluginName) {
         AuthenticationPlugin<NativePacketPayload> plugin = this.authenticationPlugins.get(pluginName);
 
-        if (plugin != null && !plugin.isReusable()) {
+        if (plugin == null) {
+            return null;
+        }
+
+        if (!plugin.isReusable()) {
             try {
                 plugin = plugin.getClass().newInstance();
             } catch (Throwable t) {
@@ -490,7 +496,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                 }
 
                 checkConfidentiality(plugin);
-                fromServer = new NativePacketPayload(StringUtils.getBytes(last_received.readString(StringSelfDataType.STRING_EOF, "ASCII")));
+                fromServer = new NativePacketPayload(last_received.readBytes(StringSelfDataType.STRING_EOF));
 
             } else {
                 // read raw packet

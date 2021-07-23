@@ -45,8 +45,8 @@ import com.mysql.cj.util.StringUtils;
 public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePacketPayload> {
     public static String PLUGIN_NAME = "mysql_clear_password";
 
-    private Protocol<NativePacketPayload> protocol;
-    private MysqlCallbackHandler usernameCallbackHandler;
+    private Protocol<NativePacketPayload> protocol = null;
+    private MysqlCallbackHandler usernameCallbackHandler = null;
     private String password = null;
 
     @Override
@@ -73,7 +73,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePack
 
     public void setAuthenticationParameters(String user, String password) {
         this.password = password;
-        if (user == null) {
+        if (user == null && this.usernameCallbackHandler != null) {
             // Fall-back to system login user.
             this.usernameCallbackHandler.handle(new UsernameCallback(System.getProperty("user.name")));
         }
@@ -92,5 +92,4 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePack
         toServer.add(bresp);
         return true;
     }
-
 }

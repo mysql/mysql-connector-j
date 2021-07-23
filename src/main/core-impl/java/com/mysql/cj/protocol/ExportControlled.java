@@ -41,6 +41,8 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathValidator;
@@ -53,11 +55,14 @@ import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
@@ -675,5 +680,32 @@ public class ExportControlled {
 
     public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key) throws RSAException {
         return encryptWithRSAPublicKey(source, key, "RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+    }
+
+    public static RSAPrivateKey decodeRSAPrivateKey(String key) throws RSAException {
+        if (key == null) {
+            throw ExceptionFactory.createException(RSAException.class, "Key parameter is null");
+        }
+
+        String keyData = key.replace("-----BEGIN PRIVATE KEY-----", "").replaceAll("\\R", "").replace("-----END PRIVATE KEY-----", "");
+        byte[] decodedKeyData = Base64.getDecoder().decode(keyData);
+
+        try {
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            return (RSAPrivateKey) keyFactory.generatePrivate(new PKCS8EncodedKeySpec(decodedKeyData));
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw ExceptionFactory.createException(RSAException.class, "Unable to decode private key", e);
+        }
+    }
+
+    public static byte[] sign(byte[] source, RSAPrivateKey privateKey) throws RSAException {
+        try {
+            Signature signature = Signature.getInstance("SHA256withRSA");
+            signature.initSign(privateKey);
+            signature.update(source);
+            return signature.sign();
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            throw ExceptionFactory.createException(RSAException.class, e.getMessage(), e);
+        }
     }
 }
