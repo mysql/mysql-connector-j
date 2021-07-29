@@ -11502,4 +11502,37 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + StringUtils.quoteIdentifier(databaseName, true));
         }
     }
+
+    /**
+     * Tests fix for Bug#28725534, MULTI HOST CONNECTION WOULD BLOCK IN CONNECTION POOLING.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug28725534() throws Exception {
+        final Connection testConn = getFailoverConnection();
+
+        ExecutorService slowQueryExecutor = Executors.newSingleThreadExecutor();
+        slowQueryExecutor.execute(() -> {
+            try {
+                testConn.createStatement().executeQuery("SELECT SLEEP(3)");
+            } catch (SQLException e) {
+                fail("failed executing SLEEP()");
+            }
+        });
+
+        TimeUnit.SECONDS.sleep(1); // Give it some time to start the slow query.
+
+        long start = System.currentTimeMillis();
+        testConn.equals(testConn);
+        testConn.toString();
+        testConn.hashCode();
+        long end = System.currentTimeMillis();
+
+        slowQueryExecutor.shutdown();
+        slowQueryExecutor.awaitTermination(3, TimeUnit.SECONDS);
+        testConn.close();
+
+        assertTrue(end - start < 250, ".equals() took too long to exectute, the method is being locked by a synchronized block.");
+    }
 }

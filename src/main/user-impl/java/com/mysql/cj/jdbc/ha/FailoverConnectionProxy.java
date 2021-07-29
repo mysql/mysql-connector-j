@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2010, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -499,7 +499,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * This is the continuation of MultiHostConnectionProxy#invoke(Object, Method, Object[]).
      */
     @Override
-    public synchronized Object invokeMore(Object proxy, Method method, Object[] args) throws Throwable {
+    public Object invokeMore(Object proxy, Method method, Object[] args) throws Throwable {
         String methodName = method.getName();
 
         if (METHOD_SET_READ_ONLY.equals(methodName)) {

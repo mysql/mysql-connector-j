@@ -3,6 +3,8 @@
 
 Version 8.0.27
 
+  - Fix for Bug#28725534, MULTI HOST CONNECTION WOULD BLOCK IN CONNECTION POOLING.
+
   - Fix for Bug#95139 (29807572), CACHESERVERCONFIGURATION APPEARS TO THWART CHARSET DETECTION.
 
   - Fix for Bug#104641 (33237255), DatabaseMetaData.getImportedKeys can return duplicated foreign keys.

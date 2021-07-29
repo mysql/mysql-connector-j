@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -54,7 +54,6 @@ import com.mysql.cj.util.Util;
 public abstract class MultiHostConnectionProxy implements InvocationHandler {
     private static final String METHOD_GET_MULTI_HOST_SAFE_PROXY = "getMultiHostSafeProxy";
     private static final String METHOD_EQUALS = "equals";
-    private static final String METHOD_HASH_CODE = "hashCode";
     private static final String METHOD_CLOSE = "close";
     private static final String METHOD_ABORT_INTERNAL = "abortInternal";
     private static final String METHOD_ABORT = "abort";
@@ -466,7 +465,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      *             if an error occurs
      */
     @Override
-    public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         String methodName = method.getName();
 
         if (METHOD_GET_MULTI_HOST_SAFE_PROXY.equals(methodName)) {
@@ -478,50 +477,53 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
             return args[0].equals(this);
         }
 
-        if (METHOD_HASH_CODE.equals(methodName)) {
-            return this.hashCode();
+        // Execute remaining ubiquitous methods right away.
+        if (method.getDeclaringClass().equals(Object.class)) {
+            return method.invoke(this, args);
         }
 
-        if (METHOD_CLOSE.equals(methodName)) {
-            doClose();
-            this.isClosed = true;
-            this.closedReason = "Connection explicitly closed.";
-            this.closedExplicitly = true;
-            return null;
-        }
-
-        if (METHOD_ABORT_INTERNAL.equals(methodName)) {
-            doAbortInternal();
-            this.currentConnection.abortInternal();
-            this.isClosed = true;
-            this.closedReason = "Connection explicitly closed.";
-            return null;
-        }
-
-        if (METHOD_ABORT.equals(methodName) && args.length == 1) {
-            doAbort((Executor) args[0]);
-            this.isClosed = true;
-            this.closedReason = "Connection explicitly closed.";
-            return null;
-        }
-
-        if (METHOD_IS_CLOSED.equals(methodName)) {
-            return this.isClosed;
-        }
-
-        try {
-            return invokeMore(proxy, method, args);
-        } catch (InvocationTargetException e) {
-            throw e.getCause() != null ? e.getCause() : e;
-        } catch (Exception e) {
-            // Check if the captured exception must be wrapped by an unchecked exception.
-            Class<?>[] declaredException = method.getExceptionTypes();
-            for (Class<?> declEx : declaredException) {
-                if (declEx.isAssignableFrom(e.getClass())) {
-                    throw e;
-                }
+        synchronized (this) {
+            if (METHOD_CLOSE.equals(methodName)) {
+                doClose();
+                this.isClosed = true;
+                this.closedReason = "Connection explicitly closed.";
+                this.closedExplicitly = true;
+                return null;
             }
-            throw new IllegalStateException(e.getMessage(), e);
+
+            if (METHOD_ABORT_INTERNAL.equals(methodName)) {
+                doAbortInternal();
+                this.currentConnection.abortInternal();
+                this.isClosed = true;
+                this.closedReason = "Connection explicitly closed.";
+                return null;
+            }
+
+            if (METHOD_ABORT.equals(methodName) && args.length == 1) {
+                doAbort((Executor) args[0]);
+                this.isClosed = true;
+                this.closedReason = "Connection explicitly closed.";
+                return null;
+            }
+
+            if (METHOD_IS_CLOSED.equals(methodName)) {
+                return this.isClosed;
+            }
+
+            try {
+                return invokeMore(proxy, method, args);
+            } catch (InvocationTargetException e) {
+                throw e.getCause() != null ? e.getCause() : e;
+            } catch (Exception e) {
+                // Check if the captured exception must be wrapped by an unchecked exception.
+                Class<?>[] declaredException = method.getExceptionTypes();
+                for (Class<?> declEx : declaredException) {
+                    if (declEx.isAssignableFrom(e.getClass())) {
+                        throw e;
+                    }
+                }
+                throw new IllegalStateException(e.getMessage(), e);
+            }
         }
     }
 
