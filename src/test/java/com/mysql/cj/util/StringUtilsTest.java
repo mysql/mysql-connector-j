@@ -44,8 +44,6 @@ import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
-import com.mysql.cj.util.StringUtils.SearchMode;
-
 import testsuite.BaseTestCase;
 
 public class StringUtilsTest extends BaseTestCase {
@@ -110,21 +108,27 @@ public class StringUtilsTest extends BaseTestCase {
 
         /*
          * C. test indexOfIgnoreCase(int startingPosition, String searchIn, String searchFor, String openingMarkers, String closingMarkers, Set<SearchMode>
-         * searchMode) using search modes SEARCH_MODE__BSESC_MRK_WS or SEARCH_MODE__MRK_WS
+         * searchMode) using search modes SearchMode.__MRK_WS or SearchMode.__BSE_MRK_WS
          */
         // basic test set
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, null, (String) null, markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, null, "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", (String) null, markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", "", markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", "bcd", markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
-        assertEquals(6, StringUtils.indexOfIgnoreCase(0, "ab -- abc", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
-        assertEquals(5, StringUtils.indexOfIgnoreCase(0, "ab # abc", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab/*/* /c", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab/**/c", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
-        assertEquals(5, StringUtils.indexOfIgnoreCase(0, "ab/* abc */c", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
-        assertEquals(0, StringUtils.indexOfIgnoreCase(0, "abc", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
-        assertEquals(3, StringUtils.indexOfIgnoreCase(0, "abc d efg", " d ", markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS));
+        assertThrows(IllegalArgumentException.class, "The source string must not be null.", () -> {
+            StringUtils.indexOfIgnoreCase(0, null, (String) null, markerStart, markerEnd, SearchMode.__BSE_MRK_WS);
+            return null;
+        });
+        assertThrows(IllegalArgumentException.class, "The source string must not be null.", () -> {
+            StringUtils.indexOfIgnoreCase(0, null, "abc", markerStart, markerEnd, SearchMode.__BSE_MRK_WS);
+            return null;
+        });
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", (String) null, markerStart, markerEnd, SearchMode.__BSE_MRK_WS));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", "", markerStart, markerEnd, SearchMode.__BSE_MRK_WS));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", "bcd", markerStart, markerEnd, SearchMode.__BSE_MRK_WS));
+        assertEquals(6, StringUtils.indexOfIgnoreCase(0, "ab -- abc", "abc", markerStart, markerEnd, SearchMode.__BSE_MRK_WS));
+        assertEquals(5, StringUtils.indexOfIgnoreCase(0, "ab # abc", "abc", markerStart, markerEnd, SearchMode.__BSE_MRK_WS));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab/*/* /c", "abc", markerStart, markerEnd, SearchMode.__BSE_MRK_WS));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab/**/c", "abc", markerStart, markerEnd, SearchMode.__BSE_MRK_WS));
+        assertEquals(5, StringUtils.indexOfIgnoreCase(0, "ab/* abc */c", "abc", markerStart, markerEnd, SearchMode.__BSE_MRK_WS));
+        assertEquals(0, StringUtils.indexOfIgnoreCase(0, "abc", "abc", markerStart, markerEnd, SearchMode.__BSE_MRK_WS));
+        assertEquals(3, StringUtils.indexOfIgnoreCase(0, "abc d efg", " d ", markerStart, markerEnd, SearchMode.__BSE_MRK_WS));
 
         // exhaustive test set
         searchInMulti = new String[] { "A \"strange \"STRONG SsStRiNg to be searched in", "A 'strange 'STRONG SsStRiNg to be searched in",
@@ -134,18 +138,17 @@ public class StringUtilsTest extends BaseTestCase {
         for (int i = 0; i < searchForMulti.length; i++) {
             for (int j = 0; j < searchInMulti.length; j++) {
                 // multiple markers
-                assertEquals(expectedIdx[i],
-                        StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__MRK_WS),
+                assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart, markerEnd, SearchMode.__MRK_WS),
                         "Test C." + j + "." + i);
                 assertEquals(expectedIdx[i],
-                        StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS),
+                        StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart, markerEnd, SearchMode.__BSE_MRK_WS),
                         "Test C." + j + "." + i);
 
                 // single marker
                 assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart.substring(j, j + 1),
-                        markerEnd.substring(j, j + 1), StringUtils.SEARCH_MODE__MRK_WS), "Test C." + j + "." + i);
+                        markerEnd.substring(j, j + 1), SearchMode.__MRK_WS), "Test C." + j + "." + i);
                 assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchInMulti[j], searchForMulti[i], markerStart.substring(j, j + 1),
-                        markerEnd.substring(j, j + 1), StringUtils.SEARCH_MODE__BSESC_MRK_WS), "Test C." + j + "." + i);
+                        markerEnd.substring(j, j + 1), SearchMode.__BSE_MRK_WS), "Test C." + j + "." + i);
             }
         }
 
@@ -154,12 +157,10 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 18, 26, -1, -1, 48, 37 };
         for (int i = 0; i < searchForMulti.length; i++) {
             // multiple markers
-            assertEquals(expectedIdx[i],
-                    StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS),
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, SearchMode.__BSE_MRK_WS),
                     "Test C.4." + i);
             // single marker
-            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], "'", "'", StringUtils.SEARCH_MODE__BSESC_MRK_WS),
-                    "Test C.5." + i);
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], "'", "'", SearchMode.__BSE_MRK_WS), "Test C.5." + i);
         }
 
         searchIn = "A 'strange \\''STRONG \\`SsSTRING\\\" to be searched in";
@@ -167,12 +168,10 @@ public class StringUtilsTest extends BaseTestCase {
         expectedIdx = new int[] { 14, 24, -1, -1, 48, 37 };
         for (int i = 0; i < searchForMulti.length; i++) {
             // multiple markers
-            assertEquals(expectedIdx[i],
-                    StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, StringUtils.SEARCH_MODE__BSESC_MRK_WS),
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, SearchMode.__BSE_MRK_WS),
                     "Test C.6." + i);
             // single marker
-            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], "'", "'", StringUtils.SEARCH_MODE__BSESC_MRK_WS),
-                    "Test C.7." + i);
+            assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], "'", "'", SearchMode.__BSE_MRK_WS), "Test C.7." + i);
         }
 
         /*
@@ -180,122 +179,165 @@ public class StringUtilsTest extends BaseTestCase {
          * searchMode) using combined and single search modes
          */
         // basic test set
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, null, (String) null, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, null, "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", (String) null, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", "", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", "bcd", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab -- abc", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab # abc", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab/*/* /c", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab/**/c", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab/* abc */c", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(0, StringUtils.indexOfIgnoreCase(0, "abc", "abc", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(3, StringUtils.indexOfIgnoreCase(0, "abc d efg", " d ", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
+        assertThrows(IllegalArgumentException.class, "The source string must not be null.", () -> {
+            StringUtils.indexOfIgnoreCase(0, null, (String) null, markerStart, markerEnd, SearchMode.__FULL);
+            return null;
+        });
+        assertThrows(IllegalArgumentException.class, "The source string must not be null.", () -> {
+            StringUtils.indexOfIgnoreCase(0, null, "abc", markerStart, markerEnd, SearchMode.__FULL);
+            return null;
+        });
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", (String) null, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", "", markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", "bcd", markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab -- abc", "abc", markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab # abc", "abc", markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab/*/* /c", "abc", markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab/**/c", "abc", markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "ab/* abc */c", "abc", markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(0, StringUtils.indexOfIgnoreCase(0, "abc", "abc", markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(3, StringUtils.indexOfIgnoreCase(0, "abc d efg", " d ", markerStart, markerEnd, SearchMode.__FULL));
 
         // exhaustive test set
         searchIn = "/* MySQL01 *//* MySQL02 */ \"MySQL03\" /* MySQL04 */-- MySQL05\n/* MySQL06 *//* MySQL07 */ 'MySQL08' /* MySQL09 */-- # MySQL10\r\n"
                 + "/* MySQL11 *//* MySQL12 */ `MySQL13` /* MySQL14 */# MySQL15\r\n/* MySQL16 *//* MySQL17 */ (MySQL18) /* MySQL19 */# -- MySQL20 \n"
-                + "/* MySQL21 *//* MySQL22 */ \\MySQL23--;/*! MySQL24 */ MySQL25 --";
+                + "/* MySQL21 *//* MySQL22 */ \\MySQL23--;/*!12345 MySQL24 */   /*+ MySQL25 */ MySQL26 --";
         searchFor = "mYSql";
 
-        // 1. different markers in method arguments
-        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, null, null, StringUtils.SEARCH_MODE__BSESC_COM_WS);
+        // D.1. different markers in method arguments
+        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, null, null, SearchMode.__BSE_COM_MYM_HNT_WS);
         assertEquals(3, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
-        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, "", "", StringUtils.SEARCH_MODE__ALL);
+        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, "", "", SearchMode.__FULL);
         assertEquals(3, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
-        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, "'`(", "'`)", StringUtils.SEARCH_MODE__ALL);
+        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, "'`(", "'`)", SearchMode.__FULL);
         assertEquals(3, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
-        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, "\"`(", "\"`)", StringUtils.SEARCH_MODE__ALL);
+        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, "\"`(", "\"`)", SearchMode.__FULL);
         assertEquals(8, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
-        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, "\"'(", "\"')", StringUtils.SEARCH_MODE__ALL);
+        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, "\"'(", "\"')", SearchMode.__FULL);
         assertEquals(13, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
-        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, "\"'`", "\"'`", StringUtils.SEARCH_MODE__ALL);
+        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, "`'\"", "`'\"", SearchMode.__FULL);
         assertEquals(18, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
 
-        // 2a. search mode: all but skip markers
-        searchMode = StringUtils.SEARCH_MODE__BSESC_COM_WS;
+        // D.2a. search mode: all but SearchMode.SKIP_BETWEEN_MARKERS
+        searchMode = SearchMode.__BSE_COM_MYM_HNT_WS;
         pos = 0;
-        expectedIdx = new int[] { 3, 8, 13, 18, 24, 25, -1 };
+        expectedIdx = new int[] { 3, 8, 13, 18, 23, 24, 26, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
             assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.2a." + i);
         }
-        // 2b. search mode: only skip markers
+        // D.2b. search mode: only SearchMode.SKIP_BETWEEN_MARKERS
         searchMode = EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS);
         pos = 0;
-        expectedIdx = new int[] { 1, 2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, -1 };
+        expectedIdx = new int[] { 1, 2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
             assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.2b." + i);
         }
 
-        // 3a. search mode: all but skip line comments
-        searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_BLOCK_COMMENTS,
-                SearchMode.SKIP_WHITE_SPACE);
+        // D.3a. search mode: all but SearchMode.SKIP_BLOCK_COMMENTS
+        searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_LINE_COMMENTS,
+                SearchMode.SKIP_MYSQL_MARKERS, SearchMode.SKIP_HINT_BLOCKS, SearchMode.SKIP_WHITE_SPACE);
         pos = 0;
-        expectedIdx = new int[] { 5, 10, 15, 20, 24, 25, -1 };
+        expectedIdx = new int[] { 1, 2, 4, 6, 7, 9, 11, 12, 14, 16, 17, 19, 21, 22, 23, 24, 26, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
             assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.3a." + i);
         }
-        // 3b. search mode: only skip line comments
-        searchMode = EnumSet.of(SearchMode.SKIP_LINE_COMMENTS);
+        // D.3b. search mode: only SearchMode.SKIP_BLOCK_COMMENTS
+        searchMode = EnumSet.of(SearchMode.SKIP_BLOCK_COMMENTS);
         pos = 0;
-        expectedIdx = new int[] { 1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24, 25, -1 };
+        expectedIdx = new int[] { 3, 5, 8, 10, 13, 15, 18, 20, 23, 24, 25, 26, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
             assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.3b." + i);
         }
 
-        // 4a. search mode: all but skip block comments
-        searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_LINE_COMMENTS, SearchMode.SKIP_WHITE_SPACE);
+        // D.4a. search mode: all but SearchMode.SKIP_LINE_COMMENTS
+        searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_BLOCK_COMMENTS,
+                SearchMode.SKIP_MYSQL_MARKERS, SearchMode.SKIP_HINT_BLOCKS, SearchMode.SKIP_WHITE_SPACE);
         pos = 0;
-        expectedIdx = new int[] { 1, 2, 4, 6, 7, 9, 11, 12, 14, 16, 17, 19, 21, 22, 24, 25, -1 };
+        expectedIdx = new int[] { 5, 10, 15, 20, 23, 24, 26, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
             assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.4a." + i);
         }
-        // 4b. search mode: only skip block comments
-        searchMode = EnumSet.of(SearchMode.SKIP_BLOCK_COMMENTS);
+        // D.4b. search mode: only SearchMode.SKIP_LINE_COMMENTS
+        searchMode = EnumSet.of(SearchMode.SKIP_LINE_COMMENTS);
         pos = 0;
-        expectedIdx = new int[] { 3, 5, 8, 10, 13, 15, 18, 20, 23, 24, 25, -1 };
+        expectedIdx = new int[] { 1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
             assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.4b." + i);
         }
 
-        // 5a. search mode: all but allow backslash escape
-        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, markerStart, markerEnd, StringUtils.SEARCH_MODE__MRK_COM_WS);
-        assertEquals(23, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
-        // 5b. search mode: only allow backslash escape
-        searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE);
+        // D.5a. search mode: all but SearchMode.SKIP_MYSQL_MARKERS
+        searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_BLOCK_COMMENTS,
+                SearchMode.SKIP_LINE_COMMENTS, SearchMode.SKIP_HINT_BLOCKS, SearchMode.SKIP_WHITE_SPACE);
         pos = 0;
-        expectedIdx = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, -1 };
+        expectedIdx = new int[] { 23, 24, 26, -1 };
+        for (int i = 0; i < expectedIdx.length; i++, pos++) {
+            pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.5a." + i);
+        }
+        // D.5b. search mode: only SearchMode.SKIP_MYSQL_MARKERS
+        searchMode = EnumSet.of(SearchMode.SKIP_MYSQL_MARKERS);
+        pos = 0;
+        expectedIdx = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
             pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
             assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.5b." + i);
         }
 
-        // 6. all together
+        // D.6a. search mode: all but SearchMode.SKIP_HINT_BLOCKS
+        searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_BLOCK_COMMENTS,
+                SearchMode.SKIP_LINE_COMMENTS, SearchMode.SKIP_MYSQL_MARKERS, SearchMode.SKIP_WHITE_SPACE);
         pos = 0;
-        expectedIdx = new int[] { 24, 25, -1 };
+        expectedIdx = new int[] { 23, 24, 25, 26, -1 };
         for (int i = 0; i < expectedIdx.length; i++, pos++) {
-            pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL);
-            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.6." + i);
+            pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.6a." + i);
         }
-        pos = StringUtils.indexOfIgnoreCase(0, searchIn, "YourSQL", markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL);
+        // D.6b. search mode: only SearchMode.SKIP_HINT_BLOCKS
+        searchMode = EnumSet.of(SearchMode.SKIP_HINT_BLOCKS);
+        pos = 0;
+        expectedIdx = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, -1 };
+        for (int i = 0; i < expectedIdx.length; i++, pos++) {
+            pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.6b." + i);
+        }
+
+        // D.7a. search mode: all but SearchMode.ALLOW_BACKSLASH_ESCAPE
+        pos = StringUtils.indexOfIgnoreCase(0, searchIn, searchFor, markerStart, markerEnd, SearchMode.__MRK_COM_MYM_HNT_WS);
+        assertEquals(23, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
+        // D.7b. search mode: only allow backslash escape
+        searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE);
+        pos = 0;
+        expectedIdx = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, -1 };
+        for (int i = 0; i < expectedIdx.length; i++, pos++) {
+            pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, searchMode);
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.7b." + i);
+        }
+
+        // D.8. all together
+        pos = 0;
+        expectedIdx = new int[] { 23, 24, 26, -1 };
+        for (int i = 0; i < expectedIdx.length; i++, pos++) {
+            pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, SearchMode.__FULL);
+            assertEquals(expectedIdx[i], testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.8." + i);
+        }
+        pos = StringUtils.indexOfIgnoreCase(0, searchIn, "YourSQL", markerStart, markerEnd, SearchMode.__FULL);
         assertEquals(-1, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
 
-        // 7. none
+        // D.9. none
         pos = 0;
-        for (int i = 1; i <= 25; i++, pos++) {
-            pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, StringUtils.SEARCH_MODE__NONE);
-            assertEquals(i, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.7." + i);
+        for (int i = 1; i <= 26; i++, pos++) {
+            pos = StringUtils.indexOfIgnoreCase(pos, searchIn, searchFor, markerStart, markerEnd, SearchMode.__NONE);
+            assertEquals(i, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos), "Test D.9." + i);
         }
-        pos = StringUtils.indexOfIgnoreCase(pos + 1, searchIn, searchFor, markerStart, markerEnd, StringUtils.SEARCH_MODE__NONE);
+        pos = StringUtils.indexOfIgnoreCase(pos + 1, searchIn, searchFor, markerStart, markerEnd, SearchMode.__NONE);
         assertEquals(-1, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
-        pos = StringUtils.indexOfIgnoreCase(0, searchIn, "YourSQL", markerStart, markerEnd, StringUtils.SEARCH_MODE__NONE);
+        pos = StringUtils.indexOfIgnoreCase(0, searchIn, "YourSQL", markerStart, markerEnd, SearchMode.__NONE);
         assertEquals(-1, testIndexOfIgnoreCaseMySQLIndexMarker(searchIn, pos));
 
         /*
@@ -375,7 +417,7 @@ public class StringUtilsTest extends BaseTestCase {
         for (int i = 0; i < searchForMulti.length; i++) {
             assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode), "Test F.3." + i);
         }
-        searchMode = StringUtils.SEARCH_MODE__BSESC_COM_WS;
+        searchMode = SearchMode.__BSE_COM_MYM_HNT_WS;
         expectedIdx = new int[] { 0, 5, 12, 21 };
         for (int i = 0; i < searchForMulti.length; i++) {
             assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode), "Test F.4." + i);
@@ -389,7 +431,7 @@ public class StringUtilsTest extends BaseTestCase {
         for (int i = 0; i < searchForMulti.length; i++) {
             assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode), "Test F.5." + i);
         }
-        searchMode = StringUtils.SEARCH_MODE__BSESC_COM_WS;
+        searchMode = SearchMode.__BSE_COM_MYM_HNT_WS;
         expectedIdx = new int[] { 0, 5, 12, 24 };
         for (int i = 0; i < searchForMulti.length; i++) {
             assertEquals(expectedIdx[i], StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti[i], markerStart, markerEnd, searchMode), "Test F.6." + i);
@@ -400,57 +442,48 @@ public class StringUtilsTest extends BaseTestCase {
          * searchMode) using all combined search modes
          */
         // basic test set
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, null, (String[]) null, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, null, new String[] { "abc" }, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", (String[]) null, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", new String[] {}, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "", "" }, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc -- d", new String[] { "c", "d" }, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(0, StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "abc" }, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1,
-                StringUtils.indexOfIgnoreCase(0, "abc d   efg h", new String[] { " d ", " efg" }, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(3, StringUtils.indexOfIgnoreCase(0, "abc d   efg h", new String[] { " d ", "efg" }, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
+        assertThrows(IllegalArgumentException.class, "The source string must not be null.", () -> {
+            StringUtils.indexOfIgnoreCase(0, null, (String[]) null, markerStart, markerEnd, SearchMode.__FULL);
+            return null;
+        });
+        assertThrows(IllegalArgumentException.class, "The source string must not be null.", () -> {
+            StringUtils.indexOfIgnoreCase(0, null, new String[] { "abc" }, markerStart, markerEnd, SearchMode.__FULL);
+            return null;
+        });
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", (String[]) null, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", new String[] {}, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "", "" }, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc -- d", new String[] { "c", "d" }, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(0, StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "abc" }, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "abc d   efg h", new String[] { " d ", " efg" }, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(3, StringUtils.indexOfIgnoreCase(0, "abc d   efg h", new String[] { " d ", "efg" }, markerStart, markerEnd, SearchMode.__FULL));
 
         // exhaustive test set
         searchForMulti = new String[] { "ONE", "two", "ThrEE" };
 
         // 1. simple strings
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "onetwothee", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "one one one one         two", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(11, StringUtils.indexOfIgnoreCase(0, "onetwothee one  two  three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(20,
-                StringUtils.indexOfIgnoreCase(0, "/* one two three */ one two three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "onetwothee", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(-1, StringUtils.indexOfIgnoreCase(0, "one one one one         two", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(11, StringUtils.indexOfIgnoreCase(0, "onetwothee one  two  three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(20, StringUtils.indexOfIgnoreCase(0, "/* one two three */ one two three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
         assertEquals(38, StringUtils.indexOfIgnoreCase(0, "/* one two three *//* one two three */one two three", searchForMulti, markerStart, markerEnd,
-                StringUtils.SEARCH_MODE__ALL));
-        assertEquals(7,
-                StringUtils.indexOfIgnoreCase(0, "/*one*/one/*two*/two/*three*/three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(0,
-                StringUtils.indexOfIgnoreCase(0, "one/*one*/two/*two*/three/*three*/", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(16,
-                StringUtils.indexOfIgnoreCase(0, "# one two three\none two three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(17,
-                StringUtils.indexOfIgnoreCase(0, "-- one two three\none two three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(22,
-                StringUtils.indexOfIgnoreCase(0, "/* one two three */--;one two three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(4,
-                StringUtils.indexOfIgnoreCase(0, "/*! one two three */--;one two three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(9, StringUtils.indexOfIgnoreCase(0, "/*!50616 one two three */--;one two three", searchForMulti, markerStart, markerEnd,
-                StringUtils.SEARCH_MODE__ALL));
-        assertEquals(16,
-                StringUtils.indexOfIgnoreCase(0, "\"one two three\" one two three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(16,
-                StringUtils.indexOfIgnoreCase(0, "'one two three' one two three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(16,
-                StringUtils.indexOfIgnoreCase(0, "`one two three` one two three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
-        assertEquals(16,
-                StringUtils.indexOfIgnoreCase(0, "(one two three) one two three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
+                SearchMode.__FULL));
+        assertEquals(7, StringUtils.indexOfIgnoreCase(0, "/*one*/one/*two*/two/*three*/three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(0, StringUtils.indexOfIgnoreCase(0, "one/*one*/two/*two*/three/*three*/", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(16, StringUtils.indexOfIgnoreCase(0, "# one two three\none two three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(17, StringUtils.indexOfIgnoreCase(0, "-- one two three\none two three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(22, StringUtils.indexOfIgnoreCase(0, "/* one two three */--;one two three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(4, StringUtils.indexOfIgnoreCase(0, "/*! one two three */--;one two three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(9,
+                StringUtils.indexOfIgnoreCase(0, "/*!50616 one two three */--;one two three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(16, StringUtils.indexOfIgnoreCase(0, "\"one two three\" one two three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(16, StringUtils.indexOfIgnoreCase(0, "'one two three' one two three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(16, StringUtils.indexOfIgnoreCase(0, "`one two three` one two three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
+        assertEquals(16, StringUtils.indexOfIgnoreCase(0, "(one two three) one two three", searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
 
-        assertEquals(3, StringUtils.indexOfIgnoreCase(0, "/* one   two   three */ one two three", searchForMulti, markerStart, markerEnd,
-                StringUtils.SEARCH_MODE__NONE));
-        assertEquals(2,
-                StringUtils.indexOfIgnoreCase(0, "# one   two   three\none two three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__NONE));
-        assertEquals(3,
-                StringUtils.indexOfIgnoreCase(0, "-- one   two   three\none two three", searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__NONE));
+        assertEquals(3, StringUtils.indexOfIgnoreCase(0, "/* one   two   three */ one two three", searchForMulti, markerStart, markerEnd, SearchMode.__NONE));
+        assertEquals(2, StringUtils.indexOfIgnoreCase(0, "# one   two   three\none two three", searchForMulti, markerStart, markerEnd, SearchMode.__NONE));
+        assertEquals(3, StringUtils.indexOfIgnoreCase(0, "-- one   two   three\none two three", searchForMulti, markerStart, markerEnd, SearchMode.__NONE));
 
         // 2. complex string
         searchIn = "/* one  two  three *//* one two three */ one 'two' three -- \"one/* one */two  three\" one owt   three\n"
@@ -459,11 +492,11 @@ public class StringUtilsTest extends BaseTestCase {
 
         printRuler(searchIn);
         // 2.1. skip all
-        assertEquals(159, StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__ALL));
+        assertEquals(159, StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti, markerStart, markerEnd, SearchMode.__FULL));
         // 2.2. search within block comments
         searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_LINE_COMMENTS, SearchMode.SKIP_WHITE_SPACE);
         assertEquals(3, StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti, markerStart, markerEnd, searchMode));
-        assertEquals(3, StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti, markerStart, markerEnd, StringUtils.SEARCH_MODE__NONE));
+        assertEquals(3, StringUtils.indexOfIgnoreCase(0, searchIn, searchForMulti, markerStart, markerEnd, SearchMode.__NONE));
         // 2.3. search within line comments and unidentified markers
         searchMode = EnumSet.of(SearchMode.ALLOW_BACKSLASH_ESCAPE, SearchMode.SKIP_BETWEEN_MARKERS, SearchMode.SKIP_BLOCK_COMMENTS,
                 SearchMode.SKIP_WHITE_SPACE);
@@ -1412,6 +1445,14 @@ public class StringUtilsTest extends BaseTestCase {
 
         System.out.print("\n firstNonWsCharUc('  \t  Raj') : " + StringUtils.firstNonWsCharUc("  \t  Raj"));
         System.out.print("\n escapeQuote('select '1', '6'') : " + StringUtils.escapeQuote("select '1', '6'", "'"));
+    }
 
+    @Test
+    public void testStripComments() throws Exception {
+        String testString = "-- 1st comment\nthis\nis/* 2nd comment */not # 3rd \"comment\"\n-- 4th comment\r\n  /* 5th comment */a 'comment'"
+                + "--neither this! nor '# this is a comment'";
+        String expected = "this\nis not   a 'comment'--neither this! nor '# this is a comment'";
+
+        assertEquals(expected, StringUtils.stripCommentsAndHints(testString, "\"'", "\"'", true));
     }
 }

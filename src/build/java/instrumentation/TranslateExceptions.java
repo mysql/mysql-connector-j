@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -292,7 +292,7 @@ public class TranslateExceptions {
         /*
          * java.sql.PreparedStatement extends java.sql.Statement (java.sql.Statement extends java.sql.Wrapper)
          */
-        // com.mysql.cj.jdbc.PreparedStatement extends com.mysql.cj.jdbc.StatementImpl implements java.sql.PreparedStatement
+        // com.mysql.cj.jdbc.ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl implements java.sql.PreparedStatement
         clazz = pool.get(ClientPreparedStatement.class.getName());
         instrumentJdbcMethods(clazz, java.sql.PreparedStatement.class, false, EXCEPTION_INTERCEPTOR_GETTER);
         instrumentJdbcMethods(clazz, JdbcStatement.class, true, EXCEPTION_INTERCEPTOR_GETTER);
@@ -318,7 +318,6 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getParameterBindings", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("initializeFromParseInfo", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("isNull", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("isSelectQuery", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("prepareBatchedInsertSQL", new CtClass[] { ctJdbcConnection, CtClass.intType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz,
@@ -328,7 +327,7 @@ public class TranslateExceptions {
         clazz.writeFile(args[0]);
 
         /*
-         * com.mysql.cj.jdbc.ServerPreparedStatement extends PreparedStatement
+         * com.mysql.cj.jdbc.ServerPreparedStatement extends ClientPreparedStatement
          */
         clazz = pool.get(ServerPreparedStatement.class.getName());
         instrumentJdbcMethods(clazz, java.sql.PreparedStatement.class, false, EXCEPTION_INTERCEPTOR_GETTER);

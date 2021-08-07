@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,6 +49,7 @@ import com.mysql.cj.conf.ConnectionUrl.Type;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.UnsupportedConnectionStringException;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.util.SearchMode;
 import com.mysql.cj.util.StringUtils;
 
 /**
@@ -178,7 +179,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
         }
 
         List<String> authoritySegments = StringUtils.split(this.authority, HOSTS_SEPARATOR, HOSTS_LIST_OPENING_MARKERS, HOSTS_LIST_CLOSING_MARKERS, true,
-                StringUtils.SEARCH_MODE__MRK_WS);
+                SearchMode.__MRK_WS);
         for (String hi : authoritySegments) {
             parseAuthoritySegment(hi);
         }
@@ -354,7 +355,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
         if (matcher.matches()) {
             String hosts = matcher.group("hosts");
             List<String> hostsList = StringUtils.split(hosts, HOSTS_SEPARATOR, HOSTS_LIST_OPENING_MARKERS, HOSTS_LIST_CLOSING_MARKERS, true,
-                    StringUtils.SEARCH_MODE__MRK_WS);
+                    SearchMode.__MRK_WS);
             // One single element could, in fact, be an IPv6 stripped from its delimiters.
             boolean maybeIPv6 = hostsList.size() == 1 && hostsList.get(0).matches("(?i)^[\\dabcdef:]+$");
             List<HostInfo> hostInfoList = new ArrayList<>();

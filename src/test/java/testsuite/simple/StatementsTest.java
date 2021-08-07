@@ -31,6 +31,7 @@ package testsuite.simple;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -4145,5 +4146,147 @@ public class StatementsTest extends BaseTestCase {
                 assertEquals(cachedSPS ? 0 : -1, getStmtsCacheSize.applyAsInt(testConn));
             }
         } while ((useSPS = !useSPS) || (cachePS = !cachePS));
+    }
+
+    @Test
+    public void testResultSetProducingQueries() throws Exception {
+        assumeTrue(versionMeetsMinimum(8, 0, 19), "MySQL 8.0.19+ is required to run this test.");
+
+        // Prepare testing entities and data.
+        createTable("rsProdQuery", "(col1 INT, col2 VARCHAR(100))");
+        createProcedure("rsProdQueryProc", "() BEGIN SELECT * FROM rsProdQuery; END");
+        assertEquals(2, this.stmt.executeUpdate("INSERT INTO rsProdQuery VALUES (1, 'test1'), (2, 'test2')"));
+        assertFalse(this.stmt.execute("PREPARE rsProdQueryPS FROM \"SELECT * FROM rsProdQuery\""));
+
+        String[] okQueries = new String[] {
+                // Data Manipulation Statements:
+                "SELECT * FROM rsProdQuery", "TABLE rsProdQuery", "VALUES ROW (1, 'test1'), ROW (2, 'test2')", "CALL rsProdQueryProc()",
+                "WITH cte1 AS (TABLE rsProdQuery), cte2 AS (TABLE rsProdQuery) SELECT * FROM cte1", "WITH cte1 AS (TABLE rsProdQuery) TABLE cte1",
+                "WITH cte1 AS (TABLE rsProdQuery) VALUES ROW (1, 'test1'), ROW (2, 'test2')",
+                // Transactional and Locking Statements:
+                "XA RECOVER",
+                // Prepared Statements:
+                "EXECUTE rsProdQueryPS",
+                // Database Administration Statements/Table Maintenance Statements:
+                "ANALYZE TABLE rsProdQuery", "CHECK TABLE rsProdQuery", "CHECKSUM TABLE rsProdQuery", "OPTIMIZE TABLE rsProdQuery", "REPAIR TABLE rsProdQuery",
+                // Database Administration Statements/SHOW Statements:
+                "SHOW CREATE TABLE rsProdQuery",
+                // Utility Statements:
+                "DESC rsProdQuery", "DESCRIBE rsProdQuery", "EXPLAIN rsProdQuery", "HELP 'SELECT'" };
+        for (String query : okQueries) {
+            try {
+                this.rs = this.stmt.executeQuery(query);
+                this.rs.absolute(2);
+                this.rs.beforeFirst();
+                this.rs.next();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                fail("Should not have thrown an Exception while executing \"" + query + "\"");
+            }
+        }
+
+        String[] notOkQueries = new String[] {
+                // Data Manipulation Statements:
+                "INSERT INTO rsProdQuery VALUES (99, 'test99')", "REPLACE INTO rsProdQuery VALUES (99, 'test99')", "UPDATE rsProdQuery SET col1 = col1 + 1",
+                "DELETE FROM rsProdQuery", "TRUNCATE TABLE rsProdQuery", "DO 1 + 1", "HANDLER rsProdQuery OPEN AS hrsProdQuery",
+                "IMPORT TABLE FROM 'rsProdQuery'", "LOAD DATA INFILE 'rsProdQuery' INTO TABLE rsProdQuery",
+                "WITH cte1 AS (TABLE rsProdQuery) UPDATE rsProdQuery SET c = c + 1", "WITH cte1 AS (TABLE rsProdQuery) DELETE FROM rsProdQuery",
+                // Transactional and Locking Statements:
+                "BEGIN", "START TRANSACTION", "SAVEPOINT rsProdQuery", "RELEASE SAVEPOINT rsProdQuery", "ROLLBACK", "COMMIT", "LOCK INSTANCE FOR BACKUP",
+                "UNLOCK INSTANCE", "XA START 'rsProdQuery'",
+                // Replication Statements:
+                "PURGE BINARY LOGS TO 'rsProdQuery'", "CHANGE REPLICATION SOURCE TO SOURCE_DELAY=0", "RESET REPLICA", "STOP REPLICA",
+                // Prepared Statements:
+                "PREPARE rsProdQueryPS FROM 'TABLE rsProdQuery'", "DEALLOCATE PREPARE rsProdQueryPS",
+                // Compound Statement Syntax/Condition Handling:
+                "SIGNAL SQLSTATE '01000'", "RESIGNAL", "GET DIAGNOSTICS @n = NUMBER",
+                // Database Administration Statements/Account Management Statements:
+                "CREATE USER rsProdQueryUser", "ALTER USER rsProdQueryUser", "RENAME USER rsProdQueryUser to rsProdQueryUserNew",
+                "GRANT SELECT ON rsProdQueryDb.* TO rsProdQueryUser", "REVOKE ALL ON *.* FROM rsProdQueryUser", "DROP USER rsProdQuery",
+                // Database Administration Statements/Component, Plugin, and Loadable Function Statements:
+                "INSTALL COMPONENT 'rsProdQuery'", "UNINSTALL COMPONENT 'rsProdQuery'",
+                // Database Administration Statements/CLONE Statement & SET Statements:
+                "CLONE LOCAL DATA DIRECTORY '/tmp'", "SET @rsProdQuery = 'rsProdQuery'",
+                // Database Administration Statements/Other Administrative Statements:
+                "BINLOG 'rsProdQuery'", "CACHE INDEX rsProdQueryIdx IN rsProdQueryCache", "FLUSH STATUS", "KILL 0", "RESTART", "SHUTDOWN",
+                //  Utility Statements
+                "USE rsProdQueryDb" };
+        for (String query : notOkQueries) {
+            assertThrows("Query: " + query, SQLException.class, "Statement\\.executeQuery\\(\\) cannot issue statements that do not produce result sets\\.",
+                    () -> {
+                        this.stmt.executeQuery(query);
+                        return null;
+                    });
+        }
+    }
+
+    @Test
+    public void testReadOnlySafeStatements() throws Exception {
+        assumeTrue(versionMeetsMinimum(8, 0, 19), "MySQL 8.0.19+ is required to run this test.");
+
+        // Prepare testing entities and data.
+        createTable("roSafeTest", "(col1 INT, col2 VARCHAR(100))");
+        createProcedure("roSafeTestProc", "() BEGIN SELECT * FROM roSafeTest; END");
+        assertEquals(2, this.stmt.executeUpdate("INSERT INTO roSafeTest VALUES (1, 'test1'), (2, 'test2')"));
+        assertFalse(this.stmt.execute("PREPARE roSafeTestPS FROM \"SELECT * FROM roSafeTest\""));
+
+        Connection testConn = getConnectionWithProps("");
+        Statement testStmt = testConn.createStatement();
+        testConn.setReadOnly(true);
+
+        String[] okQueries = new String[] {
+                // Data Manipulation Statements:
+                "SELECT * FROM roSafeTest", "TABLE roSafeTest", "VALUES ROW (1, 'test1'), ROW (2, 'test2')", "CALL roSafeTestProc()",
+                "WITH cte1 AS (TABLE roSafeTest), cte2 AS (TABLE roSafeTest) SELECT * FROM cte1", "WITH cte1 AS (TABLE roSafeTest) TABLE cte1",
+                "WITH cte1 AS (TABLE roSafeTest) VALUES ROW (1, 'test1'), ROW (2, 'test2')", "DO 1 + 1", "HANDLER roSafeTest OPEN AS hroSafeTest",
+                // Transactional and Locking Statements:
+                "BEGIN", "START TRANSACTION", "SAVEPOINT roSafeTest", "RELEASE SAVEPOINT roSafeTest", "ROLLBACK", "COMMIT", "LOCK INSTANCE FOR BACKUP",
+                "UNLOCK INSTANCE", "XA START 'roSafeTest'", "XA END 'roSafeTest'", "XA ROLLBACK 'roSafeTest'",
+                // Replication Statements:
+                "PURGE BINARY LOGS TO 'roSafeTest'", "STOP REPLICA",
+                // Prepared Statements:
+                "PREPARE roSafeTestPS FROM 'TABLE roSafeTest'", "EXECUTE roSafeTestPS", "DEALLOCATE PREPARE roSafeTestPS",
+                // Compound Statement Syntax/Condition Handling:
+                "SIGNAL SQLSTATE '01000'", "RESIGNAL", "GET DIAGNOSTICS @n = NUMBER",
+                // Database Administration Statements/Table Maintenance Statements:
+                "ANALYZE TABLE roSafeTest", "CHECK TABLE roSafeTest", "CHECKSUM TABLE roSafeTest",
+                // Database Administration Statements/CLONE Statement, SET & SHOW Statements:
+                "CLONE LOCAL DATA DIRECTORY '/tmp'", "SET @roSafeTest = 'roSafeTest'", "SHOW CREATE TABLE roSafeTest",
+                // Database Administration Statements/Other Administrative Statements:
+                "BINLOG 'roSafeTest'", "CACHE INDEX roSafeTestIdx IN roSafeTestCache", "FLUSH STATUS", "KILL 0",
+                // "RESTART", it's safe but can't be executed in this test
+                // "SHUTDOWN", it's safe but can't be executed in this test
+                //  Utility Statements
+                "USE roSafeTestDb",
+                // Utility Statements:
+                "DESC roSafeTest", "DESCRIBE roSafeTest", "EXPLAIN roSafeTest", "HELP 'SELECT'" };
+        for (String query : okQueries) {
+            try {
+                testStmt.execute(query);
+            } catch (SQLException e) {
+                assertNotEquals("Connection is read-only. Queries leading to data modification are not allowed.", e.getMessage());
+            }
+        }
+
+        String[] notOkQueries = new String[] {
+                // Data Manipulation Statements:
+                "INSERT INTO roSafeTest VALUES (99, 'test99')", "REPLACE INTO roSafeTest VALUES (99, 'test99')", "UPDATE roSafeTest SET col1 = col1 + 1",
+                "DELETE FROM roSafeTest", "TRUNCATE TABLE roSafeTest", "IMPORT TABLE FROM 'roSafeTest'", "LOAD DATA INFILE 'roSafeTest' INTO TABLE roSafeTest",
+                "WITH cte1 AS (TABLE roSafeTest) UPDATE roSafeTest SET c = c + 1", "WITH cte1 AS (TABLE roSafeTest) DELETE FROM roSafeTest",
+                // Replication Statements:
+                "CHANGE REPLICATION SOURCE TO SOURCE_DELAY=0", "RESET REPLICA",
+                // Database Administration Statements/Account Management Statements:
+                "CREATE USER roSafeTestUser", "ALTER USER roSafeTestUser", "RENAME USER roSafeTestUser to roSafeTestUserNew",
+                "GRANT SELECT ON roSafeTestDb.* TO roSafeTestUser", "REVOKE ALL ON *.* FROM roSafeTestUser", "DROP USER roSafeTest",
+                // Database Administration Statements/Table Maintenance Statements:
+                "OPTIMIZE TABLE roSafeTest", "REPAIR TABLE roSafeTest",
+                // Database Administration Statements/Component, Plugin, and Loadable Function Statements:
+                "INSTALL COMPONENT 'roSafeTest'", "UNINSTALL COMPONENT 'roSafeTest'", };
+        for (String query : notOkQueries) {
+            assertThrows("Query: " + query, SQLException.class, "Connection is read-only\\. Queries leading to data modification are not allowed\\.", () -> {
+                testStmt.execute(query);
+                return null;
+            });
+        }
     }
 }

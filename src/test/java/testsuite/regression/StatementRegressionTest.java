@@ -151,6 +151,7 @@ import com.mysql.cj.util.TimeUtil;
 import testsuite.BaseQueryInterceptor;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
+import testsuite.simple.StatementsTest;
 
 /**
  * Regression tests for the Statement class
@@ -11301,7 +11302,6 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug101558() throws Exception {
-
         Properties props = new Properties();
         props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
@@ -11597,5 +11597,81 @@ public class StatementRegressionTest extends BaseTestCase {
                 con.close();
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#23204652, CURSOR POSITIONING API'S DOESNOT CHECK THE VALIDITY OF RESULTSET.
+     * 
+     * @throws Exception
+     * 
+     * @see StatementsTest#testResultSetProducingQueries()
+     */
+    @Test
+    public void testBug23204652() throws Exception {
+        assertThrows(SQLException.class, "Statement\\.executeQuery\\(\\) cannot issue statements that do not produce result sets\\.", () -> {
+            this.stmt.executeQuery("DO 1 + 2");
+            return null;
+        });
+    }
+
+    /**
+     * Tests fix for Bug#71929 (18346501), Prefixing query with double comments cancels query DML validation.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug71929() throws Exception {
+        String[] queries = new String[] { "CREATE TABLE testBug71929 (id INT)", "/* comments */CREATE TABLE testBug71929 (id INT)",
+                "/* comments *//* more comments */CREATE TABLE testBug71929 (id INT)" };
+        for (String query : queries) {
+            assertThrows(SQLException.class, "Statement\\.executeQuery\\(\\) cannot issue statements that do not produce result sets\\.", () -> {
+                this.stmt.executeQuery(query);
+                return null;
+            });
+        }
+
+        queries = new String[] { "SELECT 1", "/* comments */SELECT 1", "/* comments *//* more comments */SELECT 1" };
+        for (String query : queries) {
+            assertThrows(SQLException.class,
+                    "Statement\\.executeUpdate\\(\\) or Statement\\.executeLargeUpdate\\(\\) cannot issue statements that produce result sets\\.", () -> {
+                        this.stmt.executeUpdate(query);
+                        return null;
+                    });
+        }
+    }
+
+    /**
+     * Test fix for Bug#103612 (32902019), Incorrectly identified WITH...SELECT as unsafe for read-only connections.
+     * 
+     * @throws Exception
+     * 
+     * @see StatementsTest#testReadOnlySafeStatements()
+     */
+    @Test
+    public void testBug103612() throws Exception {
+        assumeTrue(versionMeetsMinimum(8, 0, 1), "MySQL 8.0.1+ is required to run this test.");
+
+        createTable("testBug103612", "(id INT)");
+        String query = "WITH cte AS (SELECT * FROM testBug103612) SELECT * FROM cte";
+
+        boolean useSPS = false;
+        boolean readOnly = false;
+        do {
+            final String testCase = String.format("Case [SPS: %s, ReadOnly: %s]", useSPS ? "Y" : "N", readOnly ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            Connection testConn = getConnectionWithProps(props);
+            testConn.setReadOnly(readOnly);
+
+            try (Statement testStmt = testConn.createStatement()) {
+                assertTrue(testStmt.execute(query), testCase);
+            }
+            try (PreparedStatement testPstmt = testConn.prepareStatement(query)) {
+                assertTrue(testPstmt.execute(), testCase);
+            }
+
+            testConn.close();
+        } while ((useSPS = !useSPS) || (readOnly = !readOnly));
     }
 }

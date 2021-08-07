@@ -50,6 +50,7 @@ import com.mysql.cj.ParseInfo;
 import com.mysql.cj.PingTarget;
 import com.mysql.cj.Query;
 import com.mysql.cj.QueryAttributesBindings;
+import com.mysql.cj.QueryReturnType;
 import com.mysql.cj.Session;
 import com.mysql.cj.SimpleQuery;
 import com.mysql.cj.TransactionEventHandler;
@@ -344,29 +345,29 @@ public class StatementImpl implements JdbcStatement {
     }
 
     /**
-     * Checks if the given SQL query with the given first non-ws char is a DML
-     * statement. Throws an exception if it is.
+     * Checks if the given SQL query is a result set producing query.
      * 
      * @param sql
      *            the SQL to check
-     * @param firstStatementChar
-     *            the UC first non-ws char of the statement
-     * 
-     * @throws SQLException
-     *             if the statement contains DML
+     * @return
+     *         <code>true</code> if the query produces a result set, <code>false</code> otherwise.
      */
-    protected void checkForDml(String sql, char firstStatementChar) throws SQLException {
-        if ((firstStatementChar == 'I') || (firstStatementChar == 'U') || (firstStatementChar == 'D') || (firstStatementChar == 'A')
-                || (firstStatementChar == 'C') || (firstStatementChar == 'T') || (firstStatementChar == 'R')) {
-            String noCommentSql = StringUtils.stripComments(sql, "'\"", "'\"", true, false, true, true);
+    protected boolean isResultSetProducingQuery(String sql) {
+        QueryReturnType queryReturnType = ParseInfo.getQueryReturnType(sql, this.session.getServerSession().isNoBackslashEscapesSet());
+        return queryReturnType == QueryReturnType.PRODUCES_RESULT_SET || queryReturnType == QueryReturnType.MAY_PRODUCE_RESULT_SET;
+    }
 
-            if (StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "INSERT") || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "UPDATE")
-                    || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "DELETE") || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "DROP")
-                    || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "CREATE") || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "ALTER")
-                    || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "TRUNCATE") || StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "RENAME")) {
-                throw SQLError.createSQLException(Messages.getString("Statement.57"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-            }
-        }
+    /**
+     * Checks if the given SQL query does not return a result set.
+     * 
+     * @param sql
+     *            the SQL to check
+     * @return
+     *         <code>true</code> if the query does not produce a result set, <code>false</code> otherwise.
+     */
+    protected boolean isNonResultSetProducingQuery(String sql) {
+        QueryReturnType queryReturnType = ParseInfo.getQueryReturnType(sql, this.session.getServerSession().isNoBackslashEscapesSet());
+        return queryReturnType == QueryReturnType.DOES_NOT_PRODUCE_RESULT_SET || queryReturnType == QueryReturnType.MAY_PRODUCE_RESULT_SET;
     }
 
     /**
@@ -672,14 +673,13 @@ public class StatementImpl implements JdbcStatement {
                 }
             }
 
-            char firstNonWsChar = StringUtils.firstAlphaCharUc(sql, findStartOfStatement(sql));
-            boolean maybeSelect = firstNonWsChar == 'S';
-
             this.retrieveGeneratedKeys = returnGeneratedKeys;
 
-            this.lastQueryIsOnDupKeyUpdate = returnGeneratedKeys && firstNonWsChar == 'I' && containsOnDuplicateKeyInString(sql);
+            this.lastQueryIsOnDupKeyUpdate = returnGeneratedKeys
+                    && ParseInfo.firstCharOfStatementUc(sql, this.session.getServerSession().isNoBackslashEscapesSet()) == 'I'
+                    && containsOnDuplicateKeyInString(sql);
 
-            if (!maybeSelect && locallyScopedConn.isReadOnly()) {
+            if (!ParseInfo.isReadOnlySafeQuery(sql, this.session.getServerSession().isNoBackslashEscapesSet()) && locallyScopedConn.isReadOnly()) {
                 throw SQLError.createSQLException(Messages.getString("Statement.27") + Messages.getString("Statement.28"),
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -721,7 +721,7 @@ public class StatementImpl implements JdbcStatement {
                         }
 
                         // Only apply max_rows to selects
-                        locallyScopedConn.setSessionMaxRows(maybeSelect ? this.maxRows : -1);
+                        locallyScopedConn.setSessionMaxRows(isResultSetProducingQuery(sql) ? this.maxRows : -1);
 
                         statementBegins();
 
@@ -750,7 +750,7 @@ public class StatementImpl implements JdbcStatement {
 
                     this.results = rs;
 
-                    rs.setFirstCharOfQuery(firstNonWsChar);
+                    rs.setFirstCharOfQuery(ParseInfo.firstCharOfStatementUc(sql, this.session.getServerSession().isNoBackslashEscapesSet()));
 
                     if (rs.hasRows()) {
                         if (cachedMetaData != null) {
@@ -1136,9 +1136,9 @@ public class StatementImpl implements JdbcStatement {
                 sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;
             }
 
-            char firstStatementChar = StringUtils.firstAlphaCharUc(sql, findStartOfStatement(sql));
-
-            checkForDml(sql, firstStatementChar);
+            if (!isResultSetProducingQuery(sql)) {
+                throw SQLError.createSQLException(Messages.getString("Statement.57"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            }
 
             CachedResultSetMetaData cachedMetaData = null;
 
@@ -1259,7 +1259,10 @@ public class StatementImpl implements JdbcStatement {
 
             resetCancelledState();
 
-            char firstStatementChar = StringUtils.firstAlphaCharUc(sql, findStartOfStatement(sql));
+            char firstStatementChar = ParseInfo.firstCharOfStatementUc(sql, this.session.getServerSession().isNoBackslashEscapesSet());
+            if (!isNonResultSetProducingQuery(sql)) {
+                throw SQLError.createSQLException(Messages.getString("Statement.46"), "01S03", getExceptionInterceptor());
+            }
 
             this.retrieveGeneratedKeys = returnGeneratedKeys;
 
@@ -1277,10 +1280,6 @@ public class StatementImpl implements JdbcStatement {
             if (locallyScopedConn.isReadOnly(false)) {
                 throw SQLError.createSQLException(Messages.getString("Statement.42") + Messages.getString("Statement.43"),
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-            }
-
-            if (StringUtils.startsWithIgnoreCaseAndWs(sql, "select")) {
-                throw SQLError.createSQLException(Messages.getString("Statement.46"), "01S03", getExceptionInterceptor());
             }
 
             implicitlyCloseAllOpenResults();
@@ -2037,32 +2036,6 @@ public class StatementImpl implements JdbcStatement {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
-    }
-
-    protected static int findStartOfStatement(String sql) {
-        int statementStartPos = 0;
-
-        if (StringUtils.startsWithIgnoreCaseAndWs(sql, "/*")) {
-            statementStartPos = sql.indexOf("*/");
-
-            if (statementStartPos == -1) {
-                statementStartPos = 0;
-            } else {
-                statementStartPos += 2;
-            }
-        } else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "--") || StringUtils.startsWithIgnoreCaseAndWs(sql, "#")) {
-            statementStartPos = sql.indexOf('\n');
-
-            if (statementStartPos == -1) {
-                statementStartPos = sql.indexOf('\r');
-
-                if (statementStartPos == -1) {
-                    statementStartPos = 0;
-                }
-            }
-        }
-
-        return statementStartPos;
     }
 
     @Override

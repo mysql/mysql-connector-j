@@ -72,6 +72,7 @@ import com.mysql.cj.protocol.a.result.ResultsetRowsStatic;
 import com.mysql.cj.result.DefaultColumnDefinition;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.Row;
+import com.mysql.cj.util.SearchMode;
 import com.mysql.cj.util.StringUtils;
 
 /**
@@ -1060,13 +1061,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 if (indexOfFK != -1) {
                     int afterFk = indexOfFK + "FOREIGN KEY".length();
 
-                    int indexOfRef = StringUtils.indexOfIgnoreCase(afterFk, line, "REFERENCES", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
+                    int indexOfRef = StringUtils.indexOfIgnoreCase(afterFk, line, "REFERENCES", this.quotedId, this.quotedId,
+                            SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
                     if (indexOfRef != -1) {
 
                         int indexOfParenOpen = line.indexOf('(', afterFk);
                         int indexOfParenClose = StringUtils.indexOfIgnoreCase(indexOfParenOpen, line, ")", this.quotedId, this.quotedId,
-                                StringUtils.SEARCH_MODE__ALL);
+                                SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
                         if (indexOfParenOpen == -1 || indexOfParenClose == -1) {
                             // throw SQLError.createSQLException();
@@ -1077,20 +1079,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         int afterRef = indexOfRef + "REFERENCES".length();
 
                         int referencedColumnBegin = StringUtils.indexOfIgnoreCase(afterRef, line, "(", this.quotedId, this.quotedId,
-                                StringUtils.SEARCH_MODE__ALL);
+                                SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
                         if (referencedColumnBegin != -1) {
                             referencedTableName = line.substring(afterRef, referencedColumnBegin);
 
                             int referencedColumnEnd = StringUtils.indexOfIgnoreCase(referencedColumnBegin + 1, line, ")", this.quotedId, this.quotedId,
-                                    StringUtils.SEARCH_MODE__ALL);
+                                    SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
                             if (referencedColumnEnd != -1) {
                                 referencedColumnName = line.substring(referencedColumnBegin + 1, referencedColumnEnd);
                             }
 
                             int indexOfDbSep = StringUtils.indexOfIgnoreCase(0, referencedTableName, ".", this.quotedId, this.quotedId,
-                                    StringUtils.SEARCH_MODE__ALL);
+                                    SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
                             if (indexOfDbSep != -1) {
                                 referencedDbName = referencedTableName.substring(0, indexOfDbSep);
@@ -1435,7 +1437,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
             int dotIndex = " ".equals(this.quotedId) ? quotedProcName.indexOf(".")
                     : StringUtils.indexOfIgnoreCase(0, quotedProcName, ".", this.quotedId, this.quotedId,
-                            this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                            this.session.getServerSession().isNoBackslashEscapesSet() ? SearchMode.__MRK_COM_MYM_HNT_WS : SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
             String dbName = null;
 
@@ -1495,10 +1497,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
                 if (procedureDef != null && procedureDef.length() != 0) {
                     // sanitize/normalize by stripping out comments
-                    procedureDef = StringUtils.stripComments(procedureDef, identifierAndStringMarkers, identifierAndStringMarkers, true, false, true, true);
+                    procedureDef = StringUtils.stripCommentsAndHints(procedureDef, identifierAndStringMarkers, identifierAndStringMarkers,
+                            !this.session.getServerSession().isNoBackslashEscapesSet());
 
                     int openParenIndex = StringUtils.indexOfIgnoreCase(0, procedureDef, "(", this.quotedId, this.quotedId,
-                            this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                            this.session.getServerSession().isNoBackslashEscapesSet() ? SearchMode.__MRK_COM_MYM_HNT_WS : SearchMode.__FULL);
                     int endOfParamDeclarationIndex = 0;
 
                     endOfParamDeclarationIndex = endPositionOfParameterDeclaration(openParenIndex, procedureDef, this.quotedId);
@@ -1508,7 +1511,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         // Grab the return column since it needs
                         // to go first in the output result set
                         int returnsIndex = StringUtils.indexOfIgnoreCase(0, procedureDef, " RETURNS ", this.quotedId, this.quotedId,
-                                this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                                this.session.getServerSession().isNoBackslashEscapesSet() ? SearchMode.__MRK_COM_MYM_HNT_WS : SearchMode.__FULL);
 
                         int endReturnsDef = findEndOfReturnsClause(procedureDef, returnsIndex);
 
@@ -1691,11 +1694,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         while (parenDepth > 0 && currentPos < procedureDef.length()) {
             int closedParenIndex = StringUtils.indexOfIgnoreCase(currentPos, procedureDef, ")", quoteChar, quoteChar,
-                    this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                    this.session.getServerSession().isNoBackslashEscapesSet() ? SearchMode.__MRK_COM_MYM_HNT_WS : SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
             if (closedParenIndex != -1) {
                 int nextOpenParenIndex = StringUtils.indexOfIgnoreCase(currentPos, procedureDef, "(", quoteChar, quoteChar,
-                        this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                        this.session.getServerSession().isNoBackslashEscapesSet() ? SearchMode.__MRK_COM_MYM_HNT_WS : SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
                 if (nextOpenParenIndex != -1 && nextOpenParenIndex < closedParenIndex) {
                     parenDepth++;
@@ -1743,7 +1746,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         for (int i = 0; i < tokens.length; i++) {
             int nextEndOfReturn = StringUtils.indexOfIgnoreCase(startLookingAt, procedureDefn, tokens[i], openingMarkers, closingMarkers,
-                    this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                    this.session.getServerSession().isNoBackslashEscapesSet() ? SearchMode.__MRK_COM_MYM_HNT_WS : SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
             if (nextEndOfReturn != -1) {
                 if (endOfReturn == -1 || (nextEndOfReturn < endOfReturn)) {
@@ -1758,7 +1761,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // Label?
         endOfReturn = StringUtils.indexOfIgnoreCase(startLookingAt, procedureDefn, ":", openingMarkers, closingMarkers,
-                this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                this.session.getServerSession().isNoBackslashEscapesSet() ? SearchMode.__MRK_COM_MYM_HNT_WS : SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
         if (endOfReturn != -1) {
             // seek back until whitespace
@@ -3167,7 +3170,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             //Continuing from above (database_name.sp_name)
             if (!" ".equals(this.quotedId)) {
                 idx = StringUtils.indexOfIgnoreCase(0, procName, ".", this.quotedId, this.quotedId,
-                        this.session.getServerSession().isNoBackslashEscapesSet() ? StringUtils.SEARCH_MODE__MRK_COM_WS : StringUtils.SEARCH_MODE__ALL);
+                        this.session.getServerSession().isNoBackslashEscapesSet() ? SearchMode.__MRK_COM_MYM_HNT_WS : SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
             } else {
                 idx = procName.indexOf(".");
             }
@@ -4331,7 +4334,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         String columnsDelimitter = ","; // what version did this change in?
 
-        int indexOfOpenParenLocalColumns = StringUtils.indexOfIgnoreCase(0, keysComment, "(", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
+        int indexOfOpenParenLocalColumns = StringUtils.indexOfIgnoreCase(0, keysComment, "(", this.quotedId, this.quotedId,
+                SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
         if (indexOfOpenParenLocalColumns == -1) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.14"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -4343,7 +4347,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         String keysCommentTrimmed = keysComment.trim();
 
         int indexOfCloseParenLocalColumns = StringUtils.indexOfIgnoreCase(0, keysCommentTrimmed, ")", this.quotedId, this.quotedId,
-                StringUtils.SEARCH_MODE__ALL);
+                SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
         if (indexOfCloseParenLocalColumns == -1) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.15"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -4351,14 +4355,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         String localColumnNamesString = keysCommentTrimmed.substring(1, indexOfCloseParenLocalColumns);
 
-        int indexOfRefer = StringUtils.indexOfIgnoreCase(0, keysCommentTrimmed, "REFER ", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__ALL);
+        int indexOfRefer = StringUtils.indexOfIgnoreCase(0, keysCommentTrimmed, "REFER ", this.quotedId, this.quotedId, SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
         if (indexOfRefer == -1) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.16"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         int indexOfOpenParenReferCol = StringUtils.indexOfIgnoreCase(indexOfRefer, keysCommentTrimmed, "(", this.quotedId, this.quotedId,
-                StringUtils.SEARCH_MODE__MRK_COM_WS);
+                SearchMode.__MRK_COM_MYM_HNT_WS);
 
         if (indexOfOpenParenReferCol == -1) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.17"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -4366,7 +4370,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         String referDbTableString = keysCommentTrimmed.substring(indexOfRefer + "REFER ".length(), indexOfOpenParenReferCol);
 
-        int indexOfSlash = StringUtils.indexOfIgnoreCase(0, referDbTableString, "/", this.quotedId, this.quotedId, StringUtils.SEARCH_MODE__MRK_COM_WS);
+        int indexOfSlash = StringUtils.indexOfIgnoreCase(0, referDbTableString, "/", this.quotedId, this.quotedId, SearchMode.__MRK_COM_MYM_HNT_WS);
 
         if (indexOfSlash == -1) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.18"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -4376,7 +4380,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         String referTable = StringUtils.unQuoteIdentifier(referDbTableString.substring(indexOfSlash + 1).trim(), this.quotedId);
 
         int indexOfCloseParenRefer = StringUtils.indexOfIgnoreCase(indexOfOpenParenReferCol, keysCommentTrimmed, ")", this.quotedId, this.quotedId,
-                StringUtils.SEARCH_MODE__ALL);
+                SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
 
         if (indexOfCloseParenRefer == -1) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.19"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());

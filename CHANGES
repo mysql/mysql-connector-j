@@ -3,6 +3,12 @@
 
 Version 8.0.27
 
+  - Fix for Bug#103612 (32902019), Incorrectly identified WITH...SELECT as unsafe for read-only connections.
+
+  - Fix for Bug#71929 (18346501), Prefixing query with double comments cancels query DML validation.
+
+  - Fix for Bug#23204652, CURSOR POSITIONING API'S DOESNOT CHECK THE VALIDITY OF RESULTSET.
+
   - Fix for Bug#28725534, MULTI HOST CONNECTION WOULD BLOCK IN CONNECTION POOLING.
 
   - Fix for Bug#95139 (29807572), CACHESERVERCONFIGURATION APPEARS TO THWART CHARSET DETECTION.

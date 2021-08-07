@@ -43,6 +43,7 @@ import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.util.Base64Decoder;
+import com.mysql.cj.util.SearchMode;
 import com.mysql.cj.util.StringUtils;
 
 import testsuite.BaseTestCase;
@@ -246,13 +247,13 @@ public class StringRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug25047() throws Exception {
-        assertEquals(26, StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) values (?)", "VALUES", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS));
-        assertEquals(26, StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) VALUES (?)", "values", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS));
+        assertEquals(26, StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) values (?)", "VALUES", "`", "`", SearchMode.__MRK_COM_MYM_HNT_WS));
+        assertEquals(26, StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) VALUES (?)", "values", "`", "`", SearchMode.__MRK_COM_MYM_HNT_WS));
 
-        assertEquals(StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) values (?)", "VALUES", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS),
-                StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) VALUES (?)", "VALUES", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS));
-        assertEquals(StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) values (?)", "values", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS),
-                StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) VALUES (?)", "values", "`", "`", StringUtils.SEARCH_MODE__MRK_COM_WS));
+        assertEquals(StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) values (?)", "VALUES", "`", "`", SearchMode.__MRK_COM_MYM_HNT_WS),
+                StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) VALUES (?)", "VALUES", "`", "`", SearchMode.__MRK_COM_MYM_HNT_WS));
+        assertEquals(StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) values (?)", "values", "`", "`", SearchMode.__MRK_COM_MYM_HNT_WS),
+                StringUtils.indexOfIgnoreCase(0, "insert into Test (TestID) VALUES (?)", "values", "`", "`", SearchMode.__MRK_COM_MYM_HNT_WS));
     }
 
     /**

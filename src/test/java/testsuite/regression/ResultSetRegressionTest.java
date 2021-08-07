@@ -7441,7 +7441,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             System.out.println("MySQL Server: " + meta.getDatabaseProductVersion() + "; Driver: " + meta.getDriverName() + meta.getDriverVersion());
 
             Statement s = con.createStatement();
-            s.executeQuery("set autocommit = 0;");
+            s.execute("set autocommit = 0;");
 
             con.close();
         }
