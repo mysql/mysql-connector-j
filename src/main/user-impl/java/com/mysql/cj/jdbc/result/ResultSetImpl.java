@@ -1343,7 +1343,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 return (T) getTimestamp(columnIndex);
 
             } else if (type.equals(java.util.Date.class)) {
-                return (T) java.util.Date.from(getTimestamp(columnIndex).toInstant());
+                Timestamp ts = getTimestamp(columnIndex);
+                return ts == null ? null : (T) java.util.Date.from(ts.toInstant());
 
             } else if (type.equals(java.util.Calendar.class)) {
                 return (T) getUtilCalendar(columnIndex);

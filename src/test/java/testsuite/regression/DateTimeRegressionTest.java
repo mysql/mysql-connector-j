@@ -30,6 +30,8 @@
 package testsuite.regression;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -1110,6 +1112,8 @@ public class DateTimeRegressionTest extends BaseTestCase {
         createTable("testBug101413", "(createtime1 TIMESTAMP, createtime2 DATETIME)");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         for (boolean forceConnectionTimeZoneToSession : new boolean[] { false, true }) {
             for (boolean preserveInstants : new boolean[] { false, true }) {
                 for (boolean useSSPS : new boolean[] { false, true }) {
@@ -1135,5 +1139,26 @@ public class DateTimeRegressionTest extends BaseTestCase {
                 }
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#104559 (33232419), ResultSet.getObject(i, java.util.Date.class) throws NPE when the value is null.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug104559() throws Exception {
+        createTable("testBug104559", "(`dt` DATE DEFAULT NULL)");
+        this.stmt.executeUpdate("INSERT INTO testBug104559 VALUES (null)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        Connection con = getConnectionWithProps(props);
+        Statement st = con.createStatement();
+        this.rs = st.executeQuery("SELECT * FROM testBug104559");
+        assertTrue(this.rs.next());
+        assertNull(this.rs.getObject("dt", java.util.Date.class));
+        assertFalse(this.rs.next());
     }
 }
