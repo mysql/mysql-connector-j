@@ -122,9 +122,19 @@ public class ExportControlled {
         try {
             Properties tlsSettings = new Properties();
             tlsSettings.load(ExportControlled.class.getResourceAsStream(TLS_SETTINGS_RESOURCE));
-            Arrays.stream(tlsSettings.getProperty("TLSCiphers.Mandatory").split("\\s*,\\s*")).forEach(s -> ALLOWED_CIPHERS.add(s.trim()));
-            Arrays.stream(tlsSettings.getProperty("TLSCiphers.Approved").split("\\s*,\\s*")).forEach(s -> ALLOWED_CIPHERS.add(s.trim()));
-            Arrays.stream(tlsSettings.getProperty("TLSCiphers.Deprecated").split("\\s*,\\s*")).forEach(s -> ALLOWED_CIPHERS.add(s.trim()));
+            // Ciphers prefixed with "TLS_" are used by Oracle Java while the ones prefixed with "SSL_" are used by IBM Java
+            Arrays.stream(tlsSettings.getProperty("TLSCiphers.Mandatory").split("\\s*,\\s*")).forEach(s -> {
+                ALLOWED_CIPHERS.add("TLS_" + s.trim());
+                ALLOWED_CIPHERS.add("SSL_" + s.trim());
+            });
+            Arrays.stream(tlsSettings.getProperty("TLSCiphers.Approved").split("\\s*,\\s*")).forEach(s -> {
+                ALLOWED_CIPHERS.add("TLS_" + s.trim());
+                ALLOWED_CIPHERS.add("SSL_" + s.trim());
+            });
+            Arrays.stream(tlsSettings.getProperty("TLSCiphers.Deprecated").split("\\s*,\\s*")).forEach(s -> {
+                ALLOWED_CIPHERS.add("TLS_" + s.trim());
+                ALLOWED_CIPHERS.add("SSL_" + s.trim());
+            });
             Arrays.stream(tlsSettings.getProperty("TLSCiphers.Unacceptable.Mask").split("\\s*,\\s*")).forEach(s -> RESTRICTED_CIPHER_SUBSTR.add(s.trim()));
         } catch (IOException e) {
             throw ExceptionFactory.createException("Unable to load TlsSettings.properties");

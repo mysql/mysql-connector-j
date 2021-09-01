@@ -3,6 +3,8 @@
 
 Version 8.0.27
 
+  - Fix for Bug#31117686, PROTOCOL ALLOWLIST NOT COMPATIBLE WITH IBM JAVA.
+
   - Fix for Bug#104559 (33232419), ResultSet.getObject(i, java.util.Date.class) throws NPE when the value is null.
 
   - WL#14707, Support OCI IAM authentication.
