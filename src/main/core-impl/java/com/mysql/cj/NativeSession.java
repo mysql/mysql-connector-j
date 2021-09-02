@@ -36,6 +36,7 @@ import java.lang.ref.WeakReference;
 import java.net.SocketAddress;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -327,9 +328,7 @@ public class NativeSession extends CoreSession implements Serializable {
             }
 
             try {
-                Class<?> factoryClass;
-
-                factoryClass = Class.forName(getPropertySet().getStringProperty(PropertyKey.serverConfigCacheFactory).getStringValue());
+                Class<?> factoryClass = Class.forName(getPropertySet().getStringProperty(PropertyKey.serverConfigCacheFactory).getStringValue());
 
                 @SuppressWarnings("unchecked")
                 CacheAdapterFactory<String, Map<String, String>> cacheFactory = ((CacheAdapterFactory<String, Map<String, String>>) factoryClass.newInstance());
@@ -396,8 +395,11 @@ public class NativeSession extends CoreSession implements Serializable {
 
                 if (cachedServerVersion != null && getServerSession().getServerVersion() != null
                         && cachedServerVersion.equals(getServerSession().getServerVersion().toString())) {
-                    this.protocol.getServerSession().setServerVariables(cachedVariableMap);
-
+                    Map<String, String> localVariableMap = this.protocol.getServerSession().getServerVariables();
+                    Map<String, String> newLocalVariableMap = new HashMap<>();
+                    newLocalVariableMap.putAll(cachedVariableMap);
+                    newLocalVariableMap.putAll(localVariableMap); // preserving variables already configured on previous session initialization steps
+                    this.protocol.getServerSession().setServerVariables(newLocalVariableMap);
                     return;
                 }
 
@@ -484,7 +486,9 @@ public class NativeSession extends CoreSession implements Serializable {
 
         if (this.cacheServerConfiguration.getValue()) {
             this.protocol.getServerSession().getServerVariables().put(SERVER_VERSION_STRING_VAR_NAME, getServerSession().getServerVersion().toString());
-            this.serverConfigCache.put(this.hostInfo.getDatabaseUrl(), this.protocol.getServerSession().getServerVariables());
+            Map<String, String> localVariableMap = new HashMap<>();
+            localVariableMap.putAll(this.protocol.getServerSession().getServerVariables());
+            this.serverConfigCache.put(this.hostInfo.getDatabaseUrl(), Collections.unmodifiableMap(localVariableMap));
         }
     }
 

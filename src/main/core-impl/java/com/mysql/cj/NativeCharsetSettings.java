@@ -271,7 +271,13 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
 
         // error messages are returned according to character_set_results which, at this point, is set from the response packet
         this.errorMessageEncoding = getStaticJavaEncodingForCollationIndex(this.sessionCollationIndex);
-        this.serverSession.getServerVariables().put(CHARACTER_SET_RESULTS, getStaticMysqlCharsetNameForCollationIndex(this.sessionCollationIndex));
+
+        String csName = getStaticMysqlCharsetNameForCollationIndex(this.sessionCollationIndex);
+        this.serverSession.getServerVariables().put(CHARACTER_SET_RESULTS, csName);
+
+        this.serverSession.getServerVariables().put(CHARACTER_SET_CLIENT, csName);
+        this.serverSession.getServerVariables().put(CHARACTER_SET_CONNECTION, csName);
+        this.serverSession.getServerVariables().put(COLLATION_CONNECTION, getStaticCollationNameForCollationIndex(this.sessionCollationIndex));
 
         return this.sessionCollationIndex;
     }
@@ -354,6 +360,17 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
                 this.session.sendCommand(getCommandBuilder().buildComQuery(null, "SET NAMES " + sessionCharsetName + sessionCollationClause), false, 0);
                 this.serverSession.getServerVariables().put(CHARACTER_SET_CLIENT, sessionCharsetName);
                 this.serverSession.getServerVariables().put(CHARACTER_SET_CONNECTION, sessionCharsetName);
+
+                if (sessionCollationClause.length() > 0) {
+                    this.serverSession.getServerVariables().put(COLLATION_CONNECTION, requiredCollation);
+                } else {
+                    int idx = getCollationIndexForMysqlCharsetName(sessionCharsetName);
+                    if (idx == MYSQL_COLLATION_INDEX_utf8mb4_0900_ai_ci
+                            && !this.serverSession.getCapabilities().getServerVersion().meetsMinimum(new ServerVersion(8, 0, 1))) {
+                        idx = MYSQL_COLLATION_INDEX_utf8mb4_general_ci;
+                    }
+                    this.serverSession.getServerVariables().put(COLLATION_CONNECTION, getCollationNameForCollationIndex(idx));
+                }
             }
         }
 
@@ -514,6 +531,10 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
             customCollationNameToCollationIndex = new HashMap<>();
             customCollationIndexToCharsetName = new HashMap<>();
             customCharsetNameToMblen = new HashMap<>();
+            customCharsetNameToJavaEncoding = new HashMap<>();
+            customJavaEncodingUcToCharsetName = new HashMap<>();
+            customCharsetNameToCollationIndex = new HashMap<>();
+            customMultibyteEncodings = new HashSet<>();
 
             String customCharsetMapping = this.session.getPropertySet().getStringProperty(PropertyKey.customCharsetMapping).getValue();
             if (customCharsetMapping != null) {

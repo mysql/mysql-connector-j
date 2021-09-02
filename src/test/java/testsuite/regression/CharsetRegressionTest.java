@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -52,9 +53,11 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.CacheAdapter;
 import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.CharsetSettings;
 import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.NativeSession;
 import com.mysql.cj.Query;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
@@ -1183,4 +1186,128 @@ public class CharsetRegressionTest extends BaseTestCase {
             return null;
         }
     }
+
+    /**
+     * Tests fix for Bug#95139 (29807572), CACHESERVERCONFIGURATION APPEARS TO THWART CHARSET DETECTION.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug95139() throws Exception {
+
+        Properties p = new Properties();
+        p.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        p.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        p.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug95139QueryInterceptor.class.getName());
+        testBug95139CheckVariables(p, 1, null, "SET " + CharsetSettings.CHARACTER_SET_RESULTS + " = NULL");
+
+        p.setProperty(PropertyKey.cacheServerConfiguration.getKeyName(), "true");
+        p.setProperty(PropertyKey.detectCustomCollations.getKeyName(), "true");
+
+        // Empty the cache possibly created by other tests to get a correct queryVarsCnt on the next step
+        Connection c = getConnectionWithProps(p);
+        Field f = NativeSession.class.getDeclaredField("serverConfigCache");
+        f.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        CacheAdapter<String, Map<String, String>> cache = (CacheAdapter<String, Map<String, String>>) f.get(((MysqlConnection) c).getSession());
+        if (cache != null) {
+            cache.invalidateAll();
+        }
+
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), "cp1252");
+        p.setProperty(PropertyKey.characterSetResults.getKeyName(), "cp1252");
+        testBug95139CheckVariables(p, 1, null, null);
+
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+        p.setProperty(PropertyKey.characterSetResults.getKeyName(), "cp1252");
+        testBug95139CheckVariables(p, 0, null, "SET " + CharsetSettings.CHARACTER_SET_RESULTS + " = latin1");
+
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+        p.remove(PropertyKey.characterSetResults.getKeyName());
+        testBug95139CheckVariables(p, 0, null, "SET " + CharsetSettings.CHARACTER_SET_RESULTS + " = NULL");
+
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+        p.setProperty(PropertyKey.passwordCharacterEncoding.getKeyName(), "latin1");
+        testBug95139CheckVariables(p, 0, "SET NAMES utf8mb4", "SET " + CharsetSettings.CHARACTER_SET_RESULTS + " = NULL");
+
+        p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
+        p.setProperty(PropertyKey.passwordCharacterEncoding.getKeyName(), "latin1");
+        p.setProperty(PropertyKey.connectionCollation.getKeyName(), "utf8mb4_bin");
+        testBug95139CheckVariables(p, 0, "SET NAMES utf8mb4 COLLATE utf8mb4_bin", "SET " + CharsetSettings.CHARACTER_SET_RESULTS + " = NULL");
+    }
+
+    private void testBug95139CheckVariables(Properties p, int queryVarsCnt, String expSetNamesQuery, String expSetCharacterSetResultsquery) throws Exception {
+        Connection con = getConnectionWithProps(p);
+
+        Bug95139QueryInterceptor si = (Bug95139QueryInterceptor) ((JdbcConnection) con).getQueryInterceptorsInstances().get(0);
+        assertEquals(queryVarsCnt, si.queryVarsCnt);
+        assertEquals(expSetNamesQuery == null ? 0 : 1, si.setNamesCnt);
+        assertEquals(expSetCharacterSetResultsquery == null ? 0 : 1, si.setCharacterSetResultsCnt);
+        if (expSetNamesQuery != null) {
+            assertEquals(expSetNamesQuery, si.setNamesQuery);
+        }
+        if (expSetCharacterSetResultsquery != null) {
+            assertEquals(expSetCharacterSetResultsquery, si.setCharacterSetResultsQuery);
+        }
+
+        Map<String, String> svs = ((MysqlConnection) con).getSession().getServerSession().getServerVariables();
+        System.out.println(svs);
+        Map<String, String> exp = new HashMap<>();
+        exp.put("character_set_client", svs.get("character_set_client"));
+        exp.put("character_set_connection", svs.get("character_set_connection"));
+        exp.put("character_set_results", svs.get("character_set_results") == null ? "" : svs.get("character_set_results"));
+        exp.put("character_set_server", svs.get("character_set_server"));
+        exp.put("collation_server", svs.get("collation_server"));
+        exp.put("collation_connection", svs.get("collation_connection"));
+
+        ResultSet rset = con.createStatement()
+                .executeQuery("show variables where variable_name='character_set_client' or variable_name='character_set_connection'"
+                        + " or variable_name='character_set_results' or variable_name='character_set_server' or variable_name='collation_server'"
+                        + " or variable_name='collation_connection'");
+        while (rset.next()) {
+            System.out.println(rset.getString(1) + "=" + rset.getString(2));
+            assertEquals(exp.get(rset.getString(1)), rset.getString(2), rset.getString(1));
+        }
+
+        con.close();
+    }
+
+    public static class Bug95139QueryInterceptor extends BaseQueryInterceptor {
+        int queryVarsCnt = 0;
+        int setNamesCnt = 0;
+        String setNamesQuery = null;
+        int setCharacterSetResultsCnt = 0;
+        String setCharacterSetResultsQuery = null;
+
+        @Override
+        public <M extends Message> M preProcess(M queryPacket) {
+            String sql = StringUtils.toString(queryPacket.getByteBuffer(), 0, queryPacket.getPosition());
+            if (sql.contains("SET NAMES")) {
+                this.setNamesCnt++;
+                this.setNamesQuery = sql.substring(sql.indexOf("SET"));
+            } else if (sql.contains("SET " + CharsetSettings.CHARACTER_SET_RESULTS)) {
+                this.setCharacterSetResultsCnt++;
+                this.setCharacterSetResultsQuery = sql.substring(sql.indexOf("SET"));
+            } else if (sql.contains("SHOW VARIABLES") || sql.contains("SELECT  @@")) {
+                System.out.println(sql.substring(sql.indexOf("S")));
+                this.queryVarsCnt++;
+            }
+            return null;
+        }
+
+        @Override
+        public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
+            String sql = str.get();
+            if (sql.contains("SET NAMES")) {
+                this.setNamesCnt++;
+            } else if (sql.contains("SET " + CharsetSettings.CHARACTER_SET_RESULTS)) {
+                this.setCharacterSetResultsCnt++;
+            } else if (sql.contains("SHOW VARIABLES") || sql.contains("SELECT  @@")) {
+                System.out.println(sql.substring(sql.indexOf("S")));
+                this.queryVarsCnt++;
+            }
+            return null;
+        }
+    }
+
 }
