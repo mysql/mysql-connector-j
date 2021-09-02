@@ -6823,29 +6823,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests for fix to BUG#92574 (28706219), WHEN CONVERTING FROM VARCHAR TO JAVA BOOLEAN, 'N' IS NOT SUPPORTED.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testBug92574() throws Exception {
-        String[] strValues = new String[] { null, "N", "n", "Y", "y", "0", "1" };
-        boolean[] boolValues = new boolean[] { false, false, false, true, true, false, true };
-
-        createTable("testBug92574", "(id int not null, f varchar(1), key(id))");
-        for (int i = 0; i < strValues.length; i++) {
-            String val = strValues[i] == null ? null : "'" + strValues[i] + "'";
-            this.stmt.executeUpdate("insert into testBug92574 values(" + i + "," + val + ")");
-        }
-        this.rs = this.stmt.executeQuery("SELECT * from testBug92574");
-        while (this.rs.next()) {
-            int i = this.rs.getInt(1);
-            assertEquals(strValues[i], this.rs.getString(2));
-            assertEquals(boolValues[i], this.rs.getBoolean(2));
-        }
-    }
-
-    /**
      * Tests fix for Bug#91065 (28101003), ZERODATETIMEBEHAVIOR=CONVERT_TO_NULL SHOULD NOT APPLY TO 00:00:00 TIME COLUMNS.
      * 
      * @throws Exception
@@ -8053,5 +8030,31 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertThrows(testCase, SQLException.class, "Subquery returns more than 1 row", this.pstmt::executeQuery);
             testConn.close();
         } while ((useCursorFetch = !useCursorFetch) || (setFetchSize = !setFetchSize));
+    }
+
+    /**
+     * Test fix for Bug#33185116, Have method ResultSet.getBoolean() supporting conversion of 'T' and 'F' in a VARCHAR to True/False (boolean).
+     * Extended the test for BUG#92574 (28706219), WHEN CONVERTING FROM VARCHAR TO JAVA BOOLEAN, 'N' IS NOT SUPPORTED.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug33185116() throws Exception {
+        String[] strValues = new String[] { null, "N", "n", "Y", "y", "0", "1", "T", "t", "F", "f", "yes", "Yes", "no", "No", "true", "TrUe", "false",
+                "FalsE" };
+        boolean[] boolValues = new boolean[] { false, false, false, true, true, false, true, true, true, false, false, true, true, false, false, true, true,
+                false, false };
+
+        createTable("testBug33185116", "(id int not null, f varchar(5), key(id))");
+        for (int i = 0; i < strValues.length; i++) {
+            String val = strValues[i] == null ? null : "'" + strValues[i] + "'";
+            this.stmt.executeUpdate("insert into testBug33185116 values(" + i + "," + val + ")");
+        }
+        this.rs = this.stmt.executeQuery("SELECT * from testBug33185116");
+        while (this.rs.next()) {
+            int i = this.rs.getInt(1);
+            assertEquals(strValues[i], this.rs.getString(2));
+            assertEquals(boolValues[i], this.rs.getBoolean(2));
+        }
     }
 }
