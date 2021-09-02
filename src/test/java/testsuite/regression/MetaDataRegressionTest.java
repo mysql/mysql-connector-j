@@ -5314,4 +5314,81 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests fix for Bug#104641 (33237255), DatabaseMetaData.getImportedKeys can return duplicated foreign keys.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug104641() throws Exception {
+        String databaseName1 = "dbBug104641";
+        createDatabase(databaseName1);
+        createTable(databaseName1 + ".table1",
+                "(`CREATED` datetime DEFAULT NULL,`ID` bigint NOT NULL AUTO_INCREMENT,`LRN_ID` bigint DEFAULT '0',`USERNAME` varchar(50) NOT NULL,"
+                        + "PRIMARY KEY (`ID`),UNIQUE KEY `U_table1_LRN_ID` (`LRN_ID`),UNIQUE KEY `U_table1_USERNAME` (`USERNAME`) )");
+        createTable(databaseName1 + ".table2",
+                "(`AL_ID` varchar(50) DEFAULT NULL,`CREATED` datetime DEFAULT NULL,`ID` bigint NOT NULL AUTO_INCREMENT,`USER_ID` bigint DEFAULT NULL,"
+                        + "PRIMARY KEY (`ID`),KEY `fk_table2_user_id` (`USER_ID`),KEY `index_al_id1` (`AL_ID`),"
+                        + "CONSTRAINT `fk_table2_user_id` FOREIGN KEY (`USER_ID`) REFERENCES `table1` (`ID`) )");
+        createTable(databaseName1 + ".table3",
+                "(`AL_ID` varchar(50) DEFAULT NULL,`ID` bigint NOT NULL AUTO_INCREMENT,`USER_ID` bigint DEFAULT NULL,`LRN_ID` bigint DEFAULT '0',"
+                        + "PRIMARY KEY (`ID`),KEY `fk_table3_LRN_ID` (`LRN_ID`),KEY `index_al_id2` (`AL_ID`),"
+                        + "CONSTRAINT `fk_table3_LRN_ID` FOREIGN KEY `U_table1_LRN_ID` (`LRN_ID`) REFERENCES `table1` (`LRN_ID`) )");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (String databaseTerm : new String[] { "CATALOG", "SCHEMA" }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), databaseTerm);
+
+                boolean dbTermIsSchema = databaseTerm.contentEquals("SCHEMA");
+
+                String err = "useInformationSchema=" + useIS + ", databaseTerm=" + databaseTerm;
+                Connection con = getConnectionWithProps(props);
+                DatabaseMetaData meta = con.getMetaData();
+
+                this.rs = dbTermIsSchema ? meta.getImportedKeys(null, databaseName1, "table2") : meta.getImportedKeys(databaseName1, null, "table2");
+                assertTrue(this.rs.next(), err);
+                assertEquals(dbTermIsSchema ? "def" : databaseName1, this.rs.getString("PKTABLE_CAT"), err);
+                assertEquals(dbTermIsSchema ? databaseName1 : null, this.rs.getString("PKTABLE_SCHEM"), err);
+                assertEquals(dbTermIsSchema ? "def" : databaseName1, this.rs.getString("FKTABLE_CAT"), err);
+                assertEquals(dbTermIsSchema ? databaseName1 : null, this.rs.getString("FKTABLE_SCHEM"), err);
+                assertEquals("table1", this.rs.getString("PKTABLE_NAME"), err);
+                assertEquals("ID", this.rs.getString("PKCOLUMN_NAME"), err);
+                assertEquals("table2", this.rs.getString("FKTABLE_NAME"), err);
+                assertEquals("USER_ID", this.rs.getString("FKCOLUMN_NAME"), err);
+                assertEquals(1, this.rs.getInt("KEY_SEQ"), err);
+                assertEquals(1, this.rs.getInt("UPDATE_RULE"), err);
+                assertEquals(1, this.rs.getInt("DELETE_RULE"), err);
+                assertEquals("fk_table2_user_id", this.rs.getString("FK_NAME"), err);
+                assertEquals(useIS ? "PRIMARY" : null, this.rs.getString("PK_NAME"), err);
+                assertEquals(7, this.rs.getInt("DEFERRABILITY"), err);
+                assertFalse(this.rs.next(), err);
+
+                this.rs = dbTermIsSchema ? meta.getImportedKeys(null, databaseName1, "table3") : meta.getImportedKeys(databaseName1, null, "table3");
+                assertTrue(this.rs.next(), err);
+                assertEquals(dbTermIsSchema ? "def" : databaseName1, this.rs.getString("PKTABLE_CAT"), err);
+                assertEquals(dbTermIsSchema ? databaseName1 : null, this.rs.getString("PKTABLE_SCHEM"), err);
+                assertEquals(dbTermIsSchema ? "def" : databaseName1, this.rs.getString("FKTABLE_CAT"), err);
+                assertEquals(dbTermIsSchema ? databaseName1 : null, this.rs.getString("FKTABLE_SCHEM"), err);
+                assertEquals("table1", this.rs.getString("PKTABLE_NAME"), err);
+                assertEquals("LRN_ID", this.rs.getString("PKCOLUMN_NAME"), err);
+                assertEquals("table3", this.rs.getString("FKTABLE_NAME"), err);
+                assertEquals("LRN_ID", this.rs.getString("FKCOLUMN_NAME"), err);
+                assertEquals(1, this.rs.getInt("KEY_SEQ"), err);
+                assertEquals(1, this.rs.getInt("UPDATE_RULE"), err);
+                assertEquals(1, this.rs.getInt("DELETE_RULE"), err);
+                assertEquals("fk_table3_LRN_ID", this.rs.getString("FK_NAME"), err);
+                assertEquals(useIS ? "U_table1_LRN_ID" : null, this.rs.getString("PK_NAME"), err);
+                assertEquals(7, this.rs.getInt("DEFERRABILITY"), err);
+                assertFalse(this.rs.next(), err);
+
+                con.close();
+            }
+        }
+
+    }
 }

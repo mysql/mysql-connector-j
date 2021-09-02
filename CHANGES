@@ -3,6 +3,8 @@
 
 Version 8.0.27
 
+  - Fix for Bug#104641 (33237255), DatabaseMetaData.getImportedKeys can return duplicated foreign keys.
+
   - Fix for Bug#33185116, Have method ResultSet.getBoolean() supporting conversion of 'T' and 'F' in a VARCHAR to True/False (boolean).
 
   - Fix for Bug#31117686, PROTOCOL ALLOWLIST NOT COMPATIBLE WITH IBM JAVA.
