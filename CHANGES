@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.28
+
 Version 8.0.27
 
   - Fix for Bug#103612 (32902019), Incorrectly identified WITH...SELECT as unsafe for read-only connections.
