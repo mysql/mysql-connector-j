@@ -10,7 +10,7 @@ Introduction
    third-party software which may be included in this distribution of
    MySQL Connector/J 8.0.
 
-   Last updated: July 2021
+   Last updated: September 2021
 
 Licensing Information
 
@@ -428,6 +428,7 @@ The Universal FOSS Exception, Version 1.0
    Software with Other FOSS, and the constants, function signatures, data
    structures and other invocation methods used to run or interact with
    each of them (as to each, such software's "Interfaces"):
+
     i. The Software's Interfaces may, to the extent permitted by the
        license of the Other FOSS, be copied into, used and distributed in
        the Other FOSS in order to enable interoperability, without
@@ -437,6 +438,7 @@ The Universal FOSS Exception, Version 1.0
        including without limitation as used in the Other FOSS (which upon
        any such use also then contains a portion of the Software under the
        Software License).
+
    ii. The Other FOSS's Interfaces may, to the extent permitted by the
        license of the Other FOSS, be copied into, used and distributed in
        the Software in order to enable interoperability, without requiring
@@ -444,6 +446,7 @@ The Universal FOSS Exception, Version 1.0
        License or otherwise altering their original terms, if this does
        not require any portion of the Software other than such Interfaces
        to be licensed under the terms other than the Software License.
+
    iii. If only Interfaces and no other code is copied between the
        Software and the Other FOSS in either direction, the use and/or
        distribution of the Software with the Other FOSS shall not be
@@ -479,6 +482,7 @@ c3p0 JDBC Library
 
    The MySQL Connector/J implements interfaces that are included in c3p0,
    although no part of c3p0 is included or distributed with MySQL.
+
 Copyright (C) 2019 Machinery For Change, Inc.
 
  * This library is free software; you can redistribute it and/or modify
@@ -1124,6 +1128,65 @@ Apache License Version 2.0, January 2004
    ======================================================================
    ======================================================================
 
+Oracle OCI SDK for Java
+
+   Oracle OCI SDK for Java
+
+Copyright (c) 2016, 2020, Oracle and/or its affiliates.  All rights reserved.
+This software is dual-licensed to you under the Universal Permissive License
+(UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl
+or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0.
+You may choose either license.
+____________________________
+The Universal Permissive License (UPL), Version 1.0
+Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+Subject to the condition set forth below, permission is hereby granted to any
+person obtaining a copy of this software, associated documentation and/or
+data (collectively the "Software"), free of charge and under any and all
+copyright rights in the Software, and any and all patent rights owned or
+freely licensable by each licensor hereunder covering either (i) the
+unmodified Software as contributed to or provided by such licensor, or (ii)
+the Larger Works (as defined below), to deal in both
+(a) the Software, and
+(b) any piece of software and/or hardware listed in the lrgrwrks.txt file if
+one is included with the Software (each a "Larger Work" to which the Software
+is contributed by such licensors),
+without restriction, including without limitation the rights to copy, create
+derivative works of, display, perform, and distribute the Software and make,
+use, sell, offer for sale, import, export, have made, and have sold the
+Software and the Larger Work(s), and to sublicense the foregoing rights on
+either these or other terms.
+This license is subject to the following condition:
+The above copyright notice and either this complete permission notice or at a
+minimum a reference to the UPL must be included in all copies or substantial
+portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+The Apache Software License, Version 2.0
+Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); You may not
+use this product except in compliance with the License.  You may obtain a
+copy of the License at http://www.apache.org/licenses/LICENSE-2.0.  A copy of
+the license is also reproduced below.  Unless required by applicable law or
+agreed to in writing, software distributed under the License is distributed
+on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+express or implied.  See the License for the specific language governing
+permissions and  limitations under the License.
+
+Apache License Version 2.0, January 2004
+
+Oracle's use of OCI SDK for Java in MySQL Community Edition is solely under
+the UPL
+
+   ======================================================================
+   ======================================================================
+
 Simple Logging Facade for Java (SLF4J)
 
 Simple Logging Facade for Java (SLF4J)
@@ -1161,6 +1224,7 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 Unicode Data Files
 
    Unicode Data Files
+
 COPYRIGHT AND PERMISSION NOTICE
 
 Copyright (c) 1991-2014 Unicode, Inc. All rights reserved. Distributed under
@@ -1950,6 +2014,7 @@ Written Offer for Source Code
    request to the address listed below or by sending an email to Oracle
    using the following link:
    http://www.oracle.com/goto/opensourcecode/request.
+
   Oracle America, Inc.
   Attn: Senior Vice President
   Development and Engineering Legal
@@ -1957,20 +2022,30 @@ Written Offer for Source Code
   Redwood Shores, CA 94065
 
    Your request should include:
+
      * The name of the binary for which you are requesting the source code
+
      * The name and version number of the Oracle product containing the
        binary
+
      * The date you received the Oracle product
+
      * Your name
+
      * Your company name (if applicable)
+
      * Your return mailing address and email, and
+
      * A telephone number in the event we need to reach you.
+
 
    We may charge you a fee to cover the cost of physical media and
    processing.
 
    Your request must be sent
+
     a. within three (3) years of the date you received the Oracle product
        that included the binary that is the subject of your request, or
+
     b. in the case of code licensed under the GPL v3 for as long as Oracle
        offers spare parts or customer support for that product model.
