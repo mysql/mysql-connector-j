@@ -56,6 +56,8 @@ public class SSLTest extends BaseTestCase {
     public void testConnect() throws Exception {
         assumeTrue((((MysqlConnection) this.conn).getSession().getServerSession().getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_SSL) != 0,
                 "This test requires server with SSL support.");
+        assumeTrue(supportsTLSv1_2(((MysqlConnection) this.conn).getSession().getServerSession().getServerVersion()),
+                "This test requires server with TLSv1.2+ support.");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 

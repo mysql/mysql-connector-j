@@ -61,6 +61,7 @@ import com.mysql.cj.NativeSession;
 import com.mysql.cj.Query;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -87,7 +88,7 @@ public class CharsetRegressionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), "MS932");
 
@@ -127,7 +128,7 @@ public class CharsetRegressionTest extends BaseTestCase {
             }
 
             props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), "SHIFT_JIS");
 
@@ -144,7 +145,7 @@ public class CharsetRegressionTest extends BaseTestCase {
             String charSetUC = ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(1).toUpperCase(Locale.US);
 
             props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), "WINDOWS-31J");
 
@@ -163,7 +164,7 @@ public class CharsetRegressionTest extends BaseTestCase {
                     ((com.mysql.cj.jdbc.result.ResultSetMetaData) this.rs.getMetaData()).getColumnCharacterEncoding(1).toLowerCase(Locale.ENGLISH));
 
             props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), "CP943");
 
@@ -208,7 +209,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     @Test
     public void testBug9206() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterSetResults.getKeyName(), "UTF-8");
         getConnectionWithProps(props).close();
@@ -222,7 +223,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     @Test
     public void testBug10496() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "WINDOWS-31J");
@@ -242,7 +243,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     @Test
     public void testBug12752() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "Cp1251");
         getConnectionWithProps(props).close();
@@ -256,7 +257,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     @Test
     public void testBug15544() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "Cp437");
         Connection dosConn = null;
@@ -274,7 +275,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     public void testBug37931() throws Exception {
         Connection _conn = null;
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterSetResults.getKeyName(), "ISO88591");
 
@@ -325,7 +326,7 @@ public class CharsetRegressionTest extends BaseTestCase {
         }
 
         props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "EUC_JP");
 
         Connection testConn = null;
@@ -480,7 +481,7 @@ public class CharsetRegressionTest extends BaseTestCase {
         PreparedStatement pstmt2 = null;
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), "sjis");
             conn2 = getConnectionWithProps(props);
@@ -541,7 +542,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     @Test
     public void testEncodingRegression() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
         DriverManager.getConnection(dbUrl, props).close();
@@ -567,7 +568,7 @@ public class CharsetRegressionTest extends BaseTestCase {
         testString = new String(origByteStream, "SJIS");
 
         Properties connProps = new Properties();
-        connProps.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        connProps.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         connProps.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         connProps.setProperty(PropertyKey.characterEncoding.getKeyName(), "sjis");
 
@@ -597,7 +598,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     @Test
     public void testGreekUtf8411() throws Exception {
         Properties newProps = new Properties();
-        newProps.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        newProps.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         newProps.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         newProps.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
 
@@ -633,7 +634,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     @Test
     public void testBug24840() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "US-ASCII");
 
@@ -742,7 +743,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     public void testBug25504578() throws Exception {
         String cjCharset = CharsetMappingWrapper.getStaticJavaEncodingForMysqlCharset("latin7");
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), cjCharset);
         getConnectionWithProps(props);
@@ -764,7 +765,7 @@ public class CharsetRegressionTest extends BaseTestCase {
                             + " ENGINE=InnoDB AUTO_INCREMENT=1 CHARSET=utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci");
 
             Properties props = new Properties();
-            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
             /* With a single-byte encoding */
@@ -981,7 +982,7 @@ public class CharsetRegressionTest extends BaseTestCase {
         assumeTrue(collation != null && collation.startsWith("latin1"), "This test requires a server configured with latin1 character set.");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestSetNamesQueryInterceptor.class.getName());
 
@@ -1032,7 +1033,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     @Test
     public void testBug71038() throws Exception {
         Properties p = new Properties();
-        p.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        p.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         p.setProperty(PropertyKey.detectCustomCollations.getKeyName(), "false");
         p.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug71038QueryInterceptor.class.getName());
 
@@ -1076,7 +1077,7 @@ public class CharsetRegressionTest extends BaseTestCase {
         Map<String, String> defaultCollations = new HashMap<>();
 
         Properties p = new Properties();
-        p.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        p.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         p.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         p.setProperty(PropertyKey.detectCustomCollations.getKeyName(), "true");
         p.setProperty(PropertyKey.customCharsetMapping.getKeyName(), "custom:Cp1252");
@@ -1130,7 +1131,7 @@ public class CharsetRegressionTest extends BaseTestCase {
             }
 
             Properties p2 = new Properties();
-            p2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            p2.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             p2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             p2.setProperty(PropertyKey.detectCustomCollations.getKeyName(), "true");
             p2.setProperty(PropertyKey.customCharsetMapping.getKeyName(), "custom:Cp1252");
@@ -1162,7 +1163,7 @@ public class CharsetRegressionTest extends BaseTestCase {
                 "This test only run when character_set_server=latin1");
 
         Properties p = new Properties();
-        p.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        p.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         p.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         p.setProperty(PropertyKey.characterEncoding.getKeyName(), "cp1252");
         p.setProperty(PropertyKey.characterSetResults.getKeyName(), "cp1252");
@@ -1196,7 +1197,7 @@ public class CharsetRegressionTest extends BaseTestCase {
     public void testBug95139() throws Exception {
 
         Properties p = new Properties();
-        p.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        p.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         p.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         p.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug95139QueryInterceptor.class.getName());
         testBug95139CheckVariables(p, 1, null, "SET " + CharsetSettings.CHARACTER_SET_RESULTS + " = NULL");

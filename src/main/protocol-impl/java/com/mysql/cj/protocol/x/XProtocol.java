@@ -366,37 +366,27 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
 
         RuntimeProperty<String> xdevapiTlsVersions = this.propertySet.getStringProperty(PropertyKey.xdevapiTlsVersions);
-        RuntimeProperty<String> jdbcEnabledTlsProtocols = this.propertySet.getStringProperty(PropertyKey.enabledTLSProtocols);
+        RuntimeProperty<String> jdbcEnabledTlsProtocols = this.propertySet.getStringProperty(PropertyKey.tlsVersions);
         if (xdevapiTlsVersions.isExplicitlySet()) {
             if (sslMode.getValue() == SslMode.DISABLED) {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
                         "Option '" + PropertyKey.xdevapiTlsVersions.getKeyName() + "' can not be specified when SSL connections are disabled.");
-            }
-            if (xdevapiTlsVersions.getValue().trim().isEmpty()) {
-                throw ExceptionFactory.createException(WrongArgumentException.class,
-                        "At least one TLS protocol version must be specified in '" + PropertyKey.xdevapiTlsVersions.getKeyName() + "' list.");
             }
 
             String[] tlsVersions = xdevapiTlsVersions.getValue().split("\\s*,\\s*");
             List<String> tryProtocols = Arrays.asList(tlsVersions);
             ExportControlled.checkValidProtocols(tryProtocols);
             jdbcEnabledTlsProtocols.setValue(xdevapiTlsVersions.getValue());
-
-        } else if (!jdbcEnabledTlsProtocols.isExplicitlySet()) {
-            jdbcEnabledTlsProtocols.setValue(xdevapiTlsVersions.getValue());
         }
 
         RuntimeProperty<String> xdevapiTlsCiphersuites = this.propertySet.getStringProperty(PropertyKey.xdevapiTlsCiphersuites);
-        RuntimeProperty<String> jdbcEnabledSslCipherSuites = this.propertySet.getStringProperty(PropertyKey.enabledSSLCipherSuites);
+        RuntimeProperty<String> jdbcEnabledSslCipherSuites = this.propertySet.getStringProperty(PropertyKey.tlsCiphersuites);
         if (xdevapiTlsCiphersuites.isExplicitlySet()) {
             if (sslMode.getValue() == SslMode.DISABLED) {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
                         "Option '" + PropertyKey.xdevapiTlsCiphersuites.getKeyName() + "' can not be specified when SSL connections are disabled.");
             }
 
-            jdbcEnabledSslCipherSuites.setValue(xdevapiTlsCiphersuites.getValue());
-
-        } else if (!jdbcEnabledSslCipherSuites.isExplicitlySet()) {
             jdbcEnabledSslCipherSuites.setValue(xdevapiTlsCiphersuites.getValue());
         }
 
@@ -425,7 +415,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             }
         }
 
-        if (xdevapiSslMode.getValue() != XdevapiSslMode.DISABLED) {
+        if (jdbcSslMode.getValue() != SslMode.DISABLED) {
             negotiateSSLConnection();
         }
 

@@ -54,6 +54,7 @@ import java.util.concurrent.Callable;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.JdbcConnection;
@@ -89,7 +90,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         createProcedure("testBug3540", "(x int, out y int)\nBEGIN\nSELECT 1;end\n");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.nullDatabaseMeansCurrent.getKeyName(), "true");
         Connection con = getConnectionWithProps(props);
@@ -122,7 +123,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         createProcedure("testBug7026", "(x int, out y int)\nBEGIN\nSELECT 1;end\n");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.nullDatabaseMeansCurrent.getKeyName(), "true");
         Connection con = getConnectionWithProps(props);
@@ -172,7 +173,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     public void testBug9319() throws Exception {
         boolean doASelect = true;
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         Connection db2Connection = null;
@@ -445,7 +446,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         createProcedure("p_testBug15121", "()\nBEGIN\nSELECT * from idonotexist;\nEND");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.DBNAME.getKeyName(), "");
 
@@ -880,7 +881,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         createProcedure("sp_testBug28689", "(tid INT)\nBEGIN\nUPDATE testBug28689 SET usuario = 'BBBBBB' WHERE id = tid;\nEND");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.noAccessToProcedureBodies.getKeyName(), "true");
         Connection noProcedureBodiesConn = getConnectionWithProps(props);
@@ -1133,7 +1134,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         assertEquals(0, getRowCount("testBug49831"));
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.noAccessToProcedureBodies.getKeyName(), "true");
         props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
@@ -1201,7 +1202,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 + "\nOUT fdoc VARCHAR(100))\nBEGIN\nSET nfact = 'ncfact string';\nSET ffact = 'ffact string';\nSET fdoc = 'fdoc string';\nEND");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "true");
         props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "true");
@@ -1504,7 +1505,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         createProcedure("testBug26259384", "(IN p1 int,INOUT p2 int)\nBEGIN\nSET p2=p1+100;\nEND");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
 
@@ -1523,7 +1524,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 "(IN PARAMIN BIGINT, OUT PARAM_OUT_LONG BIGINT, OUT PARAM_OUT_STR VARCHAR(100))\nBEGIN\nSET PARAM_OUT_LONG = PARAMIN + 100000;\nSET PARAM_OUT_STR = concat('STR' ,PARAM_OUT_LONG);end\n");
 
         final Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "true");
@@ -1595,7 +1596,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         try {
             for (boolean getProcRetFuncs : new boolean[] { false, true }) {
                 Properties props = new Properties();
-                props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+                props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
                 props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
                 props.setProperty(PropertyKey.getProceduresReturnsFunctions.getKeyName(), "" + getProcRetFuncs);
                 con = getConnectionWithProps(props);

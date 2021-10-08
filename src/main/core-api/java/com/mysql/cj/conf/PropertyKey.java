@@ -115,8 +115,6 @@ public enum PropertyKey {
     emptyStringsConvertToZero("emptyStringsConvertToZero", true), //
     emulateLocators("emulateLocators", true), //
     emulateUnsupportedPstmts("emulateUnsupportedPstmts", true), //
-    enabledSSLCipherSuites("enabledSSLCipherSuites", true), //
-    enabledTLSProtocols("enabledTLSProtocols", true), //
     enableEscapeProcessing("enableEscapeProcessing", true), //
     enablePacketDebug("enablePacketDebug", true), //
     enableQueryTimeouts("enableQueryTimeouts", true), //
@@ -225,6 +223,8 @@ public enum PropertyKey {
     tcpSndBuf("tcpSndBuf", true), //
     tcpTrafficClass("tcpTrafficClass", true), //
     tinyInt1isBit("tinyInt1isBit", true), //
+    tlsCiphersuites("tlsCiphersuites", "enabledSSLCipherSuites", true), //
+    tlsVersions("tlsVersions", "enabledTLSProtocols", true), //
     traceProtocol("traceProtocol", true), //
     trackSessionState("trackSessionState", true), //
     transformedBitIsBoolean("transformedBitIsBoolean", true), //

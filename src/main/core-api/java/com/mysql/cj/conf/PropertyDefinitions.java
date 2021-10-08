@@ -361,11 +361,11 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.fallbackToSystemKeyStore, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.fallbackToSystemKeyStore"), "8.0.22", CATEGORY_SECURITY, 12),
 
-                new StringPropertyDefinition(PropertyKey.enabledSSLCipherSuites, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.enabledSSLCipherSuites"), "5.1.35", CATEGORY_SECURITY, 13),
+                new StringPropertyDefinition(PropertyKey.tlsCiphersuites, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.tlsCiphersuites"), "5.1.35", CATEGORY_SECURITY, 13),
 
-                new StringPropertyDefinition(PropertyKey.enabledTLSProtocols, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.enabledTLSProtocols"), "8.0.8", CATEGORY_SECURITY, 14),
+                new StringPropertyDefinition(PropertyKey.tlsVersions, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.tlsVersions"), "8.0.8", CATEGORY_SECURITY, 14),
 
                 new BooleanPropertyDefinition(PropertyKey.allowLoadLocalInfile, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadDataLocal"), "3.0.3", CATEGORY_SECURITY, Integer.MAX_VALUE),

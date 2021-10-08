@@ -52,6 +52,7 @@ import java.util.Properties;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 
 import testsuite.BaseTestCase;
@@ -316,7 +317,7 @@ public class StressRegressionTest extends BaseTestCase {
          * Use a brand new Connection not shared by anyone else, otherwise it may block later on test teardown.
          */
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         final Connection testConn = getConnectionWithProps(props);
 

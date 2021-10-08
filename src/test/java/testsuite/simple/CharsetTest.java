@@ -59,6 +59,7 @@ import org.junit.jupiter.api.Test;
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.util.StringUtils;
 
@@ -74,7 +75,7 @@ public class CharsetTest extends BaseTestCase {
         }
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "WINDOWS-31J");
         getConnectionWithProps(props).close();
@@ -93,7 +94,7 @@ public class CharsetTest extends BaseTestCase {
         String necExtendedCharString = String.valueOf(necExtendedChar);
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "EUC_JP_Solaris");
@@ -219,7 +220,7 @@ public class CharsetTest extends BaseTestCase {
 
         for (String charset : charsetList) {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), charset);
@@ -424,7 +425,7 @@ public class CharsetTest extends BaseTestCase {
         String characterSet = "utf-8";
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.connectionCollation.getKeyName(), collationToSet);
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), characterSet);
@@ -452,7 +453,7 @@ public class CharsetTest extends BaseTestCase {
     @Test
     public void testCharsets() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
 
@@ -760,7 +761,7 @@ public class CharsetTest extends BaseTestCase {
                 System.out.print("Testing character set " + charsetName);
 
                 Properties props = new Properties();
-                props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+                props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
                 props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
                 props.setProperty(PropertyKey.characterEncoding.getKeyName(), enc);
 
@@ -835,7 +836,7 @@ public class CharsetTest extends BaseTestCase {
     @Test
     public void testCSC5765() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf8");
         props.setProperty(PropertyKey.characterSetResults.getKeyName(), "utf8");
@@ -869,7 +870,7 @@ public class CharsetTest extends BaseTestCase {
     @Test
     public void testNewCharsetsConfiguration() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "EUC_KR");
@@ -908,7 +909,7 @@ public class CharsetTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), "cp1252");
             latin1Conn = getConnectionWithProps(props);
@@ -993,7 +994,7 @@ public class CharsetTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), "SJIS");
             sjisConn = getConnectionWithProps(props);
@@ -1045,7 +1046,7 @@ public class CharsetTest extends BaseTestCase {
     @Test
     public void testUtf8Encoding() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF8");
         props.setProperty(PropertyKey.jdbcCompliantTruncation.getKeyName(), "false");
@@ -1062,7 +1063,7 @@ public class CharsetTest extends BaseTestCase {
         byte[] field2AsBytes = field2.getBytes("utf-8");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF8");
 
@@ -1163,7 +1164,7 @@ public class CharsetTest extends BaseTestCase {
             createTable(tableNameText, "(field1 TEXT)" + charset);
 
             Properties windows31JProps = new Properties();
-            windows31JProps.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            windows31JProps.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             windows31JProps.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             windows31JProps.setProperty(PropertyKey.characterEncoding.getKeyName(), "Windows-31J");
 
@@ -1173,7 +1174,7 @@ public class CharsetTest extends BaseTestCase {
             testCsc4194InsertCheckText(windows31JConn, tableNameText, "Windows-31J");
 
             Properties sjisProps = new Properties();
-            sjisProps.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            sjisProps.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             sjisProps.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             sjisProps.setProperty(PropertyKey.characterEncoding.getKeyName(), "sjis");
 
@@ -1256,7 +1257,7 @@ public class CharsetTest extends BaseTestCase {
         System.out.println(codePage1252);
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "Cp1252");
         Connection cp1252Conn = getConnectionWithProps(props);

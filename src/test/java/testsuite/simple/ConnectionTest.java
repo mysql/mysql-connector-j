@@ -78,7 +78,6 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -285,7 +284,7 @@ public class ConnectionTest extends BaseTestCase {
             this.conn.setAutoCommit(false);
 
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.includeInnodbStatusInDeadlockExceptions.getKeyName(), "true");
             props.setProperty(PropertyKey.includeThreadDumpInDeadlockExceptions.getKeyName(), "true");
@@ -431,7 +430,7 @@ public class ConnectionTest extends BaseTestCase {
     @Test
     public void testDumpQueriesOnException() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.dumpQueriesOnException.getKeyName(), "true");
         String bogusSQL = "SELECT 1 TO BAZ";
@@ -505,7 +504,7 @@ public class ConnectionTest extends BaseTestCase {
         createTable("testLocalInfileWithUrl", "(field1 LONGTEXT)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "true");
         props.setProperty(PropertyKey.allowUrlInLocalInfile.getKeyName(), "true");
@@ -580,7 +579,7 @@ public class ConnectionTest extends BaseTestCase {
 
         // Test load local infile support enabled via client capabilities but disabled on the connector.
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "true");
         Connection loadConn = getConnectionWithProps(props);
@@ -607,7 +606,7 @@ public class ConnectionTest extends BaseTestCase {
     public void testServerConfigurationCache() throws Exception {
         Properties props = new Properties();
 
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.cacheServerConfiguration.getKeyName(), "true");
         props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
@@ -650,7 +649,7 @@ public class ConnectionTest extends BaseTestCase {
     public void testUseLocalSessionState() throws Exception {
         Properties props = new Properties();
 
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useLocalSessionState.getKeyName(), "true");
         props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
@@ -684,7 +683,7 @@ public class ConnectionTest extends BaseTestCase {
 
         if (!isServerRunningOnWindows()) { // windows sockets don't work for this test
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
             props.setProperty(PropertyKey.failOverReadOnly.getKeyName(), "false");
@@ -759,7 +758,7 @@ public class ConnectionTest extends BaseTestCase {
     @Test
     public void testDontTrackOpenResources() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         props.setProperty(PropertyKey.dontTrackOpenResources.getKeyName(), "true");
@@ -803,7 +802,7 @@ public class ConnectionTest extends BaseTestCase {
     @Test
     public void testPing() throws SQLException {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         Connection conn2 = getConnectionWithProps(props);
 
@@ -830,7 +829,7 @@ public class ConnectionTest extends BaseTestCase {
         int newWaitTimeout = Integer.parseInt(getInitialWaitTimeout) + 10000;
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.sessionVariables.getKeyName(), "wait_timeout=" + newWaitTimeout);
         props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
@@ -860,7 +859,7 @@ public class ConnectionTest extends BaseTestCase {
         this.stmt.executeUpdate("DROP DATABASE IF EXISTS " + databaseName);
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.createDatabaseIfNotExist.getKeyName(), "true");
         props.setProperty(PropertyKey.DBNAME.getKeyName(), databaseName);
@@ -883,7 +882,7 @@ public class ConnectionTest extends BaseTestCase {
     public void testGatherPerfMetrics() throws Exception {
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.autoReconnect.getKeyName(), "true");
             props.setProperty(PropertyKey.logSlowQueries.getKeyName(), "true");
@@ -977,7 +976,7 @@ public class ConnectionTest extends BaseTestCase {
         bOut.close();
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useCompression.getKeyName(), useCompression);
         Connection conn1 = getConnectionWithProps(props);
@@ -1100,7 +1099,7 @@ public class ConnectionTest extends BaseTestCase {
 
                 try {
                     Properties props = new Properties();
-                    props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+                    props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
                     props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
                     props.setProperty(PropertyKey.localSocketAddress.getKeyName(), addr.getHostAddress());
                     props.setProperty(PropertyKey.connectTimeout.getKeyName(), "2000");
@@ -1128,7 +1127,7 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useUsageAdvisor.getKeyName(), "true");
             props.setProperty(PropertyKey.resultSetSizeThreshold.getKeyName(), "4");
@@ -1155,7 +1154,7 @@ public class ConnectionTest extends BaseTestCase {
         assumeTrue(versionMeetsMinimum(5, 5, 0), "MySQL 5.5+ is required to run this test.");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useLocalSessionState.getKeyName(), "true");
         props.setProperty(PropertyKey.useLocalTransactionState.getKeyName(), "true");
@@ -1237,7 +1236,7 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // force the issue
             props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
@@ -1256,7 +1255,7 @@ public class ConnectionTest extends BaseTestCase {
     @Test
     public void testInterfaceImplementation() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         testInterfaceImplementation(getConnectionWithProps(props));
         MysqlConnectionPoolDataSource cpds = new MysqlConnectionPoolDataSource();
@@ -1330,20 +1329,20 @@ public class ConnectionTest extends BaseTestCase {
     public void testNonVerifyServerCert() throws Exception {
         assumeTrue((((MysqlConnection) this.conn).getSession().getServerSession().getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_SSL) != 0,
                 "This test requires server with SSL support.");
+        assumeTrue(supportsTLSv1_2(((MysqlConnection) this.conn).getSession().getServerSession().getServerVersion()),
+                "This test requires server with TLSv1.2+ support.");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
-        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
-        props.setProperty(PropertyKey.requireSSL.getKeyName(), "true");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
         getConnectionWithProps(props);
     }
 
     @Test
     public void testSelfDestruct() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.selfDestructOnPingMaxOperations.getKeyName(), "2");
         Connection selfDestructingConn = getConnectionWithProps(props);
@@ -1400,7 +1399,7 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.connectionLifecycleInterceptors.getKeyName(), TestLifecycleInterceptor.class.getName());
             liConn = getConnectionWithProps(props);
@@ -1436,7 +1435,7 @@ public class ConnectionTest extends BaseTestCase {
                 user != null ? user : "", password != null ? password : "", database);
 
         Properties props = getHostFreePropertiesFromTestsuiteUrl();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.remove(PropertyKey.USER.getKeyName());
         props.remove(PropertyKey.PASSWORD.getKeyName());
@@ -1462,7 +1461,7 @@ public class ConnectionTest extends BaseTestCase {
                 this.stmt.executeUpdate("SET GLOBAL max_allowed_packet=" + 1024 * 1024 * 32);
             }
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
             props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "33554432");
@@ -1503,7 +1502,7 @@ public class ConnectionTest extends BaseTestCase {
         assumeTrue(versionMeetsMinimum(5, 6, 5), "MySQL 5.6.5+ is required to run this test.");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
         props.setProperty(PropertyKey.logger.getKeyName(), BufferingLogger.class.getName());
@@ -1576,7 +1575,7 @@ public class ConnectionTest extends BaseTestCase {
         this.stmt.execute("GRANT ALL ON *.* TO '" + testUser + "'@'%'");
 
         Properties connProps = getHostFreePropertiesFromTestsuiteUrl();
-        connProps.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        connProps.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         connProps.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         connProps.setProperty(PropertyKey.USER.getKeyName(), testUser);
         connProps.setProperty(PropertyKey.PASSWORD.getKeyName(), testUser);
@@ -1762,7 +1761,7 @@ public class ConnectionTest extends BaseTestCase {
             boolean useServerPrepStmts = (tst & 0x4) != 0;
 
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestEnableEscapeProcessingQueryInterceptor.class.getName());
             props.setProperty(PropertyKey.enableEscapeProcessing.getKeyName(), Boolean.toString(enableEscapeProcessing));
@@ -1857,7 +1856,7 @@ public class ConnectionTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useCompression.getKeyName(), "false");
             props.setProperty(PropertyKey.maintainTimeStats.getKeyName(), "true");
@@ -2000,7 +1999,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * No SSL.
          */
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
@@ -2012,8 +2011,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
-        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
         testConn = getConnectionWithProps(props);
         testStmt = testConn.createStatement();
         this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
@@ -2024,7 +2022,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "true");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_CA.name());
         props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
         props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
@@ -2051,7 +2049,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & client certificate.
          */
-        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
         props.remove(PropertyKey.trustCertificateKeyStoreUrl.getKeyName());
         props.remove(PropertyKey.trustCertificateKeyStoreType.getKeyName());
         props.remove(PropertyKey.trustCertificateKeyStorePassword.getKeyName());
@@ -2093,7 +2091,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * No SSL.
          */
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
@@ -2105,8 +2103,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "true");
-        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
         assertThrows(SQLException.class, "Access denied for user '" + user + "'@.*", new Callable<Void>() {
             public Void call() throws Exception {
                 getConnectionWithProps(props);
@@ -2117,7 +2114,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: server certificate validation & no client certificate.
          */
-        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "true");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_CA.name());
         props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
         props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
         props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
@@ -2144,7 +2141,7 @@ public class ConnectionTest extends BaseTestCase {
         /*
          * SSL: no server certificate validation & client certificate.
          */
-        props.setProperty(PropertyKey.verifyServerCertificate.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
         props.remove(PropertyKey.trustCertificateKeyStoreUrl.getKeyName());
         props.remove(PropertyKey.trustCertificateKeyStoreType.getKeyName());
         props.remove(PropertyKey.trustCertificateKeyStorePassword.getKeyName());
@@ -2165,6 +2162,8 @@ public class ConnectionTest extends BaseTestCase {
     public void testSslConnectionOptions() throws Exception {
         assumeTrue((((MysqlConnection) this.conn).getSession().getServerSession().getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_SSL) != 0,
                 "This test requires server with SSL support.");
+        assumeTrue(supportsTLSv1_2(((MysqlConnection) this.conn).getSession().getServerSession().getServerVersion()),
+                "This test requires server with TLSv1.2+ support.");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 
@@ -2232,6 +2231,10 @@ public class ConnectionTest extends BaseTestCase {
      */
     @Test
     public void testFallbackToSystemTrustStore() throws Exception {
+        assumeTrue((((MysqlConnection) this.conn).getSession().getServerSession().getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_SSL) != 0,
+                "This test requires server with SSL support.");
+        assumeTrue(supportsTLSv1_2(((MysqlConnection) this.conn).getSession().getServerSession().getServerVersion()),
+                "This test requires server with TLSv1.2+ support.");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 
@@ -2463,7 +2466,7 @@ public class ConnectionTest extends BaseTestCase {
 
         createTable("testAllowLoadLocalInfileInPath", "(data VARCHAR(100))");
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         // Default behavior: 'allowLoadLocalInfile' not set (false) & 'allowLoadLocalInfile' not set (NULL) & 'allowUrlInLocalInfile' not set (false).
@@ -2711,12 +2714,14 @@ public class ConnectionTest extends BaseTestCase {
     public void testTimeoutErrors() throws Exception {
         assumeTrue((((MysqlConnection) this.conn).getSession().getServerSession().getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_SSL) != 0,
                 "This test requires server with SSL support.");
+        assumeTrue(supportsTLSv1_2(((MysqlConnection) this.conn).getSession().getServerSession().getServerVersion()),
+                "This test requires server with TLSv1.2+ support.");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 
         int seconds = 2;
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "REQUIRED"); // server reports timeout message only with SSL on
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name()); // server reports timeout message only with SSL on
         props.setProperty(PropertyKey.sessionVariables.getKeyName(), "wait_timeout=" + seconds);
 
         Connection timeoutConn = getConnectionWithProps(props);
@@ -2751,54 +2756,133 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for WL#14559, Deprecate TLS 1.0 and 1.1.
+     * Tests fix for WL#14805, Remove support for TLS 1.0 and 1.1.
      * 
      * @throws Exception
      */
     @Test
-    public void testTLSVersionDeprecation() throws Exception {
+    public void testTLSVersionRemoval() throws Exception {
         assumeTrue((((MysqlConnection) this.conn).getSession().getServerSession().getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_SSL) != 0,
                 "This test requires server with SSL support.");
+        assumeTrue(supportsTLSv1_2(((MysqlConnection) this.conn).getSession().getServerSession().getServerVersion()),
+                "This test requires server with TLSv1.2+ support.");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 
-        Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "REQUIRED");
-        props.setProperty(PropertyKey.logger.getKeyName(), BufferingLogger.class.getName());
-
-        // TS.FR1_3. Create X DevAPI connection with "sslMode=REQUIRED & enabledTLSProtocols=TLSv1,TLSv1.1".
-        //           Ensure that the deprecation warning "This connection is using TLSvX[.Y] which is now deprecated and will be removed in a future release of Connector/J." was logged.
-        // TS.FR1_4. Create X DevAPI connection with "xdevapi.ssl-mode=REQUIRED & xdevapi.tls-versions=TLSv1,TLSv1.1".
-        //           Ensure that the deprecation warning "This connection is using TLSvX[.Y] which is now deprecated and will be removed in a future release of Connector/J." was logged.
-
         Connection con = null;
-        try {
-            // TS.FR1_1.
-            if (!versionMeetsMinimum(5, 6)) {
-                BufferingLogger.startLoggingToBuffer();
-                con = getConnectionWithProps(props);
-                assertTrue(Pattern.matches(".+ This connection is using TLSv.+ which is now deprecated and will be removed in a future release of Connector/J.",
-                        BufferingLogger.getBuffer().toString()));
-                BufferingLogger.dropBuffer();
-                con.close();
-            }
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
-            // TS.FR1_2.
-            BufferingLogger.startLoggingToBuffer();
-            props.setProperty(PropertyKey.enabledTLSProtocols.getKeyName(), "TLSv1,TLSv1.1");
-            con = getConnectionWithProps(props);
-            assertTrue(Pattern.matches(".+ This connection is using TLSv.+ which is now deprecated and will be removed in a future release of Connector/J.",
-                    BufferingLogger.getBuffer().toString()));
-            BufferingLogger.dropBuffer();
-            con.close();
+        // TS.FR.1_1. Create a Connection with the connection property tlsVersions=TLSv1.2. Assess that the connection is created successfully and it is using TLSv1.2.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1.2");
+        con = getConnectionWithProps(props);
+        assertTrue(((MysqlConnection) con).getSession().isSSLEstablished());
+        assertSessionStatusEquals(con.createStatement(), "ssl_version", "TLSv1.2");
+        con.close();
 
-        } finally {
-            BufferingLogger.dropBuffer();
-            if (con != null) {
-                con.close();
-            }
-        }
+        // TS.FR.1_2. Create a Connection with the connection property enabledTLSProtocols=TLSv1.2. Assess that the connection is created successfully and it is using TLSv1.2.
+        props.remove(PropertyKey.tlsVersions.getKeyName());
+        props.setProperty("enabledTLSProtocols", "TLSv1.2");
+        con = getConnectionWithProps(props);
+        assertTrue(((MysqlConnection) con).getSession().isSSLEstablished());
+        assertSessionStatusEquals(con.createStatement(), "ssl_version", "TLSv1.2");
+        con.close();
+        props.remove("enabledTLSProtocols");
 
+        // TS.FR.2_1. Create a Connection with the connection property tlsCiphersuites=[valid-cipher-suite]. Assess that the connection is created successfully and it is using the cipher suite specified.
+        props.setProperty(PropertyKey.tlsCiphersuites.getKeyName(), "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
+        con = getConnectionWithProps(props);
+        assertTrue(((MysqlConnection) con).getSession().isSSLEstablished());
+        assertSessionStatusEquals(con.createStatement(), "ssl_cipher", "DHE-RSA-AES128-SHA");
+        con.close();
+
+        // TS.FR.2_2. Create a Connection with the connection property enabledSSLCipherSuites=[valid-cipher-suite] . Assess that the connection is created successfully and it is using the cipher suite specified.
+        props.remove(PropertyKey.tlsCiphersuites.getKeyName());
+        props.setProperty("enabledSSLCipherSuites", "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
+        con = getConnectionWithProps(props);
+        assertTrue(((MysqlConnection) con).getSession().isSSLEstablished());
+        assertSessionStatusEquals(con.createStatement(), "ssl_cipher", "DHE-RSA-AES128-SHA");
+        con.close();
+        props.remove("enabledSSLCipherSuites");
+
+        // TS.FR.3_1. Create a Connection with the connection property tlsVersions=TLSv1. Assess that the connection fails.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1");
+        assertThrows(SQLException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        // TS.FR.3_2. Create a Connection with the connection property tlsVersions=TLSv1.1. Assess that the connection fails.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1.1");
+        assertThrows(SQLException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        // TS.FR.3_3. Create a Connection with the connection property enabledTLSProtocols=TLSv1. Assess that the connection fails.
+        props.setProperty("enabledTLSProtocols", "TLSv1");
+        assertThrows(SQLException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        // TS.FR.3_4. Create a Connection with the connection property enabledTLSProtocols=TLSv1.1. Assess that the connection fails.
+        props.setProperty("enabledTLSProtocols", "TLSv1.1");
+        assertThrows(SQLException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        props.remove("enabledTLSProtocols");
+
+        // TS.FR.4. Create a Connection with the connection property tlsVersions=TLSv1 and sslMode=DISABLED. Assess that the connection is created successfully and it is not using encryption.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        con = getConnectionWithProps(props);
+        assertFalse(((MysqlConnection) con).getSession().isSSLEstablished());
+        con.close();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
+
+        // TS.FR.5_1. Create a Connection with the connection property tlsVersions=FOO,BAR.
+        //            Assess that the connection fails with the error message "Specified list of TLS versions only contains non valid TLS protocols. Accepted values are TLSv1.2 and TLSv1.3."
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "FOO,BAR");
+        assertThrows(SQLException.class, "Specified list of TLS versions only contains non valid TLS protocols. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "FOO,,,BAR");
+        assertThrows(SQLException.class, "Specified list of TLS versions only contains non valid TLS protocols. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        // TS.FR.5_2. Create a Connection with the connection property tlsVersions=FOO,TLSv1.1.
+        //            Assess that the connection fails with the error message "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3."
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "FOO,TLSv1.1");
+        assertThrows(SQLException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        // TS.FR.5_3. Create a Connection with the connection property tlsVersions=TLSv1,TLSv1.1.
+        //            Assess that the connection fails with the error message "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3."
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1,TLSv1.1");
+        assertThrows(SQLException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        // TS.FR.6. Create a Connection with the connection property tlsVersions= (empty value).
+        //          Assess that the connection fails with the error message "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv13."
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "");
+        assertThrows(SQLException.class, "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "   ");
+        assertThrows(SQLException.class, "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), ",,,");
+        assertThrows(SQLException.class, "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), ",  ,,");
+        assertThrows(SQLException.class, "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> getConnectionWithProps(props));
+
+        // TS.FR.7. Create a Connection with the connection property tlsVersions=FOO,TLSv1,TLSv1.1,TLSv1.2.
+        //          Assess that the connection is created successfully and it is using TLSv1.2.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "FOO,TLSv1,TLSv1.1,TLSv1.2");
+        con = getConnectionWithProps(props);
+        assertTrue(((MysqlConnection) con).getSession().isSSLEstablished());
+        assertSessionStatusEquals(con.createStatement(), "ssl_version", "TLSv1.2");
+        con.close();
     }
 
 }

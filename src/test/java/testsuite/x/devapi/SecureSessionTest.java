@@ -41,7 +41,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLContext;
 
@@ -59,6 +58,7 @@ import com.mysql.cj.conf.PropertyDefinitions.XdevapiSslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.x.XAuthenticationProvider;
 import com.mysql.cj.protocol.x.XProtocol;
@@ -69,8 +69,6 @@ import com.mysql.cj.xdevapi.Row;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionImpl;
 import com.mysql.cj.xdevapi.SqlResult;
-
-import testsuite.BufferingLogger;
 
 public class SecureSessionTest extends DevApiBaseTestCase {
     final String trustStoreUrl = "file:src/test/config/ssl-test-certs/ca-truststore";
@@ -112,8 +110,8 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             this.sslFreeTestProperties.remove(PropertyKey.clientCertificateKeyStoreUrl.getKeyName());
             this.sslFreeTestProperties.remove(PropertyKey.clientCertificateKeyStoreType.getKeyName());
             this.sslFreeTestProperties.remove(PropertyKey.clientCertificateKeyStorePassword.getKeyName());
-            this.sslFreeTestProperties.remove(PropertyKey.enabledSSLCipherSuites.getKeyName());
-            this.sslFreeTestProperties.remove(PropertyKey.enabledTLSProtocols.getKeyName());
+            this.sslFreeTestProperties.remove(PropertyKey.tlsCiphersuites.getKeyName());
+            this.sslFreeTestProperties.remove(PropertyKey.tlsVersions.getKeyName());
 
             this.sslFreeBaseUrl = this.baseUrl;
             this.sslFreeBaseUrl = this.sslFreeBaseUrl.replaceAll(PropertyKey.xdevapiSslMode.getKeyName() + "=",
@@ -388,18 +386,11 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(this.sslFreeBaseUrl
                 + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.REQUIRED) + makeParam(PropertyKey.xdevapiSslTrustStoreUrl, this.trustStoreUrl)));
 
-        assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(this.sslFreeBaseUrl
-                + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.DISABLED) + makeParam(PropertyKey.xdevapiSslTrustStoreUrl, this.trustStoreUrl)));
-
         Properties props = new Properties(this.sslFreeTestProperties);
         props.setProperty(PropertyKey.xdevapiSslTrustStoreUrl.getKeyName(), this.trustStoreUrl);
         assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
 
         props.setProperty(PropertyKey.xdevapiSslMode.getKeyName(), XdevapiSslMode.REQUIRED.toString());
-        props.setProperty(PropertyKey.xdevapiSslTrustStoreUrl.getKeyName(), this.trustStoreUrl);
-        assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
-
-        props.setProperty(PropertyKey.xdevapiSslMode.getKeyName(), XdevapiSslMode.DISABLED.toString());
         props.setProperty(PropertyKey.xdevapiSslTrustStoreUrl.getKeyName(), this.trustStoreUrl);
         assertThrows(CJCommunicationsException.class, expectedError, () -> this.fact.getSession(props));
     }
@@ -760,14 +751,12 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         testSession.close();
 
         // restricted to TLSv1
-        props.setProperty(PropertyKey.enabledTLSProtocols.getKeyName(), "TLSv1");
-        testSession = this.fact.getSession(props);
-        assertSecureSession(testSession);
-        assertTlsVersion(testSession, "TLSv1");
-        testSession.close();
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1");
+        assertThrows(CJCommunicationsException.class, ".+TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.",
+                () -> this.fact.getSession(props));
 
         // TLSv1.2 should fail with servers compiled with yaSSL
-        props.setProperty(PropertyKey.enabledTLSProtocols.getKeyName(), "TLSv1.2,TLSv1.1,TLSv1");
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1.2,TLSv1.1,TLSv1");
         if (gplWithRSA) {
             testSession = this.fact.getSession(props);
             assertSecureSession(testSession);
@@ -852,13 +841,13 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             props.setProperty(PropertyKey.clientCertificateKeyStorePassword.getKeyName(), this.clientKeyStorePassword);
 
             // 1. Allow only TLS_DHE_RSA_WITH_AES_128_CBC_SHA cipher
-            props.setProperty(PropertyKey.enabledSSLCipherSuites.getKeyName(), "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
+            props.setProperty(PropertyKey.tlsCiphersuites.getKeyName(), "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
             Session sess = this.fact.getSession(props);
             assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
             sess.close();
 
             // 2. Allow only TLS_RSA_WITH_AES_128_CBC_SHA cipher
-            props.setProperty(PropertyKey.enabledSSLCipherSuites.getKeyName(), "TLS_RSA_WITH_AES_128_CBC_SHA");
+            props.setProperty(PropertyKey.tlsCiphersuites.getKeyName(), "TLS_RSA_WITH_AES_128_CBC_SHA");
             sess = this.fact.getSession(props);
             assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "AES128-SHA");
             assertSessionStatusEquals(sess, "ssl_cipher", "");
@@ -975,18 +964,15 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         props.setProperty(PropertyKey.xdevapiSslTrustStoreUrl.getKeyName(), this.trustStoreUrl);
         props.setProperty(PropertyKey.xdevapiSslTrustStorePassword.getKeyName(), this.trustStorePassword);
 
+        Session testSession;
         final ClientFactory cf = new ClientFactory();
 
         // TS.FR.1_1. Create an X DevAPI session using a connection string containing the connection property xdevapi.tls-versions with a single TLS protocol.
         // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
-        Session testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsVersions, "TLSv1"));
-        assertSecureSession(testSession);
-        assertTlsVersion(testSession, "TLSv1");
-
-        assumeTrue(supportsTestCertificates(testSession),
-                "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
-
-        testSession.close();
+        //
+        // UPD: Behaviour was changed by WL#14805.
+        assertThrows(SSLParamsException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.",
+                () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsVersions, "TLSv1")));
 
         // TS.FR.1_2. Create an X DevAPI session using a connection string containing the connection property xdevapi.tls-versions with a valid list of TLS protocols.
         // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
@@ -997,11 +983,11 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
         // TS.FR.1_3. Create an X DevAPI session using a connection properties map containing the connection property xdevapi.tls-versions with a single TLS protocol.
         // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
+        //
+        // UPD: Behaviour was changed by WL#14805.
         props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "TLSv1");
-        testSession = this.fact.getSession(props);
-        assertSecureSession(testSession);
-        assertTlsVersion(testSession, "TLSv1");
-        testSession.close();
+        assertThrows(SSLParamsException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.",
+                () -> this.fact.getSession(props));
 
         // TS.FR.1_4. Create an X DevAPI session using a connection properties map containing the connection property xdevapi.tls-versions with a valid list of TLS protocols.
         // Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable ssl_version for details).
@@ -1012,13 +998,16 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         testSession.close();
 
         // TS.FR.1_5. Repeat the tests TS.FR.1_1 and TS.FR.1_2 using a ClientFactory instead of a SessionFactory.
-        Client cli = cf.getClient(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsVersions, "TLSv1"), "{\"pooling\": {\"enabled\": true}}");
-        testSession = cli.getSession();
-        assertSecureSession(testSession);
-        assertTlsVersion(testSession, "TLSv1");
-        cli.close();
+        //
+        // UPD: Behaviour was changed by WL#14805.
+        assertThrows(SSLParamsException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.", () -> {
+            Client cli1 = cf.getClient(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsVersions, "TLSv1"), "{\"pooling\": {\"enabled\": true}}");
+            cli1.getSession();
+            return null;
+        });
 
-        cli = cf.getClient(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsVersions, "TLSv1.2,TLSv1.1,TLSv1"), "{\"pooling\": {\"enabled\": true}}");
+        Client cli = cf.getClient(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsVersions, "TLSv1.2,TLSv1.1,TLSv1"),
+                "{\"pooling\": {\"enabled\": true}}");
         testSession = cli.getSession();
         assertSecureSession(testSession);
         assertTlsVersion(testSession, "TLSv1.2");
@@ -1026,17 +1015,23 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
         // TS.FR.2_1. Create an X DevAPI session using a connection string containing the connection property xdevapi.tls-versions without any value.
         // Assess that the code terminates with a WrongArgumentException containing the defined message.
-        assertThrows(WrongArgumentException.class, "At least one TLS protocol version must be specified in 'xdevapi.tls-versions' list.",
+        //
+        // UPD: Behaviour was changed by WL#14805.
+        assertThrows(SSLParamsException.class, "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.",
                 () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsVersions, "")));
 
         // TS.FR.2_2. Create an X DevAPI session using a connection properties map containing the connection property xdevapi.tls-versions without any value.
         // Assess that the code terminates with a WrongArgumentException containing the defined message.
+        //
+        // UPD: Behaviour was changed by WL#14805.
         props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "");
-        assertThrows(WrongArgumentException.class, "At least one TLS protocol version must be specified in 'xdevapi.tls-versions' list.",
+        assertThrows(SSLParamsException.class, "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.",
                 () -> this.fact.getSession(props));
 
         // TS.FR.2_3. Repeat the test TS.FR.2_1 using a ClientFactory instead of a SessionFactory.
-        assertThrows(WrongArgumentException.class, "At least one TLS protocol version must be specified in 'xdevapi.tls-versions' list.", () -> {
+        //
+        // UPD: Behaviour was changed by WL#14805.
+        assertThrows(SSLParamsException.class, "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.", () -> {
             Client cli1 = cf.getClient(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsVersions, ""), "{\"pooling\": {\"enabled\": true}}");
             cli1.getSession();
             return null;
@@ -1044,20 +1039,24 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
         // TS.FR.3_1. Create an X DevAPI session using a connection string containing the connection property xdevapi.tls-versions with
         // an invalid value, for example SSLv3. Assess that the code terminates with a WrongArgumentException containing the defined message.
-        assertThrows(WrongArgumentException.class,
-                "'SSLv3' not recognized as a valid TLS protocol version \\(should be one of TLSv1.3, TLSv1.2, TLSv1.1, TLSv1\\).",
+        //
+        // UPD: Behaviour was changed by WL#14805.
+        assertThrows(SSLParamsException.class, "Specified list of TLS versions only contains non valid TLS protocols. Accepted values are TLSv1.2 and TLSv1.3.",
                 () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsVersions, "SSLv3")));
 
         // TS.FR.3_2. Create an X DevAPI session using a connection properties map containing the connection property xdevapi.tls-versions with
         // an invalid value, for example SSLv3. Assess that the code terminates with a WrongArgumentException containing the defined message.
+        //
+        // UPD: Behaviour was changed by WL#14805.
         props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "SSLv3");
-        assertThrows(WrongArgumentException.class,
-                "'SSLv3' not recognized as a valid TLS protocol version \\(should be one of TLSv1.3, TLSv1.2, TLSv1.1, TLSv1\\).",
+        assertThrows(SSLParamsException.class, "Specified list of TLS versions only contains non valid TLS protocols. Accepted values are TLSv1.2 and TLSv1.3.",
                 () -> this.fact.getSession(props));
 
         // TS.FR.3_3. Repeat the test TS.FR.3_1 using a ClientFactory instead of a SessionFactory.
-        assertThrows(WrongArgumentException.class,
-                "'SSLv3' not recognized as a valid TLS protocol version \\(should be one of TLSv1.3, TLSv1.2, TLSv1.1, TLSv1\\).", () -> {
+        //
+        // UPD: Behaviour was changed by WL#14805.
+        assertThrows(SSLParamsException.class, "Specified list of TLS versions only contains non valid TLS protocols. Accepted values are TLSv1.2 and TLSv1.3.",
+                () -> {
                     Client cli1 = cf.getClient(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsVersions, "SSLv3"), "{\"pooling\": {\"enabled\": true}}");
                     cli1.getSession();
                     return null;
@@ -1681,47 +1680,227 @@ public class SecureSessionTest extends DevApiBaseTestCase {
     }
 
     /**
-     * Tests fix for WL#14559, Deprecate TLS 1.0 and 1.1.
+     * Tests fix for WL#14805, Remove support for TLS 1.0 and 1.1.
      * 
      * @throws Exception
      */
     @Test
-    public void testTLSVersionDeprecation() throws Exception {
+    public void testTLSVersionRemoval() throws Exception {
+        assumeTrue(supportsTestCertificates(this.session),
+                "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
+
+        Session sess = null;
         Properties props = new Properties(this.sslFreeTestProperties);
-        props.setProperty(PropertyKey.logger.getKeyName(), BufferingLogger.class.getName());
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
-        Session testSession = null;
-        try {
+        // TS.FR.1_1. Create a Connection with the connection property tlsVersions=TLSv1.2. Assess that the connection is created successfully and it is using TLSv1.2.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1.2");
+        sess = this.fact.getSession(props);
+        assertSecureSession(sess);
+        assertTlsVersion(sess, "TLSv1.2");
+        sess.close();
 
-            // TS.FR1_3.
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "REQUIRED");
-            props.setProperty(PropertyKey.enabledTLSProtocols.getKeyName(), "TLSv1,TLSv1.1");
+        props.remove(PropertyKey.tlsVersions.getKeyName());
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "TLSv1.2");
+        sess = this.fact.getSession(props);
+        assertSecureSession(sess);
+        assertTlsVersion(sess, "TLSv1.2");
+        sess.close();
 
-            BufferingLogger.startLoggingToBuffer();
-            testSession = this.fact.getSession(props);
-            assertTrue(Pattern.matches(".+ This connection is using TLSv.+ which is now deprecated and will be removed in a future release of Connector/J.",
-                    BufferingLogger.getBuffer().toString()));
-            BufferingLogger.dropBuffer();
-            testSession.close();
+        // TS.FR.1_2. Create a Connection with the connection property enabledTLSProtocols=TLSv1.2. Assess that the connection is created successfully and it is using TLSv1.2.
+        props.remove(PropertyKey.xdevapiTlsVersions.getKeyName());
+        props.setProperty("enabledTLSProtocols", "TLSv1.2");
+        sess = this.fact.getSession(props);
+        assertSecureSession(sess);
+        assertTlsVersion(sess, "TLSv1.2");
+        sess.close();
+        props.remove("enabledTLSProtocols");
 
-            // TS.FR1_4.
-            props.remove(PropertyKey.sslMode.getKeyName());
-            props.remove(PropertyKey.enabledTLSProtocols.getKeyName());
-            props.setProperty(PropertyKey.xdevapiSslMode.getKeyName(), "REQUIRED");
-            props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "TLSv1,TLSv1.1");
+        // TS.FR.2_1. Create a Connection with the connection property tlsCiphersuites=[valid-cipher-suite]. Assess that the connection is created successfully and it is using the cipher suite specified.
+        props.setProperty(PropertyKey.tlsCiphersuites.getKeyName(), "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
+        sess = this.fact.getSession(props);
+        assertSecureSession(sess);
+        assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
+        sess.close();
 
-            BufferingLogger.startLoggingToBuffer();
-            testSession = this.fact.getSession(props);
-            assertTrue(Pattern.matches(".+ This connection is using TLSv.+ which is now deprecated and will be removed in a future release of Connector/J.",
-                    BufferingLogger.getBuffer().toString()));
-            BufferingLogger.dropBuffer();
+        props.remove(PropertyKey.tlsCiphersuites.getKeyName());
+        props.setProperty(PropertyKey.xdevapiTlsCiphersuites.getKeyName(), "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
+        sess = this.fact.getSession(props);
+        assertSecureSession(sess);
+        assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
+        sess.close();
 
-        } finally {
-            BufferingLogger.dropBuffer();
-            if (testSession != null) {
-                testSession.close();
-            }
-        }
+        // TS.FR.2_2. Create a Connection with the connection property enabledSSLCipherSuites=[valid-cipher-suite] . Assess that the connection is created successfully and it is using the cipher suite specified.
+        props.remove(PropertyKey.xdevapiTlsCiphersuites.getKeyName());
+        props.setProperty("enabledSSLCipherSuites", "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
+        sess = this.fact.getSession(props);
+        assertSecureSession(sess);
+        assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", "DHE-RSA-AES128-SHA");
+        sess.close();
+        props.remove("enabledSSLCipherSuites");
 
+        // TS.FR.3_1. Create a Connection with the connection property tlsVersions=TLSv1. Assess that the connection fails.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1");
+        assertThrows(CJCommunicationsException.class, ".+TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.remove(PropertyKey.tlsVersions.getKeyName());
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "TLSv1");
+        assertThrows(SSLParamsException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        // TS.FR.3_2. Create a Connection with the connection property tlsVersions=TLSv1.1. Assess that the connection fails.
+        props.remove(PropertyKey.xdevapiTlsVersions.getKeyName());
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1.1");
+        assertThrows(CJCommunicationsException.class, ".+TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.remove(PropertyKey.tlsVersions.getKeyName());
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "TLSv1.1");
+        assertThrows(SSLParamsException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+        props.remove(PropertyKey.xdevapiTlsVersions.getKeyName());
+
+        // TS.FR.3_3. Create a Connection with the connection property enabledTLSProtocols=TLSv1. Assess that the connection fails.
+        props.setProperty("enabledTLSProtocols", "TLSv1");
+        assertThrows(CJCommunicationsException.class, ".+TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+        props.remove("enabledTLSProtocols");
+
+        // TS.FR.3_4. Create a Connection with the connection property enabledTLSProtocols=TLSv1.1. Assess that the connection fails.
+        props.setProperty("enabledTLSProtocols", "TLSv1.1");
+        assertThrows(CJCommunicationsException.class, ".+TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+        props.remove("enabledTLSProtocols");
+
+        // TS.FR.4. Create a Connection with the connection property tlsVersions=TLSv1 and sslMode=DISABLED. Assess that the connection is created successfully and it is not using encryption.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1");
+        props.setProperty(PropertyKey.xdevapiSslMode.getKeyName(), SslMode.DISABLED.name());
+        sess = this.fact.getSession(props);
+        assertNonSecureSession(sess);
+        sess.close();
+        props.remove(PropertyKey.tlsVersions.getKeyName());
+
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "TLSv1");
+        assertThrows(WrongArgumentException.class,
+                "Option '" + PropertyKey.xdevapiTlsVersions.getKeyName() + "' can not be specified when SSL connections are disabled.",
+                () -> this.fact.getSession(props));
+
+        props.remove(PropertyKey.xdevapiTlsVersions.getKeyName());
+        props.remove(PropertyKey.xdevapiSslMode.getKeyName());
+
+        // TS.FR.5_1. Create a Connection with the connection property tlsVersions=FOO,BAR.
+        //            Assess that the connection fails with the error message "Specified list of TLS versions only contains non valid TLS protocols. Accepted values are TLSv1.2 and TLSv1.3."
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "FOO,BAR");
+        assertThrows(CJCommunicationsException.class,
+                ".+Specified list of TLS versions only contains non valid TLS protocols. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "FOO,,,BAR");
+        assertThrows(CJCommunicationsException.class,
+                ".+Specified list of TLS versions only contains non valid TLS protocols. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.remove(PropertyKey.tlsVersions.getKeyName());
+
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "FOO,BAR");
+        assertThrows(SSLParamsException.class,
+                "Specified list of TLS versions only contains non valid TLS protocols. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "FOO,,,BAR");
+        assertThrows(SSLParamsException.class,
+                "Specified list of TLS versions only contains non valid TLS protocols. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.remove(PropertyKey.xdevapiTlsVersions.getKeyName());
+
+        // TS.FR.5_2. Create a Connection with the connection property tlsVersions=FOO,TLSv1.1.
+        //            Assess that the connection fails with the error message "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3."
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "FOO,TLSv1.1");
+        assertThrows(CJCommunicationsException.class, ".+TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "FOO,TLSv1.1");
+        assertThrows(SSLParamsException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+        props.remove(PropertyKey.xdevapiTlsVersions.getKeyName());
+
+        // TS.FR.5_3. Create a Connection with the connection property tlsVersions=TLSv1,TLSv1.1.
+        //            Assess that the connection fails with the error message "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3."
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "TLSv1,TLSv1.1");
+        assertThrows(SSLParamsException.class, "TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+        props.remove(PropertyKey.xdevapiTlsVersions.getKeyName());
+
+        // TS.FR.6. Create a Connection with the connection property tlsVersions= (empty value).
+        //          Assess that the connection fails with the error message "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv13."
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "");
+        assertThrows(SSLParamsException.class, "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "   ");
+        assertThrows(SSLParamsException.class, "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), ",,,");
+        assertThrows(SSLParamsException.class, "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), ",  ,,");
+        assertThrows(SSLParamsException.class, "Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.remove(PropertyKey.xdevapiTlsVersions.getKeyName());
+
+        // TS.FR.7. Create a Connection with the connection property tlsVersions=FOO,TLSv1,TLSv1.1,TLSv1.2.
+        //          Assess that the connection is created successfully and it is using TLSv1.2.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "FOO,TLSv1,TLSv1.1,TLSv1.2");
+        sess = this.fact.getSession(props);
+        assertSecureSession(sess);
+        assertTlsVersion(sess, "TLSv1.2");
+        sess.close();
+
+        props.remove(PropertyKey.tlsVersions.getKeyName());
+        props.setProperty(PropertyKey.xdevapiTlsVersions.getKeyName(), "FOO,TLSv1,TLSv1.1,TLSv1.2");
+        sess = this.fact.getSession(props);
+        assertSecureSession(sess);
+        assertTlsVersion(sess, "TLSv1.2");
+        sess.close();
+        props.remove(PropertyKey.xdevapiTlsVersions.getKeyName());
+
+        // TS.FR.9_1. Create an X DevAPI session with the property tlsVersions=TLSv1,TLSv1.1.
+        //            Assess that the operation fails with the error message TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1,TLSv1.1");
+        assertThrows(CJCommunicationsException.class, ".+TLS protocols TLSv1 and TLSv1.1 are not supported. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        // TS.FR.9_2. Create an Connection X DevAPI session with the property tlsVersions= (empty value).
+        //            Assess that the operation fails with the error message Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv13.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "");
+        assertThrows(CJCommunicationsException.class, ".+Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "   ");
+        assertThrows(CJCommunicationsException.class, ".+Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), ",,,");
+        assertThrows(CJCommunicationsException.class, ".+Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), ",  ,,");
+        assertThrows(CJCommunicationsException.class, ".+Specified list of TLS versions is empty. Accepted values are TLSv1.2 and TLSv1.3.+",
+                () -> this.fact.getSession(props));
+        props.remove(PropertyKey.tlsVersions.getKeyName());
+
+        // TS.FR.10. Create an X DevAPI session with the property tlsVersions=TLSv1.2 and xdevapi.ssl-mode=DISABLED.
+        //           Assess that the session is created successfully and it is not using encryption.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1.2");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        sess = this.fact.getSession(props);
+        assertNonSecureSession(sess);
+        sess.close();
     }
 }

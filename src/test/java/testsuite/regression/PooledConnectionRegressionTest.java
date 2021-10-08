@@ -58,6 +58,7 @@ import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.NativeSession;
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.jdbc.Blob;
 import com.mysql.cj.jdbc.CallableStatementWrapper;
@@ -150,8 +151,8 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
 
         ds.setURL(BaseTestCase.dbUrl);
-        ds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
-        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
+        ds.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.DISABLED);
+        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).setValue(true);
 
         this.cpds = ds;
     }
@@ -368,7 +369,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
     public void testBug35489() throws Exception {
         MysqlConnectionPoolDataSource pds = new MysqlConnectionPoolDataSource();
         pds.setUrl(dbUrl);
-        pds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
+        pds.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.DISABLED);
         pds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
         this.pstmt = pds.getPooledConnection().getConnection().prepareStatement("SELECT 1");
         this.pstmt.execute();
@@ -376,7 +377,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 
         MysqlXADataSource xads = new MysqlXADataSource();
         xads.setUrl(dbUrl);
-        xads.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
+        xads.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.DISABLED);
         xads.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
         this.pstmt = xads.getXAConnection().getConnection().prepareStatement("SELECT 1");
         this.pstmt.execute();
@@ -384,7 +385,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 
         xads = new MysqlXADataSource();
         xads.setUrl(dbUrl);
-        xads.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
+        xads.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.DISABLED);
         xads.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
         xads.getProperty(PropertyKey.pinGlobalTxToPhysicalConnection).setValue(true);
         this.pstmt = xads.getXAConnection().getConnection().prepareStatement("SELECT 1");

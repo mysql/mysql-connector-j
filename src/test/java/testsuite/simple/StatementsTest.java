@@ -82,6 +82,7 @@ import org.junit.jupiter.api.Test;
 import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.MysqlType;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
@@ -284,7 +285,7 @@ public class StatementsTest extends BaseTestCase {
     public void testBinaryResultSetNumericTypes() throws Exception {
         testBinaryResultSetNumericTypesInternal(this.conn);
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         Connection sspsConn = getConnectionWithProps(props);
@@ -462,7 +463,7 @@ public class StatementsTest extends BaseTestCase {
     public void testCancelStatement() throws Exception {
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         Connection cancelConn = null;
 
@@ -683,7 +684,7 @@ public class StatementsTest extends BaseTestCase {
             assertEquals(1, this.rs.getInt(1));
 
             Properties props2 = new Properties();
-            props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props2.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props2.setProperty(PropertyKey.queryTimeoutKillsConnection.getKeyName(), "true");
             final Connection forceCancel = getConnectionWithProps(props2);
@@ -769,7 +770,7 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testHoldingResultSetsOverClose() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.holdResultsOpenOverStatementClose.getKeyName(), "true");
 
@@ -927,7 +928,7 @@ public class StatementsTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.allowMultiQueries.getKeyName(), "true");
 
@@ -1018,7 +1019,7 @@ public class StatementsTest extends BaseTestCase {
     public void testParsedConversionWarning() throws Exception {
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useUsageAdvisor.getKeyName(), "true");
             Connection warnConn = getConnectionWithProps(props);
@@ -1085,7 +1086,7 @@ public class StatementsTest extends BaseTestCase {
         Connection fetchConn = null;
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
 
@@ -1141,7 +1142,7 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testSetObject() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.noDatetimeStringSync.getKeyName(), "true"); // value=true for #5
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
@@ -1190,7 +1191,7 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testSetObjectWithMysqlType() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.noDatetimeStringSync.getKeyName(), "true"); // value=true for #5
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
         Connection conn1 = getConnectionWithProps(props);
@@ -1252,7 +1253,7 @@ public class StatementsTest extends BaseTestCase {
     public void testStatementRewriteBatch() throws Exception {
         for (int j = 0; j < 2; j++) {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
             if (j == 0) {
@@ -1299,7 +1300,7 @@ public class StatementsTest extends BaseTestCase {
 
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
             props.clear();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
             props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "1024");
@@ -1322,7 +1323,7 @@ public class StatementsTest extends BaseTestCase {
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
 
             props.clear();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), j == 0 ? "true" : "false");
             props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
@@ -1518,7 +1519,7 @@ public class StatementsTest extends BaseTestCase {
         createTable("rewriteErrors", "(field1 int not null primary key) ENGINE=MyISAM");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
         props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "5660");
@@ -1786,7 +1787,7 @@ public class StatementsTest extends BaseTestCase {
 
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.queryInterceptors.getKeyName(), ServerStatusDiffInterceptor.class.getName());
 
@@ -1802,7 +1803,7 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testParameterBindings() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
         props.setProperty(PropertyKey.treatUtilDateAsTimestamp.getKeyName(), "false");
@@ -1868,7 +1869,7 @@ public class StatementsTest extends BaseTestCase {
         InputStream stream = new ByteArrayInputStream(streamData.getBytes());
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
@@ -1974,7 +1975,7 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
-        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1"); // ensure charset isn't utf8 here
@@ -1995,7 +1996,7 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNCharacterStream", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props2 = new Properties();
-        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
@@ -2024,7 +2025,7 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNCharacterStreamServer() throws Exception {
         createTable("testSetNCharacterStreamServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
-        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1"); // ensure charset isn't utf8 here
@@ -2042,7 +2043,7 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNCharacterStreamServer", "(c1 LONGTEXT charset utf8) ENGINE=InnoDB");
         Properties props2 = new Properties();
-        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
@@ -2070,7 +2071,7 @@ public class StatementsTest extends BaseTestCase {
         createTable("testSetNClob", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
 
@@ -2107,7 +2108,7 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNClobServer() throws Exception {
         createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
-        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1"); // ensure charset isn't utf8 here
@@ -2135,7 +2136,7 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNClobServer", "(c1 NATIONAL CHARACTER(10), c2 LONGTEXT charset utf8) ENGINE=InnoDB");
         Properties props2 = new Properties();
-        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
@@ -2167,7 +2168,7 @@ public class StatementsTest extends BaseTestCase {
         createTable("testSetNString",
                 "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932 ENGINE=InnoDB");
         Properties props1 = new Properties();
-        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "MS932"); // ensure charset isn't utf8 here
@@ -2189,7 +2190,7 @@ public class StatementsTest extends BaseTestCase {
         createTable("testSetNString",
                 "(c1 NATIONAL CHARACTER(10), c2 NATIONAL CHARACTER(10), " + "c3 NATIONAL CHARACTER(10)) DEFAULT CHARACTER SET cp932 ENGINE=InnoDB");
         Properties props2 = new Properties();
-        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false"); // use client-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
@@ -2218,7 +2219,7 @@ public class StatementsTest extends BaseTestCase {
     public void testSetNStringServer() throws Exception {
         createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props1 = new Properties();
-        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1"); // ensure charset isn't utf8 here
@@ -2236,7 +2237,7 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testSetNStringServer", "(c1 NATIONAL CHARACTER(10)) ENGINE=InnoDB");
         Properties props2 = new Properties();
-        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
@@ -2261,7 +2262,7 @@ public class StatementsTest extends BaseTestCase {
     public void testUpdateNCharacterStream() throws Exception {
         createTable("testUpdateNCharacterStream", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
-        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset isn't utf8 here
@@ -2292,7 +2293,7 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testUpdateNCharacterStream", "(c1 CHAR(10) PRIMARY KEY, c2 CHAR(10)) default character set sjis"); // sjis field
         Properties props2 = new Properties();
-        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "SJIS"); // ensure charset isn't utf8 here
@@ -2325,7 +2326,7 @@ public class StatementsTest extends BaseTestCase {
     public void testUpdateNClob() throws Exception {
         createTable("testUpdateNChlob", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
-        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset isn't utf8 here
@@ -2362,7 +2363,7 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testUpdateNChlob", "(c1 CHAR(10) PRIMARY KEY, c2 CHAR(10)) default character set sjis"); // sjis field
         Properties props2 = new Properties();
-        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "SJIS"); // ensure charset isn't utf8 here
@@ -2397,7 +2398,7 @@ public class StatementsTest extends BaseTestCase {
     public void testUpdateNString() throws Exception {
         createTable("testUpdateNString", "(c1 CHAR(10) PRIMARY KEY, c2 NATIONAL CHARACTER(10)) default character set sjis");
         Properties props1 = new Properties();
-        props1.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props1.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props1.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props1.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8"); // ensure charset is utf8 here
@@ -2428,7 +2429,7 @@ public class StatementsTest extends BaseTestCase {
 
         createTable("testUpdateNString", "(c1 CHAR(10) PRIMARY KEY, c2 CHAR(10)) default character set sjis"); // sjis field
         Properties props2 = new Properties();
-        props2.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props2.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props2.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props2.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // use server-side prepared statement
         props2.setProperty(PropertyKey.characterEncoding.getKeyName(), "SJIS"); // ensure charset isn't utf8 here
@@ -2455,7 +2456,7 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testJdbc4LoadBalancing() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.ha_loadBalanceStrategy.getKeyName(), CountingReBalanceStrategy.class.getName());
         props.setProperty(PropertyKey.loadBalanceAutoCommitStatementThreshold.getKeyName(), "3");
@@ -2995,7 +2996,7 @@ public class StatementsTest extends BaseTestCase {
         createTable("testExecuteLargeBatch", "(id BIGINT AUTO_INCREMENT PRIMARY KEY, n INT)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
@@ -3139,7 +3140,7 @@ public class StatementsTest extends BaseTestCase {
         createTable("testSetObjectPS1", "(id INT, d DATE, t TIME, dt DATETIME, ts TIMESTAMP)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
 
@@ -3180,7 +3181,7 @@ public class StatementsTest extends BaseTestCase {
                 "(IN id INT, IN d DATE, IN t TIME, IN dt DATETIME, IN ts TIMESTAMP) BEGIN " + "INSERT INTO testSetObjectCS1 VALUES (id, d, t, dt, ts); END");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
 
@@ -3223,7 +3224,7 @@ public class StatementsTest extends BaseTestCase {
         createTable("testSetObjectSPS1", "(id INT, d DATE, t TIME, dt DATETIME, ts TIMESTAMP)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
@@ -3248,7 +3249,7 @@ public class StatementsTest extends BaseTestCase {
     @Test
     public void testServPrepStmtSetObjectAndNewUnsupportedTypes() throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
@@ -3479,7 +3480,7 @@ public class StatementsTest extends BaseTestCase {
      */
     private void validateTestDataOffsetDTTypes(String tableName, int expectedRowCount) throws Exception {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.preserveInstants.getKeyName(), "false");
         Connection testConn = getConnectionWithProps(timeZoneFreeDbUrl, props);
@@ -3896,7 +3897,7 @@ public class StatementsTest extends BaseTestCase {
         boolean cachePS = false;
         do {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
             props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), Boolean.toString(cachePS));

@@ -41,6 +41,7 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.util.Base64Decoder;
 import com.mysql.cj.util.SearchMode;
@@ -162,7 +163,7 @@ public class StringRegressionTest extends BaseTestCase {
             System.setErr(newErr);
 
             Properties props = new Properties();
-            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf8");
             getConnectionWithProps(props).close();
             System.setOut(oldOut);
@@ -197,7 +198,7 @@ public class StringRegressionTest extends BaseTestCase {
                 "(`id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT, `text` TEXT NOT NULL," + "PRIMARY KEY(`id`)) CHARACTER SET utf8 COLLATE utf8_general_ci");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf8");
 

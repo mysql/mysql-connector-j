@@ -38,10 +38,12 @@ import java.sql.SQLException;
 import java.util.Arrays;
 
 import com.mysql.cj.MysqlxSession;
+import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.Util;
 import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.PreparableStatement;
 import com.mysql.cj.xdevapi.Row;
@@ -224,6 +226,12 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
             return (StringUtils.isNullOrEmpty(r.getString(1)) && r.getString(2).contains("ssl-test-certs") || r.getString(1).contains("ssl-test-certs"));
         }
         return false;
+    }
+
+    protected boolean supportsTLSv1_2(ServerVersion version) throws Exception {
+        return version.meetsMinimum(new ServerVersion(5, 7, 28))
+                || version.meetsMinimum(new ServerVersion(5, 6, 46)) && !version.meetsMinimum(new ServerVersion(5, 7, 0))
+                || version.meetsMinimum(new ServerVersion(5, 6, 0)) && Util.isEnterpriseEdition(version.toString());
     }
 
     int getPreparedStatementId(PreparableStatement<?> stmt) {

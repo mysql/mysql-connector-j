@@ -71,6 +71,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.ConnectionUrlParser;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.NonRegisteringDriver;
@@ -380,7 +381,7 @@ public abstract class BaseTestCase {
 
     protected Connection getNewConnection() throws SQLException {
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         return DriverManager.getConnection(dbUrl, props);
     }
@@ -637,7 +638,7 @@ public abstract class BaseTestCase {
         this.createdObjects = new ArrayList<>();
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false"); // testsuite is built upon non-SSL default connection
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name()); // testsuite is built upon non-SSL default connection
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.createDatabaseIfNotExist.getKeyName(), "true");
         if (StringUtils.isNullOrEmpty(mainConnectionUrl.getDatabase())) {
@@ -1284,4 +1285,18 @@ public abstract class BaseTestCase {
         ResultSet rs1 = st.executeQuery("SHOW VARIABLES LIKE 'caching_sha2_password_private_key_path'");
         return rs1.next() && rs1.getString(2).contains("ssl-test-certs");
     }
+
+    protected boolean supportsTLSv1_2(ServerVersion version) throws Exception {
+        return version.meetsMinimum(new ServerVersion(5, 7, 28))
+                || version.meetsMinimum(new ServerVersion(5, 6, 46)) && !version.meetsMinimum(new ServerVersion(5, 7, 0))
+                || version.meetsMinimum(new ServerVersion(5, 6, 0)) && Util.isEnterpriseEdition(version.toString());
+
+    }
+
+    protected void assertSessionStatusEquals(Statement st, String statusVariable, String expected) throws Exception {
+        ResultSet rs1 = st.executeQuery("SHOW SESSION STATUS LIKE '" + statusVariable + "'");
+        assertTrue(rs1.next());
+        assertEquals(expected, rs1.getString(2));
+    }
+
 }

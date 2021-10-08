@@ -71,6 +71,7 @@ import org.junit.jupiter.api.Test;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.conf.AbstractRuntimeProperty;
 import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
 import com.mysql.cj.jdbc.JdbcConnection;
@@ -133,8 +134,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testBug4808() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
-        ds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
-        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
+        ds.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.DISABLED);
+        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).setValue(true);
         PooledConnection closeMeTwice = ds.getPooledConnection();
         closeMeTwice.close();
         closeMeTwice.close();
@@ -341,8 +342,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testCSC4616() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
-        ds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
-        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
+        ds.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.DISABLED);
+        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).setValue(true);
         PooledConnection pooledConn = ds.getPooledConnection();
         Connection physConn = pooledConn.getConnection();
         Statement physStatement = physConn.createStatement();
@@ -426,8 +427,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testBug32101() throws Exception {
         MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
         ds.setURL(BaseTestCase.dbUrl);
-        ds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
-        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
+        ds.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.DISABLED);
+        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).setValue(true);
         PooledConnection pc = ds.getPooledConnection();
         assertNotNull(pc.getConnection().prepareStatement("SELECT 1"));
         assertNotNull(pc.getConnection().prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
@@ -452,8 +453,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
         dsUrl += "connectTimeout=" + nonDefaultConnectTimeout;
         cpds.setUrl(dsUrl);
-        cpds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
-        cpds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
+        cpds.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.DISABLED);
+        cpds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).setValue(true);
 
         Connection dsConn = cpds.getPooledConnection().getConnection();
         int configuredConnectTimeout = ((JdbcConnection) dsConn).getPropertySet().getIntegerProperty(PropertyKey.connectTimeout).getValue();
@@ -466,8 +467,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testBug42267() throws Exception {
         MysqlDataSource ds = new MysqlDataSource();
         ds.setUrl(dbUrl);
-        ds.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
-        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
+        ds.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.DISABLED);
+        ds.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).setValue(true);
         Connection c = ds.getConnection();
         String query = "select 1,2,345";
         PreparedStatement ps = c.prepareStatement(query);
@@ -487,8 +488,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
     public void testBug72890() throws Exception {
         MysqlXADataSource myDs = new MysqlXADataSource();
         myDs.setUrl(BaseTestCase.dbUrl);
-        myDs.getBooleanProperty(PropertyKey.useSSL.getKeyName()).setValue(false);
-        myDs.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName()).setValue(true);
+        myDs.<SslMode>getEnumProperty(PropertyKey.sslMode).setValue(SslMode.DISABLED);
+        myDs.getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).setValue(true);
 
         try {
             final Xid xid = new MysqlXid("72890".getBytes(), "72890".getBytes(), 1);

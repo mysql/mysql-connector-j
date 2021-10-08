@@ -51,6 +51,7 @@ import java.util.TimeZone;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.MysqlType;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.util.TimeUtil;
 
@@ -288,7 +289,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
         boolean withFract = versionMeetsMinimum(5, 6, 4); // fractional seconds are not supported in previous versions
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.connectionTimeZone.getKeyName(), "LOCAL");
         for (boolean useSSPS : new boolean[] { false, true }) {
@@ -1006,7 +1007,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
         try {
 
             Properties props = new Properties();
-            props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             for (boolean yearIsDateType : new boolean[] { true, false }) {
                 for (boolean useSSPS : new boolean[] { false, true }) {
@@ -1053,7 +1054,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
         Connection con = null;
         try {
             Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
             con = getConnectionWithProps(props);
@@ -1112,7 +1113,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
         createTable("testBug101413", "(createtime1 TIMESTAMP, createtime2 DATETIME)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         for (boolean forceConnectionTimeZoneToSession : new boolean[] { false, true }) {
             for (boolean preserveInstants : new boolean[] { false, true }) {
@@ -1152,7 +1153,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
         this.stmt.executeUpdate("INSERT INTO testBug104559 VALUES (null)");
 
         Properties props = new Properties();
-        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         Connection con = getConnectionWithProps(props);
         Statement st = con.createStatement();
