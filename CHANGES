@@ -3,6 +3,8 @@
 
 Version 8.0.28
 
+  - Fix for Bug#33488091, Remove all references to xdevapi.useAsyncProtocol from properties and code.
+
   - WL#14805, Remove support for TLS 1.0 and 1.1.
 
   - WL#14650, Support for MFA (multi factor authentication) authentication.

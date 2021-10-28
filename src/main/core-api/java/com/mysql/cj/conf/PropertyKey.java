@@ -272,7 +272,6 @@ public enum PropertyKey {
     xdevapiSslTrustStoreUrl("xdevapi.ssl-truststore", "xdevapiSslTruststore", true), //
     xdevapiTlsCiphersuites("xdevapi.tls-ciphersuites", "xdevapiTlsCiphersuites", true), //
     xdevapiTlsVersions("xdevapi.tls-versions", "xdevapiTlsVersions", true), //
-    xdevapiUseAsyncProtocol("xdevapi.useAsyncProtocol", "xdevapiUseAsyncProtocol", true), //
 
     yearIsDateType("yearIsDateType", true), //
     zeroDateTimeBehavior("zeroDateTimeBehavior", true) //
