@@ -68,14 +68,11 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
 
     private byte[] streamConvertBuf = null;
 
-    private boolean usingAnsiMode;
-
     public AbstractPreparedQuery(NativeSession sess) {
         super(sess);
 
         this.autoClosePStmtStreams = this.session.getPropertySet().getBooleanProperty(PropertyKey.autoClosePStmtStreams);
         this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyKey.useStreamLengthsInPrepStmts);
-        this.usingAnsiMode = !this.session.getServerSession().useAnsiQuotedIdentifiers();
     }
 
     @Override
@@ -400,14 +397,14 @@ public abstract class AbstractPreparedQuery<T extends QueryBindings<?>> extends 
                 packet.writeInteger(IntegerDataType.INT1, (byte) '0');
                 lastwritten = i + 1;
             } else {
-                if ((b == '\\') || (b == '\'') || (!this.usingAnsiMode && b == '"')) {
+                if ((b == '\\') || (b == '\'')) {
                     // write stuff not yet written
                     if (i > lastwritten) {
                         packet.writeBytes(StringLengthDataType.STRING_FIXED, buf, lastwritten, i - lastwritten);
                     }
 
                     // write escape
-                    packet.writeInteger(IntegerDataType.INT1, (byte) '\\');
+                    packet.writeInteger(IntegerDataType.INT1, b);
                     lastwritten = i; // not i+1 as b wasn't written.
                 }
             }

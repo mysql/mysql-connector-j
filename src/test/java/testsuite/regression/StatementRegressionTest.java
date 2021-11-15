@@ -11731,4 +11731,63 @@ public class StatementRegressionTest extends BaseTestCase {
             return super.preProcess(queryPacket);
         }
     }
+
+    @Test
+    public void testBlobWithSJIS() throws Exception {
+        createTable("testBlobWithSJIS", "(a SERIAL, b BLOB)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+
+        String sqlMode = getMysqlVariable("sql_mode");
+        sqlMode = removeSqlMode("ANSI_QUOTES", sqlMode);
+        sqlMode = removeSqlMode("NO_BACKSLASH_ESCAPES", sqlMode);
+        if (sqlMode.length() > 0) {
+            sqlMode += ",";
+        }
+
+        byte[] data1 = new byte[20];
+        data1[0] = -21;
+        data1[1] = '\'';
+        data1[2] = '"';
+        data1[3] = '\b';
+        data1[4] = '\n';
+        data1[5] = '\r';
+        data1[6] = '\t';
+        data1[7] = 26; // \Z ASCII 26 (Control+Z)
+        data1[8] = '\\';
+        data1[9] = '%'; // \% A % character; see note following the table
+        data1[10] = '_'; // \_ A _ character; see note following the table
+        data1[11] = 39; // \'
+
+        for (boolean useSSPS : new boolean[] { false, true }) {
+            for (String mode : new String[] { "", "ANSI_QUOTES", "NO_BACKSLASH_ESCAPES", "ANSI_QUOTES,NO_BACKSLASH_ESCAPES" }) {
+                for (String enc : new String[] { "SJIS", "UTF-8" }) {
+                    props.setProperty(PropertyKey.characterEncoding.getKeyName(), enc);
+                    props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+                    props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode='" + sqlMode + mode + "'");
+
+                    Connection con = getConnectionWithProps(props);
+                    Statement st = con.createStatement();
+
+                    st.executeUpdate("truncate table testBlobWithSJIS");
+
+                    PreparedStatement ps1 = con.prepareStatement("INSERT INTO testBlobWithSJIS (b) VALUES(?)");
+                    Blob blob = con.createBlob();
+                    blob.setBytes(1, data1);
+                    ps1.setBlob(1, blob);
+                    ps1.executeUpdate();
+
+                    this.rs = st.executeQuery("SELECT b FROM testBlobWithSJIS");
+                    assertTrue(this.rs.next());
+                    byte[] data2 = this.rs.getBytes(1);
+                    assertTrue(Arrays.equals(data1, data2));
+                    assertFalse(this.rs.next());
+
+                    con.close();
+                }
+            }
+        }
+    }
 }
