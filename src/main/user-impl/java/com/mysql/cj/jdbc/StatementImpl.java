@@ -1735,7 +1735,7 @@ public class StatementImpl implements JdbcStatement {
                 return null;
             }
 
-            SQLWarning pendingWarningsFromServer = this.session.getProtocol().convertShowWarningsToSQLWarnings(0, false);
+            SQLWarning pendingWarningsFromServer = this.session.getProtocol().convertShowWarningsToSQLWarnings(false);
 
             if (this.warningChain != null) {
                 this.warningChain.setNextWarning(pendingWarningsFromServer);

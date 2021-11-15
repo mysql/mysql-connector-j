@@ -1237,7 +1237,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
         }
     }
 
-    @Test
     private void testHintsSyntax(String query, boolean processesHint, boolean warningExpected) throws Exception {
         this.stmt.clearWarnings();
         this.rs = this.stmt.executeQuery(query);

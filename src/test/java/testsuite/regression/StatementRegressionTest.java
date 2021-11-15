@@ -142,11 +142,13 @@ import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
 import com.mysql.cj.jdbc.result.ResultSetInternalMethods;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.protocol.ColumnDefinition;
+import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.protocol.ResultsetRows;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.a.NativeServerSession;
 import com.mysql.cj.util.LRUCache;
+import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TimeUtil;
 
 import testsuite.BaseQueryInterceptor;
@@ -11674,5 +11676,59 @@ public class StatementRegressionTest extends BaseTestCase {
 
             testConn.close();
         } while ((useSPS = !useSPS) || (readOnly = !readOnly));
+    }
+
+    /**
+     * Tests fix for Bug#101389 (32089018), GETWARNINGS SHOULD CHECK WARNING COUNT BEFORE SENDING SHOW.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug101389() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug101389QueryInterceptor.class.getName());
+
+        boolean useSPS = false;
+        do {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+
+            Bug101389QueryInterceptor.enabled = false; // some warnings are expected here when running against old server versions
+            java.sql.Connection testConn = getConnectionWithProps(props);
+
+            Bug101389QueryInterceptor.enabled = true;
+            Statement st = testConn.createStatement();
+            st.executeQuery("SELECT 1 FROM dual;");
+            st.getWarnings();
+
+            PreparedStatement ps = testConn.prepareStatement("SELECT 1 FROM dual;");
+            ps.execute();
+            ps.getWarnings();
+
+            testConn.close();
+        } while ((useSPS = !useSPS));
+
+    }
+
+    public static class Bug101389QueryInterceptor extends BaseQueryInterceptor {
+        public static boolean enabled = false;
+
+        @Override
+        public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
+            if (enabled) {
+                assertFalse(sql.get().contains("SHOW WARNINGS"), "Unexpected [SHOW WARNINGS] was issued");
+            }
+            return super.preProcess(sql, interceptedQuery);
+        }
+
+        @Override
+        public <M extends Message> M preProcess(M queryPacket) {
+            if (enabled) {
+                String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
+                assertFalse(sql.contains("SHOW WARNINGS"), "Unexpected [SHOW WARNINGS] was issued");
+            }
+            return super.preProcess(queryPacket);
+        }
     }
 }

@@ -9894,25 +9894,37 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug88227QueryInterceptor.class.getName());
+        Bug88227QueryInterceptor.enabled = false; // some warnings are expected here when running against old server versions
         java.sql.Connection testConn = getConnectionWithProps(props);
-        Bug88227QueryInterceptor.mayHaveWarnings = false;
+        Bug88227QueryInterceptor.enabled = true;
         testConn.getTransactionIsolation();
         testConn.isReadOnly();
         testConn.close();
     }
 
     public static class Bug88227QueryInterceptor extends BaseQueryInterceptor {
-        public static boolean mayHaveWarnings = true;
+        public static boolean enabled = false;
 
         @Override
         public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
-            assertFalse(sql.get().contains("SHOW WARNINGS"), "Unexpected [SHOW WARNINGS] was issued");
+            if (enabled) {
+                assertFalse(sql.get().contains("SHOW WARNINGS"), "Unexpected [SHOW WARNINGS] was issued");
+            }
             return super.preProcess(sql, interceptedQuery);
         }
 
         @Override
+        public <M extends Message> M preProcess(M queryPacket) {
+            if (enabled) {
+                String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
+                assertFalse(sql.contains("SHOW WARNINGS"), "Unexpected [SHOW WARNINGS] was issued");
+            }
+            return super.preProcess(queryPacket);
+        }
+
+        @Override
         public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
-            if (!mayHaveWarnings) {
+            if (enabled) {
                 assertEquals(0, ((NativeSession) interceptedQuery.getSession()).getProtocol().getWarningCount(), "Warnings while executing [" + sql + "]");
             }
             return super.postProcess(sql, interceptedQuery, originalResultSet, serverSession);

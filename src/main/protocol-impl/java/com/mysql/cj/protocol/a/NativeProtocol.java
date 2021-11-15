@@ -1935,7 +1935,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     public void scanForAndThrowDataTruncation() {
         if (this.streamingData == null && this.propertySet.getBooleanProperty(PropertyKey.jdbcCompliantTruncation).getValue() && getWarningCount() > 0) {
             int warningCountOld = getWarningCount();
-            convertShowWarningsToSQLWarnings(getWarningCount(), true);
+            convertShowWarningsToSQLWarnings(true);
             setWarningCount(warningCountOld);
         }
     }
@@ -2085,14 +2085,16 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      * If 'forTruncationOnly' is true, only looks for truncation warnings, and
      * actually throws DataTruncation as an exception.
      * 
-     * @param warningCountIfKnown
-     *            the warning count (if known), otherwise set it to 0.
      * @param forTruncationOnly
      *            if this method should only scan for data truncation warnings
      * 
      * @return the SQLWarning chain (or null if no warnings)
      */
-    public SQLWarning convertShowWarningsToSQLWarnings(int warningCountIfKnown, boolean forTruncationOnly) {
+    public SQLWarning convertShowWarningsToSQLWarnings(boolean forTruncationOnly) {
+        if (this.warningCount == 0) {
+            return null;
+        }
+
         SQLWarning currentWarning = null;
         ResultsetRows rows = null;
 
@@ -2106,7 +2108,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
              */
             NativePacketPayload resultPacket = sendCommand(getCommandBuilder().buildComQuery(getSharedSendPacket(), "SHOW WARNINGS"), false, 0);
 
-            Resultset warnRs = readAllResults(-1, warningCountIfKnown > 99 /* stream large warning counts */, resultPacket, false, null,
+            Resultset warnRs = readAllResults(-1, this.warningCount > 99 /* stream large warning counts */, resultPacket, false, null,
                     new ResultsetFactory(Type.FORWARD_ONLY, Concurrency.READ_ONLY));
 
             int codeFieldIndex = warnRs.getColumnDefinition().findColumn("Code", false, 1) - 1;
