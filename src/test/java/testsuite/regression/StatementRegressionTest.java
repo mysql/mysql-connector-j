@@ -11790,4 +11790,40 @@ public class StatementRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Test fix for Bug#105211 (33468860), class java.time.LocalDate cannot be cast to class java.sql.Date.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug105211() throws Exception {
+        createTable("testBug105211", "(dt date)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+
+        boolean useSPS = false;
+        do {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+
+            Connection con = getConnectionWithProps(props);
+            this.pstmt = con.prepareStatement("insert into testBug105211(dt) values(?)");
+            con.setAutoCommit(false);
+
+            for (int i = 0; i <= 1000; i++) {
+                this.pstmt.setObject(1, LocalDate.now());
+                this.pstmt.addBatch();
+                if (i % 100 == 0) {
+                    this.pstmt.executeBatch();
+                    this.pstmt.clearBatch();
+                }
+            }
+            con.commit();
+
+            con.close();
+        } while (useSPS = !useSPS);
+    }
 }

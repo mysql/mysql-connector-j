@@ -34,7 +34,6 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.sql.Date;
 import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.sql.Time;
@@ -760,7 +759,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                             batchedStatement.setTime(batchedParamIndex++, (Time) paramArg[j].value);
                             break;
                         case MysqlType.FIELD_TYPE_DATE:
-                            batchedStatement.setDate(batchedParamIndex++, (Date) paramArg[j].value);
+                            batchedStatement.setObject(batchedParamIndex++, paramArg[j].value, MysqlType.DATE);
                             break;
                         case MysqlType.FIELD_TYPE_DATETIME:
                             batchedStatement.setObject(batchedParamIndex++, paramArg[j].value);

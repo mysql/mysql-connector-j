@@ -3,6 +3,8 @@
 
 Version 8.0.28
 
+  - Fix for Bug#105211 (33468860), class java.time.LocalDate cannot be cast to class java.sql.Date.
+
   - Fix for Bug#101389 (32089018), GETWARNINGS SHOULD CHECK WARNING COUNT BEFORE SENDING SHOW.
 
   - Fix for Bug#33488091, Remove all references to xdevapi.useAsyncProtocol from properties and code.
