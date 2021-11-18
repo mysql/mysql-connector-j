@@ -11826,4 +11826,51 @@ public class StatementRegressionTest extends BaseTestCase {
             con.close();
         } while (useSPS = !useSPS);
     }
+
+    /**
+     * Test fix for Bug#84365 (33425867), INSERT..VALUE with VALUES function lead to a StringIndexOutOfBoundsException.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug84365() throws Exception {
+        createTable("testBug84365", "(id int(11) NOT NULL, name varchar(25) DEFAULT NULL, PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+
+        for (boolean useSSPS : new boolean[] { false, true }) {
+
+            this.stmt.executeUpdate("truncate table testBug84365");
+
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
+            Connection testConn = getConnectionWithProps(props);
+
+            PreparedStatement st = testConn.prepareStatement("insert into testBug84365(id, name) VALUES(?,?) on duplicate key update id = values(id) + 1");
+            st.setInt(1, 1);
+            st.setString(2, "Name1");
+            st.execute();
+            st.close();
+
+            st = testConn.prepareStatement("insert into testBug84365(id, name) VALUE(?,?) on duplicate key update id = values(id) + 1");
+            st.setInt(1, 2);
+            st.setString(2, "Name2");
+            st.execute();
+            st.close();
+
+            st = testConn.prepareStatement("insert into testBug84365 set id = 2 on duplicate key update id = values(id) + 1");
+            st.execute();
+
+            this.rs = testConn.createStatement().executeQuery("select * from testBug84365 order by id");
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt("id"));
+            assertEquals("Name1", this.rs.getString("name"));
+            assertTrue(this.rs.next());
+            assertEquals(3, this.rs.getInt("id"));
+            assertEquals("Name2", this.rs.getString("name"));
+            assertFalse(this.rs.next());
+        }
+    }
 }

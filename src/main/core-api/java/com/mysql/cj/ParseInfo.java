@@ -244,12 +244,19 @@ public class ParseInfo {
         int indexOfValues = -1;
         int valuesSearchStart = this.statementStartPos;
 
+        int indexOfFirstEqualsChar = StringUtils.indexOfIgnoreCase(valuesSearchStart, sql, "=", quoteCharStr, quoteCharStr, SearchMode.__MRK_COM_MYM_HNT_WS);
+
         while (indexOfValues == -1) {
-            // TODO: also support "VALUE" clause
+            // "VALUE" is a synonym of "VALUES" clause, so checking for the first one
             if (quoteCharStr.length() > 0) {
-                indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, sql, "VALUES", quoteCharStr, quoteCharStr, SearchMode.__MRK_COM_MYM_HNT_WS);
+                indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, sql, "VALUE", quoteCharStr, quoteCharStr, SearchMode.__MRK_COM_MYM_HNT_WS);
             } else {
-                indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, sql, "VALUES");
+                indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, sql, "VALUE");
+            }
+
+            if (indexOfFirstEqualsChar > 0 && indexOfValues > indexOfFirstEqualsChar) {
+                // VALUES clause always precedes the first '=' occurrence, otherwise it's a values() function
+                indexOfValues = -1;
             }
 
             // TODO: this doesn't support queries like "INSERT INTO t /* foo */VALUES/* bar */(...)" although its valid. Replace by StringInspector. 
