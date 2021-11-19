@@ -3,6 +3,9 @@
 
 Version 8.0.28
 
+  - Fix for Bug#104067 (33054827), No reset autoCommit after unknown issue occurs.
+    Thanks to Tingyu Wei for his contribution.
+
   - Fix for Bug#85223 (25656020), MYSQLSQLXML SETSTRING CRASH.
 
   - Fix for Bug#84365 (33425867), INSERT..VALUE with VALUES function lead to a StringIndexOutOfBoundsException.
