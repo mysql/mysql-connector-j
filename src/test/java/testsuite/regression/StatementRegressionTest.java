@@ -11873,4 +11873,29 @@ public class StatementRegressionTest extends BaseTestCase {
             assertFalse(this.rs.next());
         }
     }
+
+    /**
+     * Test fix for Bug#85223 (25656020), MYSQLSQLXML SETSTRING CRASH.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug85223() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+
+        String elementString = "<Person ID=\"1\"><PersonType>M</PersonType><FirstName>FName</FirstName><LastName>LName</LastName></Person>";
+        Connection con = getConnectionWithProps(props);
+        PreparedStatement pst = con.prepareStatement("SELECT ExtractValue(?,?) as val1");
+        SQLXML xml = con.createSQLXML();
+        xml.setString(elementString);
+        pst.setSQLXML(1, xml);
+        pst.setString(2, "/Person/LastName");
+        pst.execute();
+        this.rs = pst.getResultSet();
+        this.rs.next();
+        String value = this.rs.getString(1);
+        assertEquals("LName", value);
+    }
 }

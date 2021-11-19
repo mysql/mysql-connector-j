@@ -404,7 +404,7 @@ public class MysqlSQLXML implements SQLXML {
 
     protected synchronized Reader serializeAsCharacterStream() throws SQLException {
         checkClosed();
-        if (this.workingWithResult) {
+        if (this.workingWithResult || this.owningResultSet == null) {
             // figure out what kind of result
             if (this.stringRep != null) {
                 return new StringReader(this.stringRep);

@@ -3,6 +3,8 @@
 
 Version 8.0.28
 
+  - Fix for Bug#85223 (25656020), MYSQLSQLXML SETSTRING CRASH.
+
   - Fix for Bug#84365 (33425867), INSERT..VALUE with VALUES function lead to a StringIndexOutOfBoundsException.
 
   - Fix for Bug#105211 (33468860), class java.time.LocalDate cannot be cast to class java.sql.Date.
