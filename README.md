@@ -53,8 +53,8 @@ There are a few ways to contribute to the Connector/J code. Please refer to the 
 * [MySQL Connector/J, JDBC and Java forum](https://forums.mysql.com/list.php?39).
 * [`#connectors` channel in MySQL Community Slack](https://mysqlcommunity.slack.com/messages/connectors). ([Sign-up](https://lefred.be/mysql-community-on-slack/) required if you do not have an Oracle account.)
 * [@MySQL on Twitter](https://twitter.com/MySQL).
-* [MySQL and Java Mailing Lists](https://lists.mysql.com/java).
-* [InsideMySQL.com Connectors Blog](https://insidemysql.com/category/mysql-development/connectors/).
+* [MySQL Blog](https://blogs.oracle.com/mysql/).
+* [MySQL Connectors Blog archive](https://dev.mysql.com/blog-archive/?cat=Connectors%20%2F%20Languages).
 * [MySQL Bugs Database](https://bugs.mysql.com/).
 
 For more information about this and other MySQL products, please visit [MySQL Contact & Questions](https://www.mysql.com/about/contact/).

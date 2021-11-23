@@ -1302,6 +1302,9 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             </and>
         </condition>
 
+        <!-- ant 1.10.10 and above print report summaries to the console from where test counts can be retrieved. -->
+        <antversion property="com.mysql.cj.testsuite.ant.version" atleast="1.10.10" />
+
         <junitlauncher haltOnFailure="false" printSummary="true" failureProperty="com.mysql.cj.testsuite.junit.fail">
             <classpath refid="com.mysql.cj.testsuite.build.classpath" />
 
@@ -1314,7 +1317,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
                     <syspropertyset refid="junit.system.properties" />
                 </fork>
-                <listener classname="testsuite.JUnitSummary" />
+                <listener classname="testsuite.JUnitSummary" unless="com.mysql.cj.testsuite.ant.version" />
                 <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
                 <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
             </test>
@@ -1328,7 +1331,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
                     <syspropertyset refid="junit.system.properties" />
                 </fork>
-                <listener classname="testsuite.JUnitSummary" />
+                <listener classname="testsuite.JUnitSummary" unless="com.mysql.cj.testsuite.ant.version" />
                 <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
                 <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
             </test>
@@ -1343,7 +1346,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
                     <syspropertyset refid="junit.system.properties" />
                 </fork>
-                <listener classname="testsuite.JUnitSummary" />
+                <listener classname="testsuite.JUnitSummary" unless="com.mysql.cj.testsuite.ant.version" />
                 <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
                 <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
             </testclasses>
