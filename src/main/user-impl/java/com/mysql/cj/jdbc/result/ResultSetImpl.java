@@ -371,6 +371,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean absolute(int row) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (!hasRows()) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            }
+
             if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
@@ -419,6 +424,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public void afterLast() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (!hasRows()) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            }
+
             if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
@@ -435,6 +445,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public void beforeFirst() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (!hasRows()) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            }
+
             if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
@@ -560,18 +575,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         throw new NotUpdatable(Messages.getString("NotUpdatable.0"));
     }
 
-    /*
-     * /**
-     * TODO: Required by JDBC spec
-     */
-    /*
-     * protected void finalize() throws Throwable {
-     * if (!this.isClosed) {
-     * realClose(false);
-     * }
-     * }
-     */
-
     @Override
     public int findColumn(String columnName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
@@ -590,6 +593,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean first() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (!hasRows()) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            }
+
             if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
@@ -1590,6 +1598,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     public int getRow() throws SQLException {
         checkClosed();
 
+        if (!hasRows()) {
+            throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                    getExceptionInterceptor());
+        }
+
         int currentRowNumber = this.rowData.getPosition();
         int row = 0;
 
@@ -1692,15 +1705,22 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean isAfterLast() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            boolean b = this.rowData.isAfterLast();
-
-            return b;
+            if (!hasRows()) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            }
+            return this.rowData.isAfterLast();
         }
     }
 
     @Override
     public boolean isBeforeFirst() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (!hasRows()) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            }
+
             return this.rowData.isBeforeFirst();
         }
     }
@@ -1708,6 +1728,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean isFirst() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (!hasRows()) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            }
+
             return this.rowData.isFirst();
         }
     }
@@ -1715,6 +1740,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean isLast() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (!hasRows()) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            }
+
             return this.rowData.isLast();
         }
     }
@@ -1733,6 +1763,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean last() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (!hasRows()) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            }
+
             if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
@@ -1765,13 +1800,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean next() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-
-            boolean b;
-
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
+
+            boolean b;
 
             if (this.rowData.size() == 0) {
                 b = false;
@@ -1839,6 +1873,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean previous() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (!hasRows()) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            }
+
             if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
@@ -1961,6 +2000,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public boolean relative(int rows) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            if (!hasRows()) {
+                throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            }
+
             if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }

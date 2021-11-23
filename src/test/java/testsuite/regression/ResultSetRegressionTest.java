@@ -8058,4 +8058,67 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(boolValues[i], this.rs.getBoolean(2));
         }
     }
+
+    /**
+     * Tests for Bug#105197 (33461744), Statement.executeQuery() may return non-navigable ResultSet.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug105197() throws Exception {
+        createProcedure("testBug105197Proc", "() BEGIN END");
+        this.rs = this.stmt.executeQuery("CALL testBug105197Proc()");
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.absolute(1);
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.relative(1);
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.getRow();
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.beforeFirst();
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.isBeforeFirst();
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.first();
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.isFirst();
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.previous();
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.next();
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.last();
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.isLast();
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.afterLast();
+            return null;
+        });
+        assertThrows(SQLException.class, "Not a navigable ResultSet\\.", () -> {
+            this.rs.isAfterLast();
+            return null;
+        });
+    }
 }

@@ -3,6 +3,8 @@
 
 Version 8.0.28
 
+  - Fix for Bug#105197 (33461744), Statement.executeQuery() may return non-navigable ResultSet.
+
   - Fix for Bug#105323 (33507321), README.md contains broken links.
 
   - Fix for Bug#96900 (30355150), STATEMENT.CANCEL()CREATE A DATABASE CONNECTION BUT DOES NOT CLOSE THE CONNECTION.
