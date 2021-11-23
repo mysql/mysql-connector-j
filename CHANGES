@@ -3,6 +3,8 @@
 
 Version 8.0.28
 
+  - Fix for Bug#96900 (30355150), STATEMENT.CANCEL()CREATE A DATABASE CONNECTION BUT DOES NOT CLOSE THE CONNECTION.
+
   - Fix for Bug#104067 (33054827), No reset autoCommit after unknown issue occurs.
     Thanks to Tingyu Wei for his contribution.
 

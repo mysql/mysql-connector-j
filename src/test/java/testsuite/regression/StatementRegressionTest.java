@@ -11898,4 +11898,46 @@ public class StatementRegressionTest extends BaseTestCase {
         String value = this.rs.getString(1);
         assertEquals("LName", value);
     }
+
+    /**
+     * Test fix for Bug#96900 (30355150), STATEMENT.CANCEL()CREATE A DATABASE CONNECTION BUT DOES NOT CLOSE THE CONNECTION.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug96900() throws Exception {
+        assumeTrue(versionMeetsMinimum(5, 6), "MySQL 5.6+ is required to run this test.");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.connectionAttributes.getKeyName(), "testBug96900:1");
+
+        Connection con = getConnectionWithProps(props);
+        Statement st = con.createStatement();
+        new Thread(() -> {
+            try {
+                st.executeQuery("SELECT SLEEP(600)");
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        String attCountQuery = "SELECT COUNT(*) FROM performance_schema.session_connect_attrs WHERE attr_name = 'testBug96900'";
+
+        this.rs = this.stmt.executeQuery(attCountQuery);
+        this.rs.next();
+        assertEquals(1, this.rs.getInt(1));
+
+        st.cancel();
+        this.rs = this.stmt.executeQuery(attCountQuery);
+        this.rs.next();
+        assertEquals(1, this.rs.getInt(1));
+
+        con.close();
+        this.rs = this.stmt.executeQuery(attCountQuery);
+        this.rs.next();
+        assertEquals(0, this.rs.getInt(1));
+    }
+
 }

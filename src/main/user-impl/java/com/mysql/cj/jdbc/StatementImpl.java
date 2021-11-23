@@ -289,15 +289,14 @@ public class StatementImpl implements JdbcStatement {
         }
 
         if (!this.isClosed && this.connection != null) {
-            JdbcConnection cancelConn = null;
-            java.sql.Statement cancelStmt = null;
+            NativeSession newSession = null;
 
             try {
                 HostInfo hostInfo = this.session.getHostInfo();
                 String database = hostInfo.getDatabase();
                 String user = hostInfo.getUser();
                 String password = hostInfo.getPassword();
-                NativeSession newSession = new NativeSession(this.session.getHostInfo(), this.session.getPropertySet());
+                newSession = new NativeSession(this.session.getHostInfo(), this.session.getPropertySet());
                 newSession.connect(hostInfo, user, password, database, 30000, new TransactionEventHandler() {
                     @Override
                     public void transactionCompleted() {
@@ -313,12 +312,8 @@ public class StatementImpl implements JdbcStatement {
             } catch (IOException e) {
                 throw SQLExceptionsMapping.translateException(e, this.exceptionInterceptor);
             } finally {
-                if (cancelStmt != null) {
-                    cancelStmt.close();
-                }
-
-                if (cancelConn != null) {
-                    cancelConn.close();
+                if (newSession != null) {
+                    newSession.forceClose();
                 }
             }
 
