@@ -3,6 +3,8 @@
 
 Version 8.0.28
 
+  - Fix for Bug#103324 (32770013), X DevAPI Collection.replaceOne() missing matching _id check.
+
   - Fix for Bug#105197 (33461744), Statement.executeQuery() may return non-navigable ResultSet.
 
   - Fix for Bug#105323 (33507321), README.md contains broken links.

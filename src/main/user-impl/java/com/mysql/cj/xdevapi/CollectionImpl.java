@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -188,6 +188,10 @@ public class CollectionImpl implements Collection {
         if (doc == null) {
             throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "doc" }));
         }
+        JsonValue docId = doc.get("_id");
+        if (docId != null && (!JsonString.class.isInstance(docId) || !id.equals(((JsonString) docId).getString()))) {
+            throw new XDevAPIError(Messages.getString("Collection.DocIdMismatch"));
+        }
         return modify("_id = :id").set("$", doc).bind("id", id).execute();
     }
 
@@ -214,10 +218,11 @@ public class CollectionImpl implements Collection {
         if (doc == null) {
             throw new XDevAPIError(Messages.getString("CreateTableStatement.0", new String[] { "doc" }));
         }
-        if (doc.get("_id") == null) {
+        JsonValue docId = doc.get("_id");
+        if (docId == null) {
             doc.add("_id", new JsonString().setValue(id));
-        } else if (!id.equals(((JsonString) doc.get("_id")).getString())) {
-            throw new XDevAPIError("Document already has an _id that doesn't match to id parameter");
+        } else if (!JsonString.class.isInstance(docId) || !id.equals(((JsonString) docId).getString())) {
+            throw new XDevAPIError(Messages.getString("Collection.DocIdMismatch"));
         }
         return add(doc).setUpsert(true).execute();
     }

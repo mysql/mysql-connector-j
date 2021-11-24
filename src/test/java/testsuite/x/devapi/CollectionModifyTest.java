@@ -549,42 +549,23 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         DbDoc doc = this.collection.getOne("existingId");
         assertNotNull(doc);
-        assertEquals(new Integer(2), ((JsonNumber) doc.get("a")).getInteger());
+        assertEquals(2, ((JsonNumber) doc.get("a")).getInteger());
 
-        res = this.collection.replaceOne("notExistingId", "{\"_id\":\"existingId\",\"a\":3}");
-        assertEquals(0, res.getAffectedItemsCount());
+        // Original behavior changed by Bug#32770013.
+        assertThrows(XDevAPIError.class, "Replacement document has an _id that is different than the matched document\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionModifyTest.this.collection.replaceOne("nonExistingId", "{\"_id\":\"existingId\",\"a\":3}");
+                return null;
+            }
+        });
 
-        res = this.collection.replaceOne("", "{\"_id\":\"existingId\",\"a\":3}");
-        assertEquals(0, res.getAffectedItemsCount());
-
-        /*
-         * FR5.1 The id of the document must remain immutable:
-         * 
-         * Use a collection with some documents
-         * Fetch a document
-         * Modify _id: _new_id_ and modify any other field of the document
-         * Call replaceOne() giving original ID and modified document: expect affected = 1
-         * Fetch the document again, ensure other document modifications took place
-         * Ensure no document with _new_id_ was added to the collection
-         */
-        this.collection.remove("1=1").execute();
-        assertEquals(0, this.collection.count());
-        this.collection.add("{\"_id\":\"id1\",\"a\":1}").execute();
-
-        doc = this.collection.getOne("id1");
-        assertNotNull(doc);
-        ((JsonString) doc.get("_id")).setValue("id2");
-        ((JsonNumber) doc.get("a")).setValue("2");
-        res = this.collection.replaceOne("id1", doc);
-        assertEquals(1, res.getAffectedItemsCount());
-
-        doc = this.collection.getOne("id1");
-        assertNotNull(doc);
-        assertEquals("id1", ((JsonString) doc.get("_id")).getString());
-        assertEquals(new Integer(2), ((JsonNumber) doc.get("a")).getInteger());
-
-        doc = this.collection.getOne("id2");
-        assertNull(doc);
+        // Original behavior changed by Bug#32770013.
+        assertThrows(XDevAPIError.class, "Replacement document has an _id that is different than the matched document\\.", new Callable<Void>() {
+            public Void call() throws Exception {
+                CollectionModifyTest.this.collection.replaceOne("", "{\"_id\":\"existingId\",\"a\":3}");
+                return null;
+            }
+        });
 
         /*
          * FR5.2 The id of the document must remain immutable:
@@ -596,6 +577,10 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
          * Fetch the document again, ensure other document modifications took place
          * Ensure the number of documents in the collection is unaltered
          */
+        this.collection.remove("true").execute();
+        assertEquals(0, this.collection.count());
+        this.collection.add("{\"_id\":\"id1\",\"a\":1}").execute();
+
         doc = this.collection.getOne("id1");
         assertNotNull(doc);
         doc.remove("_id");

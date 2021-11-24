@@ -260,7 +260,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         assertTrue(this.collection.find("a = 4").execute().hasNext());
 
         // a new document with _id field that doesn't match id parameter
-        assertThrows(XDevAPIError.class, "Document already has an _id that doesn't match to id parameter", new Callable<Void>() {
+        assertThrows(XDevAPIError.class, "Replacement document has an _id that is different than the matched document\\.", new Callable<Void>() {
             public Void call() throws Exception {
                 CollectionAddTest.this.collection.addOrReplaceOne("id2",
                         CollectionAddTest.this.collection.newDoc().add("_id", new JsonString().setValue("id111")));
