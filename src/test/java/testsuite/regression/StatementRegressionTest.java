@@ -11940,4 +11940,44 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(0, this.rs.getInt(1));
     }
 
+    /**
+     * Tests fix for Bug#99260 (31189960), statement.setQueryTimeout,creates a database connection and does not close.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug99260() throws Exception {
+        Supplier<Integer> sessionCount = () -> {
+            try {
+                this.stmt.execute("FLUSH STATUS");
+                this.rs = this.stmt.executeQuery("SHOW STATUS LIKE 'threads_connected'");
+                this.rs.next();
+                return this.rs.getInt(2);
+            } catch (SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        };
+
+        int initialSessionCount = sessionCount.get();
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+
+        Connection testConn = getConnectionWithProps(props);
+        Statement testStmt = testConn.createStatement();
+
+        testStmt.setQueryTimeout(1);
+        for (int i = 0; i < 5; i++) {
+            assertThrows(MySQLTimeoutException.class, "Statement cancelled due to timeout or client request", () -> {
+                testStmt.executeQuery("SELECT SLEEP(30)");
+                return null;
+            });
+            // The difference between the `initialSessionCount` and the current session count would be greater than one if connections external to this test are
+            // created in between. Chances for this to happen in a controlled or development environment are very low and can be neglected. 
+            assertEquals(1, sessionCount.get() - initialSessionCount);
+        }
+
+        testConn.close();
+    }
 }

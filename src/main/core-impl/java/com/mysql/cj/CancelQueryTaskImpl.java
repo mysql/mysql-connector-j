@@ -91,24 +91,32 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
                             String user = hostInfo.getUser();
                             String password = hostInfo.getPassword();
 
-                            NativeSession newSession = new NativeSession(hostInfo, session.getPropertySet());
-                            newSession.connect(hostInfo, user, password, database, 30000, new TransactionEventHandler() {
-                                @Override
-                                public void transactionCompleted() {
-                                }
+                            NativeSession newSession = null;
+                            try {
+                                newSession = new NativeSession(hostInfo, session.getPropertySet());
+                                newSession.connect(hostInfo, user, password, database, 30000, new TransactionEventHandler() {
+                                    @Override
+                                    public void transactionCompleted() {
+                                    }
 
-                                public void transactionBegun() {
+                                    public void transactionBegun() {
+                                    }
+                                });
+                                newSession.sendCommand(new NativeMessageBuilder(newSession.getServerSession().supportsQueryAttributes())
+                                        .buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + origConnId), false, 0);
+                            } finally {
+                                try {
+                                    newSession.forceClose();
+                                } catch (Throwable t) {
+                                    // no-op.
                                 }
-                            });
-                            newSession.sendCommand(new NativeMessageBuilder(newSession.getServerSession().supportsQueryAttributes())
-                                    .buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + origConnId), false, 0);
-
+                            }
                             localQueryToCancel.setCancelStatus(CancelStatus.CANCELED_BY_TIMEOUT);
                         }
                     }
                     // } catch (NullPointerException npe) {
                     // Case when connection closed while starting to cancel.
-                    // We can't easily synchronise this, because then one thread can't cancel() a running query.
+                    // We can't easily synchronize this, because then one thread can't cancel() a running query.
                     // Ignore, we shouldn't re-throw this, because the connection's already closed, so the statement has been timed out.
                 } catch (Throwable t) {
                     CancelQueryTaskImpl.this.caughtWhileCancelling = t;
