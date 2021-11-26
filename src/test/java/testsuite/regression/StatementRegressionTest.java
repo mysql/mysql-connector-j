@@ -11906,38 +11906,45 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug96900() throws Exception {
-        assumeTrue(versionMeetsMinimum(5, 6), "MySQL 5.6+ is required to run this test.");
+        assumeTrue(versionMeetsMinimum(5, 7), "MySQL 5.7+ is required to run this test.");
+
+        Supplier<Integer> sessionCount = () -> {
+            try {
+                this.stmt.execute("FLUSH STATUS");
+                this.rs = this.stmt.executeQuery("SHOW STATUS LIKE 'threads_connected'");
+                this.rs.next();
+                return this.rs.getInt(2);
+            } catch (SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        };
+
+        int initialSessionCount = sessionCount.get();
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-        props.setProperty(PropertyKey.connectionAttributes.getKeyName(), "testBug96900:1");
 
-        Connection con = getConnectionWithProps(props);
-        Statement st = con.createStatement();
+        Connection testConn = getConnectionWithProps(props);
+        Statement testStmt = testConn.createStatement();
+
         new Thread(() -> {
             try {
-                st.executeQuery("SELECT SLEEP(600)");
+                testStmt.executeQuery("SELECT SLEEP(600)");
             } catch (Throwable e) {
                 e.printStackTrace();
             }
         }).start();
 
-        String attCountQuery = "SELECT COUNT(*) FROM performance_schema.session_connect_attrs WHERE attr_name = 'testBug96900'";
+        // The difference between the `initialSessionCount` and the current session count would be greater than one if connections external to this test are
+        // created in between. Chances for this to happen in a controlled or development environment are very low and can be neglected. 
+        assertEquals(1, sessionCount.get() - initialSessionCount);
 
-        this.rs = this.stmt.executeQuery(attCountQuery);
-        this.rs.next();
-        assertEquals(1, this.rs.getInt(1));
+        testStmt.cancel();
+        assertEquals(1, sessionCount.get() - initialSessionCount);
 
-        st.cancel();
-        this.rs = this.stmt.executeQuery(attCountQuery);
-        this.rs.next();
-        assertEquals(1, this.rs.getInt(1));
-
-        con.close();
-        this.rs = this.stmt.executeQuery(attCountQuery);
-        this.rs.next();
-        assertEquals(0, this.rs.getInt(1));
+        testConn.close();
+        assertEquals(0, sessionCount.get() - initialSessionCount);
     }
 
     /**
@@ -11947,6 +11954,8 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug99260() throws Exception {
+        assumeTrue(versionMeetsMinimum(5, 7), "MySQL 5.7+ is required to run this test.");
+
         Supplier<Integer> sessionCount = () -> {
             try {
                 this.stmt.execute("FLUSH STATUS");
