@@ -1613,7 +1613,9 @@ public class StringUtils {
         } else {
             valuesString.append(prefix);
         }
-        valuesString.append(elems[elems.length - 1]).append(suffix);
+        if (elems.length > 0) {
+            valuesString.append(elems[elems.length - 1]).append(suffix);
+        }
 
         return valuesString.toString();
     }
