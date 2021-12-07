@@ -531,6 +531,8 @@ public class DateTimeTest extends BaseTestCase {
                                                         .format(withFract ? TIME_FORMATTER_WITH_MILLIS_NO_OFFCET : TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET)
                                                 : expTimeNoMs;
 
+                                        String expDate8_0_28 = zdt_19700101_120000_123_at_senderTz.format(DateTimeFormatter.ofPattern("20HH-mm-ss"));
+
                                         String expTimeNoMsCal = zdt_19700101_120000_123_at_calendarTz.toLocalTime()
                                                 .format(TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET);
                                         String expTimeCal = sendFractionalSeconds && sendTimeFract
@@ -568,7 +570,9 @@ public class DateTimeTest extends BaseTestCase {
 
                                         /* Into DATE field */
 
-                                        String expDateErr = incorrectDateErr.replace("X", expTimeSendTimeFract);
+                                        String expDateErr = incorrectDateErr.replace("X",
+                                                useSSPS && !(sendTimeFract && sendFractionalSeconds) && versionMeetsMinimum(8, 0, 28) ? expDate8_0_28
+                                                        : expTimeSendTimeFract);
                                         String expDateErrWithCal = incorrectDateErr.replace("X", expTimeCal);
 
                                         if (useSSPS) {
@@ -630,7 +634,9 @@ public class DateTimeTest extends BaseTestCase {
 
                                         String expDatetime = expDate + " " + expTimeSendTimeFract;
                                         String expDatetimeWithCal = expDate + " " + expTimeCal;
-                                        String expDatetimeErr = incorrectDatetimeErr.replace("X", expTimeSendTimeFract);
+                                        String expDatetimeErr = incorrectDatetimeErr.replace("X",
+                                                useSSPS && !(sendTimeFract && sendFractionalSeconds) && versionMeetsMinimum(8, 0, 28) ? expDate8_0_28
+                                                        : expTimeSendTimeFract);
                                         String expDatetimeErrWithCal = incorrectDatetimeErr.replace("X", expTimeCal);
 
                                         if (useSSPS) {
@@ -1848,6 +1854,8 @@ public class DateTimeTest extends BaseTestCase {
                                         String expTimeNoMs = zdt_no_date_120000_123456_on_wire.format(TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET);
                                         String expTime6 = zdt_no_date_120000_123456_on_wire.format(timeFmt);
                                         String expTime9 = zdt_no_date_120000_123456_on_wire.format(timeFmtForChars);
+                                        String expTime8_0_28 = zdt_no_date_120000_123456_on_wire.format(DateTimeFormatter.ofPattern("20HH-mm-ss"));
+
                                         String expDatetimeDef = zdt_no_date_120000_123456_on_wire
                                                 .format(useSSPS ? dateTimeFmt : DateTimeFormatter.ofPattern("20HH-mm-ss 00:00:00"));
                                         String expDefTimestamp = zdt_no_date_120000_123456_on_wire.withZoneSameInstant(tz_UTC.toZoneId()).format(dateTimeFmt);
@@ -1860,9 +1868,13 @@ public class DateTimeTest extends BaseTestCase {
                                                 : "");
 
                                         String expDateErr6 = incorrectDateErr.replace("X", expTime6);
-                                        String expDateErr9 = incorrectDateErr.replace("X", expTime9);
+
+                                        String expDateErr9 = incorrectDateErr.replace("X",
+                                                useSSPS && !sendFractionalSeconds && versionMeetsMinimum(8, 0, 28) ? expTime8_0_28 : expTime9);
+
                                         String expDatetimeErr6 = incorrectDatetimeErr.replace("X", expTime6);
-                                        String expDatetimeErr9 = incorrectDatetimeErr.replace("X", expTime9);
+                                        String expDatetimeErr9 = incorrectDatetimeErr.replace("X",
+                                                useSSPS && !sendFractionalSeconds && versionMeetsMinimum(8, 0, 28) ? expTime8_0_28 : expTime9);
 
                                         /* Unsupported conversions */
 
@@ -2317,6 +2329,10 @@ public class DateTimeTest extends BaseTestCase {
                                         String expTimeNoMs = zdt_no_date_120000_123456_on_wire.format(TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET);
                                         String expTime = zdt_no_date_120000_123456_on_wire.format(timeFmt);
                                         String expTimeTz = ot_120000_123456_05_00.format(timeFmtTz).replace("+", "\\+");
+                                        String expTimeTz8_0_28 = ot_120000_123456_05_00.format(DateTimeFormatter.ofPattern("20HH-mm-ss X:00:00")).replace("+",
+                                                "");
+                                        String expDatetimeTz8_0_28 = ot_120000_123456_05_00.format(DateTimeFormatter.ofPattern("20HH-mm-ss X:00:00.000000"))
+                                                .replace("+", "");
 
                                         String expDatetimeDef = zdt_no_date_120000_123456_on_wire
                                                 .format(useSSPS ? dateTimeFmt : DateTimeFormatter.ofPattern("20HH-mm-ss 00:00:00"));
@@ -2330,10 +2346,12 @@ public class DateTimeTest extends BaseTestCase {
                                                 : "");
 
                                         String expDateErr = incorrectDateErr.replace("X", expTime);
-                                        String expDateErrTz = incorrectDateErr.replace("X", expTimeTz);
+                                        String expDateErrTz = incorrectDateErr.replace("X",
+                                                useSSPS && !sendFractionalSeconds && versionMeetsMinimum(8, 0, 28) ? expTimeTz8_0_28 : expTimeTz);
                                         String expTimeErrTz = incorrectTimeErr.replace("X", expTimeTz);
                                         String expDatetimeErr = incorrectDatetimeErr.replace("X", expTime);
-                                        String expDatetimeErrTz = incorrectDatetimeErr.replace("X", expTimeTz);
+                                        String expDatetimeErrTz = incorrectDatetimeErr.replace("X",
+                                                useSSPS && !sendFractionalSeconds && versionMeetsMinimum(8, 0, 28) ? expDatetimeTz8_0_28 : expTimeTz);
 
                                         /* Unsupported conversions */
 
@@ -2464,9 +2482,9 @@ public class DateTimeTest extends BaseTestCase {
     public void testOffsetDatetimeSetters() throws Exception {
         boolean withFract = versionMeetsMinimum(5, 6, 4); // fractional seconds are not supported in previous versions
         boolean allowsOffset = versionMeetsMinimum(8, 0, 19);
-        // Starting from MySQL 8.0.22 server also converts TIMESTAMP_WITH_TIMEZONE value to the server time zone for column types other than TIMESTAMP and DATETIME.
-        // In MySQL 8.0.26 it was reverted.
-        boolean serverConvertsTzForAllTypes = versionMeetsMinimum(8, 0, 22) && !versionMeetsMinimum(8, 0, 26);
+        // Starting from MySQL 8.0.22 server also converts string values in TIMESTAMP_WITH_TIMEZONE format to the session time zone
+        // for column types other than TIMESTAMP and DATETIME. In MySQL 8.0.26 it was reverted, restored in MySQL 8.0.28.
+        boolean serverConvertsTzForAllTypes = versionMeetsMinimum(8, 0, 22) && !versionMeetsMinimum(8, 0, 26) || versionMeetsMinimum(8, 0, 28);
 
         createTable(tYear, "(id INT, d YEAR)");
         createTable(tDate, "(id INT, d DATE)");
@@ -2554,8 +2572,7 @@ public class DateTimeTest extends BaseTestCase {
                                         String expDate = zdt_20200101_120000_123456_on_wire.format(TimeUtil.DATE_FORMATTER);
                                         String expDateDef = zdt_no_date_120000_123456_on_wire
                                                 .format(useSSPS ? TimeUtil.DATE_FORMATTER : DateTimeFormatter.ofPattern("20HH-mm-ss"));
-                                        // Starting from MySQL 8.0.22 TIMESTAMP_WITH_TIMEZONE value is also converted to the server time zone by server
-                                        // for column types other than TIMESTAMP or DATETIME
+
                                         String expDateChar = serverConvertsTzForAllTypes
                                                 ? odt_20200101_120000_123456_05_00.atZoneSameInstant(sessionTz.toZoneId()).format(TimeUtil.DATE_FORMATTER)
                                                 : odt_20200101_120000_123456_05_00.format(TimeUtil.DATE_FORMATTER);
@@ -2840,9 +2857,9 @@ public class DateTimeTest extends BaseTestCase {
     public void testZonedDatetimeSetters() throws Exception {
         boolean withFract = versionMeetsMinimum(5, 6, 4); // fractional seconds are not supported in previous versions
         boolean allowsOffset = versionMeetsMinimum(8, 0, 19);
-        // Starting from MySQL 8.0.22 server also converts TIMESTAMP_WITH_TIMEZONE value to the server time zone for column types other than TIMESTAMP and DATETIME.
-        // In MySQL 8.0.26 it was reverted.
-        boolean serverConvertsTzForAllTypes = versionMeetsMinimum(8, 0, 22) && !versionMeetsMinimum(8, 0, 26);
+        // Starting from MySQL 8.0.22 server also converts string values in TIMESTAMP_WITH_TIMEZONE format to the session time zone
+        // for column types other than TIMESTAMP and DATETIME. In MySQL 8.0.26 it was reverted, restored in MySQL 8.0.28.
+        boolean serverConvertsTzForAllTypes = versionMeetsMinimum(8, 0, 22) && !versionMeetsMinimum(8, 0, 26) || versionMeetsMinimum(8, 0, 28);
 
         createTable(tYear, "(id INT, d YEAR)");
         createTable(tDate, "(id INT, d DATE)");
@@ -2930,8 +2947,6 @@ public class DateTimeTest extends BaseTestCase {
                                         String expDate = zdt_20200101_120000_123456_on_wire.format(TimeUtil.DATE_FORMATTER);
                                         String expDateDef = zdt_no_date_120000_123456_on_wire
                                                 .format(useSSPS ? TimeUtil.DATE_FORMATTER : DateTimeFormatter.ofPattern("20HH-mm-ss"));
-                                        // Starting from MySQL 8.0.22 TIMESTAMP_WITH_TIMEZONE value is also converted to the server time zone by server
-                                        // for column types other than TIMESTAMP or DATETIME
                                         String expDateChar = serverConvertsTzForAllTypes
                                                 ? zdt_20200101_120000_123456_05_00.withZoneSameInstant(sessionTz.toZoneId()).format(TimeUtil.DATE_FORMATTER)
                                                 : zdt_20200101_120000_123456_05_00.format(TimeUtil.DATE_FORMATTER);
