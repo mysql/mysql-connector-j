@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Date;
 import java.sql.ParameterMetaData;
@@ -768,11 +769,20 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                         case MysqlType.FIELD_TYPE_TIMESTAMP:
                             batchedStatement.setTimestamp(batchedParamIndex++, (Timestamp) paramArg[j].value);
                             break;
+                        case MysqlType.FIELD_TYPE_DECIMAL:
+                        case MysqlType.FIELD_TYPE_NEWDECIMAL:
+                            Object decimalValue = paramArg[j].value;
+                            if (decimalValue instanceof String) {
+                                String plainString = (String) paramArg[j].value;
+                                batchedStatement.setBigDecimal(batchedParamIndex++, new BigDecimal(plainString));
+                                break;
+                            } else if (decimalValue instanceof BigDecimal) {
+                                batchedStatement.setBigDecimal(batchedParamIndex++, (BigDecimal) decimalValue);
+                                break;
+                            }
                         case MysqlType.FIELD_TYPE_VAR_STRING:
                         case MysqlType.FIELD_TYPE_STRING:
                         case MysqlType.FIELD_TYPE_VARCHAR:
-                        case MysqlType.FIELD_TYPE_DECIMAL:
-                        case MysqlType.FIELD_TYPE_NEWDECIMAL:
                             Object value = paramArg[j].value;
 
                             if (value instanceof byte[]) {
