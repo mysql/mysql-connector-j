@@ -166,7 +166,7 @@ public class ServerPreparedQueryBindings extends AbstractQueryBindings<ServerPre
         } else {
             ServerPreparedQueryBindValue binding = getBinding(parameterIndex, false);
             this.sendTypesToServer.compareAndSet(false, binding.resetToType(MysqlType.FIELD_TYPE_NEWDECIMAL, this.numberOfExecutions));
-            binding.value = StringUtils.fixDecimalExponent(x.toPlainString());
+            binding.value = x.toPlainString();
             binding.parameterType = MysqlType.DECIMAL;
         }
     }

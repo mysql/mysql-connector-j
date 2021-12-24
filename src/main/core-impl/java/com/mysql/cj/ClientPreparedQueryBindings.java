@@ -135,7 +135,7 @@ public class ClientPreparedQueryBindings extends AbstractQueryBindings<ClientPre
         if (x == null) {
             setNull(parameterIndex);
         } else {
-            setValue(parameterIndex, StringUtils.fixDecimalExponent(x.toPlainString()), MysqlType.DECIMAL);
+            setValue(parameterIndex, x.toPlainString(), MysqlType.DECIMAL);
         }
     }
 

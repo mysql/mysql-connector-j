@@ -962,7 +962,7 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                     case LONGTEXT:
                     case JSON:
                         if (parameterObj instanceof BigDecimal) {
-                            setString(parameterIndex, (StringUtils.fixDecimalExponent(((BigDecimal) parameterObj).toPlainString())));
+                            setString(parameterIndex, ((BigDecimal) parameterObj).toPlainString());
                         } else {
                             setString(parameterIndex, parameterObj.toString());
                         }
@@ -1000,7 +1000,7 @@ public abstract class AbstractQueryBindings<T extends BindValue> implements Quer
                     case LONGTEXT:
                     case JSON:
                         if (parameterObj instanceof BigDecimal) {
-                            setString(parameterIndex, (StringUtils.fixDecimalExponent(((BigDecimal) parameterObj).toPlainString())));
+                            setString(parameterIndex, ((BigDecimal) parameterObj).toPlainString());
                         } else if (parameterObj instanceof java.sql.Clob) {
                             setClob(parameterIndex, (java.sql.Clob) parameterObj);
                         } else {
