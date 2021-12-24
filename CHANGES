@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.29
+
 Version 8.0.28
 
   - Fix for Bug#99260 (31189960), statement.setQueryTimeout,creates a database connection and does not close.
