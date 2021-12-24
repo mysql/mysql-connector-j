@@ -261,7 +261,7 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
     }
 
     public <T> T decodeDecimal(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
-        BigDecimal d = new BigDecimal(StringUtils.toAsciiString(bytes, offset, length));
+        BigDecimal d = new BigDecimal(StringUtils.toAsciiCharArray(bytes, offset, length));
         return vf.createFromBigDecimal(d);
     }
 

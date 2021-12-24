@@ -832,6 +832,22 @@ public class StringUtils {
      * @return the ASCII string
      */
     public static String toAsciiString(byte[] buffer, int startPos, int length) {
+        return new String(toAsciiCharArray(buffer, startPos, length));
+    }
+
+    /**
+     * Returns the bytes as an ASCII String.
+     *
+     * @param buffer
+     *            the bytes to convert
+     * @param startPos
+     *            the position to start converting
+     * @param length
+     *            the length of the string to convert
+     *
+     * @return the ASCII char array
+     */
+    public static char[] toAsciiCharArray(byte[] buffer, int startPos, int length) {
         char[] charArray = new char[length];
         int readpoint = startPos;
 
@@ -840,7 +856,7 @@ public class StringUtils {
             readpoint++;
         }
 
-        return new String(charArray);
+        return charArray;
     }
 
     /**
