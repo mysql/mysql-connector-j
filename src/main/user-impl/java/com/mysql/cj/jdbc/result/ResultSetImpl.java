@@ -575,7 +575,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public int findColumn(String columnName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Integer index = this.columnDefinition.findColumn(columnName, this.useColumnNamesInFindColumn, 1);
+            int index = this.columnDefinition.findColumn(columnName, this.useColumnNamesInFindColumn, 1);
 
             if (index == -1) {
                 throw SQLError.createSQLException(
