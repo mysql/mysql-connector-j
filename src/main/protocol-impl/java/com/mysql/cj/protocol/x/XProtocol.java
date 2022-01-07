@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -55,7 +55,6 @@ import com.mysql.cj.QueryResult;
 import com.mysql.cj.Session;
 import com.mysql.cj.TransactionEventHandler;
 import com.mysql.cj.conf.HostInfo;
-import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.Compression;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyDefinitions.XdevapiSslMode;
@@ -313,7 +312,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             this.clientCapabilities.put(XServerCapabilities.KEY_SESSION_CONNECT_ATTRS, attMap);
         }
 
-        // Override JDBC (global) SSL properties with xdevapi ones to provide unified logic in ExportControlled via common SSL properties.
+        // Override JDBC (global) SSL properties with X DevAPI ones to provide unified logic in ExportControlled via common SSL properties.
         RuntimeProperty<XdevapiSslMode> xdevapiSslMode = this.propertySet.<XdevapiSslMode>getEnumProperty(PropertyKey.xdevapiSslMode);
         RuntimeProperty<SslMode> jdbcSslMode = this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode);
         if (xdevapiSslMode.isExplicitlySet() || !jdbcSslMode.isExplicitlySet()) {
@@ -365,40 +364,21 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             sslMode.setValue(SslMode.REQUIRED);
         }
 
-        RuntimeProperty<String> xdevapiTlsVersions = this.propertySet.getStringProperty(PropertyKey.xdevapiTlsVersions);
-        RuntimeProperty<String> jdbcEnabledTlsProtocols = this.propertySet.getStringProperty(PropertyKey.tlsVersions);
-        if (xdevapiTlsVersions.isExplicitlySet()) {
-            if (sslMode.getValue() == SslMode.DISABLED) {
-                throw ExceptionFactory.createException(WrongArgumentException.class,
-                        "Option '" + PropertyKey.xdevapiTlsVersions.getKeyName() + "' can not be specified when SSL connections are disabled.");
+        if (sslMode.getValue() != SslMode.DISABLED) {
+            RuntimeProperty<String> xdevapiTlsVersions = this.propertySet.getStringProperty(PropertyKey.xdevapiTlsVersions);
+            RuntimeProperty<String> jdbcEnabledTlsProtocols = this.propertySet.getStringProperty(PropertyKey.tlsVersions);
+            if (xdevapiTlsVersions.isExplicitlySet()) {
+                String[] tlsVersions = xdevapiTlsVersions.getValue().split("\\s*,\\s*");
+                List<String> tryProtocols = Arrays.asList(tlsVersions);
+                ExportControlled.checkValidProtocols(tryProtocols);
+                jdbcEnabledTlsProtocols.setValue(xdevapiTlsVersions.getValue());
             }
 
-            String[] tlsVersions = xdevapiTlsVersions.getValue().split("\\s*,\\s*");
-            List<String> tryProtocols = Arrays.asList(tlsVersions);
-            ExportControlled.checkValidProtocols(tryProtocols);
-            jdbcEnabledTlsProtocols.setValue(xdevapiTlsVersions.getValue());
-        }
-
-        RuntimeProperty<String> xdevapiTlsCiphersuites = this.propertySet.getStringProperty(PropertyKey.xdevapiTlsCiphersuites);
-        RuntimeProperty<String> jdbcEnabledSslCipherSuites = this.propertySet.getStringProperty(PropertyKey.tlsCiphersuites);
-        if (xdevapiTlsCiphersuites.isExplicitlySet()) {
-            if (sslMode.getValue() == SslMode.DISABLED) {
-                throw ExceptionFactory.createException(WrongArgumentException.class,
-                        "Option '" + PropertyKey.xdevapiTlsCiphersuites.getKeyName() + "' can not be specified when SSL connections are disabled.");
+            RuntimeProperty<String> xdevapiTlsCiphersuites = this.propertySet.getStringProperty(PropertyKey.xdevapiTlsCiphersuites);
+            RuntimeProperty<String> jdbcEnabledSslCipherSuites = this.propertySet.getStringProperty(PropertyKey.tlsCiphersuites);
+            if (xdevapiTlsCiphersuites.isExplicitlySet()) {
+                jdbcEnabledSslCipherSuites.setValue(xdevapiTlsCiphersuites.getValue());
             }
-
-            jdbcEnabledSslCipherSuites.setValue(xdevapiTlsCiphersuites.getValue());
-        }
-
-        boolean verifyServerCert = sslMode.getValue() == SslMode.VERIFY_CA || sslMode.getValue() == SslMode.VERIFY_IDENTITY;
-        String trustStoreUrl = jdbcTrustCertKeyStoreUrl.getValue();
-        if (!verifyServerCert && !StringUtils.isNullOrEmpty(trustStoreUrl)) {
-            StringBuilder msg = new StringBuilder("Incompatible security settings. The property '");
-            msg.append(PropertyKey.xdevapiSslTrustStoreUrl.getKeyName()).append("' requires '");
-            msg.append(PropertyKey.xdevapiSslMode.getKeyName()).append("' as '");
-            msg.append(PropertyDefinitions.SslMode.VERIFY_CA).append("' or '");
-            msg.append(PropertyDefinitions.SslMode.VERIFY_IDENTITY).append("'.");
-            throw new CJCommunicationsException(msg.toString());
         }
 
         if (this.clientCapabilities.size() > 0) {

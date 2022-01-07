@@ -3,6 +3,8 @@
 
 Version 8.0.29
 
+  - WL#14835, Align TLS option checking across connectors.
+
 Version 8.0.28
 
   - Fix for Bug#99260 (31189960), statement.setQueryTimeout,creates a database connection and does not close.

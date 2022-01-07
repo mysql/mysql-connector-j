@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -993,7 +993,7 @@ public abstract class BaseTestCase {
     protected static void assertSecureConnection(Connection conn) throws Exception {
         try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SHOW STATUS LIKE 'Ssl_version'")) {
             assertTrue(rs.next());
-            assertNotEquals("", rs.getString(1));
+            assertNotEquals("", rs.getString(2));
         }
     }
 
@@ -1002,6 +1002,13 @@ public abstract class BaseTestCase {
         try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT CURRENT_USER()")) {
             assertTrue(rs.next());
             assertEquals(user, rs.getString(1).split("@")[0]);
+        }
+    }
+
+    protected static void assertNonSecureConnection(Connection conn) throws Exception {
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SHOW STATUS LIKE 'Ssl_version'")) {
+            assertTrue(rs.next());
+            assertEquals("", rs.getString(2));
         }
     }
 
