@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -80,6 +80,8 @@ public class AuthenticationOciClient implements AuthenticationPlugin<NativePacke
     @Override
     public void destroy() {
         reset();
+        this.protocol = null;
+        this.usernameCallbackHandler = null;
     }
 
     @Override
@@ -100,7 +102,7 @@ public class AuthenticationOciClient implements AuthenticationPlugin<NativePacke
     @Override
     public void setAuthenticationParameters(String user, String password) {
         if (user == null && this.usernameCallbackHandler != null) {
-            // Fall-back to system login user.
+            // Fall back to system login user.
             this.usernameCallbackHandler.handle(new UsernameCallback(System.getProperty("user.name")));
         }
     }

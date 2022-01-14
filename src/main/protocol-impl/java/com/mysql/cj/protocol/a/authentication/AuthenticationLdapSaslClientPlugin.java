@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -163,8 +163,9 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
 
     @Override
     public void destroy() {
-        this.protocol = null;
         reset();
+        this.protocol = null;
+        this.usernameCallbackHandler = null;
     }
 
     @Override
@@ -188,7 +189,7 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
         this.password = password;
 
         if (this.user == null) {
-            // Fall-back to system login user.
+            // Fall back to system login user.
             this.user = System.getProperty("user.name");
             if (this.usernameCallbackHandler != null) {
                 this.usernameCallbackHandler.handle(new UsernameCallback(this.user));
@@ -295,9 +296,9 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
                 Subject.doAs(this.subject, (PrivilegedExceptionAction<Void>) () -> {
                     byte[] response = this.saslClient.evaluateChallenge(fromServer.readBytes(StringSelfDataType.STRING_EOF));
                     if (response != null) {
-                        NativePacketPayload bresp = new NativePacketPayload(response);
-                        bresp.setPosition(0);
-                        toServer.add(bresp);
+                        NativePacketPayload packet = new NativePacketPayload(response);
+                        packet.setPosition(0);
+                        toServer.add(packet);
                     }
                     return null;
                 });

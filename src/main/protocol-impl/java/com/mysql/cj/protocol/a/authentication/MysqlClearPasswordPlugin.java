@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2012, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -56,6 +56,9 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePack
     }
 
     public void destroy() {
+        reset();
+        this.protocol = null;
+        this.usernameCallbackHandler = null;
         this.password = null;
     }
 
@@ -74,7 +77,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePack
     public void setAuthenticationParameters(String user, String password) {
         this.password = password;
         if (user == null && this.usernameCallbackHandler != null) {
-            // Fall-back to system login user.
+            // Fall back to system login user.
             this.usernameCallbackHandler.handle(new UsernameCallback(System.getProperty("user.name")));
         }
     }
@@ -83,13 +86,13 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePack
         toServer.clear();
 
         String encoding = this.protocol.getServerSession().getCharsetSettings().getPasswordCharacterEncoding();
-        NativePacketPayload bresp = new NativePacketPayload(StringUtils.getBytes(this.password != null ? this.password : "", encoding));
+        NativePacketPayload packet = new NativePacketPayload(StringUtils.getBytes(this.password != null ? this.password : "", encoding));
 
-        bresp.setPosition(bresp.getPayloadLength());
-        bresp.writeInteger(IntegerDataType.INT1, 0);
-        bresp.setPosition(0);
+        packet.setPosition(packet.getPayloadLength());
+        packet.writeInteger(IntegerDataType.INT1, 0);
+        packet.setPosition(0);
 
-        toServer.add(bresp);
+        toServer.add(packet);
         return true;
     }
 }

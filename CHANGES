@@ -3,6 +3,8 @@
 
 Version 8.0.29
 
+  - WL#14834, Support for FIDO authentication.
+
   - WL#14835, Align TLS option checking across connectors.
 
 Version 8.0.28

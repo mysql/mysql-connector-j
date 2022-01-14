@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2012, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -56,6 +56,9 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin<NativePac
     }
 
     public void destroy() {
+        reset();
+        this.protocol = null;
+        this.usernameCallbackHandler = null;
         this.password = null;
     }
 
@@ -74,7 +77,7 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin<NativePac
     public void setAuthenticationParameters(String user, String password) {
         this.password = password;
         if (user == null && this.usernameCallbackHandler != null) {
-            // Fall-back to system login user.
+            // Fall back to system login user.
             this.usernameCallbackHandler.handle(new UsernameCallback(System.getProperty("user.name")));
         }
     }
@@ -82,17 +85,17 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin<NativePac
     public boolean nextAuthenticationStep(NativePacketPayload fromServer, List<NativePacketPayload> toServer) {
         toServer.clear();
 
-        NativePacketPayload bresp = null;
+        NativePacketPayload packet = null;
 
         String pwd = this.password;
 
         if (fromServer == null || pwd == null || pwd.length() == 0) {
-            bresp = new NativePacketPayload(new byte[0]);
+            packet = new NativePacketPayload(new byte[0]);
         } else {
-            bresp = new NativePacketPayload(Security.scramble411(pwd, fromServer.readBytes(StringSelfDataType.STRING_TERM),
+            packet = new NativePacketPayload(Security.scramble411(pwd, fromServer.readBytes(StringSelfDataType.STRING_TERM),
                     this.protocol.getServerSession().getCharsetSettings().getPasswordCharacterEncoding()));
         }
-        toServer.add(bresp);
+        toServer.add(packet);
 
         return true;
     }

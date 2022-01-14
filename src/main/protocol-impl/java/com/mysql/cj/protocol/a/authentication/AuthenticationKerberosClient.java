@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -117,6 +117,7 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
     @Override
     public void destroy() {
         reset();
+        this.usernameCallbackHandler = null;
         this.userPrincipalName = null;
         this.subject = null;
         this.cachedPrincipalName = null;
@@ -153,7 +154,7 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
                     this.user = this.cachedPrincipalName;
                 }
             } catch (CJException e) {
-                // Fall-back to system login user.
+                // Fall back to system login user.
                 this.user = System.getProperty("user.name");
             }
             if (this.usernameCallbackHandler != null) {
@@ -236,9 +237,9 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
                 Subject.doAs(this.subject, (PrivilegedExceptionAction<Void>) () -> {
                     byte[] response = this.saslClient.evaluateChallenge(fromServer.readBytes(StringSelfDataType.STRING_EOF));
                     if (response != null) {
-                        NativePacketPayload bresp = new NativePacketPayload(response);
-                        bresp.setPosition(0);
-                        toServer.add(bresp);
+                        NativePacketPayload packet = new NativePacketPayload(response);
+                        packet.setPosition(0);
+                        toServer.add(packet);
                     }
                     return null;
                 });

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -68,8 +68,8 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
 
     @Override
     public void destroy() {
-        this.stage = AuthStage.FAST_AUTH_SEND_SCRAMBLE;
         super.destroy();
+        this.stage = AuthStage.FAST_AUTH_SEND_SCRAMBLE;
     }
 
     @Override
@@ -83,8 +83,8 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
 
         if (this.password == null || this.password.length() == 0 || fromServer == null) {
             // no password
-            NativePacketPayload bresp = new NativePacketPayload(new byte[] { 0 });
-            toServer.add(bresp);
+            NativePacketPayload packet = new NativePacketPayload(new byte[] { 0 });
+            toServer.add(packet);
 
         } else {
             try {
@@ -113,17 +113,17 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
 
                 if (this.protocol.getSocketConnection().isSSLEstablished()) {
                     // allow plain text over SSL
-                    NativePacketPayload bresp = new NativePacketPayload(
+                    NativePacketPayload packet = new NativePacketPayload(
                             StringUtils.getBytes(this.password, this.protocol.getServerSession().getCharsetSettings().getPasswordCharacterEncoding()));
-                    bresp.setPosition(bresp.getPayloadLength());
-                    bresp.writeInteger(IntegerDataType.INT1, 0);
-                    bresp.setPosition(0);
-                    toServer.add(bresp);
+                    packet.setPosition(packet.getPayloadLength());
+                    packet.writeInteger(IntegerDataType.INT1, 0);
+                    packet.setPosition(0);
+                    toServer.add(packet);
 
                 } else if (this.serverRSAPublicKeyFile.getValue() != null) {
                     // encrypt with given key, don't use "Public Key Retrieval"
-                    NativePacketPayload bresp = new NativePacketPayload(encryptPassword());
-                    toServer.add(bresp);
+                    NativePacketPayload packet = new NativePacketPayload(encryptPassword());
+                    toServer.add(packet);
 
                 } else {
                     if (!this.protocol.getPropertySet().getBooleanProperty(PropertyKey.allowPublicKeyRetrieval).getValue()) {
@@ -139,13 +139,13 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
 
                         // read key response
                         this.publicKeyString = fromServer.readString(StringSelfDataType.STRING_TERM, null);
-                        NativePacketPayload bresp = new NativePacketPayload(encryptPassword());
-                        toServer.add(bresp);
+                        NativePacketPayload packet = new NativePacketPayload(encryptPassword());
+                        toServer.add(packet);
                         this.publicKeyRequested = false;
                     } else {
                         // build and send Public Key Retrieval packet
-                        NativePacketPayload bresp = new NativePacketPayload(new byte[] { 2 }); // was 1 in sha256_password
-                        toServer.add(bresp);
+                        NativePacketPayload packet = new NativePacketPayload(new byte[] { 2 }); // was 1 in sha256_password
+                        toServer.add(packet);
                         this.publicKeyRequested = true;
                     }
                 }

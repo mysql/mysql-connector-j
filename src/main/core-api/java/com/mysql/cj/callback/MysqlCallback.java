@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,7 +31,7 @@ package com.mysql.cj.callback;
 
 /**
  * Implementations of this interface can be passed to a {@link MysqlCallbackHandler} so that the owner of the callback handler and its caller can share data in
- * a way that would otherwise require tight coupling.
+ * a way that would otherwise require tighter coupling.
  */
 public interface MysqlCallback {
 }
