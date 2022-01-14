@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -188,13 +188,13 @@ public class PropertyDefinitions {
                         Integer.MIN_VALUE + 2),
 
                 new StringPropertyDefinition(PropertyKey.password1, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.Password1"), "8.0.27", CATEGORY_AUTH, Integer.MIN_VALUE + 3),
+                        Messages.getString("ConnectionProperties.Password1"), "8.0.28", CATEGORY_AUTH, Integer.MIN_VALUE + 3),
 
                 new StringPropertyDefinition(PropertyKey.password2, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.Password2"), "8.0.27", CATEGORY_AUTH, Integer.MIN_VALUE + 4),
+                        Messages.getString("ConnectionProperties.Password2"), "8.0.28", CATEGORY_AUTH, Integer.MIN_VALUE + 4),
 
                 new StringPropertyDefinition(PropertyKey.password3, DEFAULT_VALUE_NULL_STRING, RUNTIME_NOT_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.Password3"), "8.0.27", CATEGORY_AUTH, Integer.MIN_VALUE + 5),
+                        Messages.getString("ConnectionProperties.Password3"), "8.0.28", CATEGORY_AUTH, Integer.MIN_VALUE + 5),
 
                 new StringPropertyDefinition(PropertyKey.authenticationPlugins, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.authenticationPlugins"), "5.1.19", CATEGORY_AUTH, Integer.MIN_VALUE + 6),
