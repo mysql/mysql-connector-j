@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,12 @@
 
 package com.mysql.cj.protocol;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetTime;
+import java.util.Calendar;
+
 import com.mysql.cj.util.TimeUtil;
 
 public class InternalTime {
@@ -39,6 +45,32 @@ public class InternalTime {
     private int seconds = 0;
     private int nanos = 0;
     private int scale = 0;
+
+    public static InternalTime from(LocalTime x) {
+        return new InternalTime(x.getHour(), x.getMinute(), x.getSecond(), x.getNano(), -1);
+    }
+
+    public static InternalTime from(LocalDateTime x) {
+        return new InternalTime(x.getHour(), x.getMinute(), x.getSecond(), x.getNano(), -1);
+    }
+
+    public static InternalTime from(OffsetTime x) {
+        return new InternalTime(x.getHour(), x.getMinute(), x.getSecond(), x.getNano(), -1);
+    }
+
+    public static InternalTime from(Duration x) {
+        Duration durationAbs = x.abs();
+        long fullSeconds = durationAbs.getSeconds();
+        long fullMinutes = fullSeconds / 60;
+        long fullHours = fullMinutes / 60;
+        InternalTime internalTime = new InternalTime((int) fullHours, (int) (fullMinutes % 60), (int) (fullSeconds % 60), durationAbs.getNano(), -1);
+        internalTime.setNegative(x.isNegative());
+        return internalTime;
+    }
+
+    public static InternalTime from(Calendar x, int nanos) {
+        return new InternalTime(x.get(Calendar.HOUR_OF_DAY), x.get(Calendar.MINUTE), x.get(Calendar.SECOND), nanos, -1);
+    }
 
     /**
      * Constructs a zero time

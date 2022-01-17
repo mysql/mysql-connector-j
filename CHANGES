@@ -3,6 +3,14 @@
 
 Version 8.0.29
 
+  - Fix for Bug#38954 (11749415), DATA TRUNCATION WHILE USING BIT(1) IN STORED PROCEDURE WITH INOUT TYPE.
+
+  - Fix for Bug#85317 (25672958), EXECUTE BATCH WILL THROW NULL POINTER EXCEPTION WHERE THE COLUMN IS BLOB!
+
+  - Fix for Bug#105915 (33678490), Connector/J 8 server prepared statement precision loss in execute batch.
+
+  - WL#14750, Better unification of query bindings.
+
   - WL#14834, Support for FIDO authentication.
 
   - WL#14835, Align TLS option checking across connectors.

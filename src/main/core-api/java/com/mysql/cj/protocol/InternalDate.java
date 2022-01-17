@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,11 +29,22 @@
 
 package com.mysql.cj.protocol;
 
+import java.time.LocalDate;
+import java.util.Calendar;
+
 public class InternalDate {
 
     protected int year = 0;
     protected int month = 0;
     protected int day = 0;
+
+    public static InternalDate from(LocalDate x) {
+        return new InternalDate(x.getYear(), x.getMonthValue(), x.getDayOfMonth());
+    }
+
+    public static InternalDate from(Calendar x) {
+        return new InternalDate(x.get(Calendar.YEAR), x.get(Calendar.MONTH) + 1, x.get(Calendar.DAY_OF_MONTH));
+    }
 
     /**
      * Constructs a zero date.

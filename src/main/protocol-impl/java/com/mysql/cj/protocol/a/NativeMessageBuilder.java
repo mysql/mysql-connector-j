@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,11 +31,21 @@ package com.mysql.cj.protocol.a;
 
 import java.util.List;
 
+import com.mysql.cj.BindValue;
+import com.mysql.cj.Constants;
 import com.mysql.cj.MessageBuilder;
+import com.mysql.cj.Messages;
+import com.mysql.cj.NativeSession;
+import com.mysql.cj.PreparedQuery;
+import com.mysql.cj.QueryAttributesBindings;
+import com.mysql.cj.QueryBindings;
+import com.mysql.cj.Session;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
+import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.util.StringUtils;
 
 public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload> {
@@ -81,6 +91,94 @@ public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload>
 
     public NativePacketPayload buildComQuery(NativePacketPayload sharedPacket, String query, String encoding) {
         return buildComQuery(sharedPacket, StringUtils.getBytes(query, encoding));
+    }
+
+    public NativePacketPayload buildComQuery(NativePacketPayload sharedPacket, Session sess, PreparedQuery preparedQuery, QueryBindings bindings,
+            String characterEncoding) {
+        NativePacketPayload sendPacket = sharedPacket != null ? sharedPacket : new NativePacketPayload(9);
+        QueryAttributesBindings queryAttributesBindings = preparedQuery.getQueryAttributesBindings();
+
+        synchronized (this) {
+            BindValue[] bindValues = bindings.getBindValues();
+
+            sendPacket.writeInteger(IntegerDataType.INT1, NativeConstants.COM_QUERY);
+
+            if (this.supportsQueryAttributes) {
+                if (queryAttributesBindings.getCount() > 0) {
+                    sendPacket.writeInteger(IntegerDataType.INT_LENENC, queryAttributesBindings.getCount());
+                    sendPacket.writeInteger(IntegerDataType.INT_LENENC, 1); // parameter_set_count (always 1)
+                    byte[] nullBitsBuffer = new byte[(queryAttributesBindings.getCount() + 7) / 8];
+                    for (int i = 0; i < queryAttributesBindings.getCount(); i++) {
+                        if (queryAttributesBindings.getAttributeValue(i).isNull()) {
+                            nullBitsBuffer[i >>> 3] |= 1 << (i & 7);
+                        }
+                    }
+                    sendPacket.writeBytes(StringLengthDataType.STRING_VAR, nullBitsBuffer);
+                    sendPacket.writeInteger(IntegerDataType.INT1, 1); // new_params_bind_flag (always 1)
+                    queryAttributesBindings.runThroughAll(a -> {
+                        sendPacket.writeInteger(IntegerDataType.INT2, a.getFieldType());
+                        sendPacket.writeBytes(StringSelfDataType.STRING_LENENC, a.getName().getBytes());
+                    });
+                    queryAttributesBindings.runThroughAll(a -> {
+                        if (!a.isNull()) {
+                            a.writeAsQueryAttribute(sendPacket);
+                        }
+                    });
+                } else {
+                    sendPacket.writeInteger(IntegerDataType.INT_LENENC, 0);
+                    sendPacket.writeInteger(IntegerDataType.INT_LENENC, 1); // parameter_set_count (always 1)
+                }
+            } else if (queryAttributesBindings.getCount() > 0) {
+                sess.getLog().logWarn(Messages.getString("QueryAttributes.SetButNotSupported"));
+            }
+
+            sendPacket.setTag("QUERY");
+
+            boolean useStreamLengths = sess.getPropertySet().getBooleanProperty(PropertyKey.useStreamLengthsInPrepStmts).getValue();
+
+            //
+            // Try and get this allocation as close as possible for BLOBs
+            //
+            int ensurePacketSize = 0;
+
+            String statementComment = ((NativeSession) sess).getProtocol().getQueryComment();
+
+            byte[] commentAsBytes = null;
+
+            if (statementComment != null) {
+                commentAsBytes = StringUtils.getBytes(statementComment, characterEncoding);
+
+                ensurePacketSize += commentAsBytes.length;
+                ensurePacketSize += 6; // for /*[space] [space]*/
+            }
+
+            for (int i = 0; i < bindValues.length; i++) {
+                if (bindValues[i].isStream() && useStreamLengths) {
+                    ensurePacketSize += bindValues[i].getScaleOrLength();
+                }
+            }
+
+            if (ensurePacketSize != 0) {
+                sendPacket.ensureCapacity(ensurePacketSize);
+            }
+
+            if (commentAsBytes != null) {
+                sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SLASH_STAR_SPACE_AS_BYTES);
+                sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, commentAsBytes);
+                sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
+            }
+
+            byte[][] staticSqlStrings = preparedQuery.getParseInfo().getStaticSql();
+            for (int i = 0; i < bindValues.length; i++) {
+                bindings.checkParameterSet(i);
+                sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, staticSqlStrings[i]);
+                bindValues[i].writeAsText(sendPacket);
+            }
+
+            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, staticSqlStrings[bindValues.length]);
+
+            return sendPacket;
+        }
     }
 
     public NativePacketPayload buildComInitDb(NativePacketPayload sharedPacket, byte[] dbName) {
@@ -153,12 +251,110 @@ public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload>
     }
 
     public NativePacketPayload buildComStmtSendLongData(NativePacketPayload sharedPacket, long serverStatementId, int parameterIndex, byte[] longData) {
-        NativePacketPayload packet = sharedPacket != null ? sharedPacket : new NativePacketPayload(9);
-        packet.writeInteger(IntegerDataType.INT1, NativeConstants.COM_STMT_SEND_LONG_DATA);
-        packet.writeInteger(IntegerDataType.INT4, serverStatementId);
-        packet.writeInteger(IntegerDataType.INT2, parameterIndex);
+        NativePacketPayload packet = buildComStmtSendLongDataHeader(sharedPacket, serverStatementId, parameterIndex);
         packet.writeBytes(StringLengthDataType.STRING_FIXED, longData);
         return packet;
     }
 
+    public NativePacketPayload buildComStmtSendLongDataHeader(NativePacketPayload sharedPacket, long serverStatementId, int parameterIndex) {
+        NativePacketPayload packet = sharedPacket != null ? sharedPacket : new NativePacketPayload(9);
+        packet.writeInteger(IntegerDataType.INT1, NativeConstants.COM_STMT_SEND_LONG_DATA);
+        packet.writeInteger(IntegerDataType.INT4, serverStatementId);
+        packet.writeInteger(IntegerDataType.INT2, parameterIndex);
+        return packet;
+    }
+
+    public NativePacketPayload buildComStmtExecute(NativePacketPayload sharedPacket, long serverStatementId, byte flags, boolean sendQueryAttributes,
+            PreparedQuery preparedQuery) {
+        NativePacketPayload packet = sharedPacket != null ? sharedPacket : new NativePacketPayload(5);
+
+        int parameterCount = preparedQuery.getParameterCount();
+        QueryBindings queryBindings = preparedQuery.getQueryBindings();
+        BindValue[] parameterBindings = queryBindings.getBindValues();
+        QueryAttributesBindings queryAttributesBindings = preparedQuery.getQueryAttributesBindings();
+
+        packet.writeInteger(IntegerDataType.INT1, NativeConstants.COM_STMT_EXECUTE);
+        packet.writeInteger(IntegerDataType.INT4, serverStatementId);
+        packet.writeInteger(IntegerDataType.INT1, flags);
+        packet.writeInteger(IntegerDataType.INT4, 1); // placeholder for parameter iterations
+
+        int parametersAndAttributesCount = parameterCount;
+        if (this.supportsQueryAttributes) {
+            if (sendQueryAttributes) {
+                parametersAndAttributesCount += queryAttributesBindings.getCount();
+            }
+            if (sendQueryAttributes || parametersAndAttributesCount > 0) {
+                // Servers between 8.0.23 and 8.0.25 don't expect a 'parameter_count' value if the statement was prepared without parameters.
+                packet.writeInteger(IntegerDataType.INT_LENENC, parametersAndAttributesCount);
+            }
+        }
+
+        if (parametersAndAttributesCount > 0) {
+            /* Reserve place for null-marker bytes */
+            int nullCount = (parametersAndAttributesCount + 7) / 8;
+
+            int nullBitsPosition = packet.getPosition();
+
+            for (int i = 0; i < nullCount; i++) {
+                packet.writeInteger(IntegerDataType.INT1, 0);
+            }
+
+            byte[] nullBitsBuffer = new byte[nullCount];
+
+            // In case if buffers (type) changed or there are query attributes to send.
+            if (queryBindings.getSendTypesToServer().get() || sendQueryAttributes && queryAttributesBindings.getCount() > 0) {
+                packet.writeInteger(IntegerDataType.INT1, 1);
+
+                // Store types of parameters in the first package that is sent to the server.
+                for (int i = 0; i < parameterCount; i++) {
+                    packet.writeInteger(IntegerDataType.INT2, parameterBindings[i].getFieldType());
+                    if (this.supportsQueryAttributes) {
+                        packet.writeBytes(StringSelfDataType.STRING_LENENC, "".getBytes()); // Parameters have no names.
+                    }
+                }
+
+                if (sendQueryAttributes) {
+                    queryAttributesBindings.runThroughAll(a -> {
+                        packet.writeInteger(IntegerDataType.INT2, a.getFieldType());
+                        packet.writeBytes(StringSelfDataType.STRING_LENENC, a.getName().getBytes());
+                    });
+                }
+            } else {
+                packet.writeInteger(IntegerDataType.INT1, 0);
+            }
+
+            // Store the parameter values.
+            for (int i = 0; i < parameterCount; i++) {
+                if (!parameterBindings[i].isStream()) {
+                    if (!parameterBindings[i].isNull()) {
+                        parameterBindings[i].writeAsBinary(packet);
+                    } else {
+                        nullBitsBuffer[i >>> 3] |= (1 << (i & 7));
+                    }
+                }
+            }
+
+            if (sendQueryAttributes) {
+                for (int i = 0; i < queryAttributesBindings.getCount(); i++) {
+                    if (queryAttributesBindings.getAttributeValue(i).isNull()) {
+                        int b = i + parameterCount;
+                        nullBitsBuffer[b >>> 3] |= 1 << (b & 7);
+                    }
+                }
+                queryAttributesBindings.runThroughAll(a -> {
+                    if (!a.isNull()) {
+                        a.writeAsQueryAttribute(packet);
+                    }
+                });
+            }
+
+            // Go back and write the NULL flags to the beginning of the packet
+            int endPosition = packet.getPosition();
+            packet.setPosition(nullBitsPosition);
+            packet.writeBytes(StringLengthDataType.STRING_FIXED, nullBitsBuffer);
+            packet.setPosition(endPosition);
+        }
+
+        return packet;
+    }
 }

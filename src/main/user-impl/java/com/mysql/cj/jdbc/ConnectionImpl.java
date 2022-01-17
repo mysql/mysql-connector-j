@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1754,7 +1754,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
                 synchronized (this.serverSideStatementCache) {
                     Object oldServerPrepStmt = this.serverSideStatementCache.put(
-                            new CompoundCacheKey(pstmt.getCurrentDatabase(), ((PreparedQuery<?>) pstmt.getQuery()).getOriginalSql()),
+                            new CompoundCacheKey(pstmt.getCurrentDatabase(), ((PreparedQuery) pstmt.getQuery()).getOriginalSql()),
                             (ServerPreparedStatement) pstmt);
                     if (oldServerPrepStmt != null && oldServerPrepStmt != pstmt) {
                         ((ServerPreparedStatement) oldServerPrepStmt).isCached = false;
@@ -1771,8 +1771,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         synchronized (getConnectionMutex()) {
             if (this.cachePrepStmts.getValue()) {
                 synchronized (this.serverSideStatementCache) {
-                    this.serverSideStatementCache
-                            .remove(new CompoundCacheKey(pstmt.getCurrentDatabase(), ((PreparedQuery<?>) pstmt.getQuery()).getOriginalSql()));
+                    this.serverSideStatementCache.remove(new CompoundCacheKey(pstmt.getCurrentDatabase(), ((PreparedQuery) pstmt.getQuery()).getOriginalSql()));
                 }
             }
         }

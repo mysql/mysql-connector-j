@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,6 +39,7 @@ import java.sql.NClob;
 import java.sql.SQLException;
 import java.sql.SQLType;
 import java.sql.SQLXML;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,7 +49,6 @@ import java.util.TreeMap;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.AssertionFailedException;
@@ -58,7 +58,6 @@ import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.MysqlSQLXML;
-import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -476,15 +475,16 @@ public class UpdatableResultSet extends ResultSetImpl {
                 ps.setDate(psIdx, getDate(rsIdx + 1));
                 break;
             case TIMESTAMP:
-                ((PreparedQuery<?>) ps.getQuery()).getQueryBindings().bindTimestamp(ps.getCoreParameterIndex(psIdx), getTimestamp(rsIdx + 1), null,
-                        field.getDecimals(), MysqlType.TIMESTAMP);
+                ps.setObject(psIdx, getObject(rsIdx + 1, Timestamp.class), MysqlType.TIMESTAMP, field.getDecimals());
+                ps.getQueryBindings().getBinding(psIdx - 1, false).setKeepOrigNanos(true);
                 break;
             case DATETIME:
                 ps.setObject(psIdx, getObject(rsIdx + 1, LocalDateTime.class), MysqlType.DATETIME, field.getDecimals());
+                ps.getQueryBindings().getBinding(psIdx - 1, false).setKeepOrigNanos(true);
                 break;
             case TIME:
-                // TODO adjust nanos to decimal numbers
                 ps.setTime(psIdx, getTime(rsIdx + 1));
+                ps.getQueryBindings().getBinding(psIdx - 1, false).setKeepOrigNanos(true);
                 break;
             case DOUBLE:
             case DOUBLE_UNSIGNED:
@@ -492,7 +492,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             case FLOAT_UNSIGNED:
             case BOOLEAN:
             case BIT:
-                ps.setBytesNoEscapeNoQuotes(psIdx, val);
+                ps.setBytes(psIdx, val, false);
                 break;
             /*
              * default, but also explicitly for following types:
@@ -740,12 +740,14 @@ public class UpdatableResultSet extends ResultSetImpl {
             byte[][] newRow = new byte[fields.length][];
 
             for (int i = 0; i < fields.length; i++) {
-                newRow[i] = this.inserter.isNull(i + 1) ? null : this.inserter.getBytesRepresentation(i + 1);
+                if (this.inserter.isNull(i + 1)) {
+                    newRow[i] = null;
+                }
 
                 // WARN: This non-variant only holds if MySQL never allows more than one auto-increment key (which is the way it is _today_)
                 if (fields[i].isAutoIncrement() && autoIncrementId > 0) {
                     newRow[i] = StringUtils.getBytes(String.valueOf(autoIncrementId));
-                    this.inserter.setBytesNoEscapeNoQuotes(i + 1, newRow[i]);
+                    this.inserter.setBytes(i + 1, newRow[i], false);
                 }
             }
 
@@ -842,7 +844,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             for (int i = 0; i < numFields; i++) {
                 if (!this.populateInserterWithDefaultValues) {
-                    this.inserter.setBytesNoEscapeNoQuotes(i + 1, StringUtils.getBytes("DEFAULT"));
+                    this.inserter.setBytes(i + 1, StringUtils.getBytes("DEFAULT"), false);
                     newRowData = null;
                 } else {
                     if (this.defaultColumnValue[i] != null) {
@@ -859,15 +861,14 @@ public class UpdatableResultSet extends ResultSetImpl {
                                         && this.defaultColumnValue[i][3] == (byte) 'R' && this.defaultColumnValue[i][4] == (byte) 'E'
                                         && this.defaultColumnValue[i][5] == (byte) 'N' && this.defaultColumnValue[i][6] == (byte) 'T'
                                         && this.defaultColumnValue[i][7] == (byte) '_') {
-                                    this.inserter.setBytesNoEscapeNoQuotes(i + 1, this.defaultColumnValue[i]);
-
+                                    this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false);
                                 } else {
-                                    this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false, false);
+                                    this.inserter.setBytes(i + 1, this.defaultColumnValue[i]);
                                 }
                                 break;
 
                             default:
-                                this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false, false);
+                                this.inserter.setBytes(i + 1, this.defaultColumnValue[i]);
                         }
 
                         // This value _could_ be changed from a getBytes(), so we need a copy....
@@ -1035,22 +1036,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.setParamValue(this.refresher, i + 1, this.thisRow, index, this.getMetadata().getFields()[index]);
                 continue;
             }
-            dataFrom = StringUtils.stripEnclosure(dataFrom, "_binary'", "'");
 
-            byte[] origBytes = updateInsertStmt.getOrigBytes(i + 1);
-            if (origBytes != null) {
-                // It happens when updateInsertStmt parameter is set as a HEX literal.
-                // We need to avoid quotation in this case.
-                if (this.refresher instanceof ServerPreparedStatement) {
-                    // Server-side prepared statement does not recognize HEX literal sent as a parameter to execute command,
-                    // it's treated as a usual string and quoted on server side. Thus we send original bytes instead.
-                    this.refresher.setBytesNoEscapeNoQuotes(i + 1, origBytes);
-                } else {
-                    this.refresher.setBytesNoEscapeNoQuotes(i + 1, dataFrom);
-                }
-            } else {
-                this.refresher.setBytesNoEscape(i + 1, dataFrom);
-            }
+            this.refresher.getQueryBindings().setFromBindValue(i, updateInsertStmt.getQueryBindings().getBindValues()[index]);
         }
 
         java.sql.ResultSet rs = null;

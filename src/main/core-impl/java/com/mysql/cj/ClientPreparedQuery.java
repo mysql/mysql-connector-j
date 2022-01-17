@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,19 +29,156 @@
 
 package com.mysql.cj;
 
-//TODO should not be protocol-specific
+import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.RuntimeProperty;
+import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.Message;
+import com.mysql.cj.util.StringUtils;
 
-public class ClientPreparedQuery extends AbstractPreparedQuery<ClientPreparedQueryBindings> {
+public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery {
+
+    protected ParseInfo parseInfo;
+
+    protected QueryBindings queryBindings = null;
+
+    /** The SQL that was passed in to 'prepare' */
+    protected String originalSql = null;
+
+    /** The number of parameters in this PreparedStatement */
+    protected int parameterCount;
+
+    /** Command index of currently executing batch command. */
+    protected int batchCommandIndex = -1;
+
+    protected RuntimeProperty<Boolean> autoClosePStmtStreams;
+    protected RuntimeProperty<Boolean> useStreamLengthsInPrepStmts;
 
     public ClientPreparedQuery(NativeSession sess) {
         super(sess);
+        this.autoClosePStmtStreams = this.session.getPropertySet().getBooleanProperty(PropertyKey.autoClosePStmtStreams);
+        this.useStreamLengthsInPrepStmts = this.session.getPropertySet().getBooleanProperty(PropertyKey.useStreamLengthsInPrepStmts);
+    }
+
+    @Override
+    public void closeQuery() {
+        super.closeQuery();
+    }
+
+    public ParseInfo getParseInfo() {
+        return this.parseInfo;
+    }
+
+    public void setParseInfo(ParseInfo parseInfo) {
+        this.parseInfo = parseInfo;
+    }
+
+    public String getOriginalSql() {
+        return this.originalSql;
+    }
+
+    public void setOriginalSql(String originalSql) {
+        this.originalSql = originalSql;
+    }
+
+    public int getParameterCount() {
+        return this.parameterCount;
+    }
+
+    public void setParameterCount(int parameterCount) {
+        this.parameterCount = parameterCount;
+    }
+
+    @Override
+    public QueryBindings getQueryBindings() {
+        return this.queryBindings;
+    }
+
+    @Override
+    public void setQueryBindings(QueryBindings queryBindings) {
+        this.queryBindings = queryBindings;
+    }
+
+    public int getBatchCommandIndex() {
+        return this.batchCommandIndex;
+    }
+
+    public void setBatchCommandIndex(int batchCommandIndex) {
+        this.batchCommandIndex = batchCommandIndex;
+    }
+
+    /**
+     * Computes the optimum number of batched parameter lists to send
+     * without overflowing max_allowed_packet.
+     * 
+     * @param numBatchedArgs
+     *            original batch size
+     * @return computed batch size
+     */
+    public int computeBatchSize(int numBatchedArgs) {
+        long[] combinedValues = computeMaxParameterSetSizeAndBatchSize(numBatchedArgs);
+
+        long maxSizeOfParameterSet = combinedValues[0];
+        long sizeOfEntireBatch = combinedValues[1];
+
+        if (sizeOfEntireBatch < this.maxAllowedPacket.getValue() - this.originalSql.length()) {
+            return numBatchedArgs;
+        }
+
+        return (int) Math.max(1, (this.maxAllowedPacket.getValue() - this.originalSql.length()) / maxSizeOfParameterSet);
+    }
+
+    /**
+     * Method checkNullOrEmptyQuery.
+     * 
+     * @param sql
+     *            the SQL to check
+     * 
+     * @throws WrongArgumentException
+     *             if query is null or empty.
+     */
+    public void checkNullOrEmptyQuery(String sql) {
+        if (sql == null) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("PreparedQuery.0"), this.session.getExceptionInterceptor());
+        }
+
+        if (sql.length() == 0) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("PreparedQuery.1"), this.session.getExceptionInterceptor());
+        }
+    }
+
+    public String asSql() {
+        StringBuilder buf = new StringBuilder();
+        Object batchArg = null;
+        if (this.batchCommandIndex != -1) {
+            batchArg = this.batchedArgs.get(this.batchCommandIndex);
+        }
+
+        byte[][] staticSqlStrings = this.parseInfo.getStaticSql();
+        for (int i = 0; i < this.parameterCount; ++i) {
+            buf.append(this.charEncoding != null ? StringUtils.toString(staticSqlStrings[i], this.charEncoding) : StringUtils.toString(staticSqlStrings[i]));
+            String val = null;
+            if (batchArg != null && batchArg instanceof String) {
+                buf.append((String) batchArg);
+                continue;
+            }
+            val = this.batchCommandIndex == -1 ? (this.queryBindings == null ? null : this.queryBindings.getBindValues()[i].getString())
+                    : ((QueryBindings) batchArg).getBindValues()[i].getString();
+            buf.append(val == null ? "** NOT SPECIFIED **" : val);
+        }
+        buf.append(this.charEncoding != null ? StringUtils.toString(staticSqlStrings[this.parameterCount], this.charEncoding)
+                : StringUtils.toAsciiString(staticSqlStrings[this.parameterCount]));
+        return buf.toString();
     }
 
     /**
      * Computes the maximum parameter set size, and entire batch size given
      * the number of arguments in the batch.
+     * 
+     * @param numBatchedArgs
+     *            number of batched arguments
+     * @return new long[] { maxSizeOfParameterSet, sizeOfEntireBatch }
      */
-    @Override
     protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) {
         long sizeOfEntireBatch = 1 /* com_query */;
         long maxSizeOfParameterSet = 0;
@@ -50,36 +187,17 @@ public class ClientPreparedQuery extends AbstractPreparedQuery<ClientPreparedQue
             sizeOfEntireBatch += 9 /* parameter_count */ + 1 /* parameter_set_count */;
             sizeOfEntireBatch += (this.queryAttributesBindings.getCount() + 7) / 8 /* null_bitmap */ + 1 /* new_params_bind_flag */;
             for (int i = 0; i < this.queryAttributesBindings.getCount(); i++) {
-                QueryAttributesBindValue queryAttribute = this.queryAttributesBindings.getAttributeValue(i);
-                sizeOfEntireBatch += 2 /* parameter_type */ + queryAttribute.getName().length() /* parameter_name */ + queryAttribute.getBoundLength();
+                BindValue queryAttribute = this.queryAttributesBindings.getAttributeValue(i);
+                sizeOfEntireBatch += 2 /* parameter_type */ + queryAttribute.getName().length() /* parameter_name */ + queryAttribute.getBinaryLength();
             }
         }
 
         for (int i = 0; i < numBatchedArgs; i++) {
-            ClientPreparedQueryBindings qBindings = (ClientPreparedQueryBindings) this.batchedArgs.get(i);
-
-            BindValue[] bindValues = qBindings.getBindValues();
-
             long sizeOfParameterSet = 0;
 
+            BindValue[] bindValues = ((QueryBindings) this.batchedArgs.get(i)).getBindValues();
             for (int j = 0; j < bindValues.length; j++) {
-                if (!bindValues[j].isNull()) {
-
-                    if (bindValues[j].isStream()) {
-                        long streamLength = bindValues[j].getStreamLength();
-
-                        if (streamLength != -1) {
-                            sizeOfParameterSet += streamLength * 2; // for safety in escaping
-                        } else {
-                            int paramLength = qBindings.getBindValues()[j].getByteValue().length;
-                            sizeOfParameterSet += paramLength;
-                        }
-                    } else {
-                        sizeOfParameterSet += qBindings.getBindValues()[j].getByteValue().length;
-                    }
-                } else {
-                    sizeOfParameterSet += 4; // for NULL literal in SQL 
-                }
+                sizeOfParameterSet += bindValues[j].getTextLength();
             }
 
             //
@@ -87,13 +205,7 @@ public class ClientPreparedQuery extends AbstractPreparedQuery<ClientPreparedQue
             // This is a little naive, because the ?s will be replaced but it gives us some padding, and is less housekeeping to ignore them. We're looking
             // for a "fuzzy" value here anyway
             //
-
-            if (this.parseInfo.getValuesClause() != null) {
-                sizeOfParameterSet += this.parseInfo.getValuesClause().length() + 1;
-            } else {
-                sizeOfParameterSet += this.originalSql.length() + 1;
-            }
-
+            sizeOfParameterSet += this.parseInfo.getValuesClause() != null ? this.parseInfo.getValuesClause().length() + 1 : this.originalSql.length() + 1;
             sizeOfEntireBatch += sizeOfParameterSet;
 
             if (sizeOfParameterSet > maxSizeOfParameterSet) {
@@ -102,5 +214,12 @@ public class ClientPreparedQuery extends AbstractPreparedQuery<ClientPreparedQue
         }
 
         return new long[] { maxSizeOfParameterSet, sizeOfEntireBatch };
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <M extends Message> M fillSendPacket(QueryBindings bindings) {
+        return (M) this.session.getProtocol().getMessageBuilder().buildComQuery(this.session.getSharedSendPacket(), this.session, this, bindings,
+                this.charEncoding);
     }
 }

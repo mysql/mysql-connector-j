@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -2570,6 +2570,11 @@ public class StatementRegressionTest extends BaseTestCase {
             updRs.updateBinaryStream("field1", new ByteArrayInputStream(streamData), streamLength);
 
             updRs.insertRow();
+
+            assertTrue(updRs.next());
+            assertEquals(1, updRs.getInt(1));
+            assertTrue(Arrays.equals(streamData, updRs.getBytes(2)));
+
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS updateStreamTest");
         }
@@ -11139,9 +11144,10 @@ public class StatementRegressionTest extends BaseTestCase {
                 }
 
                 ps.clearParameters();
-                assertThrows(SQLException.class, ".+ No conversion from abc to Types.BOOLEAN possible.+", new Callable<Void>() {
+                assertThrows(SQLException.class, "No conversion from abc to Types.BOOLEAN possible.+", new Callable<Void>() {
                     public Void call() throws Exception {
                         ps.setObject(1, "abc", Types.BOOLEAN);
+                        ps.execute();
                         return null;
                     }
                 });
@@ -11403,7 +11409,7 @@ public class StatementRegressionTest extends BaseTestCase {
             ps.setInt(1, 3);
             ps.setBytes(2, blobData);
             ps.addBatch();
-            assertThrows(SQLException.class, "Packet for query is too large \\(1.048.59\\d > 1.048.576\\).*", () -> ps.executeBatch());
+            assertThrows(SQLException.class, "Packet for query is too large \\(1.048.6\\d\\d > 1.048.576\\).*", () -> ps.executeBatch());
             ps.close(); // was failing
 
             this.rs = st.executeQuery("select c1 from testBug21132376 ");
@@ -11988,5 +11994,51 @@ public class StatementRegressionTest extends BaseTestCase {
         }
 
         testConn.close();
+    }
+
+    /**
+     * Tests fix for Bug#85317 (25672958), EXECUTE BATCH WILL THROW NULL POINTER EXCEPTION WHERE THE COLUMN IS BLOB!
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug85317() throws Exception {
+        createTable("testBug85317", "(k varchar(127) not null, v blob not null, primary key(k)) default charset utf8");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+
+        byte[] ba = "abcdefg".getBytes();
+
+        boolean useSPS = false;
+        boolean rewriteBS = false;
+        do {
+            this.stmt.executeUpdate("truncate table testBug85317");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSPS);
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "" + rewriteBS);
+
+            Connection con = getConnectionWithProps(props);
+            con.setAutoCommit(false);
+            PreparedStatement ps = con.prepareStatement("replace into testBug85317(k,v) values(?,?)");
+            for (int i = 1; i < 10000; i++) {
+                ps.setString(1, String.valueOf(i));
+                ps.setBlob(2, new ByteArrayInputStream(ba));
+                ps.addBatch();
+            }
+            ps.executeBatch(); // was throwing NPE when useServerPrepStmts=false
+            ps.close();
+            con.commit();
+
+            int cnt = 0;
+            this.rs = this.stmt.executeQuery("select * from testBug85317");
+            while (this.rs.next()) {
+                cnt++;
+                assertTrue(Arrays.equals(ba, this.rs.getBytes(2)));
+            }
+            assertEquals(9999, cnt);
+
+        } while ((useSPS = !useSPS) || (rewriteBS = !rewriteBS));
+
     }
 }

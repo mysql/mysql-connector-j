@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -127,6 +127,7 @@ import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.NativeSession;
+import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.Query;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.Session;
@@ -6384,11 +6385,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 sql = "";
             }
             if (sql.length() == 0 && interceptedQuery instanceof ClientPreparedStatement) {
-                try {
-                    sql = ((ClientPreparedStatement) interceptedQuery).asSql();
-                } catch (SQLException ex) {
-                    throw ExceptionFactory.createException(ex.getMessage(), ex);
-                }
+                sql = ((PreparedQuery) ((ClientPreparedStatement) interceptedQuery)).asSql();
             }
             if (sql.indexOf("nonexistent_table") >= 0) {
                 assertTrue(!this.connection.equals(previousConnection), "Different connection expected.");

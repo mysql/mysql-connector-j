@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -50,6 +50,7 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.InternalDate;
 import com.mysql.cj.protocol.InternalTime;
 import com.mysql.cj.protocol.InternalTimestamp;
+import com.mysql.cj.util.TimeUtil;
 
 /**
  * Tests for JDBC {@link java.sql.Date} creation.
@@ -206,7 +207,7 @@ public class SqlDateValueFactoryTest extends CommonAsserts {
 
         assertEquals(Date.valueOf(LocalDate.of(2018, 1, 2)), this.vf.createFromBytes("2018-01-02 03:04:05.6".getBytes(), 0, 21, f));
         assertEquals(Date.valueOf(LocalDate.of(2018, 1, 2)), this.vf.createFromBytes("2018-01-02".getBytes(), 0, 10, f));
-        assertEquals(Date.valueOf(LocalDate.of(1970, 1, 1)).toString(), this.vf.createFromBytes("03:04:05.6".getBytes(), 0, 10, f).toString());
+        assertEquals(Date.valueOf(TimeUtil.DEFAULT_DATE).toString(), this.vf.createFromBytes("03:04:05.6".getBytes(), 0, 10, f).toString());
 
         assertThrows(DataConversionException.class, "Cannot convert string '1' to java.sql.Date value", new Callable<Void>() {
             @Override

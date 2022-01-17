@@ -94,7 +94,6 @@ import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
-import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
@@ -1816,14 +1815,10 @@ public class ConnectionTest extends BaseTestCase {
         public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
             String sql = str == null ? null : str.get();
             if (sql == null) {
-                try {
-                    if (interceptedQuery instanceof ClientPreparedStatement) {
-                        sql = ((ClientPreparedStatement) interceptedQuery).asSql();
-                    } else if (interceptedQuery instanceof PreparedQuery<?>) {
-                        sql = ((PreparedQuery<?>) interceptedQuery).asSql();
-                    }
-                } catch (SQLException ex) {
-                    throw ExceptionFactory.createException(ex.getMessage(), ex);
+                if (interceptedQuery instanceof ClientPreparedStatement) {
+                    sql = ((PreparedQuery) ((ClientPreparedStatement) interceptedQuery)).asSql();
+                } else if (interceptedQuery instanceof PreparedQuery) {
+                    sql = ((PreparedQuery) interceptedQuery).asSql();
                 }
             }
 
@@ -1833,7 +1828,7 @@ public class ConnectionTest extends BaseTestCase {
                 boolean enableEscapeProcessing = (tst & 0x1) != 0;
                 boolean processEscapeCodesForPrepStmts = (tst & 0x2) != 0;
                 boolean useServerPrepStmts = (tst & 0x4) != 0;
-                boolean isPreparedStatement = interceptedQuery instanceof PreparedStatement || interceptedQuery instanceof PreparedQuery<?>;
+                boolean isPreparedStatement = interceptedQuery instanceof PreparedStatement || interceptedQuery instanceof PreparedQuery;
 
                 String testCase = String.format("Case: %d [ %s | %s | %s ]/%s", tst, enableEscapeProcessing ? "enEscProc" : "-",
                         processEscapeCodesForPrepStmts ? "procEscProcPS" : "-", useServerPrepStmts ? "useSSPS" : "-",

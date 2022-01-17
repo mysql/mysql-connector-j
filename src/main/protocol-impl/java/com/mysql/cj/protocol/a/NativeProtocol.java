@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,10 +33,13 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.lang.ref.SoftReference;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.Socket;
@@ -46,11 +49,25 @@ import java.net.UnknownHostException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.DataTruncation;
+import java.sql.Date;
 import java.sql.SQLWarning;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -61,6 +78,7 @@ import java.util.Optional;
 import java.util.TimeZone;
 import java.util.function.Supplier;
 
+import com.mysql.cj.BindValue;
 import com.mysql.cj.CharsetMapping;
 import com.mysql.cj.Constants;
 import com.mysql.cj.MessageBuilder;
@@ -69,7 +87,6 @@ import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeCharsetSettings;
 import com.mysql.cj.NativeSession;
 import com.mysql.cj.Query;
-import com.mysql.cj.QueryAttributesBindValue;
 import com.mysql.cj.QueryAttributesBindings;
 import com.mysql.cj.QueryResult;
 import com.mysql.cj.ServerPreparedQuery;
@@ -119,6 +136,7 @@ import com.mysql.cj.protocol.ResultsetRow;
 import com.mysql.cj.protocol.ResultsetRows;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.SocketConnection;
+import com.mysql.cj.protocol.ValueEncoder;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
@@ -169,7 +187,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     private RuntimeProperty<Integer> maxAllowedPacket;
     private RuntimeProperty<Boolean> useServerPrepStmts;
 
-    //private boolean needToGrabQueryFromPacket;
     private boolean autoGenerateTestcaseScript;
 
     /** Does the server support long column info? */
@@ -197,6 +214,38 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     private InputStream localInfileInputStream;
 
     private BaseMetricsHolder metricsHolder;
+
+    static Map<Class<?>, Supplier<ValueEncoder>> DEFAULT_ENCODERS = new HashMap<>();
+    static {
+        DEFAULT_ENCODERS.put(BigDecimal.class, NumberValueEncoder::new);
+        DEFAULT_ENCODERS.put(BigInteger.class, NumberValueEncoder::new);
+        DEFAULT_ENCODERS.put(Blob.class, BlobValueEncoder::new);
+        DEFAULT_ENCODERS.put(Boolean.class, BooleanValueEncoder::new);
+        DEFAULT_ENCODERS.put(Byte.class, NumberValueEncoder::new);
+        DEFAULT_ENCODERS.put(byte[].class, ByteArrayValueEncoder::new);
+        DEFAULT_ENCODERS.put(Calendar.class, UtilCalendarValueEncoder::new);
+        DEFAULT_ENCODERS.put(Clob.class, ClobValueEncoder::new);
+        DEFAULT_ENCODERS.put(Date.class, SqlDateValueEncoder::new);
+        DEFAULT_ENCODERS.put(java.util.Date.class, UtilDateValueEncoder::new);
+        DEFAULT_ENCODERS.put(Double.class, NumberValueEncoder::new);
+        DEFAULT_ENCODERS.put(Duration.class, DurationValueEncoder::new);
+        DEFAULT_ENCODERS.put(Float.class, NumberValueEncoder::new);
+        DEFAULT_ENCODERS.put(InputStream.class, InputStreamValueEncoder::new);
+        DEFAULT_ENCODERS.put(Instant.class, InstantValueEncoder::new);
+        DEFAULT_ENCODERS.put(Integer.class, NumberValueEncoder::new);
+        DEFAULT_ENCODERS.put(LocalDate.class, LocalDateValueEncoder::new);
+        DEFAULT_ENCODERS.put(LocalDateTime.class, LocalDateTimeValueEncoder::new);
+        DEFAULT_ENCODERS.put(LocalTime.class, LocalTimeValueEncoder::new);
+        DEFAULT_ENCODERS.put(Long.class, NumberValueEncoder::new);
+        DEFAULT_ENCODERS.put(OffsetDateTime.class, OffsetDateTimeValueEncoder::new);
+        DEFAULT_ENCODERS.put(OffsetTime.class, OffsetTimeValueEncoder::new);
+        DEFAULT_ENCODERS.put(Reader.class, ReaderValueEncoder::new);
+        DEFAULT_ENCODERS.put(Short.class, NumberValueEncoder::new);
+        DEFAULT_ENCODERS.put(String.class, StringValueEncoder::new);
+        DEFAULT_ENCODERS.put(Time.class, SqlTimeValueEncoder::new);
+        DEFAULT_ENCODERS.put(Timestamp.class, SqlTimestampValueEncoder::new);
+        DEFAULT_ENCODERS.put(ZonedDateTime.class, ZonedDateTimeValueEncoder::new);
+    }
 
     /**
      * The comment (if any) that we'll prepend to all queries
@@ -232,7 +281,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         this.useServerPrepStmts = this.propertySet.getBooleanProperty(PropertyKey.useServerPrepStmts);
 
         this.reusablePacket = new NativePacketPayload(INITIAL_PACKET_SIZE);
-        //this.sendPacket = new Buffer(INITIAL_PACKET_SIZE);
 
         try {
             this.packetSender = new SimplePacketSender(this.socketConnection.getMysqlOutput());
@@ -241,8 +289,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder(),
                     this.getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
         }
-
-        //this.needToGrabQueryFromPacket = (this.profileSQL || this.logSlowQueries || this.autoGenerateTestcaseScript);
 
         if (this.propertySet.getBooleanProperty(PropertyKey.logSlowQueries).getValue()) {
             calculateSlowQueryThreshold();
@@ -266,7 +312,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     @Override
     public MessageBuilder<NativePacketPayload> getMessageBuilder() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+        return getCommandBuilder();
     }
 
     public MessageSender<NativePacketPayload> getPacketSender() {
@@ -282,6 +328,21 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             return this.commandBuilder;
         }
         return this.commandBuilder = new NativeMessageBuilder(this.serverSession.supportsQueryAttributes());
+    }
+
+    public Supplier<ValueEncoder> getValueEncoderSupplier(Object obj) {
+        if (obj == null) {
+            return ByteArrayValueEncoder::new;
+        }
+        Supplier<ValueEncoder> res = DEFAULT_ENCODERS.get(obj.getClass());
+        if (res == null) {
+            Optional<Supplier<ValueEncoder>> mysqlType = DEFAULT_ENCODERS.entrySet().stream().filter(m -> m.getKey().isAssignableFrom(obj.getClass()))
+                    .map(m -> m.getValue()).findFirst();
+            if (mysqlType.isPresent()) {
+                res = mysqlType.get();
+            }
+        }
+        return res;
     }
 
     /**
@@ -879,8 +940,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 packLength += 9 /* parameter_count */ + 1 /* parameter_set_count */;
                 packLength += (queryAttributes.getCount() + 7) / 8 /* null_bitmap */ + 1 /* new_params_bind_flag */;
                 for (int i = 0; i < queryAttributes.getCount(); i++) {
-                    QueryAttributesBindValue queryAttribute = queryAttributes.getAttributeValue(i);
-                    packLength += 2 /* parameter_type */ + queryAttribute.getName().length() /* parameter_name */ + queryAttribute.getBoundLength();
+                    BindValue queryAttribute = queryAttributes.getAttributeValue(i);
+                    packLength += 2 /* parameter_type */ + queryAttribute.getName().length() /* parameter_name */ + queryAttribute.getBinaryLength();
                 }
             } else {
                 packLength += 1 /* parameter_count */ + 1 /* parameter_set_count */;
@@ -906,11 +967,14 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 sendPacket.writeBytes(StringLengthDataType.STRING_VAR, nullBitsBuffer);
                 sendPacket.writeInteger(IntegerDataType.INT1, 1); // new_params_bind_flag (always 1)
                 queryAttributes.runThroughAll(a -> {
-                    sendPacket.writeInteger(IntegerDataType.INT2, a.getType());
+                    sendPacket.writeInteger(IntegerDataType.INT2, a.getFieldType());
                     sendPacket.writeBytes(StringSelfDataType.STRING_LENENC, a.getName().getBytes());
                 });
-                ValueEncoder valueEncoder = new ValueEncoder(sendPacket, characterEncoding, this.serverSession.getDefaultTimeZone());
-                queryAttributes.runThroughAll(a -> valueEncoder.encodeValue(a.getValue(), a.getType()));
+                queryAttributes.runThroughAll(a -> {
+                    if (!a.isNull()) {
+                        a.writeAsQueryAttribute(sendPacket);
+                    }
+                });
             } else {
                 sendPacket.writeInteger(IntegerDataType.INT_LENENC, 0);
                 sendPacket.writeInteger(IntegerDataType.INT_LENENC, 1); // parameter_set_count (always 1)

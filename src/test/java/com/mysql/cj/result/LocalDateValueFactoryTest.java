@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,6 +49,7 @@ import com.mysql.cj.exceptions.DataReadException;
 import com.mysql.cj.protocol.InternalDate;
 import com.mysql.cj.protocol.InternalTime;
 import com.mysql.cj.protocol.InternalTimestamp;
+import com.mysql.cj.util.TimeUtil;
 
 public class LocalDateValueFactoryTest extends CommonAsserts {
     PropertySet pset = new DefaultPropertySet();
@@ -66,7 +67,7 @@ public class LocalDateValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromTime() {
-        assertEquals(LocalDate.of(1970, 1, 1), this.vf.createFromTime(new InternalTime(-1, 0, 0, 0, 0)));
+        assertEquals(TimeUtil.DEFAULT_DATE, this.vf.createFromTime(new InternalTime(-1, 0, 0, 0, 0)));
     }
 
     @Test
@@ -188,7 +189,7 @@ public class LocalDateValueFactoryTest extends CommonAsserts {
 
         assertEquals(LocalDate.of(2018, 1, 2), this.vf.createFromBytes("2018-01-02 03:04:05.6".getBytes(), 0, 21, f));
         assertEquals(LocalDate.of(2018, 1, 2), this.vf.createFromBytes("2018-01-02".getBytes(), 0, 10, f));
-        assertEquals(LocalDate.of(1970, 1, 1), this.vf.createFromBytes("03:04:05.6".getBytes(), 0, 10, f));
+        assertEquals(TimeUtil.DEFAULT_DATE, this.vf.createFromBytes("03:04:05.6".getBytes(), 0, 10, f));
 
         assertThrows(DataConversionException.class, "Cannot convert string '1' to java.time.LocalDate value", new Callable<Void>() {
             @Override

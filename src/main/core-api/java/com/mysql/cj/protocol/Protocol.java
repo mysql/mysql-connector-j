@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,6 +31,7 @@ package com.mysql.cj.protocol;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Supplier;
 
 import com.mysql.cj.MessageBuilder;
 import com.mysql.cj.QueryResult;
@@ -309,4 +310,5 @@ public interface Protocol<M extends Message> {
         void invokeListeners(EventType type, Throwable reason);
     }
 
+    Supplier<ValueEncoder> getValueEncoderSupplier(Object obj);
 }

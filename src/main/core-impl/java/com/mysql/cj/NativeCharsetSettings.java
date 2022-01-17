@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -357,7 +357,8 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
             boolean isCollationDifferent = sessionCollationClause.length() > 0
                     && !requiredCollation.equalsIgnoreCase(this.serverSession.getServerVariable(COLLATION_CONNECTION));
             if (dontCheckServerMatch || isCharsetDifferent || isCollationDifferent) {
-                this.session.sendCommand(getCommandBuilder().buildComQuery(null, "SET NAMES " + sessionCharsetName + sessionCollationClause), false, 0);
+                this.session.getProtocol().sendCommand(getCommandBuilder().buildComQuery(null, "SET NAMES " + sessionCharsetName + sessionCollationClause),
+                        false, 0);
                 this.serverSession.getServerVariables().put(CHARACTER_SET_CLIENT, sessionCharsetName);
                 this.serverSession.getServerVariables().put(CHARACTER_SET_CONNECTION, sessionCharsetName);
 
@@ -385,7 +386,7 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
         String characterSetResultsValue = this.characterSetResults.getValue();
         if (StringUtils.isNullOrEmpty(characterSetResultsValue) || "null".equalsIgnoreCase(characterSetResultsValue)) {
             if (!StringUtils.isNullOrEmpty(sessionResultsCharset) && !"NULL".equalsIgnoreCase(sessionResultsCharset)) {
-                this.session.sendCommand(getCommandBuilder().buildComQuery(null, "SET character_set_results = NULL"), false, 0);
+                this.session.getProtocol().sendCommand(getCommandBuilder().buildComQuery(null, "SET character_set_results = NULL"), false, 0);
                 this.serverSession.getServerVariables().put(CHARACTER_SET_RESULTS, null);
             }
 
@@ -403,7 +404,7 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
             }
 
             if (!resultsCharsetName.equalsIgnoreCase(sessionResultsCharset)) {
-                this.session.sendCommand(getCommandBuilder().buildComQuery(null, "SET character_set_results = " + resultsCharsetName), false, 0);
+                this.session.getProtocol().sendCommand(getCommandBuilder().buildComQuery(null, "SET character_set_results = " + resultsCharsetName), false, 0);
                 this.serverSession.getServerVariables().put(CHARACTER_SET_RESULTS, resultsCharsetName);
             }
 
@@ -553,7 +554,7 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
             ValueFactory<Integer> ivf = new IntegerValueFactory(this.session.getPropertySet());
 
             try {
-                NativePacketPayload resultPacket = this.session.sendCommand(getCommandBuilder().buildComQuery(null,
+                NativePacketPayload resultPacket = this.session.getProtocol().sendCommand(getCommandBuilder().buildComQuery(null,
                         "select c.COLLATION_NAME, c.CHARACTER_SET_NAME, c.ID, cs.MAXLEN, c.IS_DEFAULT='Yes' from INFORMATION_SCHEMA.COLLATIONS as c left join"
                                 + " INFORMATION_SCHEMA.CHARACTER_SETS as cs on cs.CHARACTER_SET_NAME=c.CHARACTER_SET_NAME"),
                         false, 0);

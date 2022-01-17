@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -75,8 +75,6 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.CharsetMappingWrapper;
@@ -104,86 +102,6 @@ public class StatementsTest extends BaseTestCase {
     private static final int MAX_COLUMN_LENGTH = 255;
     private static final int MAX_COLUMNS_TO_TEST = 40;
     private static final int STEP = 8;
-
-    @BeforeEach
-    public void setUp() throws Exception {
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS statement_test");
-        this.stmt.executeUpdate("DROP TABLE IF EXISTS statement_batch_test");
-        this.stmt.executeUpdate(
-                "CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
-
-        try {
-            this.stmt.executeUpdate("CREATE TABLE statement_batch_test (id int not null primary key auto_increment, "
-                    + "strdata1 varchar(255) not null, strdata2 varchar(255), UNIQUE INDEX (strdata1))");
-        } catch (SQLException sqlEx) {
-            if (sqlEx.getMessage().indexOf("max key length") != -1) {
-                createTable("statement_batch_test",
-                        "(id int not null primary key auto_increment, strdata1 varchar(175) not null, strdata2 varchar(175), " + "UNIQUE INDEX (strdata1))");
-            }
-        }
-
-        for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
-            this.stmt.executeUpdate("DROP TABLE IF EXISTS statement_col_test_" + i);
-
-            StringBuilder insertBuf = new StringBuilder("INSERT INTO statement_col_test_");
-            StringBuilder stmtBuf = new StringBuilder("CREATE TABLE IF NOT EXISTS statement_col_test_");
-            stmtBuf.append(i);
-            insertBuf.append(i);
-            stmtBuf.append(" (");
-            insertBuf.append(" VALUES (");
-
-            boolean firstTime = true;
-
-            for (int j = 0; j < i; j++) {
-                if (!firstTime) {
-                    stmtBuf.append(",");
-                    insertBuf.append(",");
-                } else {
-                    firstTime = false;
-                }
-
-                stmtBuf.append("col_");
-                stmtBuf.append(j);
-                stmtBuf.append(" VARCHAR(");
-                stmtBuf.append(MAX_COLUMN_LENGTH);
-                stmtBuf.append(")");
-                insertBuf.append("'");
-
-                int numChars = 16;
-
-                for (int k = 0; k < numChars; k++) {
-                    insertBuf.append("A");
-                }
-
-                insertBuf.append("'");
-            }
-
-            stmtBuf.append(")");
-            insertBuf.append(")");
-            this.stmt.executeUpdate(stmtBuf.toString());
-            this.stmt.executeUpdate(insertBuf.toString());
-        }
-
-        // explicitly set the catalog to exercise code in execute(), executeQuery() and executeUpdate()
-        // FIXME: Only works on Windows!
-        // this.conn.setCatalog(this.conn.getCatalog().toUpperCase());
-    }
-
-    @AfterEach
-    public void tearDown() throws Exception {
-        this.stmt.executeUpdate("DROP TABLE statement_test");
-
-        for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
-            StringBuilder stmtBuf = new StringBuilder("DROP TABLE IF EXISTS statement_col_test_");
-            stmtBuf.append(i);
-            this.stmt.executeUpdate(stmtBuf.toString());
-        }
-
-        try {
-            this.stmt.executeUpdate("DROP TABLE statement_batch_test");
-        } catch (SQLException sqlEx) {
-        }
-    }
 
     @Test
     public void testAccessorsAndMutators() throws SQLException {
@@ -241,6 +159,8 @@ public class StatementsTest extends BaseTestCase {
 
     @Test
     public void testAutoIncrement() throws SQLException {
+        createTable("statement_test", "(id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
+
         try {
             this.stmt.setFetchSize(Integer.MIN_VALUE);
 
@@ -855,6 +775,8 @@ public class StatementsTest extends BaseTestCase {
 
     @Test
     public void testInsert() throws SQLException {
+        createTable("statement_test", "(id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
+
         try {
             boolean autoCommit = this.conn.getAutoCommit();
 
@@ -1040,6 +962,8 @@ public class StatementsTest extends BaseTestCase {
 
     @Test
     public void testPreparedStatement() throws SQLException {
+        createTable("statement_test", "(id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
+
         this.stmt.executeUpdate("INSERT INTO statement_test (id, strdata1,strdata2) values (999,'abcdefg', 'poi')");
         this.pstmt = this.conn.prepareStatement("UPDATE statement_test SET strdata1=?, strdata2=? where id=999");
         this.pstmt.setString(1, "iop");
@@ -1062,6 +986,16 @@ public class StatementsTest extends BaseTestCase {
 
     @Test
     public void testPreparedStatementBatch() throws SQLException {
+        try {
+            createTable("statement_batch_test",
+                    "(id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255), UNIQUE INDEX (strdata1))");
+        } catch (SQLException sqlEx) {
+            if (sqlEx.getMessage().indexOf("max key length") != -1) {
+                createTable("statement_batch_test",
+                        "(id int not null primary key auto_increment, strdata1 varchar(175) not null, strdata2 varchar(175), UNIQUE INDEX (strdata1))");
+            }
+        }
+
         this.pstmt = this.conn.prepareStatement("INSERT INTO statement_batch_test (strdata1, strdata2) VALUES (?,?)");
 
         for (int i = 0; i < 1000; i++) {
@@ -1122,6 +1056,34 @@ public class StatementsTest extends BaseTestCase {
 
     @Test
     public void testSelectColumns() throws SQLException {
+        for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
+            StringBuilder insertBuf = new StringBuilder("INSERT INTO statement_col_test_").append(i).append(" VALUES (");
+            StringBuilder tnameBuf = new StringBuilder("statement_col_test_").append(i);
+            StringBuilder ddlBuf = new StringBuilder("(");
+
+            boolean firstTime = true;
+            for (int j = 0; j < i; j++) {
+                if (!firstTime) {
+                    ddlBuf.append(",");
+                    insertBuf.append(",");
+                } else {
+                    firstTime = false;
+                }
+
+                ddlBuf.append("col_");
+                ddlBuf.append(j);
+                ddlBuf.append(" VARCHAR(");
+                ddlBuf.append(MAX_COLUMN_LENGTH);
+                ddlBuf.append(")");
+                insertBuf.append("'AAAAAAAAAAAAAAAA'");
+            }
+
+            ddlBuf.append(")");
+            insertBuf.append(")");
+            createTable(tnameBuf.toString(), ddlBuf.toString());
+            this.stmt.executeUpdate(insertBuf.toString());
+        }
+
         for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
             long start = System.currentTimeMillis();
             this.rs = this.stmt.executeQuery("SELECT * from statement_col_test_" + i);
@@ -1251,15 +1213,11 @@ public class StatementsTest extends BaseTestCase {
 
     @Test
     public void testStatementRewriteBatch() throws Exception {
-        for (int j = 0; j < 2; j++) {
+        for (boolean useSSPS : new boolean[] { false, true }) {
             Properties props = new Properties();
             props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-
-            if (j == 0) {
-                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
-            }
-
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
             props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
             Connection multiConn = getConnectionWithProps(props);
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
@@ -1325,7 +1283,7 @@ public class StatementsTest extends BaseTestCase {
             props.clear();
             props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
             props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), j == 0 ? "true" : "false");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
             props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
             multiConn = getConnectionWithProps(props);
 
@@ -1348,9 +1306,9 @@ public class StatementsTest extends BaseTestCase {
             }
 
             createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
-            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), j == 0 ? "true" : "false");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
             props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
-            props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), j == 0 ? "10240" : "1024");
+            props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), useSSPS ? "10240" : "1024");
             multiConn = getConnectionWithProps(props);
 
             pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
@@ -1395,9 +1353,9 @@ public class StatementsTest extends BaseTestCase {
                 differentTypes[i][14] = Math.random() < .5 ? null : new Timestamp(System.currentTimeMillis());
             }
 
-            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), j == 0 ? "true" : "false");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
             props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
-            props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), j == 0 ? "10240" : "1024");
+            props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), useSSPS ? "10240" : "1024");
             multiConn = getConnectionWithProps(props);
             pStmt = multiConn.prepareStatement("INSERT INTO rewriteBatchTypes(internalOrder,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14,f15) VALUES "
                     + "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
@@ -1440,7 +1398,9 @@ public class StatementsTest extends BaseTestCase {
             SimpleDateFormat sdf = TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss''", null);
             DateTimeFormatter dtf = TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET;
 
+            int cnt = 0;
             while (this.rs.next()) {
+                System.out.println(++cnt);
                 for (int k = 0; k < 14; k++) {
                     if (differentTypes[idx][k] == null) {
                         assertTrue(this.rs.getObject(k + 1) == null,
@@ -1503,6 +1463,8 @@ public class StatementsTest extends BaseTestCase {
                             assertEquals(new Integer(((Short) differentTypes[idx][k]).shortValue()), this.rs.getObject(k + 1),
                                     "On row " + idx + ", column " + (k + 1));
                         } else {
+                            System.out
+                                    .println((k + 1) + ": " + this.rs.getMetaData().getColumnName(k + 1) + ": " + differentTypes[idx][k].getClass().getName());//+ " " + this.rs.getObject(k + 1).getClass().getName());
                             assertEquals(differentTypes[idx][k].toString(), this.rs.getObject(k + 1).toString(), "On row " + idx + ", column " + (k + 1) + " ("
                                     + differentTypes[idx][k].getClass() + "/" + this.rs.getObject(k + 1).getClass());
                         }
@@ -2031,12 +1993,13 @@ public class StatementsTest extends BaseTestCase {
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
         PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testSetNCharacterStreamServer (c1) VALUES (?)");
+        pstmt1.setNCharacterStream(1, new StringReader("aaa"), 3);
         try {
-            pstmt1.setNCharacterStream(1, new StringReader("aaa"), 3);
+            pstmt1.execute();
             fail();
         } catch (SQLException e) {
             // ok
-            assertEquals("Can not call setNCharacterStream() when connection character set isn't UTF-8", e.getMessage());
+            assertEquals("Can not send national characters when connection character set isn't UTF-8", e.getMessage());
         }
         pstmt1.close();
         conn1.close();
@@ -2117,19 +2080,23 @@ public class StatementsTest extends BaseTestCase {
         NClob nclob1 = conn1.createNClob();
         nclob1.setString(1, "aaa");
         Reader reader2 = new StringReader("aaa");
+        pstmt1.setNClob(1, nclob1);
+        pstmt1.setString(2, "abc");
         try {
-            pstmt1.setNClob(1, nclob1);
+            pstmt1.execute();
             fail();
         } catch (SQLException e) {
             // ok
-            assertEquals("Can not call setNClob() when connection character set isn't UTF-8", e.getMessage());
+            assertEquals("Can not send national characters when connection character set isn't UTF-8", e.getMessage());
         }
+        pstmt1.setString(1, "abc");
+        pstmt1.setNClob(2, reader2, 3);
         try {
-            pstmt1.setNClob(2, reader2, 3);
+            pstmt1.execute();
             fail();
         } catch (SQLException e) {
             // ok
-            assertEquals("Can not call setNClob() when connection character set isn't UTF-8", e.getMessage());
+            assertEquals("Can not send national characters when connection character set isn't UTF-8", e.getMessage());
         }
         pstmt1.close();
         conn1.close();
@@ -2225,12 +2192,13 @@ public class StatementsTest extends BaseTestCase {
         props1.setProperty(PropertyKey.characterEncoding.getKeyName(), "latin1"); // ensure charset isn't utf8 here
         Connection conn1 = getConnectionWithProps(props1);
         PreparedStatement pstmt1 = conn1.prepareStatement("INSERT INTO testSetNStringServer (c1) VALUES (?)");
+        pstmt1.setNString(1, "aaa");
         try {
-            pstmt1.setNString(1, "aaa");
+            pstmt1.execute();
             fail();
         } catch (SQLException e) {
             // ok
-            assertEquals("Can not call setNString() when connection character set isn't UTF-8", e.getMessage());
+            assertEquals("Can not send national characters when connection character set isn't UTF-8", e.getMessage());
         }
         pstmt1.close();
         conn1.close();

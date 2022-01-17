@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -312,49 +312,49 @@ public class DateTimeRegressionTest extends BaseTestCase {
                     subTestBug20391832(props, type, "380119", "2038-01-19 00:00:00");
                     subTestBug20391832(props, type, "030417", "2003-04-17 00:00:00"); // resolved as a DATE literal
 
-                    assertThrows(SQLException.class, ".* Conversion from java.time.Duration to " + type + " is not supported.", () -> {
+                    assertThrows(SQLException.class, "Conversion from java.time.Duration to " + type + " is not supported.", () -> {
                         subTestBug20391832(props, type, "12 1", null);
                         return null;
                     });
-                    assertThrows(SQLException.class, ".* Conversion from java.time.Duration to " + type + " is not supported.", () -> {
+                    assertThrows(SQLException.class, "Conversion from java.time.Duration to " + type + " is not supported.", () -> {
                         subTestBug20391832(props, type, "12 13:04", null);
                         return null;
                     });
-                    assertThrows(SQLException.class, ".* Conversion from java.time.Duration to " + type + " is not supported.", () -> {
+                    assertThrows(SQLException.class, "Conversion from java.time.Duration to " + type + " is not supported.", () -> {
                         subTestBug20391832(props, type, "12 1:4:1", null);
                         return null;
                     });
-                    assertThrows(SQLException.class, ".* Conversion from java.time.Duration to " + type + " is not supported.", () -> {
+                    assertThrows(SQLException.class, "Conversion from java.time.Duration to " + type + " is not supported.", () -> {
                         subTestBug20391832(props, type, "12 1:04:17.123456789", null);
                         return null;
                     });
-                    assertThrows(SQLException.class, ".* Conversion from java.time.Duration to " + type + " is not supported.", () -> {
+                    assertThrows(SQLException.class, "Conversion from java.time.Duration to " + type + " is not supported.", () -> {
                         subTestBug20391832(props, type, "-838:59:59", null);
                         return null;
                     });
 
-                    assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to " + type + " is not supported.", () -> {
+                    assertThrows(SQLException.class, "Conversion from java.time.LocalTime to " + type + " is not supported.", () -> {
                         subTestBug20391832(props, type, "13:04:17", null);
                         return null;
                     });
-                    assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to " + type + " is not supported.", () -> {
+                    assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to " + type + " is not supported.", () -> {
                         subTestBug20391832(props, type, "13:04", null);
                         return null;
                     });
-                    assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to " + type + " is not supported.", () -> {
+                    assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to " + type + " is not supported.", () -> {
                         subTestBug20391832(props, type, "0417", null);
                         return null;
                     });
-                    assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to " + type + " is not supported.", () -> {
+                    assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to " + type + " is not supported.", () -> {
                         subTestBug20391832(props, type, "03:14:07.012", null);
                         return null;
                     });
-                    assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to " + type + " is not supported.", () -> {
+                    assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to " + type + " is not supported.", () -> {
                         subTestBug20391832(props, type, "031407.123", null);
                         return null;
                     });
 
-                    assertThrows(SQLException.class, ".* There is no known date-time pattern for.*", () -> {
+                    assertThrows(SQLException.class, ".*There is no known date-time pattern for.*", () -> {
                         subTestBug20391832(props, type, "031407#12", null); // wrong delimiter
                         return null;
                     });
@@ -505,23 +505,23 @@ public class DateTimeRegressionTest extends BaseTestCase {
                 subTestBug20391832(props, MysqlType.TIME, "25:59:59", "25:59:59");
                 subTestBug20391832(props, MysqlType.TIME, "-838:59:59", "-838:59:59");
 
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalDate to TIME is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalDate to TIME is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.TIME, "2038-01-19", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalDate to TIME is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalDate to TIME is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.TIME, "38-01-19", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalDate to TIME is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalDate to TIME is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.TIME, "2038#01$19", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalDate to TIME is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalDate to TIME is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.TIME, "38#01$19", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalDate to TIME is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalDate to TIME is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.TIME, "20380119", null);
                     return null;
                 });
@@ -550,7 +550,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
                     subTestBug20391832(props, MysqlType.TIME, "031407.123", sendFr ? "03:14:07.123" : "03:14:07");
                 }
 
-                assertThrows(SQLException.class, ".* There is no known date-time pattern for.*", () -> {
+                assertThrows(SQLException.class, ".*There is no known date-time pattern for.*", () -> {
                     subTestBug20391832(props, MysqlType.TIME, "031407#12", null); // wrong delimiter
                     return null;
                 });
@@ -685,49 +685,49 @@ public class DateTimeRegressionTest extends BaseTestCase {
                 subTestBug20391832(props, MysqlType.DATE, "380119", "2038-01-19");
                 subTestBug20391832(props, MysqlType.DATE, "030417", "2003-04-17");
 
-                assertThrows(SQLException.class, ".* Conversion from java.time.Duration to DATE is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.Duration to DATE is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.DATE, "12 1", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.Duration to DATE is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.Duration to DATE is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.DATE, "12 13:04", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.Duration to DATE is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.Duration to DATE is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.DATE, "12 1:4:1", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.Duration to DATE is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.Duration to DATE is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.DATE, "12 1:04:17.123456789", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.Duration to DATE is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.Duration to DATE is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.DATE, "-838:59:59", null);
                     return null;
                 });
 
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to DATE is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to DATE is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.DATE, "13:04:17", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to DATE is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to DATE is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.DATE, "13:04", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to DATE is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to DATE is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.DATE, "0417", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to DATE is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to DATE is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.DATE, "03:14:07.012", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to DATE is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to DATE is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.DATE, "031407.123", null);
                     return null;
                 });
 
-                assertThrows(SQLException.class, ".* There is no known date-time pattern for.*", () -> {
+                assertThrows(SQLException.class, ".*There is no known date-time pattern for.*", () -> {
                     subTestBug20391832(props, MysqlType.DATE, "031407#12", null); // wrong delimiter
                     return null;
                 });
@@ -833,33 +833,33 @@ public class DateTimeRegressionTest extends BaseTestCase {
                 subTestBug20391832(props, MysqlType.YEAR, "380119", "2038");
                 subTestBug20391832(props, MysqlType.YEAR, "030417", "2003");
 
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to YEAR is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to YEAR is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.YEAR, "13:04:17", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to YEAR is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to YEAR is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.YEAR, "13:04", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to YEAR is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to YEAR is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.YEAR, "0417", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to YEAR is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to YEAR is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.YEAR, "03:14:07.012", null);
                     return null;
                 });
-                assertThrows(SQLException.class, ".* Conversion from java.time.LocalTime to YEAR is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.LocalTime to YEAR is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.YEAR, "031407.123", null);
                     return null;
                 });
 
-                assertThrows(SQLException.class, ".* There is no known date-time pattern for.*", () -> {
+                assertThrows(SQLException.class, ".*There is no known date-time pattern for.*", () -> {
                     subTestBug20391832(props, MysqlType.YEAR, "031407#12", null); // wrong delimiter
                     return null;
                 });
 
-                assertThrows(SQLException.class, ".* Conversion from java.time.Duration to YEAR is not supported.", () -> {
+                assertThrows(SQLException.class, ".*Conversion from java.time.Duration to YEAR is not supported.", () -> {
                     subTestBug20391832(props, MysqlType.YEAR, "-838:59:59", null);
                     return null;
                 });
@@ -875,7 +875,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
                 subTestBug20391832(props, MysqlType.YEAR, "2038-01-19 03:14:07.01234567", "2038");
                 subTestBug20391832(props, MysqlType.YEAR, "2038-01-19 03:14:07.012345678", "2038");
 
-                assertThrows(SQLException.class, ".* There is no known date-time pattern for.*", () -> {
+                assertThrows(SQLException.class, ".*There is no known date-time pattern for.*", () -> {
                     subTestBug20391832(props, MysqlType.YEAR, "2038-01-19 03:14:07.0123456789", null); // nanos part is too long
                     return null;
                 });

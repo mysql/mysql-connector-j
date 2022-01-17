@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,13 @@
 
 package com.mysql.cj.protocol;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
+
 public class InternalTimestamp extends InternalDate {
 
     private int hours = 0;
@@ -37,6 +44,33 @@ public class InternalTimestamp extends InternalDate {
     private int nanos = 0;
     private int scale = 0;
     private int offset = 0;
+
+    public static InternalTimestamp from(LocalDate x) {
+        return new InternalTimestamp(x.getYear(), x.getMonthValue(), x.getDayOfMonth(), 0, 0, 0, 0, -1);
+    }
+
+    public static InternalTimestamp from(LocalDateTime x) {
+        return new InternalTimestamp(x.getYear(), x.getMonthValue(), x.getDayOfMonth(), x.getHour(), x.getMinute(), x.getSecond(), x.getNano(), -1);
+    }
+
+    public static InternalTimestamp from(OffsetDateTime x) {
+        InternalTimestamp internalTimestamp = new InternalTimestamp(x.getYear(), x.getMonthValue(), x.getDayOfMonth(), x.getHour(), x.getMinute(),
+                x.getSecond(), x.getNano(), -1);
+        internalTimestamp.setOffset((int) TimeUnit.SECONDS.toMinutes(x.getOffset().getTotalSeconds()));
+        return internalTimestamp;
+    }
+
+    public static InternalTimestamp from(ZonedDateTime x) {
+        InternalTimestamp internalTimestamp = new InternalTimestamp(x.getYear(), x.getMonthValue(), x.getDayOfMonth(), x.getHour(), x.getMinute(),
+                x.getSecond(), x.getNano(), -1);
+        internalTimestamp.setOffset((int) TimeUnit.SECONDS.toMinutes(x.getOffset().getTotalSeconds()));
+        return internalTimestamp;
+    }
+
+    public static InternalTimestamp from(Calendar x, int nanos) {
+        return new InternalTimestamp(x.get(Calendar.YEAR), x.get(Calendar.MONTH) + 1, x.get(Calendar.DAY_OF_MONTH), x.get(Calendar.HOUR_OF_DAY),
+                x.get(Calendar.MINUTE), x.get(Calendar.SECOND), nanos, -1);
+    }
 
     /**
      * Constructs a zero datetime

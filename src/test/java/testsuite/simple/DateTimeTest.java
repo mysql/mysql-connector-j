@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -281,9 +281,9 @@ public class DateTimeTest extends BaseTestCase {
                                         /* Unsupported conversions */
 
                                         assertThrows(props, tVarchar, sqlDate_at_senderTz, MysqlType.TIME, senderTz,
-                                                ".* Conversion from java.sql.Date to TIME is not supported.");
+                                                ".*Conversion from java.sql.Date to TIME is not supported.");
                                         assertThrows(props, tDate, sqlDate_at_senderTz, MysqlType.INT, senderTz,
-                                                ".* Conversion from java.sql.Date to INT is not supported.");
+                                                ".*Conversion from java.sql.Date to INT is not supported.");
 
                                         /* Into YEAR field */
 
@@ -1668,9 +1668,9 @@ public class DateTimeTest extends BaseTestCase {
                                         /* Unsupported conversions */
 
                                         assertThrows(props, tVarchar, ld_20200101, MysqlType.TIME, senderTz,
-                                                ".* Conversion from java.time.LocalDate to TIME is not supported.");
+                                                ".*Conversion from java.time.LocalDate to TIME is not supported.");
                                         assertThrows(props, tDate, ld_20200101, MysqlType.INT, senderTz,
-                                                ".* Conversion from java.time.LocalDate to INT is not supported.");
+                                                ".*Conversion from java.time.LocalDate to INT is not supported.");
 
                                         /* Into YEAR field */
 
@@ -1879,13 +1879,13 @@ public class DateTimeTest extends BaseTestCase {
                                         /* Unsupported conversions */
 
                                         assertThrows(props, tVarchar, orig_lt, MysqlType.DATE, senderTz,
-                                                ".* Conversion from java.time.LocalTime to DATE is not supported.");
+                                                ".*Conversion from java.time.LocalTime to DATE is not supported.");
                                         assertThrows(props, tVarchar, orig_lt, MysqlType.DATETIME, senderTz,
-                                                ".* Conversion from java.time.LocalTime to DATETIME is not supported.");
+                                                ".*Conversion from java.time.LocalTime to DATETIME is not supported.");
                                         assertThrows(props, tVarchar, orig_lt, MysqlType.TIMESTAMP, senderTz,
-                                                ".* Conversion from java.time.LocalTime to TIMESTAMP is not supported.");
+                                                ".*Conversion from java.time.LocalTime to TIMESTAMP is not supported.");
                                         assertThrows(props, tVarchar, orig_lt, MysqlType.YEAR, senderTz,
-                                                ".* Conversion from java.time.LocalTime to YEAR is not supported.");
+                                                ".*Conversion from java.time.LocalTime to YEAR is not supported.");
 
                                         /* Into YEAR field */
 
@@ -2356,13 +2356,13 @@ public class DateTimeTest extends BaseTestCase {
                                         /* Unsupported conversions */
 
                                         assertThrows(props, tVarchar, ot_120000_123456_05_00, MysqlType.DATE, senderTz,
-                                                ".* Conversion from java.time.OffsetTime to DATE is not supported.");
+                                                ".*Conversion from java.time.OffsetTime to DATE is not supported.");
                                         assertThrows(props, tVarchar, ot_120000_123456_05_00, MysqlType.DATETIME, senderTz,
-                                                ".* Conversion from java.time.OffsetTime to DATETIME is not supported.");
+                                                ".*Conversion from java.time.OffsetTime to DATETIME is not supported.");
                                         assertThrows(props, tVarchar, ot_120000_123456_05_00, MysqlType.TIMESTAMP, senderTz,
-                                                ".* Conversion from java.time.OffsetTime to TIMESTAMP is not supported.");
+                                                ".*Conversion from java.time.OffsetTime to TIMESTAMP is not supported.");
                                         assertThrows(props, tVarchar, ot_120000_123456_05_00, MysqlType.YEAR, senderTz,
-                                                ".* Conversion from java.time.OffsetTime to YEAR is not supported.");
+                                                ".*Conversion from java.time.OffsetTime to YEAR is not supported.");
 
                                         /* Into YEAR field */
 
@@ -3276,13 +3276,13 @@ public class DateTimeTest extends BaseTestCase {
                                         /* Unsupported conversions */
 
                                         assertThrows(props, tVarchar, dur, MysqlType.DATE, senderTz,
-                                                ".* Conversion from java.time.Duration to DATE is not supported.");
+                                                ".*Conversion from java.time.Duration to DATE is not supported.");
                                         assertThrows(props, tVarchar, dur, MysqlType.DATETIME, senderTz,
-                                                ".* Conversion from java.time.Duration to DATETIME is not supported.");
+                                                ".*Conversion from java.time.Duration to DATETIME is not supported.");
                                         assertThrows(props, tVarchar, dur, MysqlType.TIMESTAMP, senderTz,
-                                                ".* Conversion from java.time.Duration to TIMESTAMP is not supported.");
+                                                ".*Conversion from java.time.Duration to TIMESTAMP is not supported.");
                                         assertThrows(props, tVarchar, dur, MysqlType.YEAR, senderTz,
-                                                ".* Conversion from java.time.Duration to YEAR is not supported.");
+                                                ".*Conversion from java.time.Duration to YEAR is not supported.");
 
                                         /* Into TIME field */
 

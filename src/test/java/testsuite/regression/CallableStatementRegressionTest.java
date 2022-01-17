@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1642,5 +1642,31 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 con.close();
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#38954 (11749415), DATA TRUNCATION WHILE USING BIT(1) IN STORED PROCEDURE WITH INOUT TYPE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug38954() throws Exception {
+        createTable("testBug38954", "(c BIT PRIMARY KEY)");
+        createProcedure("sp_bug38954_1", "(IN p1 BIT)\n" + "begin\n" + "INSERT INTO testBug38954 VALUES(p1);\n" + "end\n");
+        createProcedure("sp_bug38954_2", "(INOUT p1 BIT)\n" + "begin\n" + "INSERT INTO testBug38954 VALUES(p1); set p1=0;\n" + "end\n");
+
+        CallableStatement cstmt1 = this.conn.prepareCall("{call sp_bug38954_1(?)}");
+        cstmt1.setBoolean(1, true);
+        cstmt1.execute();
+        assertEquals(1, cstmt1.getUpdateCount());
+
+        this.stmt.executeUpdate("truncate table testBug38954");
+
+        CallableStatement cstmt2 = this.conn.prepareCall("{call sp_bug38954_2(?)}");
+        cstmt2.setBoolean(1, true);
+        cstmt2.registerOutParameter(1, java.sql.Types.BOOLEAN);
+        cstmt2.execute(); // was failing
+        assertEquals(1, cstmt2.getUpdateCount());
+        assertEquals(0, cstmt2.getByte(1));
     }
 }

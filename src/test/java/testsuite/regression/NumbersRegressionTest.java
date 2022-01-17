@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,9 +32,16 @@ package testsuite.regression;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
+import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
+
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
+import com.mysql.cj.conf.PropertyKey;
 
 import testsuite.BaseTestCase;
 
@@ -224,5 +231,50 @@ public class NumbersRegressionTest extends BaseTestCase {
         this.rs.next();
         assertEquals("12345678.123", this.rs.getBigDecimal(1, 3).toString());
         assertEquals("0.000", this.rs.getBigDecimal(2, 3).toString());
+    }
+
+    /**
+     * Tests fix for Bug#105915 (33678490), Connector/J 8 server prepared statement precision loss in execute batch.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug105915() throws Exception {
+        createTable("testBug105915",
+                "(`fid` bigint(20) DEFAULT NULL,`fvalue` decimal(23,10) DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+
+        boolean useSPS = false;
+        boolean useCursorFetch = false;
+        do {
+            this.stmt.executeUpdate("truncate table testBug105915");
+            this.stmt.executeUpdate(
+                    "INSERT INTO testBug105915 VALUES (0,-723279.9710000000),(1,-723279.9710000000),(2,-723279.9710000000),(3,-723279.9710000000),"
+                            + "(4,-723279.9710000000),(5,-723279.9710000000),(6,-723279.9710000000),(7,-723279.9710000000),(8,-723279.9710000000),(9,-723279.9710000000)");
+
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSPS);
+            props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "" + useCursorFetch);
+            Connection con = getConnectionWithProps(props);
+
+            PreparedStatement st = con.prepareStatement("UPDATE testBug105915 SET fvalue= fvalue + ? where fid = ?");
+            for (int i = 0; i < 10; i++) {
+                BigDecimal decimal = new BigDecimal("-964372.8000000000");
+                st.setBigDecimal(1, decimal);
+                st.setLong(2, i);
+                st.addBatch();
+            }
+            st.executeBatch();
+
+            this.rs = this.stmt.executeQuery("SELECT * from testBug105915");
+            while (this.rs.next()) {
+                assertEquals("-1687652.7710000000", this.rs.getString(2));
+            }
+            con.close();
+
+        } while ((useSPS = !useSPS) || (useCursorFetch = !useCursorFetch));
     }
 }

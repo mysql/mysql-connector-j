@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,10 +29,12 @@
 
 package com.mysql.cj.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +42,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.Messages;
@@ -1460,6 +1463,22 @@ public class StringUtils {
 
     private static final char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
+    /**
+     * Used to escape binary data with hex
+     * 
+     * @param buf
+     *            source bytes
+     * @param size
+     *            number of bytes to read
+     * @param bc
+     *            consumer for low and high bits of each byte
+     */
+    public static final void hexEscapeBlock(byte[] buf, int size, BiConsumer<Byte, Byte> bc) {
+        for (int i = 0; i < size; i++) {
+            bc.accept((byte) HEX_DIGITS[(buf[i] >>> 4) & 0xF], (byte) HEX_DIGITS[buf[i] & 0xF]);
+        }
+    }
+
     public static void appendAsHex(StringBuilder builder, byte[] bytes) {
         builder.append("0x");
         for (byte b : bytes) {
@@ -1704,5 +1723,114 @@ public class StringUtils {
         byte[] res = new byte[j];
         System.arraycopy(withQuotes, 0, res, 0, j);
         return res;
+    }
+
+    public static StringBuilder escapeString(StringBuilder buf, String x, boolean useAnsiQuotedIdentifiers, CharsetEncoder charsetEncoder) {
+        int stringLength = x.length();
+
+        buf.append('\'');
+
+        //
+        // Note: buf.append(char) is _faster_ than appending in blocks, because the block append requires a System.arraycopy().... go figure...
+        //
+
+        for (int i = 0; i < stringLength; ++i) {
+            char c = x.charAt(i);
+
+            switch (c) {
+                case 0: /* Must be escaped for 'mysql' */
+                    buf.append('\\');
+                    buf.append('0');
+                    break;
+                case '\n': /* Must be escaped for logs */
+                    buf.append('\\');
+                    buf.append('n');
+                    break;
+                case '\r':
+                    buf.append('\\');
+                    buf.append('r');
+                    break;
+                case '\\':
+                    buf.append('\\');
+                    buf.append('\\');
+                    break;
+                case '\'':
+                    buf.append('\'');
+                    buf.append('\'');
+                    break;
+                case '"': /* Better safe than sorry */
+                    if (useAnsiQuotedIdentifiers) {
+                        buf.append('\\');
+                    }
+                    buf.append('"');
+                    break;
+                case '\032': /* This gives problems on Win32 */
+                    buf.append('\\');
+                    buf.append('Z');
+                    break;
+                case '\u00a5':
+                case '\u20a9':
+                    // escape characters interpreted as backslash by mysql
+                    if (charsetEncoder != null) {
+                        CharBuffer cbuf = CharBuffer.allocate(1);
+                        ByteBuffer bbuf = ByteBuffer.allocate(1);
+                        cbuf.put(c);
+                        cbuf.position(0);
+                        charsetEncoder.encode(cbuf, bbuf, true);
+                        if (bbuf.get(0) == '\\') {
+                            buf.append('\\');
+                        }
+                    }
+                    buf.append(c);
+                    break;
+
+                default:
+                    buf.append(c);
+            }
+        }
+
+        buf.append('\'');
+
+        return buf;
+    }
+
+    public static void escapeBytes(ByteArrayOutputStream bOut, byte[] x) {
+        int numBytes = x.length;
+        for (int i = 0; i < numBytes; ++i) {
+            byte b = x[i];
+
+            switch (b) {
+                case 0: /* Must be escaped for 'mysql' */
+                    bOut.write('\\');
+                    bOut.write('0');
+                    break;
+                case '\n': /* Must be escaped for logs */
+                    bOut.write('\\');
+                    bOut.write('n');
+                    break;
+                case '\r':
+                    bOut.write('\\');
+                    bOut.write('r');
+                    break;
+                case '\\':
+                    bOut.write('\\');
+                    bOut.write('\\');
+                    break;
+                case '\'':
+                    bOut.write('\\');
+                    bOut.write('\'');
+                    break;
+                case '"': /* Better safe than sorry */
+                    bOut.write('\\');
+                    bOut.write('"');
+                    break;
+                case '\032': /* This gives problems on Win32 */
+                    bOut.write('\\');
+                    bOut.write('Z');
+                    break;
+                default:
+                    bOut.write(b);
+            }
+        }
     }
 }

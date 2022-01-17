@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -203,6 +203,8 @@ public class QueryAttributesTest extends BaseTestCase {
                 + new SimpleDateFormat("XXX").format(new Date(testInstInMilli)).replaceAll("([+-])0", "$1").replace("Z", "+0:00");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
         Connection testConn = getConnectionWithProps(props);
 
@@ -299,6 +301,8 @@ public class QueryAttributesTest extends BaseTestCase {
                 + new SimpleDateFormat("XXX").format(new Date(testInstInMilli)).replaceAll("([+-])0", "$1").replace("Z", "+0:00");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
 
@@ -503,6 +507,8 @@ public class QueryAttributesTest extends BaseTestCase {
     @Test
     public void preserveAndClearAttributesInClientPreparedStatement() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
         Connection testConn = getConnectionWithProps(props);
 
@@ -541,6 +547,8 @@ public class QueryAttributesTest extends BaseTestCase {
     @Test
     public void preserveAndClearAttributesInServerPreparedStatement() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
 
@@ -613,6 +621,8 @@ public class QueryAttributesTest extends BaseTestCase {
     @Test
     public void multiQueriesWithAttributesInPlainStatement() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.allowMultiQueries.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
 
@@ -645,6 +655,8 @@ public class QueryAttributesTest extends BaseTestCase {
     @Test
     public void multiQueriesWithAttributesInPreparedStatement() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true"); // Will fall-back to client prepared statement, anyway.
         props.setProperty(PropertyKey.allowMultiQueries.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
@@ -681,6 +693,8 @@ public class QueryAttributesTest extends BaseTestCase {
         createTable("testRewritePlainStmt", "(c1 VARCHAR(100), c2 VARCHAR(100))");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
 
@@ -728,6 +742,8 @@ public class QueryAttributesTest extends BaseTestCase {
         createTable("testRewriteClientPstmt", "(c1 VARCHAR(100), c2 VARCHAR(100))");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
         props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
@@ -781,6 +797,8 @@ public class QueryAttributesTest extends BaseTestCase {
         createTable("testRewriteServerPstmt", "(c1 VARCHAR(100), c2 VARCHAR(100))");
 
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
@@ -832,6 +850,8 @@ public class QueryAttributesTest extends BaseTestCase {
     @Test
     void cachedServerPreparedStatementsWithQueryAttributes() throws Exception {
         Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
         props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
@@ -951,7 +971,9 @@ public class QueryAttributesTest extends BaseTestCase {
     @Test
     void serverPreparedStatementWithQueryAttributesInMultiHost() throws Exception {
         Properties props = new Properties();
-        props.setProperty("useServerPrepStmts", "true");
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
 
         // Failover connection.
         Connection testConn = getFailoverConnection(props);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -6217,8 +6217,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs = ps.executeQuery();
 
         assertNotNull(this.rs.next());
-        assertEquals(Date.valueOf(LocalDate.of(1970, 1, 1)).getTime(), this.rs.getDate(1, null).getTime());
-        assertEquals(Date.valueOf(LocalDate.of(1970, 1, 1)).getTime(), this.rs.getDate(2, null).getTime());
+        assertEquals(Date.valueOf(TimeUtil.DEFAULT_DATE).getTime(), this.rs.getDate(1, null).getTime());
+        assertEquals(Date.valueOf(TimeUtil.DEFAULT_DATE).getTime(), this.rs.getDate(2, null).getTime());
 
         // at least 2 warnings are expected 
         SQLWarning w = this.rs.getWarnings();

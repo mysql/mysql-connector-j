@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -56,6 +56,7 @@ import java.util.HashMap;
 import javax.sql.StatementEvent;
 
 import com.mysql.cj.Messages;
+import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.exceptions.SQLError;
 
@@ -607,16 +608,10 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder(super.toString());
-
         if (this.wrappedStmt != null) {
             buf.append(": ");
-            try {
-                buf.append(((ClientPreparedStatement) this.wrappedStmt).asSql());
-            } catch (SQLException sqlEx) {
-                buf.append("EXCEPTION: " + sqlEx.toString());
-            }
+            buf.append(((PreparedQuery) ((ClientPreparedStatement) this.wrappedStmt).getQuery()).asSql());
         }
-
         return buf.toString();
     }
 

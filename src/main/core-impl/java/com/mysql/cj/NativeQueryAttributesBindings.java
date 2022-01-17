@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,17 +31,36 @@ package com.mysql.cj;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class NativeQueryAttributesBindings implements QueryAttributesBindings {
-    private List<NativeQueryAttributesBindValue> bindAttributes = new ArrayList<>();
+    Session session = null;
+    private List<NativeQueryBindValue> bindAttributes = new ArrayList<>();
 
-    public NativeQueryAttributesBindings() {
+    public NativeQueryAttributesBindings(Session sess) {
+        this.session = sess;
     }
 
     @Override
     public void setAttribute(String name, Object value) {
-        this.bindAttributes.add(new NativeQueryAttributesBindValue(name, value));
+        MysqlType defaultMysqlType = value == null ? MysqlType.NULL : NativeQueryBindings.DEFAULT_MYSQL_TYPES.get(value.getClass());
+        Object val = value;
+        if (defaultMysqlType == null) {
+            Optional<MysqlType> mysqlType = NativeQueryBindings.DEFAULT_MYSQL_TYPES.entrySet().stream()
+                    .filter(m -> m.getKey().isAssignableFrom(value.getClass())).map(m -> m.getValue()).findFirst();
+            if (mysqlType.isPresent()) {
+                defaultMysqlType = mysqlType.get();
+            } else {
+                defaultMysqlType = MysqlType.VARCHAR;
+                val = value.toString();
+            }
+        }
+
+        NativeQueryBindValue bv = new NativeQueryBindValue(this.session);
+        bv.setName(name);
+        bv.setBinding(val, defaultMysqlType, 0, null);
+        this.bindAttributes.add(bv);
     }
 
     @Override
@@ -50,12 +69,12 @@ public class NativeQueryAttributesBindings implements QueryAttributesBindings {
     }
 
     @Override
-    public QueryAttributesBindValue getAttributeValue(int index) {
+    public BindValue getAttributeValue(int index) {
         return this.bindAttributes.get(index);
     }
 
     @Override
-    public void runThroughAll(Consumer<QueryAttributesBindValue> bindAttribute) {
+    public void runThroughAll(Consumer<BindValue> bindAttribute) {
         this.bindAttributes.forEach(bindAttribute::accept);
     }
 

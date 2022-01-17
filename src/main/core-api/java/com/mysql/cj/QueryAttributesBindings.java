@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -64,9 +64,9 @@ public interface QueryAttributesBindings {
      *            the position of the query attribute value to return.
      * 
      * @return
-     *         the {@link QueryAttributesBindValue} in the given position of the query attributes list.
+     *         the {@link BindValue} in the given position of the query attributes list.
      */
-    QueryAttributesBindValue getAttributeValue(int index);
+    BindValue getAttributeValue(int index);
 
     /**
      * Runs through all query attributes while feeding the given {@link Consumer} with each one of them.
@@ -74,7 +74,7 @@ public interface QueryAttributesBindings {
      * @param bindAttribute
      *            A {@link Consumer} for each one of the single query attributes.
      */
-    void runThroughAll(Consumer<QueryAttributesBindValue> bindAttribute);
+    void runThroughAll(Consumer<BindValue> bindAttribute);
 
     /**
      * Removes all query attributes from the query attributes list.

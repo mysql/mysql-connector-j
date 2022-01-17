@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,7 +31,7 @@ package com.mysql.cj;
 
 import com.mysql.cj.protocol.Message;
 
-public interface PreparedQuery<T extends QueryBindings<?>> extends Query {
+public interface PreparedQuery extends Query {
 
     ParseInfo getParseInfo();
 
@@ -47,9 +47,9 @@ public interface PreparedQuery<T extends QueryBindings<?>> extends Query {
 
     void setParameterCount(int parameterCount);
 
-    public T getQueryBindings();
+    public QueryBindings getQueryBindings();
 
-    public void setQueryBindings(T queryBindings);
+    public void setQueryBindings(QueryBindings queryBindings);
 
     int computeBatchSize(int numBatchedArgs);
 
@@ -59,9 +59,5 @@ public interface PreparedQuery<T extends QueryBindings<?>> extends Query {
 
     String asSql();
 
-    String asSql(boolean quoteStreamsAndUnknowns);
-
-    <M extends Message> M fillSendPacket();
-
-    <M extends Message> M fillSendPacket(QueryBindings<?> bindings);
+    <M extends Message> M fillSendPacket(QueryBindings bindings);
 }

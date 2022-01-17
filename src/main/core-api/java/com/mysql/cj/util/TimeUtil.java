@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -61,16 +61,23 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 public class TimeUtil {
     static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
 
+    public static final LocalDate DEFAULT_DATE = LocalDate.of(1970, 1, 1);
+    public static final LocalTime DEFAULT_TIME = LocalTime.of(0, 0);
+
     public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     public static final DateTimeFormatter TIME_FORMATTER_NO_FRACT_NO_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ss");
     public static final DateTimeFormatter TIME_FORMATTER_WITH_NANOS_NO_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSSSS");
     public static final DateTimeFormatter TIME_FORMATTER_NO_FRACT_WITH_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ssXXX");
     public static final DateTimeFormatter TIME_FORMATTER_WITH_NANOS_WITH_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSSSSXXX");
+    public static final DateTimeFormatter TIME_FORMATTER_WITH_OPTIONAL_MICROS = new DateTimeFormatterBuilder().appendPattern("HH:mm:ss")
+            .appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true).toFormatter();
     public static final DateTimeFormatter DATETIME_FORMATTER_NO_FRACT_NO_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     public static final DateTimeFormatter DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
     public static final DateTimeFormatter DATETIME_FORMATTER_WITH_NANOS_NO_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS");
     public static final DateTimeFormatter DATETIME_FORMATTER_NO_FRACT_WITH_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX");
     public static final DateTimeFormatter DATETIME_FORMATTER_WITH_NANOS_WITH_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSSXXX");
+    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_OPTIONAL_MICROS = new DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd HH:mm:ss")
+            .appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true).toFormatter();
 
     public static final Pattern DATE_LITERAL_WITH_DELIMITERS = Pattern
             .compile("(\\d{4}|\\d{2})[\\p{Punct}&&[^:]](([0])?[1-9]|[1][0-2])[\\p{Punct}&&[^:]](([0])?[1-9]|[1-2]\\d|[3][0-1])");
@@ -397,7 +404,7 @@ public class TimeUtil {
         return sdf;
     }
 
-    public static Object parseToDateTimeObject(String s, MysqlType targetMysqlType) throws IOException {
+    public static Object parseToDateTimeObject(String s, MysqlType targetMysqlType) {
         if (DATE_LITERAL_WITH_DELIMITERS.matcher(s).matches()) {
             return LocalDate.parse(getCanonicalDate(s), DateTimeFormatter.ISO_LOCAL_DATE);
 

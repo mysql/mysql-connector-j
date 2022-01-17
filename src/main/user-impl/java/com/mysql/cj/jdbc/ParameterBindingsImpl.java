@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -65,7 +65,7 @@ import com.mysql.cj.util.StringUtils;
 
 public class ParameterBindingsImpl implements ParameterBindings {
 
-    private QueryBindings<?> queryBindings;
+    private QueryBindings queryBindings;
     private List<Object> batchedArgs;
     private PropertySet propertySet;
     private ExceptionInterceptor exceptionInterceptor;
@@ -73,7 +73,7 @@ public class ParameterBindingsImpl implements ParameterBindings {
     private ResultSetImpl bindingsAsRs;
     private BindValue[] bindValues;
 
-    ParameterBindingsImpl(PreparedQuery<?> query, Session session, ResultSetFactory resultSetFactory) throws SQLException {
+    ParameterBindingsImpl(PreparedQuery query, Session session, ResultSetFactory resultSetFactory) throws SQLException {
         this.queryBindings = query.getQueryBindings();
         this.batchedArgs = query.getBatchedArgs();
         this.propertySet = session.getPropertySet();
@@ -151,8 +151,7 @@ public class ParameterBindingsImpl implements ParameterBindings {
         if (batchedArg instanceof String) {
             return StringUtils.getBytes((String) batchedArg, this.propertySet.getStringProperty(PropertyKey.characterEncoding).getValue());
         }
-
-        return ((QueryBindings<?>) batchedArg).getBytesRepresentation(parameterIndex);
+        return ((QueryBindings) batchedArg).getBytesRepresentation(parameterIndex);
     }
 
     @Override
@@ -247,37 +246,7 @@ public class ParameterBindingsImpl implements ParameterBindings {
 
     @Override
     public Object getObject(int parameterIndex) throws SQLException {
-        //        checkBounds(parameterIndex, 0);
-
-        if (this.bindValues[parameterIndex - 1].isNull()) {
-            return null;
-        }
-
-        // we can't rely on the default mapping for JDBC's ResultSet.getObject() for numerics, they're not one-to-one with PreparedStatement.setObject
-
-        switch (this.queryBindings.getBindValues()[parameterIndex - 1].getMysqlType()) {
-            case TINYINT:
-            case TINYINT_UNSIGNED:
-                return Byte.valueOf(getByte(parameterIndex));
-            case SMALLINT:
-            case SMALLINT_UNSIGNED:
-                return Short.valueOf(getShort(parameterIndex));
-            case INT:
-            case INT_UNSIGNED:
-                return Integer.valueOf(getInt(parameterIndex));
-            case BIGINT:
-                return Long.valueOf(getLong(parameterIndex));
-            case BIGINT_UNSIGNED:
-                return getBigInteger(parameterIndex);
-            case FLOAT:
-            case FLOAT_UNSIGNED:
-                return Float.valueOf(getFloat(parameterIndex));
-            case DOUBLE:
-            case DOUBLE_UNSIGNED:
-                return Double.valueOf(getDouble(parameterIndex));
-            default:
-                return this.bindingsAsRs.getObject(parameterIndex);
-        }
+        return this.bindValues[parameterIndex - 1].isStream() ? this.bindingsAsRs.getObject(parameterIndex) : this.bindValues[parameterIndex - 1].getValue();
     }
 
     @Override
@@ -312,8 +281,6 @@ public class ParameterBindingsImpl implements ParameterBindings {
 
     @Override
     public boolean isNull(int parameterIndex) throws SQLException {
-        //        checkBounds(parameterIndex, 0);
-        //return this.bindValues[parameterIndex - 1].isNull();
         return this.queryBindings.isNull(parameterIndex - 1);
     }
 

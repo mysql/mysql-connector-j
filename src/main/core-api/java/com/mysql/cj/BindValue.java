@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,11 @@
 
 package com.mysql.cj;
 
-import java.io.InputStream;
+import java.util.Calendar;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.mysql.cj.protocol.Message;
+import com.mysql.cj.result.Field;
 
 public interface BindValue {
 
@@ -43,25 +47,95 @@ public interface BindValue {
 
     boolean isStream();
 
-    void setIsStream(boolean isStream);
-
     MysqlType getMysqlType();
 
     void setMysqlType(MysqlType type);
 
     byte[] getByteValue();
 
-    void setByteValue(byte[] parameterValue);
-
-    void setOrigByteValue(byte[] origParamValue);
-
-    byte[] getOrigByteValue();
-
-    InputStream getStreamValue();
-
-    void setStreamValue(InputStream parameterStream, long streamLength);
-
-    long getStreamLength();
-
     boolean isSet();
+
+    void setBinding(Object obj, MysqlType type, int numberOfExecutions, AtomicBoolean sendTypesToServer);
+
+    Calendar getCalendar();
+
+    void setCalendar(Calendar cal);
+
+    boolean escapeBytesIfNeeded();
+
+    void setEscapeBytesIfNeeded(boolean val);
+
+    boolean isLoadDataQuery();
+
+    void setLoadDataQuery(boolean isLoadDataQuery);
+
+    Object getValue();
+
+    boolean isNational();
+
+    void setIsNational(boolean isNational);
+
+    int getFieldType();
+
+    /**
+     * Gets the length of this bind value in the text protocol representation.
+     * 
+     * @return
+     *         the expected length, in bytes, of this bind value after being encoded.
+     */
+    long getTextLength();
+
+    /**
+     * Gets the length of this bind value in the binary protocol representation.
+     * 
+     * @return
+     *         the expected length, in bytes, of this bind value after being encoded.
+     */
+    long getBinaryLength();
+
+    long getBoundBeforeExecutionNum();
+
+    /**
+     * Get a String representation of the value.
+     *
+     * @return value as a String
+     */
+    String getString();
+
+    Field getField();
+
+    void setField(Field field);
+
+    boolean keepOrigNanos();
+
+    /**
+     * Should the value keep original fractional seconds ignoring sendFractionalSeconds and sendFractionalSecondsForTime?
+     * <p>
+     * <i>If the value is a part of key for UpdatableResultSet updater, it should keep original milliseconds.</i>
+     * </p>
+     * 
+     * @param value
+     */
+    void setKeepOrigNanos(boolean value);
+
+    void setScaleOrLength(long scaleOrLength);
+
+    long getScaleOrLength();
+
+    /**
+     * Gets the name of this query attribute.
+     * 
+     * @return
+     *         the name of this query attribute.
+     */
+    String getName();
+
+    void setName(String name);
+
+    void writeAsText(Message intoMessage);
+
+    void writeAsBinary(Message intoMessage);
+
+    void writeAsQueryAttribute(Message intoMessage);
+
 }

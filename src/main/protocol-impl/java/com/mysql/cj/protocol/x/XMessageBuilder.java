@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -48,6 +48,11 @@ import javax.security.sasl.SaslException;
 import com.google.protobuf.ByteString;
 import com.mysql.cj.MessageBuilder;
 import com.mysql.cj.Messages;
+import com.mysql.cj.PreparedQuery;
+import com.mysql.cj.QueryBindings;
+import com.mysql.cj.Session;
+import com.mysql.cj.exceptions.CJOperationNotSupportedException;
+import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.protocol.Security;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.x.protobuf.MysqlxConnection.Capabilities;
@@ -996,4 +1001,8 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
                 .setConditionKey(MysqlxExpect.Open.Condition.Key.EXPECT_FIELD_EXIST_VALUE).setConditionValue(ByteString.copyFromUtf8("6.1"))).build());
     }
 
+    @Override
+    public XMessage buildComQuery(XMessage sharedPacket, Session sess, PreparedQuery preparedQuery, QueryBindings bindings, String characterEncoding) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
 }

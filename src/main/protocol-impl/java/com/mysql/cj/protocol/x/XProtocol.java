@@ -47,6 +47,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.mysql.cj.Constants;
@@ -91,6 +92,7 @@ import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.protocol.ServerCapabilities;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.SocketConnection;
+import com.mysql.cj.protocol.ValueEncoder;
 import com.mysql.cj.protocol.a.NativeSocketConnection;
 import com.mysql.cj.protocol.x.Notice.XSessionStateChanged;
 import com.mysql.cj.result.DefaultColumnDefinition;
@@ -1026,6 +1028,11 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     @Override
     public void setQueryComment(String comment) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
+    @Override
+    public Supplier<ValueEncoder> getValueEncoderSupplier(Object obj) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 }

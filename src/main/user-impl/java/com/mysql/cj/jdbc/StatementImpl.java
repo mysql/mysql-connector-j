@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -306,7 +306,7 @@ public class StatementImpl implements JdbcStatement {
                     public void transactionBegun() {
                     }
                 });
-                newSession.sendCommand(new NativeMessageBuilder(newSession.getServerSession().supportsQueryAttributes())
+                newSession.getProtocol().sendCommand(new NativeMessageBuilder(newSession.getServerSession().supportsQueryAttributes())
                         .buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + this.session.getThreadId()), false, 0);
                 setCancelStatus(CancelStatus.CANCELED_BY_USER);
             } catch (IOException e) {
@@ -2260,6 +2260,9 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public void clearAttributes() {
-        getQueryAttributesBindings().clearAttributes();
+        QueryAttributesBindings qab = getQueryAttributesBindings();
+        if (qab != null) {
+            qab.clearAttributes();
+        }
     }
 }
