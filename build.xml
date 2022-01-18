@@ -284,6 +284,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <path id="com.mysql.cj.extra.libs.class.path" cache="true">
         <fileset dir="${com.mysql.cj.extra.libs}">
             <include name="**/*.jar" />
+            <exclude name="**/*-sources.jar" />
             <exclude name="ant/**" />
             <exclude name="jacoco/**" />
             <exclude name="src/**" />
