@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -50,8 +50,8 @@ public final class MysqlxCursor {
 
     /**
      * <pre>
-     ** client side assigned cursor id, the ID is going to represent
-     *new cursor and assigned to it statement 
+     ** client-side assigned cursor ID; the ID is going to represent
+     *the new cursor and assigned to it the statement 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
@@ -60,8 +60,8 @@ public final class MysqlxCursor {
     boolean hasCursorId();
     /**
      * <pre>
-     ** client side assigned cursor id, the ID is going to represent
-     *new cursor and assigned to it statement 
+     ** client-side assigned cursor ID; the ID is going to represent
+     *the new cursor and assigned to it the statement 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
@@ -71,7 +71,7 @@ public final class MysqlxCursor {
 
     /**
      * <pre>
-     ** statement which resultset is going to be iterated through the cursor 
+     ** statement for which the resultset is going to be iterated through by the cursor 
      * </pre>
      *
      * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -80,7 +80,7 @@ public final class MysqlxCursor {
     boolean hasStmt();
     /**
      * <pre>
-     ** statement which resultset is going to be iterated through the cursor 
+     ** statement for which the resultset is going to be iterated through by the cursor 
      * </pre>
      *
      * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -89,7 +89,7 @@ public final class MysqlxCursor {
     com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage getStmt();
     /**
      * <pre>
-     ** statement which resultset is going to be iterated through the cursor 
+     ** statement for which the resultset is going to be iterated through by the cursor 
      * </pre>
      *
      * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -98,7 +98,7 @@ public final class MysqlxCursor {
 
     /**
      * <pre>
-     ** number of rows which should be retrieved from sequential cursor 
+     ** number of rows that should be retrieved from sequential cursor 
      * </pre>
      *
      * <code>optional uint64 fetch_rows = 5;</code>
@@ -107,7 +107,7 @@ public final class MysqlxCursor {
     boolean hasFetchRows();
     /**
      * <pre>
-     ** number of rows which should be retrieved from sequential cursor 
+     ** number of rows that should be retrieved from sequential cursor 
      * </pre>
      *
      * <code>optional uint64 fetch_rows = 5;</code>
@@ -133,7 +133,7 @@ public final class MysqlxCursor {
    *
    * Protobuf type {@code Mysqlx.Cursor.Open}
    */
-  public  static final class Open extends
+  public static final class Open extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Cursor.Open)
       OpenOrBuilder {
@@ -264,7 +264,7 @@ public final class MysqlxCursor {
     /**
      * Protobuf type {@code Mysqlx.Cursor.Open.OneOfMessage}
      */
-    public  static final class OneOfMessage extends
+    public static final class OneOfMessage extends
         com.google.protobuf.GeneratedMessageV3 implements
         // @@protoc_insertion_point(message_implements:Mysqlx.Cursor.Open.OneOfMessage)
         OneOfMessageOrBuilder {
@@ -459,14 +459,14 @@ public final class MysqlxCursor {
        * <code>required .Mysqlx.Cursor.Open.OneOfMessage.Type type = 1;</code>
        * @return Whether the type field is set.
        */
-      public boolean hasType() {
+      @java.lang.Override public boolean hasType() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required .Mysqlx.Cursor.Open.OneOfMessage.Type type = 1;</code>
        * @return The type.
        */
-      public com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage.Type getType() {
+      @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage.Type getType() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage.Type result = com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage.Type.valueOf(type_);
         return result == null ? com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage.Type.PREPARE_EXECUTE : result;
@@ -478,6 +478,7 @@ public final class MysqlxCursor {
        * <code>optional .Mysqlx.Prepare.Execute prepare_execute = 2;</code>
        * @return Whether the prepareExecute field is set.
        */
+      @java.lang.Override
       public boolean hasPrepareExecute() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -485,12 +486,14 @@ public final class MysqlxCursor {
        * <code>optional .Mysqlx.Prepare.Execute prepare_execute = 2;</code>
        * @return The prepareExecute.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxPrepare.Execute getPrepareExecute() {
         return prepareExecute_ == null ? com.mysql.cj.x.protobuf.MysqlxPrepare.Execute.getDefaultInstance() : prepareExecute_;
       }
       /**
        * <code>optional .Mysqlx.Prepare.Execute prepare_execute = 2;</code>
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxPrepare.ExecuteOrBuilder getPrepareExecuteOrBuilder() {
         return prepareExecute_ == null ? com.mysql.cj.x.protobuf.MysqlxPrepare.Execute.getDefaultInstance() : prepareExecute_;
       }
@@ -865,13 +868,14 @@ public final class MysqlxCursor {
          * <code>required .Mysqlx.Cursor.Open.OneOfMessage.Type type = 1;</code>
          * @return Whether the type field is set.
          */
-        public boolean hasType() {
+        @java.lang.Override public boolean hasType() {
           return ((bitField0_ & 0x00000001) != 0);
         }
         /**
          * <code>required .Mysqlx.Cursor.Open.OneOfMessage.Type type = 1;</code>
          * @return The type.
          */
+        @java.lang.Override
         public com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage.Type getType() {
           @SuppressWarnings("deprecation")
           com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage.Type result = com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage.Type.valueOf(type_);
@@ -1079,25 +1083,27 @@ public final class MysqlxCursor {
     private int cursorId_;
     /**
      * <pre>
-     ** client side assigned cursor id, the ID is going to represent
-     *new cursor and assigned to it statement 
+     ** client-side assigned cursor ID; the ID is going to represent
+     *the new cursor and assigned to it the statement 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
      * @return Whether the cursorId field is set.
      */
+    @java.lang.Override
     public boolean hasCursorId() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <pre>
-     ** client side assigned cursor id, the ID is going to represent
-     *new cursor and assigned to it statement 
+     ** client-side assigned cursor ID; the ID is going to represent
+     *the new cursor and assigned to it the statement 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
      * @return The cursorId.
      */
+    @java.lang.Override
     public int getCursorId() {
       return cursorId_;
     }
@@ -1106,33 +1112,36 @@ public final class MysqlxCursor {
     private com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage stmt_;
     /**
      * <pre>
-     ** statement which resultset is going to be iterated through the cursor 
+     ** statement for which the resultset is going to be iterated through by the cursor 
      * </pre>
      *
      * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
      * @return Whether the stmt field is set.
      */
+    @java.lang.Override
     public boolean hasStmt() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <pre>
-     ** statement which resultset is going to be iterated through the cursor 
+     ** statement for which the resultset is going to be iterated through by the cursor 
      * </pre>
      *
      * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
      * @return The stmt.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage getStmt() {
       return stmt_ == null ? com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage.getDefaultInstance() : stmt_;
     }
     /**
      * <pre>
-     ** statement which resultset is going to be iterated through the cursor 
+     ** statement for which the resultset is going to be iterated through by the cursor 
      * </pre>
      *
      * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessageOrBuilder getStmtOrBuilder() {
       return stmt_ == null ? com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage.getDefaultInstance() : stmt_;
     }
@@ -1141,23 +1150,25 @@ public final class MysqlxCursor {
     private long fetchRows_;
     /**
      * <pre>
-     ** number of rows which should be retrieved from sequential cursor 
+     ** number of rows that should be retrieved from sequential cursor 
      * </pre>
      *
      * <code>optional uint64 fetch_rows = 5;</code>
      * @return Whether the fetchRows field is set.
      */
+    @java.lang.Override
     public boolean hasFetchRows() {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
      * <pre>
-     ** number of rows which should be retrieved from sequential cursor 
+     ** number of rows that should be retrieved from sequential cursor 
      * </pre>
      *
      * <code>optional uint64 fetch_rows = 5;</code>
      * @return The fetchRows.
      */
+    @java.lang.Override
     public long getFetchRows() {
       return fetchRows_;
     }
@@ -1575,32 +1586,34 @@ public final class MysqlxCursor {
       private int cursorId_ ;
       /**
        * <pre>
-       ** client side assigned cursor id, the ID is going to represent
-       *new cursor and assigned to it statement 
+       ** client-side assigned cursor ID; the ID is going to represent
+       *the new cursor and assigned to it the statement 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>
        * @return Whether the cursorId field is set.
        */
+      @java.lang.Override
       public boolean hasCursorId() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <pre>
-       ** client side assigned cursor id, the ID is going to represent
-       *new cursor and assigned to it statement 
+       ** client-side assigned cursor ID; the ID is going to represent
+       *the new cursor and assigned to it the statement 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>
        * @return The cursorId.
        */
+      @java.lang.Override
       public int getCursorId() {
         return cursorId_;
       }
       /**
        * <pre>
-       ** client side assigned cursor id, the ID is going to represent
-       *new cursor and assigned to it statement 
+       ** client-side assigned cursor ID; the ID is going to represent
+       *the new cursor and assigned to it the statement 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>
@@ -1615,8 +1628,8 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** client side assigned cursor id, the ID is going to represent
-       *new cursor and assigned to it statement 
+       ** client-side assigned cursor ID; the ID is going to represent
+       *the new cursor and assigned to it the statement 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>
@@ -1634,7 +1647,7 @@ public final class MysqlxCursor {
           com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage, com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessage.Builder, com.mysql.cj.x.protobuf.MysqlxCursor.Open.OneOfMessageOrBuilder> stmtBuilder_;
       /**
        * <pre>
-       ** statement which resultset is going to be iterated through the cursor 
+       ** statement for which the resultset is going to be iterated through by the cursor 
        * </pre>
        *
        * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -1645,7 +1658,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** statement which resultset is going to be iterated through the cursor 
+       ** statement for which the resultset is going to be iterated through by the cursor 
        * </pre>
        *
        * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -1660,7 +1673,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** statement which resultset is going to be iterated through the cursor 
+       ** statement for which the resultset is going to be iterated through by the cursor 
        * </pre>
        *
        * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -1680,7 +1693,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** statement which resultset is going to be iterated through the cursor 
+       ** statement for which the resultset is going to be iterated through by the cursor 
        * </pre>
        *
        * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -1698,7 +1711,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** statement which resultset is going to be iterated through the cursor 
+       ** statement for which the resultset is going to be iterated through by the cursor 
        * </pre>
        *
        * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -1722,7 +1735,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** statement which resultset is going to be iterated through the cursor 
+       ** statement for which the resultset is going to be iterated through by the cursor 
        * </pre>
        *
        * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -1739,7 +1752,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** statement which resultset is going to be iterated through the cursor 
+       ** statement for which the resultset is going to be iterated through by the cursor 
        * </pre>
        *
        * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -1751,7 +1764,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** statement which resultset is going to be iterated through the cursor 
+       ** statement for which the resultset is going to be iterated through by the cursor 
        * </pre>
        *
        * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -1766,7 +1779,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** statement which resultset is going to be iterated through the cursor 
+       ** statement for which the resultset is going to be iterated through by the cursor 
        * </pre>
        *
        * <code>required .Mysqlx.Cursor.Open.OneOfMessage stmt = 4;</code>
@@ -1788,29 +1801,31 @@ public final class MysqlxCursor {
       private long fetchRows_ ;
       /**
        * <pre>
-       ** number of rows which should be retrieved from sequential cursor 
+       ** number of rows that should be retrieved from sequential cursor 
        * </pre>
        *
        * <code>optional uint64 fetch_rows = 5;</code>
        * @return Whether the fetchRows field is set.
        */
+      @java.lang.Override
       public boolean hasFetchRows() {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
        * <pre>
-       ** number of rows which should be retrieved from sequential cursor 
+       ** number of rows that should be retrieved from sequential cursor 
        * </pre>
        *
        * <code>optional uint64 fetch_rows = 5;</code>
        * @return The fetchRows.
        */
+      @java.lang.Override
       public long getFetchRows() {
         return fetchRows_;
       }
       /**
        * <pre>
-       ** number of rows which should be retrieved from sequential cursor 
+       ** number of rows that should be retrieved from sequential cursor 
        * </pre>
        *
        * <code>optional uint64 fetch_rows = 5;</code>
@@ -1825,7 +1840,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** number of rows which should be retrieved from sequential cursor 
+       ** number of rows that should be retrieved from sequential cursor 
        * </pre>
        *
        * <code>optional uint64 fetch_rows = 5;</code>
@@ -1896,7 +1911,7 @@ public final class MysqlxCursor {
 
     /**
      * <pre>
-     ** client side assigned cursor id, must be already open 
+     ** client-side assigned cursor ID; must be already open 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
@@ -1905,7 +1920,7 @@ public final class MysqlxCursor {
     boolean hasCursorId();
     /**
      * <pre>
-     ** client side assigned cursor id, must be already open 
+     ** client-side assigned cursor ID; must be already open 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
@@ -1915,7 +1930,7 @@ public final class MysqlxCursor {
 
     /**
      * <pre>
-     ** number of rows which should be retrieved from sequential cursor 
+     ** number of rows that should be retrieved from sequential cursor 
      * </pre>
      *
      * <code>optional uint64 fetch_rows = 5;</code>
@@ -1924,7 +1939,7 @@ public final class MysqlxCursor {
     boolean hasFetchRows();
     /**
      * <pre>
-     ** number of rows which should be retrieved from sequential cursor 
+     ** number of rows that should be retrieved from sequential cursor 
      * </pre>
      *
      * <code>optional uint64 fetch_rows = 5;</code>
@@ -1949,7 +1964,7 @@ public final class MysqlxCursor {
    *
    * Protobuf type {@code Mysqlx.Cursor.Fetch}
    */
-  public  static final class Fetch extends
+  public static final class Fetch extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Cursor.Fetch)
       FetchOrBuilder {
@@ -2039,23 +2054,25 @@ public final class MysqlxCursor {
     private int cursorId_;
     /**
      * <pre>
-     ** client side assigned cursor id, must be already open 
+     ** client-side assigned cursor ID; must be already open 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
      * @return Whether the cursorId field is set.
      */
+    @java.lang.Override
     public boolean hasCursorId() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <pre>
-     ** client side assigned cursor id, must be already open 
+     ** client-side assigned cursor ID; must be already open 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
      * @return The cursorId.
      */
+    @java.lang.Override
     public int getCursorId() {
       return cursorId_;
     }
@@ -2064,23 +2081,25 @@ public final class MysqlxCursor {
     private long fetchRows_;
     /**
      * <pre>
-     ** number of rows which should be retrieved from sequential cursor 
+     ** number of rows that should be retrieved from sequential cursor 
      * </pre>
      *
      * <code>optional uint64 fetch_rows = 5;</code>
      * @return Whether the fetchRows field is set.
      */
+    @java.lang.Override
     public boolean hasFetchRows() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <pre>
-     ** number of rows which should be retrieved from sequential cursor 
+     ** number of rows that should be retrieved from sequential cursor 
      * </pre>
      *
      * <code>optional uint64 fetch_rows = 5;</code>
      * @return The fetchRows.
      */
+    @java.lang.Override
     public long getFetchRows() {
       return fetchRows_;
     }
@@ -2449,29 +2468,31 @@ public final class MysqlxCursor {
       private int cursorId_ ;
       /**
        * <pre>
-       ** client side assigned cursor id, must be already open 
+       ** client-side assigned cursor ID; must be already open 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>
        * @return Whether the cursorId field is set.
        */
+      @java.lang.Override
       public boolean hasCursorId() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <pre>
-       ** client side assigned cursor id, must be already open 
+       ** client-side assigned cursor ID; must be already open 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>
        * @return The cursorId.
        */
+      @java.lang.Override
       public int getCursorId() {
         return cursorId_;
       }
       /**
        * <pre>
-       ** client side assigned cursor id, must be already open 
+       ** client-side assigned cursor ID; must be already open 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>
@@ -2486,7 +2507,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** client side assigned cursor id, must be already open 
+       ** client-side assigned cursor ID; must be already open 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>
@@ -2502,29 +2523,31 @@ public final class MysqlxCursor {
       private long fetchRows_ ;
       /**
        * <pre>
-       ** number of rows which should be retrieved from sequential cursor 
+       ** number of rows that should be retrieved from sequential cursor 
        * </pre>
        *
        * <code>optional uint64 fetch_rows = 5;</code>
        * @return Whether the fetchRows field is set.
        */
+      @java.lang.Override
       public boolean hasFetchRows() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <pre>
-       ** number of rows which should be retrieved from sequential cursor 
+       ** number of rows that should be retrieved from sequential cursor 
        * </pre>
        *
        * <code>optional uint64 fetch_rows = 5;</code>
        * @return The fetchRows.
        */
+      @java.lang.Override
       public long getFetchRows() {
         return fetchRows_;
       }
       /**
        * <pre>
-       ** number of rows which should be retrieved from sequential cursor 
+       ** number of rows that should be retrieved from sequential cursor 
        * </pre>
        *
        * <code>optional uint64 fetch_rows = 5;</code>
@@ -2539,7 +2562,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** number of rows which should be retrieved from sequential cursor 
+       ** number of rows that should be retrieved from sequential cursor 
        * </pre>
        *
        * <code>optional uint64 fetch_rows = 5;</code>
@@ -2610,7 +2633,7 @@ public final class MysqlxCursor {
 
     /**
      * <pre>
-     ** client side assigned cursor id, must be allocated/open 
+     ** client-side assigned cursor ID; must be allocated/open 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
@@ -2619,7 +2642,7 @@ public final class MysqlxCursor {
     boolean hasCursorId();
     /**
      * <pre>
-     ** client side assigned cursor id, must be allocated/open 
+     ** client-side assigned cursor ID; must be allocated/open 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
@@ -2644,7 +2667,7 @@ public final class MysqlxCursor {
    *
    * Protobuf type {@code Mysqlx.Cursor.Close}
    */
-  public  static final class Close extends
+  public static final class Close extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Cursor.Close)
       CloseOrBuilder {
@@ -2729,23 +2752,25 @@ public final class MysqlxCursor {
     private int cursorId_;
     /**
      * <pre>
-     ** client side assigned cursor id, must be allocated/open 
+     ** client-side assigned cursor ID; must be allocated/open 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
      * @return Whether the cursorId field is set.
      */
+    @java.lang.Override
     public boolean hasCursorId() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <pre>
-     ** client side assigned cursor id, must be allocated/open 
+     ** client-side assigned cursor ID; must be allocated/open 
      * </pre>
      *
      * <code>required uint32 cursor_id = 1;</code>
      * @return The cursorId.
      */
+    @java.lang.Override
     public int getCursorId() {
       return cursorId_;
     }
@@ -3088,29 +3113,31 @@ public final class MysqlxCursor {
       private int cursorId_ ;
       /**
        * <pre>
-       ** client side assigned cursor id, must be allocated/open 
+       ** client-side assigned cursor ID; must be allocated/open 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>
        * @return Whether the cursorId field is set.
        */
+      @java.lang.Override
       public boolean hasCursorId() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <pre>
-       ** client side assigned cursor id, must be allocated/open 
+       ** client-side assigned cursor ID; must be allocated/open 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>
        * @return The cursorId.
        */
+      @java.lang.Override
       public int getCursorId() {
         return cursorId_;
       }
       /**
        * <pre>
-       ** client side assigned cursor id, must be allocated/open 
+       ** client-side assigned cursor ID; must be allocated/open 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>
@@ -3125,7 +3152,7 @@ public final class MysqlxCursor {
       }
       /**
        * <pre>
-       ** client side assigned cursor id, must be allocated/open 
+       ** client-side assigned cursor ID; must be allocated/open 
        * </pre>
        *
        * <code>required uint32 cursor_id = 1;</code>

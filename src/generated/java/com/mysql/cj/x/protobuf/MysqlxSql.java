@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -177,7 +177,7 @@ public final class MysqlxSql {
    *
    * Protobuf type {@code Mysqlx.Sql.StmtExecute}
    */
-  public  static final class StmtExecute extends
+  public static final class StmtExecute extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Sql.StmtExecute)
       StmtExecuteOrBuilder {
@@ -294,6 +294,7 @@ public final class MysqlxSql {
      * <code>optional string namespace = 3 [default = "sql"];</code>
      * @return Whether the namespace field is set.
      */
+    @java.lang.Override
     public boolean hasNamespace() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -305,6 +306,7 @@ public final class MysqlxSql {
      * <code>optional string namespace = 3 [default = "sql"];</code>
      * @return The namespace.
      */
+    @java.lang.Override
     public java.lang.String getNamespace() {
       java.lang.Object ref = namespace_;
       if (ref instanceof java.lang.String) {
@@ -327,6 +329,7 @@ public final class MysqlxSql {
      * <code>optional string namespace = 3 [default = "sql"];</code>
      * @return The bytes for namespace.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getNamespaceBytes() {
       java.lang.Object ref = namespace_;
@@ -351,6 +354,7 @@ public final class MysqlxSql {
      * <code>required bytes stmt = 1;</code>
      * @return Whether the stmt field is set.
      */
+    @java.lang.Override
     public boolean hasStmt() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -362,6 +366,7 @@ public final class MysqlxSql {
      * <code>required bytes stmt = 1;</code>
      * @return The stmt.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getStmt() {
       return stmt_;
     }
@@ -375,6 +380,7 @@ public final class MysqlxSql {
      *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Any> getArgsList() {
       return args_;
     }
@@ -385,6 +391,7 @@ public final class MysqlxSql {
      *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder> 
         getArgsOrBuilderList() {
       return args_;
@@ -396,6 +403,7 @@ public final class MysqlxSql {
      *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
+    @java.lang.Override
     public int getArgsCount() {
       return args_.size();
     }
@@ -406,6 +414,7 @@ public final class MysqlxSql {
      *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getArgs(int index) {
       return args_.get(index);
     }
@@ -416,6 +425,7 @@ public final class MysqlxSql {
      *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
         int index) {
       return args_.get(index);
@@ -432,6 +442,7 @@ public final class MysqlxSql {
      * <code>optional bool compact_metadata = 4 [default = false];</code>
      * @return Whether the compactMetadata field is set.
      */
+    @java.lang.Override
     public boolean hasCompactMetadata() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -444,6 +455,7 @@ public final class MysqlxSql {
      * <code>optional bool compact_metadata = 4 [default = false];</code>
      * @return The compactMetadata.
      */
+    @java.lang.Override
     public boolean getCompactMetadata() {
       return compactMetadata_;
     }
@@ -1017,6 +1029,7 @@ public final class MysqlxSql {
        * <code>required bytes stmt = 1;</code>
        * @return Whether the stmt field is set.
        */
+      @java.lang.Override
       public boolean hasStmt() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -1028,6 +1041,7 @@ public final class MysqlxSql {
        * <code>required bytes stmt = 1;</code>
        * @return The stmt.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getStmt() {
         return stmt_;
       }
@@ -1386,6 +1400,7 @@ public final class MysqlxSql {
        * <code>optional bool compact_metadata = 4 [default = false];</code>
        * @return Whether the compactMetadata field is set.
        */
+      @java.lang.Override
       public boolean hasCompactMetadata() {
         return ((bitField0_ & 0x00000008) != 0);
       }
@@ -1398,6 +1413,7 @@ public final class MysqlxSql {
        * <code>optional bool compact_metadata = 4 [default = false];</code>
        * @return The compactMetadata.
        */
+      @java.lang.Override
       public boolean getCompactMetadata() {
         return compactMetadata_;
       }
@@ -1492,12 +1508,12 @@ public final class MysqlxSql {
   /**
    * <pre>
    **
-   *Statement executed successful
+   *Statement executed successfully
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Sql.StmtExecuteOk}
    */
-  public  static final class StmtExecuteOk extends
+  public static final class StmtExecuteOk extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Sql.StmtExecuteOk)
       StmtExecuteOkOrBuilder {
@@ -1718,7 +1734,7 @@ public final class MysqlxSql {
     /**
      * <pre>
      **
-     *Statement executed successful
+     *Statement executed successfully
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Sql.StmtExecuteOk}

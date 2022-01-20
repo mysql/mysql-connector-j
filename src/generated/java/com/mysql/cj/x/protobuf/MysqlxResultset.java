@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -53,7 +53,7 @@ public final class MysqlxResultset {
    *|BYTES | 0x0002 | JSON (text encoding)    |
    *|BYTES | 0x0003 | XML (text encoding)     |
    *&#64;note
-   *this list isn't comprehensive. As guideline: the field's value is expected
+   *this list isn't comprehensive. As a guideline: the field's value is expected
    *to pass a validator check on client and server if this field is set.
    *If the server adds more internal datatypes that rely on BLOB storage
    *like image manipulation, seeking into complex types in BLOBs, ... more
@@ -281,7 +281,7 @@ public final class MysqlxResultset {
    *
    * Protobuf type {@code Mysqlx.Resultset.FetchDoneMoreOutParams}
    */
-  public  static final class FetchDoneMoreOutParams extends
+  public static final class FetchDoneMoreOutParams extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Resultset.FetchDoneMoreOutParams)
       FetchDoneMoreOutParamsOrBuilder {
@@ -709,7 +709,7 @@ public final class MysqlxResultset {
    *
    * Protobuf type {@code Mysqlx.Resultset.FetchDoneMoreResultsets}
    */
-  public  static final class FetchDoneMoreResultsets extends
+  public static final class FetchDoneMoreResultsets extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Resultset.FetchDoneMoreResultsets)
       FetchDoneMoreResultsetsOrBuilder {
@@ -1137,7 +1137,7 @@ public final class MysqlxResultset {
    *
    * Protobuf type {@code Mysqlx.Resultset.FetchDone}
    */
-  public  static final class FetchDone extends
+  public static final class FetchDone extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Resultset.FetchDone)
       FetchDoneOrBuilder {
@@ -1560,12 +1560,12 @@ public final class MysqlxResultset {
   /**
    * <pre>
    **
-   *Cursor is opened still the execution of PrepFetch or PrepExecute ended
+   *Cursor is opened; still, the execution of PrepFetch or PrepExecute ended
    * </pre>
    *
    * Protobuf type {@code Mysqlx.Resultset.FetchSuspended}
    */
-  public  static final class FetchSuspended extends
+  public static final class FetchSuspended extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Resultset.FetchSuspended)
       FetchSuspendedOrBuilder {
@@ -1786,7 +1786,7 @@ public final class MysqlxResultset {
     /**
      * <pre>
      **
-     *Cursor is opened still the execution of PrepFetch or PrepExecute ended
+     *Cursor is opened; still, the execution of PrepFetch or PrepExecute ended
      * </pre>
      *
      * Protobuf type {@code Mysqlx.Resultset.FetchSuspended}
@@ -2006,7 +2006,7 @@ public final class MysqlxResultset {
 
     /**
      * <pre>
-     ** ame of the column 
+     ** name of the column 
      * </pre>
      *
      * <code>optional bytes name = 2;</code>
@@ -2015,7 +2015,7 @@ public final class MysqlxResultset {
     boolean hasName();
     /**
      * <pre>
-     ** ame of the column 
+     ** name of the column 
      * </pre>
      *
      * <code>optional bytes name = 2;</code>
@@ -2103,7 +2103,7 @@ public final class MysqlxResultset {
      * <pre>
      ** catalog the schema originates from
      *&#64;note
-     *As there is current no support for catalogs in MySQL,
+     *As there is currently no support for catalogs in MySQL,
      *don't expect this field to be set. In the MySQL C/S
      *protocol the field had the value ``def`` all the time 
      * </pre>
@@ -2116,7 +2116,7 @@ public final class MysqlxResultset {
      * <pre>
      ** catalog the schema originates from
      *&#64;note
-     *As there is current no support for catalogs in MySQL,
+     *As there is currently no support for catalogs in MySQL,
      *don't expect this field to be set. In the MySQL C/S
      *protocol the field had the value ``def`` all the time 
      * </pre>
@@ -2235,7 +2235,7 @@ public final class MysqlxResultset {
      *| BYTES  | 0x0002 | JSON (text encoding)    |
      *| BYTES  | 0x0003 | XML (text encoding)     |
      *&#64;note
-     *This list isn't comprehensive. As guideline: the field's
+     *This list isn't comprehensive. As a guideline: the field's
      *value is expected to pass a validator check on client
      *and server if this field is set. If the server adds more
      *internal data types that rely on BLOB storage like image
@@ -2256,7 +2256,7 @@ public final class MysqlxResultset {
      *| BYTES  | 0x0002 | JSON (text encoding)    |
      *| BYTES  | 0x0003 | XML (text encoding)     |
      *&#64;note
-     *This list isn't comprehensive. As guideline: the field's
+     *This list isn't comprehensive. As a guideline: the field's
      *value is expected to pass a validator check on client
      *and server if this field is set. If the server adds more
      *internal data types that rely on BLOB storage like image
@@ -2520,7 +2520,7 @@ public final class MysqlxResultset {
    *
    * Protobuf type {@code Mysqlx.Resultset.ColumnMetaData}
    */
-  public  static final class ColumnMetaData extends
+  public static final class ColumnMetaData extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Resultset.ColumnMetaData)
       ColumnMetaDataOrBuilder {
@@ -2857,7 +2857,7 @@ public final class MysqlxResultset {
      * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
      * @return Whether the type field is set.
      */
-    public boolean hasType() {
+    @java.lang.Override public boolean hasType() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
@@ -2868,7 +2868,7 @@ public final class MysqlxResultset {
      * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
      * @return The type.
      */
-    public com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.FieldType getType() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.FieldType getType() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.FieldType result = com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.FieldType.valueOf(type_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.FieldType.SINT : result;
@@ -2878,23 +2878,25 @@ public final class MysqlxResultset {
     private com.google.protobuf.ByteString name_;
     /**
      * <pre>
-     ** ame of the column 
+     ** name of the column 
      * </pre>
      *
      * <code>optional bytes name = 2;</code>
      * @return Whether the name field is set.
      */
+    @java.lang.Override
     public boolean hasName() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <pre>
-     ** ame of the column 
+     ** name of the column 
      * </pre>
      *
      * <code>optional bytes name = 2;</code>
      * @return The name.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getName() {
       return name_;
     }
@@ -2909,6 +2911,7 @@ public final class MysqlxResultset {
      * <code>optional bytes original_name = 3;</code>
      * @return Whether the originalName field is set.
      */
+    @java.lang.Override
     public boolean hasOriginalName() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -2920,6 +2923,7 @@ public final class MysqlxResultset {
      * <code>optional bytes original_name = 3;</code>
      * @return The originalName.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getOriginalName() {
       return originalName_;
     }
@@ -2934,6 +2938,7 @@ public final class MysqlxResultset {
      * <code>optional bytes table = 4;</code>
      * @return Whether the table field is set.
      */
+    @java.lang.Override
     public boolean hasTable() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -2945,6 +2950,7 @@ public final class MysqlxResultset {
      * <code>optional bytes table = 4;</code>
      * @return The table.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getTable() {
       return table_;
     }
@@ -2959,6 +2965,7 @@ public final class MysqlxResultset {
      * <code>optional bytes original_table = 5;</code>
      * @return Whether the originalTable field is set.
      */
+    @java.lang.Override
     public boolean hasOriginalTable() {
       return ((bitField0_ & 0x00000010) != 0);
     }
@@ -2970,6 +2977,7 @@ public final class MysqlxResultset {
      * <code>optional bytes original_table = 5;</code>
      * @return The originalTable.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getOriginalTable() {
       return originalTable_;
     }
@@ -2984,6 +2992,7 @@ public final class MysqlxResultset {
      * <code>optional bytes schema = 6;</code>
      * @return Whether the schema field is set.
      */
+    @java.lang.Override
     public boolean hasSchema() {
       return ((bitField0_ & 0x00000020) != 0);
     }
@@ -2995,6 +3004,7 @@ public final class MysqlxResultset {
      * <code>optional bytes schema = 6;</code>
      * @return The schema.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getSchema() {
       return schema_;
     }
@@ -3005,7 +3015,7 @@ public final class MysqlxResultset {
      * <pre>
      ** catalog the schema originates from
      *&#64;note
-     *As there is current no support for catalogs in MySQL,
+     *As there is currently no support for catalogs in MySQL,
      *don't expect this field to be set. In the MySQL C/S
      *protocol the field had the value ``def`` all the time 
      * </pre>
@@ -3013,6 +3023,7 @@ public final class MysqlxResultset {
      * <code>optional bytes catalog = 7;</code>
      * @return Whether the catalog field is set.
      */
+    @java.lang.Override
     public boolean hasCatalog() {
       return ((bitField0_ & 0x00000040) != 0);
     }
@@ -3020,7 +3031,7 @@ public final class MysqlxResultset {
      * <pre>
      ** catalog the schema originates from
      *&#64;note
-     *As there is current no support for catalogs in MySQL,
+     *As there is currently no support for catalogs in MySQL,
      *don't expect this field to be set. In the MySQL C/S
      *protocol the field had the value ``def`` all the time 
      * </pre>
@@ -3028,6 +3039,7 @@ public final class MysqlxResultset {
      * <code>optional bytes catalog = 7;</code>
      * @return The catalog.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getCatalog() {
       return catalog_;
     }
@@ -3038,6 +3050,7 @@ public final class MysqlxResultset {
      * <code>optional uint64 collation = 8;</code>
      * @return Whether the collation field is set.
      */
+    @java.lang.Override
     public boolean hasCollation() {
       return ((bitField0_ & 0x00000080) != 0);
     }
@@ -3045,6 +3058,7 @@ public final class MysqlxResultset {
      * <code>optional uint64 collation = 8;</code>
      * @return The collation.
      */
+    @java.lang.Override
     public long getCollation() {
       return collation_;
     }
@@ -3060,6 +3074,7 @@ public final class MysqlxResultset {
      * <code>optional uint32 fractional_digits = 9;</code>
      * @return Whether the fractionalDigits field is set.
      */
+    @java.lang.Override
     public boolean hasFractionalDigits() {
       return ((bitField0_ & 0x00000100) != 0);
     }
@@ -3072,6 +3087,7 @@ public final class MysqlxResultset {
      * <code>optional uint32 fractional_digits = 9;</code>
      * @return The fractionalDigits.
      */
+    @java.lang.Override
     public int getFractionalDigits() {
       return fractionalDigits_;
     }
@@ -3086,6 +3102,7 @@ public final class MysqlxResultset {
      * <code>optional uint32 length = 10;</code>
      * @return Whether the length field is set.
      */
+    @java.lang.Override
     public boolean hasLength() {
       return ((bitField0_ & 0x00000200) != 0);
     }
@@ -3097,6 +3114,7 @@ public final class MysqlxResultset {
      * <code>optional uint32 length = 10;</code>
      * @return The length.
      */
+    @java.lang.Override
     public int getLength() {
       return length_;
     }
@@ -3126,6 +3144,7 @@ public final class MysqlxResultset {
      * <code>optional uint32 flags = 11;</code>
      * @return Whether the flags field is set.
      */
+    @java.lang.Override
     public boolean hasFlags() {
       return ((bitField0_ & 0x00000400) != 0);
     }
@@ -3152,6 +3171,7 @@ public final class MysqlxResultset {
      * <code>optional uint32 flags = 11;</code>
      * @return The flags.
      */
+    @java.lang.Override
     public int getFlags() {
       return flags_;
     }
@@ -3167,7 +3187,7 @@ public final class MysqlxResultset {
      *| BYTES  | 0x0002 | JSON (text encoding)    |
      *| BYTES  | 0x0003 | XML (text encoding)     |
      *&#64;note
-     *This list isn't comprehensive. As guideline: the field's
+     *This list isn't comprehensive. As a guideline: the field's
      *value is expected to pass a validator check on client
      *and server if this field is set. If the server adds more
      *internal data types that rely on BLOB storage like image
@@ -3178,6 +3198,7 @@ public final class MysqlxResultset {
      * <code>optional uint32 content_type = 12;</code>
      * @return Whether the contentType field is set.
      */
+    @java.lang.Override
     public boolean hasContentType() {
       return ((bitField0_ & 0x00000800) != 0);
     }
@@ -3190,7 +3211,7 @@ public final class MysqlxResultset {
      *| BYTES  | 0x0002 | JSON (text encoding)    |
      *| BYTES  | 0x0003 | XML (text encoding)     |
      *&#64;note
-     *This list isn't comprehensive. As guideline: the field's
+     *This list isn't comprehensive. As a guideline: the field's
      *value is expected to pass a validator check on client
      *and server if this field is set. If the server adds more
      *internal data types that rely on BLOB storage like image
@@ -3201,6 +3222,7 @@ public final class MysqlxResultset {
      * <code>optional uint32 content_type = 12;</code>
      * @return The contentType.
      */
+    @java.lang.Override
     public int getContentType() {
       return contentType_;
     }
@@ -4058,7 +4080,7 @@ public final class MysqlxResultset {
        * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
        * @return Whether the type field is set.
        */
-      public boolean hasType() {
+      @java.lang.Override public boolean hasType() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
@@ -4069,6 +4091,7 @@ public final class MysqlxResultset {
        * <code>required .Mysqlx.Resultset.ColumnMetaData.FieldType type = 1;</code>
        * @return The type.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.FieldType getType() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.FieldType result = com.mysql.cj.x.protobuf.MysqlxResultset.ColumnMetaData.FieldType.valueOf(type_);
@@ -4110,29 +4133,31 @@ public final class MysqlxResultset {
       private com.google.protobuf.ByteString name_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <pre>
-       ** ame of the column 
+       ** name of the column 
        * </pre>
        *
        * <code>optional bytes name = 2;</code>
        * @return Whether the name field is set.
        */
+      @java.lang.Override
       public boolean hasName() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <pre>
-       ** ame of the column 
+       ** name of the column 
        * </pre>
        *
        * <code>optional bytes name = 2;</code>
        * @return The name.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getName() {
         return name_;
       }
       /**
        * <pre>
-       ** ame of the column 
+       ** name of the column 
        * </pre>
        *
        * <code>optional bytes name = 2;</code>
@@ -4150,7 +4175,7 @@ public final class MysqlxResultset {
       }
       /**
        * <pre>
-       ** ame of the column 
+       ** name of the column 
        * </pre>
        *
        * <code>optional bytes name = 2;</code>
@@ -4172,6 +4197,7 @@ public final class MysqlxResultset {
        * <code>optional bytes original_name = 3;</code>
        * @return Whether the originalName field is set.
        */
+      @java.lang.Override
       public boolean hasOriginalName() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -4183,6 +4209,7 @@ public final class MysqlxResultset {
        * <code>optional bytes original_name = 3;</code>
        * @return The originalName.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getOriginalName() {
         return originalName_;
       }
@@ -4228,6 +4255,7 @@ public final class MysqlxResultset {
        * <code>optional bytes table = 4;</code>
        * @return Whether the table field is set.
        */
+      @java.lang.Override
       public boolean hasTable() {
         return ((bitField0_ & 0x00000008) != 0);
       }
@@ -4239,6 +4267,7 @@ public final class MysqlxResultset {
        * <code>optional bytes table = 4;</code>
        * @return The table.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getTable() {
         return table_;
       }
@@ -4284,6 +4313,7 @@ public final class MysqlxResultset {
        * <code>optional bytes original_table = 5;</code>
        * @return Whether the originalTable field is set.
        */
+      @java.lang.Override
       public boolean hasOriginalTable() {
         return ((bitField0_ & 0x00000010) != 0);
       }
@@ -4295,6 +4325,7 @@ public final class MysqlxResultset {
        * <code>optional bytes original_table = 5;</code>
        * @return The originalTable.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getOriginalTable() {
         return originalTable_;
       }
@@ -4340,6 +4371,7 @@ public final class MysqlxResultset {
        * <code>optional bytes schema = 6;</code>
        * @return Whether the schema field is set.
        */
+      @java.lang.Override
       public boolean hasSchema() {
         return ((bitField0_ & 0x00000020) != 0);
       }
@@ -4351,6 +4383,7 @@ public final class MysqlxResultset {
        * <code>optional bytes schema = 6;</code>
        * @return The schema.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getSchema() {
         return schema_;
       }
@@ -4392,7 +4425,7 @@ public final class MysqlxResultset {
        * <pre>
        ** catalog the schema originates from
        *&#64;note
-       *As there is current no support for catalogs in MySQL,
+       *As there is currently no support for catalogs in MySQL,
        *don't expect this field to be set. In the MySQL C/S
        *protocol the field had the value ``def`` all the time 
        * </pre>
@@ -4400,6 +4433,7 @@ public final class MysqlxResultset {
        * <code>optional bytes catalog = 7;</code>
        * @return Whether the catalog field is set.
        */
+      @java.lang.Override
       public boolean hasCatalog() {
         return ((bitField0_ & 0x00000040) != 0);
       }
@@ -4407,7 +4441,7 @@ public final class MysqlxResultset {
        * <pre>
        ** catalog the schema originates from
        *&#64;note
-       *As there is current no support for catalogs in MySQL,
+       *As there is currently no support for catalogs in MySQL,
        *don't expect this field to be set. In the MySQL C/S
        *protocol the field had the value ``def`` all the time 
        * </pre>
@@ -4415,6 +4449,7 @@ public final class MysqlxResultset {
        * <code>optional bytes catalog = 7;</code>
        * @return The catalog.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getCatalog() {
         return catalog_;
       }
@@ -4422,7 +4457,7 @@ public final class MysqlxResultset {
        * <pre>
        ** catalog the schema originates from
        *&#64;note
-       *As there is current no support for catalogs in MySQL,
+       *As there is currently no support for catalogs in MySQL,
        *don't expect this field to be set. In the MySQL C/S
        *protocol the field had the value ``def`` all the time 
        * </pre>
@@ -4444,7 +4479,7 @@ public final class MysqlxResultset {
        * <pre>
        ** catalog the schema originates from
        *&#64;note
-       *As there is current no support for catalogs in MySQL,
+       *As there is currently no support for catalogs in MySQL,
        *don't expect this field to be set. In the MySQL C/S
        *protocol the field had the value ``def`` all the time 
        * </pre>
@@ -4464,6 +4499,7 @@ public final class MysqlxResultset {
        * <code>optional uint64 collation = 8;</code>
        * @return Whether the collation field is set.
        */
+      @java.lang.Override
       public boolean hasCollation() {
         return ((bitField0_ & 0x00000080) != 0);
       }
@@ -4471,6 +4507,7 @@ public final class MysqlxResultset {
        * <code>optional uint64 collation = 8;</code>
        * @return The collation.
        */
+      @java.lang.Override
       public long getCollation() {
         return collation_;
       }
@@ -4506,6 +4543,7 @@ public final class MysqlxResultset {
        * <code>optional uint32 fractional_digits = 9;</code>
        * @return Whether the fractionalDigits field is set.
        */
+      @java.lang.Override
       public boolean hasFractionalDigits() {
         return ((bitField0_ & 0x00000100) != 0);
       }
@@ -4518,6 +4556,7 @@ public final class MysqlxResultset {
        * <code>optional uint32 fractional_digits = 9;</code>
        * @return The fractionalDigits.
        */
+      @java.lang.Override
       public int getFractionalDigits() {
         return fractionalDigits_;
       }
@@ -4562,6 +4601,7 @@ public final class MysqlxResultset {
        * <code>optional uint32 length = 10;</code>
        * @return Whether the length field is set.
        */
+      @java.lang.Override
       public boolean hasLength() {
         return ((bitField0_ & 0x00000200) != 0);
       }
@@ -4573,6 +4613,7 @@ public final class MysqlxResultset {
        * <code>optional uint32 length = 10;</code>
        * @return The length.
        */
+      @java.lang.Override
       public int getLength() {
         return length_;
       }
@@ -4630,6 +4671,7 @@ public final class MysqlxResultset {
        * <code>optional uint32 flags = 11;</code>
        * @return Whether the flags field is set.
        */
+      @java.lang.Override
       public boolean hasFlags() {
         return ((bitField0_ & 0x00000400) != 0);
       }
@@ -4656,6 +4698,7 @@ public final class MysqlxResultset {
        * <code>optional uint32 flags = 11;</code>
        * @return The flags.
        */
+      @java.lang.Override
       public int getFlags() {
         return flags_;
       }
@@ -4729,7 +4772,7 @@ public final class MysqlxResultset {
        *| BYTES  | 0x0002 | JSON (text encoding)    |
        *| BYTES  | 0x0003 | XML (text encoding)     |
        *&#64;note
-       *This list isn't comprehensive. As guideline: the field's
+       *This list isn't comprehensive. As a guideline: the field's
        *value is expected to pass a validator check on client
        *and server if this field is set. If the server adds more
        *internal data types that rely on BLOB storage like image
@@ -4740,6 +4783,7 @@ public final class MysqlxResultset {
        * <code>optional uint32 content_type = 12;</code>
        * @return Whether the contentType field is set.
        */
+      @java.lang.Override
       public boolean hasContentType() {
         return ((bitField0_ & 0x00000800) != 0);
       }
@@ -4752,7 +4796,7 @@ public final class MysqlxResultset {
        *| BYTES  | 0x0002 | JSON (text encoding)    |
        *| BYTES  | 0x0003 | XML (text encoding)     |
        *&#64;note
-       *This list isn't comprehensive. As guideline: the field's
+       *This list isn't comprehensive. As a guideline: the field's
        *value is expected to pass a validator check on client
        *and server if this field is set. If the server adds more
        *internal data types that rely on BLOB storage like image
@@ -4763,6 +4807,7 @@ public final class MysqlxResultset {
        * <code>optional uint32 content_type = 12;</code>
        * @return The contentType.
        */
+      @java.lang.Override
       public int getContentType() {
         return contentType_;
       }
@@ -4775,7 +4820,7 @@ public final class MysqlxResultset {
        *| BYTES  | 0x0002 | JSON (text encoding)    |
        *| BYTES  | 0x0003 | XML (text encoding)     |
        *&#64;note
-       *This list isn't comprehensive. As guideline: the field's
+       *This list isn't comprehensive. As a guideline: the field's
        *value is expected to pass a validator check on client
        *and server if this field is set. If the server adds more
        *internal data types that rely on BLOB storage like image
@@ -4802,7 +4847,7 @@ public final class MysqlxResultset {
        *| BYTES  | 0x0002 | JSON (text encoding)    |
        *| BYTES  | 0x0003 | XML (text encoding)     |
        *&#64;note
-       *This list isn't comprehensive. As guideline: the field's
+       *This list isn't comprehensive. As a guideline: the field's
        *value is expected to pass a validator check on client
        *and server if this field is set. If the server adds more
        *internal data types that rely on BLOB storage like image
@@ -4906,7 +4951,7 @@ public final class MysqlxResultset {
    *
    * Protobuf type {@code Mysqlx.Resultset.Row}
    */
-  public  static final class Row extends
+  public static final class Row extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Resultset.Row)
       RowOrBuilder {
@@ -4999,6 +5044,7 @@ public final class MysqlxResultset {
      * <code>repeated bytes field = 1;</code>
      * @return A list containing the field.
      */
+    @java.lang.Override
     public java.util.List<com.google.protobuf.ByteString>
         getFieldList() {
       return field_;

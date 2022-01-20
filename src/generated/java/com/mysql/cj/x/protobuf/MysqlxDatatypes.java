@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -162,7 +162,7 @@ public final class MysqlxDatatypes {
    *
    * Protobuf type {@code Mysqlx.Datatypes.Scalar}
    */
-  public  static final class Scalar extends
+  public static final class Scalar extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Datatypes.Scalar)
       ScalarOrBuilder {
@@ -484,7 +484,7 @@ public final class MysqlxDatatypes {
      *
      * Protobuf type {@code Mysqlx.Datatypes.Scalar.String}
      */
-    public  static final class String extends
+    public static final class String extends
         com.google.protobuf.GeneratedMessageV3 implements
         // @@protoc_insertion_point(message_implements:Mysqlx.Datatypes.Scalar.String)
         StringOrBuilder {
@@ -577,6 +577,7 @@ public final class MysqlxDatatypes {
        * <code>required bytes value = 1;</code>
        * @return Whether the value field is set.
        */
+      @java.lang.Override
       public boolean hasValue() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -584,6 +585,7 @@ public final class MysqlxDatatypes {
        * <code>required bytes value = 1;</code>
        * @return The value.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getValue() {
         return value_;
       }
@@ -594,6 +596,7 @@ public final class MysqlxDatatypes {
        * <code>optional uint64 collation = 2;</code>
        * @return Whether the collation field is set.
        */
+      @java.lang.Override
       public boolean hasCollation() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -601,6 +604,7 @@ public final class MysqlxDatatypes {
        * <code>optional uint64 collation = 2;</code>
        * @return The collation.
        */
+      @java.lang.Override
       public long getCollation() {
         return collation_;
       }
@@ -961,6 +965,7 @@ public final class MysqlxDatatypes {
          * <code>required bytes value = 1;</code>
          * @return Whether the value field is set.
          */
+        @java.lang.Override
         public boolean hasValue() {
           return ((bitField0_ & 0x00000001) != 0);
         }
@@ -968,6 +973,7 @@ public final class MysqlxDatatypes {
          * <code>required bytes value = 1;</code>
          * @return The value.
          */
+        @java.lang.Override
         public com.google.protobuf.ByteString getValue() {
           return value_;
         }
@@ -1001,6 +1007,7 @@ public final class MysqlxDatatypes {
          * <code>optional uint64 collation = 2;</code>
          * @return Whether the collation field is set.
          */
+        @java.lang.Override
         public boolean hasCollation() {
           return ((bitField0_ & 0x00000002) != 0);
         }
@@ -1008,6 +1015,7 @@ public final class MysqlxDatatypes {
          * <code>optional uint64 collation = 2;</code>
          * @return The collation.
          */
+        @java.lang.Override
         public long getCollation() {
           return collation_;
         }
@@ -1119,7 +1127,7 @@ public final class MysqlxDatatypes {
      *
      * Protobuf type {@code Mysqlx.Datatypes.Scalar.Octets}
      */
-    public  static final class Octets extends
+    public static final class Octets extends
         com.google.protobuf.GeneratedMessageV3 implements
         // @@protoc_insertion_point(message_implements:Mysqlx.Datatypes.Scalar.Octets)
         OctetsOrBuilder {
@@ -1212,6 +1220,7 @@ public final class MysqlxDatatypes {
        * <code>required bytes value = 1;</code>
        * @return Whether the value field is set.
        */
+      @java.lang.Override
       public boolean hasValue() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -1219,6 +1228,7 @@ public final class MysqlxDatatypes {
        * <code>required bytes value = 1;</code>
        * @return The value.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getValue() {
         return value_;
       }
@@ -1229,6 +1239,7 @@ public final class MysqlxDatatypes {
        * <code>optional uint32 content_type = 2;</code>
        * @return Whether the contentType field is set.
        */
+      @java.lang.Override
       public boolean hasContentType() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -1236,6 +1247,7 @@ public final class MysqlxDatatypes {
        * <code>optional uint32 content_type = 2;</code>
        * @return The contentType.
        */
+      @java.lang.Override
       public int getContentType() {
         return contentType_;
       }
@@ -1596,6 +1608,7 @@ public final class MysqlxDatatypes {
          * <code>required bytes value = 1;</code>
          * @return Whether the value field is set.
          */
+        @java.lang.Override
         public boolean hasValue() {
           return ((bitField0_ & 0x00000001) != 0);
         }
@@ -1603,6 +1616,7 @@ public final class MysqlxDatatypes {
          * <code>required bytes value = 1;</code>
          * @return The value.
          */
+        @java.lang.Override
         public com.google.protobuf.ByteString getValue() {
           return value_;
         }
@@ -1636,6 +1650,7 @@ public final class MysqlxDatatypes {
          * <code>optional uint32 content_type = 2;</code>
          * @return Whether the contentType field is set.
          */
+        @java.lang.Override
         public boolean hasContentType() {
           return ((bitField0_ & 0x00000002) != 0);
         }
@@ -1643,6 +1658,7 @@ public final class MysqlxDatatypes {
          * <code>optional uint32 content_type = 2;</code>
          * @return The contentType.
          */
+        @java.lang.Override
         public int getContentType() {
           return contentType_;
         }
@@ -1727,14 +1743,14 @@ public final class MysqlxDatatypes {
      * <code>required .Mysqlx.Datatypes.Scalar.Type type = 1;</code>
      * @return Whether the type field is set.
      */
-    public boolean hasType() {
+    @java.lang.Override public boolean hasType() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required .Mysqlx.Datatypes.Scalar.Type type = 1;</code>
      * @return The type.
      */
-    public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Type getType() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Type getType() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Type result = com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Type.valueOf(type_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Type.V_SINT : result;
@@ -1746,6 +1762,7 @@ public final class MysqlxDatatypes {
      * <code>optional sint64 v_signed_int = 2;</code>
      * @return Whether the vSignedInt field is set.
      */
+    @java.lang.Override
     public boolean hasVSignedInt() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -1753,6 +1770,7 @@ public final class MysqlxDatatypes {
      * <code>optional sint64 v_signed_int = 2;</code>
      * @return The vSignedInt.
      */
+    @java.lang.Override
     public long getVSignedInt() {
       return vSignedInt_;
     }
@@ -1763,6 +1781,7 @@ public final class MysqlxDatatypes {
      * <code>optional uint64 v_unsigned_int = 3;</code>
      * @return Whether the vUnsignedInt field is set.
      */
+    @java.lang.Override
     public boolean hasVUnsignedInt() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -1770,6 +1789,7 @@ public final class MysqlxDatatypes {
      * <code>optional uint64 v_unsigned_int = 3;</code>
      * @return The vUnsignedInt.
      */
+    @java.lang.Override
     public long getVUnsignedInt() {
       return vUnsignedInt_;
     }
@@ -1784,6 +1804,7 @@ public final class MysqlxDatatypes {
      * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
      * @return Whether the vOctets field is set.
      */
+    @java.lang.Override
     public boolean hasVOctets() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -1795,6 +1816,7 @@ public final class MysqlxDatatypes {
      * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
      * @return The vOctets.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Octets getVOctets() {
       return vOctets_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Octets.getDefaultInstance() : vOctets_;
     }
@@ -1805,6 +1827,7 @@ public final class MysqlxDatatypes {
      *
      * <code>optional .Mysqlx.Datatypes.Scalar.Octets v_octets = 5;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.OctetsOrBuilder getVOctetsOrBuilder() {
       return vOctets_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Octets.getDefaultInstance() : vOctets_;
     }
@@ -1815,6 +1838,7 @@ public final class MysqlxDatatypes {
      * <code>optional double v_double = 6;</code>
      * @return Whether the vDouble field is set.
      */
+    @java.lang.Override
     public boolean hasVDouble() {
       return ((bitField0_ & 0x00000010) != 0);
     }
@@ -1822,6 +1846,7 @@ public final class MysqlxDatatypes {
      * <code>optional double v_double = 6;</code>
      * @return The vDouble.
      */
+    @java.lang.Override
     public double getVDouble() {
       return vDouble_;
     }
@@ -1832,6 +1857,7 @@ public final class MysqlxDatatypes {
      * <code>optional float v_float = 7;</code>
      * @return Whether the vFloat field is set.
      */
+    @java.lang.Override
     public boolean hasVFloat() {
       return ((bitField0_ & 0x00000020) != 0);
     }
@@ -1839,6 +1865,7 @@ public final class MysqlxDatatypes {
      * <code>optional float v_float = 7;</code>
      * @return The vFloat.
      */
+    @java.lang.Override
     public float getVFloat() {
       return vFloat_;
     }
@@ -1849,6 +1876,7 @@ public final class MysqlxDatatypes {
      * <code>optional bool v_bool = 8;</code>
      * @return Whether the vBool field is set.
      */
+    @java.lang.Override
     public boolean hasVBool() {
       return ((bitField0_ & 0x00000040) != 0);
     }
@@ -1856,6 +1884,7 @@ public final class MysqlxDatatypes {
      * <code>optional bool v_bool = 8;</code>
      * @return The vBool.
      */
+    @java.lang.Override
     public boolean getVBool() {
       return vBool_;
     }
@@ -1866,6 +1895,7 @@ public final class MysqlxDatatypes {
      * <code>optional .Mysqlx.Datatypes.Scalar.String v_string = 9;</code>
      * @return Whether the vString field is set.
      */
+    @java.lang.Override
     public boolean hasVString() {
       return ((bitField0_ & 0x00000080) != 0);
     }
@@ -1873,12 +1903,14 @@ public final class MysqlxDatatypes {
      * <code>optional .Mysqlx.Datatypes.Scalar.String v_string = 9;</code>
      * @return The vString.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.String getVString() {
       return vString_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.String.getDefaultInstance() : vString_;
     }
     /**
      * <code>optional .Mysqlx.Datatypes.Scalar.String v_string = 9;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.StringOrBuilder getVStringOrBuilder() {
       return vString_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.String.getDefaultInstance() : vString_;
     }
@@ -2434,13 +2466,14 @@ public final class MysqlxDatatypes {
        * <code>required .Mysqlx.Datatypes.Scalar.Type type = 1;</code>
        * @return Whether the type field is set.
        */
-      public boolean hasType() {
+      @java.lang.Override public boolean hasType() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required .Mysqlx.Datatypes.Scalar.Type type = 1;</code>
        * @return The type.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Type getType() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Type result = com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.Type.valueOf(type_);
@@ -2476,6 +2509,7 @@ public final class MysqlxDatatypes {
        * <code>optional sint64 v_signed_int = 2;</code>
        * @return Whether the vSignedInt field is set.
        */
+      @java.lang.Override
       public boolean hasVSignedInt() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -2483,6 +2517,7 @@ public final class MysqlxDatatypes {
        * <code>optional sint64 v_signed_int = 2;</code>
        * @return The vSignedInt.
        */
+      @java.lang.Override
       public long getVSignedInt() {
         return vSignedInt_;
       }
@@ -2513,6 +2548,7 @@ public final class MysqlxDatatypes {
        * <code>optional uint64 v_unsigned_int = 3;</code>
        * @return Whether the vUnsignedInt field is set.
        */
+      @java.lang.Override
       public boolean hasVUnsignedInt() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -2520,6 +2556,7 @@ public final class MysqlxDatatypes {
        * <code>optional uint64 v_unsigned_int = 3;</code>
        * @return The vUnsignedInt.
        */
+      @java.lang.Override
       public long getVUnsignedInt() {
         return vUnsignedInt_;
       }
@@ -2706,6 +2743,7 @@ public final class MysqlxDatatypes {
        * <code>optional double v_double = 6;</code>
        * @return Whether the vDouble field is set.
        */
+      @java.lang.Override
       public boolean hasVDouble() {
         return ((bitField0_ & 0x00000010) != 0);
       }
@@ -2713,6 +2751,7 @@ public final class MysqlxDatatypes {
        * <code>optional double v_double = 6;</code>
        * @return The vDouble.
        */
+      @java.lang.Override
       public double getVDouble() {
         return vDouble_;
       }
@@ -2743,6 +2782,7 @@ public final class MysqlxDatatypes {
        * <code>optional float v_float = 7;</code>
        * @return Whether the vFloat field is set.
        */
+      @java.lang.Override
       public boolean hasVFloat() {
         return ((bitField0_ & 0x00000020) != 0);
       }
@@ -2750,6 +2790,7 @@ public final class MysqlxDatatypes {
        * <code>optional float v_float = 7;</code>
        * @return The vFloat.
        */
+      @java.lang.Override
       public float getVFloat() {
         return vFloat_;
       }
@@ -2780,6 +2821,7 @@ public final class MysqlxDatatypes {
        * <code>optional bool v_bool = 8;</code>
        * @return Whether the vBool field is set.
        */
+      @java.lang.Override
       public boolean hasVBool() {
         return ((bitField0_ & 0x00000040) != 0);
       }
@@ -2787,6 +2829,7 @@ public final class MysqlxDatatypes {
        * <code>optional bool v_bool = 8;</code>
        * @return The vBool.
        */
+      @java.lang.Override
       public boolean getVBool() {
         return vBool_;
       }
@@ -3020,7 +3063,7 @@ public final class MysqlxDatatypes {
    *
    * Protobuf type {@code Mysqlx.Datatypes.Object}
    */
-  public  static final class Object extends
+  public static final class Object extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Datatypes.Object)
       ObjectOrBuilder {
@@ -3147,7 +3190,7 @@ public final class MysqlxDatatypes {
     /**
      * Protobuf type {@code Mysqlx.Datatypes.Object.ObjectField}
      */
-    public  static final class ObjectField extends
+    public static final class ObjectField extends
         com.google.protobuf.GeneratedMessageV3 implements
         // @@protoc_insertion_point(message_implements:Mysqlx.Datatypes.Object.ObjectField)
         ObjectFieldOrBuilder {
@@ -3249,6 +3292,7 @@ public final class MysqlxDatatypes {
        * <code>required string key = 1;</code>
        * @return Whether the key field is set.
        */
+      @java.lang.Override
       public boolean hasKey() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -3256,6 +3300,7 @@ public final class MysqlxDatatypes {
        * <code>required string key = 1;</code>
        * @return The key.
        */
+      @java.lang.Override
       public java.lang.String getKey() {
         java.lang.Object ref = key_;
         if (ref instanceof java.lang.String) {
@@ -3274,6 +3319,7 @@ public final class MysqlxDatatypes {
        * <code>required string key = 1;</code>
        * @return The bytes for key.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString
           getKeyBytes() {
         java.lang.Object ref = key_;
@@ -3294,6 +3340,7 @@ public final class MysqlxDatatypes {
        * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
        * @return Whether the value field is set.
        */
+      @java.lang.Override
       public boolean hasValue() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -3301,12 +3348,14 @@ public final class MysqlxDatatypes {
        * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
        * @return The value.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getValue() {
         return value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance() : value_;
       }
       /**
        * <code>required .Mysqlx.Datatypes.Any value = 2;</code>
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getValueOrBuilder() {
         return value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.getDefaultInstance() : value_;
       }
@@ -3942,12 +3991,14 @@ public final class MysqlxDatatypes {
     /**
      * <code>repeated .Mysqlx.Datatypes.Object.ObjectField fld = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.ObjectField> getFldList() {
       return fld_;
     }
     /**
      * <code>repeated .Mysqlx.Datatypes.Object.ObjectField fld = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.ObjectFieldOrBuilder> 
         getFldOrBuilderList() {
       return fld_;
@@ -3955,18 +4006,21 @@ public final class MysqlxDatatypes {
     /**
      * <code>repeated .Mysqlx.Datatypes.Object.ObjectField fld = 1;</code>
      */
+    @java.lang.Override
     public int getFldCount() {
       return fld_.size();
     }
     /**
      * <code>repeated .Mysqlx.Datatypes.Object.ObjectField fld = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.ObjectField getFld(int index) {
       return fld_.get(index);
     }
     /**
      * <code>repeated .Mysqlx.Datatypes.Object.ObjectField fld = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.ObjectFieldOrBuilder getFldOrBuilder(
         int index) {
       return fld_.get(index);
@@ -4658,7 +4712,7 @@ public final class MysqlxDatatypes {
    *
    * Protobuf type {@code Mysqlx.Datatypes.Array}
    */
-  public  static final class Array extends
+  public static final class Array extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Datatypes.Array)
       ArrayOrBuilder {
@@ -4751,12 +4805,14 @@ public final class MysqlxDatatypes {
     /**
      * <code>repeated .Mysqlx.Datatypes.Any value = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Any> getValueList() {
       return value_;
     }
     /**
      * <code>repeated .Mysqlx.Datatypes.Any value = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder> 
         getValueOrBuilderList() {
       return value_;
@@ -4764,18 +4820,21 @@ public final class MysqlxDatatypes {
     /**
      * <code>repeated .Mysqlx.Datatypes.Any value = 1;</code>
      */
+    @java.lang.Override
     public int getValueCount() {
       return value_.size();
     }
     /**
      * <code>repeated .Mysqlx.Datatypes.Any value = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getValue(int index) {
       return value_.get(index);
     }
     /**
      * <code>repeated .Mysqlx.Datatypes.Any value = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getValueOrBuilder(
         int index) {
       return value_.get(index);
@@ -5499,7 +5558,7 @@ public final class MysqlxDatatypes {
    *
    * Protobuf type {@code Mysqlx.Datatypes.Any}
    */
-  public  static final class Any extends
+  public static final class Any extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Datatypes.Any)
       AnyOrBuilder {
@@ -5738,14 +5797,14 @@ public final class MysqlxDatatypes {
      * <code>required .Mysqlx.Datatypes.Any.Type type = 1;</code>
      * @return Whether the type field is set.
      */
-    public boolean hasType() {
+    @java.lang.Override public boolean hasType() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required .Mysqlx.Datatypes.Any.Type type = 1;</code>
      * @return The type.
      */
-    public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Type getType() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Type getType() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Type result = com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Type.valueOf(type_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Type.SCALAR : result;
@@ -5757,6 +5816,7 @@ public final class MysqlxDatatypes {
      * <code>optional .Mysqlx.Datatypes.Scalar scalar = 2;</code>
      * @return Whether the scalar field is set.
      */
+    @java.lang.Override
     public boolean hasScalar() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -5764,12 +5824,14 @@ public final class MysqlxDatatypes {
      * <code>optional .Mysqlx.Datatypes.Scalar scalar = 2;</code>
      * @return The scalar.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getScalar() {
       return scalar_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance() : scalar_;
     }
     /**
      * <code>optional .Mysqlx.Datatypes.Scalar scalar = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getScalarOrBuilder() {
       return scalar_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance() : scalar_;
     }
@@ -5780,6 +5842,7 @@ public final class MysqlxDatatypes {
      * <code>optional .Mysqlx.Datatypes.Object obj = 3;</code>
      * @return Whether the obj field is set.
      */
+    @java.lang.Override
     public boolean hasObj() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -5787,12 +5850,14 @@ public final class MysqlxDatatypes {
      * <code>optional .Mysqlx.Datatypes.Object obj = 3;</code>
      * @return The obj.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Object getObj() {
       return obj_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.getDefaultInstance() : obj_;
     }
     /**
      * <code>optional .Mysqlx.Datatypes.Object obj = 3;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ObjectOrBuilder getObjOrBuilder() {
       return obj_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Object.getDefaultInstance() : obj_;
     }
@@ -5803,6 +5868,7 @@ public final class MysqlxDatatypes {
      * <code>optional .Mysqlx.Datatypes.Array array = 4;</code>
      * @return Whether the array field is set.
      */
+    @java.lang.Override
     public boolean hasArray() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -5810,12 +5876,14 @@ public final class MysqlxDatatypes {
      * <code>optional .Mysqlx.Datatypes.Array array = 4;</code>
      * @return The array.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Array getArray() {
       return array_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Array.getDefaultInstance() : array_;
     }
     /**
      * <code>optional .Mysqlx.Datatypes.Array array = 4;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ArrayOrBuilder getArrayOrBuilder() {
       return array_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Array.getDefaultInstance() : array_;
     }
@@ -6285,13 +6353,14 @@ public final class MysqlxDatatypes {
        * <code>required .Mysqlx.Datatypes.Any.Type type = 1;</code>
        * @return Whether the type field is set.
        */
-      public boolean hasType() {
+      @java.lang.Override public boolean hasType() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required .Mysqlx.Datatypes.Any.Type type = 1;</code>
        * @return The type.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Type getType() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Type result = com.mysql.cj.x.protobuf.MysqlxDatatypes.Any.Type.valueOf(type_);

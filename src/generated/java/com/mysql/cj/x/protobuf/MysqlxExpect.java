@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -94,7 +94,7 @@ public final class MysqlxExpect {
    *
    * Protobuf type {@code Mysqlx.Expect.Open}
    */
-  public  static final class Open extends
+  public static final class Open extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Expect.Open)
       OpenOrBuilder {
@@ -347,7 +347,7 @@ public final class MysqlxExpect {
     /**
      * Protobuf type {@code Mysqlx.Expect.Open.Condition}
      */
-    public  static final class Condition extends
+    public static final class Condition extends
         com.google.protobuf.GeneratedMessageV3 implements
         // @@protoc_insertion_point(message_implements:Mysqlx.Expect.Open.Condition)
         ConditionOrBuilder {
@@ -469,7 +469,7 @@ public final class MysqlxExpect {
         EXPECT_FIELD_EXIST(2),
         /**
          * <pre>
-         ** Check if X Protocol support document _id generation 
+         ** Check if X Protocol supports document _id generation 
          * </pre>
          *
          * <code>EXPECT_DOCID_GENERATED = 3;</code>
@@ -495,7 +495,7 @@ public final class MysqlxExpect {
         public static final int EXPECT_FIELD_EXIST_VALUE = 2;
         /**
          * <pre>
-         ** Check if X Protocol support document _id generation 
+         ** Check if X Protocol supports document _id generation 
          * </pre>
          *
          * <code>EXPECT_DOCID_GENERATED = 3;</code>
@@ -694,6 +694,7 @@ public final class MysqlxExpect {
        * <code>required uint32 condition_key = 1;</code>
        * @return Whether the conditionKey field is set.
        */
+      @java.lang.Override
       public boolean hasConditionKey() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -701,6 +702,7 @@ public final class MysqlxExpect {
        * <code>required uint32 condition_key = 1;</code>
        * @return The conditionKey.
        */
+      @java.lang.Override
       public int getConditionKey() {
         return conditionKey_;
       }
@@ -711,6 +713,7 @@ public final class MysqlxExpect {
        * <code>optional bytes condition_value = 2;</code>
        * @return Whether the conditionValue field is set.
        */
+      @java.lang.Override
       public boolean hasConditionValue() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -718,6 +721,7 @@ public final class MysqlxExpect {
        * <code>optional bytes condition_value = 2;</code>
        * @return The conditionValue.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getConditionValue() {
         return conditionValue_;
       }
@@ -728,14 +732,14 @@ public final class MysqlxExpect {
        * <code>optional .Mysqlx.Expect.Open.Condition.ConditionOperation op = 3 [default = EXPECT_OP_SET];</code>
        * @return Whether the op field is set.
        */
-      public boolean hasOp() {
+      @java.lang.Override public boolean hasOp() {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
        * <code>optional .Mysqlx.Expect.Open.Condition.ConditionOperation op = 3 [default = EXPECT_OP_SET];</code>
        * @return The op.
        */
-      public com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.ConditionOperation getOp() {
+      @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.ConditionOperation getOp() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.ConditionOperation result = com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.ConditionOperation.valueOf(op_);
         return result == null ? com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.ConditionOperation.EXPECT_OP_SET : result;
@@ -1116,6 +1120,7 @@ public final class MysqlxExpect {
          * <code>required uint32 condition_key = 1;</code>
          * @return Whether the conditionKey field is set.
          */
+        @java.lang.Override
         public boolean hasConditionKey() {
           return ((bitField0_ & 0x00000001) != 0);
         }
@@ -1123,6 +1128,7 @@ public final class MysqlxExpect {
          * <code>required uint32 condition_key = 1;</code>
          * @return The conditionKey.
          */
+        @java.lang.Override
         public int getConditionKey() {
           return conditionKey_;
         }
@@ -1153,6 +1159,7 @@ public final class MysqlxExpect {
          * <code>optional bytes condition_value = 2;</code>
          * @return Whether the conditionValue field is set.
          */
+        @java.lang.Override
         public boolean hasConditionValue() {
           return ((bitField0_ & 0x00000002) != 0);
         }
@@ -1160,6 +1167,7 @@ public final class MysqlxExpect {
          * <code>optional bytes condition_value = 2;</code>
          * @return The conditionValue.
          */
+        @java.lang.Override
         public com.google.protobuf.ByteString getConditionValue() {
           return conditionValue_;
         }
@@ -1193,13 +1201,14 @@ public final class MysqlxExpect {
          * <code>optional .Mysqlx.Expect.Open.Condition.ConditionOperation op = 3 [default = EXPECT_OP_SET];</code>
          * @return Whether the op field is set.
          */
-        public boolean hasOp() {
+        @java.lang.Override public boolean hasOp() {
           return ((bitField0_ & 0x00000004) != 0);
         }
         /**
          * <code>optional .Mysqlx.Expect.Open.Condition.ConditionOperation op = 3 [default = EXPECT_OP_SET];</code>
          * @return The op.
          */
+        @java.lang.Override
         public com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.ConditionOperation getOp() {
           @SuppressWarnings("deprecation")
           com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.ConditionOperation result = com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition.ConditionOperation.valueOf(op_);
@@ -1289,14 +1298,14 @@ public final class MysqlxExpect {
      * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
      * @return Whether the op field is set.
      */
-    public boolean hasOp() {
+    @java.lang.Override public boolean hasOp() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
      * @return The op.
      */
-    public com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation getOp() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation getOp() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation result = com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation.valueOf(op_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation.EXPECT_CTX_COPY_PREV : result;
@@ -1307,12 +1316,14 @@ public final class MysqlxExpect {
     /**
      * <code>repeated .Mysqlx.Expect.Open.Condition cond = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition> getCondList() {
       return cond_;
     }
     /**
      * <code>repeated .Mysqlx.Expect.Open.Condition cond = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpect.Open.ConditionOrBuilder> 
         getCondOrBuilderList() {
       return cond_;
@@ -1320,18 +1331,21 @@ public final class MysqlxExpect {
     /**
      * <code>repeated .Mysqlx.Expect.Open.Condition cond = 2;</code>
      */
+    @java.lang.Override
     public int getCondCount() {
       return cond_.size();
     }
     /**
      * <code>repeated .Mysqlx.Expect.Open.Condition cond = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpect.Open.Condition getCond(int index) {
       return cond_.get(index);
     }
     /**
      * <code>repeated .Mysqlx.Expect.Open.Condition cond = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpect.Open.ConditionOrBuilder getCondOrBuilder(
         int index) {
       return cond_.get(index);
@@ -1730,13 +1744,14 @@ public final class MysqlxExpect {
        * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
        * @return Whether the op field is set.
        */
-      public boolean hasOp() {
+      @java.lang.Override public boolean hasOp() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>optional .Mysqlx.Expect.Open.CtxOperation op = 1 [default = EXPECT_CTX_COPY_PREV];</code>
        * @return The op.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation getOp() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation result = com.mysql.cj.x.protobuf.MysqlxExpect.Open.CtxOperation.valueOf(op_);
@@ -2074,7 +2089,7 @@ public final class MysqlxExpect {
    *
    * Protobuf type {@code Mysqlx.Expect.Close}
    */
-  public  static final class Close extends
+  public static final class Close extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Expect.Close)
       CloseOrBuilder {

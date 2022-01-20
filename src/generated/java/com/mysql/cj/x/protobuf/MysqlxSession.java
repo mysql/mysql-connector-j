@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -124,7 +124,7 @@ public final class MysqlxSession {
    *
    * Protobuf type {@code Mysqlx.Session.AuthenticateStart}
    */
-  public  static final class AuthenticateStart extends
+  public static final class AuthenticateStart extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Session.AuthenticateStart)
       AuthenticateStartOrBuilder {
@@ -229,6 +229,7 @@ public final class MysqlxSession {
      * <code>required string mech_name = 1;</code>
      * @return Whether the mechName field is set.
      */
+    @java.lang.Override
     public boolean hasMechName() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -240,6 +241,7 @@ public final class MysqlxSession {
      * <code>required string mech_name = 1;</code>
      * @return The mechName.
      */
+    @java.lang.Override
     public java.lang.String getMechName() {
       java.lang.Object ref = mechName_;
       if (ref instanceof java.lang.String) {
@@ -262,6 +264,7 @@ public final class MysqlxSession {
      * <code>required string mech_name = 1;</code>
      * @return The bytes for mechName.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getMechNameBytes() {
       java.lang.Object ref = mechName_;
@@ -286,6 +289,7 @@ public final class MysqlxSession {
      * <code>optional bytes auth_data = 2;</code>
      * @return Whether the authData field is set.
      */
+    @java.lang.Override
     public boolean hasAuthData() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -297,6 +301,7 @@ public final class MysqlxSession {
      * <code>optional bytes auth_data = 2;</code>
      * @return The authData.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getAuthData() {
       return authData_;
     }
@@ -311,6 +316,7 @@ public final class MysqlxSession {
      * <code>optional bytes initial_response = 3;</code>
      * @return Whether the initialResponse field is set.
      */
+    @java.lang.Override
     public boolean hasInitialResponse() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -322,6 +328,7 @@ public final class MysqlxSession {
      * <code>optional bytes initial_response = 3;</code>
      * @return The initialResponse.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getInitialResponse() {
       return initialResponse_;
     }
@@ -822,6 +829,7 @@ public final class MysqlxSession {
        * <code>optional bytes auth_data = 2;</code>
        * @return Whether the authData field is set.
        */
+      @java.lang.Override
       public boolean hasAuthData() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -833,6 +841,7 @@ public final class MysqlxSession {
        * <code>optional bytes auth_data = 2;</code>
        * @return The authData.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getAuthData() {
         return authData_;
       }
@@ -878,6 +887,7 @@ public final class MysqlxSession {
        * <code>optional bytes initial_response = 3;</code>
        * @return Whether the initialResponse field is set.
        */
+      @java.lang.Override
       public boolean hasInitialResponse() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -889,6 +899,7 @@ public final class MysqlxSession {
        * <code>optional bytes initial_response = 3;</code>
        * @return The initialResponse.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getInitialResponse() {
         return initialResponse_;
       }
@@ -1010,7 +1021,7 @@ public final class MysqlxSession {
    *
    * Protobuf type {@code Mysqlx.Session.AuthenticateContinue}
    */
-  public  static final class AuthenticateContinue extends
+  public static final class AuthenticateContinue extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Session.AuthenticateContinue)
       AuthenticateContinueOrBuilder {
@@ -1102,6 +1113,7 @@ public final class MysqlxSession {
      * <code>required bytes auth_data = 1;</code>
      * @return Whether the authData field is set.
      */
+    @java.lang.Override
     public boolean hasAuthData() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -1113,6 +1125,7 @@ public final class MysqlxSession {
      * <code>required bytes auth_data = 1;</code>
      * @return The authData.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getAuthData() {
       return authData_;
     }
@@ -1454,6 +1467,7 @@ public final class MysqlxSession {
        * <code>required bytes auth_data = 1;</code>
        * @return Whether the authData field is set.
        */
+      @java.lang.Override
       public boolean hasAuthData() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -1465,6 +1479,7 @@ public final class MysqlxSession {
        * <code>required bytes auth_data = 1;</code>
        * @return The authData.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getAuthData() {
         return authData_;
       }
@@ -1584,7 +1599,7 @@ public final class MysqlxSession {
    *
    * Protobuf type {@code Mysqlx.Session.AuthenticateOk}
    */
-  public  static final class AuthenticateOk extends
+  public static final class AuthenticateOk extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Session.AuthenticateOk)
       AuthenticateOkOrBuilder {
@@ -1676,6 +1691,7 @@ public final class MysqlxSession {
      * <code>optional bytes auth_data = 1;</code>
      * @return Whether the authData field is set.
      */
+    @java.lang.Override
     public boolean hasAuthData() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -1687,6 +1703,7 @@ public final class MysqlxSession {
      * <code>optional bytes auth_data = 1;</code>
      * @return The authData.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getAuthData() {
       return authData_;
     }
@@ -2019,6 +2036,7 @@ public final class MysqlxSession {
        * <code>optional bytes auth_data = 1;</code>
        * @return Whether the authData field is set.
        */
+      @java.lang.Override
       public boolean hasAuthData() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -2030,6 +2048,7 @@ public final class MysqlxSession {
        * <code>optional bytes auth_data = 1;</code>
        * @return The authData.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getAuthData() {
         return authData_;
       }
@@ -2152,7 +2171,7 @@ public final class MysqlxSession {
    *
    * Protobuf type {@code Mysqlx.Session.Reset}
    */
-  public  static final class Reset extends
+  public static final class Reset extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Session.Reset)
       ResetOrBuilder {
@@ -2244,6 +2263,7 @@ public final class MysqlxSession {
      * <code>optional bool keep_open = 1 [default = false];</code>
      * @return Whether the keepOpen field is set.
      */
+    @java.lang.Override
     public boolean hasKeepOpen() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -2256,6 +2276,7 @@ public final class MysqlxSession {
      * <code>optional bool keep_open = 1 [default = false];</code>
      * @return The keepOpen.
      */
+    @java.lang.Override
     public boolean getKeepOpen() {
       return keepOpen_;
     }
@@ -2591,6 +2612,7 @@ public final class MysqlxSession {
        * <code>optional bool keep_open = 1 [default = false];</code>
        * @return Whether the keepOpen field is set.
        */
+      @java.lang.Override
       public boolean hasKeepOpen() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -2603,6 +2625,7 @@ public final class MysqlxSession {
        * <code>optional bool keep_open = 1 [default = false];</code>
        * @return The keepOpen.
        */
+      @java.lang.Override
       public boolean getKeepOpen() {
         return keepOpen_;
       }
@@ -2703,7 +2726,7 @@ public final class MysqlxSession {
    *
    * Protobuf type {@code Mysqlx.Session.Close}
    */
-  public  static final class Close extends
+  public static final class Close extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Session.Close)
       CloseOrBuilder {

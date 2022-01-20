@@ -3,6 +3,8 @@
 
 Version 8.0.29
 
+  - WL#15048, Upgrade Protocol Buffers dependency to protobuf-java-3.19.4.
+
   - Fix for Bug#106065 (33726184) Contribution: BigDecimal.toPlainString no need to check decimal exponent.
     Thanks to Baoyi Chen for his contribution.
 

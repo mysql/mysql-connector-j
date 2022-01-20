@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -201,7 +201,7 @@ public final class MysqlxExpr {
    *
    * Protobuf type {@code Mysqlx.Expr.Expr}
    */
-  public  static final class Expr extends
+  public static final class Expr extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Expr.Expr)
       ExprOrBuilder {
@@ -536,14 +536,14 @@ public final class MysqlxExpr {
      * <code>required .Mysqlx.Expr.Expr.Type type = 1;</code>
      * @return Whether the type field is set.
      */
-    public boolean hasType() {
+    @java.lang.Override public boolean hasType() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required .Mysqlx.Expr.Expr.Type type = 1;</code>
      * @return The type.
      */
-    public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Type getType() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Type getType() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Type result = com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Type.valueOf(type_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Type.IDENT : result;
@@ -555,6 +555,7 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Expr.ColumnIdentifier identifier = 2;</code>
      * @return Whether the identifier field is set.
      */
+    @java.lang.Override
     public boolean hasIdentifier() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -562,12 +563,14 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Expr.ColumnIdentifier identifier = 2;</code>
      * @return The identifier.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier getIdentifier() {
       return identifier_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier.getDefaultInstance() : identifier_;
     }
     /**
      * <code>optional .Mysqlx.Expr.ColumnIdentifier identifier = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifierOrBuilder getIdentifierOrBuilder() {
       return identifier_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier.getDefaultInstance() : identifier_;
     }
@@ -578,6 +581,7 @@ public final class MysqlxExpr {
      * <code>optional string variable = 3;</code>
      * @return Whether the variable field is set.
      */
+    @java.lang.Override
     public boolean hasVariable() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -585,6 +589,7 @@ public final class MysqlxExpr {
      * <code>optional string variable = 3;</code>
      * @return The variable.
      */
+    @java.lang.Override
     public java.lang.String getVariable() {
       java.lang.Object ref = variable_;
       if (ref instanceof java.lang.String) {
@@ -603,6 +608,7 @@ public final class MysqlxExpr {
      * <code>optional string variable = 3;</code>
      * @return The bytes for variable.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getVariableBytes() {
       java.lang.Object ref = variable_;
@@ -623,6 +629,7 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Datatypes.Scalar literal = 4;</code>
      * @return Whether the literal field is set.
      */
+    @java.lang.Override
     public boolean hasLiteral() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -630,12 +637,14 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Datatypes.Scalar literal = 4;</code>
      * @return The literal.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getLiteral() {
       return literal_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance() : literal_;
     }
     /**
      * <code>optional .Mysqlx.Datatypes.Scalar literal = 4;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getLiteralOrBuilder() {
       return literal_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance() : literal_;
     }
@@ -646,6 +655,7 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Expr.FunctionCall function_call = 5;</code>
      * @return Whether the functionCall field is set.
      */
+    @java.lang.Override
     public boolean hasFunctionCall() {
       return ((bitField0_ & 0x00000010) != 0);
     }
@@ -653,12 +663,14 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Expr.FunctionCall function_call = 5;</code>
      * @return The functionCall.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.FunctionCall getFunctionCall() {
       return functionCall_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.FunctionCall.getDefaultInstance() : functionCall_;
     }
     /**
      * <code>optional .Mysqlx.Expr.FunctionCall function_call = 5;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.FunctionCallOrBuilder getFunctionCallOrBuilder() {
       return functionCall_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.FunctionCall.getDefaultInstance() : functionCall_;
     }
@@ -669,6 +681,7 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Expr.Operator operator = 6;</code>
      * @return Whether the operator field is set.
      */
+    @java.lang.Override
     public boolean hasOperator() {
       return ((bitField0_ & 0x00000020) != 0);
     }
@@ -676,12 +689,14 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Expr.Operator operator = 6;</code>
      * @return The operator.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Operator getOperator() {
       return operator_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Operator.getDefaultInstance() : operator_;
     }
     /**
      * <code>optional .Mysqlx.Expr.Operator operator = 6;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.OperatorOrBuilder getOperatorOrBuilder() {
       return operator_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Operator.getDefaultInstance() : operator_;
     }
@@ -692,6 +707,7 @@ public final class MysqlxExpr {
      * <code>optional uint32 position = 7;</code>
      * @return Whether the position field is set.
      */
+    @java.lang.Override
     public boolean hasPosition() {
       return ((bitField0_ & 0x00000040) != 0);
     }
@@ -699,6 +715,7 @@ public final class MysqlxExpr {
      * <code>optional uint32 position = 7;</code>
      * @return The position.
      */
+    @java.lang.Override
     public int getPosition() {
       return position_;
     }
@@ -709,6 +726,7 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Expr.Object object = 8;</code>
      * @return Whether the object field is set.
      */
+    @java.lang.Override
     public boolean hasObject() {
       return ((bitField0_ & 0x00000080) != 0);
     }
@@ -716,12 +734,14 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Expr.Object object = 8;</code>
      * @return The object.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Object getObject() {
       return object_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Object.getDefaultInstance() : object_;
     }
     /**
      * <code>optional .Mysqlx.Expr.Object object = 8;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ObjectOrBuilder getObjectOrBuilder() {
       return object_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Object.getDefaultInstance() : object_;
     }
@@ -732,6 +752,7 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Expr.Array array = 9;</code>
      * @return Whether the array field is set.
      */
+    @java.lang.Override
     public boolean hasArray() {
       return ((bitField0_ & 0x00000100) != 0);
     }
@@ -739,12 +760,14 @@ public final class MysqlxExpr {
      * <code>optional .Mysqlx.Expr.Array array = 9;</code>
      * @return The array.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Array getArray() {
       return array_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Array.getDefaultInstance() : array_;
     }
     /**
      * <code>optional .Mysqlx.Expr.Array array = 9;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ArrayOrBuilder getArrayOrBuilder() {
       return array_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Array.getDefaultInstance() : array_;
     }
@@ -1416,13 +1439,14 @@ public final class MysqlxExpr {
        * <code>required .Mysqlx.Expr.Expr.Type type = 1;</code>
        * @return Whether the type field is set.
        */
-      public boolean hasType() {
+      @java.lang.Override public boolean hasType() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required .Mysqlx.Expr.Expr.Type type = 1;</code>
        * @return The type.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Type getType() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Type result = com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Type.valueOf(type_);
@@ -2022,6 +2046,7 @@ public final class MysqlxExpr {
        * <code>optional uint32 position = 7;</code>
        * @return Whether the position field is set.
        */
+      @java.lang.Override
       public boolean hasPosition() {
         return ((bitField0_ & 0x00000040) != 0);
       }
@@ -2029,6 +2054,7 @@ public final class MysqlxExpr {
        * <code>optional uint32 position = 7;</code>
        * @return The position.
        */
+      @java.lang.Override
       public int getPosition() {
         return position_;
       }
@@ -2397,7 +2423,7 @@ public final class MysqlxExpr {
    *
    * Protobuf type {@code Mysqlx.Expr.Identifier}
    */
-  public  static final class Identifier extends
+  public static final class Identifier extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Expr.Identifier)
       IdentifierOrBuilder {
@@ -2493,6 +2519,7 @@ public final class MysqlxExpr {
      * <code>required string name = 1;</code>
      * @return Whether the name field is set.
      */
+    @java.lang.Override
     public boolean hasName() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -2500,6 +2527,7 @@ public final class MysqlxExpr {
      * <code>required string name = 1;</code>
      * @return The name.
      */
+    @java.lang.Override
     public java.lang.String getName() {
       java.lang.Object ref = name_;
       if (ref instanceof java.lang.String) {
@@ -2518,6 +2546,7 @@ public final class MysqlxExpr {
      * <code>required string name = 1;</code>
      * @return The bytes for name.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getNameBytes() {
       java.lang.Object ref = name_;
@@ -2538,6 +2567,7 @@ public final class MysqlxExpr {
      * <code>optional string schema_name = 2;</code>
      * @return Whether the schemaName field is set.
      */
+    @java.lang.Override
     public boolean hasSchemaName() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -2545,6 +2575,7 @@ public final class MysqlxExpr {
      * <code>optional string schema_name = 2;</code>
      * @return The schemaName.
      */
+    @java.lang.Override
     public java.lang.String getSchemaName() {
       java.lang.Object ref = schemaName_;
       if (ref instanceof java.lang.String) {
@@ -2563,6 +2594,7 @@ public final class MysqlxExpr {
      * <code>optional string schema_name = 2;</code>
      * @return The bytes for schemaName.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getSchemaNameBytes() {
       java.lang.Object ref = schemaName_;
@@ -3221,7 +3253,7 @@ public final class MysqlxExpr {
    *
    * Protobuf type {@code Mysqlx.Expr.DocumentPathItem}
    */
-  public  static final class DocumentPathItem extends
+  public static final class DocumentPathItem extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Expr.DocumentPathItem)
       DocumentPathItemOrBuilder {
@@ -3491,14 +3523,14 @@ public final class MysqlxExpr {
      * <code>required .Mysqlx.Expr.DocumentPathItem.Type type = 1;</code>
      * @return Whether the type field is set.
      */
-    public boolean hasType() {
+    @java.lang.Override public boolean hasType() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required .Mysqlx.Expr.DocumentPathItem.Type type = 1;</code>
      * @return The type.
      */
-    public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Type getType() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Type getType() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Type result = com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Type.valueOf(type_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Type.MEMBER : result;
@@ -3510,6 +3542,7 @@ public final class MysqlxExpr {
      * <code>optional string value = 2;</code>
      * @return Whether the value field is set.
      */
+    @java.lang.Override
     public boolean hasValue() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -3517,6 +3550,7 @@ public final class MysqlxExpr {
      * <code>optional string value = 2;</code>
      * @return The value.
      */
+    @java.lang.Override
     public java.lang.String getValue() {
       java.lang.Object ref = value_;
       if (ref instanceof java.lang.String) {
@@ -3535,6 +3569,7 @@ public final class MysqlxExpr {
      * <code>optional string value = 2;</code>
      * @return The bytes for value.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getValueBytes() {
       java.lang.Object ref = value_;
@@ -3559,6 +3594,7 @@ public final class MysqlxExpr {
      * <code>optional uint32 index = 3;</code>
      * @return Whether the index field is set.
      */
+    @java.lang.Override
     public boolean hasIndex() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -3570,6 +3606,7 @@ public final class MysqlxExpr {
      * <code>optional uint32 index = 3;</code>
      * @return The index.
      */
+    @java.lang.Override
     public int getIndex() {
       return index_;
     }
@@ -3962,13 +3999,14 @@ public final class MysqlxExpr {
        * <code>required .Mysqlx.Expr.DocumentPathItem.Type type = 1;</code>
        * @return Whether the type field is set.
        */
-      public boolean hasType() {
+      @java.lang.Override public boolean hasType() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required .Mysqlx.Expr.DocumentPathItem.Type type = 1;</code>
        * @return The type.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Type getType() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Type result = com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem.Type.valueOf(type_);
@@ -4092,6 +4130,7 @@ public final class MysqlxExpr {
        * <code>optional uint32 index = 3;</code>
        * @return Whether the index field is set.
        */
+      @java.lang.Override
       public boolean hasIndex() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -4103,6 +4142,7 @@ public final class MysqlxExpr {
        * <code>optional uint32 index = 3;</code>
        * @return The index.
        */
+      @java.lang.Override
       public int getIndex() {
         return index_;
       }
@@ -4348,7 +4388,7 @@ public final class MysqlxExpr {
    *
    * Protobuf type {@code Mysqlx.Expr.ColumnIdentifier}
    */
-  public  static final class ColumnIdentifier extends
+  public static final class ColumnIdentifier extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Expr.ColumnIdentifier)
       ColumnIdentifierOrBuilder {
@@ -4467,6 +4507,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem> getDocumentPathList() {
       return documentPath_;
     }
@@ -4477,6 +4518,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItemOrBuilder> 
         getDocumentPathOrBuilderList() {
       return documentPath_;
@@ -4488,6 +4530,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
+    @java.lang.Override
     public int getDocumentPathCount() {
       return documentPath_.size();
     }
@@ -4498,6 +4541,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem getDocumentPath(int index) {
       return documentPath_.get(index);
     }
@@ -4508,6 +4552,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItemOrBuilder getDocumentPathOrBuilder(
         int index) {
       return documentPath_.get(index);
@@ -4523,6 +4568,7 @@ public final class MysqlxExpr {
      * <code>optional string name = 2;</code>
      * @return Whether the name field is set.
      */
+    @java.lang.Override
     public boolean hasName() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -4534,6 +4580,7 @@ public final class MysqlxExpr {
      * <code>optional string name = 2;</code>
      * @return The name.
      */
+    @java.lang.Override
     public java.lang.String getName() {
       java.lang.Object ref = name_;
       if (ref instanceof java.lang.String) {
@@ -4556,6 +4603,7 @@ public final class MysqlxExpr {
      * <code>optional string name = 2;</code>
      * @return The bytes for name.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getNameBytes() {
       java.lang.Object ref = name_;
@@ -4580,6 +4628,7 @@ public final class MysqlxExpr {
      * <code>optional string table_name = 3;</code>
      * @return Whether the tableName field is set.
      */
+    @java.lang.Override
     public boolean hasTableName() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -4591,6 +4640,7 @@ public final class MysqlxExpr {
      * <code>optional string table_name = 3;</code>
      * @return The tableName.
      */
+    @java.lang.Override
     public java.lang.String getTableName() {
       java.lang.Object ref = tableName_;
       if (ref instanceof java.lang.String) {
@@ -4613,6 +4663,7 @@ public final class MysqlxExpr {
      * <code>optional string table_name = 3;</code>
      * @return The bytes for tableName.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getTableNameBytes() {
       java.lang.Object ref = tableName_;
@@ -4637,6 +4688,7 @@ public final class MysqlxExpr {
      * <code>optional string schema_name = 4;</code>
      * @return Whether the schemaName field is set.
      */
+    @java.lang.Override
     public boolean hasSchemaName() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -4648,6 +4700,7 @@ public final class MysqlxExpr {
      * <code>optional string schema_name = 4;</code>
      * @return The schemaName.
      */
+    @java.lang.Override
     public java.lang.String getSchemaName() {
       java.lang.Object ref = schemaName_;
       if (ref instanceof java.lang.String) {
@@ -4670,6 +4723,7 @@ public final class MysqlxExpr {
      * <code>optional string schema_name = 4;</code>
      * @return The bytes for schemaName.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getSchemaNameBytes() {
       java.lang.Object ref = schemaName_;
@@ -5914,7 +5968,7 @@ public final class MysqlxExpr {
    *
    * Protobuf type {@code Mysqlx.Expr.FunctionCall}
    */
-  public  static final class FunctionCall extends
+  public static final class FunctionCall extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Expr.FunctionCall)
       FunctionCallOrBuilder {
@@ -6026,6 +6080,7 @@ public final class MysqlxExpr {
      * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
      * @return Whether the name field is set.
      */
+    @java.lang.Override
     public boolean hasName() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -6037,6 +6092,7 @@ public final class MysqlxExpr {
      * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
      * @return The name.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Identifier getName() {
       return name_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Identifier.getDefaultInstance() : name_;
     }
@@ -6047,6 +6103,7 @@ public final class MysqlxExpr {
      *
      * <code>required .Mysqlx.Expr.Identifier name = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.IdentifierOrBuilder getNameOrBuilder() {
       return name_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Identifier.getDefaultInstance() : name_;
     }
@@ -6060,6 +6117,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> getParamList() {
       return param_;
     }
@@ -6070,6 +6128,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
         getParamOrBuilderList() {
       return param_;
@@ -6081,6 +6140,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
+    @java.lang.Override
     public int getParamCount() {
       return param_.size();
     }
@@ -6091,6 +6151,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getParam(int index) {
       return param_.get(index);
     }
@@ -6101,6 +6162,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getParamOrBuilder(
         int index) {
       return param_.get(index);
@@ -7118,7 +7180,7 @@ public final class MysqlxExpr {
   /**
    * Protobuf type {@code Mysqlx.Expr.Operator}
    */
-  public  static final class Operator extends
+  public static final class Operator extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Expr.Operator)
       OperatorOrBuilder {
@@ -7224,6 +7286,7 @@ public final class MysqlxExpr {
      * <code>required string name = 1;</code>
      * @return Whether the name field is set.
      */
+    @java.lang.Override
     public boolean hasName() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -7235,6 +7298,7 @@ public final class MysqlxExpr {
      * <code>required string name = 1;</code>
      * @return The name.
      */
+    @java.lang.Override
     public java.lang.String getName() {
       java.lang.Object ref = name_;
       if (ref instanceof java.lang.String) {
@@ -7257,6 +7321,7 @@ public final class MysqlxExpr {
      * <code>required string name = 1;</code>
      * @return The bytes for name.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getNameBytes() {
       java.lang.Object ref = name_;
@@ -7280,6 +7345,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> getParamList() {
       return param_;
     }
@@ -7290,6 +7356,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
         getParamOrBuilderList() {
       return param_;
@@ -7301,6 +7368,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
+    @java.lang.Override
     public int getParamCount() {
       return param_.size();
     }
@@ -7311,6 +7379,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getParam(int index) {
       return param_.get(index);
     }
@@ -7321,6 +7390,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr param = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getParamOrBuilder(
         int index) {
       return param_.get(index);
@@ -8242,7 +8312,7 @@ public final class MysqlxExpr {
    *
    * Protobuf type {@code Mysqlx.Expr.Object}
    */
-  public  static final class Object extends
+  public static final class Object extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Expr.Object)
       ObjectOrBuilder {
@@ -8393,7 +8463,7 @@ public final class MysqlxExpr {
     /**
      * Protobuf type {@code Mysqlx.Expr.Object.ObjectField}
      */
-    public  static final class ObjectField extends
+    public static final class ObjectField extends
         com.google.protobuf.GeneratedMessageV3 implements
         // @@protoc_insertion_point(message_implements:Mysqlx.Expr.Object.ObjectField)
         ObjectFieldOrBuilder {
@@ -8499,6 +8569,7 @@ public final class MysqlxExpr {
        * <code>required string key = 1;</code>
        * @return Whether the key field is set.
        */
+      @java.lang.Override
       public boolean hasKey() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -8510,6 +8581,7 @@ public final class MysqlxExpr {
        * <code>required string key = 1;</code>
        * @return The key.
        */
+      @java.lang.Override
       public java.lang.String getKey() {
         java.lang.Object ref = key_;
         if (ref instanceof java.lang.String) {
@@ -8532,6 +8604,7 @@ public final class MysqlxExpr {
        * <code>required string key = 1;</code>
        * @return The bytes for key.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString
           getKeyBytes() {
         java.lang.Object ref = key_;
@@ -8556,6 +8629,7 @@ public final class MysqlxExpr {
        * <code>required .Mysqlx.Expr.Expr value = 2;</code>
        * @return Whether the value field is set.
        */
+      @java.lang.Override
       public boolean hasValue() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -8567,6 +8641,7 @@ public final class MysqlxExpr {
        * <code>required .Mysqlx.Expr.Expr value = 2;</code>
        * @return The value.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getValue() {
         return value_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : value_;
       }
@@ -8577,6 +8652,7 @@ public final class MysqlxExpr {
        *
        * <code>required .Mysqlx.Expr.Expr value = 2;</code>
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getValueOrBuilder() {
         return value_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : value_;
       }
@@ -9276,6 +9352,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField> getFldList() {
       return fld_;
     }
@@ -9286,6 +9363,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectFieldOrBuilder> 
         getFldOrBuilderList() {
       return fld_;
@@ -9297,6 +9375,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
+    @java.lang.Override
     public int getFldCount() {
       return fld_.size();
     }
@@ -9307,6 +9386,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectField getFld(int index) {
       return fld_.get(index);
     }
@@ -9317,6 +9397,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Object.ObjectField fld = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Object.ObjectFieldOrBuilder getFldOrBuilder(
         int index) {
       return fld_.get(index);
@@ -10100,7 +10181,7 @@ public final class MysqlxExpr {
    *
    * Protobuf type {@code Mysqlx.Expr.Array}
    */
-  public  static final class Array extends
+  public static final class Array extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Expr.Array)
       ArrayOrBuilder {
@@ -10197,6 +10278,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> getValueList() {
       return value_;
     }
@@ -10207,6 +10289,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
         getValueOrBuilderList() {
       return value_;
@@ -10218,6 +10301,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
+    @java.lang.Override
     public int getValueCount() {
       return value_.size();
     }
@@ -10228,6 +10312,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getValue(int index) {
       return value_.get(index);
     }
@@ -10238,6 +10323,7 @@ public final class MysqlxExpr {
      *
      * <code>repeated .Mysqlx.Expr.Expr value = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getValueOrBuilder(
         int index) {
       return value_.get(index);

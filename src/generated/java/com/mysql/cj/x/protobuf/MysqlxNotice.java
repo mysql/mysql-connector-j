@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -120,7 +120,7 @@ public final class MysqlxNotice {
    *
    * Protobuf type {@code Mysqlx.Notice.Frame}
    */
-  public  static final class Frame extends
+  public static final class Frame extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Notice.Frame)
       FrameOrBuilder {
@@ -457,6 +457,7 @@ public final class MysqlxNotice {
      * <code>required uint32 type = 1;</code>
      * @return Whether the type field is set.
      */
+    @java.lang.Override
     public boolean hasType() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -468,6 +469,7 @@ public final class MysqlxNotice {
      * <code>required uint32 type = 1;</code>
      * @return The type.
      */
+    @java.lang.Override
     public int getType() {
       return type_;
     }
@@ -482,7 +484,7 @@ public final class MysqlxNotice {
      * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
      * @return Whether the scope field is set.
      */
-    public boolean hasScope() {
+    @java.lang.Override public boolean hasScope() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
@@ -493,7 +495,7 @@ public final class MysqlxNotice {
      * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
      * @return The scope.
      */
-    public com.mysql.cj.x.protobuf.MysqlxNotice.Frame.Scope getScope() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxNotice.Frame.Scope getScope() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxNotice.Frame.Scope result = com.mysql.cj.x.protobuf.MysqlxNotice.Frame.Scope.valueOf(scope_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxNotice.Frame.Scope.GLOBAL : result;
@@ -509,6 +511,7 @@ public final class MysqlxNotice {
      * <code>optional bytes payload = 3;</code>
      * @return Whether the payload field is set.
      */
+    @java.lang.Override
     public boolean hasPayload() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -520,6 +523,7 @@ public final class MysqlxNotice {
      * <code>optional bytes payload = 3;</code>
      * @return The payload.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getPayload() {
       return payload_;
     }
@@ -915,6 +919,7 @@ public final class MysqlxNotice {
        * <code>required uint32 type = 1;</code>
        * @return Whether the type field is set.
        */
+      @java.lang.Override
       public boolean hasType() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -926,6 +931,7 @@ public final class MysqlxNotice {
        * <code>required uint32 type = 1;</code>
        * @return The type.
        */
+      @java.lang.Override
       public int getType() {
         return type_;
       }
@@ -968,7 +974,7 @@ public final class MysqlxNotice {
        * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
        * @return Whether the scope field is set.
        */
-      public boolean hasScope() {
+      @java.lang.Override public boolean hasScope() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
@@ -979,6 +985,7 @@ public final class MysqlxNotice {
        * <code>optional .Mysqlx.Notice.Frame.Scope scope = 2 [default = GLOBAL];</code>
        * @return The scope.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxNotice.Frame.Scope getScope() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxNotice.Frame.Scope result = com.mysql.cj.x.protobuf.MysqlxNotice.Frame.Scope.valueOf(scope_);
@@ -1026,6 +1033,7 @@ public final class MysqlxNotice {
        * <code>optional bytes payload = 3;</code>
        * @return Whether the payload field is set.
        */
+      @java.lang.Override
       public boolean hasPayload() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -1037,6 +1045,7 @@ public final class MysqlxNotice {
        * <code>optional bytes payload = 3;</code>
        * @return The payload.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getPayload() {
         return payload_;
       }
@@ -1218,7 +1227,7 @@ public final class MysqlxNotice {
    *
    * Protobuf type {@code Mysqlx.Notice.Warning}
    */
-  public  static final class Warning extends
+  public static final class Warning extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Notice.Warning)
       WarningOrBuilder {
@@ -1434,7 +1443,7 @@ public final class MysqlxNotice {
      * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
      * @return Whether the level field is set.
      */
-    public boolean hasLevel() {
+    @java.lang.Override public boolean hasLevel() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
@@ -1445,7 +1454,7 @@ public final class MysqlxNotice {
      * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
      * @return The level.
      */
-    public com.mysql.cj.x.protobuf.MysqlxNotice.Warning.Level getLevel() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxNotice.Warning.Level getLevel() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxNotice.Warning.Level result = com.mysql.cj.x.protobuf.MysqlxNotice.Warning.Level.valueOf(level_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxNotice.Warning.Level.WARNING : result;
@@ -1461,6 +1470,7 @@ public final class MysqlxNotice {
      * <code>required uint32 code = 2;</code>
      * @return Whether the code field is set.
      */
+    @java.lang.Override
     public boolean hasCode() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -1472,6 +1482,7 @@ public final class MysqlxNotice {
      * <code>required uint32 code = 2;</code>
      * @return The code.
      */
+    @java.lang.Override
     public int getCode() {
       return code_;
     }
@@ -1486,6 +1497,7 @@ public final class MysqlxNotice {
      * <code>required string msg = 3;</code>
      * @return Whether the msg field is set.
      */
+    @java.lang.Override
     public boolean hasMsg() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -1497,6 +1509,7 @@ public final class MysqlxNotice {
      * <code>required string msg = 3;</code>
      * @return The msg.
      */
+    @java.lang.Override
     public java.lang.String getMsg() {
       java.lang.Object ref = msg_;
       if (ref instanceof java.lang.String) {
@@ -1519,6 +1532,7 @@ public final class MysqlxNotice {
      * <code>required string msg = 3;</code>
      * @return The bytes for msg.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getMsgBytes() {
       java.lang.Object ref = msg_;
@@ -1939,7 +1953,7 @@ public final class MysqlxNotice {
        * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
        * @return Whether the level field is set.
        */
-      public boolean hasLevel() {
+      @java.lang.Override public boolean hasLevel() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
@@ -1950,6 +1964,7 @@ public final class MysqlxNotice {
        * <code>optional .Mysqlx.Notice.Warning.Level level = 1 [default = WARNING];</code>
        * @return The level.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxNotice.Warning.Level getLevel() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxNotice.Warning.Level result = com.mysql.cj.x.protobuf.MysqlxNotice.Warning.Level.valueOf(level_);
@@ -1997,6 +2012,7 @@ public final class MysqlxNotice {
        * <code>required uint32 code = 2;</code>
        * @return Whether the code field is set.
        */
+      @java.lang.Override
       public boolean hasCode() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -2008,6 +2024,7 @@ public final class MysqlxNotice {
        * <code>required uint32 code = 2;</code>
        * @return The code.
        */
+      @java.lang.Override
       public int getCode() {
         return code_;
       }
@@ -2277,7 +2294,7 @@ public final class MysqlxNotice {
    *
    * Protobuf type {@code Mysqlx.Notice.SessionVariableChanged}
    */
-  public  static final class SessionVariableChanged extends
+  public static final class SessionVariableChanged extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Notice.SessionVariableChanged)
       SessionVariableChangedOrBuilder {
@@ -2383,6 +2400,7 @@ public final class MysqlxNotice {
      * <code>required string param = 1;</code>
      * @return Whether the param field is set.
      */
+    @java.lang.Override
     public boolean hasParam() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -2394,6 +2412,7 @@ public final class MysqlxNotice {
      * <code>required string param = 1;</code>
      * @return The param.
      */
+    @java.lang.Override
     public java.lang.String getParam() {
       java.lang.Object ref = param_;
       if (ref instanceof java.lang.String) {
@@ -2416,6 +2435,7 @@ public final class MysqlxNotice {
      * <code>required string param = 1;</code>
      * @return The bytes for param.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getParamBytes() {
       java.lang.Object ref = param_;
@@ -2440,6 +2460,7 @@ public final class MysqlxNotice {
      * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
      * @return Whether the value field is set.
      */
+    @java.lang.Override
     public boolean hasValue() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -2451,6 +2472,7 @@ public final class MysqlxNotice {
      * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
      * @return The value.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue() {
       return value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance() : value_;
     }
@@ -2461,6 +2483,7 @@ public final class MysqlxNotice {
      *
      * <code>optional .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder() {
       return value_ == null ? com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar.getDefaultInstance() : value_;
     }
@@ -3231,7 +3254,7 @@ public final class MysqlxNotice {
   /**
    * Protobuf type {@code Mysqlx.Notice.SessionStateChanged}
    */
-  public  static final class SessionStateChanged extends
+  public static final class SessionStateChanged extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Notice.SessionStateChanged)
       SessionStateChangedOrBuilder {
@@ -3528,7 +3551,7 @@ public final class MysqlxNotice {
      * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
      * @return Whether the param field is set.
      */
-    public boolean hasParam() {
+    @java.lang.Override public boolean hasParam() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
@@ -3539,7 +3562,7 @@ public final class MysqlxNotice {
      * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
      * @return The param.
      */
-    public com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter getParam() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter getParam() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter result = com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter.valueOf(param_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter.CURRENT_SCHEMA : result;
@@ -3554,6 +3577,7 @@ public final class MysqlxNotice {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> getValueList() {
       return value_;
     }
@@ -3564,6 +3588,7 @@ public final class MysqlxNotice {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getValueOrBuilderList() {
       return value_;
@@ -3575,6 +3600,7 @@ public final class MysqlxNotice {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
+    @java.lang.Override
     public int getValueCount() {
       return value_.size();
     }
@@ -3585,6 +3611,7 @@ public final class MysqlxNotice {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getValue(int index) {
       return value_.get(index);
     }
@@ -3595,6 +3622,7 @@ public final class MysqlxNotice {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar value = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getValueOrBuilder(
         int index) {
       return value_.get(index);
@@ -3995,7 +4023,7 @@ public final class MysqlxNotice {
        * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
        * @return Whether the param field is set.
        */
-      public boolean hasParam() {
+      @java.lang.Override public boolean hasParam() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
@@ -4006,6 +4034,7 @@ public final class MysqlxNotice {
        * <code>required .Mysqlx.Notice.SessionStateChanged.Parameter param = 1;</code>
        * @return The param.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter getParam() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter result = com.mysql.cj.x.protobuf.MysqlxNotice.SessionStateChanged.Parameter.valueOf(param_);
@@ -4472,7 +4501,7 @@ public final class MysqlxNotice {
    *
    * Protobuf type {@code Mysqlx.Notice.GroupReplicationStateChanged}
    */
-  public  static final class GroupReplicationStateChanged extends
+  public static final class GroupReplicationStateChanged extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Notice.GroupReplicationStateChanged)
       GroupReplicationStateChangedOrBuilder {
@@ -4684,6 +4713,7 @@ public final class MysqlxNotice {
      * <code>required uint32 type = 1;</code>
      * @return Whether the type field is set.
      */
+    @java.lang.Override
     public boolean hasType() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -4695,6 +4725,7 @@ public final class MysqlxNotice {
      * <code>required uint32 type = 1;</code>
      * @return The type.
      */
+    @java.lang.Override
     public int getType() {
       return type_;
     }
@@ -4709,6 +4740,7 @@ public final class MysqlxNotice {
      * <code>optional string view_id = 2;</code>
      * @return Whether the viewId field is set.
      */
+    @java.lang.Override
     public boolean hasViewId() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -4720,6 +4752,7 @@ public final class MysqlxNotice {
      * <code>optional string view_id = 2;</code>
      * @return The viewId.
      */
+    @java.lang.Override
     public java.lang.String getViewId() {
       java.lang.Object ref = viewId_;
       if (ref instanceof java.lang.String) {
@@ -4742,6 +4775,7 @@ public final class MysqlxNotice {
      * <code>optional string view_id = 2;</code>
      * @return The bytes for viewId.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getViewIdBytes() {
       java.lang.Object ref = viewId_;
@@ -5121,6 +5155,7 @@ public final class MysqlxNotice {
        * <code>required uint32 type = 1;</code>
        * @return Whether the type field is set.
        */
+      @java.lang.Override
       public boolean hasType() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -5132,6 +5167,7 @@ public final class MysqlxNotice {
        * <code>required uint32 type = 1;</code>
        * @return The type.
        */
+      @java.lang.Override
       public int getType() {
         return type_;
       }
@@ -5341,7 +5377,7 @@ public final class MysqlxNotice {
    *
    * Protobuf type {@code Mysqlx.Notice.ServerHello}
    */
-  public  static final class ServerHello extends
+  public static final class ServerHello extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Notice.ServerHello)
       ServerHelloOrBuilder {

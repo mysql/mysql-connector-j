@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -285,8 +285,8 @@ public final class MysqlxCrud {
    * <pre>
    **
    *ViewSqlSecurity defines the security context in which the view is going to be
-   *executed, this means that VIEW can be executed with current user permissions or
-   *with permissions of the uses who defined the VIEW
+   *executed; this means that VIEW can be executed with current user permissions or
+   *with permissions of the user who defined the VIEW
    * </pre>
    *
    * Protobuf enum {@code Mysqlx.Crud.ViewSqlSecurity}
@@ -303,7 +303,7 @@ public final class MysqlxCrud {
     INVOKER(1),
     /**
      * <pre>
-     ** use permissions of the uses who defined the VIEW 
+     ** use permissions of the user who defined the VIEW 
      * </pre>
      *
      * <code>DEFINER = 2;</code>
@@ -321,7 +321,7 @@ public final class MysqlxCrud {
     public static final int INVOKER_VALUE = 1;
     /**
      * <pre>
-     ** use permissions of the uses who defined the VIEW 
+     ** use permissions of the user who defined the VIEW 
      * </pre>
      *
      * <code>DEFINER = 2;</code>
@@ -585,7 +585,7 @@ public final class MysqlxCrud {
   /**
    * Protobuf type {@code Mysqlx.Crud.Column}
    */
-  public  static final class Column extends
+  public static final class Column extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.Column)
       ColumnOrBuilder {
@@ -694,6 +694,7 @@ public final class MysqlxCrud {
      * <code>optional string name = 1;</code>
      * @return Whether the name field is set.
      */
+    @java.lang.Override
     public boolean hasName() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -701,6 +702,7 @@ public final class MysqlxCrud {
      * <code>optional string name = 1;</code>
      * @return The name.
      */
+    @java.lang.Override
     public java.lang.String getName() {
       java.lang.Object ref = name_;
       if (ref instanceof java.lang.String) {
@@ -719,6 +721,7 @@ public final class MysqlxCrud {
      * <code>optional string name = 1;</code>
      * @return The bytes for name.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getNameBytes() {
       java.lang.Object ref = name_;
@@ -739,6 +742,7 @@ public final class MysqlxCrud {
      * <code>optional string alias = 2;</code>
      * @return Whether the alias field is set.
      */
+    @java.lang.Override
     public boolean hasAlias() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -746,6 +750,7 @@ public final class MysqlxCrud {
      * <code>optional string alias = 2;</code>
      * @return The alias.
      */
+    @java.lang.Override
     public java.lang.String getAlias() {
       java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
@@ -764,6 +769,7 @@ public final class MysqlxCrud {
      * <code>optional string alias = 2;</code>
      * @return The bytes for alias.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getAliasBytes() {
       java.lang.Object ref = alias_;
@@ -783,12 +789,14 @@ public final class MysqlxCrud {
     /**
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 3;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem> getDocumentPathList() {
       return documentPath_;
     }
     /**
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 3;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItemOrBuilder> 
         getDocumentPathOrBuilderList() {
       return documentPath_;
@@ -796,18 +804,21 @@ public final class MysqlxCrud {
     /**
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 3;</code>
      */
+    @java.lang.Override
     public int getDocumentPathCount() {
       return documentPath_.size();
     }
     /**
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 3;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItem getDocumentPath(int index) {
       return documentPath_.get(index);
     }
     /**
      * <code>repeated .Mysqlx.Expr.DocumentPathItem document_path = 3;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.DocumentPathItemOrBuilder getDocumentPathOrBuilder(
         int index) {
       return documentPath_.get(index);
@@ -1686,7 +1697,7 @@ public final class MysqlxCrud {
 
     /**
      * <pre>
-     ** the expression identifying an element from the source data
+     ** the expression identifying an element from the source data,
      *which can include a column identifier or any expression 
      * </pre>
      *
@@ -1696,7 +1707,7 @@ public final class MysqlxCrud {
     boolean hasSource();
     /**
      * <pre>
-     ** the expression identifying an element from the source data
+     ** the expression identifying an element from the source data,
      *which can include a column identifier or any expression 
      * </pre>
      *
@@ -1706,7 +1717,7 @@ public final class MysqlxCrud {
     com.mysql.cj.x.protobuf.MysqlxExpr.Expr getSource();
     /**
      * <pre>
-     ** the expression identifying an element from the source data
+     ** the expression identifying an element from the source data,
      *which can include a column identifier or any expression 
      * </pre>
      *
@@ -1749,7 +1760,7 @@ public final class MysqlxCrud {
   /**
    * Protobuf type {@code Mysqlx.Crud.Projection}
    */
-  public  static final class Projection extends
+  public static final class Projection extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.Projection)
       ProjectionOrBuilder {
@@ -1849,36 +1860,39 @@ public final class MysqlxCrud {
     private com.mysql.cj.x.protobuf.MysqlxExpr.Expr source_;
     /**
      * <pre>
-     ** the expression identifying an element from the source data
+     ** the expression identifying an element from the source data,
      *which can include a column identifier or any expression 
      * </pre>
      *
      * <code>required .Mysqlx.Expr.Expr source = 1;</code>
      * @return Whether the source field is set.
      */
+    @java.lang.Override
     public boolean hasSource() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <pre>
-     ** the expression identifying an element from the source data
+     ** the expression identifying an element from the source data,
      *which can include a column identifier or any expression 
      * </pre>
      *
      * <code>required .Mysqlx.Expr.Expr source = 1;</code>
      * @return The source.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getSource() {
       return source_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : source_;
     }
     /**
      * <pre>
-     ** the expression identifying an element from the source data
+     ** the expression identifying an element from the source data,
      *which can include a column identifier or any expression 
      * </pre>
      *
      * <code>required .Mysqlx.Expr.Expr source = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getSourceOrBuilder() {
       return source_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : source_;
     }
@@ -1894,6 +1908,7 @@ public final class MysqlxCrud {
      * <code>optional string alias = 2;</code>
      * @return Whether the alias field is set.
      */
+    @java.lang.Override
     public boolean hasAlias() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -1906,6 +1921,7 @@ public final class MysqlxCrud {
      * <code>optional string alias = 2;</code>
      * @return The alias.
      */
+    @java.lang.Override
     public java.lang.String getAlias() {
       java.lang.Object ref = alias_;
       if (ref instanceof java.lang.String) {
@@ -1929,6 +1945,7 @@ public final class MysqlxCrud {
      * <code>optional string alias = 2;</code>
      * @return The bytes for alias.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getAliasBytes() {
       java.lang.Object ref = alias_;
@@ -2311,7 +2328,7 @@ public final class MysqlxCrud {
           com.mysql.cj.x.protobuf.MysqlxExpr.Expr, com.mysql.cj.x.protobuf.MysqlxExpr.Expr.Builder, com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> sourceBuilder_;
       /**
        * <pre>
-       ** the expression identifying an element from the source data
+       ** the expression identifying an element from the source data,
        *which can include a column identifier or any expression 
        * </pre>
        *
@@ -2323,7 +2340,7 @@ public final class MysqlxCrud {
       }
       /**
        * <pre>
-       ** the expression identifying an element from the source data
+       ** the expression identifying an element from the source data,
        *which can include a column identifier or any expression 
        * </pre>
        *
@@ -2339,7 +2356,7 @@ public final class MysqlxCrud {
       }
       /**
        * <pre>
-       ** the expression identifying an element from the source data
+       ** the expression identifying an element from the source data,
        *which can include a column identifier or any expression 
        * </pre>
        *
@@ -2360,7 +2377,7 @@ public final class MysqlxCrud {
       }
       /**
        * <pre>
-       ** the expression identifying an element from the source data
+       ** the expression identifying an element from the source data,
        *which can include a column identifier or any expression 
        * </pre>
        *
@@ -2379,7 +2396,7 @@ public final class MysqlxCrud {
       }
       /**
        * <pre>
-       ** the expression identifying an element from the source data
+       ** the expression identifying an element from the source data,
        *which can include a column identifier or any expression 
        * </pre>
        *
@@ -2404,7 +2421,7 @@ public final class MysqlxCrud {
       }
       /**
        * <pre>
-       ** the expression identifying an element from the source data
+       ** the expression identifying an element from the source data,
        *which can include a column identifier or any expression 
        * </pre>
        *
@@ -2422,7 +2439,7 @@ public final class MysqlxCrud {
       }
       /**
        * <pre>
-       ** the expression identifying an element from the source data
+       ** the expression identifying an element from the source data,
        *which can include a column identifier or any expression 
        * </pre>
        *
@@ -2435,7 +2452,7 @@ public final class MysqlxCrud {
       }
       /**
        * <pre>
-       ** the expression identifying an element from the source data
+       ** the expression identifying an element from the source data,
        *which can include a column identifier or any expression 
        * </pre>
        *
@@ -2451,7 +2468,7 @@ public final class MysqlxCrud {
       }
       /**
        * <pre>
-       ** the expression identifying an element from the source data
+       ** the expression identifying an element from the source data,
        *which can include a column identifier or any expression 
        * </pre>
        *
@@ -2678,7 +2695,7 @@ public final class MysqlxCrud {
   /**
    * Protobuf type {@code Mysqlx.Crud.Collection}
    */
-  public  static final class Collection extends
+  public static final class Collection extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.Collection)
       CollectionOrBuilder {
@@ -2774,6 +2791,7 @@ public final class MysqlxCrud {
      * <code>required string name = 1;</code>
      * @return Whether the name field is set.
      */
+    @java.lang.Override
     public boolean hasName() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -2781,6 +2799,7 @@ public final class MysqlxCrud {
      * <code>required string name = 1;</code>
      * @return The name.
      */
+    @java.lang.Override
     public java.lang.String getName() {
       java.lang.Object ref = name_;
       if (ref instanceof java.lang.String) {
@@ -2799,6 +2818,7 @@ public final class MysqlxCrud {
      * <code>required string name = 1;</code>
      * @return The bytes for name.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getNameBytes() {
       java.lang.Object ref = name_;
@@ -2819,6 +2839,7 @@ public final class MysqlxCrud {
      * <code>optional string schema = 2;</code>
      * @return Whether the schema field is set.
      */
+    @java.lang.Override
     public boolean hasSchema() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -2826,6 +2847,7 @@ public final class MysqlxCrud {
      * <code>optional string schema = 2;</code>
      * @return The schema.
      */
+    @java.lang.Override
     public java.lang.String getSchema() {
       java.lang.Object ref = schema_;
       if (ref instanceof java.lang.String) {
@@ -2844,6 +2866,7 @@ public final class MysqlxCrud {
      * <code>optional string schema = 2;</code>
      * @return The bytes for schema.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getSchemaBytes() {
       java.lang.Object ref = schema_;
@@ -3471,7 +3494,7 @@ public final class MysqlxCrud {
   /**
    * Protobuf type {@code Mysqlx.Crud.Limit}
    */
-  public  static final class Limit extends
+  public static final class Limit extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.Limit)
       LimitOrBuilder {
@@ -3567,6 +3590,7 @@ public final class MysqlxCrud {
      * <code>required uint64 row_count = 1;</code>
      * @return Whether the rowCount field is set.
      */
+    @java.lang.Override
     public boolean hasRowCount() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -3578,6 +3602,7 @@ public final class MysqlxCrud {
      * <code>required uint64 row_count = 1;</code>
      * @return The rowCount.
      */
+    @java.lang.Override
     public long getRowCount() {
       return rowCount_;
     }
@@ -3592,6 +3617,7 @@ public final class MysqlxCrud {
      * <code>optional uint64 offset = 2;</code>
      * @return Whether the offset field is set.
      */
+    @java.lang.Override
     public boolean hasOffset() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -3603,6 +3629,7 @@ public final class MysqlxCrud {
      * <code>optional uint64 offset = 2;</code>
      * @return The offset.
      */
+    @java.lang.Override
     public long getOffset() {
       return offset_;
     }
@@ -3964,6 +3991,7 @@ public final class MysqlxCrud {
        * <code>required uint64 row_count = 1;</code>
        * @return Whether the rowCount field is set.
        */
+      @java.lang.Override
       public boolean hasRowCount() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -3975,6 +4003,7 @@ public final class MysqlxCrud {
        * <code>required uint64 row_count = 1;</code>
        * @return The rowCount.
        */
+      @java.lang.Override
       public long getRowCount() {
         return rowCount_;
       }
@@ -4017,6 +4046,7 @@ public final class MysqlxCrud {
        * <code>optional uint64 offset = 2;</code>
        * @return Whether the offset field is set.
        */
+      @java.lang.Override
       public boolean hasOffset() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -4028,6 +4058,7 @@ public final class MysqlxCrud {
        * <code>optional uint64 offset = 2;</code>
        * @return The offset.
        */
+      @java.lang.Override
       public long getOffset() {
         return offset_;
       }
@@ -4174,7 +4205,7 @@ public final class MysqlxCrud {
   /**
    * <pre>
    **
-   *LimitExpr in comparison to Limit, is able to specify that row_count and
+   *LimitExpr, in comparison to Limit, is able to specify that row_count and
    *offset are placeholders.
    *This message support expressions of following types Expr/literal/UINT,
    *Expr/PLACEHOLDER.
@@ -4182,7 +4213,7 @@ public final class MysqlxCrud {
    *
    * Protobuf type {@code Mysqlx.Crud.LimitExpr}
    */
-  public  static final class LimitExpr extends
+  public static final class LimitExpr extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.LimitExpr)
       LimitExprOrBuilder {
@@ -4294,6 +4325,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Expr.Expr row_count = 1;</code>
      * @return Whether the rowCount field is set.
      */
+    @java.lang.Override
     public boolean hasRowCount() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -4305,6 +4337,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Expr.Expr row_count = 1;</code>
      * @return The rowCount.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getRowCount() {
       return rowCount_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : rowCount_;
     }
@@ -4315,6 +4348,7 @@ public final class MysqlxCrud {
      *
      * <code>required .Mysqlx.Expr.Expr row_count = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getRowCountOrBuilder() {
       return rowCount_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : rowCount_;
     }
@@ -4329,6 +4363,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr offset = 2;</code>
      * @return Whether the offset field is set.
      */
+    @java.lang.Override
     public boolean hasOffset() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -4340,6 +4375,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr offset = 2;</code>
      * @return The offset.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getOffset() {
       return offset_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : offset_;
     }
@@ -4350,6 +4386,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Expr.Expr offset = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getOffsetOrBuilder() {
       return offset_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : offset_;
     }
@@ -4547,7 +4584,7 @@ public final class MysqlxCrud {
     /**
      * <pre>
      **
-     *LimitExpr in comparison to Limit, is able to specify that row_count and
+     *LimitExpr, in comparison to Limit, is able to specify that row_count and
      *offset are placeholders.
      *This message support expressions of following types Expr/literal/UINT,
      *Expr/PLACEHOLDER.
@@ -5146,7 +5183,7 @@ public final class MysqlxCrud {
    *
    * Protobuf type {@code Mysqlx.Crud.Order}
    */
-  public  static final class Order extends
+  public static final class Order extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.Order)
       OrderOrBuilder {
@@ -5350,6 +5387,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
      * @return Whether the expr field is set.
      */
+    @java.lang.Override
     public boolean hasExpr() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -5357,12 +5395,14 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
      * @return The expr.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getExpr() {
       return expr_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : expr_;
     }
     /**
      * <code>required .Mysqlx.Expr.Expr expr = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getExprOrBuilder() {
       return expr_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : expr_;
     }
@@ -5373,14 +5413,14 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Order.Direction direction = 2 [default = ASC];</code>
      * @return Whether the direction field is set.
      */
-    public boolean hasDirection() {
+    @java.lang.Override public boolean hasDirection() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <code>optional .Mysqlx.Crud.Order.Direction direction = 2 [default = ASC];</code>
      * @return The direction.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.Order.Direction getDirection() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.Order.Direction getDirection() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.Order.Direction result = com.mysql.cj.x.protobuf.MysqlxCrud.Order.Direction.valueOf(direction_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Order.Direction.ASC : result;
@@ -5877,13 +5917,14 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.Order.Direction direction = 2 [default = ASC];</code>
        * @return Whether the direction field is set.
        */
-      public boolean hasDirection() {
+      @java.lang.Override public boolean hasDirection() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <code>optional .Mysqlx.Crud.Order.Direction direction = 2 [default = ASC];</code>
        * @return The direction.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.Order.Direction getDirection() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.Order.Direction result = com.mysql.cj.x.protobuf.MysqlxCrud.Order.Direction.valueOf(direction_);
@@ -6058,7 +6099,7 @@ public final class MysqlxCrud {
   /**
    * Protobuf type {@code Mysqlx.Crud.UpdateOperation}
    */
-  public  static final class UpdateOperation extends
+  public static final class UpdateOperation extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.UpdateOperation)
       UpdateOperationOrBuilder {
@@ -6401,6 +6442,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Expr.ColumnIdentifier source = 1;</code>
      * @return Whether the source field is set.
      */
+    @java.lang.Override
     public boolean hasSource() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -6416,6 +6458,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Expr.ColumnIdentifier source = 1;</code>
      * @return The source.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier getSource() {
       return source_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier.getDefaultInstance() : source_;
     }
@@ -6430,6 +6473,7 @@ public final class MysqlxCrud {
      *
      * <code>required .Mysqlx.Expr.ColumnIdentifier source = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifierOrBuilder getSourceOrBuilder() {
       return source_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier.getDefaultInstance() : source_;
     }
@@ -6444,7 +6488,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.UpdateOperation.UpdateType operation = 2;</code>
      * @return Whether the operation field is set.
      */
-    public boolean hasOperation() {
+    @java.lang.Override public boolean hasOperation() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
@@ -6455,7 +6499,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.UpdateOperation.UpdateType operation = 2;</code>
      * @return The operation.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation.UpdateType getOperation() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation.UpdateType getOperation() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation.UpdateType result = com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation.UpdateType.valueOf(operation_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation.UpdateType.SET : result;
@@ -6471,6 +6515,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr value = 3;</code>
      * @return Whether the value field is set.
      */
+    @java.lang.Override
     public boolean hasValue() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -6482,6 +6527,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr value = 3;</code>
      * @return The value.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getValue() {
       return value_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : value_;
     }
@@ -6492,6 +6538,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Expr.Expr value = 3;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getValueOrBuilder() {
       return value_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : value_;
     }
@@ -7110,7 +7157,7 @@ public final class MysqlxCrud {
        * <code>required .Mysqlx.Crud.UpdateOperation.UpdateType operation = 2;</code>
        * @return Whether the operation field is set.
        */
-      public boolean hasOperation() {
+      @java.lang.Override public boolean hasOperation() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
@@ -7121,6 +7168,7 @@ public final class MysqlxCrud {
        * <code>required .Mysqlx.Crud.UpdateOperation.UpdateType operation = 2;</code>
        * @return The operation.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation.UpdateType getOperation() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation.UpdateType result = com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation.UpdateType.valueOf(operation_);
@@ -7758,7 +7806,7 @@ public final class MysqlxCrud {
    *
    * Protobuf type {@code Mysqlx.Crud.Find}
    */
-  public  static final class Find extends
+  public static final class Find extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.Find)
       FindOrBuilder {
@@ -8228,6 +8276,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
      * @return Whether the collection field is set.
      */
+    @java.lang.Override
     public boolean hasCollection() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -8239,6 +8288,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
      * @return The collection.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Collection getCollection() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -8249,6 +8299,7 @@ public final class MysqlxCrud {
      *
      * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -8263,7 +8314,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
      * @return Whether the dataModel field is set.
      */
-    public boolean hasDataModel() {
+    @java.lang.Override public boolean hasDataModel() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
@@ -8274,7 +8325,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
      * @return The dataModel.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.DataModel result = com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.valueOf(dataModel_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.DOCUMENT : result;
@@ -8289,6 +8340,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxCrud.Projection> getProjectionList() {
       return projection_;
     }
@@ -8299,6 +8351,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxCrud.ProjectionOrBuilder> 
         getProjectionOrBuilderList() {
       return projection_;
@@ -8310,6 +8363,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
      */
+    @java.lang.Override
     public int getProjectionCount() {
       return projection_.size();
     }
@@ -8320,6 +8374,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Projection getProjection(int index) {
       return projection_.get(index);
     }
@@ -8330,6 +8385,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Projection projection = 4;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.ProjectionOrBuilder getProjectionOrBuilder(
         int index) {
       return projection_.get(index);
@@ -8344,6 +8400,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
       return args_;
     }
@@ -8354,6 +8411,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getArgsOrBuilderList() {
       return args_;
@@ -8365,6 +8423,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
+    @java.lang.Override
     public int getArgsCount() {
       return args_.size();
     }
@@ -8375,6 +8434,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
       return args_.get(index);
     }
@@ -8385,6 +8445,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 11;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
         int index) {
       return args_.get(index);
@@ -8400,6 +8461,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
      * @return Whether the criteria field is set.
      */
+    @java.lang.Override
     public boolean hasCriteria() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -8411,6 +8473,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
      * @return The criteria.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getCriteria() {
       return criteria_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : criteria_;
     }
@@ -8421,6 +8484,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Expr.Expr criteria = 5;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder() {
       return criteria_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : criteria_;
     }
@@ -8436,6 +8500,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
      * @return Whether the limit field is set.
      */
+    @java.lang.Override
     public boolean hasLimit() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -8448,6 +8513,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
      * @return The limit.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Limit getLimit() {
       return limit_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Limit.getDefaultInstance() : limit_;
     }
@@ -8459,6 +8525,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Crud.Limit limit = 6;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder() {
       return limit_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Limit.getDefaultInstance() : limit_;
     }
@@ -8472,6 +8539,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxCrud.Order> getOrderList() {
       return order_;
     }
@@ -8482,6 +8550,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxCrud.OrderOrBuilder> 
         getOrderOrBuilderList() {
       return order_;
@@ -8493,6 +8562,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
      */
+    @java.lang.Override
     public int getOrderCount() {
       return order_.size();
     }
@@ -8503,6 +8573,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Order getOrder(int index) {
       return order_.get(index);
     }
@@ -8513,6 +8584,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 7;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
         int index) {
       return order_.get(index);
@@ -8527,6 +8599,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> getGroupingList() {
       return grouping_;
     }
@@ -8537,6 +8610,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
         getGroupingOrBuilderList() {
       return grouping_;
@@ -8548,6 +8622,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
      */
+    @java.lang.Override
     public int getGroupingCount() {
       return grouping_.size();
     }
@@ -8558,6 +8633,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getGrouping(int index) {
       return grouping_.get(index);
     }
@@ -8568,6 +8644,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Expr.Expr grouping = 8;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getGroupingOrBuilder(
         int index) {
       return grouping_.get(index);
@@ -8583,6 +8660,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
      * @return Whether the groupingCriteria field is set.
      */
+    @java.lang.Override
     public boolean hasGroupingCriteria() {
       return ((bitField0_ & 0x00000010) != 0);
     }
@@ -8594,6 +8672,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
      * @return The groupingCriteria.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getGroupingCriteria() {
       return groupingCriteria_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : groupingCriteria_;
     }
@@ -8604,6 +8683,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Expr.Expr grouping_criteria = 9;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getGroupingCriteriaOrBuilder() {
       return groupingCriteria_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : groupingCriteria_;
     }
@@ -8618,7 +8698,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Find.RowLock locking = 12;</code>
      * @return Whether the locking field is set.
      */
-    public boolean hasLocking() {
+    @java.lang.Override public boolean hasLocking() {
       return ((bitField0_ & 0x00000020) != 0);
     }
     /**
@@ -8629,7 +8709,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Find.RowLock locking = 12;</code>
      * @return The locking.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock getLocking() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock getLocking() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock result = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock.valueOf(locking_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock.SHARED_LOCK : result;
@@ -8645,7 +8725,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
      * @return Whether the lockingOptions field is set.
      */
-    public boolean hasLockingOptions() {
+    @java.lang.Override public boolean hasLockingOptions() {
       return ((bitField0_ & 0x00000040) != 0);
     }
     /**
@@ -8656,7 +8736,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
      * @return The lockingOptions.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions getLockingOptions() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions getLockingOptions() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions result = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions.valueOf(lockingOptions_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions.NOWAIT : result;
@@ -8673,6 +8753,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.LimitExpr limit_expr = 14;</code>
      * @return Whether the limitExpr field is set.
      */
+    @java.lang.Override
     public boolean hasLimitExpr() {
       return ((bitField0_ & 0x00000080) != 0);
     }
@@ -8685,6 +8766,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.LimitExpr limit_expr = 14;</code>
      * @return The limitExpr.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.LimitExpr getLimitExpr() {
       return limitExpr_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.LimitExpr.getDefaultInstance() : limitExpr_;
     }
@@ -8696,6 +8778,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Crud.LimitExpr limit_expr = 14;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.LimitExprOrBuilder getLimitExprOrBuilder() {
       return limitExpr_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.LimitExpr.getDefaultInstance() : limitExpr_;
     }
@@ -9728,7 +9811,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
        * @return Whether the dataModel field is set.
        */
-      public boolean hasDataModel() {
+      @java.lang.Override public boolean hasDataModel() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
@@ -9739,6 +9822,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
        * @return The dataModel.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.DataModel result = com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.valueOf(dataModel_);
@@ -11511,7 +11595,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.Find.RowLock locking = 12;</code>
        * @return Whether the locking field is set.
        */
-      public boolean hasLocking() {
+      @java.lang.Override public boolean hasLocking() {
         return ((bitField0_ & 0x00000200) != 0);
       }
       /**
@@ -11522,6 +11606,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.Find.RowLock locking = 12;</code>
        * @return The locking.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock getLocking() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock result = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLock.valueOf(locking_);
@@ -11569,7 +11654,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
        * @return Whether the lockingOptions field is set.
        */
-      public boolean hasLockingOptions() {
+      @java.lang.Override public boolean hasLockingOptions() {
         return ((bitField0_ & 0x00000400) != 0);
       }
       /**
@@ -11580,6 +11665,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.Find.RowLockOptions locking_options = 13;</code>
        * @return The lockingOptions.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions getLockingOptions() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions result = com.mysql.cj.x.protobuf.MysqlxCrud.Find.RowLockOptions.valueOf(lockingOptions_);
@@ -12057,7 +12143,7 @@ public final class MysqlxCrud {
    *
    * Protobuf type {@code Mysqlx.Crud.Insert}
    */
-  public  static final class Insert extends
+  public static final class Insert extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.Insert)
       InsertOrBuilder {
@@ -12237,7 +12323,7 @@ public final class MysqlxCrud {
      *
      * Protobuf type {@code Mysqlx.Crud.Insert.TypedRow}
      */
-    public  static final class TypedRow extends
+    public static final class TypedRow extends
         com.google.protobuf.GeneratedMessageV3 implements
         // @@protoc_insertion_point(message_implements:Mysqlx.Crud.Insert.TypedRow)
         TypedRowOrBuilder {
@@ -12330,12 +12416,14 @@ public final class MysqlxCrud {
       /**
        * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
+      @java.lang.Override
       public java.util.List<com.mysql.cj.x.protobuf.MysqlxExpr.Expr> getFieldList() {
         return field_;
       }
       /**
        * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
+      @java.lang.Override
       public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder> 
           getFieldOrBuilderList() {
         return field_;
@@ -12343,18 +12431,21 @@ public final class MysqlxCrud {
       /**
        * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
+      @java.lang.Override
       public int getFieldCount() {
         return field_.size();
       }
       /**
        * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getField(int index) {
         return field_.get(index);
       }
       /**
        * <code>repeated .Mysqlx.Expr.Expr field = 1;</code>
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getFieldOrBuilder(
           int index) {
         return field_.get(index);
@@ -13020,6 +13111,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      * @return Whether the collection field is set.
      */
+    @java.lang.Override
     public boolean hasCollection() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -13031,6 +13123,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      * @return The collection.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Collection getCollection() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -13041,6 +13134,7 @@ public final class MysqlxCrud {
      *
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -13055,7 +13149,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.DataModel data_model = 2;</code>
      * @return Whether the dataModel field is set.
      */
-    public boolean hasDataModel() {
+    @java.lang.Override public boolean hasDataModel() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
@@ -13066,7 +13160,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.DataModel data_model = 2;</code>
      * @return The dataModel.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.DataModel result = com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.valueOf(dataModel_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.DOCUMENT : result;
@@ -13082,6 +13176,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Column projection = 3;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxCrud.Column> getProjectionList() {
       return projection_;
     }
@@ -13093,6 +13188,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Column projection = 3;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxCrud.ColumnOrBuilder> 
         getProjectionOrBuilderList() {
       return projection_;
@@ -13105,6 +13201,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Column projection = 3;</code>
      */
+    @java.lang.Override
     public int getProjectionCount() {
       return projection_.size();
     }
@@ -13116,6 +13213,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Column projection = 3;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Column getProjection(int index) {
       return projection_.get(index);
     }
@@ -13127,6 +13225,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Column projection = 3;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.ColumnOrBuilder getProjectionOrBuilder(
         int index) {
       return projection_.get(index);
@@ -13142,6 +13241,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Insert.TypedRow row = 4;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxCrud.Insert.TypedRow> getRowList() {
       return row_;
     }
@@ -13153,6 +13253,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Insert.TypedRow row = 4;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxCrud.Insert.TypedRowOrBuilder> 
         getRowOrBuilderList() {
       return row_;
@@ -13165,6 +13266,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Insert.TypedRow row = 4;</code>
      */
+    @java.lang.Override
     public int getRowCount() {
       return row_.size();
     }
@@ -13176,6 +13278,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Insert.TypedRow row = 4;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Insert.TypedRow getRow(int index) {
       return row_.get(index);
     }
@@ -13187,6 +13290,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Insert.TypedRow row = 4;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Insert.TypedRowOrBuilder getRowOrBuilder(
         int index) {
       return row_.get(index);
@@ -13201,6 +13305,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
       return args_;
     }
@@ -13211,6 +13316,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getArgsOrBuilderList() {
       return args_;
@@ -13222,6 +13328,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
      */
+    @java.lang.Override
     public int getArgsCount() {
       return args_.size();
     }
@@ -13232,6 +13339,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
       return args_.get(index);
     }
@@ -13242,6 +13350,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 5;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
         int index) {
       return args_.get(index);
@@ -13258,6 +13367,7 @@ public final class MysqlxCrud {
      * <code>optional bool upsert = 6 [default = false];</code>
      * @return Whether the upsert field is set.
      */
+    @java.lang.Override
     public boolean hasUpsert() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -13270,6 +13380,7 @@ public final class MysqlxCrud {
      * <code>optional bool upsert = 6 [default = false];</code>
      * @return The upsert.
      */
+    @java.lang.Override
     public boolean getUpsert() {
       return upsert_;
     }
@@ -14030,7 +14141,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.DataModel data_model = 2;</code>
        * @return Whether the dataModel field is set.
        */
-      public boolean hasDataModel() {
+      @java.lang.Override public boolean hasDataModel() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
@@ -14041,6 +14152,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.DataModel data_model = 2;</code>
        * @return The dataModel.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.DataModel result = com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.valueOf(dataModel_);
@@ -15061,6 +15173,7 @@ public final class MysqlxCrud {
        * <code>optional bool upsert = 6 [default = false];</code>
        * @return Whether the upsert field is set.
        */
+      @java.lang.Override
       public boolean hasUpsert() {
         return ((bitField0_ & 0x00000020) != 0);
       }
@@ -15073,6 +15186,7 @@ public final class MysqlxCrud {
        * <code>optional bool upsert = 6 [default = false];</code>
        * @return The upsert.
        */
+      @java.lang.Override
       public boolean getUpsert() {
         return upsert_;
       }
@@ -15443,7 +15557,7 @@ public final class MysqlxCrud {
    *
    * Protobuf type {@code Mysqlx.Crud.Update}
    */
-  public  static final class Update extends
+  public static final class Update extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.Update)
       UpdateOrBuilder {
@@ -15633,6 +15747,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
      * @return Whether the collection field is set.
      */
+    @java.lang.Override
     public boolean hasCollection() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -15644,6 +15759,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
      * @return The collection.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Collection getCollection() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -15654,6 +15770,7 @@ public final class MysqlxCrud {
      *
      * <code>required .Mysqlx.Crud.Collection collection = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -15668,7 +15785,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
      * @return Whether the dataModel field is set.
      */
-    public boolean hasDataModel() {
+    @java.lang.Override public boolean hasDataModel() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
@@ -15679,7 +15796,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
      * @return The dataModel.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.DataModel result = com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.valueOf(dataModel_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.DOCUMENT : result;
@@ -15695,6 +15812,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
      * @return Whether the criteria field is set.
      */
+    @java.lang.Override
     public boolean hasCriteria() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -15706,6 +15824,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
      * @return The criteria.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getCriteria() {
       return criteria_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : criteria_;
     }
@@ -15716,6 +15835,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Expr.Expr criteria = 4;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder() {
       return criteria_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : criteria_;
     }
@@ -15731,6 +15851,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
      * @return Whether the limit field is set.
      */
+    @java.lang.Override
     public boolean hasLimit() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -15743,6 +15864,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
      * @return The limit.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Limit getLimit() {
       return limit_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Limit.getDefaultInstance() : limit_;
     }
@@ -15754,6 +15876,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Crud.Limit limit = 5;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder() {
       return limit_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Limit.getDefaultInstance() : limit_;
     }
@@ -15767,6 +15890,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxCrud.Order> getOrderList() {
       return order_;
     }
@@ -15777,6 +15901,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxCrud.OrderOrBuilder> 
         getOrderOrBuilderList() {
       return order_;
@@ -15788,6 +15913,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
      */
+    @java.lang.Override
     public int getOrderCount() {
       return order_.size();
     }
@@ -15798,6 +15924,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Order getOrder(int index) {
       return order_.get(index);
     }
@@ -15808,6 +15935,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 6;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
         int index) {
       return order_.get(index);
@@ -15823,6 +15951,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation> getOperationList() {
       return operation_;
     }
@@ -15834,6 +15963,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperationOrBuilder> 
         getOperationOrBuilderList() {
       return operation_;
@@ -15846,6 +15976,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
      */
+    @java.lang.Override
     public int getOperationCount() {
       return operation_.size();
     }
@@ -15857,6 +15988,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation getOperation(int index) {
       return operation_.get(index);
     }
@@ -15868,6 +16000,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.UpdateOperation operation = 7;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperationOrBuilder getOperationOrBuilder(
         int index) {
       return operation_.get(index);
@@ -15882,6 +16015,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
       return args_;
     }
@@ -15892,6 +16026,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getArgsOrBuilderList() {
       return args_;
@@ -15903,6 +16038,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
+    @java.lang.Override
     public int getArgsCount() {
       return args_.size();
     }
@@ -15913,6 +16049,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
       return args_.get(index);
     }
@@ -15923,6 +16060,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 8;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
         int index) {
       return args_.get(index);
@@ -15939,6 +16077,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.LimitExpr limit_expr = 9;</code>
      * @return Whether the limitExpr field is set.
      */
+    @java.lang.Override
     public boolean hasLimitExpr() {
       return ((bitField0_ & 0x00000010) != 0);
     }
@@ -15951,6 +16090,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.LimitExpr limit_expr = 9;</code>
      * @return The limitExpr.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.LimitExpr getLimitExpr() {
       return limitExpr_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.LimitExpr.getDefaultInstance() : limitExpr_;
     }
@@ -15962,6 +16102,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Crud.LimitExpr limit_expr = 9;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.LimitExprOrBuilder getLimitExprOrBuilder() {
       return limitExpr_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.LimitExpr.getDefaultInstance() : limitExpr_;
     }
@@ -16831,7 +16972,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
        * @return Whether the dataModel field is set.
        */
-      public boolean hasDataModel() {
+      @java.lang.Override public boolean hasDataModel() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
@@ -16842,6 +16983,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.DataModel data_model = 3;</code>
        * @return The dataModel.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.DataModel result = com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.valueOf(dataModel_);
@@ -18606,7 +18748,7 @@ public final class MysqlxCrud {
    *
    * Protobuf type {@code Mysqlx.Crud.Delete}
    */
-  public  static final class Delete extends
+  public static final class Delete extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.Delete)
       DeleteOrBuilder {
@@ -18783,6 +18925,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      * @return Whether the collection field is set.
      */
+    @java.lang.Override
     public boolean hasCollection() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -18794,6 +18937,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      * @return The collection.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Collection getCollection() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -18804,6 +18948,7 @@ public final class MysqlxCrud {
      *
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -18818,7 +18963,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.DataModel data_model = 2;</code>
      * @return Whether the dataModel field is set.
      */
-    public boolean hasDataModel() {
+    @java.lang.Override public boolean hasDataModel() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
@@ -18829,7 +18974,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.DataModel data_model = 2;</code>
      * @return The dataModel.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.DataModel result = com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.valueOf(dataModel_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.DOCUMENT : result;
@@ -18845,6 +18990,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr criteria = 3;</code>
      * @return Whether the criteria field is set.
      */
+    @java.lang.Override
     public boolean hasCriteria() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -18856,6 +19002,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Expr.Expr criteria = 3;</code>
      * @return The criteria.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.Expr getCriteria() {
       return criteria_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : criteria_;
     }
@@ -18866,6 +19013,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Expr.Expr criteria = 3;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxExpr.ExprOrBuilder getCriteriaOrBuilder() {
       return criteria_ == null ? com.mysql.cj.x.protobuf.MysqlxExpr.Expr.getDefaultInstance() : criteria_;
     }
@@ -18881,6 +19029,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Limit limit = 4;</code>
      * @return Whether the limit field is set.
      */
+    @java.lang.Override
     public boolean hasLimit() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -18893,6 +19042,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Limit limit = 4;</code>
      * @return The limit.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Limit getLimit() {
       return limit_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Limit.getDefaultInstance() : limit_;
     }
@@ -18904,6 +19054,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Crud.Limit limit = 4;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.LimitOrBuilder getLimitOrBuilder() {
       return limit_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Limit.getDefaultInstance() : limit_;
     }
@@ -18917,6 +19068,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 5;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxCrud.Order> getOrderList() {
       return order_;
     }
@@ -18927,6 +19079,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 5;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxCrud.OrderOrBuilder> 
         getOrderOrBuilderList() {
       return order_;
@@ -18938,6 +19091,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 5;</code>
      */
+    @java.lang.Override
     public int getOrderCount() {
       return order_.size();
     }
@@ -18948,6 +19102,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 5;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Order getOrder(int index) {
       return order_.get(index);
     }
@@ -18958,6 +19113,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Crud.Order order = 5;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.OrderOrBuilder getOrderOrBuilder(
         int index) {
       return order_.get(index);
@@ -18972,6 +19128,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar> getArgsList() {
       return args_;
     }
@@ -18982,6 +19139,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder> 
         getArgsOrBuilderList() {
       return args_;
@@ -18993,6 +19151,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
+    @java.lang.Override
     public int getArgsCount() {
       return args_.size();
     }
@@ -19003,6 +19162,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Scalar getArgs(int index) {
       return args_.get(index);
     }
@@ -19013,6 +19173,7 @@ public final class MysqlxCrud {
      *
      * <code>repeated .Mysqlx.Datatypes.Scalar args = 6;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.ScalarOrBuilder getArgsOrBuilder(
         int index) {
       return args_.get(index);
@@ -19029,6 +19190,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.LimitExpr limit_expr = 7;</code>
      * @return Whether the limitExpr field is set.
      */
+    @java.lang.Override
     public boolean hasLimitExpr() {
       return ((bitField0_ & 0x00000010) != 0);
     }
@@ -19041,6 +19203,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.LimitExpr limit_expr = 7;</code>
      * @return The limitExpr.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.LimitExpr getLimitExpr() {
       return limitExpr_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.LimitExpr.getDefaultInstance() : limitExpr_;
     }
@@ -19052,6 +19215,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Crud.LimitExpr limit_expr = 7;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.LimitExprOrBuilder getLimitExprOrBuilder() {
       return limitExpr_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.LimitExpr.getDefaultInstance() : limitExpr_;
     }
@@ -19855,7 +20019,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.DataModel data_model = 2;</code>
        * @return Whether the dataModel field is set.
        */
-      public boolean hasDataModel() {
+      @java.lang.Override public boolean hasDataModel() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
@@ -19866,6 +20030,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.DataModel data_model = 2;</code>
        * @return The dataModel.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.DataModel getDataModel() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.DataModel result = com.mysql.cj.x.protobuf.MysqlxCrud.DataModel.valueOf(dataModel_);
@@ -21286,7 +21451,7 @@ public final class MysqlxCrud {
    *
    * Protobuf type {@code Mysqlx.Crud.CreateView}
    */
-  public  static final class CreateView extends
+  public static final class CreateView extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.CreateView)
       CreateViewOrBuilder {
@@ -21462,6 +21627,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      * @return Whether the collection field is set.
      */
+    @java.lang.Override
     public boolean hasCollection() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -21473,6 +21639,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      * @return The collection.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Collection getCollection() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -21483,6 +21650,7 @@ public final class MysqlxCrud {
      *
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -21498,6 +21666,7 @@ public final class MysqlxCrud {
      * <code>optional string definer = 2;</code>
      * @return Whether the definer field is set.
      */
+    @java.lang.Override
     public boolean hasDefiner() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -21510,6 +21679,7 @@ public final class MysqlxCrud {
      * <code>optional string definer = 2;</code>
      * @return The definer.
      */
+    @java.lang.Override
     public java.lang.String getDefiner() {
       java.lang.Object ref = definer_;
       if (ref instanceof java.lang.String) {
@@ -21533,6 +21703,7 @@ public final class MysqlxCrud {
      * <code>optional string definer = 2;</code>
      * @return The bytes for definer.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getDefinerBytes() {
       java.lang.Object ref = definer_;
@@ -21557,7 +21728,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewAlgorithm algorithm = 3 [default = UNDEFINED];</code>
      * @return Whether the algorithm field is set.
      */
-    public boolean hasAlgorithm() {
+    @java.lang.Override public boolean hasAlgorithm() {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
@@ -21568,7 +21739,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewAlgorithm algorithm = 3 [default = UNDEFINED];</code>
      * @return The algorithm.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm getAlgorithm() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm getAlgorithm() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.valueOf(algorithm_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.UNDEFINED : result;
@@ -21584,7 +21755,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewSqlSecurity security = 4 [default = DEFINER];</code>
      * @return Whether the security field is set.
      */
-    public boolean hasSecurity() {
+    @java.lang.Override public boolean hasSecurity() {
       return ((bitField0_ & 0x00000008) != 0);
     }
     /**
@@ -21595,7 +21766,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewSqlSecurity security = 4 [default = DEFINER];</code>
      * @return The security.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity getSecurity() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity getSecurity() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity.valueOf(security_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity.DEFINER : result;
@@ -21611,7 +21782,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewCheckOption check = 5;</code>
      * @return Whether the check field is set.
      */
-    public boolean hasCheck() {
+    @java.lang.Override public boolean hasCheck() {
       return ((bitField0_ & 0x00000010) != 0);
     }
     /**
@@ -21622,7 +21793,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewCheckOption check = 5;</code>
      * @return The check.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption getCheck() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption getCheck() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption.valueOf(check_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption.LOCAL : result;
@@ -21690,6 +21861,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Find stmt = 7;</code>
      * @return Whether the stmt field is set.
      */
+    @java.lang.Override
     public boolean hasStmt() {
       return ((bitField0_ & 0x00000020) != 0);
     }
@@ -21702,6 +21874,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Find stmt = 7;</code>
      * @return The stmt.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Find getStmt() {
       return stmt_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Find.getDefaultInstance() : stmt_;
     }
@@ -21713,6 +21886,7 @@ public final class MysqlxCrud {
      *
      * <code>required .Mysqlx.Crud.Find stmt = 7;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.FindOrBuilder getStmtOrBuilder() {
       return stmt_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Find.getDefaultInstance() : stmt_;
     }
@@ -21728,6 +21902,7 @@ public final class MysqlxCrud {
      * <code>optional bool replace_existing = 8 [default = false];</code>
      * @return Whether the replaceExisting field is set.
      */
+    @java.lang.Override
     public boolean hasReplaceExisting() {
       return ((bitField0_ & 0x00000040) != 0);
     }
@@ -21740,6 +21915,7 @@ public final class MysqlxCrud {
      * <code>optional bool replace_existing = 8 [default = false];</code>
      * @return The replaceExisting.
      */
+    @java.lang.Override
     public boolean getReplaceExisting() {
       return replaceExisting_;
     }
@@ -22571,7 +22747,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewAlgorithm algorithm = 3 [default = UNDEFINED];</code>
        * @return Whether the algorithm field is set.
        */
-      public boolean hasAlgorithm() {
+      @java.lang.Override public boolean hasAlgorithm() {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
@@ -22582,6 +22758,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewAlgorithm algorithm = 3 [default = UNDEFINED];</code>
        * @return The algorithm.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm getAlgorithm() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.valueOf(algorithm_);
@@ -22629,7 +22806,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewSqlSecurity security = 4 [default = DEFINER];</code>
        * @return Whether the security field is set.
        */
-      public boolean hasSecurity() {
+      @java.lang.Override public boolean hasSecurity() {
         return ((bitField0_ & 0x00000008) != 0);
       }
       /**
@@ -22640,6 +22817,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewSqlSecurity security = 4 [default = DEFINER];</code>
        * @return The security.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity getSecurity() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity.valueOf(security_);
@@ -22687,7 +22865,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewCheckOption check = 5;</code>
        * @return Whether the check field is set.
        */
-      public boolean hasCheck() {
+      @java.lang.Override public boolean hasCheck() {
         return ((bitField0_ & 0x00000010) != 0);
       }
       /**
@@ -22698,6 +22876,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewCheckOption check = 5;</code>
        * @return The check.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption getCheck() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption.valueOf(check_);
@@ -23056,6 +23235,7 @@ public final class MysqlxCrud {
        * <code>optional bool replace_existing = 8 [default = false];</code>
        * @return Whether the replaceExisting field is set.
        */
+      @java.lang.Override
       public boolean hasReplaceExisting() {
         return ((bitField0_ & 0x00000080) != 0);
       }
@@ -23068,6 +23248,7 @@ public final class MysqlxCrud {
        * <code>optional bool replace_existing = 8 [default = false];</code>
        * @return The replaceExisting.
        */
+      @java.lang.Override
       public boolean getReplaceExisting() {
         return replaceExisting_;
       }
@@ -23355,7 +23536,7 @@ public final class MysqlxCrud {
    *
    * Protobuf type {@code Mysqlx.Crud.ModifyView}
    */
-  public  static final class ModifyView extends
+  public static final class ModifyView extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.ModifyView)
       ModifyViewOrBuilder {
@@ -23526,6 +23707,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      * @return Whether the collection field is set.
      */
+    @java.lang.Override
     public boolean hasCollection() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -23537,6 +23719,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      * @return The collection.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Collection getCollection() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -23547,6 +23730,7 @@ public final class MysqlxCrud {
      *
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -23562,6 +23746,7 @@ public final class MysqlxCrud {
      * <code>optional string definer = 2;</code>
      * @return Whether the definer field is set.
      */
+    @java.lang.Override
     public boolean hasDefiner() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -23574,6 +23759,7 @@ public final class MysqlxCrud {
      * <code>optional string definer = 2;</code>
      * @return The definer.
      */
+    @java.lang.Override
     public java.lang.String getDefiner() {
       java.lang.Object ref = definer_;
       if (ref instanceof java.lang.String) {
@@ -23597,6 +23783,7 @@ public final class MysqlxCrud {
      * <code>optional string definer = 2;</code>
      * @return The bytes for definer.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getDefinerBytes() {
       java.lang.Object ref = definer_;
@@ -23621,7 +23808,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewAlgorithm algorithm = 3;</code>
      * @return Whether the algorithm field is set.
      */
-    public boolean hasAlgorithm() {
+    @java.lang.Override public boolean hasAlgorithm() {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
@@ -23632,7 +23819,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewAlgorithm algorithm = 3;</code>
      * @return The algorithm.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm getAlgorithm() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm getAlgorithm() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.valueOf(algorithm_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.UNDEFINED : result;
@@ -23648,7 +23835,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewSqlSecurity security = 4;</code>
      * @return Whether the security field is set.
      */
-    public boolean hasSecurity() {
+    @java.lang.Override public boolean hasSecurity() {
       return ((bitField0_ & 0x00000008) != 0);
     }
     /**
@@ -23659,7 +23846,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewSqlSecurity security = 4;</code>
      * @return The security.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity getSecurity() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity getSecurity() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity.valueOf(security_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity.INVOKER : result;
@@ -23675,7 +23862,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewCheckOption check = 5;</code>
      * @return Whether the check field is set.
      */
-    public boolean hasCheck() {
+    @java.lang.Override public boolean hasCheck() {
       return ((bitField0_ & 0x00000010) != 0);
     }
     /**
@@ -23686,7 +23873,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.ViewCheckOption check = 5;</code>
      * @return The check.
      */
-    public com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption getCheck() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption getCheck() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption.valueOf(check_);
       return result == null ? com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption.LOCAL : result;
@@ -23754,6 +23941,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Find stmt = 7;</code>
      * @return Whether the stmt field is set.
      */
+    @java.lang.Override
     public boolean hasStmt() {
       return ((bitField0_ & 0x00000020) != 0);
     }
@@ -23766,6 +23954,7 @@ public final class MysqlxCrud {
      * <code>optional .Mysqlx.Crud.Find stmt = 7;</code>
      * @return The stmt.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Find getStmt() {
       return stmt_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Find.getDefaultInstance() : stmt_;
     }
@@ -23777,6 +23966,7 @@ public final class MysqlxCrud {
      *
      * <code>optional .Mysqlx.Crud.Find stmt = 7;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.FindOrBuilder getStmtOrBuilder() {
       return stmt_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Find.getDefaultInstance() : stmt_;
     }
@@ -24580,7 +24770,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewAlgorithm algorithm = 3;</code>
        * @return Whether the algorithm field is set.
        */
-      public boolean hasAlgorithm() {
+      @java.lang.Override public boolean hasAlgorithm() {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
@@ -24591,6 +24781,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewAlgorithm algorithm = 3;</code>
        * @return The algorithm.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm getAlgorithm() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewAlgorithm.valueOf(algorithm_);
@@ -24638,7 +24829,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewSqlSecurity security = 4;</code>
        * @return Whether the security field is set.
        */
-      public boolean hasSecurity() {
+      @java.lang.Override public boolean hasSecurity() {
         return ((bitField0_ & 0x00000008) != 0);
       }
       /**
@@ -24649,6 +24840,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewSqlSecurity security = 4;</code>
        * @return The security.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity getSecurity() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewSqlSecurity.valueOf(security_);
@@ -24696,7 +24888,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewCheckOption check = 5;</code>
        * @return Whether the check field is set.
        */
-      public boolean hasCheck() {
+      @java.lang.Override public boolean hasCheck() {
         return ((bitField0_ & 0x00000010) != 0);
       }
       /**
@@ -24707,6 +24899,7 @@ public final class MysqlxCrud {
        * <code>optional .Mysqlx.Crud.ViewCheckOption check = 5;</code>
        * @return The check.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption getCheck() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption result = com.mysql.cj.x.protobuf.MysqlxCrud.ViewCheckOption.valueOf(check_);
@@ -25165,7 +25358,7 @@ public final class MysqlxCrud {
    *
    * Protobuf type {@code Mysqlx.Crud.DropView}
    */
-  public  static final class DropView extends
+  public static final class DropView extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Crud.DropView)
       DropViewOrBuilder {
@@ -25269,6 +25462,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      * @return Whether the collection field is set.
      */
+    @java.lang.Override
     public boolean hasCollection() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -25280,6 +25474,7 @@ public final class MysqlxCrud {
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      * @return The collection.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.Collection getCollection() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -25290,6 +25485,7 @@ public final class MysqlxCrud {
      *
      * <code>required .Mysqlx.Crud.Collection collection = 1;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxCrud.CollectionOrBuilder getCollectionOrBuilder() {
       return collection_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Collection.getDefaultInstance() : collection_;
     }
@@ -25304,6 +25500,7 @@ public final class MysqlxCrud {
      * <code>optional bool if_exists = 2 [default = false];</code>
      * @return Whether the ifExists field is set.
      */
+    @java.lang.Override
     public boolean hasIfExists() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -25315,6 +25512,7 @@ public final class MysqlxCrud {
      * <code>optional bool if_exists = 2 [default = false];</code>
      * @return The ifExists.
      */
+    @java.lang.Override
     public boolean getIfExists() {
       return ifExists_;
     }
@@ -25852,6 +26050,7 @@ public final class MysqlxCrud {
        * <code>optional bool if_exists = 2 [default = false];</code>
        * @return Whether the ifExists field is set.
        */
+      @java.lang.Override
       public boolean hasIfExists() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -25863,6 +26062,7 @@ public final class MysqlxCrud {
        * <code>optional bool if_exists = 2 [default = false];</code>
        * @return The ifExists.
        */
+      @java.lang.Override
       public boolean getIfExists() {
         return ifExists_;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -50,7 +50,7 @@ public final class MysqlxPrepare {
 
     /**
      * <pre>
-     ** client side assigned statement id, which is going to identify
+     ** client-side assigned statement ID, which is going to identify
      *the result of preparation 
      * </pre>
      *
@@ -60,7 +60,7 @@ public final class MysqlxPrepare {
     boolean hasStmtId();
     /**
      * <pre>
-     ** client side assigned statement id, which is going to identify
+     ** client-side assigned statement ID, which is going to identify
      *the result of preparation 
      * </pre>
      *
@@ -116,7 +116,7 @@ public final class MysqlxPrepare {
    *
    * Protobuf type {@code Mysqlx.Prepare.Prepare}
    */
-  public  static final class Prepare extends
+  public static final class Prepare extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Prepare.Prepare)
       PrepareOrBuilder {
@@ -302,7 +302,7 @@ public final class MysqlxPrepare {
     /**
      * Protobuf type {@code Mysqlx.Prepare.Prepare.OneOfMessage}
      */
-    public  static final class OneOfMessage extends
+    public static final class OneOfMessage extends
         com.google.protobuf.GeneratedMessageV3 implements
         // @@protoc_insertion_point(message_implements:Mysqlx.Prepare.Prepare.OneOfMessage)
         OneOfMessageOrBuilder {
@@ -590,14 +590,14 @@ public final class MysqlxPrepare {
        * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage.Type type = 1;</code>
        * @return Whether the type field is set.
        */
-      public boolean hasType() {
+      @java.lang.Override public boolean hasType() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage.Type type = 1;</code>
        * @return The type.
        */
-      public com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.Type getType() {
+      @java.lang.Override public com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.Type getType() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.Type result = com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.Type.valueOf(type_);
         return result == null ? com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.Type.FIND : result;
@@ -609,6 +609,7 @@ public final class MysqlxPrepare {
        * <code>optional .Mysqlx.Crud.Find find = 2;</code>
        * @return Whether the find field is set.
        */
+      @java.lang.Override
       public boolean hasFind() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -616,12 +617,14 @@ public final class MysqlxPrepare {
        * <code>optional .Mysqlx.Crud.Find find = 2;</code>
        * @return The find.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.Find getFind() {
         return find_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Find.getDefaultInstance() : find_;
       }
       /**
        * <code>optional .Mysqlx.Crud.Find find = 2;</code>
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.FindOrBuilder getFindOrBuilder() {
         return find_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Find.getDefaultInstance() : find_;
       }
@@ -632,6 +635,7 @@ public final class MysqlxPrepare {
        * <code>optional .Mysqlx.Crud.Insert insert = 3;</code>
        * @return Whether the insert field is set.
        */
+      @java.lang.Override
       public boolean hasInsert() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -639,12 +643,14 @@ public final class MysqlxPrepare {
        * <code>optional .Mysqlx.Crud.Insert insert = 3;</code>
        * @return The insert.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.Insert getInsert() {
         return insert_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Insert.getDefaultInstance() : insert_;
       }
       /**
        * <code>optional .Mysqlx.Crud.Insert insert = 3;</code>
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.InsertOrBuilder getInsertOrBuilder() {
         return insert_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Insert.getDefaultInstance() : insert_;
       }
@@ -655,6 +661,7 @@ public final class MysqlxPrepare {
        * <code>optional .Mysqlx.Crud.Update update = 4;</code>
        * @return Whether the update field is set.
        */
+      @java.lang.Override
       public boolean hasUpdate() {
         return ((bitField0_ & 0x00000008) != 0);
       }
@@ -662,12 +669,14 @@ public final class MysqlxPrepare {
        * <code>optional .Mysqlx.Crud.Update update = 4;</code>
        * @return The update.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.Update getUpdate() {
         return update_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Update.getDefaultInstance() : update_;
       }
       /**
        * <code>optional .Mysqlx.Crud.Update update = 4;</code>
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOrBuilder getUpdateOrBuilder() {
         return update_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Update.getDefaultInstance() : update_;
       }
@@ -678,6 +687,7 @@ public final class MysqlxPrepare {
        * <code>optional .Mysqlx.Crud.Delete delete = 5;</code>
        * @return Whether the delete field is set.
        */
+      @java.lang.Override
       public boolean hasDelete() {
         return ((bitField0_ & 0x00000010) != 0);
       }
@@ -685,12 +695,14 @@ public final class MysqlxPrepare {
        * <code>optional .Mysqlx.Crud.Delete delete = 5;</code>
        * @return The delete.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.Delete getDelete() {
         return delete_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Delete.getDefaultInstance() : delete_;
       }
       /**
        * <code>optional .Mysqlx.Crud.Delete delete = 5;</code>
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxCrud.DeleteOrBuilder getDeleteOrBuilder() {
         return delete_ == null ? com.mysql.cj.x.protobuf.MysqlxCrud.Delete.getDefaultInstance() : delete_;
       }
@@ -701,6 +713,7 @@ public final class MysqlxPrepare {
        * <code>optional .Mysqlx.Sql.StmtExecute stmt_execute = 6;</code>
        * @return Whether the stmtExecute field is set.
        */
+      @java.lang.Override
       public boolean hasStmtExecute() {
         return ((bitField0_ & 0x00000020) != 0);
       }
@@ -708,12 +721,14 @@ public final class MysqlxPrepare {
        * <code>optional .Mysqlx.Sql.StmtExecute stmt_execute = 6;</code>
        * @return The stmtExecute.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxSql.StmtExecute getStmtExecute() {
         return stmtExecute_ == null ? com.mysql.cj.x.protobuf.MysqlxSql.StmtExecute.getDefaultInstance() : stmtExecute_;
       }
       /**
        * <code>optional .Mysqlx.Sql.StmtExecute stmt_execute = 6;</code>
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.MysqlxSql.StmtExecuteOrBuilder getStmtExecuteOrBuilder() {
         return stmtExecute_ == null ? com.mysql.cj.x.protobuf.MysqlxSql.StmtExecute.getDefaultInstance() : stmtExecute_;
       }
@@ -1268,13 +1283,14 @@ public final class MysqlxPrepare {
          * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage.Type type = 1;</code>
          * @return Whether the type field is set.
          */
-        public boolean hasType() {
+        @java.lang.Override public boolean hasType() {
           return ((bitField0_ & 0x00000001) != 0);
         }
         /**
          * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage.Type type = 1;</code>
          * @return The type.
          */
+        @java.lang.Override
         public com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.Type getType() {
           @SuppressWarnings("deprecation")
           com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.Type result = com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.Type.valueOf(type_);
@@ -1962,25 +1978,27 @@ public final class MysqlxPrepare {
     private int stmtId_;
     /**
      * <pre>
-     ** client side assigned statement id, which is going to identify
+     ** client-side assigned statement ID, which is going to identify
      *the result of preparation 
      * </pre>
      *
      * <code>required uint32 stmt_id = 1;</code>
      * @return Whether the stmtId field is set.
      */
+    @java.lang.Override
     public boolean hasStmtId() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <pre>
-     ** client side assigned statement id, which is going to identify
+     ** client-side assigned statement ID, which is going to identify
      *the result of preparation 
      * </pre>
      *
      * <code>required uint32 stmt_id = 1;</code>
      * @return The stmtId.
      */
+    @java.lang.Override
     public int getStmtId() {
       return stmtId_;
     }
@@ -1996,6 +2014,7 @@ public final class MysqlxPrepare {
      * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
      * @return Whether the stmt field is set.
      */
+    @java.lang.Override
     public boolean hasStmt() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -2008,6 +2027,7 @@ public final class MysqlxPrepare {
      * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
      * @return The stmt.
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage getStmt() {
       return stmt_ == null ? com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.getDefaultInstance() : stmt_;
     }
@@ -2019,6 +2039,7 @@ public final class MysqlxPrepare {
      *
      * <code>required .Mysqlx.Prepare.Prepare.OneOfMessage stmt = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessageOrBuilder getStmtOrBuilder() {
       return stmt_ == null ? com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare.OneOfMessage.getDefaultInstance() : stmt_;
     }
@@ -2409,31 +2430,33 @@ public final class MysqlxPrepare {
       private int stmtId_ ;
       /**
        * <pre>
-       ** client side assigned statement id, which is going to identify
+       ** client-side assigned statement ID, which is going to identify
        *the result of preparation 
        * </pre>
        *
        * <code>required uint32 stmt_id = 1;</code>
        * @return Whether the stmtId field is set.
        */
+      @java.lang.Override
       public boolean hasStmtId() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <pre>
-       ** client side assigned statement id, which is going to identify
+       ** client-side assigned statement ID, which is going to identify
        *the result of preparation 
        * </pre>
        *
        * <code>required uint32 stmt_id = 1;</code>
        * @return The stmtId.
        */
+      @java.lang.Override
       public int getStmtId() {
         return stmtId_;
       }
       /**
        * <pre>
-       ** client side assigned statement id, which is going to identify
+       ** client-side assigned statement ID, which is going to identify
        *the result of preparation 
        * </pre>
        *
@@ -2449,7 +2472,7 @@ public final class MysqlxPrepare {
       }
       /**
        * <pre>
-       ** client side assigned statement id, which is going to identify
+       ** client-side assigned statement ID, which is going to identify
        *the result of preparation 
        * </pre>
        *
@@ -2686,7 +2709,7 @@ public final class MysqlxPrepare {
 
     /**
      * <pre>
-     ** client side assigned statement id, must be already prepared 
+     ** client-side assigned statement ID, must be already prepared 
      * </pre>
      *
      * <code>required uint32 stmt_id = 1;</code>
@@ -2695,7 +2718,7 @@ public final class MysqlxPrepare {
     boolean hasStmtId();
     /**
      * <pre>
-     ** client side assigned statement id, must be already prepared 
+     ** client-side assigned statement ID, must be already prepared 
      * </pre>
      *
      * <code>required uint32 stmt_id = 1;</code>
@@ -2771,7 +2794,7 @@ public final class MysqlxPrepare {
   /**
    * <pre>
    **
-   *Execute already prepared statement
+   *Execute already-prepared statement
    *&#64;startuml
    *client -&gt; server: Execute
    *alt Success
@@ -2786,7 +2809,7 @@ public final class MysqlxPrepare {
    *
    * Protobuf type {@code Mysqlx.Prepare.Execute}
    */
-  public  static final class Execute extends
+  public static final class Execute extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Prepare.Execute)
       ExecuteOrBuilder {
@@ -2889,23 +2912,25 @@ public final class MysqlxPrepare {
     private int stmtId_;
     /**
      * <pre>
-     ** client side assigned statement id, must be already prepared 
+     ** client-side assigned statement ID, must be already prepared 
      * </pre>
      *
      * <code>required uint32 stmt_id = 1;</code>
      * @return Whether the stmtId field is set.
      */
+    @java.lang.Override
     public boolean hasStmtId() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <pre>
-     ** client side assigned statement id, must be already prepared 
+     ** client-side assigned statement ID, must be already prepared 
      * </pre>
      *
      * <code>required uint32 stmt_id = 1;</code>
      * @return The stmtId.
      */
+    @java.lang.Override
     public int getStmtId() {
       return stmtId_;
     }
@@ -2919,6 +2944,7 @@ public final class MysqlxPrepare {
      *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<com.mysql.cj.x.protobuf.MysqlxDatatypes.Any> getArgsList() {
       return args_;
     }
@@ -2929,6 +2955,7 @@ public final class MysqlxPrepare {
      *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder> 
         getArgsOrBuilderList() {
       return args_;
@@ -2940,6 +2967,7 @@ public final class MysqlxPrepare {
      *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
+    @java.lang.Override
     public int getArgsCount() {
       return args_.size();
     }
@@ -2950,6 +2978,7 @@ public final class MysqlxPrepare {
      *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.Any getArgs(int index) {
       return args_.get(index);
     }
@@ -2960,6 +2989,7 @@ public final class MysqlxPrepare {
      *
      * <code>repeated .Mysqlx.Datatypes.Any args = 2;</code>
      */
+    @java.lang.Override
     public com.mysql.cj.x.protobuf.MysqlxDatatypes.AnyOrBuilder getArgsOrBuilder(
         int index) {
       return args_.get(index);
@@ -2976,6 +3006,7 @@ public final class MysqlxPrepare {
      * <code>optional bool compact_metadata = 3 [default = false];</code>
      * @return Whether the compactMetadata field is set.
      */
+    @java.lang.Override
     public boolean hasCompactMetadata() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -2988,6 +3019,7 @@ public final class MysqlxPrepare {
      * <code>optional bool compact_metadata = 3 [default = false];</code>
      * @return The compactMetadata.
      */
+    @java.lang.Override
     public boolean getCompactMetadata() {
       return compactMetadata_;
     }
@@ -3195,7 +3227,7 @@ public final class MysqlxPrepare {
     /**
      * <pre>
      **
-     *Execute already prepared statement
+     *Execute already-prepared statement
      *&#64;startuml
      *client -&gt; server: Execute
      *alt Success
@@ -3423,29 +3455,31 @@ public final class MysqlxPrepare {
       private int stmtId_ ;
       /**
        * <pre>
-       ** client side assigned statement id, must be already prepared 
+       ** client-side assigned statement ID, must be already prepared 
        * </pre>
        *
        * <code>required uint32 stmt_id = 1;</code>
        * @return Whether the stmtId field is set.
        */
+      @java.lang.Override
       public boolean hasStmtId() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <pre>
-       ** client side assigned statement id, must be already prepared 
+       ** client-side assigned statement ID, must be already prepared 
        * </pre>
        *
        * <code>required uint32 stmt_id = 1;</code>
        * @return The stmtId.
        */
+      @java.lang.Override
       public int getStmtId() {
         return stmtId_;
       }
       /**
        * <pre>
-       ** client side assigned statement id, must be already prepared 
+       ** client-side assigned statement ID, must be already prepared 
        * </pre>
        *
        * <code>required uint32 stmt_id = 1;</code>
@@ -3460,7 +3494,7 @@ public final class MysqlxPrepare {
       }
       /**
        * <pre>
-       ** client side assigned statement id, must be already prepared 
+       ** client-side assigned statement ID, must be already prepared 
        * </pre>
        *
        * <code>required uint32 stmt_id = 1;</code>
@@ -3795,6 +3829,7 @@ public final class MysqlxPrepare {
        * <code>optional bool compact_metadata = 3 [default = false];</code>
        * @return Whether the compactMetadata field is set.
        */
+      @java.lang.Override
       public boolean hasCompactMetadata() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -3807,6 +3842,7 @@ public final class MysqlxPrepare {
        * <code>optional bool compact_metadata = 3 [default = false];</code>
        * @return The compactMetadata.
        */
+      @java.lang.Override
       public boolean getCompactMetadata() {
         return compactMetadata_;
       }
@@ -3900,7 +3936,7 @@ public final class MysqlxPrepare {
 
     /**
      * <pre>
-     ** client side assigned statement id, must be already prepared 
+     ** client-side assigned statement ID, must be already prepared 
      * </pre>
      *
      * <code>required uint32 stmt_id = 1;</code>
@@ -3909,7 +3945,7 @@ public final class MysqlxPrepare {
     boolean hasStmtId();
     /**
      * <pre>
-     ** client side assigned statement id, must be already prepared 
+     ** client-side assigned statement ID, must be already prepared 
      * </pre>
      *
      * <code>required uint32 stmt_id = 1;</code>
@@ -3920,7 +3956,7 @@ public final class MysqlxPrepare {
   /**
    * <pre>
    **
-   *Deallocate already prepared statement
+   *Deallocate already-prepared statement
    *&#64;startuml
    *client -&gt; server: Deallocate
    *alt Success
@@ -3934,7 +3970,7 @@ public final class MysqlxPrepare {
    *
    * Protobuf type {@code Mysqlx.Prepare.Deallocate}
    */
-  public  static final class Deallocate extends
+  public static final class Deallocate extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Prepare.Deallocate)
       DeallocateOrBuilder {
@@ -4019,23 +4055,25 @@ public final class MysqlxPrepare {
     private int stmtId_;
     /**
      * <pre>
-     ** client side assigned statement id, must be already prepared 
+     ** client-side assigned statement ID, must be already prepared 
      * </pre>
      *
      * <code>required uint32 stmt_id = 1;</code>
      * @return Whether the stmtId field is set.
      */
+    @java.lang.Override
     public boolean hasStmtId() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <pre>
-     ** client side assigned statement id, must be already prepared 
+     ** client-side assigned statement ID, must be already prepared 
      * </pre>
      *
      * <code>required uint32 stmt_id = 1;</code>
      * @return The stmtId.
      */
+    @java.lang.Override
     public int getStmtId() {
       return stmtId_;
     }
@@ -4207,7 +4245,7 @@ public final class MysqlxPrepare {
     /**
      * <pre>
      **
-     *Deallocate already prepared statement
+     *Deallocate already-prepared statement
      *&#64;startuml
      *client -&gt; server: Deallocate
      *alt Success
@@ -4378,29 +4416,31 @@ public final class MysqlxPrepare {
       private int stmtId_ ;
       /**
        * <pre>
-       ** client side assigned statement id, must be already prepared 
+       ** client-side assigned statement ID, must be already prepared 
        * </pre>
        *
        * <code>required uint32 stmt_id = 1;</code>
        * @return Whether the stmtId field is set.
        */
+      @java.lang.Override
       public boolean hasStmtId() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <pre>
-       ** client side assigned statement id, must be already prepared 
+       ** client-side assigned statement ID, must be already prepared 
        * </pre>
        *
        * <code>required uint32 stmt_id = 1;</code>
        * @return The stmtId.
        */
+      @java.lang.Override
       public int getStmtId() {
         return stmtId_;
       }
       /**
        * <pre>
-       ** client side assigned statement id, must be already prepared 
+       ** client-side assigned statement ID, must be already prepared 
        * </pre>
        *
        * <code>required uint32 stmt_id = 1;</code>
@@ -4415,7 +4455,7 @@ public final class MysqlxPrepare {
       }
       /**
        * <pre>
-       ** client side assigned statement id, must be already prepared 
+       ** client-side assigned statement ID, must be already prepared 
        * </pre>
        *
        * <code>required uint32 stmt_id = 1;</code>

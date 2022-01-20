@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -61,7 +61,7 @@ public final class Mysqlx {
    *
    * Protobuf type {@code Mysqlx.ClientMessages}
    */
-  public  static final class ClientMessages extends
+  public static final class ClientMessages extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.ClientMessages)
       ClientMessagesOrBuilder {
@@ -791,7 +791,7 @@ public final class Mysqlx {
    *
    * Protobuf type {@code Mysqlx.ServerMessages}
    */
-  public  static final class ServerMessages extends
+  public static final class ServerMessages extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.ServerMessages)
       ServerMessagesOrBuilder {
@@ -1447,7 +1447,7 @@ public final class Mysqlx {
   /**
    * Protobuf type {@code Mysqlx.Ok}
    */
-  public  static final class Ok extends
+  public static final class Ok extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Ok)
       OkOrBuilder {
@@ -1536,6 +1536,7 @@ public final class Mysqlx {
      * <code>optional string msg = 1;</code>
      * @return Whether the msg field is set.
      */
+    @java.lang.Override
     public boolean hasMsg() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -1543,6 +1544,7 @@ public final class Mysqlx {
      * <code>optional string msg = 1;</code>
      * @return The msg.
      */
+    @java.lang.Override
     public java.lang.String getMsg() {
       java.lang.Object ref = msg_;
       if (ref instanceof java.lang.String) {
@@ -1561,6 +1563,7 @@ public final class Mysqlx {
      * <code>optional string msg = 1;</code>
      * @return The bytes for msg.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getMsgBytes() {
       java.lang.Object ref = msg_;
@@ -2051,7 +2054,7 @@ public final class Mysqlx {
 
     /**
      * <pre>
-     ** error-code 
+     ** error code 
      * </pre>
      *
      * <code>required uint32 code = 2;</code>
@@ -2060,7 +2063,7 @@ public final class Mysqlx {
     boolean hasCode();
     /**
      * <pre>
-     ** error-code 
+     ** error code 
      * </pre>
      *
      * <code>required uint32 code = 2;</code>
@@ -2099,7 +2102,7 @@ public final class Mysqlx {
 
     /**
      * <pre>
-     ** human readable error message 
+     ** human-readable error message 
      * </pre>
      *
      * <code>required string msg = 3;</code>
@@ -2108,7 +2111,7 @@ public final class Mysqlx {
     boolean hasMsg();
     /**
      * <pre>
-     ** human readable error message 
+     ** human-readable error message 
      * </pre>
      *
      * <code>required string msg = 3;</code>
@@ -2117,7 +2120,7 @@ public final class Mysqlx {
     java.lang.String getMsg();
     /**
      * <pre>
-     ** human readable error message 
+     ** human-readable error message 
      * </pre>
      *
      * <code>required string msg = 3;</code>
@@ -2129,7 +2132,7 @@ public final class Mysqlx {
   /**
    * Protobuf type {@code Mysqlx.Error}
    */
-  public  static final class Error extends
+  public static final class Error extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:Mysqlx.Error)
       ErrorOrBuilder {
@@ -2343,7 +2346,7 @@ public final class Mysqlx {
      * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
      * @return Whether the severity field is set.
      */
-    public boolean hasSeverity() {
+    @java.lang.Override public boolean hasSeverity() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
@@ -2354,7 +2357,7 @@ public final class Mysqlx {
      * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
      * @return The severity.
      */
-    public com.mysql.cj.x.protobuf.Mysqlx.Error.Severity getSeverity() {
+    @java.lang.Override public com.mysql.cj.x.protobuf.Mysqlx.Error.Severity getSeverity() {
       @SuppressWarnings("deprecation")
       com.mysql.cj.x.protobuf.Mysqlx.Error.Severity result = com.mysql.cj.x.protobuf.Mysqlx.Error.Severity.valueOf(severity_);
       return result == null ? com.mysql.cj.x.protobuf.Mysqlx.Error.Severity.ERROR : result;
@@ -2364,23 +2367,25 @@ public final class Mysqlx {
     private int code_;
     /**
      * <pre>
-     ** error-code 
+     ** error code 
      * </pre>
      *
      * <code>required uint32 code = 2;</code>
      * @return Whether the code field is set.
      */
+    @java.lang.Override
     public boolean hasCode() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <pre>
-     ** error-code 
+     ** error code 
      * </pre>
      *
      * <code>required uint32 code = 2;</code>
      * @return The code.
      */
+    @java.lang.Override
     public int getCode() {
       return code_;
     }
@@ -2395,6 +2400,7 @@ public final class Mysqlx {
      * <code>required string sql_state = 4;</code>
      * @return Whether the sqlState field is set.
      */
+    @java.lang.Override
     public boolean hasSqlState() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -2406,6 +2412,7 @@ public final class Mysqlx {
      * <code>required string sql_state = 4;</code>
      * @return The sqlState.
      */
+    @java.lang.Override
     public java.lang.String getSqlState() {
       java.lang.Object ref = sqlState_;
       if (ref instanceof java.lang.String) {
@@ -2428,6 +2435,7 @@ public final class Mysqlx {
      * <code>required string sql_state = 4;</code>
      * @return The bytes for sqlState.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getSqlStateBytes() {
       java.lang.Object ref = sqlState_;
@@ -2446,23 +2454,25 @@ public final class Mysqlx {
     private volatile java.lang.Object msg_;
     /**
      * <pre>
-     ** human readable error message 
+     ** human-readable error message 
      * </pre>
      *
      * <code>required string msg = 3;</code>
      * @return Whether the msg field is set.
      */
+    @java.lang.Override
     public boolean hasMsg() {
       return ((bitField0_ & 0x00000008) != 0);
     }
     /**
      * <pre>
-     ** human readable error message 
+     ** human-readable error message 
      * </pre>
      *
      * <code>required string msg = 3;</code>
      * @return The msg.
      */
+    @java.lang.Override
     public java.lang.String getMsg() {
       java.lang.Object ref = msg_;
       if (ref instanceof java.lang.String) {
@@ -2479,12 +2489,13 @@ public final class Mysqlx {
     }
     /**
      * <pre>
-     ** human readable error message 
+     ** human-readable error message 
      * </pre>
      *
      * <code>required string msg = 3;</code>
      * @return The bytes for msg.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getMsgBytes() {
       java.lang.Object ref = msg_;
@@ -2919,7 +2930,7 @@ public final class Mysqlx {
        * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
        * @return Whether the severity field is set.
        */
-      public boolean hasSeverity() {
+      @java.lang.Override public boolean hasSeverity() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
@@ -2930,6 +2941,7 @@ public final class Mysqlx {
        * <code>optional .Mysqlx.Error.Severity severity = 1 [default = ERROR];</code>
        * @return The severity.
        */
+      @java.lang.Override
       public com.mysql.cj.x.protobuf.Mysqlx.Error.Severity getSeverity() {
         @SuppressWarnings("deprecation")
         com.mysql.cj.x.protobuf.Mysqlx.Error.Severity result = com.mysql.cj.x.protobuf.Mysqlx.Error.Severity.valueOf(severity_);
@@ -2971,29 +2983,31 @@ public final class Mysqlx {
       private int code_ ;
       /**
        * <pre>
-       ** error-code 
+       ** error code 
        * </pre>
        *
        * <code>required uint32 code = 2;</code>
        * @return Whether the code field is set.
        */
+      @java.lang.Override
       public boolean hasCode() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <pre>
-       ** error-code 
+       ** error code 
        * </pre>
        *
        * <code>required uint32 code = 2;</code>
        * @return The code.
        */
+      @java.lang.Override
       public int getCode() {
         return code_;
       }
       /**
        * <pre>
-       ** error-code 
+       ** error code 
        * </pre>
        *
        * <code>required uint32 code = 2;</code>
@@ -3008,7 +3022,7 @@ public final class Mysqlx {
       }
       /**
        * <pre>
-       ** error-code 
+       ** error code 
        * </pre>
        *
        * <code>required uint32 code = 2;</code>
@@ -3132,7 +3146,7 @@ public final class Mysqlx {
       private java.lang.Object msg_ = "";
       /**
        * <pre>
-       ** human readable error message 
+       ** human-readable error message 
        * </pre>
        *
        * <code>required string msg = 3;</code>
@@ -3143,7 +3157,7 @@ public final class Mysqlx {
       }
       /**
        * <pre>
-       ** human readable error message 
+       ** human-readable error message 
        * </pre>
        *
        * <code>required string msg = 3;</code>
@@ -3165,7 +3179,7 @@ public final class Mysqlx {
       }
       /**
        * <pre>
-       ** human readable error message 
+       ** human-readable error message 
        * </pre>
        *
        * <code>required string msg = 3;</code>
@@ -3186,7 +3200,7 @@ public final class Mysqlx {
       }
       /**
        * <pre>
-       ** human readable error message 
+       ** human-readable error message 
        * </pre>
        *
        * <code>required string msg = 3;</code>
@@ -3205,7 +3219,7 @@ public final class Mysqlx {
       }
       /**
        * <pre>
-       ** human readable error message 
+       ** human-readable error message 
        * </pre>
        *
        * <code>required string msg = 3;</code>
@@ -3219,7 +3233,7 @@ public final class Mysqlx {
       }
       /**
        * <pre>
-       ** human readable error message 
+       ** human-readable error message 
        * </pre>
        *
        * <code>required string msg = 3;</code>
