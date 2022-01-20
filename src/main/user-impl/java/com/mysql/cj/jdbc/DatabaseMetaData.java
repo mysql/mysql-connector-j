@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -2486,7 +2486,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public int getDefaultTransactionIsolation() throws SQLException {
-        return java.sql.Connection.TRANSACTION_READ_COMMITTED;
+        return java.sql.Connection.TRANSACTION_REPEATABLE_READ;
     }
 
     @Override

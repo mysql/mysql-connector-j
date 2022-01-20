@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -5390,6 +5390,22 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 con.close();
             }
         }
+    }
 
+    /**
+     * Tests fix for Bug#33723611, getDefaultTransactionIsolation must return repeatable read.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug33723611() throws Exception {
+        this.rs = this.stmt.executeQuery(versionMeetsMinimum(5, 7) ? "SELECT @@SESSION.transaction_isolation" : "SELECT @@SESSION.tx_isolation");
+        assertTrue(this.rs.next());
+        assertEquals("REPEATABLE-READ", this.rs.getString(1));
+
+        assertEquals(Connection.TRANSACTION_REPEATABLE_READ, this.conn.getTransactionIsolation());
+
+        DatabaseMetaData dbmd = this.conn.getMetaData();
+        assertEquals(Connection.TRANSACTION_REPEATABLE_READ, dbmd.getDefaultTransactionIsolation());
     }
 }

@@ -211,15 +211,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      * java.sql.Connection.TRANSACTION_XXX
      */
     private static Map<String, Integer> mapTransIsolationNameToValue = null;
-
-    protected static Map<?, ?> roundRobinStatsMap;
-
-    private List<ConnectionLifecycleInterceptor> connectionLifecycleInterceptors;
-
-    private static final int DEFAULT_RESULT_SET_TYPE = ResultSet.TYPE_FORWARD_ONLY;
-
-    private static final int DEFAULT_RESULT_SET_CONCURRENCY = ResultSet.CONCUR_READ_ONLY;
-
     static {
         mapTransIsolationNameToValue = new HashMap<>(8);
         mapTransIsolationNameToValue.put("READ-UNCOMMITED", TRANSACTION_READ_UNCOMMITTED);
@@ -228,6 +219,14 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         mapTransIsolationNameToValue.put("REPEATABLE-READ", TRANSACTION_REPEATABLE_READ);
         mapTransIsolationNameToValue.put("SERIALIZABLE", TRANSACTION_SERIALIZABLE);
     }
+
+    protected static Map<?, ?> roundRobinStatsMap;
+
+    private List<ConnectionLifecycleInterceptor> connectionLifecycleInterceptors;
+
+    private static final int DEFAULT_RESULT_SET_TYPE = ResultSet.TYPE_FORWARD_ONLY;
+
+    private static final int DEFAULT_RESULT_SET_CONCURRENCY = ResultSet.CONCUR_READ_ONLY;
 
     /**
      * Creates a connection instance.
