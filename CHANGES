@@ -3,6 +3,9 @@
 
 Version 8.0.29
 
+  - Fix for Bug#106171 (33757217), Contribution: Remove unnecessary boxing in ResultSetImpl.
+    Thanks to Ningpp Ning for his contribution.
+
   - Fix for Bug#25701740, STMT EXECUTION FAILS FOR REPLICATION CONNECTION WHEN USECURSORFETCH=TRUE.
 
   - Fix for Bug#33723611, getDefaultTransactionIsolation must return repeatable read.

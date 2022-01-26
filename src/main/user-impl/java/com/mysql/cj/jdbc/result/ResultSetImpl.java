@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -578,7 +578,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public int findColumn(String columnName) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            Integer index = this.columnDefinition.findColumn(columnName, this.useColumnNamesInFindColumn, 1);
+            int index = this.columnDefinition.findColumn(columnName, this.useColumnNamesInFindColumn, 1);
 
             if (index == -1) {
                 throw SQLError.createSQLException(
