@@ -3,6 +3,9 @@
 
 Version 8.0.29
 
+  - Fix for Bug#106065 (33726184) Contribution: BigDecimal.toPlainString no need to check decimal exponent.
+    Thanks to Baoyi Chen for his contribution.
+
   - Fix for Bug#106171 (33757217), Contribution: Remove unnecessary boxing in ResultSetImpl.
     Thanks to Ningpp Ning for his contribution.
 
