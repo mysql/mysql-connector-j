@@ -567,9 +567,9 @@ public class StatementImpl implements JdbcStatement {
             //
             // Need to be able to get resultset irrespective if we issued DML or not to make this work.
             //
-            ResultSetInternalMethods rs = ((StatementImpl) pStmt).getResultSetInternal();
+            ResultSetInternalMethods rs = ((JdbcStatement) pStmt).getResultSetInternal();
 
-            rs.setStatementUsedForFetchingRows((ClientPreparedStatement) pStmt);
+            rs.setStatementUsedForFetchingRows((JdbcPreparedStatement) pStmt);
 
             this.results = rs;
 
@@ -1700,7 +1700,8 @@ public class StatementImpl implements JdbcStatement {
         return java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
 
-    protected ResultSetInternalMethods getResultSetInternal() {
+    @Override
+    public ResultSetInternalMethods getResultSetInternal() {
         try {
             synchronized (checkClosed().getConnectionMutex()) {
                 return this.results;

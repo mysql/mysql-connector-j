@@ -11624,4 +11624,29 @@ public class ConnectionRegressionTest extends BaseTestCase {
             return super.preProcess(str, interceptedQuery);
         }
     }
+
+    /**
+     * Tests fix for Bug#25701740, STMT EXECUTION FAILS FOR REPLICATION CONNECTION WHEN USECURSORFETCH=TRUE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug25701740() throws Exception {
+        Connection replConn = null;
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
+            props.setProperty(PropertyKey.defaultFetchSize.getKeyName(), "1");
+            replConn = getSourceReplicaReplicationConnection(props);
+            Statement st = replConn.createStatement();
+            this.rs = st.executeQuery("select 1");
+            assertTrue(this.rs.next());
+        } finally {
+            if (replConn != null) {
+                replConn.close();
+            }
+        }
+    }
 }
