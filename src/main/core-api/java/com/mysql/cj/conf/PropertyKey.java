@@ -171,7 +171,7 @@ public enum PropertyKey {
     packetDebugBufferSize("packetDebugBufferSize", true), //
     padCharsWithSpace("padCharsWithSpace", true), //
     paranoid("paranoid", false), //
-    parseInfoCacheFactory("parseInfoCacheFactory", true), //
+    queryInfoCacheFactory("queryInfoCacheFactory", "parseInfoCacheFactory", true), //
     password1("password1", true), //
     password2("password2", true), //
     password3("password3", true), //

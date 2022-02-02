@@ -2712,7 +2712,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             String sql = str.get();
             if (interceptedQuery instanceof ClientPreparedStatement) {
                 sql = ((ClientPreparedStatement) interceptedQuery).getPreparedSql();
-                assertTrue(StringUtils.indexOfIgnoreCase(0, sql, "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?") > -1, "Assereet failed on: " + sql);
+                assertTrue(StringUtils.indexOfIgnoreCase(0, sql, "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?") > -1, "Failed on: " + sql);
             }
             return null;
         }

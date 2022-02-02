@@ -125,13 +125,9 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
         synchronized (this.session) {
             long begin = this.profileSQL ? System.currentTimeMillis() : 0;
 
-            boolean loadDataQuery = StringUtils.startsWithIgnoreCaseAndWs(sql, "LOAD DATA");
-
             NativePacketPayload prepareResultPacket = this.session.getProtocol()
-                    .sendCommand(
-                            this.commandBuilder.buildComStmtPrepare(this.session.getSharedSendPacket(), sql,
-                                    loadDataQuery ? null : this.session.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue()),
-                            false, 0);
+                    .sendCommand(this.commandBuilder.buildComStmtPrepare(this.session.getSharedSendPacket(), sql,
+                            this.session.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue()), false, 0);
 
             // 4.1.1 and newer use the first byte as an 'ok' or 'error' flag, so move the buffer pointer past it to start reading the statement id.
             prepareResultPacket.setPosition(1);
@@ -141,10 +137,6 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
             setParameterCount((int) prepareResultPacket.readInteger(IntegerDataType.INT2));
 
             this.queryBindings = new NativeQueryBindings(this.parameterCount, this.session, NativeQueryBindValue::new);
-            BindValue[] bindValues = this.queryBindings.getBindValues();
-            for (int i = 0; i < bindValues.length; i++) {
-                bindValues[i].setLoadDataQuery(loadDataQuery);
-            }
 
             if (this.gatherPerfMetrics) {
                 this.session.getProtocol().getMetricsHolder().incrementNumberOfPrepares();

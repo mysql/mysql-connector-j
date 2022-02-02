@@ -33,9 +33,9 @@ import com.mysql.cj.protocol.Message;
 
 public interface PreparedQuery extends Query {
 
-    ParseInfo getParseInfo();
+    QueryInfo getQueryInfo();
 
-    void setParseInfo(ParseInfo parseInfo);
+    void setQueryInfo(QueryInfo queryInfo);
 
     void checkNullOrEmptyQuery(String sql);
 

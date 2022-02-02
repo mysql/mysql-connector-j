@@ -38,7 +38,7 @@ import com.mysql.cj.util.StringUtils;
 
 public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery {
 
-    protected ParseInfo parseInfo;
+    protected QueryInfo queryInfo;
 
     protected QueryBindings queryBindings = null;
 
@@ -65,12 +65,12 @@ public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery 
         super.closeQuery();
     }
 
-    public ParseInfo getParseInfo() {
-        return this.parseInfo;
+    public QueryInfo getQueryInfo() {
+        return this.queryInfo;
     }
 
-    public void setParseInfo(ParseInfo parseInfo) {
-        this.parseInfo = parseInfo;
+    public void setQueryInfo(QueryInfo queryInfo) {
+        this.queryInfo = queryInfo;
     }
 
     public String getOriginalSql() {
@@ -154,7 +154,7 @@ public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery 
             batchArg = this.batchedArgs.get(this.batchCommandIndex);
         }
 
-        byte[][] staticSqlStrings = this.parseInfo.getStaticSql();
+        byte[][] staticSqlStrings = this.queryInfo.getStaticSqlParts();
         for (int i = 0; i < this.parameterCount; ++i) {
             buf.append(this.charEncoding != null ? StringUtils.toString(staticSqlStrings[i], this.charEncoding) : StringUtils.toString(staticSqlStrings[i]));
             String val = null;
@@ -205,7 +205,7 @@ public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery 
             // This is a little naive, because the ?s will be replaced but it gives us some padding, and is less housekeeping to ignore them. We're looking
             // for a "fuzzy" value here anyway
             //
-            sizeOfParameterSet += this.parseInfo.getValuesClause() != null ? this.parseInfo.getValuesClause().length() + 1 : this.originalSql.length() + 1;
+            sizeOfParameterSet += this.queryInfo.getValuesClauseLength() != -1 ? this.queryInfo.getValuesClauseLength() + 1 : this.originalSql.length() + 1;
             sizeOfEntireBatch += sizeOfParameterSet;
 
             if (sizeOfParameterSet > maxSizeOfParameterSet) {

@@ -96,7 +96,7 @@ public class StringValueEncoder extends AbstractValueEncoder {
                     StringBuilder buf = new StringBuilder((int) (x.length() * 1.1 + 4));
                     buf.append("_utf8");
                     StringUtils.escapeString(buf, x, this.serverSession.useAnsiQuotedIdentifiers(), null);
-                    return binding.isLoadDataQuery() ? StringUtils.getBytes(buf.toString()) : StringUtils.getBytes(buf.toString(), "UTF-8");
+                    return StringUtils.getBytes(buf.toString(), "UTF-8");
                 }
 
                 int stringLength = x.length();
@@ -108,20 +108,19 @@ public class StringValueEncoder extends AbstractValueEncoder {
                         quotedString.append('\'');
                         quotedString.append(x);
                         quotedString.append('\'');
-                        return binding.isLoadDataQuery() ? StringUtils.getBytes(quotedString.toString())
-                                : StringUtils.getBytes(quotedString.toString(), this.charEncoding.getValue());
+                        StringUtils.getBytes(quotedString.toString(), this.charEncoding.getValue());
                     }
-                    return escapeBytesIfNeeded(binding.isLoadDataQuery() ? StringUtils.getBytes(x) : StringUtils.getBytes(x, this.charEncoding.getValue()));
+                    return escapeBytesIfNeeded(StringUtils.getBytes(x, this.charEncoding.getValue()));
                 }
 
-                if (binding.isLoadDataQuery() || isEscapeNeededForString(x, stringLength)) {
+                if (isEscapeNeededForString(x, stringLength)) {
                     String escString = StringUtils
                             .escapeString(new StringBuilder((int) (x.length() * 1.1)), x, this.serverSession.useAnsiQuotedIdentifiers(), this.charsetEncoder)
                             .toString();
-                    return binding.isLoadDataQuery() ? StringUtils.getBytes(escString) : StringUtils.getBytes(escString, this.charEncoding.getValue());
+                    return StringUtils.getBytes(escString, this.charEncoding.getValue());
                 }
 
-                return binding.isLoadDataQuery() ? StringUtils.getBytes(x) : StringUtils.getBytesWrapped(x, '\'', '\'', this.charEncoding.getValue());
+                return StringUtils.getBytesWrapped(x, '\'', '\'', this.charEncoding.getValue());
 
             default:
                 return StringUtils.getBytes(getString(binding), this.charEncoding.getValue());
@@ -343,16 +342,11 @@ public class StringValueEncoder extends AbstractValueEncoder {
                 if (binding.isNational() && !this.charEncoding.getValue().equalsIgnoreCase("UTF-8") && !this.charEncoding.getValue().equalsIgnoreCase("utf8")) {
                     throw ExceptionFactory.createException(Messages.getString("ServerPreparedStatement.31"), this.exceptionInterceptor);
                 }
-
-                if (!binding.isLoadDataQuery()) {
-                    try {
-                        intoPacket.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes(x, this.charEncoding.getValue()));
-                    } catch (CJException uEE) {
-                        throw ExceptionFactory.createException(Messages.getString("ServerPreparedStatement.31") + this.charEncoding.getValue() + "'", uEE,
-                                this.exceptionInterceptor);
-                    }
-                } else {
-                    intoPacket.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes(x));
+                try {
+                    intoPacket.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes(x, this.charEncoding.getValue()));
+                } catch (CJException uEE) {
+                    throw ExceptionFactory.createException(Messages.getString("ServerPreparedStatement.31") + this.charEncoding.getValue() + "'", uEE,
+                            this.exceptionInterceptor);
                 }
                 return;
             case DATE:

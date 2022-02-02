@@ -168,7 +168,7 @@ public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload>
                 sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
             }
 
-            byte[][] staticSqlStrings = preparedQuery.getParseInfo().getStaticSql();
+            byte[][] staticSqlStrings = preparedQuery.getQueryInfo().getStaticSqlParts();
             for (int i = 0; i < bindValues.length; i++) {
                 bindings.checkParameterSet(i);
                 sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, staticSqlStrings[i]);

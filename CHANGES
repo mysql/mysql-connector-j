@@ -3,6 +3,8 @@
 
 Version 8.0.29
 
+  - Fix for Bug#106240 (33781440), StringIndexOutOfBoundsException when VALUE is at the end of the query.
+
   - Fix for Bug#106397 (33893591), Contribution: fix: fix LocalizedErrorMessages.properties doc: less then -> ...
     Thanks to Jianjian Song for his contribution.
 

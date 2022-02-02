@@ -62,8 +62,8 @@ import com.mysql.cj.LicenseConfiguration;
 import com.mysql.cj.Messages;
 import com.mysql.cj.NativeSession;
 import com.mysql.cj.NoSubInterceptorWrapper;
-import com.mysql.cj.ParseInfo;
 import com.mysql.cj.PreparedQuery;
+import com.mysql.cj.QueryInfo;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.Session.SessionEventListener;
 import com.mysql.cj.conf.HostInfo;
@@ -273,7 +273,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     /** A cache of SQL to parsed prepared statement parameters. */
-    private CacheAdapter<String, ParseInfo> cachedPreparedStatementParams;
+    private CacheAdapter<String, QueryInfo> queryInfoCache;
 
     /** The database we're currently using. */
     private String database = null;
@@ -657,12 +657,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         ClientPreparedStatement pStmt = null;
 
         if (this.cachePrepStmts.getValue()) {
-            ParseInfo pStmtInfo = this.cachedPreparedStatementParams.get(nativeSql);
+            QueryInfo pStmtInfo = this.queryInfoCache.get(nativeSql);
 
             if (pStmtInfo == null) {
                 pStmt = ClientPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database);
 
-                this.cachedPreparedStatementParams.put(nativeSql, pStmt.getParseInfo());
+                this.queryInfoCache.put(nativeSql, pStmt.getQueryInfo());
             } else {
                 pStmt = ClientPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.database, pStmtInfo);
             }
@@ -1017,29 +1017,28 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     private void createPreparedStatementCaches() throws SQLException {
         synchronized (getConnectionMutex()) {
             int cacheSize = this.propertySet.getIntegerProperty(PropertyKey.prepStmtCacheSize).getValue();
-            String parseInfoCacheFactory = this.propertySet.getStringProperty(PropertyKey.parseInfoCacheFactory).getValue();
+            String queryInfoCacheFactory = this.propertySet.getStringProperty(PropertyKey.queryInfoCacheFactory).getValue();
 
             try {
                 Class<?> factoryClass;
 
-                factoryClass = Class.forName(parseInfoCacheFactory);
+                factoryClass = Class.forName(queryInfoCacheFactory);
 
                 @SuppressWarnings("unchecked")
-                CacheAdapterFactory<String, ParseInfo> cacheFactory = ((CacheAdapterFactory<String, ParseInfo>) factoryClass.newInstance());
+                CacheAdapterFactory<String, QueryInfo> cacheFactory = ((CacheAdapterFactory<String, QueryInfo>) factoryClass.newInstance());
 
-                this.cachedPreparedStatementParams = cacheFactory.getInstance(this, this.origHostInfo.getDatabaseUrl(), cacheSize,
-                        this.prepStmtCacheSqlLimit.getValue());
+                this.queryInfoCache = cacheFactory.getInstance(this, this.origHostInfo.getDatabaseUrl(), cacheSize, this.prepStmtCacheSqlLimit.getValue());
 
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { parseInfoCacheFactory, PropertyKey.parseInfoCacheFactory }),
+                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { queryInfoCacheFactory, PropertyKey.queryInfoCacheFactory }),
                         getExceptionInterceptor());
                 sqlEx.initCause(e);
 
                 throw sqlEx;
             } catch (Exception e) {
                 SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { parseInfoCacheFactory, PropertyKey.parseInfoCacheFactory }),
+                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { queryInfoCacheFactory, PropertyKey.queryInfoCacheFactory }),
                         getExceptionInterceptor());
                 sqlEx.initCause(e);
 

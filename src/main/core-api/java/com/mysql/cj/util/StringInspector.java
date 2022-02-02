@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,9 +39,9 @@ import com.mysql.cj.Messages;
 /**
  * Utility class to inspect a MySQL string, typically a query string.
  * 
- * Provides string searching and manipulation operations operations such as finding sub-strings or building a comments-free version of a string.
+ * Provides string searching and manipulation operations such as finding sub-strings, matching sub-strings or building a comments-free version of a string.
  * 
- * This object keeps internal status that affect the operations, e.g., executing an indexOf operation after another causes the second to start the search form
+ * This object keeps internal state that affect the operations, e.g., executing an indexOf operation after another causes the second to start the search form
  * where the previous one stopped.
  */
 public class StringInspector {
@@ -57,12 +57,17 @@ public class StringInspector {
     private int srcLen = 0;
     private int pos = 0;
     private int stopAt = 0;
-
     private boolean escaped = false;
     private boolean inMysqlBlock = false;
 
+    private int markedPos = this.pos;
+    private int markedStopAt = this.stopAt;
+    private boolean markedEscape = this.escaped;
+    private boolean markedInMysqlBlock = this.inMysqlBlock;
+
     /**
-     * This object provides string searching and manipulation operations operations such as finding sub-strings or building a comments-free version of a string.
+     * This object provides string searching and manipulation operations such as finding sub-strings, matching sub-strings or building a comments-free version
+     * of a string.
      * 
      * @param source
      *            the source string to process
@@ -85,7 +90,8 @@ public class StringInspector {
     }
 
     /**
-     * This object provides string searching and manipulation operations operations such as finding sub-strings or building a comments-free version of a string.
+     * This object provides string searching and manipulation operations such as finding sub-strings, matching sub-strings or building a comments-free version
+     * of a string.
      * 
      * @param source
      *            the source string to process
@@ -182,9 +188,29 @@ public class StringInspector {
     }
 
     /**
-     * Resets this object control data. Allows to reuse it for subsequent operations.
+     * Marks the current object's state. A subsequent call to the {@link #reset()} method restores the marked state.
+     */
+    public void mark() {
+        this.markedPos = this.pos;
+        this.markedStopAt = this.stopAt;
+        this.markedEscape = this.escaped;
+        this.markedInMysqlBlock = this.inMysqlBlock;
+    }
+
+    /**
+     * Resets this object's state to previously mark state.
      */
     public void reset() {
+        this.pos = this.markedPos;
+        this.stopAt = this.markedStopAt;
+        this.escaped = this.markedEscape;
+        this.inMysqlBlock = this.markedInMysqlBlock;
+    }
+
+    /**
+     * Resets this object's state to original values. Allows to reuse the object from a fresh start.
+     */
+    public void restart() {
         this.pos = 0;
         this.stopAt = this.srcLen;
         this.escaped = false;
@@ -215,7 +241,7 @@ public class StringInspector {
     }
 
     /**
-     * Increments the current position index, taking into consideration the "escaped" status of current character, if the mode
+     * Increments the current position index, by one, taking into consideration the "escaped" status of current character, if the mode
      * {@link SearchMode#ALLOW_BACKSLASH_ESCAPE} is present in the default search mode.
      * 
      * @return
@@ -226,7 +252,7 @@ public class StringInspector {
     }
 
     /**
-     * Increments the current position index, taking into consideration the "escaped" status of current character, if the mode
+     * Increments the current position index, by one, taking into consideration the "escaped" status of current character, if the mode
      * {@link SearchMode#ALLOW_BACKSLASH_ESCAPE} is present in the search mode specified.
      * 
      * @param searchMode
@@ -280,8 +306,8 @@ public class StringInspector {
     }
 
     /**
-     * Checks if current character is escaped by analyzing previous characters, as long as the search mode {@link SearchMode#ALLOW_BACKSLASH_ESCAPE} is present
-     * in the default search mode.
+     * Checks if the current character is escaped by analyzing previous characters, as long as the search mode {@link SearchMode#ALLOW_BACKSLASH_ESCAPE} is
+     * present in the default search mode.
      */
     private void resetEscaped() {
         this.escaped = false;
@@ -297,7 +323,7 @@ public class StringInspector {
 
     /**
      * Returns the position of the next valid character. This method does not increment the current position automatically, i.e., if already positioned in a
-     * valid character then always the same index is returned.
+     * valid character then repeated calls return always the same index.
      * If the character in the current position matches one of the prefixes that determine a skipping block, then the position marker advances to the first
      * character after the block to skip.
      * 
@@ -310,7 +336,7 @@ public class StringInspector {
 
     /**
      * Returns the position of the next valid character using the given search mode instead of the default one. This method does not increment the current
-     * position automatically, i.e., if already positioned in a valid character then always the same index is returned.
+     * position automatically, i.e., if already positioned in a valid character then repeated calls return always the same index.
      * If the character in the current position matches one of the prefixes that determine a skipping block, then the position marker advances to the first
      * character after the block to skip.
      * 
@@ -527,7 +553,7 @@ public class StringInspector {
 
     /**
      * Returns the position of the next alphanumeric character regardless the default search mode originally specified. This method does not increment the
-     * current position automatically, i.e., if already positioned in a valid character then always the same index is returned.
+     * current position automatically, i.e., if already positioned in a valid character then repeated calls return always the same index.
      * If the character in the current position matches one of the prefixes that determine a skipping block, then the position marker advances to the first
      * alphanumeric character after the block to skip.
      * 
@@ -567,7 +593,7 @@ public class StringInspector {
 
     /**
      * Returns the position of the next non-whitespace character regardless the default search mode originally specified. This method does not increment the
-     * current position automatically, i.e., if already positioned in a valid character then always the same index is returned.
+     * current position automatically, i.e., if already positioned in a valid character then repeated calls return always the same index.
      * If the character in the current position matches one of the prefixes that determine a skipping block, then the position marker advances to the first
      * non-whitespace character after the block to skip.
      * 
@@ -594,7 +620,7 @@ public class StringInspector {
 
     /**
      * Returns the position of the next whitespace character regardless the default search mode originally specified. This method does not increment the
-     * current position automatically, i.e., if already positioned in a valid character then always the same index is returned.
+     * current position automatically, i.e., if already positioned in a valid character then repeated calls return always the same index.
      * If the character in the current position matches one of the prefixes that determine a skipping block, then the position marker advances to the first
      * whitespace character after the block to skip.
      * 
@@ -703,12 +729,12 @@ public class StringInspector {
      * delimited by the specified markers or inside comment blocks.
      * 
      * <p>
-     * Independently of the <code>searchMode</code> specified, when searching for the second and following strings {@link SearchMode#SKIP_WHITE_SPACE} will be
-     * added and {@link SearchMode#SKIP_BETWEEN_MARKERS} removed.
+     * Independently of the <code>searchMode</code> specified, when searching for the second and following sub-strings {@link SearchMode#SKIP_WHITE_SPACE} will
+     * be added and {@link SearchMode#SKIP_BETWEEN_MARKERS} removed.
      * </p>
      * 
      * @param searchFor
-     *            the continuous sequence of sub-strings to search
+     *            the sequence of sub-strings to search
      * @return
      *         the position where the first sub-string is found, starting from the current position, or -1 if not found
      */
@@ -754,6 +780,7 @@ public class StringInspector {
             if (positionOfFirstWord == -1 || positionOfFirstWord >= localStopAt) {
                 return -1;
             }
+            mark();
 
             int startingPositionForNextWord = incrementPosition(searchFor[0].length(), searchMode2);
             int wc = 0;
@@ -769,12 +796,115 @@ public class StringInspector {
             }
 
             if (match) {
-                setStartPosition(positionOfFirstWord);
+                reset();
                 return positionOfFirstWord;
             }
         }
 
         return -1;
+    }
+
+    /**
+     * Checks if the given string matches the source string counting from the current position, ignoring case, with the option to skip text delimited by the
+     * specified markers or inside comment blocks.
+     * 
+     * @param toMatch
+     *            the sub-string to match
+     * @return
+     *         the position where the sub-string match ended, or -1 if not matched
+     */
+    public int matchesIgnoreCase(String toMatch) {
+        if (toMatch == null) {
+            return -1;
+        }
+
+        int toMatchLength = toMatch.length();
+        int localStopAt = this.srcLen - toMatchLength + 1;
+        if (localStopAt > this.stopAt) {
+            localStopAt = this.stopAt;
+        }
+
+        if (this.pos >= localStopAt || toMatchLength == 0) {
+            return -1;
+        }
+
+        // Some locales don't follow upper-case rule, so need to check both.
+        char firstCharOfToMatchUc = Character.toUpperCase(toMatch.charAt(0));
+        char firstCharOfToMatchLc = Character.toLowerCase(toMatch.charAt(0));
+
+        if (StringUtils.isCharEqualIgnoreCase(getChar(), firstCharOfToMatchUc, firstCharOfToMatchLc)
+                && StringUtils.regionMatchesIgnoreCase(this.source, this.pos, toMatch)) {
+            return this.pos + toMatchLength;
+        }
+
+        return -1;
+    }
+
+    /**
+     * Checks if the given consecutive sequence of strings matches the source string counting from the current position, ignoring case, with the option to skip
+     * text delimited by the specified markers or inside comment blocks.
+     * 
+     * <p>
+     * Independently of the <code>searchMode</code> specified, when matching the second and following sub-strings {@link SearchMode#SKIP_WHITE_SPACE} will be
+     * added and {@link SearchMode#SKIP_BETWEEN_MARKERS} removed.
+     * </p>
+     * 
+     * @param toMatch
+     *            the sequence of sub-strings to match
+     * @return
+     *         the position where the sequence of sub-strings match ended, or -1 if not matched
+     */
+    public int matchesIgnoreCase(String... toMatch) {
+        if (toMatch == null) {
+            return -1;
+        }
+
+        int toMatchLength = 0;
+        for (String toMatchPart : toMatch) {
+            toMatchLength += toMatchPart.length();
+        } // Minimum length for searchFor (without gaps between words).
+
+        if (toMatchLength == 0) {
+            return -1;
+        }
+
+        int toMatchWordsCount = toMatch.length;
+        toMatchLength += toMatchWordsCount > 0 ? toMatchWordsCount - 1 : 0; // Count gaps between words.
+        int localStopAt = this.srcLen - toMatchLength + 1;
+        if (localStopAt > this.stopAt) {
+            localStopAt = this.stopAt;
+        }
+
+        if (this.pos >= localStopAt) {
+            return -1;
+        }
+
+        // searchMode used to match 2nd and following words cannot contain SearchMode.SKIP_BETWEEN_MARKERS and must contain SearchMode.SKIP_WHITE_SPACE.
+        Set<SearchMode> searchMode2 = EnumSet.copyOf(this.defaultSearchMode);
+        searchMode2.add(SearchMode.SKIP_WHITE_SPACE);
+        searchMode2.remove(SearchMode.SKIP_BETWEEN_MARKERS);
+
+        mark();
+        int endOfMatch = -1;
+        int startingPositionForNextWord = -1;
+        for (String searchForPart : toMatch) {
+            if (getPosition() == startingPositionForNextWord) {
+                // There is no gap between words.
+                reset();
+                return -1;
+            }
+
+            endOfMatch = matchesIgnoreCase(searchForPart);
+            if (endOfMatch == -1) {
+                reset();
+                return -1;
+            }
+
+            startingPositionForNextWord = incrementPosition(searchForPart.length(), searchMode2);
+            indexOfNextChar(searchMode2);
+        }
+        reset();
+        return endOfMatch;
     }
 
     /**
@@ -784,7 +914,7 @@ public class StringInspector {
      *         a comments-free string
      */
     public String stripCommentsAndHints() {
-        reset();
+        restart();
 
         Set<SearchMode> searchMode = EnumSet.of(SearchMode.SKIP_BLOCK_COMMENTS, SearchMode.SKIP_LINE_COMMENTS, SearchMode.SKIP_HINT_BLOCKS);
         if (this.defaultSearchMode.contains(SearchMode.ALLOW_BACKSLASH_ESCAPE)) {
@@ -834,7 +964,7 @@ public class StringInspector {
             throw new IllegalArgumentException(Messages.getString("StringInspector.8"));
         }
 
-        reset();
+        restart();
 
         int startPos = 0;
         List<String> splitParts = new ArrayList<>();

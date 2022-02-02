@@ -246,16 +246,6 @@ public class NativeQueryBindValue implements BindValue {
     }
 
     @Override
-    public boolean isLoadDataQuery() {
-        return this.isLoadDataQuery;
-    }
-
-    @Override
-    public void setLoadDataQuery(boolean isLoadDataQuery) {
-        this.isLoadDataQuery = isLoadDataQuery;
-    }
-
-    @Override
     public boolean escapeBytesIfNeeded() {
         return this.escapeBytesIfNeeded;
     }

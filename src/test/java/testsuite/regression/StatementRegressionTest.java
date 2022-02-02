@@ -3279,7 +3279,7 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(Statement.SUCCESS_NO_INFO, counts[0]);
             assertEquals(Statement.SUCCESS_NO_INFO, counts[1]);
             assertEquals(Statement.SUCCESS_NO_INFO, counts[2]);
-            assertEquals(true, ((ClientPreparedStatement) this.pstmt).getParseInfo().canRewriteAsMultiValueInsertAtSqlLevel());
+            assertEquals(true, ((ClientPreparedStatement) this.pstmt).getQueryInfo().isRewritableWithMultiValuesClause());
         } finally {
             if (multiConn != null) {
                 multiConn.close();
@@ -11713,8 +11713,7 @@ public class StatementRegressionTest extends BaseTestCase {
             ps.getWarnings();
 
             testConn.close();
-        } while ((useSPS = !useSPS));
-
+        } while (useSPS = !useSPS);
     }
 
     public static class Bug101389QueryInterceptor extends BaseQueryInterceptor {
@@ -12117,6 +12116,56 @@ public class StatementRegressionTest extends BaseTestCase {
             this.pstmt.setObject(1, new StringReader("test"));
             this.pstmt.execute();
             testConn.close();
+        } while (useSPS = !useSPS);
+    }
+
+    /**
+     * Tests fix for Bug#106240 (33781440), StringIndexOutOfBoundsException when VALUE is at the end of the query.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug106240() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+
+        boolean useSPS = false;
+        do {
+            String testCase = String.format("Case: [ useSPS=%s ]", useSPS ? "Y" : "N");
+
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            Connection testConn = getConnectionWithProps(props);
+
+            assertThrows(testCase, SQLException.class,
+                    "You have an error in your SQL syntax; check the manual that corresponds to your "
+                            + "MySQL server version for the right syntax to use near '' at line 1",
+                    () -> testConn.prepareStatement("INSERT INTO testBug106240 VALUES").execute());
+            assertThrows(testCase, SQLException.class,
+                    "You have an error in your SQL syntax; check the manual that corresponds to your "
+                            + "MySQL server version for the right syntax to use near '' at line 1",
+                    () -> testConn.prepareStatement("INSERT INTO testBug106240 VALUES   ").execute());
+            assertThrows(testCase, SQLException.class,
+                    "You have an error in your SQL syntax; check the manual that corresponds to your "
+                            + "MySQL server version for the right syntax to use near '' at line 1",
+                    () -> testConn.prepareStatement("INSERT INTO testBug106240 VALUES\n").execute());
+            assertThrows(testCase, SQLException.class,
+                    "You have an error in your SQL syntax; check the manual that corresponds to your "
+                            + "MySQL server version for the right syntax to use near '' at line 1",
+                    () -> testConn.prepareStatement("INSERT INTO testBug106240 VALUES/* (?, ?) */").execute());
+            assertThrows(testCase, SQLException.class,
+                    "You have an error in your SQL syntax; check the manual that corresponds to your "
+                            + "MySQL server version for the right syntax to use near '' at line 1",
+                    () -> testConn.prepareStatement("INSERT INTO testBug106240 VALUES -- (?, ?) ON DUPLICATE KEY UPDATE").execute());
+            assertThrows(testCase, SQLException.class,
+                    "You have an error in your SQL syntax; check the manual that corresponds to your "
+                            + "MySQL server version for the right syntax to use near 'AS tb106240\\(a, b\\)' at line 1",
+                    () -> testConn.prepareStatement("INSERT INTO testBug106240 VALUES/* (?, ?) */AS tb106240(a, b)").execute());
+            assertThrows(testCase, SQLException.class,
+                    "You have an error in your SQL syntax; check the manual that corresponds to your "
+                            + "MySQL server version for the right syntax to use near 'ON DUPLICATE KEY UPDATE' at line 1",
+                    () -> testConn.prepareStatement("INSERT INTO testBug106240 VALUES/* (?, ?) */ON DUPLICATE KEY UPDATE").execute());
         } while (useSPS = !useSPS);
     }
 }

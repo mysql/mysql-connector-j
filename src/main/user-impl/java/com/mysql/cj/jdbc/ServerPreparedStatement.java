@@ -31,7 +31,6 @@ package com.mysql.cj.jdbc;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.sql.ParameterMetaData;
 import java.sql.SQLException;
@@ -42,9 +41,9 @@ import com.mysql.cj.BindValue;
 import com.mysql.cj.CancelQueryTask;
 import com.mysql.cj.Messages;
 import com.mysql.cj.NativeSession;
-import com.mysql.cj.ParseInfo;
 import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.QueryBindings;
+import com.mysql.cj.QueryInfo;
 import com.mysql.cj.ServerPreparedQuery;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
@@ -121,10 +120,11 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
         checkNullOrEmptyQuery(sql);
         String statementComment = this.session.getProtocol().getQueryComment();
-        ((PreparedQuery) this.query).setOriginalSql(statementComment == null ? sql : "/* " + statementComment + " */ " + sql);
-        ((PreparedQuery) this.query).setParseInfo(new ParseInfo(((PreparedQuery) this.query).getOriginalSql(), this.session, this.charEncoding));
+        PreparedQuery prepQuery = (PreparedQuery) this.query;
+        prepQuery.setOriginalSql(statementComment == null ? sql : "/* " + statementComment + " */ " + sql);
+        prepQuery.setQueryInfo(new QueryInfo(prepQuery.getOriginalSql(), this.session, this.charEncoding));
 
-        this.hasOnDuplicateKeyUpdate = ((PreparedQuery) this.query).getParseInfo().getFirstStmtChar() == 'I' && containsOnDuplicateKeyInString(sql);
+        this.hasOnDuplicateKeyUpdate = prepQuery.getQueryInfo().containsOnDuplicateKeyUpdate();
 
         try {
             serverPrepare(sql);
@@ -282,7 +282,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                                     }
 
                                     // limit one generated key per OnDuplicateKey statement
-                                    getBatchedGeneratedKeys(containsOnDuplicateKeyUpdateInSQL() ? 1 : 0);
+                                    getBatchedGeneratedKeys(containsOnDuplicateKeyUpdate() ? 1 : 0);
                                 }
                             } catch (SQLException ex) {
                                 updateCounts[commandIndex] = EXECUTE_FAILED;
@@ -631,7 +631,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
     }
 
     @Override
-    protected boolean containsOnDuplicateKeyUpdateInSQL() {
+    protected boolean containsOnDuplicateKeyUpdate() {
         return this.hasOnDuplicateKeyUpdate;
     }
 
@@ -639,14 +639,14 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
     protected ClientPreparedStatement prepareBatchedInsertSQL(JdbcConnection localConn, int numBatches) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             try {
-                ClientPreparedStatement pstmt = ((Wrapper) localConn.prepareStatement(((PreparedQuery) this.query).getParseInfo().getSqlForBatch(numBatches),
+                ClientPreparedStatement pstmt = ((Wrapper) localConn.prepareStatement(((PreparedQuery) this.query).getQueryInfo().getSqlForBatch(numBatches),
                         this.resultSetConcurrency, this.query.getResultType().getIntValue())).unwrap(ClientPreparedStatement.class);
                 pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
 
                 getQueryAttributesBindings().runThroughAll(a -> ((JdbcStatement) pstmt).setAttribute(a.getName(), a.getValue()));
 
                 return pstmt;
-            } catch (UnsupportedEncodingException e) {
+            } catch (CJException e) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.27"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
                         this.exceptionInterceptor);
                 sqlEx.initCause(e);

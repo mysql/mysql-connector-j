@@ -58,7 +58,7 @@ import java.util.Map;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.ParseInfo;
+import com.mysql.cj.QueryInfo;
 import com.mysql.cj.PreparedQuery;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
@@ -2300,9 +2300,9 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     @Override
     protected boolean checkReadOnlySafeStatement() throws SQLException {
-        if (ParseInfo.isReadOnlySafeQuery(((PreparedQuery) this.query).getOriginalSql(), this.session.getServerSession().isNoBackslashEscapesSet())) {
+        if (QueryInfo.isReadOnlySafeQuery(((PreparedQuery) this.query).getOriginalSql(), this.session.getServerSession().isNoBackslashEscapesSet())) {
             String sql = ((PreparedQuery) this.query).getOriginalSql();
-            int statementKeywordPos = ParseInfo.indexOfStatementKeyword(sql, this.session.getServerSession().isNoBackslashEscapesSet());
+            int statementKeywordPos = QueryInfo.indexOfStatementKeyword(sql, this.session.getServerSession().isNoBackslashEscapesSet());
             if (StringUtils.startsWithIgnoreCaseAndWs(sql, "CALL", statementKeywordPos)
                     || StringUtils.startsWithIgnoreCaseAndWs(sql, "SELECT", statementKeywordPos)) {
                 // "CALL" and "SELECT" are read-only safe but the routine they call may not be.

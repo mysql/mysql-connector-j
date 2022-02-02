@@ -65,10 +65,6 @@ public interface BindValue {
 
     void setEscapeBytesIfNeeded(boolean val);
 
-    boolean isLoadDataQuery();
-
-    void setLoadDataQuery(boolean isLoadDataQuery);
-
     Object getValue();
 
     boolean isNational();

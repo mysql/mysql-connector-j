@@ -33,7 +33,7 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.ParseInfo;
+import com.mysql.cj.QueryInfo;
 import com.mysql.cj.QueryBindings;
 
 public interface JdbcPreparedStatement extends java.sql.PreparedStatement, JdbcStatement {
@@ -44,7 +44,7 @@ public interface JdbcPreparedStatement extends java.sql.PreparedStatement, JdbcS
 
     byte[] getBytesRepresentation(int parameterIndex) throws SQLException;
 
-    ParseInfo getParseInfo();
+    QueryInfo getQueryInfo();
 
     boolean isNull(int paramIndex) throws SQLException;
 
