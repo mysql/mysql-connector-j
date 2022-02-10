@@ -2015,10 +2015,10 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 this.autoReconnect.setValue(true);
             }
 
-            boolean isAutocommit = this.session.getServerSession().isAutocommit();
+            boolean isAutoCommit = this.session.getServerSession().isAutoCommit();
             try {
                 boolean needsSetOnServer = true;
-                if (this.useLocalSessionState.getValue() && isAutocommit == autoCommitFlag) {
+                if (this.useLocalSessionState.getValue() && isAutoCommit == autoCommitFlag) {
                     needsSetOnServer = false;
                 } else if (!this.autoReconnect.getValue()) {
                     needsSetOnServer = getSession().isSetNeededForAutoCommitMode(autoCommitFlag);
@@ -2037,7 +2037,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 throw e;
             } catch (CJException e) {
                 // Reset to current autocommit value in case of an exception different than a communication exception occurs.
-                this.session.getServerSession().setAutoCommit(isAutocommit);
+                this.session.getServerSession().setAutoCommit(isAutoCommit);
                 // Update the stacktrace.
                 throw SQLError.createSQLException(e.getMessage(), e.getSQLState(), e.getVendorCode(), e.isTransient(), e, getExceptionInterceptor());
             } finally {

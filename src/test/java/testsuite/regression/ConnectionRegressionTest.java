@@ -11562,63 +11562,109 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#104067 (33054827), No reset autoCommit after unknown issue occurs.
+     * Tests fix for Bug#106435 (33850099), 8.0.28 Connector/J has regressive in setAutoCommit after Bug#104067 (33054827).
      * 
      * @throws Exception
      */
     @Test
-    public void testBug104067() throws Exception {
+    public void testBug104067AndBug106435() throws Exception {
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug104067QueryInterceptor.class.getName());
-        Connection testConn = getConnectionWithProps(props);
-        Statement testStmt = testConn.createStatement();
 
-        // Connection vs session autocommit value:
-        // 1. Default value.
-        assertTrue(testConn.getAutoCommit());
-        this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
-        assertTrue(this.rs.next());
-        assertTrue(this.rs.getString(2).equalsIgnoreCase("ON"));
+        // Connection vs session autocommit value - error on setAutoCommit(false).
+        try (Connection testConn = getConnectionWithProps(props); Statement testStmt = testConn.createStatement()) {
+            // 1. Initial value - true.
+            assertTrue(testConn.getAutoCommit());
+            this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
+            assertTrue(this.rs.next());
+            assertEquals("ON", this.rs.getString(2).toUpperCase());
 
-        // 2. After Connection.setAutcommit(true).
-        try {
-            testConn.setAutoCommit(true);
-        } catch (SQLException e) {
-            fail("Exception not expected.", e);
+            // 2. After Connection.setAutcommit(true).
+            try {
+                testConn.setAutoCommit(true);
+            } catch (SQLException e) {
+                fail("Exception not expected.", e);
+            }
+            assertTrue(testConn.getAutoCommit());
+            this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
+            assertTrue(this.rs.next());
+            assertEquals("ON", this.rs.getString(2).toUpperCase());
+
+            // 3. After Connection.setAutcommit(false) & ERROR. 
+            assertThrows(SQLException.class, () -> {
+                testConn.setAutoCommit(false);
+                return null;
+            });
+            assertTrue(testConn.getAutoCommit());
+            this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
+            this.rs.next();
+            assertEquals("ON", this.rs.getString(2).toUpperCase());
+
+            // 4. After Connection.setAutcommit(true).
+            try {
+                testConn.setAutoCommit(true);
+            } catch (SQLException e) {
+                fail("Exception not expected.", e);
+            }
+            assertTrue(testConn.getAutoCommit());
+            this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
+            assertTrue(this.rs.next());
+            assertEquals("ON", this.rs.getString(2).toUpperCase());
         }
-        assertTrue(testConn.getAutoCommit());
-        this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
-        assertTrue(this.rs.next());
-        assertTrue(this.rs.getString(2).equalsIgnoreCase("ON"));
 
-        // 3. After Connection.setAutcommit(false).
-        assertThrows(SQLException.class, () -> {
-            testConn.setAutoCommit(false);
-            return null;
-        });
-        assertTrue(testConn.getAutoCommit());
-        this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
-        this.rs.next();
-        assertTrue(this.rs.getString(2).equalsIgnoreCase("ON"));
+        // Connection vs session autocommit value - error on setAutoCommit(true).
+        try (Connection testConn = getConnectionWithProps(props); Statement testStmt = testConn.createStatement()) {
+            Bug104067QueryInterceptor.errorOnSetTrue = true;
 
-        // 4. After Connection.setAutcommit(true).
-        try {
-            testConn.setAutoCommit(true);
-        } catch (SQLException e) {
-            fail("Exception not expected.", e);
+            // 1. Initial value - true.
+            assertTrue(testConn.getAutoCommit());
+            this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
+            assertTrue(this.rs.next());
+            assertEquals("ON", this.rs.getString(2).toUpperCase());
+
+            // 2. After Connection.setAutcommit(false)
+            try {
+                testConn.setAutoCommit(false);
+            } catch (SQLException e) {
+                fail("Exception not expected.", e);
+            }
+            assertFalse(testConn.getAutoCommit());
+            this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
+            assertTrue(this.rs.next());
+            assertEquals("OFF", this.rs.getString(2).toUpperCase());
+
+            // 3. After Connection.setAutcommit(true) & ERROR.
+            assertThrows(SQLException.class, () -> {
+                testConn.setAutoCommit(true);
+                return null;
+            });
+            assertFalse(testConn.getAutoCommit());
+            this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
+            assertTrue(this.rs.next());
+            assertEquals("OFF", this.rs.getString(2).toUpperCase());
+
+            // 4. After Connection.setAutcommit(false). 
+            try {
+                testConn.setAutoCommit(false);
+            } catch (SQLException e) {
+                fail("Exception not expected.", e);
+            }
+            assertFalse(testConn.getAutoCommit());
+            this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
+            this.rs.next();
+            assertEquals("OFF", this.rs.getString(2).toUpperCase());
         }
-        assertTrue(testConn.getAutoCommit());
-        this.rs = testStmt.executeQuery("SHOW SESSION VARIABLES LIKE 'autocommit'");
-        assertTrue(this.rs.next());
-        assertTrue(this.rs.getString(2).equalsIgnoreCase("ON"));
     }
 
     public static class Bug104067QueryInterceptor extends BaseQueryInterceptor {
+        public static boolean errorOnSetTrue = false;
+
         @Override
         public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
             String sql = str.get();
-            if (sql.equalsIgnoreCase("SET autocommit=0")) {
+            if (errorOnSetTrue && sql.equalsIgnoreCase("SET autocommit=1") || !errorOnSetTrue && sql.equalsIgnoreCase("SET autocommit=0")) {
                 throw ExceptionFactory.createException("Artificial non-connection related exception while executing \"" + sql + "\"");
             }
             return super.preProcess(str, interceptedQuery);
