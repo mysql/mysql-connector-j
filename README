@@ -26,3 +26,8 @@ Notice:
   Maven repository and add it to the CLASSPATH, or use Maven's automatic
   dependency resolution features by adding a dependency to "GroupId: mysql"
   and "ArtifactId: mysql-connector-java" to your project's pom.xml file.
+- To use OCI AIM authentication, you will need to add the external library
+  oci-java-sdk-common, which you can download manually from the official Maven
+  repository and add it to the CLASSPATH, or use Maven's automatic dependency
+  resolution features by adding a dependency to "GroupId: com.oracle.oci.sdk"
+  and "ArtifactId: oci-java-sdk-common" to your project's pom.xml file.

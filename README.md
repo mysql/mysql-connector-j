@@ -22,6 +22,11 @@ MySQL Connector/J is free for usage under the terms of the specified licensing a
 
 MySQL Connector/J can be installed from pre-compiled packages that can be downloaded from the [Connector/J download page](https://dev.mysql.com/downloads/connector/j/). Installing Connector/J only requires obtaining the corresponding JAR file from the downloaded bundle or installer and including it in the application's CLASSPATH.
 
+According to how you use Connector/J, you may also need to install the following third-party libraries on your system for it to work:
+* Protocol Buffers (protobuf-java) is required for using X DevAPI
+* Oracle Cloud Infrastructure SDK for Java (oci-java-sdk) is required to support OCI AIM authentication
+* Simple Logging Facade API (slf4j-api) is required for using the logging capabilities provided by the default implementation of org.slf4j.Logger.Slf4JLogger by Connector/J 
+
 ### As a Maven Dependency
 
 Alternatively, Connector/J can be obtained automatically via [Maven's dependency management](https://search.maven.org/search?q=g:mysql%20AND%20a:mysql-connector-java) by adding the following configuration in the application's Project Object Model (POM) file:
@@ -31,6 +36,22 @@ Alternatively, Connector/J can be obtained automatically via [Maven's dependency
   <groupId>mysql</groupId>
   <artifactId>mysql-connector-java</artifactId>
   <version>8.0.29</version>
+</dependency>
+```
+
+Connector/J's own Project Object Model (POM) file specifies a transitive dependency to Protocol Buffers (protobuf-java) since it is required for using X DevAPI. However, if you do not use the X DevAPI features, you may also want to add a dependency exclusion to avoid linking the unneeded sub-library. For example:
+
+```xml
+<dependency>
+  <groupId>mysql</groupId>
+  <artifactId>mysql-connector-java</artifactId>
+  <version>8.0.29</version>
+  <exclusions>
+    <exclusion>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+    </exclusion>
+  </exclusions> 
 </dependency>
 ```
 
