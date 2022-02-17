@@ -39,6 +39,7 @@ import java.nio.charset.CharsetEncoder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -456,9 +457,24 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
     }
 
     private boolean characterSetNamesMatches(String mysqlEncodingName) {
-        // set names is equivalent to character_set_client ..._results and ..._connection, but we set _results later, so don't check it here.
-        return (mysqlEncodingName != null && mysqlEncodingName.equalsIgnoreCase(this.serverSession.getServerVariable(CHARACTER_SET_CLIENT))
-                && mysqlEncodingName.equalsIgnoreCase(this.serverSession.getServerVariable(CHARACTER_SET_CONNECTION)));
+        boolean res = false;
+        if (mysqlEncodingName != null) {
+            // set names is equivalent to character_set_client ..._results and ..._connection, but we set _results later, so don't check it here.
+            res = (mysqlEncodingName.equalsIgnoreCase(this.serverSession.getServerVariable(CHARACTER_SET_CLIENT))
+                    && mysqlEncodingName.equalsIgnoreCase(this.serverSession.getServerVariable(CHARACTER_SET_CONNECTION)));
+            // if still doesn't match then checking aliases
+            List<String> aliases;
+            if (!res && (aliases = CharsetMapping.getStaticMysqlCharsetAliasesByName(mysqlEncodingName)) != null) {
+                for (String alias : aliases) {
+                    if (res = (alias.equalsIgnoreCase(this.serverSession.getServerVariable(CHARACTER_SET_CLIENT))
+                            && alias.equalsIgnoreCase(this.serverSession.getServerVariable(CHARACTER_SET_CONNECTION)))) {
+                        break;
+                    }
+                }
+            }
+        }
+        return res;
+
     }
 
     /**

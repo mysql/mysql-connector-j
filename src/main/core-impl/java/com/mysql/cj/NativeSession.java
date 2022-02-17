@@ -461,8 +461,7 @@ public class NativeSession extends CoreSession implements Serializable {
                     if ((r = rs.getRows().next()) != null) {
                         for (int i = 0; i < f.length; i++) {
                             String value = r.getValue(i, vf);
-                            this.protocol.getServerSession().getServerVariables().put(f[i].getColumnLabel(),
-                                    "utf8mb3".equalsIgnoreCase(value) ? "utf8" : value); // recent server versions return "utf8mb3" instead of "utf8"
+                            this.protocol.getServerSession().getServerVariables().put(f[i].getColumnLabel(), value);
                         }
                     }
                 }

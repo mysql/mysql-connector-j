@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -661,6 +661,8 @@ public class CharsetRegressionTest extends BaseTestCase {
                 "This test requires server configured with character_set_server=utf8mb4 and collation-server set to one of utf8mb4 collations.");
 
         Properties p = new Properties();
+        p.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        p.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
         p.setProperty(PropertyKey.queryInterceptors.getKeyName(), Bug73663QueryInterceptor.class.getName());
 
@@ -833,6 +835,8 @@ public class CharsetRegressionTest extends BaseTestCase {
         String fallbackCollation = versionMeetsMinimum(8, 0, 1) ? "utf8mb4_0900_ai_ci" : "utf8mb4_general_ci";
 
         Properties p = new Properties();
+        p.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        p.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         p.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
         p.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestSetNamesQueryInterceptor.class.getName());
         checkCollationConnection(p, "SET NAMES", false, fallbackCollation);

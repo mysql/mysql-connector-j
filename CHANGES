@@ -3,6 +3,8 @@
 
 Version 8.0.29
 
+  - Fix for Bug#106441 (33850155), Add charset mapping for utf8mb3.
+
   - WL#15048, Upgrade Protocol Buffers dependency to protobuf-java-3.19.4.
 
   - Fix for Bug#106065 (33726184) Contribution: BigDecimal.toPlainString no need to check decimal exponent.
