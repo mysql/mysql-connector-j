@@ -1859,6 +1859,44 @@ public class StatementsTest extends BaseTestCase {
     }
 
     @Test
+    public void testEOFPacketForPrepareStmt() throws Exception {
+        Properties props = new Properties();
+        props.setProperty("useServerPrepStmts", "true");
+
+        Connection testConn = getConnectionWithProps(props);
+
+        Session session = ((JdbcConnection) (testConn)).getSession();
+
+        boolean checkEOF = !session.getServerSession().isEOFDeprecated();
+
+        try {
+            ServerPreparedQuery query = ServerPreparedQuery.getInstance((NativeSession) session);
+
+            // two placeholders (?) and one column (col1)
+            query.serverPrepare("SELECT CONCAT(?, ?) as col1;");
+
+            if (checkEOF) {
+                // check the Parameter Definition Block and make sure both of the fields are not null
+                assertEquals(query.getParameterFields().length, 2);
+                assertNotNull(query.getParameterFields()[0]);
+                assertNotNull(query.getParameterFields()[1]);
+
+                // check the Column Definition Block and make sure the field is not null
+                assertEquals(query.getResultFields().getFields().length, 1);
+                assertNotNull(query.getResultFields().getFields()[0]);
+
+                // Should be 6 packets in total:
+                // one description packet
+                // Parameter Definition Block: two Parameter definition packets and one EOF packet
+                // Column Definition Block: one Column definition packets and one EOF packet
+                assertEquals(query.session.getProtocol().getPacketReader().getMessageSequence(), 6);
+            }
+        } finally {
+            testConn.close();
+        }
+    }
+
+    @Test
     public void testLocalInfileHooked() throws Exception {
         this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'local_infile'");
         assumeTrue(this.rs.next() && "ON".equalsIgnoreCase(this.rs.getString(2)), "This test requires the server started with --local-infile=ON");
