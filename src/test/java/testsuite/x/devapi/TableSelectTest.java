@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1152,5 +1152,48 @@ public class TableSelectTest extends BaseTableTestCase {
             assertEquals(expectedMin++, r.getInt("ord"));
         }
         assertEquals(expectedMax, expectedMin - 1);
+    }
+
+    /**
+     * Tests server Bug#31667405, INCORRECT PREPARED STATEMENT OUTCOME WITH NUMERIC STRINGS IN JSON.
+     */
+    @Test
+    public void testBug31667405() {
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.14")), "MySQL 8.0.14+ is required to run this test.");
+
+        try {
+            // Prepare test data.
+            sqlUpdate("DROP TABLE IF EXISTS testBug31667405");
+            sqlUpdate("CREATE TABLE testBug31667405 (doc JSON)");
+            sqlUpdate("INSERT INTO testBug31667405 VALUES ('{\"ord\":\"1\"}')");
+
+            SessionFactory sf = new SessionFactory();
+            Session testSession = sf.getSession(this.testProperties);
+
+            int sessionThreadId = getThreadId(testSession);
+            assertPreparedStatementsCount(sessionThreadId, 0, 1);
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            Table testTbl = testSession.getDefaultSchema().getTable("testBug31667405");
+
+            // Initialize SelectStatement object.
+            SelectStatement testSelect2 = testTbl.select().where("$.ord == :n");
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect2, 0, -1);
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            // A. Set binds: 1st execute -> non-prepared.
+            testSelect2.bind("n", "1").execute();
+            assertPreparedStatementsCountsAndId(testSession, 0, testSelect2, 0, -1);
+            assertPreparedStatementsStatusCounts(testSession, 0, 0, 0);
+
+            // B. Set binds reuse statement: 2nd execute -> prepare + execute.
+            RowResult res = testSelect2.bind("n", "1").execute();
+            assertEquals(1, res.count());
+
+            assertPreparedStatementsCountsAndId(testSession, 1, testSelect2, 1, 1);
+            assertPreparedStatementsStatusCounts(testSession, 1, 1, 0);
+        } finally {
+            sqlUpdate("DROP TABLE IF EXISTS testBug31667405");
+        }
     }
 }
