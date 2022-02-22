@@ -12041,4 +12041,53 @@ public class StatementRegressionTest extends BaseTestCase {
         } while ((useSPS = !useSPS) || (rewriteBS = !rewriteBS));
 
     }
+
+    /**
+     * Tests fix for Bug#104349 (33563548), com.mysql.cj NPE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug104349() throws Exception {
+        createTable("testBug104349", "(col1 INT, col2 VARCHAR(100))");
+
+        this.stmt.executeUpdate("INSERT INTO testBug104349 VALUES (1, 'key 1')");
+        this.stmt.executeUpdate("INSERT INTO testBug104349 VALUES (2, 'key 2')");
+        this.stmt.executeUpdate("INSERT INTO testBug104349 VALUES (3, 'key 3')");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useSSL.getKeyName(), "false");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "true");
+
+        boolean useSPS = false;
+        do {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSPS);
+            Connection testConn = getConnectionWithProps(props);
+
+            PreparedStatement ps = testConn.prepareStatement("SELECT * FROM testBug104349 WHERE col1 = ?");
+            assertTrue(ps.toString().endsWith("SELECT * FROM testBug104349 WHERE col1 = ** NOT SPECIFIED **"));
+            ps.setInt(1, 1);
+            assertTrue(ps.toString().endsWith("SELECT * FROM testBug104349 WHERE col1 = 1"));
+            this.rs = ps.executeQuery();
+            assertTrue(ps.toString().endsWith("SELECT * FROM testBug104349 WHERE col1 = 1"));
+            while (this.rs.next()) {
+                assertEquals(1, this.rs.getInt(1));
+                assertEquals("key 1", this.rs.getString(2));
+            }
+            ps.close();
+            ps = testConn.prepareStatement("SELECT * FROM testBug104349 WHERE col1 = ?");
+            assertTrue(ps.toString().endsWith("SELECT * FROM testBug104349 WHERE col1 = ** NOT SPECIFIED **"));
+            ps.setInt(1, 2);
+            assertTrue(ps.toString().endsWith("SELECT * FROM testBug104349 WHERE col1 = 2"));
+            this.rs = ps.executeQuery();
+            assertTrue(ps.toString().endsWith("SELECT * FROM testBug104349 WHERE col1 = 2"));
+            while (this.rs.next()) {
+                assertEquals(2, this.rs.getInt(1));
+                assertEquals("key 2", this.rs.getString(2));
+            }
+            testConn.close();
+
+        } while (useSPS = !useSPS);
+    }
 }

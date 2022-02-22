@@ -23,6 +23,8 @@ Version 8.0.29
 
   - Fix for Bug#105915 (33678490), Connector/J 8 server prepared statement precision loss in execute batch.
 
+  - Fix for Bug#104349 (33563548), com.mysql.cj NPE.
+
   - WL#14750, Better unification of query bindings.
 
   - WL#14834, Support for FIDO authentication.
