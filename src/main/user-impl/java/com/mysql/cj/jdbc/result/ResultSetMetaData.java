@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,6 +30,7 @@
 package com.mysql.cj.jdbc.result;
 
 import java.sql.SQLException;
+import java.sql.Types;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
@@ -185,7 +186,11 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     @Override
     public int getColumnType(int column) throws SQLException {
-        return getField(column).getJavaType();
+        Field f = getField(column);
+        if (f.getMysqlType() == MysqlType.YEAR && !this.treatYearAsDate) {
+            return Types.SMALLINT;
+        }
+        return f.getJavaType();
     }
 
     @Override

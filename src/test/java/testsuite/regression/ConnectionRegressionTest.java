@@ -6560,7 +6560,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.rs = con.createStatement().executeQuery("SHOW VARIABLES");
             while (this.rs.next()) {
                 String val = this.rs.getString(2);
-                serverVariables.put(this.rs.getString(1), "utf8mb3".equals(val) ? "utf8" : val);
+                serverVariables.put(this.rs.getString(1), val);
             }
 
             // fix the renaming of "tx_isolation" to "transaction_isolation" that is made in NativeSession.loadServerVariables().

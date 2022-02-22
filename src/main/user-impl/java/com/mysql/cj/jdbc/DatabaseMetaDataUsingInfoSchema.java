@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,6 +32,7 @@ package com.mysql.cj.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -1233,7 +1234,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                         buf.append(mysqlType.getJdbcType());
                     }
                     break;
-
+                case YEAR:
+                    buf.append(this.yearIsDateType ? mysqlType.getJdbcType() : Types.SMALLINT);
+                    break;
                 default:
                     buf.append(mysqlType.getJdbcType());
             }

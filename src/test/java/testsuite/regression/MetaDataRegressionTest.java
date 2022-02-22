@@ -67,6 +67,7 @@ import org.opentest4j.AssertionFailedError;
 import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.Constants;
 import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeCharsetSettings;
 import com.mysql.cj.Query;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
@@ -3987,7 +3988,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         rsMetaData = this.rs.getMetaData();
 
         assertTrue(this.rs.next());
-        assertEquals(Types.DATE, rsMetaData.getColumnType(1), "YEAR columns should be treated as java.sql.Types.DATE");
+        assertEquals(Types.SMALLINT, rsMetaData.getColumnType(1), "YEAR columns should be treated as java.sql.Types.SMALLINT");
         assertEquals("YEAR", rsMetaData.getColumnTypeName(1), "YEAR columns should be identified as 'YEAR'");
         assertEquals(java.lang.Short.class.getName(), rsMetaData.getColumnClassName(1), "YEAR columns should be mapped to java.lang.Short");
         assertEquals(java.lang.Short.class.getName(), this.rs.getObject(1).getClass().getName(), "YEAR columns should be returned as java.lang.Short");
@@ -5407,5 +5408,61 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         DatabaseMetaData dbmd = this.conn.getMetaData();
         assertEquals(Connection.TRANSACTION_REPEATABLE_READ, dbmd.getDefaultTransactionIsolation());
+    }
+
+    /**
+     * Tests fix for Bug#82084 (23743938), YEAR DATA TYPE RETURNS INCORRECT VALUE FOR JDBC GETCOLUMNTYPE().
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug82084() throws Exception {
+        createProcedure("testBug82084p", "(in param1 int, out result year) BEGIN select 1, ''; END");
+        createTable("testBug82084", "(col_tiny SMALLINT, col_year year, col_date date)");
+        this.stmt.executeUpdate("INSERT INTO testBug82084 VALUES(1,2006, '2006-01-01')");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+
+        for (boolean useIS : new Boolean[] { true, false }) {
+            for (boolean yearIsDate : new Boolean[] { true, false }) {
+                props.setProperty(PropertyKey.yearIsDateType.getKeyName(), "" + yearIsDate);
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                Connection con = getConnectionWithProps(props);
+
+                DatabaseMetaData dbmd = con.getMetaData();
+                this.rs = dbmd.getColumns(null, null, "testBug82084", "%year");
+                assertTrue(this.rs.next());
+                assertEquals(MysqlType.YEAR.getName(), this.rs.getString("TYPE_NAME"));
+                assertEquals(yearIsDate ? Types.DATE : Types.SMALLINT, this.rs.getInt("DATA_TYPE"));
+
+                this.rs = dbmd.getTypeInfo();
+                while (this.rs.next()) {
+                    if (this.rs.getString("TYPE_NAME").equals("YEAR")) {
+                        assertEquals(yearIsDate ? Types.DATE : Types.SMALLINT, this.rs.getInt("DATA_TYPE"));
+                        break;
+                    }
+                }
+
+                ResultSet procMD = con.getMetaData().getProcedureColumns(null, null, "testBug82084p", "%result");
+                assertTrue(procMD.next());
+                assertEquals(MysqlType.YEAR.getName(), procMD.getString("TYPE_NAME"));
+                assertEquals(yearIsDate ? Types.DATE : Types.SMALLINT, procMD.getInt("DATA_TYPE"));
+
+                this.rs = con.createStatement().executeQuery("select * from testBug82084");
+                ResultSetMetaData rsmd = this.rs.getMetaData();
+
+                assertEquals(MysqlType.YEAR.getName(), rsmd.getColumnTypeName(2));
+                if (yearIsDate) {
+                    assertEquals(Types.DATE, rsmd.getColumnType(2));
+                    assertEquals(java.sql.Date.class.getName(), rsmd.getColumnClassName(2));
+                } else {
+                    assertEquals(Types.SMALLINT, rsmd.getColumnType(2));
+                    assertEquals(Short.class.getName(), rsmd.getColumnClassName(2));
+                }
+
+                con.close();
+            }
+        }
     }
 }
