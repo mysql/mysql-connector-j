@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -91,7 +91,7 @@ public class StandardSocketFactory implements SocketFactory {
      * @throws IOException
      *             if an error occurs
      */
-    private void configureSocket(Socket sock, PropertySet pset) throws SocketException, IOException {
+    protected void configureSocket(Socket sock, PropertySet pset) throws SocketException, IOException {
         sock.setTcpNoDelay(pset.getBooleanProperty(PropertyKey.tcpNoDelay).getValue());
         sock.setKeepAlive(pset.getBooleanProperty(PropertyKey.tcpKeepAlive).getValue());
 
@@ -118,15 +118,12 @@ public class StandardSocketFactory implements SocketFactory {
 
         if (pset != null) {
             this.host = hostname;
-
             this.port = portNumber;
 
             String localSocketHostname = pset.getStringProperty(PropertyKey.localSocketAddress).getValue();
-            InetSocketAddress localSockAddr = null;
-            if (localSocketHostname != null && localSocketHostname.length() > 0) {
-                localSockAddr = new InetSocketAddress(InetAddress.getByName(localSocketHostname), 0);
-            }
-
+            InetSocketAddress localSockAddr = localSocketHostname != null && localSocketHostname.length() > 0
+                    ? new InetSocketAddress(InetAddress.getByName(localSocketHostname), 0)
+                    : null;
             int connectTimeout = pset.getIntegerProperty(PropertyKey.connectTimeout).getValue();
 
             if (this.host != null) {

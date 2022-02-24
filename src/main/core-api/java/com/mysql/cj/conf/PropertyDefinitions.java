@@ -298,6 +298,9 @@ public class PropertyDefinitions {
                 new IntegerPropertyDefinition(PropertyKey.socksProxyPort, 1080, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.socksProxyPort"),
                         "5.1.34", CATEGORY_NETWORK, 2, 0, 65535),
 
+                new BooleanPropertyDefinition(PropertyKey.socksProxyRemoteDns, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.socksProxyRemoteDns"), "8.0.29", CATEGORY_NETWORK, Integer.MIN_VALUE),
+
                 new IntegerPropertyDefinition(PropertyKey.socketTimeout, 0, RUNTIME_MODIFIABLE, Messages.getString("ConnectionProperties.socketTimeout"),
                         "3.0.1", CATEGORY_NETWORK, 10, 0, Integer.MAX_VALUE),
 

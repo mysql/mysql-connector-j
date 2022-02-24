@@ -216,6 +216,7 @@ public enum PropertyKey {
     socketTimeout("socketTimeout", true), //
     socksProxyHost("socksProxyHost", true), //
     socksProxyPort("socksProxyPort", true), //
+    socksProxyRemoteDns("socksProxyRemoteDns", true), //
     sslMode("sslMode", true), //
     strictUpdates("strictUpdates", true), //
     tcpKeepAlive("tcpKeepAlive", true), //

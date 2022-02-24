@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,9 +29,13 @@
 
 package com.mysql.cj.protocol;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Socket;
+import java.net.SocketException;
 
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
@@ -47,4 +51,52 @@ public class SocksProxySocketFactory extends StandardSocketFactory {
         int socksProxyPort = props.getIntegerProperty(PropertyKey.socksProxyPort).getValue();
         return new Socket(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(socksProxyHost, socksProxyPort)));
     }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Closeable> T connect(String hostname, int portNumber, PropertySet pset, int loginTimeout) throws IOException {
+        if (!pset.getBooleanProperty(PropertyKey.socksProxyRemoteDns).getValue()) {
+            // fall back to the parent connection procedure
+            return super.connect(hostname, portNumber, pset, loginTimeout);
+        }
+
+        // proceed without local DNS resolution
+        this.loginTimeoutCountdown = loginTimeout;
+
+        if (pset != null && hostname != null) {
+            this.host = hostname;
+            this.port = portNumber;
+
+            String localSocketHostname = pset.getStringProperty(PropertyKey.localSocketAddress).getValue();
+            InetSocketAddress localSockAddr = localSocketHostname != null && localSocketHostname.length() > 0
+                    ? new InetSocketAddress(InetAddress.getByName(localSocketHostname), 0)
+                    : null;
+            int connectTimeout = pset.getIntegerProperty(PropertyKey.connectTimeout).getValue();
+
+            // save last exception to propagate to caller if connection fails
+            try {
+                this.rawSocket = createSocket(pset);
+                configureSocket(this.rawSocket, pset);
+
+                // bind to the local port if not using the ephemeral port
+                if (localSockAddr != null) {
+                    this.rawSocket.bind(localSockAddr);
+                }
+
+                this.rawSocket.connect(InetSocketAddress.createUnresolved(this.host, this.port), getRealTimeout(connectTimeout));
+
+            } catch (SocketException ex) {
+                this.rawSocket = null;
+                throw ex;
+            }
+
+            resetLoginTimeCountdown();
+
+            this.sslSocket = this.rawSocket;
+            return (T) this.rawSocket;
+        }
+
+        throw new SocketException("Unable to create socket");
+    }
+
 }
