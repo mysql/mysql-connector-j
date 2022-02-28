@@ -32,6 +32,8 @@ Version 8.0.29
 
   - Fix for Bug#104349 (33563548), com.mysql.cj NPE.
 
+  - Fix for Bug#62006 (16714956), JAVA.IO.NOTSERIALIZABLEEXCEPTION: JAVA.IO.STRINGREADER WHEN PROFILESQL=TRUE.
+
   - WL#14750, Better unification of query bindings.
 
   - WL#14834, Support for FIDO authentication.

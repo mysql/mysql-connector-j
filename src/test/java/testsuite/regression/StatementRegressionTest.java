@@ -12090,4 +12090,33 @@ public class StatementRegressionTest extends BaseTestCase {
 
         } while (useSPS = !useSPS);
     }
+
+    /**
+     * Tests for Bug#62006 (16714956), JAVA.IO.NOTSERIALIZABLEEXCEPTION: JAVA.IO.STRINGREADER WHEN PROFILESQL=TRUE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug62006() throws Exception {
+        createTable("testBug62006", "(f1 longtext)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.profileSQL.getKeyName(), "true");
+
+        boolean useSPS = false;
+        do {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSPS);
+            Connection testConn = getConnectionWithProps(props);
+            this.pstmt = testConn.prepareStatement("insert into testBug62006 values(?)");
+            this.pstmt.setObject(1, new StringReader("test"), java.sql.Types.LONGVARCHAR, 0);
+            this.pstmt.execute();
+            this.pstmt.setObject(1, new StringReader("test"), java.sql.Types.LONGVARCHAR, 1);
+            this.pstmt.execute();
+            this.pstmt.setObject(1, new StringReader("test"));
+            this.pstmt.execute();
+            testConn.close();
+        } while (useSPS = !useSPS);
+    }
 }
