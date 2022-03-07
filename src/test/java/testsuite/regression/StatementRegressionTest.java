@@ -29,6 +29,7 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -12168,4 +12169,120 @@ public class StatementRegressionTest extends BaseTestCase {
                     () -> testConn.prepareStatement("INSERT INTO testBug106240 VALUES/* (?, ?) */ON DUPLICATE KEY UPDATE").execute());
         } while (useSPS = !useSPS);
     }
+
+    /**
+     * Tests for Bug#81468 (23312764), MySQL server fails to rewrite batch insert when column name contains word select.
+     * Resolved by fix for Bug#106240 (33781440), StringIndexOutOfBoundsException when VALUE is at the end of the query.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug81468() throws Exception {
+        createTable("testBug81468", "(selection INT)"); // Column has to contain "select" in its name.
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestBug81468QueryInterceptor.class.getName());
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+        props.setProperty(PropertyKey.continueBatchOnError.getKeyName(), "false");
+        props.setProperty(PropertyKey.emulateUnsupportedPstmts.getKeyName(), "true");
+
+        boolean useSPS = false;
+
+        do {
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            Connection testConn = getConnectionWithProps(props);
+
+            // Re-writes in a single query with three values.
+            TestBug81468QueryInterceptor.resetExpectedValues(1, 1, 3);
+            PreparedStatement testPStmt = testConn.prepareStatement("INSERT INTO testBug81468 (selection) VALUES (?)");
+            testPStmt.setInt(1, 11);
+            testPStmt.addBatch();
+            testPStmt.setInt(1, 12);
+            testPStmt.addBatch();
+            testPStmt.setInt(1, 13);
+            testPStmt.addBatch();
+            assertArrayEquals(new int[] { Statement.SUCCESS_NO_INFO, Statement.SUCCESS_NO_INFO, Statement.SUCCESS_NO_INFO }, testPStmt.executeBatch());
+            testPStmt.close();
+
+            // Re-writes in a single query with five values.
+            TestBug81468QueryInterceptor.resetExpectedValues(1, 1, 5);
+            testPStmt = testConn.prepareStatement("INSERT INTO testBug81468 (selection) VALUES (?)");
+            testPStmt.setInt(1, 21);
+            testPStmt.addBatch();
+            testPStmt.setInt(1, 22);
+            testPStmt.addBatch();
+            testPStmt.setInt(1, 23);
+            testPStmt.addBatch();
+            testPStmt.setInt(1, 24);
+            testPStmt.addBatch();
+            testPStmt.setInt(1, 25);
+            testPStmt.addBatch();
+            assertArrayEquals(new int[] { Statement.SUCCESS_NO_INFO, Statement.SUCCESS_NO_INFO, Statement.SUCCESS_NO_INFO, Statement.SUCCESS_NO_INFO,
+                    Statement.SUCCESS_NO_INFO }, testPStmt.executeBatch());
+            testPStmt.close();
+
+            // Not enough queries to trigger the query re-write feature.
+            TestBug81468QueryInterceptor.resetExpectedValues(3, 1, 1);
+            Statement testStmt = testConn.createStatement();
+            testStmt.addBatch("INSERT INTO testBug81468 (selection) VALUES (31)");
+            testStmt.addBatch("INSERT INTO testBug81468 (selection) VALUES (32)");
+            testStmt.addBatch("INSERT INTO testBug81468 (selection) VALUES (33)");
+            assertArrayEquals(new int[] { 1, 1, 1 }, testStmt.executeBatch());
+            testStmt.close();
+
+            // Five or more queries triggers the query re-write feature.
+            TestBug81468QueryInterceptor.resetExpectedValues(1, 5, 5);
+            testStmt = testConn.createStatement();
+            testStmt.addBatch("INSERT INTO testBug81468 (selection) VALUES (41)");
+            testStmt.addBatch("INSERT INTO testBug81468 (selection) VALUES (42)");
+            testStmt.addBatch("INSERT INTO testBug81468 (selection) VALUES (43)");
+            testStmt.addBatch("INSERT INTO testBug81468 (selection) VALUES (44)");
+            testStmt.addBatch("INSERT INTO testBug81468 (selection) VALUES (45)");
+            assertArrayEquals(new int[] { 1, 1, 1, 1, 1 }, testStmt.executeBatch());
+            testStmt.close();
+
+            testConn.close();
+        } while (useSPS = !useSPS);
+    }
+
+    public static class TestBug81468QueryInterceptor extends BaseQueryInterceptor {
+        private static int expectedNumberOfExecutions = 0;
+        private static int expectedNumberOfQueries = 0;
+        private static int expectedNumberOfValues = 0;
+        private static int executionsCount = 0;
+
+        static void resetExpectedValues(int expExecs, int expQueries, int expVals) {
+            expectedNumberOfExecutions = expExecs;
+            expectedNumberOfQueries = expQueries;
+            expectedNumberOfValues = expVals;
+            executionsCount = 0;
+        }
+
+        @Override
+        public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
+            String query = sql.get();
+            if (query.contains("testBug81468")) {
+                assertTrue(++executionsCount <= expectedNumberOfExecutions,
+                        "Too many statement executions. The query [" + query + "] should have been re-written");
+                assertEquals(expectedNumberOfQueries, countQueries(query), "Wrong number of queries in [" + query + "]");
+                assertEquals(expectedNumberOfValues, countValues(query));
+            }
+            return super.preProcess(sql, interceptedQuery);
+        }
+
+        private int countQueries(String query) {
+            return query.split(";").length;
+        }
+
+        private int countValues(String query) {
+            query += "/* junk */"; // Add some junk to the end of the query so that the following split allows counting the values correctly.
+            if (query.contains("?")) {
+                return query.split("\\(\\?\\)").length - 1;
+            }
+            return query.split("\\(\\d{2}\\)").length - 1;
+        }
+    }
+
 }
