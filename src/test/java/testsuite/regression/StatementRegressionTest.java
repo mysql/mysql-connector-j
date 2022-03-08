@@ -102,6 +102,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
@@ -12285,4 +12286,98 @@ public class StatementRegressionTest extends BaseTestCase {
         }
     }
 
+    /**
+     * Tests for Bug#21978230, COMMENT PARSING NOT PROPER IN PREPSTMT.EXECUTEBATCH().
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug21978230() throws Exception {
+        createTable("testBug21978230", "(c1 INT, c2 INT, t VARCHAR(100))");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+        props.setProperty(PropertyKey.continueBatchOnError.getKeyName(), "false");
+        props.setProperty(PropertyKey.emulateUnsupportedPstmts.getKeyName(), "true");
+        Connection testConn = getConnectionWithProps(props);
+
+        Consumer<String> runQueryAndAssertResults = (query) -> {
+            try {
+                this.pstmt = testConn.prepareStatement(query);
+                this.pstmt.setInt(1, 1);
+                this.pstmt.setInt(2, 10);
+                this.pstmt.setString(3, "A");
+                this.pstmt.setString(4, "A");
+                this.pstmt.addBatch();
+                this.pstmt.setInt(1, 2);
+                this.pstmt.setInt(2, 20);
+                this.pstmt.setString(3, "B");
+                this.pstmt.setString(4, "B");
+                this.pstmt.addBatch();
+                this.pstmt.setInt(1, 3);
+                this.pstmt.setInt(2, 30);
+                this.pstmt.setString(3, "C");
+                this.pstmt.setString(4, "C");
+                this.pstmt.addBatch();
+                this.pstmt.setInt(1, 4);
+                this.pstmt.setInt(2, 40);
+                this.pstmt.setString(3, "D");
+                this.pstmt.setString(4, "D");
+                this.pstmt.addBatch();
+                this.pstmt.executeBatch();
+
+                this.rs = this.stmt.executeQuery("SELECT * FROM testBug21978230");
+                for (int i = 1; i <= 4; i++) {
+                    assertTrue(this.rs.next());
+                    assertEquals(i, this.rs.getInt(1));
+                    assertEquals(i * 10, this.rs.getInt(2));
+                    char chr = (char) ('A' + i - 1);
+                    assertEquals(chr + "^^^^" + chr, this.rs.getString(3));
+                }
+                assertFalse(this.rs.next());
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        };
+
+        /*
+         * Expected: "Parameter index out of range".
+         */
+        this.stmt.execute("TRUNCATE TABLE testBug21978230");
+        Exception ex = assertThrows(RuntimeException.class, ".*Parameter index out of range \\(3 > number of parameters, which is 2\\)\\.", () -> {
+            runQueryAndAssertResults.accept("REPLACE INTO testBug21978230 VALUES (?, ?, /*/ CONCAT(?, '^^^^', ?)) /*ON DUPLICATE KEY UPDATE v=concat(v,?)*/");
+            return null;
+        });
+        assertEquals(ex.getCause().getClass(), SQLException.class);
+
+        this.stmt.execute("TRUNCATE TABLE testBug21978230");
+        ex = assertThrows(RuntimeException.class, ".*Parameter index out of range \\(3 > number of parameters, which is 2\\)\\.", () -> {
+            runQueryAndAssertResults.accept("INSERT INTO testBug21978230 VALUES (?, ?, /*/ CONCAT(?, '^^^^', ?)) /*ON DUPLICATE KEY UPDATE v=concat(v,?)*/");
+            return null;
+        });
+        assertEquals(ex.getCause().getClass(), SQLException.class);
+
+        /*
+         * Expected: 4 records inserted in each query
+         */
+        this.stmt.execute("TRUNCATE TABLE testBug21978230");
+        runQueryAndAssertResults.accept("REPLACE INTO testBug21978230 VALUES (?, ?, /**/ CONCAT(?, '^^^^', ?)) /*ON DUPLICATE KEY UPDATE v=concat(v,?)*/");
+
+        this.stmt.execute("TRUNCATE TABLE testBug21978230");
+        runQueryAndAssertResults.accept("INSERT INTO testBug21978230 VALUES (?, ?, /**/ CONCAT(?, '^^^^', ?)) /*ON DUPLICATE KEY UPDATE v=concat(v,?)*/");
+
+        this.stmt.execute("TRUNCATE TABLE testBug21978230");
+        runQueryAndAssertResults.accept("REPLACE INTO testBug21978230 VALUES (?, ?, concat(?, '^^^^', ?)) /*ON DUPLICATE KEY UPDaTE v=concat(v,?)*/");
+
+        this.stmt.execute("TRUNCATE TABLE testBug21978230");
+        runQueryAndAssertResults.accept("INSERT INTO testBug21978230 VALUES (?, ?, concat(?, '^^^^', ?)) /*ON DUPLICATE KEY UPDaTE v=concat(v,?)*/");
+
+        this.stmt.execute("TRUNCATE TABLE testBug21978230");
+        runQueryAndAssertResults.accept("REPLACE INTO testBug21978230 VALUES(?, ?, /* comment */CONCAT(?, '^^^^', ?))");
+
+        this.stmt.execute("TRUNCATE TABLE testBug21978230");
+        runQueryAndAssertResults.accept("INSERT INTO testBug21978230 VALUES(?, ?, /* comment */CONCAT(?, '^^^^', ?))");
+    }
 }

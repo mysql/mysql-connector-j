@@ -3,6 +3,8 @@
 
 Version 8.0.29
 
+  - Fix for Bug#21978230, COMMENT PARSING NOT PROPER IN PREPSTMT.EXECUTEBATCH().
+
   - Fix for Bug#81468 (23312764), MySQL server fails to rewrite batch insert when column name contains word select.
 
   - Fix for Bug#106435 (33850099), 8.0.28 Connector/J has regressive in setAutoCommit after Bug#104067 (33054827).
