@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.30
+
 Version 8.0.29
 
   - Fix for Bug#21978230, COMMENT PARSING NOT PROPER IN PREPSTMT.EXECUTEBATCH().
