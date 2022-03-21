@@ -12380,4 +12380,163 @@ public class StatementRegressionTest extends BaseTestCase {
         this.stmt.execute("TRUNCATE TABLE testBug21978230");
         runQueryAndAssertResults.accept("INSERT INTO testBug21978230 VALUES(?, ?, /* comment */CONCAT(?, '^^^^', ?))");
     }
+
+    /**
+     * Tests for Bug#76623 (20856749), JDBC driver misinterprets "--" as a comment, instead of "-- ".
+     * 
+     * Fixed in Connector/J 8.0.27 under fix for Bug#71929 (18346501), Prefixing query with double comments cancels query DML validation.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug76623() throws Exception {
+        this.rs = this.stmt.executeQuery("SELECT 1--2");
+        assertTrue(this.rs.next());
+        assertEquals(3, this.rs.getInt(1));
+
+        this.rs = this.stmt.executeQuery("SELECT 1 --2");
+        assertTrue(this.rs.next());
+        assertEquals(3, this.rs.getInt(1));
+
+        this.rs = this.stmt.executeQuery("SELECT 1 - -2");
+        assertTrue(this.rs.next());
+        assertEquals(3, this.rs.getInt(1));
+
+        this.rs = this.stmt.executeQuery("SELECT 1-- 2");
+        assertTrue(this.rs.next());
+        assertEquals(1, this.rs.getInt(1));
+
+        this.rs = this.stmt.executeQuery("SELECT 1 -- 2");
+        assertTrue(this.rs.next());
+        assertEquals(1, this.rs.getInt(1));
+
+        boolean useSPS = false;
+        do {
+            String expectedErrMsg = useSPS ? "No parameters specified during prepareStatement\\(\\) or prepareCall\\(\\)"
+                    : "Parameter index out of range \\(1 > number of parameters, which is 0\\)\\.";
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            Connection testConn = getConnectionWithProps(props);
+
+            this.pstmt = testConn.prepareStatement("SELECT 1--2 + ?");
+            this.pstmt.setInt(1, 3);
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(6, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 --2 + ?");
+            this.pstmt.setInt(1, 3);
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(6, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 - -2 + ?");
+            this.pstmt.setInt(1, 3);
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(6, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1-- 2 + ?");
+            assertThrows(SQLException.class, expectedErrMsg, () -> {
+                this.pstmt.setInt(1, 3);
+                return null;
+            });
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 -- 2 + ?");
+            assertThrows(SQLException.class, expectedErrMsg, () -> {
+                this.pstmt.setInt(1, 3);
+                return null;
+            });
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 -- 2--?");
+            assertThrows(SQLException.class, expectedErrMsg, () -> {
+                this.pstmt.setInt(1, 3);
+                return null;
+            });
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 -- 2 --?");
+            assertThrows(SQLException.class, expectedErrMsg, () -> {
+                this.pstmt.setInt(1, 3);
+                return null;
+            });
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 -- 2 - -?");
+            assertThrows(SQLException.class, expectedErrMsg, () -> {
+                this.pstmt.setInt(1, 3);
+                return null;
+            });
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 -- 2-- ?");
+            assertThrows(SQLException.class, expectedErrMsg, () -> {
+                this.pstmt.setInt(1, 3);
+                return null;
+            });
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 -- 2 -- ?");
+            assertThrows(SQLException.class, expectedErrMsg, () -> {
+                this.pstmt.setInt(1, 3);
+                return null;
+            });
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 - -2--?");
+            this.pstmt.setInt(1, 3);
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(6, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 - -2 --?");
+            this.pstmt.setInt(1, 3);
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(6, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 - -2 - -?");
+            this.pstmt.setInt(1, 3);
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(6, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 - -2-- ?");
+            assertThrows(SQLException.class, expectedErrMsg, () -> {
+                this.pstmt.setInt(1, 3);
+                return null;
+            });
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(3, this.rs.getInt(1));
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 - -2 -- ?");
+            assertThrows(SQLException.class, expectedErrMsg, () -> {
+                this.pstmt.setInt(1, 3);
+                return null;
+            });
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(3, this.rs.getInt(1));
+
+            testConn.close();
+        } while (useSPS = !useSPS);
+    }
 }

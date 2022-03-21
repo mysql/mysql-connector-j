@@ -3,6 +3,8 @@
 
 Version 8.0.30
 
+  - Fix for Bug#76623 (20856749), JDBC driver misinterprets "--" as a comment, instead of "-- ".
+
 Version 8.0.29
 
   - Fix for Bug#21978230, COMMENT PARSING NOT PROPER IN PREPSTMT.EXECUTEBATCH().
