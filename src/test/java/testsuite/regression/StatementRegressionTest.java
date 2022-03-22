@@ -11963,35 +11963,38 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug99260() throws Exception {
         assumeTrue(versionMeetsMinimum(5, 7), "MySQL 5.7+ is required to run this test.");
 
-        Supplier<Integer> sessionCount = () -> {
-            try {
-                this.stmt.execute("FLUSH STATUS");
-                this.rs = this.stmt.executeQuery("SHOW STATUS LIKE 'threads_connected'");
-                this.rs.next();
-                return this.rs.getInt(2);
-            } catch (SQLException e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        };
-
-        int initialSessionCount = sessionCount.get();
-
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         Connection testConn = getConnectionWithProps(props);
-        Statement testStmt = testConn.createStatement();
+        long threadId = ((JdbcConnection) testConn).getId();
+        Supplier<Integer> sessionCount = () -> { // Counts sessions created since the main connection.
+            try (Statement testStmt = testConn.createStatement()) {
+                int c = 0;
+                testStmt.execute("FLUSH STATUS");
+                this.rs = testStmt.executeQuery("SHOW PROCESSLIST");
+                while (this.rs.next()) {
+                    if (this.rs.getInt(1) > threadId) {
+                        c++;
+                    }
+                }
+                return c;
+            } catch (SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        };
 
+        assertEquals(0, sessionCount.get());
+
+        Statement testStmt = testConn.createStatement();
         testStmt.setQueryTimeout(1);
         for (int i = 0; i < 5; i++) {
             assertThrows(MySQLTimeoutException.class, "Statement cancelled due to timeout or client request", () -> {
                 testStmt.executeQuery("SELECT SLEEP(30)");
                 return null;
             });
-            // The difference between the `initialSessionCount` and the current session count would be greater than one if connections external to this test are
-            // created in between. Chances for this to happen in a controlled or development environment are very low and can be neglected. 
-            assertEquals(1, sessionCount.get() - initialSessionCount);
+            assertEquals(0, sessionCount.get());
         }
 
         testConn.close();
