@@ -50,6 +50,7 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -642,7 +643,9 @@ public class ResultSetTest extends BaseTestCase {
             assertEquals(testSqlDate, this.rs.getDate(2), row);
             assertEquals(testSqlTime, this.rs.getTime(3), row);
             assertEquals(testTSFromDatetime, this.rs.getTimestamp(4), row);
+            assertEquals(testTSFromDatetime.toInstant(), this.rs.getObject(4, Instant.class), row);
             assertEquals(testTSFromTimestamp, this.rs.getTimestamp(5), row);
+            assertEquals(testTSFromTimestamp.toInstant(), this.rs.getObject(5, Instant.class), row);
 
             assertEquals(testLocalDate, this.rs.getObject(2, LocalDate.class), row);
             assertEquals(testLocalTime, this.rs.getObject(3, LocalTime.class), row);
@@ -654,7 +657,9 @@ public class ResultSetTest extends BaseTestCase {
             assertEquals(testSqlDate, this.rs.getDate("d"), row);
             assertEquals(testSqlTime, this.rs.getTime("t"), row);
             assertEquals(testTSFromDatetime, this.rs.getTimestamp("dt"), row);
+            assertEquals(testTSFromDatetime.toInstant(), this.rs.getObject("dt", Instant.class), row);
             assertEquals(testTSFromTimestamp, this.rs.getTimestamp("ts"), row);
+            assertEquals(testTSFromTimestamp.toInstant(), this.rs.getObject("ts", Instant.class), row);
 
             assertEquals(testLocalDate, this.rs.getObject("d", LocalDate.class), row);
             assertEquals(testLocalTime, this.rs.getObject("t", LocalTime.class), row);

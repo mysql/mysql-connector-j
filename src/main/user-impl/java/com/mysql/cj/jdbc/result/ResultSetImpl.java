@@ -55,6 +55,7 @@ import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -64,6 +65,7 @@ import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TimeZone;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
@@ -103,6 +105,7 @@ import com.mysql.cj.result.DoubleValueFactory;
 import com.mysql.cj.result.DurationValueFactory;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.FloatValueFactory;
+import com.mysql.cj.result.InstantValueFactory;
 import com.mysql.cj.result.IntegerValueFactory;
 import com.mysql.cj.result.LocalDateTimeValueFactory;
 import com.mysql.cj.result.LocalDateValueFactory;
@@ -205,6 +208,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     private ValueFactory<Time> defaultTimeValueFactory;
     private ValueFactory<Timestamp> defaultTimestampValueFactory;
 
+    private ValueFactory<Instant> defaultInstantValueFactory;
+
     private ValueFactory<Calendar> defaultUtilCalendarValueFactory;
 
     private ValueFactory<LocalDate> defaultLocalDateValueFactory;
@@ -214,6 +219,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     private ValueFactory<OffsetTime> defaultOffsetTimeValueFactory;
     private ValueFactory<OffsetDateTime> defaultOffsetDateTimeValueFactory;
     private ValueFactory<ZonedDateTime> defaultZonedDateTimeValueFactory;
+    private ValueFactory<Duration> defaultDurationValueFactory;
 
     protected RuntimeProperty<Boolean> emulateLocators;
     protected boolean yearIsDateType = true;
@@ -282,22 +288,20 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         this.bigDecimalValueFactory = new BigDecimalValueFactory(pset);
         this.binaryStreamValueFactory = new BinaryStreamValueFactory(pset);
 
-        this.defaultTimeValueFactory = new SqlTimeValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(), this);
-        this.defaultTimestampValueFactory = new SqlTimestampValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(),
-                this.session.getServerSession().getSessionTimeZone());
+        TimeZone defaultTimeZone = this.session.getServerSession().getDefaultTimeZone();
+        TimeZone sessionTimeZone = this.session.getServerSession().getSessionTimeZone();
 
-        this.defaultUtilCalendarValueFactory = new UtilCalendarValueFactory(pset, this.session.getServerSession().getDefaultTimeZone(),
-                this.session.getServerSession().getSessionTimeZone());
-
+        this.defaultTimeValueFactory = new SqlTimeValueFactory(pset, null, defaultTimeZone, this);
+        this.defaultTimestampValueFactory = new SqlTimestampValueFactory(pset, null, defaultTimeZone, sessionTimeZone);
+        this.defaultUtilCalendarValueFactory = new UtilCalendarValueFactory(pset, defaultTimeZone, sessionTimeZone);
         this.defaultLocalDateValueFactory = new LocalDateValueFactory(pset, this);
         this.defaultLocalTimeValueFactory = new LocalTimeValueFactory(pset, this);
         this.defaultLocalDateTimeValueFactory = new LocalDateTimeValueFactory(pset);
-
-        this.defaultOffsetTimeValueFactory = new OffsetTimeValueFactory(pset, this.session.getProtocol().getServerSession().getDefaultTimeZone());
-        this.defaultOffsetDateTimeValueFactory = new OffsetDateTimeValueFactory(pset, this.session.getProtocol().getServerSession().getDefaultTimeZone(),
-                this.session.getProtocol().getServerSession().getSessionTimeZone());
-        this.defaultZonedDateTimeValueFactory = new ZonedDateTimeValueFactory(pset, this.session.getProtocol().getServerSession().getDefaultTimeZone(),
-                this.session.getProtocol().getServerSession().getSessionTimeZone());
+        this.defaultOffsetTimeValueFactory = new OffsetTimeValueFactory(pset, defaultTimeZone);
+        this.defaultOffsetDateTimeValueFactory = new OffsetDateTimeValueFactory(pset, defaultTimeZone, sessionTimeZone);
+        this.defaultZonedDateTimeValueFactory = new ZonedDateTimeValueFactory(pset, defaultTimeZone, sessionTimeZone);
+        this.defaultInstantValueFactory = new InstantValueFactory(pset, defaultTimeZone, sessionTimeZone);
+        this.defaultDurationValueFactory = new DurationValueFactory(pset);
 
         this.columnDefinition = tuples.getMetadata();
         this.rowData = tuples;
@@ -947,6 +951,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         return this.thisRow.getValue(columnIndex - 1, this.defaultTimestampValueFactory);
     }
 
+    public Instant getInstant(int columnIndex) throws SQLException {
+        checkRowPos();
+        checkColumnBounds(columnIndex);
+        return this.thisRow.getValue(columnIndex - 1, this.defaultInstantValueFactory);
+    }
+
     public LocalDate getLocalDate(int columnIndex) throws SQLException {
         checkRowPos();
         checkColumnBounds(columnIndex);
@@ -1408,10 +1418,13 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 checkColumnBounds(columnIndex);
                 return (T) this.thisRow.getValue(columnIndex - 1, this.defaultZonedDateTimeValueFactory);
 
+            } else if (type.equals(Instant.class)) {
+                return (T) getInstant(columnIndex);
+
             } else if (type.equals(Duration.class)) {
                 checkRowPos();
                 checkColumnBounds(columnIndex);
-                return (T) this.thisRow.getValue(columnIndex - 1, new DurationValueFactory(this.session.getPropertySet()));
+                return (T) this.thisRow.getValue(columnIndex - 1, this.defaultDurationValueFactory);
             }
 
             if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.autoDeserialize).getValue()) {
