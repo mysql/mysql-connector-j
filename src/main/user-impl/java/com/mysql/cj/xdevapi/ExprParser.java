@@ -855,9 +855,9 @@ public class ExprParser {
             case NULL:
                 return ExprUtil.buildLiteralNullScalar();
             case LNUM_INT:
-                return ExprUtil.buildLiteralScalar(Long.valueOf(t.value));
+                return ExprUtil.buildLiteralScalar(Long.parseLong(t.value));
             case LNUM_DOUBLE:
-                return ExprUtil.buildLiteralScalar(Double.valueOf(t.value));
+                return ExprUtil.buildLiteralScalar(Double.parseDouble(t.value));
             case TRUE:
             case FALSE:
                 return ExprUtil.buildLiteralScalar(t.type == TokenType.TRUE);

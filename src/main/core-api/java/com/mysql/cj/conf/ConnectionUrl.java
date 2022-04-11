@@ -495,7 +495,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         int port = hi.getPort();
         if (port == HostInfo.NO_PORT && !isNullOrEmpty(portAsString)) {
             try {
-                port = Integer.valueOf(portAsString);
+                port = Integer.parseInt(portAsString);
             } catch (NumberFormatException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
                         Messages.getString("ConnectionString.7", new Object[] { hostProps.get(PropertyKey.PORT.getKeyName()) }), e);

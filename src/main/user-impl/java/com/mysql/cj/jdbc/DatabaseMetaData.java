@@ -252,7 +252,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                         this.columnSize = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(","))).trim());
                         this.decimalDigits = Integer.valueOf(typeInfo.substring((typeInfo.indexOf(",") + 1), (typeInfo.indexOf(")"))).trim());
                     } else if (typeInfo.indexOf("(") != -1) {
-                        int size = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(")"))).trim());
+                        int size = Integer.parseInt(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(")"))).trim());
                         if (size > 23) {
                             this.mysqlType = this.mysqlType == MysqlType.FLOAT ? MysqlType.DOUBLE : MysqlType.DOUBLE_UNSIGNED;
                             this.columnSize = Integer.valueOf(22);
@@ -351,7 +351,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     this.datetimePrecision = 0;
                     this.columnSize = 8;
                     if (typeInfo.indexOf("(") != -1
-                            && (fract = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(")"))).trim())) > 0) {
+                            && (fract = Integer.parseInt(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(")"))).trim())) > 0) {
                         // with fractional seconds
                         this.datetimePrecision = fract;
                         this.columnSize += fract + 1;
@@ -363,7 +363,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                     this.datetimePrecision = 0;
                     this.columnSize = 19;
                     if (typeInfo.indexOf("(") != -1
-                            && (fract = Integer.valueOf(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(")"))).trim())) > 0) {
+                            && (fract = Integer.parseInt(typeInfo.substring((typeInfo.indexOf("(") + 1), (typeInfo.indexOf(")"))).trim())) > 0) {
                         // with fractional seconds
                         this.datetimePrecision = fract;
                         this.columnSize += fract + 1;

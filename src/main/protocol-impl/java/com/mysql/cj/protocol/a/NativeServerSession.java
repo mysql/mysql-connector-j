@@ -244,7 +244,7 @@ public class NativeServerSession implements ServerSession {
     @Override
     public int getServerVariable(String variableName, int fallbackValue) {
         try {
-            return Integer.valueOf(getServerVariable(variableName));
+            return Integer.parseInt(getServerVariable(variableName));
         } catch (NumberFormatException nfe) {
             //getLog().logWarn(
             //        Messages.getString("Connection.BadValueInServerVariables", new Object[] { variableName, getServerVariable(variableName), fallbackValue }));
