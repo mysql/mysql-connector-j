@@ -679,7 +679,7 @@ public class PropertyDefinitions {
                         "3.1.9", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.elideSetAutoCommits, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.eliseSetAutoCommit"), "3.1.3", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
+                        Messages.getString("ConnectionProperties.elideSetAutoCommit"), "3.1.3", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.enableQueryTimeouts, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.enableQueryTimeouts"), "5.0.6", CATEGORY_PERFORMANCE, Integer.MIN_VALUE),
