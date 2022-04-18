@@ -19,7 +19,7 @@ Bug reports should be as complete as possible. Please try and include the follow
 Contributing to MySQL projects is easy. You just need to follow these steps.
 
 * Make sure you have a user account at [bugs.mysql.com](https://bugs.mysql.com). You will need to reference this user account when you submit your Oracle Contributor Agreement (OCA).
-* Sign the Oracle Contributor Agreement. You can find instructions for doing that at the [OCA Page](https://www.oracle.com/technetwork/community/oca-486395.html).
+* Sign the Oracle Contributor Agreement. You can find instructions for doing that at the [OCA Page](https://oca.opensource.oracle.com/).
 * Develop your pull request. Make sure you are aware of the requirements for the project (e.g. do not require Java 7 if we are supporting Java 8 and higher).
 * Validate your pull request by including tests that sufficiently cover the functionality you are adding.
 * Verify that the entire test suite passes with your code applied.
@@ -40,9 +40,10 @@ If you need help or just want to get in touch with us, please use the following 
 * [MySQL Connector/J, JDBC and Java forum](https://forums.mysql.com/list.php?39).
 * [`#connectors` channel in MySQL Community Slack](https://mysqlcommunity.slack.com/messages/connectors). ([Sign-up](https://lefred.be/mysql-community-on-slack/) required if you do not have an Oracle account.)
 * [@MySQL on Twitter](https://twitter.com/MySQL).
-* [MySQL and Java Mailing Lists](https://lists.mysql.com/java).
-* [InsideMySQL.com Connectors Blog](https://insidemysql.com/category/mysql-development/connectors/).
-* [MySQL Bugs database](https://bugs.mysql.com/).
+* [MySQL Blog](https://blogs.oracle.com/mysql/).
+* [MySQL Connectors Blog archive](https://dev.mysql.com/blog-archive/?cat=Connectors%20%2F%20Languages).
+* [MySQL Newsletter](https://www.mysql.com/news-and-events/newsletter/).
+* [MySQL Bugs Database](https://bugs.mysql.com/).
 
 We hope to hear from you soon. Enjoy your coding!
 

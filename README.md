@@ -76,6 +76,7 @@ There are a few ways to contribute to the Connector/J code. Please refer to the 
 * [@MySQL on Twitter](https://twitter.com/MySQL).
 * [MySQL Blog](https://blogs.oracle.com/mysql/).
 * [MySQL Connectors Blog archive](https://dev.mysql.com/blog-archive/?cat=Connectors%20%2F%20Languages).
+* [MySQL Newsletter](https://www.mysql.com/news-and-events/newsletter/).
 * [MySQL Bugs Database](https://bugs.mysql.com/).
 
 For more information about this and other MySQL products, please visit [MySQL Contact & Questions](https://www.mysql.com/about/contact/).

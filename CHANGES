@@ -3,6 +3,8 @@
 
 Version 8.0.30
 
+  - Fix for Bug#34082503, CONTRIBUTING.md contains broken links.
+
   - Fix for Bug#106779 (33976245), Contribution: Fix typo in PropertyDefinitions.
     Thanks to Weijie Wu for his contribution.
 
