@@ -1238,23 +1238,16 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- ******************* -->
 
     <condition property="junit.styledir" value="${com.mysql.cj.build.dir.driver}" else="${ant.home}/etc">
-        <available file="${com.mysql.cj.extra.libs}/ant/junit-frames.xsl" type="file"/>
+        <available file="${com.mysql.cj.extra.libs}/ant/junit-frames.xsl" type="file" />
     </condition>
-    
-    <target name="-check-custom-xslt" unless="file.exists">
-        <available property="custom.xslt.exists" file="${com.mysql.cj.extra.libs}/ant/junit-frames.xsl" type="file"/>
-    </target>
-    
-    <target name="-init-custom-xslt" depends="-check-custom-xslt" if="${custom.xslt.exists}">
-        <copy file="${com.mysql.cj.extra.libs}/ant/junit-frames.xsl"
-              tofile="${com.mysql.cj.build.dir.driver}/junit-frames.xsl"
-              overwrite="true" />
 
-        <replaceregexp match="extralibs"
-                       replace="file:${ant.home}/etc/junit-frames.xsl"
-                       flags="s">
-            <fileset file="${com.mysql.cj.build.dir.driver}/junit-frames.xsl"/>
-        </replaceregexp>
+    <target name="-check-custom-xslt" unless="file.exists">
+        <available property="custom.xslt.exists" file="${com.mysql.cj.extra.libs}/ant/junit-frames.xsl" type="file" />
+    </target>
+
+    <target name="-init-custom-xslt" depends="-check-custom-xslt" if="${custom.xslt.exists}">
+        <copy file="${com.mysql.cj.extra.libs}/ant/junit-frames.xsl" tofile="${com.mysql.cj.build.dir.driver}/junit-frames.xsl" overwrite="true" />
+        <replace file="${com.mysql.cj.build.dir.driver}/junit-frames.xsl" token="extralibs" value="${ant.home}/etc/junit-frames.xsl" />
     </target>
 
     <!-- Run the full test suite, single test set or named tests against one JVM and one server config. -->
