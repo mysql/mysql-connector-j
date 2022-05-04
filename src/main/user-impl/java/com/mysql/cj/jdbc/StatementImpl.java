@@ -835,8 +835,7 @@ public class StatementImpl implements JdbcStatement {
 
                         boolean multiQueriesEnabled = locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.allowMultiQueries).getValue();
 
-                        if (multiQueriesEnabled || (locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.rewriteBatchedStatements).getValue()
-                                && nbrCommands > 4)) {
+                        if (multiQueriesEnabled || this.rewriteBatchedStatements.getValue() && nbrCommands > 4) {
                             return executeBatchUsingMultiQueries(multiQueriesEnabled, nbrCommands, individualStatementTimeout);
                         }
 

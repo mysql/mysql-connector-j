@@ -406,7 +406,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 if (!this.batchHasPlainStatements && this.rewriteBatchedStatements.getValue()) {
 
                     if (getQueryInfo().isRewritableWithMultiValuesClause()) {
-                        return executeBatchedInserts(batchTimeout);
+                        return executeBatchWithMultiValuesClause(batchTimeout);
                     }
 
                     if (!this.batchHasPlainStatements && this.query.getBatchedArgs() != null
@@ -611,7 +611,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     }
 
     /**
-     * Rewrites the already prepared statement into a multi-value insert statement and executes the entire batch using this new statement.
+     * Rewrites the already prepared statement into a multi-values clause INSERT/REPLACE statement and executes the entire batch using this new statement.
      * 
      * @param batchTimeout
      *            timeout for the batch execution
@@ -620,7 +620,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      * @throws SQLException
      *             if a database access error occurs or this method is called on a closed PreparedStatement
      */
-    protected long[] executeBatchedInserts(int batchTimeout) throws SQLException {
+    protected long[] executeBatchWithMultiValuesClause(int batchTimeout) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             JdbcConnection locallyScopedConn = this.connection;
 

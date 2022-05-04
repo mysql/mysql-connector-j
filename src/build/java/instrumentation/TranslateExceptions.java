@@ -300,7 +300,8 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("toString", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("checkBounds", new CtClass[] { CtClass.intType, CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("checkReadOnlySafeStatement", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("executeBatchedInserts", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("executeBatchWithMultiValuesClause", new CtClass[] { CtClass.intType }),
+                EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("executeBatchSerially", new CtClass[] { CtClass.intType }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz,
                 clazz.getDeclaredMethod("executeInternal",
