@@ -556,7 +556,7 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
 
         if (this.queryBindings != null) {
             hadLongData = this.queryBindings.clearBindValues();
-            this.queryBindings.setLongParameterSwitchDetected(clearServerParameters && hadLongData ? false : true);
+            this.queryBindings.setLongParameterSwitchDetected(clearServerParameters && hadLongData ? true : false);
         }
 
         if (clearServerParameters && hadLongData) {
