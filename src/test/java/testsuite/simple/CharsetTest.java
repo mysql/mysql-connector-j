@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -421,32 +421,18 @@ public class CharsetTest extends BaseTestCase {
      */
     @Test
     public void testNonStandardConnectionCollation() throws Exception {
-        String collationToSet = "utf8_bin";
-        String characterSet = "utf-8";
-
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-        props.setProperty(PropertyKey.connectionCollation.getKeyName(), collationToSet);
-        props.setProperty(PropertyKey.characterEncoding.getKeyName(), characterSet);
+        props.setProperty(PropertyKey.connectionCollation.getKeyName(), "utf8_bin");
+        props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf-8");
 
-        Connection collConn = null;
-        Statement collStmt = null;
-        ResultSet collRs = null;
-
-        try {
-            collConn = getConnectionWithProps(props);
-
-            collStmt = collConn.createStatement();
-
-            collRs = collStmt.executeQuery("SHOW VARIABLES LIKE 'collation_connection'");
+        try (Connection collConn = getConnectionWithProps(props)) {
+            Statement collStmt = collConn.createStatement();
+            ResultSet collRs = collStmt.executeQuery("SHOW VARIABLES LIKE 'collation_connection'");
 
             assertTrue(collRs.next());
-            assertTrue(collationToSet.equalsIgnoreCase(collRs.getString(2)));
-        } finally {
-            if (collConn != null) {
-                collConn.close();
-            }
+            assertEquals(versionMeetsMinimum(8, 0, 30) ? "utf8mb3_bin" : "utf8_bin", collRs.getString(2));
         }
     }
 
@@ -744,10 +730,8 @@ public class CharsetTest extends BaseTestCase {
     @Test
     public void testCollation41() throws Exception {
         Map<String, String> charsetsAndCollations = getCharacterSetsAndCollations();
-        charsetsAndCollations.remove("latin7"); // Maps to multiple Java
-        // charsets
-        charsetsAndCollations.remove("ucs2"); // can't be used as a
-        // connection charset
+        charsetsAndCollations.remove("latin7"); // Maps to multiple Java charsets
+        charsetsAndCollations.remove("ucs2"); // can't be used as a connection charset
 
         for (String charsetName : charsetsAndCollations.keySet()) {
             String enc = ((MysqlConnection) this.conn).getSession().getServerSession().getCharsetSettings().getJavaEncodingForMysqlCharset(charsetName);
@@ -778,8 +762,7 @@ public class CharsetTest extends BaseTestCase {
 
                 charsetConn.setCatalog("testCollation41");
 
-                // We've switched catalogs, so we need to recreate the
-                // statement to pick this up...
+                // We've switched catalogs, so we need to recreate the statement to pick this up...
                 charsetStmt = charsetConn.createStatement();
 
                 StringBuilder createTableCommand = new StringBuilder("CREATE TABLE testCollation41(field1 VARCHAR(255), field2 INT)");
@@ -789,7 +772,7 @@ public class CharsetTest extends BaseTestCase {
                 charsetStmt.executeUpdate("INSERT INTO testCollation41 VALUES ('abc', 0)");
 
                 int updateCount = charsetStmt.executeUpdate("UPDATE testCollation41 SET field2=1 WHERE field1='abc'");
-                assertTrue(updateCount == 1);
+                assertEquals(1, updateCount);
             } finally {
                 if (charsetStmt != null) {
                     charsetStmt.executeUpdate("DROP TABLE IF EXISTS testCollation41");

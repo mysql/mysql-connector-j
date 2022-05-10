@@ -3,6 +3,8 @@
 
 Version 8.0.30
 
+  - Fix for Bug#34090350, Update mappings for utf8mb3 and utf8mb4 collations.
+
   - Fix for Bug#106880 (34022110), Outdated description in connection property 'rewriteBatchedStatements'.
 
   - Fix for Bug#34082503, CONTRIBUTING.md contains broken links.

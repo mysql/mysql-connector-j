@@ -1199,7 +1199,6 @@ public class CharsetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug95139() throws Exception {
-
         Properties p = new Properties();
         p.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         p.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
@@ -1315,4 +1314,40 @@ public class CharsetRegressionTest extends BaseTestCase {
         }
     }
 
+    /**
+     * Tests fix for Bug#34090350, Update mappings for utf8mb3 and utf8mb4 collations.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug34090350() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+
+        for (String coll : new String[] { "utf8_unicode_ci", "utf8mb3_unicode_ci", "utf8mb4_unicode_ci" }) {
+            props.setProperty(PropertyKey.connectionCollation.getKeyName(), coll);
+
+            try (Connection testConn = getConnectionWithProps(props)) {
+                this.stmt = testConn.createStatement();
+                this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'character_set_connection'");
+                assertTrue(this.rs.next());
+                String connCharSet = this.rs.getString(2);
+                if (coll.startsWith("utf8mb4")) {
+                    assertEquals("utf8mb4", connCharSet);
+                } else {
+                    assertEquals(versionMeetsMinimum(8, 0, 24) ? "utf8mb3" : "utf8", connCharSet);
+                }
+
+                this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'collation_connection'");
+                assertTrue(this.rs.next());
+                String connColl = this.rs.getString(2);
+                if (coll.startsWith("utf8mb4")) {
+                    assertEquals("utf8mb4_unicode_ci", connColl);
+                } else {
+                    assertEquals(versionMeetsMinimum(8, 0, 30) ? "utf8mb3_unicode_ci" : "utf8_unicode_ci", connColl);
+                }
+            }
+        }
+    }
 }

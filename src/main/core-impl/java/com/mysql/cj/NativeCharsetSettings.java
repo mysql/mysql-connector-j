@@ -571,8 +571,8 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
 
             try {
                 NativePacketPayload resultPacket = this.session.getProtocol().sendCommand(getCommandBuilder().buildComQuery(null,
-                        "select c.COLLATION_NAME, c.CHARACTER_SET_NAME, c.ID, cs.MAXLEN, c.IS_DEFAULT='Yes' from INFORMATION_SCHEMA.COLLATIONS as c left join"
-                                + " INFORMATION_SCHEMA.CHARACTER_SETS as cs on cs.CHARACTER_SET_NAME=c.CHARACTER_SET_NAME"),
+                        "SELECT c.COLLATION_NAME, c.CHARACTER_SET_NAME, c.ID, cs.MAXLEN, c.IS_DEFAULT='Yes' from INFORMATION_SCHEMA.COLLATIONS AS c LEFT JOIN"
+                                + " INFORMATION_SCHEMA.CHARACTER_SETS AS cs ON cs.CHARACTER_SET_NAME=c.CHARACTER_SET_NAME"),
                         false, 0);
                 Resultset rs = this.session.getProtocol().readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
                 ValueFactory<String> svf = new StringValueFactory(this.session.getPropertySet());
@@ -585,19 +585,16 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
                     boolean isDefault = ((Number) r.getValue(4, ivf)).intValue() > 0;
 
                     if (collationIndex >= MAP_SIZE //
-                            || !collationName.equals(getStaticCollationNameForCollationIndex(collationIndex))
+                            || collationIndex != getStaticCollationIndexForCollationName(collationName)
                             || !charsetName.equals(getStaticMysqlCharsetNameForCollationIndex(collationIndex))) {
                         customCollationIndexToCollationName.put(collationIndex, collationName);
                         customCollationNameToCollationIndex.put(collationName, collationIndex);
                         customCollationIndexToCharsetName.put(collationIndex, charsetName);
-                        if (isDefault) {
+                        if (isDefault || !customCharsetNameToCollationIndex.containsKey(charsetName)
+                                && CharsetMapping.getStaticCollationIndexForMysqlCharsetName(charsetName) == 0) {
                             customCharsetNameToCollationIndex.put(charsetName, collationIndex);
-                        } else {
-                            customCharsetNameToCollationIndex.putIfAbsent(charsetName, collationIndex);
                         }
-
                     }
-
                     // if no static map for charsetName adding to custom map
                     if (getStaticMysqlCharsetByName(charsetName) == null) {
                         customCharsetNameToMblen.put(charsetName, maxlen);
