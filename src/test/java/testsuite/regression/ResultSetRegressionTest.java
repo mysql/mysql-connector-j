@@ -68,6 +68,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -7639,8 +7640,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
             System.out.println("getObject(ts, OffsetDateTime.class)  : " + odt2 + " (" + odt2.toEpochSecond() + ")");
             System.out.println("getObject(odt, OffsetDateTime.class) : " + odt3 + " (" + odt3.toEpochSecond() + ")");
 
-            int localOffset = TimeZone.getDefault().getRawOffset() / 1000;
-            int serverOffset = serverTz.getRawOffset() / 1000;
+            int localOffset = ZoneId.of(TimeZone.getDefault().getID()).getRules().getOffset(Instant.now()).getTotalSeconds();
+            int serverOffset = ZoneId.of(serverTz.getID()).getRules().getOffset(Instant.now()).getTotalSeconds();
 
             int expOffset = 6 * 60 * 60;
 
