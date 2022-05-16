@@ -168,6 +168,13 @@
                         <version>5.6.2</version>
                     </dependency>
                 </dependencies>
+
+                <configuration>
+                    <systemPropertyVariables>
+                        <com.mysql.cj.testsuite.url>jdbc:mysql://127.0.0.1:3306/test?user=root&amp;password=123456</com.mysql.cj.testsuite.url>
+                        <com.mysql.cj.testsuite.mysqlx.url>jdbc:mysql://root:123456@127.0.0.1:33060/test</com.mysql.cj.testsuite.mysqlx.url>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
         </plugins>
     </build>
