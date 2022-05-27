@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -605,19 +605,16 @@ public class AuthenticationTest extends BaseTestCase {
 
             // TS.1.2: 2FA fail - 1st password wrong.
             props.setProperty(PropertyKey.password1.getKeyName(), "wrongpwd");
-            assertThrows(SQLException.class, "Access denied for user 'wl14650_2fa'@'localhost' \\(using password: YES\\)",
-                    () -> getConnectionWithProps(url1, props));
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_2fa'@.* \\(using password: YES\\)", () -> getConnectionWithProps(url1, props));
 
             // TS.1.3: 2FA fail - 2nd password wrong.
             props.setProperty(PropertyKey.password1.getKeyName(), "testpwd1");
             props.setProperty(PropertyKey.password2.getKeyName(), "wrongpwd");
-            assertThrows(SQLException.class, "Access denied for user 'wl14650_2fa'@'localhost' \\(using password: YES\\)",
-                    () -> getConnectionWithProps(url1, props));
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_2fa'@.* \\(using password: YES\\)", () -> getConnectionWithProps(url1, props));
 
             // TS.1.4: 2FA fail - missing required password.
             props.remove(PropertyKey.password2.getKeyName());
-            assertThrows(SQLException.class, "Access denied for user 'wl14650_2fa'@'localhost' \\(using password: YES\\)",
-                    () -> getConnectionWithProps(url1, props));
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_2fa'@.* \\(using password: YES\\)", () -> getConnectionWithProps(url1, props));
 
             // TS.2.1: 3FA successful.
             props.setProperty(PropertyKey.USER.getKeyName(), "wl14650_3fa");
@@ -635,25 +632,21 @@ public class AuthenticationTest extends BaseTestCase {
 
             // TS.2.2: 2FA fail - 1st password wrong.
             props.setProperty(PropertyKey.password1.getKeyName(), "wrongpwd");
-            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@'localhost' \\(using password: YES\\)",
-                    () -> getConnectionWithProps(url1, props));
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@.* \\(using password: YES\\)", () -> getConnectionWithProps(url1, props));
 
             // TS.2.3: 2FA fail - 2nd password wrong.
             props.setProperty(PropertyKey.password1.getKeyName(), "testpwd1");
             props.setProperty(PropertyKey.password2.getKeyName(), "wrongpwd");
-            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@'localhost' \\(using password: YES\\)",
-                    () -> getConnectionWithProps(url1, props));
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@.* \\(using password: YES\\)", () -> getConnectionWithProps(url1, props));
 
             // TS.2.4: 2FA fail - 3rd password wrong.
             props.setProperty(PropertyKey.password2.getKeyName(), "testpwd2");
             props.setProperty(PropertyKey.password3.getKeyName(), "wrongpwd");
-            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@'localhost' \\(using password: YES\\)",
-                    () -> getConnectionWithProps(url1, props));
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@.* \\(using password: YES\\)", () -> getConnectionWithProps(url1, props));
 
             // TS.2.5: 2FA fail - missing required password.
             props.remove(PropertyKey.password3.getKeyName());
-            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@'localhost' \\(using password: YES\\)",
-                    () -> getConnectionWithProps(url1, props));
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_3fa'@.* \\(using password: YES\\)", () -> getConnectionWithProps(url1, props));
 
             // TS.3/TS.4/TS.5: new password options don't pollute original ones.
             props.setProperty(PropertyKey.USER.getKeyName(), "wl14650_1fa");
@@ -732,8 +725,7 @@ public class AuthenticationTest extends BaseTestCase {
             final StringBuilder urlBuilder7 = new StringBuilder("jdbc:mysql://").append(getHostFromTestsuiteUrl()).append(":").append(getPortFromTestsuiteUrl())
                     .append("/");
             final String url7 = urlBuilder7.toString();
-            assertThrows(SQLException.class, "Access denied for user 'wl14650_1fa'@'localhost' \\(using password: YES\\)",
-                    () -> getConnectionWithProps(url7, props));
+            assertThrows(SQLException.class, "Access denied for user 'wl14650_1fa'@.* \\(using password: YES\\)", () -> getConnectionWithProps(url7, props));
         } finally {
             if (installPluginInRuntime) {
                 this.stmt.executeUpdate("UNINSTALL PLUGIN cleartext_plugin_server");

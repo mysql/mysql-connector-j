@@ -1241,7 +1241,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <available file="${com.mysql.cj.extra.libs}/ant/junit-frames.xsl" type="file" />
     </condition>
 
-    <target name="-check-custom-xslt" unless="file.exists">
+    <target name="-check-custom-xslt">
         <available property="custom.xslt.exists" file="${com.mysql.cj.extra.libs}/ant/junit-frames.xsl" type="file" />
     </target>
 
