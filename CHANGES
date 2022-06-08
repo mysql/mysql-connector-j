@@ -3,6 +3,8 @@
 
 Version 8.0.30
 
+  - Fix for Bug#107510 (Bug#34259416), Empty string given to set() from Collection.modify() replaces full document.
+
   - Fix for Bug#106758 (33973048), DatabaseMetaData.getTypeInfo returns AUTO_INCREMENT = false for all datatypes.
 
   - Fix for Bug#34090350, Update mappings for utf8mb3 and utf8mb4 collations.

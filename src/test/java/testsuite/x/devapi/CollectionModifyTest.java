@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,6 +49,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.ServerVersion;
+import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.xdevapi.AddResult;
 import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.DbDoc;
@@ -1889,5 +1890,92 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         docs = asyncDocs.get();
         doc = docs.next();
         assertEquals((long) (maxrec) / 2, (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+    }
+
+    /**
+     * Tests fix for Bug#107510 (Bug#34259416), Empty string given to set() from Collection.modify() replaces full document.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug107510() throws Exception {
+        this.collection.add("{\"bug\": \"testBug107510\"}").execute();
+        DbDoc doc = this.collection.find().execute().fetchOne();
+        assertEquals("testBug107510", ((JsonString) doc.get("bug")).getString());
+
+        // .set()
+        assertThrows(CJException.class, "Parameter 'docPath' must not be null or empty\\.", () -> {
+            this.collection.modify("true").set("", JsonParser.parseDoc("{\"bug\": \"testBug34259416\"}")).execute();
+            return null;
+        });
+        assertThrows(CJException.class, "Parameter 'docPath' must not be null or empty\\.", () -> {
+            this.collection.modify("true").set(null, JsonParser.parseDoc("{\"bug\": \"testBug34259416\"}")).execute();
+            return null;
+        });
+        doc = this.collection.find().execute().fetchOne();
+        assertEquals("testBug107510", ((JsonString) doc.get("bug")).getString());
+
+        this.collection.modify("true").set("$", JsonParser.parseDoc("{\"bug\": \"testBug34259416\"}")).execute();
+        doc = this.collection.find().execute().fetchOne();
+        assertEquals("testBug34259416", ((JsonString) doc.get("bug")).getString());
+
+        this.collection.modify("true").set("$.type", "BUG1").execute();
+        doc = this.collection.find().execute().fetchOne();
+        assertEquals("testBug34259416", ((JsonString) doc.get("bug")).getString());
+        assertEquals("BUG1", ((JsonString) doc.get("type")).getString());
+
+        this.collection.modify("true").set(".type", "BUG2").execute();
+        doc = this.collection.find().execute().fetchOne();
+        assertEquals("testBug34259416", ((JsonString) doc.get("bug")).getString());
+        assertEquals("BUG2", ((JsonString) doc.get("type")).getString());
+
+        this.collection.modify("true").set("type", "BUG3").execute();
+        doc = this.collection.find().execute().fetchOne();
+        assertEquals("testBug34259416", ((JsonString) doc.get("bug")).getString());
+        assertEquals("BUG3", ((JsonString) doc.get("type")).getString());
+
+        // .unset()
+        assertThrows(CJException.class, "Parameter 'docPath' must not be null or empty\\.", () -> {
+            this.collection.modify("true").unset("").execute();
+            return null;
+        });
+        assertThrows(CJException.class, "Parameter 'docPath' must not be null or empty\\.", () -> {
+            this.collection.modify("true").unset((String) null).execute();
+            return null;
+        });
+        assertThrows(CJException.class, "Parameter 'docPath' must not be null or empty\\.", () -> {
+            this.collection.modify("true").unset((String[]) null).execute();
+            return null;
+        });
+
+        // .change()
+        assertThrows(CJException.class, "Parameter 'docPath' must not be null or empty\\.", () -> {
+            this.collection.modify("true").change("", "").execute();
+            return null;
+        });
+        assertThrows(CJException.class, "Parameter 'docPath' must not be null or empty\\.", () -> {
+            this.collection.modify("true").change(null, "").execute();
+            return null;
+        });
+
+        // .arrayAppend()
+        assertThrows(CJException.class, "Parameter 'docPath' must not be null or empty\\.", () -> {
+            this.collection.modify("true").arrayAppend("", "").execute();
+            return null;
+        });
+        assertThrows(CJException.class, "Parameter 'docPath' must not be null or empty\\.", () -> {
+            this.collection.modify("true").arrayAppend(null, "").execute();
+            return null;
+        });
+
+        // .arrayInsert()
+        assertThrows(CJException.class, "Parameter 'docPath' must not be null or empty\\.", () -> {
+            this.collection.modify("true").arrayInsert("", "").execute();
+            return null;
+        });
+        assertThrows(CJException.class, "Parameter 'docPath' must not be null or empty\\.", () -> {
+            this.collection.modify("true").arrayInsert(null, "").execute();
+            return null;
+        });
     }
 }

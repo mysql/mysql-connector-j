@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -76,11 +76,11 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
     /**
      * Nullify the given fields.
      * 
-     * @param fields
+     * @param docPath
      *            one or more field names
      * @return {@link ModifyStatement}
      */
-    ModifyStatement unset(String... fields);
+    ModifyStatement unset(String... docPath);
 
     /**
      * Takes in a patch object and applies it on all documents matching the modify() filter, using the JSON_MERGE_PATCH() function.
@@ -111,22 +111,22 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
     /**
      * Insert a value into the specified array.
      * 
-     * @param field
+     * @param docPath
      *            document path to the array field
      * @param value
      *            value to insert
      * @return {@link ModifyStatement}
      */
-    ModifyStatement arrayInsert(String field, Object value);
+    ModifyStatement arrayInsert(String docPath, Object value);
 
     /**
      * Append a value to the specified array.
      * 
-     * @param field
+     * @param docPath
      *            document path to the array field
      * @param value
      *            value to append
      * @return {@link ModifyStatement}
      */
-    ModifyStatement arrayAppend(String field, Object value);
+    ModifyStatement arrayAppend(String docPath, Object value);
 }

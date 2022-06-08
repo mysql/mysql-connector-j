@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,7 @@
 
 package com.mysql.cj.xdevapi;
 
+import com.mysql.cj.Messages;
 import com.mysql.cj.x.protobuf.MysqlxCrud.UpdateOperation;
 import com.mysql.cj.x.protobuf.MysqlxExpr.ColumnIdentifier;
 import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
@@ -48,11 +49,25 @@ public class UpdateSpec {
      * 
      * @param updateType
      *            update operation type
+     */
+    public UpdateSpec(UpdateType updateType) {
+        this.updateType = UpdateOperation.UpdateType.valueOf(updateType.name());
+        this.source = ColumnIdentifier.getDefaultInstance();
+    }
+
+    /**
+     * Constructor.
+     * 
+     * @param updateType
+     *            update operation type
      * @param source
      *            document path expression
      */
     public UpdateSpec(UpdateType updateType, String source) {
         this.updateType = UpdateOperation.UpdateType.valueOf(updateType.name());
+        if (source == null || source.trim().isEmpty()) {
+            throw new XDevAPIError(Messages.getString("ModifyStatement.0", new String[] { "docPath" }));
+        }
         // accommodate parser's documentField() handling by removing "$"
         if (source.length() > 0 && source.charAt(0) == '$') {
             source = source.substring(1);
