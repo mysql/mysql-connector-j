@@ -1307,6 +1307,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                   methods="${com.mysql.cj.testsuite.test.methods}"
                   outputdir="${com.mysql.cj.testsuite.junit.results}">
                 <fork>
+                    <jvmarg value="-Dfile.encoding=UTF-8" />
                     <jvmarg value="-Xmx1024m" />
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
                     <syspropertyset refid="junit.system.properties" />
@@ -1321,6 +1322,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                   name="${com.mysql.cj.testsuite.test.class}"
                   outputdir="${com.mysql.cj.testsuite.junit.results}">
                 <fork>
+                    <jvmarg value="-Dfile.encoding=UTF-8" />
                     <jvmarg value="-Xmx1024m" />
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
                     <syspropertyset refid="junit.system.properties" />
@@ -1336,6 +1338,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                     <exclude name="**/perf/*.class" />
                 </fileset>
                 <fork>
+                    <jvmarg value="-Dfile.encoding=UTF-8" />
                     <jvmarg value="-Xmx1024m" />
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
                     <syspropertyset refid="junit.system.properties" />
