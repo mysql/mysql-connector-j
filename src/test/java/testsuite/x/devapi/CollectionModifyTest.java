@@ -1899,6 +1899,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug107510() throws Exception {
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5")), "MySQL 8.0.5+ is required to run this test.");
+
         this.collection.add("{\"bug\": \"testBug107510\"}").execute();
         DbDoc doc = this.collection.find().execute().fetchOne();
         assertEquals("testBug107510", ((JsonString) doc.get("bug")).getString());
