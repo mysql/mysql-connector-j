@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.util.Properties;
@@ -194,8 +195,10 @@ public class StringRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug11614() throws Exception {
+        System.out.println(Charset.defaultCharset());
+
         createTable("testBug11614",
-                "(`id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT, `text` TEXT NOT NULL," + "PRIMARY KEY(`id`)) CHARACTER SET utf8 COLLATE utf8_general_ci");
+                "(`id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT, `text` TEXT NOT NULL, PRIMARY KEY(`id`)) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci");
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
@@ -207,7 +210,7 @@ public class StringRegressionTest extends BaseTestCase {
         try {
             utf8Conn = getConnectionWithProps(props);
 
-            utf8Conn.createStatement().executeUpdate("INSERT INTO testBug11614  (`id`,`text`) values (1,'')");
+            utf8Conn.createStatement().executeUpdate("INSERT INTO testBug11614 (`id`,`text`) values (1,'')");
             this.rs = utf8Conn.createStatement().executeQuery("SELECT `text` FROM testBug11614 WHERE id=1");
             assertTrue(this.rs.next());
 

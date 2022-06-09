@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1068,13 +1068,14 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void testBug28616573() throws Exception {
-        RowResult res = this.session.sql(
-                "select @@global.mysqlx_max_connections, VARIABLE_VALUE FROM performance_schema.global_status WHERE VARIABLE_NAME='Mysqlx_worker_threads_active'")
-                .execute();
+        this.session.sql("FLUSH STATUS").execute();
+        RowResult res = this.session.sql("SELECT @@global.mysqlx_max_connections, VARIABLE_VALUE FROM performance_schema.global_status "
+                + "WHERE VARIABLE_NAME='Mysqlx_worker_threads_active'").execute();
         Row r = res.next();
         int mysqlxMaxConnections = r.getInt(0);
         int mysqlWorkerThreadsActive = Integer.parseInt(r.getString(1));
         this.session.sql("SET @@global.mysqlx_max_connections=" + (mysqlWorkerThreadsActive + 2)).execute(); // allow only 2 additional connections
+        this.session.sql("FLUSH STATUS").execute();
 
         Properties props = new Properties();
         props.setProperty(ClientProperty.POOLING_ENABLED.getKeyName(), "true");

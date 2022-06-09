@@ -11448,7 +11448,7 @@ public class StatementRegressionTest extends BaseTestCase {
             st.setQueryTimeout(2);
 
             PreparedStatement ps = con.prepareStatement("update testBug20391550 set c2=? where c1=?");
-            assertThrows(SQLException.class, "Statement cancelled due to timeout or client request", () -> st.executeQuery("select sleep(3)"));
+            assertThrows(SQLException.class, "Statement cancelled due to timeout or client request", () -> st.executeQuery("select sleep(8)"));
 
             assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
                 ps.setInt(2, 100);
@@ -11576,16 +11576,14 @@ public class StatementRegressionTest extends BaseTestCase {
             PreparedStatement ps = con.prepareStatement("SHOW CREATE TABLE testBug103878");
             this.rs = ps.executeQuery();
             assertTrue(this.rs.next());
-            assertTrue(this.rs.getString(2).startsWith("CREATE TABLE"));
-            System.out.println(this.rs.getString(2));
+            assertTrue(StringUtils.startsWithIgnoreCase(this.rs.getString(2), "CREATE TABLE"));
             ps.close();
 
             ps = con.prepareStatement("SHOW CREATE VIEW testBug103878_view");
             this.rs = ps.executeQuery();
             assertTrue(this.rs.next());
-            assertTrue(this.rs.getString(2).startsWith("CREATE"));
-            assertTrue(this.rs.getString(2).contains("testBug103878_view"));
-            System.out.println(this.rs.getString(2));
+            assertTrue(StringUtils.startsWithIgnoreCase(this.rs.getString(2), "CREATE"));
+            assertTrue(StringUtils.indexOfIgnoreCase(this.rs.getString(2), "testBug103878_view") >= 0);
             ps.close();
 
             ps = con.prepareStatement("SHOW PROCESSLIST");
@@ -11599,8 +11597,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 ps = con.prepareStatement("SHOW CREATE USER testBug103878User");
                 this.rs = ps.executeQuery();
                 assertTrue(this.rs.next());
-                assertTrue(this.rs.getString(1).startsWith("CREATE USER"));
-                System.out.println(this.rs.getString(1));
+                assertTrue(StringUtils.startsWithIgnoreCase(this.rs.getString(1), "CREATE USER"));
                 ps.close();
             }
         } finally {

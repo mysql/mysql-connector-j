@@ -5325,6 +5325,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
     @Test
     public void testBug104641() throws Exception {
         String databaseName1 = "dbBug104641";
+        if (isServerRunningOnWindows()) {
+            databaseName1 = databaseName1.toLowerCase();
+        }
         createDatabase(databaseName1);
         createTable(databaseName1 + ".table1",
                 "(`CREATED` datetime DEFAULT NULL,`ID` bigint NOT NULL AUTO_INCREMENT,`LRN_ID` bigint DEFAULT '0',`USERNAME` varchar(50) NOT NULL,"
