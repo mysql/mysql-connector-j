@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.31
+
 Version 8.0.30
 
   - Fix for Bug#107510 (Bug#34259416), Empty string given to set() from Collection.modify() replaces full document.
