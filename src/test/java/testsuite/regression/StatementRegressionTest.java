@@ -12539,4 +12539,69 @@ public class StatementRegressionTest extends BaseTestCase {
             testConn.close();
         } while (useSPS = !useSPS);
     }
+
+    /**
+     * Tests fix for Bug#104753 (Bug#33286177), PreparedStatement.setFetchSize(0) causes ArrayIndexOutOfBoundsException.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug104753() throws Exception {
+        createTable("testBug104753", "(id BIGINT NOT NULL, PRIMARY KEY (id))");
+
+        Consumer<Integer> runQuery = (f) -> { // fetchSize
+            try {
+                this.pstmt.setFetchSize(f);
+                this.pstmt.execute();
+                this.rs = this.pstmt.getResultSet();
+                assertTrue(this.rs.next());
+                assertEquals(1, this.rs.getInt(1));
+            } catch (Throwable e) {
+                fail("Exception not expected");
+            }
+        };
+
+        this.stmt.executeUpdate("INSERT INTO testBug104753 VALUES (1)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
+
+        // With prepared statements cache, COM_STMT_RESET sent.
+        props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "true");
+        Connection testConn = getConnectionWithProps(props);
+
+        this.pstmt = testConn.prepareStatement("SELECT id FROM testBug104753");
+        runQuery.accept(0);
+        this.pstmt.close();
+        this.pstmt = testConn.prepareStatement("SELECT id FROM testBug104753");
+        runQuery.accept(1);
+        this.pstmt.close();
+        this.pstmt = testConn.prepareStatement("SELECT id FROM testBug104753");
+        runQuery.accept(0);
+        this.pstmt.close();
+        this.pstmt = testConn.prepareStatement("SELECT id FROM testBug104753");
+        runQuery.accept(0);
+        this.pstmt.close();
+        this.pstmt = testConn.prepareStatement("SELECT id FROM testBug104753");
+        runQuery.accept(1);
+        this.pstmt.close();
+
+        testConn.close();
+
+        // No prepared statements cache, no COM_STMT_RESET sent.
+        props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "false");
+        testConn = getConnectionWithProps(props);
+
+        this.pstmt = testConn.prepareStatement("SELECT id FROM testBug104753");
+        runQuery.accept(0);
+        runQuery.accept(1);
+        runQuery.accept(0);
+        runQuery.accept(0);
+        runQuery.accept(1);
+
+        testConn.close();
+    }
 }
