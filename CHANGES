@@ -3,6 +3,8 @@
 
 Version 8.0.31
 
+  - WL#15259, Review maven publishing process.
+
   - Fix for Bug#107222 (Bug#34150112), ClientPreparedStatement.toString() no longer interpolates byte arrays.
 
   - Fix for Bug#104753 (Bug#33286177), PreparedStatement.setFetchSize(0) causes ArrayIndexOutOfBoundsException.

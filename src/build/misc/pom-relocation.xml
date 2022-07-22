@@ -31,44 +31,15 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.mysql</groupId>
-  <artifactId>@MYSQL_CJ_EXTENDED_PROD_NAME@</artifactId>
+  <groupId>mysql</groupId>
+  <artifactId>@MYSQL_CJ_EXTENDED_PROD_NAME_RELOCATION@</artifactId>
   <version>@MYSQL_CJ_VERSION@</version>
-  <packaging>jar</packaging>
 
-  <name>MySQL Connector/J</name>
-  <description>JDBC Type 4 driver for MySQL.</description>
-  <url>http://dev.mysql.com/doc/connector-j/en/</url>
-
-  <organization>
-    <name>Oracle Corporation</name>
-    <url>http://www.oracle.com</url>
-  </organization>
-  <licenses>
-    <license>
-      <name>@MYSQL_CJ_LICENSE_NAME@</name>
-      <distribution>repo</distribution>
-      <comments>For detailed license information see the LICENSE file in this distribution.</comments>
-    </license>
-  </licenses>
-
-  <scm>
-    <connection>scm:git:git@github.com:mysql/mysql-connector-j.git</connection>
-    <url>https://github.com/mysql/mysql-connector-j</url>
-  </scm>
-
-  <dependencies>
-    <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-      <version>3.19.4</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.oracle.oci.sdk</groupId>
-      <artifactId>oci-java-sdk-common</artifactId>
-      <version>2.14.1</version>
-      <optional>true</optional>
-    </dependency>
-  </dependencies>
+  <distributionManagement>
+    <relocation>
+      <groupId>com.mysql</groupId>
+      <artifactId>@MYSQL_CJ_EXTENDED_PROD_NAME@</artifactId>
+      <message>MySQL Connector/J artifacts moved to reverse-DNS compliant Maven 2+ coordinates.</message>
+    </relocation>
+  </distributionManagement>
 </project>

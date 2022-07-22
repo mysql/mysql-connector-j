@@ -24,8 +24,8 @@ Notice:
 - To use the X DevAPI features in Connector/J, you also need the external
   library protobuf-java, which you can download manually from the official
   Maven repository and add it to the CLASSPATH, or use Maven's automatic
-  dependency resolution features by adding a dependency to "GroupId: mysql"
-  and "ArtifactId: mysql-connector-java" to your project's pom.xml file.
+  dependency resolution features by adding a dependency to "GroupId: com.mysql"
+  and "ArtifactId: mysql-connector-j" to your project's pom.xml file.
 - To use OCI AIM authentication, you will need to add the external library
   oci-java-sdk-common, which you can download manually from the official Maven
   repository and add it to the CLASSPATH, or use Maven's automatic dependency
