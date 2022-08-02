@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,7 @@
 
 package com.mysql.cj.sasl;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -130,7 +131,7 @@ public abstract class ScramShaSaslClient implements SaslClient {
 
                 case SERVER_FIRST_CLIENT_FINAL: // Process server-first-message & client-final-message.
                     // 1st part: server-first-message.
-                    String serverFirstMessage = StringUtils.toString(challenge, "UTF-8");
+                    String serverFirstMessage = StringUtils.toString(challenge, StandardCharsets.UTF_8);
                     Map<String, String> serverFirstAttributes = parseChallenge(serverFirstMessage);
 
                     if (!serverFirstAttributes.containsKey("r") || !serverFirstAttributes.containsKey("s") || !serverFirstAttributes.containsKey("i")) {

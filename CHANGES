@@ -3,6 +3,8 @@
 
 Version 8.0.31
 
+  - Fix for Bug#107222 (Bug#34150112), ClientPreparedStatement.toString() no longer interpolates byte arrays.
+
   - Fix for Bug#104753 (Bug#33286177), PreparedStatement.setFetchSize(0) causes ArrayIndexOutOfBoundsException.
 
 Version 8.0.30

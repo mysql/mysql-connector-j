@@ -332,7 +332,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     public Supplier<ValueEncoder> getValueEncoderSupplier(Object obj) {
         if (obj == null) {
-            return ByteArrayValueEncoder::new;
+            return NullValueEncoder::new;
         }
         Supplier<ValueEncoder> res = DEFAULT_ENCODERS.get(obj.getClass());
         if (res == null) {

@@ -560,7 +560,6 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
             SQLException t = null;
 
             try {
-
                 ServerPreparedQuery q = (ServerPreparedQuery) this.query;
                 q.serverPrepare(sql);
             } catch (IOException ioEx) {

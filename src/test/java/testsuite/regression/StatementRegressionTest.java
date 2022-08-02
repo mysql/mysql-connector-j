@@ -12604,4 +12604,70 @@ public class StatementRegressionTest extends BaseTestCase {
 
         testConn.close();
     }
+
+    /**
+     * Tests fix for Bug#107222 (Bug#34150112), ClientPreparedStatement.toString() no longer interpolates byte arrays.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug107222() throws Exception {
+        boolean useSPS = false;
+        boolean setMax = false;
+
+        createTable("testBug107222", "(b1 VARBINARY(100), b2 VARBINARY(100), i1 INT)");
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            if (setMax) {
+                props.setProperty(PropertyKey.maxByteArrayAsHex.getKeyName(), "10");
+            }
+            Connection testConn = getConnectionWithProps(props);
+
+            final String testCase = String.format("Case [SPS: %s, SetMax: %s]", useSPS ? "Y" : "N", setMax ? "Y" : "N");
+            String expectedInterpolation = setMax ? "** BYTE ARRAY DATA **" : "x'4d7953514c20436f6e6e6563746f722f4a'";
+
+            this.pstmt = testConn.prepareStatement("INSERT INTO testBug107222 VALUES (?, ?, ?)");
+            this.pstmt.setBytes(1, "MySQL Connector/J".getBytes());
+            this.pstmt.setString(2, null);
+            this.pstmt.setNull(3, Types.INTEGER);
+            this.pstmt.execute();
+
+            String sql = this.pstmt.unwrap(JdbcPreparedStatement.class).toString();
+            int startPos = sql.indexOf("testBug107222");
+            assertTrue(startPos > 0, testCase);
+            int pos = sql.indexOf(expectedInterpolation, startPos);
+            assertTrue(pos > 0, testCase);
+            startPos = pos + expectedInterpolation.length();
+            pos = sql.indexOf("NULL", startPos);
+            assertTrue(pos > 0, testCase);
+            startPos = pos + "NULL".length();
+            pos = sql.indexOf("NULL", startPos);
+            assertTrue(pos > 0, testCase);
+            startPos = pos + "NULL".length();
+            assertEquals(-1, sql.indexOf("NULL", startPos), testCase);
+
+            this.pstmt = testConn.prepareStatement("SELECT ?, ?, ?");
+            this.pstmt.setString(1, null);
+            this.pstmt.setBytes(2, "MySQL Connector/J".getBytes());
+            this.pstmt.setNull(3, Types.BOOLEAN);
+            this.pstmt.executeQuery();
+
+            sql = this.pstmt.unwrap(JdbcPreparedStatement.class).toString();
+            startPos = sql.indexOf("SELECT");
+            assertTrue(startPos > 0, testCase);
+            pos = sql.indexOf("NULL", startPos);
+            assertTrue(pos > 0, testCase);
+            startPos = pos + "NULL".length();
+            pos = sql.indexOf(expectedInterpolation, startPos);
+            assertTrue(pos > 0, testCase);
+            startPos = pos + expectedInterpolation.length();
+            pos = sql.indexOf("NULL", startPos);
+            assertTrue(pos > 0, testCase);
+            startPos = pos + "NULL".length();
+            assertEquals(-1, sql.indexOf("NULL", startPos), testCase);
+        } while ((useSPS = !useSPS) && (setMax = !setMax));
+    }
 }

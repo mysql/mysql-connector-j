@@ -1382,6 +1382,10 @@ public class StringUtils {
         }
     }
 
+    public static String toString(byte[] value, Charset charset) {
+        return new String(value, charset);
+    }
+
     public static String toString(byte[] value, int offset, int length) {
         return new String(value, offset, length);
     }

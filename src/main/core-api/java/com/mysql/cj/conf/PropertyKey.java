@@ -158,6 +158,7 @@ public enum PropertyKey {
     logXaCommands("logXaCommands", true), //
     maintainTimeStats("maintainTimeStats", true), //
     maxAllowedPacket("maxAllowedPacket", true), //
+    maxByteArrayAsHex("maxByteArrayAsHex", true), //
     maxQuerySizeToLog("maxQuerySizeToLog", true), //
     maxReconnects("maxReconnects", true), //
     maxRows("maxRows", true), //
