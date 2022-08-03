@@ -62,7 +62,7 @@
 %endif
 
 Summary:        Standardized MySQL database driver for Java
-Name:           @MYSQL_CJ_EXTENDED_PROD_NAME@
+Name:           @MYSQL_CJ_EXTENDED_PROD_NAME@@MYSQL_CJ_RPM_PACKAGE_SUFFIX@
 Version:        @MYSQL_CJ_VERSION_NUMERIC@
 Release:        @MYSQL_CJ_RPM_RELEASE_FULL@%{?dist}
 Epoch:          1
@@ -76,6 +76,7 @@ BuildArch:      noarch
 
 %if 0%{?commercial:1}
 Obsoletes:     mysql-connector-java < %{version}-%{release}
+Obsoletes:     mysql-connector-j < %{version}-%{release}
 Provides:      mysql-connector-j = %{version}-%{release}
 %endif
 

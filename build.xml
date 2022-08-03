@@ -225,7 +225,8 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <condition property="com.mysql.cj.dist.packageExtraName" value="-commercial" else="">
         <istrue value="${com.mysql.cj.build.commercial}" />
     </condition>
-    <property name="com.mysql.cj.dist.packageName" value="${com.mysql.cj.build.driver.extendedName}${com.mysql.cj.dist.packageExtraName}-${com.mysql.cj.build.driver.version.full}" />
+    <property name="com.mysql.cj.dist.packageName"
+              value="${com.mysql.cj.build.driver.extendedName}${com.mysql.cj.dist.packageExtraName}-${com.mysql.cj.build.driver.version.full}" />
     <property name="com.mysql.cj.dist.licenseUrl" value="file:./LICENSE" />
 
     <property name="com.mysql.cj.dist.dir" value="dist" />
@@ -554,7 +555,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <filter token="MYSQL_CJ_VERSION" value="${com.mysql.cj.build.driver.version.full}" />
             <filter token="MYSQL_CJ_VERSION_SERIES" value="${com.mysql.cj.build.driver.version.series}" />
             <filter token="MYSQL_CJ_REVISION" value="${com.mysql.cj.build.git.commit}" />
-            <filter token="MYSQL_CJ_PROD_NAME" value="${com.mysql.cj.build.driver.name}" />
             <filter token="MYSQL_CJ_EXTRA_NAME" value="${com.mysql.cj.build.driver.extraName}" />
             <filter token="MYSQL_CJ_EXTENDED_PROD_NAME" value="${com.mysql.cj.build.driver.extendedName}" />
             <!-- TODO: Remove as soon as maven relocation artifacts stop being published -->
@@ -562,6 +562,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <filter token="MYSQL_CJ_FULL_PROD_NAME" value="${com.mysql.cj.build.driver.fullName}" />
             <filter token="MYSQL_CJ_DISPLAY_PROD_NAME" value="${com.mysql.cj.build.driver.displayName}" />
             <filter token="MYSQL_CJ_RPM_RELEASE_FULL" value="${com.mysql.cj.dist.rpm.releaseFull}" />
+            <filter token="MYSQL_CJ_RPM_PACKAGE_SUFFIX" value="${com.mysql.cj.dist.packageExtraName}" />
         </filterset>
 
         <!-- License replace tokens. -->
@@ -1621,7 +1622,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
         <local name="orig_package_name" />
         <property name="orig_package_name"
-                  value="${com.mysql.cj.build.driver.extendedName}_${com.mysql.cj.build.driver.version.full}${deb_version_suffix}.orig.tar.gz" />
+                  value="${com.mysql.cj.build.driver.extendedName}${com.mysql.cj.dist.packageExtraName}_${com.mysql.cj.build.driver.version.full}${deb_version_suffix}.orig.tar.gz" />
         <tar destfile="build/deb/${orig_package_name}" basedir="." compression="gzip" excludes="${com.mysql.cj.dist.dir}/**, build/**" />
 
         <copy todir="build/deb/src" overwrite="true">
@@ -1643,8 +1644,8 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <filter token="ID_RELEASE" value="${deb_version}" />
                 <filter token="CODENAME" value="${codename}" />
                 <filter token="LIC_FILE" value="${lic_file}" />
-                <filter token="PRODUCT_NAME" value="${com.mysql.cj.build.driver.name}" />
-                <filter token="PRODUCT_SUFFIX" value="${com.mysql.cj.build.driver.extraName}" />
+                <filter token="PRODUCT_NAME" value="${com.mysql.cj.build.driver.extendedName}" />
+                <filter token="PACKAGE_SUFFIX" value="${com.mysql.cj.dist.packageExtraName}" />
                 <filter token="DIR_PACKAGE" value="${com.mysql.cj.dist.dir.package}" />
                 <filter token="DEB_VERSION_SUFFIX" value="${deb_version_suffix}" />
                 <filter token="VERSION_FULL" value="${com.mysql.cj.build.driver.version.full}" />

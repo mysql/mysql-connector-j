@@ -35,7 +35,7 @@ ANT_COMMON_OPTIONS=\
   -Dcom.mysql.cj.build.driver.version.status=@MYSQL_CJ_VERSION_STATUS@ \
   -Dcom.mysql.cj.build.driver.version.extra=@MYSQL_CJ_VERSION_EXTRA@ \
   -Dcom.mysql.cj.build.driver.version.snapshot=@MYSQL_CJ_VERSION_SNAPSHOT@ \
-  -Dcom.mysql.cj.build.driver.extraName=@PRODUCT_SUFFIX@ \
+  -Dcom.mysql.cj.build.driver.extraName=@MYSQL_CJ_EXTRA_NAME@ \
   -Dcom.mysql.cj.dist.licenseUrl=@MYSQL_CJ_LICENSEURL@ \
   -Djava.awt.headless=true
 

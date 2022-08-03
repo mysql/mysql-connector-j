@@ -1,4 +1,4 @@
-@PRODUCT_NAME@@PRODUCT_SUFFIX@ (@MYSQL_CJ_VERSION@@MYSQL_CJ_VERSION_SNAPSHOT@@DEB_VERSION_SUFFIX@@ID_RELEASE@) @CODENAME@; urgency=low
+@PRODUCT_NAME@@PACKAGE_SUFFIX@ (@MYSQL_CJ_VERSION@@MYSQL_CJ_VERSION_SNAPSHOT@@DEB_VERSION_SUFFIX@@ID_RELEASE@) @CODENAME@; urgency=low
 
   * For release notes, please refer to https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
