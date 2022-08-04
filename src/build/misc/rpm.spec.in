@@ -74,10 +74,14 @@ Source0:        https://cdn.mysql.com/Downloads/Connector-J/@MYSQL_CJ_FULL_PROD_
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 
+Obsoletes:     mysql-connector-java@MYSQL_CJ_RPM_PACKAGE_SUFFIX@ < %{version}-%{release}
+Provides:      mysql-connector-java@MYSQL_CJ_RPM_PACKAGE_SUFFIX@ = %{version}-%{release}
+
 %if 0%{?commercial:1}
 Obsoletes:     mysql-connector-java < %{version}-%{release}
-Obsoletes:     mysql-connector-j < %{version}-%{release}
-Provides:      mysql-connector-j = %{version}-%{release}
+Provides:      mysql-connector-java = %{version}-%{release}
+Obsoletes:     @MYSQL_CJ_EXTENDED_PROD_NAME@ < %{version}-%{release}
+Provides:      @MYSQL_CJ_EXTENDED_PROD_NAME@ = %{version}-%{release}
 %endif
 
 %if 0%{!?with_ant:1}
