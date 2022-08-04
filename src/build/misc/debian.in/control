@@ -10,5 +10,8 @@ Package: @PRODUCT_NAME@@PACKAGE_SUFFIX@
 Section: database
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Replaces: mysql-connector-java@PACKAGE_SUFFIX@ (<< 8.0.31)
+Breaks: mysql-connector-java@PACKAGE_SUFFIX@ (<< 8.0.31)
+Provides: mysql-connector-java@PACKAGE_SUFFIX@
 Description: MySQL Connector/J
  Standardized MySQL database driver for Java
