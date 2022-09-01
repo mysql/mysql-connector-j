@@ -29,9 +29,7 @@
 
 package com.mysql.cj;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -123,31 +121,9 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
     private static final Map<String, Set<String>> customMultibyteEncodingsByUrl = new HashMap<>();
 
     /**
-     * We store the platform 'encoding' here, only used to avoid munging filenames for LOAD DATA LOCAL INFILE...
-     */
-    private static Charset jvmPlatformCharset = null;
-
-    /**
      * Does the character set of this connection match the character set of the platform
      */
     private boolean platformDbCharsetMatches = true; // changed once we've connected.
-
-    static {
-        OutputStreamWriter outWriter = null;
-        // Use the I/O system to get the encoding (if possible), to avoid security restrictions on System.getProperty("file.encoding") in applets (why is that restricted?)
-        try {
-            outWriter = new OutputStreamWriter(new ByteArrayOutputStream());
-            jvmPlatformCharset = Charset.forName(outWriter.getEncoding());
-        } finally {
-            try {
-                if (outWriter != null) {
-                    outWriter.close();
-                }
-            } catch (IOException ioEx) {
-                // ignore
-            }
-        }
-    }
 
     private NativeMessageBuilder getCommandBuilder() {
         if (this.commandBuilder == null) {
@@ -157,19 +133,15 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
     }
 
     /**
-     * Determines if the database charset is the same as the platform charset
+     * Determines if the connection charset is the same as the platform charset
      */
     private void checkForCharsetMismatch() {
         String characterEncodingValue = this.characterEncoding.getValue();
         if (characterEncodingValue != null) {
             Charset characterEncodingCs = Charset.forName(characterEncodingValue);
-            Charset encodingToCheck = jvmPlatformCharset;
+            Charset encodingToCheck = Charset.defaultCharset();
 
-            if (encodingToCheck == null) {
-                encodingToCheck = Charset.forName(Constants.PLATFORM_ENCODING);
-            }
-
-            this.platformDbCharsetMatches = encodingToCheck == null ? false : encodingToCheck.equals(characterEncodingCs);
+            this.platformDbCharsetMatches = encodingToCheck.equals(characterEncodingCs);
         }
     }
 

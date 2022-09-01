@@ -50,7 +50,6 @@ public class PropertyDefinitions {
     public static final String SYSP_os_name = "os.name";
     public static final String SYSP_os_arch = "os.arch";
     public static final String SYSP_os_version = "os.version";
-    public static final String SYSP_file_encoding = "file.encoding";
 
     /*
      * Operational system properties.

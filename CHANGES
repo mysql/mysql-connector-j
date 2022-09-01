@@ -3,6 +3,8 @@
 
 Version 8.0.31
 
+  - Fix for Bug#67828 (Bug#15967406), Crashing applets due to reading file.encoding system property.
+
   - WL#15259, Review maven publishing process.
 
   - Fix for Bug#107222 (Bug#34150112), ClientPreparedStatement.toString() no longer interpolates byte arrays.
