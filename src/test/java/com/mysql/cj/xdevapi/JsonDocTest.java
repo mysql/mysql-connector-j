@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,11 +46,38 @@ import com.mysql.cj.exceptions.WrongArgumentException;
  * DbDoc tests.
  */
 public class JsonDocTest {
+    protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, Callable<?> testRoutine) {
+        try {
+            testRoutine.call();
+        } catch (Throwable t) {
+            assertTrue(throwable.isAssignableFrom(t.getClass()),
+                    "Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
+            return throwable.cast(t);
+        }
+        fail("Expected exception of type '" + throwable.getName() + "'.");
+
+        // never reaches here
+        return null;
+    }
+
+    protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, String msgMatchesRegex, Callable<?> testRoutine) {
+        try {
+            testRoutine.call();
+        } catch (Throwable t) {
+            assertTrue(throwable.isAssignableFrom(t.getClass()),
+                    "Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
+            assertTrue(t.getMessage().matches(msgMatchesRegex), "The error message [" + t.getMessage() + "] was expected to match [" + msgMatchesRegex + "].");
+            return throwable.cast(t);
+        }
+        fail("Expected exception of type '" + throwable.getName() + "'.");
+
+        // never reaches here
+        return null;
+    }
 
     @Test
     public void testEscaping() throws Exception {
-
-        String testStr = "\"\\\"\\\\\\\u002F\\b\\f\\n\\r\\t\"";
+        String testStr = "\"\\\"\\\\\u002F\\b\\f\\n\\r\\t\"";
         JsonString val = JsonParser.parseString(new StringReader(testStr));
         assertEquals(8, val.getString().length());
         assertEquals('\"', val.getString().charAt(0));
@@ -81,10 +108,19 @@ public class JsonDocTest {
 
     @Test
     public void testParseString() throws Exception {
-
         // ignore whitespaces
         JsonString val = JsonParser.parseString(new StringReader(" \\n\\r \" qq \" "));
         assertEquals(" qq ", val.getString());
+
+        val = JsonParser.parseString(new StringReader("\"\\u005C// \\\"foo\\u003Dbar\\\" & \\uD83D\\uDC2C\tbaz\\n\""));
+        assertEquals("\\// \"foo=bar\" & \uD83D\uDC2C\tbaz\n", val.getString());
+        val = JsonParser.parseString(new StringReader("\"\\// \\\"foo\u003Dbar\\\" & \uD83D\uDC2C\tbaz\n\""));
+        assertEquals("// \"foo=bar\" & \uD83D\uDC2C\tbaz\n", val.getString());
+
+        JsonString jsonStr = new JsonString().setValue("\\u005C// \"foo\\u003Dbar\" & \\uD83D\\uDC2C\\tbaz\\n");
+        assertEquals("\\u005C// \"foo\\u003Dbar\" & \\uD83D\\uDC2C\\tbaz\\n", jsonStr.getString());
+        jsonStr = new JsonString().setValue("\\// \"foo\u003Dbar\" & \uD83D\uDC2C\tbaz\n");
+        assertEquals("\\// \"foo=bar\" & \uD83D\uDC2C\tbaz\n", jsonStr.getString());
 
         // don't ignore other symbols before opening quotation mark
         assertThrows(WrongArgumentException.class, "Attempt to add character '\\\\' to unopened string.", new Callable<Void>() {
@@ -121,7 +157,6 @@ public class JsonDocTest {
 
     @Test
     public void testParseNumber() throws Exception {
-
         JsonNumber val;
 
         // ignore whitespaces
@@ -534,7 +569,6 @@ public class JsonDocTest {
 
     @Test
     public void testParseDoc() throws Exception {
-
         DbDoc doc;
 
         // empty doc
@@ -685,11 +719,25 @@ public class JsonDocTest {
         assertTrue(DbDoc.class.isAssignableFrom(doc.get("x").getClass()));
         assertEquals("{\"y\":true}", doc.get("x").toString());
         assertEquals("{\n\"y\" : true\n}", doc.get("x").toFormattedString());
+
+        // Doc with escape sequences
+        doc = new DbDocImpl();
+        doc.add("foo", new JsonString().setValue("\\u005C// \"foo\\u003Dbar\" & \\uD83D\\uDC2C\tbaz\\n"));
+        assertEquals("{\"foo\":\"\\\\u005C// \\\"foo\\\\u003Dbar\\\" & \\\\uD83D\\\\uDC2C\\tbaz\\\\n\"}", doc.toString());
+        assertEquals("\\u005C// \"foo\\u003Dbar\" & \\uD83D\\uDC2C\tbaz\\n", ((JsonString) doc.get("foo")).getString());
+        // - Escape sequences are processed differently when sent in Java Strings and JSON string to be parsed. The next are identical:
+        DbDoc doc1 = new DbDocImpl();
+        doc1.add("foo", new JsonString().setValue("\\// \"foo\u003Dbar\" & \uD83D\uDC2C\tbaz\n"));
+        assertEquals("{\"foo\":\"\\\\// \\\"foo=bar\\\" & \uD83D\uDC2C\\tbaz\\n\"}", doc1.toString());
+        assertEquals("\\// \"foo=bar\" & \uD83D\uDC2C\tbaz\n", ((JsonString) doc1.get("foo")).getString());
+        DbDoc doc2 = JsonParser.parseDoc("{ \"foo\": \"\\u005C// \\\"foo\\u003Dbar\\\" & \\uD83D\\uDC2C\tbaz\\n\" }");
+        assertEquals("{\"foo\":\"\\\\// \\\"foo=bar\\\" & \uD83D\uDC2C\\tbaz\\n\"}", doc2.toString());
+        assertEquals("\\// \"foo=bar\" & \uD83D\uDC2C\tbaz\n", ((JsonString) doc2.get("foo")).getString());
+        assertEquals(doc1.toFormattedString(), doc2.toFormattedString());
     }
 
     @Test
     public void testToJsonString() {
-
         DbDoc doc = new DbDocImpl().add("field1", new JsonString().setValue("value 1")).add("field2", new JsonNumber().setValue("12345.44E22"))
                 .add("field3", JsonLiteral.TRUE).add("field4", JsonLiteral.FALSE).add("field5", JsonLiteral.NULL)
                 .add("field6",
@@ -713,34 +761,5 @@ public class JsonDocTest {
     @Test
     public void testJsonNumberAtEnd() throws Exception {
         JsonParser.parseDoc(new StringReader("{\"x\":2}"));
-    }
-
-    protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, Callable<?> testRoutine) {
-        try {
-            testRoutine.call();
-        } catch (Throwable t) {
-            assertTrue(throwable.isAssignableFrom(t.getClass()),
-                    "Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
-            return throwable.cast(t);
-        }
-        fail("Expected exception of type '" + throwable.getName() + "'.");
-
-        // never reaches here
-        return null;
-    }
-
-    protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, String msgMatchesRegex, Callable<?> testRoutine) {
-        try {
-            testRoutine.call();
-        } catch (Throwable t) {
-            assertTrue(throwable.isAssignableFrom(t.getClass()),
-                    "Expected exception of type '" + throwable.getName() + "' but instead a exception of type '" + t.getClass().getName() + "' was thrown.");
-            assertTrue(t.getMessage().matches(msgMatchesRegex), "The error message [" + t.getMessage() + "] was expected to match [" + msgMatchesRegex + "].");
-            return throwable.cast(t);
-        }
-        fail("Expected exception of type '" + throwable.getName() + "'.");
-
-        // never reaches here
-        return null;
     }
 }

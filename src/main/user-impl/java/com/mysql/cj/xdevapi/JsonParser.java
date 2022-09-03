@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,7 +41,6 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 
 public class JsonParser {
-
     enum Whitespace {
         TAB('\u0009'), LF('\n'), CR('\r'), SPACE('\u0020');
 
@@ -88,53 +87,55 @@ public class JsonParser {
 
     enum EscapeChar {
         /**
-         * \" represents the quotation mark character (U+0022)
+         * \\" represents the quotation mark character (U+0022)
          */
-        QUOTE('\u0022', "\\\""),
+        QUOTE('\u0022', "\\\"", true),
         /**
-         * \\ represents the reverse solidus character (U+005C)
+         * \\\\ represents the reverse solidus character (U+005C)
          */
-        RSOLIDUS('\\', "\\\\"),
+        RSOLIDUS('\\', "\\\\", true),
         /**
-         * \/ represents the solidus character (U+002F)
+         * \\/ represents the solidus character (U+002F)
          */
-        SOLIDUS('\u002F', "\\\u002F"),
+        SOLIDUS('\u002F', "\\\u002F", false),
         /**
-         * \b represents the backspace character (U+0008)
+         * \\b represents the backspace character (U+0008)
          */
-        BACKSPACE('\u0008', "\\b"),
+        BACKSPACE('\u0008', "\\b", true),
         /**
-         * \f represents the form feed character (U+000C)
+         * \\f represents the form feed character (U+000C)
          */
-        FF('\u000C', "\\f"),
+        FF('\u000C', "\\f", true),
         /**
-         * \n represents the line feed character (U+000A)
+         * \\n represents the line feed character (U+000A)
          */
-        LF('\n', "\\n"),
+        LF('\n', "\\n", true),
         /**
-         * \r represents the carriage return character (U+000D)
+         * \\r represents the carriage return character (U+000D)
          */
-        CR('\r', "\\r"),
+        CR('\r', "\\r", true),
         /**
-         * \t represents the character tabulation character (U+0009)
+         * \\t represents the character tabulation character (U+0009)
          */
-        TAB('\t', "\\t");
+        TAB('\t', "\\t", true);
 
         public final char CHAR;
         public final String ESCAPED;
+        public final boolean NEEDS_ESCAPING;
 
-        private EscapeChar(char character, String escaped) {
+        private EscapeChar(char character, String escaped, boolean needsEscaping) {
             this.CHAR = character;
             this.ESCAPED = escaped;
+            this.NEEDS_ESCAPING = needsEscaping;
         }
     };
 
     static Set<Character> whitespaceChars = new HashSet<>();
-    static HashMap<Character, Character> unescapeChars = new HashMap<>();
+    static HashMap<Character, Character> escapeChars = new HashMap<>();
 
     static {
         for (EscapeChar ec : EscapeChar.values()) {
-            unescapeChars.put(ec.ESCAPED.charAt(1), ec.CHAR);
+            escapeChars.put(ec.ESCAPED.charAt(1), ec.CHAR);
         }
         for (Whitespace ws : Whitespace.values()) {
             whitespaceChars.add(ws.CHAR);
@@ -379,8 +380,23 @@ public class JsonParser {
         while ((intch = reader.read()) != -1) {
             char ch = (char) intch;
             if (escapeNextChar) {
-                if (unescapeChars.containsKey(ch)) {
-                    appendChar(sb, unescapeChars.get(ch));
+                if (escapeChars.containsKey(ch)) {
+                    appendChar(sb, escapeChars.get(ch));
+                } else if (ch == 'u') {
+                    // \\u[4 hex digits] represents a unicode code point (ISO/IEC 10646)
+                    char[] buf = new char[4];
+                    int countRead = reader.read(buf);
+                    String hexCodePoint = countRead == -1 ? "" : String.valueOf(buf, 0, countRead);
+                    if (countRead != 4) {
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("JsonParser.13", new String[] { hexCodePoint }));
+                    }
+                    try {
+                        appendChar(sb, (char) Integer.parseInt(hexCodePoint, 16));
+                    } catch (NumberFormatException e) {
+                        throw ExceptionFactory.createException(WrongArgumentException.class,
+                                Messages.getString("JsonParser.13", new String[] { hexCodePoint }));
+                    }
                 } else {
                     throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.7", new Character[] { ch }));
                 }
@@ -589,5 +605,4 @@ public class JsonParser {
 
         throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.12", new String[] { sb.toString() }));
     }
-
 }
