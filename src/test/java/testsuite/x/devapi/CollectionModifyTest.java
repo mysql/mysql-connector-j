@@ -60,6 +60,7 @@ import com.mysql.cj.xdevapi.JsonLiteral;
 import com.mysql.cj.xdevapi.JsonNumber;
 import com.mysql.cj.xdevapi.JsonParser;
 import com.mysql.cj.xdevapi.JsonString;
+import com.mysql.cj.xdevapi.JsonValue;
 import com.mysql.cj.xdevapi.ModifyStatement;
 import com.mysql.cj.xdevapi.ModifyStatementImpl;
 import com.mysql.cj.xdevapi.Result;
@@ -1979,5 +1980,81 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             this.collection.modify("true").arrayInsert(null, "").execute();
             return null;
         });
+    }
+
+    /**
+     * Tests fix for Bug#33637993, Loss of backslashes in data after modify api is used.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug33637993() throws Exception {
+        Result res;
+        String testData = "(%d) foo\nbar\\nbaz\\u003D|\"\""; // Use "(%d)" as an increment to force different documents each step.
+
+        // Test document with a string element.
+        DbDoc doc = new DbDocImpl().add("_id", new JsonString().setValue("1")).add("str", new JsonString().setValue(String.format(testData, 0)));
+        String expected = "{\"_id\":\"1\",\"str\":\"(0) foo\\nbar\\\\nbaz\\\\u003D|\\\"\\\"\"}";
+
+        // Add test document.
+        res = this.collection.add(doc).execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        assertEquals(expected, this.collection.find("_id = \"1\"").execute().fetchOne().toString());
+
+        // Modify using .set(DbDoc)
+        res = this.collection.modify("_id = \"1\"").set("str", String.format(testData, 1)).execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        assertEquals(expected.replace("(0)", "(1)"), this.collection.find("_id = \"1\"").execute().fetchOne().toString());
+
+        // Modify using .patch(DbDoc)
+        DbDoc docEdit = new DbDocImpl().add("str", new JsonString().setValue(String.format(testData, 2)));
+        res = this.collection.modify("_id = \"1\"").patch(docEdit).execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        assertEquals(expected.replace("(0)", "(2)"), this.collection.find("_id = \"1\"").execute().fetchOne().toString());
+
+        // Modify using .patch(String) --> Escape sequences are processed by the JSON parser, so result is different.
+        expected = "{\"_id\":\"1\",\"str\":\"(3) foo\\nbar\\nbaz=|\\\"\"}";
+        res = this.collection.modify("_id = \"1\"").patch("{\"str\": \"" + String.format(testData, 3) + "\"}").execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        assertEquals(expected, this.collection.find("_id = \"1\"").execute().fetchOne().toString());
+
+        // Test document with an array element.
+        doc = new DbDocImpl().add("_id", new JsonString().setValue("2")).add("arr",
+                new JsonArray().addValue(new JsonString().setValue(String.format(testData, 0))));
+        expected = "{\"_id\":\"2\",\"arr\":[\"(0) foo\\nbar\\\\nbaz\\\\u003D|\\\"\\\"\"]}";
+        String expectedPart = expected.substring(expected.indexOf("foo"), expected.indexOf(']'));
+        String resAsStr;
+        int p = -1;
+
+        // Add test document.
+        res = this.collection.add(doc).execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        assertEquals(expected, this.collection.find("_id = \"2\"").execute().fetchOne().toString());
+
+        // Modify using .arrayInsert()
+        res = this.collection.modify("_id = \"2\"").arrayInsert("arr[1]", String.format(testData, 1)).execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        resAsStr = this.collection.find("_id = \"2\"").execute().fetchOne().toString();
+        assertTrue((p = resAsStr.indexOf(expectedPart, p + 1)) > 0);
+        assertTrue((p = resAsStr.indexOf(expectedPart, p + 1)) > 0);
+        assertFalse((p = resAsStr.indexOf(expectedPart, p + 1)) > 0);
+        p = -1;
+
+        // Modify using .arrayInsert()
+        res = this.collection.modify("_id = \"2\"").arrayAppend("arr", String.format(testData, 2)).execute();
+        assertEquals(1, res.getAffectedItemsCount());
+        resAsStr = this.collection.find("_id = \"2\"").execute().fetchOne().toString();
+        assertTrue((p = resAsStr.indexOf(expectedPart, p + 1)) > 0);
+        assertTrue((p = resAsStr.indexOf(expectedPart, p + 1)) > 0);
+        assertTrue((p = resAsStr.indexOf(expectedPart, p + 1)) > 0);
+        assertFalse((p = resAsStr.indexOf(expectedPart, p + 1)) > 0);
+
+        // Final strings (within array) check.
+        doc = this.collection.find("_id = \"2\"").execute().fetchOne();
+        JsonArray arr = (JsonArray) doc.get("arr");
+        assertEquals(3, arr.size());
+        for (JsonValue v : arr) {
+            assertEquals(5, ((JsonString) v).toFormattedString().indexOf(expectedPart));
+        }
     }
 }

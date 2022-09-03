@@ -3,6 +3,8 @@
 
 Version 8.0.31
 
+  - Fix for Bug#33637993, Loss of backslashes in data after modify api is used.
+
   - Fix for Bug#34529014, JSonParser not accepting valid JSON string when converting to DbDoc.
 
   - Fix for Bug#67828 (Bug#15967406), Crashing applets due to reading file.encoding system property.

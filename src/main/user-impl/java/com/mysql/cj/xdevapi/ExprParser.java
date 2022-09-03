@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -54,7 +54,7 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Operator;
 
 // Grammar includes precedence & associativity of binary operators:
 // (^ refers to the preceding production)
-// (c.f. https://dev.mysql.com/doc/refman/5.7/en/operator-precedence.html)
+// (c.f. https://dev.mysql.com/doc/refman/8.0/en/operator-precedence.html)
 //
 // AtomicExpr: [Unary]OpExpr | Identifier | FunctionCall | '(' Expr ')'
 //
@@ -80,6 +80,20 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Operator;
  * Expression parser for X protocol.
  */
 public class ExprParser {
+    private static HashMap<Character, Character> escapeChars = new HashMap<>();
+    static { // Replicated from JsonParser.EscapeChar
+        escapeChars.put('"', '"');
+        escapeChars.put('\'', '\'');
+        escapeChars.put('`', '`');
+        escapeChars.put('\\', '\\');
+        escapeChars.put('/', '/');
+        escapeChars.put('b', '\b');
+        escapeChars.put('f', '\f');
+        escapeChars.put('n', '\n');
+        escapeChars.put('r', '\r');
+        escapeChars.put('t', '\t');
+    }
+
     /** String being parsed. */
     String string;
     /** Token stream produced by lexer. */
@@ -124,7 +138,7 @@ public class ExprParser {
     /**
      * Token types used by the lexer.
      */
-    private static enum TokenType {
+    private enum TokenType {
         NOT, AND, ANDAND, OR, OROR, XOR, IS, LPAREN, RPAREN, LSQBRACKET, RSQBRACKET, BETWEEN, TRUE, NULL, FALSE, IN, LIKE, INTERVAL, REGEXP, ESCAPE, IDENT,
         LSTRING, LNUM_INT, LNUM_DOUBLE, DOT, DOLLAR, COMMA, EQ, NE, GT, GE, LT, LE, BITAND, BITOR, BITXOR, LSHIFT, RSHIFT, PLUS, MINUS, STAR, SLASH, HEX, BIN,
         NEG, BANG, EROTEME, MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND,
@@ -406,12 +420,37 @@ public class ExprParser {
                         char quoteChar = c;
                         StringBuilder val = new StringBuilder();
                         try {
-                            for (c = this.string.charAt(++i); c != quoteChar
+                            boolean escapeNextChar = false;
+                            for (c = this.string.charAt(++i); c != quoteChar || escapeNextChar
                                     || (i + 1 < this.string.length() && this.string.charAt(i + 1) == quoteChar); c = this.string.charAt(++i)) {
-                                if (c == '\\' || c == quoteChar) {
-                                    ++i;
+                                if (escapeNextChar) {
+                                    if (escapeChars.containsKey(c)) {
+                                        val.append(escapeChars.get(c));
+                                    } else if (c == 'u') {
+                                        // \\u[4 hex digits] represents a unicode code point (ISO/IEC 10646)
+                                        char[] buf = new char[4];
+                                        this.string.getChars(++i, i + 4, buf, 0);
+                                        String hexCodePoint = String.valueOf(buf);
+                                        try {
+                                            val.append((char) Integer.parseInt(hexCodePoint, 16));
+                                        } catch (NumberFormatException e) {
+                                            throw new WrongArgumentException("Invalid Unicode code point '" + hexCodePoint + "'");
+                                        }
+                                        i += 3;
+                                    } else {
+                                        val.append('\\').append(c);
+                                    }
+                                    escapeNextChar = false;
+                                } else {
+                                    if (c == '\\' || c == quoteChar) { // Escape sequence or two consecutive quotes
+                                        escapeNextChar = true;
+                                    } else {
+                                        val.append(c);
+                                    }
                                 }
-                                val.append(this.string.charAt(i));
+                            }
+                            if (escapeNextChar) {
+                                throw new WrongArgumentException("Unterminated escape sequence at " + i);
                             }
                         } catch (StringIndexOutOfBoundsException ex) {
                             throw new WrongArgumentException("Unterminated string starting at " + start);
@@ -419,7 +458,7 @@ public class ExprParser {
                         this.tokens.add(new Token(quoteChar == '`' ? TokenType.IDENT : TokenType.LSTRING, val.toString()));
                         break;
                     default:
-                        throw new WrongArgumentException("Can't parse at pos: " + i);
+                        throw new WrongArgumentException("Can't parse at position " + i);
                 }
             } else {
                 // otherwise, it's an identifier
@@ -458,10 +497,10 @@ public class ExprParser {
      */
     void assertTokenAt(int pos, TokenType type) {
         if (this.tokens.size() <= pos) {
-            throw new WrongArgumentException("No more tokens when expecting " + type + " at token pos " + pos);
+            throw new WrongArgumentException("No more tokens when expecting " + type + " at token position " + pos);
         }
         if (this.tokens.get(pos).type != type) {
-            throw new WrongArgumentException("Expected token type " + type + " at token pos " + pos);
+            throw new WrongArgumentException("Expected token type " + type + " at token position " + pos);
         }
     }
 
@@ -590,7 +629,7 @@ public class ExprParser {
             consumeToken(TokenType.LSTRING);
             memberName = t.value;
         } else {
-            throw new WrongArgumentException("Expected token type IDENT or LSTRING in JSON path at token pos " + this.tokenPos);
+            throw new WrongArgumentException("Expected token type IDENT or LSTRING in JSON path at token position " + this.tokenPos);
         }
         DocumentPathItem.Builder item = DocumentPathItem.newBuilder();
         item.setType(DocumentPathItem.Type.MEMBER);
@@ -619,7 +658,7 @@ public class ExprParser {
             consumeToken(TokenType.RSQBRACKET);
             return builder.setType(DocumentPathItem.Type.ARRAY_INDEX).setIndex(v).build();
         } else {
-            throw new WrongArgumentException("Expected token type STAR or LNUM_INT in JSON path array index at token pos " + this.tokenPos);
+            throw new WrongArgumentException("Expected token type STAR or LNUM_INT in JSON path array index at token position " + this.tokenPos);
         }
     }
 
@@ -737,7 +776,7 @@ public class ExprParser {
      */
     Expr atomicExpr() { // constant, identifier, variable, function call, etc
         if (this.tokenPos >= this.tokens.size()) {
-            throw new WrongArgumentException("No more tokens when expecting one at token pos " + this.tokenPos);
+            throw new WrongArgumentException("No more tokens when expecting one at token position " + this.tokenPos);
         }
         Token t = this.tokens.get(this.tokenPos);
         this.tokenPos++; // consume
@@ -754,7 +793,7 @@ public class ExprParser {
                 } else if (t.type == TokenType.EROTEME) {
                     placeholderName = String.valueOf(this.positionalPlaceholderCount);
                 } else {
-                    throw new WrongArgumentException("Invalid placeholder name at token pos " + this.tokenPos);
+                    throw new WrongArgumentException("Invalid placeholder name at token position " + this.tokenPos);
                 }
                 Expr.Builder placeholder = Expr.newBuilder().setType(Expr.Type.PLACEHOLDER);
                 if (this.placeholderNameToPosition.containsKey(placeholderName)) {
@@ -880,7 +919,7 @@ public class ExprParser {
             default:
                 break;
         }
-        throw new WrongArgumentException("Cannot find atomic expression at token pos: " + (this.tokenPos - 1));
+        throw new WrongArgumentException("Cannot find atomic expression at token position " + (this.tokenPos - 1));
     }
 
     /**
@@ -1030,7 +1069,7 @@ public class ExprParser {
                         params.add(compExpr());
                         break;
                     default:
-                        throw new WrongArgumentException("Unknown token after NOT at pos: " + this.tokenPos);
+                        throw new WrongArgumentException("Unknown token after NOT at position " + this.tokenPos);
                 }
                 if (isNot) {
                     opName = "not_" + opName;

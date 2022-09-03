@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1236,13 +1236,15 @@ public class CollectionFindTest extends BaseCollectionTestCase {
         assertTrue(((JsonLiteral) doc.get("overlaps")).equals(JsonLiteral.FALSE));
 
         // TSFR4
-        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 0", () -> this.collection.find("overlaps $.list").execute());
-        assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token pos 4", () -> this.collection.find("$.list OVERLAPS").execute());
-        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 0", () -> this.collection.find("overlaps").execute());
-        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 1", () -> this.collection.find("NOT overlaps").execute());
-        assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token pos 5",
+        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 0",
+                () -> this.collection.find("overlaps $.list").execute());
+        assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token position 4",
+                () -> this.collection.find("$.list OVERLAPS").execute());
+        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 0", () -> this.collection.find("overlaps").execute());
+        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 1", () -> this.collection.find("NOT overlaps").execute());
+        assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token position 5",
                 () -> this.collection.find("$.list NOT OVERLAPS").execute());
-        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 1", () -> this.collection.find("not overlaps").execute());
+        assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 1", () -> this.collection.find("not overlaps").execute());
 
         // TSFR5
         res = this.collection.find("[1, 2, 3] OVERLAPS $.age").execute();
@@ -2268,29 +2270,31 @@ public class CollectionFindTest extends BaseCollectionTestCase {
             assertEquals(maxrec, docs.count());
 
             /* When the right number of operands are not provided - error should be thrown */
-            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 0",
+            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 0",
                     () -> this.collection.find("overlaps $.ARR1").execute());
-            assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token pos 4",
+            assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token position 4",
                     () -> this.collection.find("$.ARR1 OVERLAPS").execute());
-            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 0", () -> this.collection.find("OVERLAPS").execute());
-            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 1",
+            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 0", () -> this.collection.find("OVERLAPS").execute());
+            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 1",
                     () -> this.collection.find("not overlaps $.ARR1").execute());
-            assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token pos 5",
+            assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token position 5",
                     () -> this.collection.find("$.ARR1 NOT OVERLAPS").execute());
-            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 1", () -> this.collection.find("not OVERLAPS").execute());
+            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 1",
+                    () -> this.collection.find("not OVERLAPS").execute());
 
             final Table table1 = this.schema.getCollectionAsTable(this.collectionName);
 
-            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 0",
+            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 0",
                     () -> table1.select().where("overlaps $.ARR1").execute());
-            assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token pos 4",
+            assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token position 4",
                     () -> table1.select().where("$.ARR1 OVERLAPS").execute());
-            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 0", () -> table1.select().where("OVERLAPS").execute());
-            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 1",
+            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 0", () -> table1.select().where("OVERLAPS").execute());
+            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 1",
                     () -> table1.select().where("not overlaps $.ARR1").execute());
-            assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token pos 5",
+            assertThrows(WrongArgumentException.class, "No more tokens when expecting one at token position 5",
                     () -> table1.select().where("$.ARR1 NOT OVERLAPS").execute());
-            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token pos: 1", () -> table1.select().where("not OVERLAPS").execute());
+            assertThrows(WrongArgumentException.class, "Cannot find atomic expression at token position 1",
+                    () -> table1.select().where("not OVERLAPS").execute());
 
             /* invalid criteria, e.g. .find("[1, 2, 3] OVERLAPS $.age") . where $.age is atomic value */
             dropCollection("coll2");

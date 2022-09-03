@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -107,7 +107,7 @@ public class ExprParserTest {
     }
 
     /**
-     * Check that a string parses and is reconstituted as a string that we expect. Futher we parse the canonical version to make sure it doesn't change.
+     * Check that a string parses and is reconstituted as a string that we expect. Further we parse the canonical version to make sure it doesn't change.
      * 
      * @param input
      * @param expected
@@ -220,6 +220,10 @@ public class ExprParserTest {
         // star function
         checkParseRoundTrip("*", "*");
         checkParseRoundTrip("count(*) + 1", "(count(*) + 1)");
+        checkParseRoundTrip("foo\u003Dbar", "(foo == bar)");
+        checkParseRoundTrip("\"foo\"", "\"foo\"");
+        checkParseRoundTrip("\"foo\\\"bar\"", "\"foo\"\"bar\"");
+        checkParseRoundTrip("\"foo\nbar\"", "\"foo\nbar\""); // TODO: Could it be that the unparsed \n should be escaped?
     }
 
     /**
