@@ -1191,7 +1191,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         /* add(DbDoc[] docs) */
         DbDoc[] jsonlist = new DbDocImpl[maxrec];
         long l1 = Long.MAX_VALUE, l2 = Long.MIN_VALUE, l3 = 2147483647;
-        System.out.println("l = ===" + l1);
 
         double d1 = 100.4567;
         for (i = 0; i < maxrec; i++) {
@@ -1989,6 +1988,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug33637993() throws Exception {
+        assumeTrue(mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.0")), "MySQL 8.0 is required to run this test.");
+
         Result res;
         String testData = "(%d) foo\nbar\\nbaz\\u003D|\"\""; // Use "(%d)" as an increment to force different documents each step.
 
