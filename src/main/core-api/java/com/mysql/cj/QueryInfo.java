@@ -225,7 +225,7 @@ public class QueryInfo {
                         this.valuesEndpoints.add(valuesClauseEnd);
                     }
 
-                } else if (withinValuesClause && parensLevel == 0 && isInsert && (matchEnd = strInspector.matchesIgnoreCase(ODKU_CLAUSE)) != -1) { // End of VALUES clause.
+                } else if (parensLevel == 0 && isInsert && (matchEnd = strInspector.matchesIgnoreCase(ODKU_CLAUSE)) != -1) { // End of VALUES clause.
                     if (valuesClauseEnd == -1) {
                         valuesClauseEnd = strInspector.getPosition();
                     }

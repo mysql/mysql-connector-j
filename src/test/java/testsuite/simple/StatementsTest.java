@@ -5401,4 +5401,32 @@ public class StatementsTest extends BaseTestCase {
             return super.preProcess(sql, interceptedQuery);
         }
     }
+
+    @Test
+    public void testGetGeneratedKeysWithOnDuplicateKeyUpdate() throws SQLException {
+        createTable("statement_test", "(id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
+
+        this.pstmt = this.conn.prepareStatement("INSERT INTO statement_test (id, strdata1) VALUES (?, ?)");
+        this.pstmt.setInt(1, 1);
+        this.pstmt.setString(2, "foo");
+        this.pstmt.execute();
+
+        this.pstmt = this.conn.prepareStatement("INSERT INTO statement_test (id, strdata1) VALUES (?, ?) ON DUPLICATE KEY UPDATE strdata1 = VALUES(strdata1)", Statement.RETURN_GENERATED_KEYS);
+        this.pstmt.setInt(1, 1);
+        this.pstmt.setString(2, "bar");
+        this.pstmt.execute();
+        this.rs = this.pstmt.getGeneratedKeys();
+        this.rs.last();
+        assertEquals(1, this.rs.getRow(), "The number of generatedKeys isn't one.");
+        this.rs.close();
+
+        this.pstmt = this.conn.prepareStatement("INSERT INTO statement_test SET id = ?, strdata1 = ? ON DUPLICATE KEY UPDATE strdata1 = VALUES(strdata1)", Statement.RETURN_GENERATED_KEYS);
+        this.pstmt.setInt(1, 1);
+        this.pstmt.setString(2, "hoge");
+        this.pstmt.execute();
+        this.rs = this.pstmt.getGeneratedKeys();
+        this.rs.last();
+        assertEquals(1, this.rs.getRow(), "The number of generatedKeys isn't one.");
+        this.rs.close();
+    }
 }
