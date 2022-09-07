@@ -37,6 +37,7 @@ ANT_COMMON_OPTIONS=\
   -Dcom.mysql.cj.build.driver.version.snapshot=@MYSQL_CJ_VERSION_SNAPSHOT@ \
   -Dcom.mysql.cj.build.driver.extraName=@MYSQL_CJ_EXTRA_NAME@ \
   -Dcom.mysql.cj.dist.licenseUrl=@MYSQL_CJ_LICENSEURL@ \
+  -Dcom.mysql.cj.dist.noMaven=true
   -Djava.awt.headless=true
 
 ifeq ($(ANT_HOME),)
