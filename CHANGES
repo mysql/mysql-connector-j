@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.32
+
 Version 8.0.31
 
   - Fix for Bug#33637993, Loss of backslashes in data after modify api is used.
