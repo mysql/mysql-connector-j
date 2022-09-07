@@ -284,6 +284,7 @@ public class NativeQueryBindValue implements BindValue {
             case BIGINT:
             case BIGINT_UNSIGNED:
                 return MysqlType.FIELD_TYPE_LONGLONG;
+            case BIT:
             case BOOLEAN:
             case TINYINT:
             case TINYINT_UNSIGNED:
@@ -325,7 +326,6 @@ public class NativeQueryBindValue implements BindValue {
             case LONGBLOB:
             case LONGTEXT:
                 return MysqlType.FIELD_TYPE_LONG_BLOB;
-            //            case BIT:
             //            case JSON:
             //            case ENUM:
             //            case SET:
