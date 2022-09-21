@@ -3,6 +3,9 @@
 
 Version 8.0.32
 
+  - Fix for Bug#108419 (Bug#34578010), Contribution: Recognize "ON DUPLICATE KEY UPDATE" in "INSERT SET" Statement.
+    Thanks to Yamasaki Tadashi for his contribution.
+
 Version 8.0.31
 
   - Fix for Bug#33637993, Loss of backslashes in data after modify api is used.

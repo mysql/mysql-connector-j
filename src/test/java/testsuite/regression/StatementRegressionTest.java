@@ -12670,4 +12670,69 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(-1, sql.indexOf("NULL", startPos), testCase);
         } while ((useSPS = !useSPS) && (setMax = !setMax));
     }
+
+    /**
+     * Tests fix for Bug#108419 (Bug#34578010), Contribution: Recognize "ON DUPLICATE KEY UPDATE" in "INSERT SET" Statement.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug108419() throws Exception {
+        createTable("testBug108419", "(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, data1 VARCHAR(255) NOT NULL, data2 VARCHAR(255))");
+
+        boolean useSPS = false;
+        boolean rwBS = false;
+        boolean noODKU = false;
+
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), Boolean.toString(rwBS));
+            props.setProperty(PropertyKey.dontCheckOnDuplicateKeyUpdateInSQL.getKeyName(), Boolean.toString(noODKU));
+            Connection testConn = getConnectionWithProps(props);
+
+            final String testCase = String.format("Case [useSPS: %s, rwBS: %s, noODKU: %s]", useSPS ? "Y" : "N", rwBS ? "Y" : "N", noODKU ? "Y" : "N");
+
+            this.pstmt = testConn.prepareStatement("INSERT INTO testBug108419 (id, data1) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setString(2, "MySQL");
+            this.pstmt.execute();
+            this.rs = this.pstmt.getGeneratedKeys();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            assertFalse(this.rs.next(), testCase);
+
+            this.pstmt = testConn.prepareStatement("INSERT INTO testBug108419 (id, data1) VALUES (?, ?) ON DUPLICATE KEY UPDATE data2 = VALUES(data1)",
+                    Statement.RETURN_GENERATED_KEYS);
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setString(2, "Connector/J");
+            this.pstmt.execute();
+            this.rs = this.pstmt.getGeneratedKeys();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            if (!rwBS && noODKU) { // Assume two keys were generated only when no query re-write and don't check for ODKU.
+                assertTrue(this.rs.next(), testCase);
+                assertEquals(2, this.rs.getInt(1), testCase);
+            }
+            assertFalse(this.rs.next(), testCase);
+
+            this.pstmt = testConn.prepareStatement("INSERT INTO testBug108419 SET id = ?, data1 = ? ON DUPLICATE KEY UPDATE data2 = VALUES(data1)",
+                    Statement.RETURN_GENERATED_KEYS);
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setString(2, "MySQL Connector/J");
+            this.pstmt.execute();
+            this.rs = this.pstmt.getGeneratedKeys();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            if (!rwBS && noODKU) { // Assume two keys were generated only when no query re-write and don't check for ODKU.
+                assertTrue(this.rs.next(), testCase);
+                assertEquals(2, this.rs.getInt(1), testCase);
+            }
+            assertFalse(this.rs.next(), testCase);
+
+            this.stmt.execute("TRUNCATE TABLE testBug108419");
+        } while ((useSPS = !useSPS) || (rwBS = !rwBS) || (noODKU = !noODKU));
+    }
 }
