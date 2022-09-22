@@ -457,7 +457,7 @@ public class TimeUtil {
         String[] sa = s.split("\\p{Punct}");
         StringBuilder sb = new StringBuilder();
         if (sa[0].length() == 2) {
-            sb.append(Integer.valueOf(sa[0]) > 69 ? "19" : "20");
+            sb.append(Integer.parseInt(sa[0]) > 69 ? "19" : "20");
         }
         sb.append(sa[0]);
         sb.append("-");

@@ -785,7 +785,7 @@ public class ExprParser {
             case COLON: {
                 String placeholderName;
                 if (currentTokenTypeEquals(TokenType.LNUM_INT)) {
-                    // int pos = Integer.valueOf(consumeToken(TokenType.LNUM_INT));
+                    // int pos = Integer.parseInt(consumeToken(TokenType.LNUM_INT));
                     // return Expr.newBuilder().setType(Expr.Type.PLACEHOLDER).setPosition(pos).build();
                     placeholderName = consumeToken(TokenType.LNUM_INT);
                 } else if (currentTokenTypeEquals(TokenType.IDENT)) {
@@ -894,9 +894,9 @@ public class ExprParser {
             case NULL:
                 return ExprUtil.buildLiteralNullScalar();
             case LNUM_INT:
-                return ExprUtil.buildLiteralScalar(Long.valueOf(t.value));
+                return ExprUtil.buildLiteralScalar(Long.parseLong(t.value));
             case LNUM_DOUBLE:
-                return ExprUtil.buildLiteralScalar(Double.valueOf(t.value));
+                return ExprUtil.buildLiteralScalar(Double.parseDouble(t.value));
             case TRUE:
             case FALSE:
                 return ExprUtil.buildLiteralScalar(t.type == TokenType.TRUE);
