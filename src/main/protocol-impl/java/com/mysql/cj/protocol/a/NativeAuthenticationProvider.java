@@ -644,7 +644,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         } else {
             // send 1 byte length of auth-response and string[n] auth-response
             last_sent.writeInteger(IntegerDataType.INT1, authData.getPayloadLength());
-            last_sent.writeBytes(StringSelfDataType.STRING_EOF, authData.getByteBuffer());
+            last_sent.writeBytes(StringSelfDataType.STRING_EOF, authData.getByteBuffer(), 0, authData.getPayloadLength());
         }
 
         if (this.useConnectWithDb) {
