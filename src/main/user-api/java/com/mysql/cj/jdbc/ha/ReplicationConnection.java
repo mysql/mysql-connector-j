@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -59,6 +59,7 @@ public interface ReplicationConnection extends JdbcConnection {
      * @param host
      *            host name
      * @throws SQLException
+     *             in case of failure
      * @deprecated
      */
     @Deprecated
@@ -74,6 +75,7 @@ public interface ReplicationConnection extends JdbcConnection {
      * @param host
      *            host name
      * @throws SQLException
+     *             in case of failure
      * @deprecated
      */
     @Deprecated
@@ -91,6 +93,7 @@ public interface ReplicationConnection extends JdbcConnection {
      * @param waitUntilNotInUse
      *            remove immediately or wait for it's release
      * @throws SQLException
+     *             in case of failure
      * @deprecated
      */
     @Deprecated
@@ -134,6 +137,7 @@ public interface ReplicationConnection extends JdbcConnection {
      * @param host
      *            host name
      * @throws SQLException
+     *             in case of failure
      * @deprecated
      */
     @Deprecated
@@ -149,6 +153,7 @@ public interface ReplicationConnection extends JdbcConnection {
      * @param host
      *            host name
      * @throws SQLException
+     *             in case of failure
      * @deprecated
      */
     @Deprecated
@@ -166,6 +171,7 @@ public interface ReplicationConnection extends JdbcConnection {
      * @param closeGently
      *            mode
      * @throws SQLException
+     *             in case of failure
      * @deprecated
      */
     @Deprecated

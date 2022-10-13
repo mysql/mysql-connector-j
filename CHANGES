@@ -3,6 +3,8 @@
 
 Version 8.0.32
 
+  - WL#15437, Sonatype compliant POM and maven bundles.
+
   - WL#15411, Upgrade Protocol Buffers dependency to protobuf-java-3.21.7.
 
   - Fix for Bug#106981 (Bug#34059340), Contribution: [PATCH] Remove superfluous use of boxing.

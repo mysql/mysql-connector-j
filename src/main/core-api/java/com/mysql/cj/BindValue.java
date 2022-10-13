@@ -111,6 +111,7 @@ public interface BindValue {
      * </p>
      * 
      * @param value
+     *            the value to set
      */
     void setKeepOrigNanos(boolean value);
 

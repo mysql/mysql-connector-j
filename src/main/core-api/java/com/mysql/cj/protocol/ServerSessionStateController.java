@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -116,6 +116,7 @@ public interface ServerSessionStateController {
      * <li>{@link #SESSION_TRACK_TRANSACTION_CHARACTERISTICS} - single value, transaction characteristics statement;</li>
      * <li>{@link #SESSION_TRACK_TRANSACTION_STATE} - single value, transaction state record.</li>
      * </ul>
+     * <p>
      * For the unknown change type the raw payload is written into the single value.
      * </p>
      * <p>
