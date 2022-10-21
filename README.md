@@ -1,6 +1,6 @@
 # MySQL Connector/J
 
-[![GitHub top language](https://img.shields.io/github/languages/top/mysql/mysql-connector-j?label=Java&color=5382a1)](https://github.com/mysql/mysql-connector-j/tree/release/8.0/src) [![License: GPLv2 with FOSS exception](https://img.shields.io/badge/License-GPLv2_with_FOSS_exception-c30014.svg)](LICENSE) [![Maven Central](https://img.shields.io/maven-central/v/com.mysql/mysql-connector-java?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.mysql%22%20AND%20a:%22mysql-connector-j%22)
+[![GitHub top language](https://img.shields.io/github/languages/top/mysql/mysql-connector-j?label=Java&color=5382a1)](https://github.com/mysql/mysql-connector-j/tree/release/8.0/src) [![License: GPLv2 with FOSS exception](https://img.shields.io/badge/License-GPLv2_with_FOSS_exception-c30014.svg)](LICENSE) [![Maven Central](https://img.shields.io/maven-central/v/com.mysql/mysql-connector-j?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.mysql%22%20AND%20a:%22mysql-connector-j%22)
 
 MySQL provides connectivity for client applications developed in the Java programming language with MySQL Connector/J, a driver that implements the [Java Database Connectivity (JDBC) API](https://www.oracle.com/technetwork/java/javase/jdbc/) and also [MySQL X DevAPI](https://dev.mysql.com/doc/x-devapi-userguide/en/).
 
