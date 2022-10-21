@@ -905,8 +905,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <patternset refid="exclude.files" />
             </tarfileset>
         </tar>
-        <checksum file="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}.tar.gz" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}.tar.gz" forceoverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
 
         <delete file="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}.zip" />
 
@@ -915,8 +913,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <patternset refid="exclude.files" />
             </fileset>
         </zip>
-        <checksum file="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}.zip" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}.zip" forceoverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
     </target>
 
 
