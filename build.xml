@@ -1047,12 +1047,12 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <mkdir dir="${com.mysql.cj.dist.dir.mavenRelocation}" />
 
         <copy file="${com.mysql.cj.build.dir.driver}/pom-relocation.xml"
-              tofile="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.build.driver.fullName}.pom" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.build.driver.fullName}.pom"
+              tofile="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.dist.packageNameRelocation}.pom" />
+        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.dist.packageNameRelocation}.pom"
                   forceoverwrite="yes"
                   fileext=".md5"
                   algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.build.driver.fullName}.pom"
+        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.dist.packageNameRelocation}.pom"
                   forceoverwrite="yes"
                   fileext=".sha1"
                   algorithm="SHA-1" />

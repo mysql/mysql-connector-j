@@ -3,6 +3,9 @@
 
 Version 8.0.32
 
+  - Fix for Bug#108814 (Bug#34717205), Contribution: Fix name of relocation POM file.
+    Thanks to Henning Pöttker for his contribution.
+
   - WL#15437, Sonatype compliant POM and maven bundles.
 
   - WL#15411, Upgrade Protocol Buffers dependency to protobuf-java-3.21.7.
