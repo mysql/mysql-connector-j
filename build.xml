@@ -1377,17 +1377,22 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             </and>
         </condition>
 
-        <local name="com.mysql.cj.testsuite.message.test.mode" />
-        <condition property="com.mysql.cj.testsuite.message.test.mode"
+        <local name="com.mysql.cj.testsuite.test.class.sanitized" />
+        <condition property="com.mysql.cj.testsuite.test.class.sanitized" value="_none_" else="${com.mysql.cj.testsuite.test.class}">
+            <istrue value="${com.mysql.cj.testsuite.run.all}" />
+        </condition>
+
+        <local name="com.mysql.cj.testsuite.run.message" />
+        <condition property="com.mysql.cj.testsuite.run.message"
                    value="Running JDBC unit tests against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'">
             <istrue value="${com.mysql.cj.testsuite.run.all}" />
         </condition>
-        <condition property="com.mysql.cj.testsuite.message.test.mode"
+        <condition property="com.mysql.cj.testsuite.run.message"
                    value="Running JDBC unit test '${com.mysql.cj.testsuite.test.class}' against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'"
                    else="Running JDBC unit test '${com.mysql.cj.testsuite.test.class}', method(s) '${com.mysql.cj.testsuite.test.methods}' against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'">
             <istrue value="${com.mysql.cj.testsuite.run.class}" />
         </condition>
-        <echo>${com.mysql.cj.testsuite.message.test.mode}</echo>
+        <echo>${com.mysql.cj.testsuite.run.message}</echo>
 
         <local name="com.mysql.cj.testsuite.test.coverage.jvmargfinal" />
         <condition property="com.mysql.cj.testsuite.test.coverage.jvmargfinal"
@@ -1408,7 +1413,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <classpath refid="com.mysql.cj.testsuite.build.classpath" />
 
             <test if="${com.mysql.cj.testsuite.run.methods}"
-                  name="${com.mysql.cj.testsuite.test.class}"
+                  name="${com.mysql.cj.testsuite.test.class.sanitized}"
                   methods="${com.mysql.cj.testsuite.test.methods}"
                   outputdir="${com.mysql.cj.testsuite.junit.results}">
                 <fork>
@@ -1422,7 +1427,9 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
             </test>
 
-            <test if="${com.mysql.cj.testsuite.run.class}" name="${com.mysql.cj.testsuite.test.class}" outputdir="${com.mysql.cj.testsuite.junit.results}">
+            <test if="${com.mysql.cj.testsuite.run.class}"
+                  name="${com.mysql.cj.testsuite.test.class.sanitized}"
+                  outputdir="${com.mysql.cj.testsuite.junit.results}">
                 <fork>
                     <jvmarg value="-Dfile.encoding=UTF-8" />
                     <jvmarg value="-Xmx1024m" />
