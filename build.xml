@@ -1549,6 +1549,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <target name="-prepare-rpm-deb-commercial-props" if="${com.mysql.cj.build.commercial}">
         <echo>Using Commercial settings</echo>
         <property name="deb_version_suffix" value="+commercial" />
+        <property name="deb_commercial_flag" value="true" />
         <property name="lic_file" value="LICENSE" />
         <property name="rpm_com_arg" value="--define=commercial yes" />
     </target>
@@ -1557,6 +1558,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <target name="-prepare-rpm-deb-gpl-props" unless="${com.mysql.cj.build.commercial}">
         <echo>Using GPL settings</echo>
         <property name="deb_version_suffix" value="" />
+        <property name="deb_commercial_flag" value="" />
         <property name="lic_file" value="LICENSE" />
         <property name="rpm_com_arg" value="--define=dummy yes" />
     </target>
@@ -1676,7 +1678,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <exec executable="debuild" dir="build/deb/src" failonerror="true">
             <arg value="--set-envvar=ANT_HOME=${ant.home}" />
             <arg value="--set-envvar=JAVA_HOME=${com.mysql.cj.build.jdk}" />
-            <arg value="--set-envvar=COMMERCIAL=${com.mysql.cj.build.commercial}" />
+            <arg value="--set-envvar=COMMERCIAL=${deb_commercial_flag}" />
             <arg value="-uc" />
             <arg value="-us" />
             <arg value="-j4" />
