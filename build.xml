@@ -1346,32 +1346,48 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
         <mkdir dir="${com.mysql.cj.testsuite.junit.results}/report" />
 
-        <local name="com.mysql.cj.testsuite.test.methods.enabled" />
-        <condition property="com.mysql.cj.testsuite.test.methods.enabled">
+        <local name="com.mysql.cj.testsuite.run.methods" />
+        <condition property="com.mysql.cj.testsuite.run.methods" value="true" else="false">
             <and>
-                <isset property="com.mysql.cj.testsuite.test.class" />
                 <isset property="com.mysql.cj.testsuite.test.methods" />
+                <not>
+                    <equals arg1="${com.mysql.cj.testsuite.test.methods}" arg2="" />
+                </not>
+                <isset property="com.mysql.cj.testsuite.test.class" />
+                <not>
+                    <equals arg1="${com.mysql.cj.testsuite.test.class}" arg2="" />
+                </not>
+            </and>
+        </condition>
+        <local name="com.mysql.cj.testsuite.run.class" />
+        <condition property="com.mysql.cj.testsuite.run.class" value="true" else="false">
+            <and>
+                <isfalse value="${com.mysql.cj.testsuite.run.methods}" />
+                <isset property="com.mysql.cj.testsuite.test.class" />
+                <not>
+                    <equals arg1="${com.mysql.cj.testsuite.test.class}" arg2="" />
+                </not>
+            </and>
+        </condition>
+        <local name="com.mysql.cj.testsuite.run.all" />
+        <condition property="com.mysql.cj.testsuite.run.all" value="true" else="false">
+            <and>
+                <isfalse value="${com.mysql.cj.testsuite.run.methods}" />
+                <isfalse value="${com.mysql.cj.testsuite.run.class}" />
             </and>
         </condition>
 
         <local name="com.mysql.cj.testsuite.message.test.mode" />
         <condition property="com.mysql.cj.testsuite.message.test.mode"
                    value="Running JDBC unit tests against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'">
-            <not>
-                <isset property="com.mysql.cj.testsuite.test.class" />
-            </not>
+            <istrue value="${com.mysql.cj.testsuite.run.all}" />
         </condition>
         <condition property="com.mysql.cj.testsuite.message.test.mode"
-                   value="Running JDBC unit test '${com.mysql.cj.testsuite.test.class}', method(s) '${com.mysql.cj.testsuite.test.methods}' against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'"
-                   else="Running JDBC unit test '${com.mysql.cj.testsuite.test.class}' against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'">
-            <isset property="com.mysql.cj.testsuite.test.methods.enabled" />
+                   value="Running JDBC unit test '${com.mysql.cj.testsuite.test.class}' against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'"
+                   else="Running JDBC unit test '${com.mysql.cj.testsuite.test.class}', method(s) '${com.mysql.cj.testsuite.test.methods}' against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'">
+            <istrue value="${com.mysql.cj.testsuite.run.class}" />
         </condition>
         <echo>${com.mysql.cj.testsuite.message.test.mode}</echo>
-
-        <local name="com.mysql.cj.testsuite.test.coverage" />
-        <condition property="com.mysql.cj.testsuite.test.coverage" value="true" else="false">
-            <isset property="com.mysql.cj.coverage.result.dir.final" />
-        </condition>
 
         <local name="com.mysql.cj.testsuite.test.coverage.jvmargfinal" />
         <condition property="com.mysql.cj.testsuite.test.coverage.jvmargfinal"
@@ -1391,7 +1407,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <junitlauncher haltOnFailure="false" printSummary="true" failureProperty="com.mysql.cj.testsuite.junit.fail">
             <classpath refid="com.mysql.cj.testsuite.build.classpath" />
 
-            <test if="${com.mysql.cj.testsuite.test.methods.enabled}"
+            <test if="${com.mysql.cj.testsuite.run.methods}"
                   name="${com.mysql.cj.testsuite.test.class}"
                   methods="${com.mysql.cj.testsuite.test.methods}"
                   outputdir="${com.mysql.cj.testsuite.junit.results}">
@@ -1406,10 +1422,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
             </test>
 
-            <test if="com.mysql.cj.testsuite.test.class"
-                  unless="com.mysql.cj.testsuite.test.methods"
-                  name="${com.mysql.cj.testsuite.test.class}"
-                  outputdir="${com.mysql.cj.testsuite.junit.results}">
+            <test if="${com.mysql.cj.testsuite.run.class}" name="${com.mysql.cj.testsuite.test.class}" outputdir="${com.mysql.cj.testsuite.junit.results}">
                 <fork>
                     <jvmarg value="-Dfile.encoding=UTF-8" />
                     <jvmarg value="-Xmx1024m" />
@@ -1421,7 +1434,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
             </test>
 
-            <testclasses unless="com.mysql.cj.testsuite.test.class" outputdir="${com.mysql.cj.testsuite.junit.results}">
+            <testclasses if="${com.mysql.cj.testsuite.run.all}" outputdir="${com.mysql.cj.testsuite.junit.results}">
                 <fileset dir="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}">
                     <include name="**/*Test.class" />
                     <exclude name="**/perf/*.class" />
