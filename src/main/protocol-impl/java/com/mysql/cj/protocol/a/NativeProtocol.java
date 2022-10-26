@@ -1291,7 +1291,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     /**
-     * Reads and discards a single MySQL packet from the input stream.
+     * Reads and discards a single MySQL packet.
      * 
      * @throws CJException
      *             if the network fails while skipping the
@@ -1299,11 +1299,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      */
     public final void skipPacket() {
         try {
-
-            int packetLength = this.packetReader.readHeader().getMessageSize();
-
-            this.socketConnection.getMysqlInput().skipFully(packetLength);
-
+            this.packetReader.skipPacket();
         } catch (IOException ioEx) {
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder(),
                     this.getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());

@@ -3,6 +3,9 @@
 
 Version 8.0.32
 
+  - Fix for Bug#106252 (Bug#33968169), Connector/J client hangs after prepare & execute process with old version server.
+    Thanks to Zhe Huang for his contribution.
+
   - Fix for Bug#34725725, RPM and DEB builds broken after introducing javadoc for maven bundles.
 
   - Fix for Bug#108814 (Bug#34717205), Contribution: Fix name of relocation POM file.

@@ -66,6 +66,7 @@ import java.sql.Connection;
 import java.sql.DataTruncation;
 import java.sql.Date;
 import java.sql.NClob;
+import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.Ref;
 import java.sql.ResultSet;
@@ -12734,5 +12735,56 @@ public class StatementRegressionTest extends BaseTestCase {
 
             this.stmt.execute("TRUNCATE TABLE testBug108419");
         } while ((useSPS = !useSPS) || (rwBS = !rwBS) || (noODKU = !noODKU));
+    }
+
+    /**
+     * Tests fix for Bug#106252 (Bug#33968169), Connector/J client hangs after prepare & execute process with old version server.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug106252() throws Exception {
+        boolean useSPS = false;
+
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            Connection testConn = getConnectionWithProps(props);
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 + ? AS c1, 'MySQL' AS c2, ? AS c3");
+
+            ResultSetMetaData md = this.pstmt.getMetaData();
+            assertEquals(3, md.getColumnCount());
+            assertEquals("c1", md.getColumnName(1));
+            assertEquals("c2", md.getColumnName(2));
+            assertEquals("c3", md.getColumnName(3));
+
+            ParameterMetaData pmd = this.pstmt.getParameterMetaData();
+            assertEquals(2, pmd.getParameterCount());
+            if (useSPS) {
+                // Prior to this fix one of the following was throwing a NullPointerException.
+                // The values they return are not important for this test because different server versions return different metadata.
+                pmd.getParameterClassName(1);
+                pmd.getParameterTypeName(1);
+                pmd.getParameterClassName(2);
+                pmd.getParameterTypeName(2);
+            } else {
+                assertThrows(SQLException.class, () -> pmd.getParameterType(1));
+                assertThrows(SQLException.class, () -> pmd.getParameterType(2));
+            }
+
+            this.pstmt.setInt(1, 5);
+            this.pstmt.setString(2, "Connector/J");
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(6, this.rs.getInt(1));
+            assertEquals("MySQL", this.rs.getString(2));
+            assertEquals("Connector/J", this.rs.getString(3));
+            assertFalse(this.rs.next());
+
+            testConn.close();
+        } while (useSPS = !useSPS);
     }
 }

@@ -150,17 +150,19 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
             boolean checkEOF = !this.session.getServerSession().isEOFDeprecated();
 
             if (this.parameterCount > 0) {
-                if (checkEOF) { // Skip the following EOF packet.
-                    this.session.getProtocol().skipPacket();
-                }
-
                 this.parameterFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(this.parameterCount, null))
                         .getFields();
+                if (checkEOF && this.session.getProtocol().probeMessage(null).isEOFPacket()) { // Skip the following EOF packet.
+                    this.session.getProtocol().skipPacket();
+                }
             }
 
             // Read in the result set column information
             if (fieldCount > 0) {
                 this.resultFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(fieldCount, null));
+            }
+            if (checkEOF && this.session.getProtocol().probeMessage(null).isEOFPacket()) { // Skip the following EOF packet.
+                this.session.getProtocol().skipPacket();
             }
         }
     }
