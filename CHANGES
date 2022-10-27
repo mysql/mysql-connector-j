@@ -3,6 +3,9 @@
 
 Version 8.0.32
 
+  - Fix for Bug#108414 (Bug#34578541), Malformed packet generation for `COM_STMT_EXECUTE`.
+    Thanks to Seongman Yang for his contribution.
+
   - Fix for Bug#106252 (Bug#33968169), Connector/J client hangs after prepare & execute process with old version server.
     Thanks to Zhe Huang for his contribution.
 

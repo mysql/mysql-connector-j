@@ -116,9 +116,11 @@ import org.junit.jupiter.api.Test;
 import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.ClientPreparedQuery;
 import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.MysqlType;
 import com.mysql.cj.Query;
 import com.mysql.cj.ServerPreparedQuery;
 import com.mysql.cj.Session;
+import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
@@ -12786,5 +12788,45 @@ public class StatementRegressionTest extends BaseTestCase {
 
             testConn.close();
         } while (useSPS = !useSPS);
+    }
+
+    /**
+     * Tests fix for Bug#108414 (Bug#34578541), Malformed packet generation for `COM_STMT_EXECUTE`.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug108414() throws Exception {
+        boolean useSPS = false;
+        boolean bitIsBool = false;
+        boolean value = false;
+
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), PropertyDefinitions.SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.transformedBitIsBoolean.getKeyName(), Boolean.toString(bitIsBool));
+
+            final String testCase = String.format("Case [SPS: %s, BitIsBool: %s, Expected: %s]", useSPS ? "Y" : "N", bitIsBool ? "Y" : "N", value ? "Y" : "N");
+
+            Connection testConn = getConnectionWithProps(props);
+            this.pstmt = testConn.prepareStatement("SELECT ?, ?, ?, ?, ?");
+
+            this.pstmt.setBoolean(1, value);
+            this.pstmt.setObject(2, value);
+            this.pstmt.setObject(3, value, MysqlType.BOOLEAN);
+            this.pstmt.setObject(4, value, MysqlType.TINYINT);
+            this.pstmt.setObject(5, value, MysqlType.BIT);
+
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+
+            assertEquals(value, this.rs.getBoolean(1), testCase);
+            assertEquals(value, this.rs.getBoolean(2), testCase);
+            assertEquals(value, this.rs.getBoolean(3), testCase);
+            assertEquals(value, this.rs.getBoolean(4), testCase);
+            assertEquals(value, this.rs.getBoolean(5), testCase);
+        } while ((useSPS = !useSPS) || (bitIsBool = !bitIsBool) || (value = !value));
     }
 }
