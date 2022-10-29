@@ -3,6 +3,8 @@
 
 Version 8.0.32
 
+  - WL#15411, Upgrade Protocol Buffers dependency to protobuf-java-3.21.9.
+
   - Fix for Bug#108414 (Bug#34578541), Malformed packet generation for `COM_STMT_EXECUTE`.
     Thanks to Seongman Yang for his contribution.
 
@@ -15,8 +17,6 @@ Version 8.0.32
     Thanks to Henning Pöttker for his contribution.
 
   - WL#15437, Sonatype compliant POM and maven bundles.
-
-  - WL#15411, Upgrade Protocol Buffers dependency to protobuf-java-3.21.7.
 
   - Fix for Bug#106981 (Bug#34059340), Contribution: [PATCH] Remove superfluous use of boxing.
     Thanks to Andrey Turbanov for his contribution.
