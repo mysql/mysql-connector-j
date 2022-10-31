@@ -3,6 +3,8 @@
 
 Version 8.0.32
 
+  - WL#15468, Upgrade 3rd party libraries and tools.
+
   - WL#15411, Upgrade Protocol Buffers dependency to protobuf-java-3.21.9.
 
   - Fix for Bug#108414 (Bug#34578541), Malformed packet generation for `COM_STMT_EXECUTE`.
