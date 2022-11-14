@@ -653,12 +653,12 @@ public class QueryInfo {
             return QueryReturnType.PRODUCES_RESULT_SET;
         } else if (firstStatementChar == 'W' && StringUtils.startsWithIgnoreCaseAndWs(sql, "WITH", statementKeywordPos)) {
             String context = getContextForWithStatement(sql, noBackslashEscapes);
-            if (context == null) {
-                return QueryReturnType.MAY_PRODUCE_RESULT_SET;
-            } else if (context.equalsIgnoreCase("SELECT") || context.equalsIgnoreCase("TABLE") || context.equalsIgnoreCase("VALUES")) {
+            if ("SELECT".equalsIgnoreCase(context) || "TABLE".equalsIgnoreCase(context) || "VALUES".equalsIgnoreCase(context)) {
                 return QueryReturnType.PRODUCES_RESULT_SET;
-            } else {
+            } else if ("UPDATE".equalsIgnoreCase(context) || "DELETE".equalsIgnoreCase(context)) {
                 return QueryReturnType.DOES_NOT_PRODUCE_RESULT_SET;
+            } else {
+                return QueryReturnType.MAY_PRODUCE_RESULT_SET;
             }
         } else if (firstStatementChar == 'X' && StringUtils.indexOfIgnoreCase(statementKeywordPos, sql, new String[] { "XA", "RECOVER" }, OPENING_MARKERS,
                 CLOSING_MARKERS, noBackslashEscapes ? SearchMode.__MRK_COM_MYM_HNT_WS : SearchMode.__FULL) == statementKeywordPos) {

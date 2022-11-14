@@ -3,6 +3,8 @@
 
 Version 8.0.32
 
+  - Fix for Bug#108195 (Bug#34512212), Connector/J rejects UNION with CTE.
+
   - WL#15468, Upgrade 3rd party libraries and tools.
 
   - WL#15411, Upgrade Protocol Buffers dependency to protobuf-java-3.21.9.

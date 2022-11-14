@@ -12829,4 +12829,19 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(value, this.rs.getBoolean(5), testCase);
         } while ((useSPS = !useSPS) || (bitIsBool = !bitIsBool) || (value = !value));
     }
+
+    /**
+     * Tests fix for Bug#108195 (Bug#34512212), Connector/J rejects UNION with CTE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug108195() throws Exception {
+        this.rs = this.stmt.executeQuery("WITH cte AS (SELECT 1) (SELECT * FROM cte) UNION (SELECT 2)");
+        assertTrue(this.rs.next());
+        assertEquals(1, this.rs.getInt(1));
+        assertTrue(this.rs.next());
+        assertEquals(2, this.rs.getInt(1));
+        assertFalse(this.rs.next());
+    }
 }
