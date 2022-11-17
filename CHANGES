@@ -3,6 +3,8 @@
 
 Version 8.0.32
 
+  - Fix for Bug#99604 (Bug#31612628), Add support to row alias on INSERT... ON DUPLICATE KEY UPDATE on batch mode.
+
   - Fix for Bug#105449 (Bug#33563505), connectionCollation ignored if characterEncoding is set.
 
   - Fix for Bug#108195 (Bug#34512212), Connector/J rejects UNION with CTE.

@@ -12827,6 +12827,8 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(value, this.rs.getBoolean(3), testCase);
             assertEquals(value, this.rs.getBoolean(4), testCase);
             assertEquals(value, this.rs.getBoolean(5), testCase);
+
+            testConn.close();
         } while ((useSPS = !useSPS) || (bitIsBool = !bitIsBool) || (value = !value));
     }
 
@@ -12836,7 +12838,7 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     @Test
-    void testBug108195() throws Exception {
+    public void testBug108195() throws Exception {
         assumeTrue(versionMeetsMinimum(8, 0), "MySQL 8.0+ is required to run this test.");
 
         this.rs = this.stmt.executeQuery("WITH cte AS (SELECT 1) (SELECT * FROM cte) UNION (SELECT 2)");
@@ -12845,5 +12847,49 @@ public class StatementRegressionTest extends BaseTestCase {
         assertTrue(this.rs.next());
         assertEquals(2, this.rs.getInt(1));
         assertFalse(this.rs.next());
+    }
+
+    /**
+     * Tests for Bug#99604 (Bug#31612628), Add support to row alias on INSERT... ON DUPLICATE KEY UPDATE on batch mode.
+     * Resolved by fix for Bug#106240 (33781440), StringIndexOutOfBoundsException when VALUE is at the end of the query.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug99604() throws Exception {
+        createTable("testBug99604", "(id INT NOT NULL PRIMARY KEY, data VARCHAR(100))");
+
+        boolean useSPS = false;
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+
+            final String testCase = String.format("Case [SPS: %s]", useSPS ? "Y" : "N");
+
+            Connection testConn = getConnectionWithProps(props);
+
+            PreparedStatement testStmt = testConn.prepareStatement(
+                    "INSERT INTO testBug99604 (id, data) VALUES (?, ?) AS new ON DUPLICATE KEY UPDATE testBug99604.data = CONCAT(testBug99604.data, new.data)");
+            testStmt.setInt(1, 1);
+            testStmt.setString(2, "MySQL ");
+            testStmt.addBatch();
+            testStmt.setInt(1, 1);
+            testStmt.setString(2, "Connector/J ");
+            testStmt.addBatch();
+            testStmt.executeBatch();
+
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug99604");
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+            assertEquals("MySQL Connector/J ", this.rs.getString(2));
+            assertFalse(this.rs.next());
+
+            this.stmt.execute("TRUNCATE TABLE testBug99604");
+
+            testConn.close();
+        } while (useSPS = !useSPS);
     }
 }
