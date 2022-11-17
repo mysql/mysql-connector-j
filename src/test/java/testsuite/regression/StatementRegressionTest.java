@@ -12837,6 +12837,8 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     @Test
     void testBug108195() throws Exception {
+        assumeTrue(versionMeetsMinimum(8, 0), "MySQL 8.0+ is required to run this test.");
+
         this.rs = this.stmt.executeQuery("WITH cte AS (SELECT 1) (SELECT * FROM cte) UNION (SELECT 2)");
         assertTrue(this.rs.next());
         assertEquals(1, this.rs.getInt(1));
