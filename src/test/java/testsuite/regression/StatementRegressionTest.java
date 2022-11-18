@@ -12857,6 +12857,8 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug99604() throws Exception {
+        assumeTrue(versionMeetsMinimum(8, 0, 19), "MySQL 8.0.19+ is required to run this test.");
+
         createTable("testBug99604", "(id INT NOT NULL PRIMARY KEY, data VARCHAR(100))");
 
         boolean useSPS = false;
