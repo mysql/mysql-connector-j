@@ -98,7 +98,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     private String notUpdatableReason = null;
 
     /** List of primary keys */
-    private List<Integer> primaryKeyIndicies = null;
+    private List<Integer> primaryKeyIndices = null;
 
     private String qualifiedAndQuotedTableName;
 
@@ -418,9 +418,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             this.deleter.clearParameters();
 
-            int numKeys = this.primaryKeyIndicies.size();
+            int numKeys = this.primaryKeyIndices.size();
             for (int i = 0; i < numKeys; i++) {
-                int index = this.primaryKeyIndicies.get(i).intValue();
+                int index = this.primaryKeyIndices.get(i).intValue();
                 this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.getMetadata().getFields()[index]);
             }
 
@@ -448,10 +448,10 @@ public class UpdatableResultSet extends ResultSetImpl {
             case MEDIUMINT:
             case MEDIUMINT_UNSIGNED:
             case INT:
-            case INT_UNSIGNED:
             case YEAR:
                 ps.setInt(psIdx, getInt(rsIdx + 1));
                 break;
+            case INT_UNSIGNED:
             case BIGINT:
                 ps.setLong(psIdx, getLong(rsIdx + 1));
                 break;
@@ -582,7 +582,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.databasesUsedToTablesUsed = new TreeMap<>();
         }
 
-        this.primaryKeyIndicies = new ArrayList<>();
+        this.primaryKeyIndices = new ArrayList<>();
 
         StringBuilder fieldValues = new StringBuilder();
         StringBuilder keyValues = new StringBuilder();
@@ -657,7 +657,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                     .append(StringUtils.quoteIdentifier(columnName, quotedId, this.pedantic)).toString();
 
             if (fields[i].isPrimaryKey()) {
-                this.primaryKeyIndicies.add(Integer.valueOf(i));
+                this.primaryKeyIndices.add(Integer.valueOf(i));
 
                 if (keyValues.length() > 0) {
                     keyValues.append(" AND ");
@@ -1018,11 +1018,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         this.refresher.clearParameters();
 
-        int numKeys = this.primaryKeyIndicies.size();
+        int numKeys = this.primaryKeyIndices.size();
 
         for (int i = 0; i < numKeys; i++) {
             byte[] dataFrom = null;
-            int index = this.primaryKeyIndicies.get(i).intValue();
+            int index = this.primaryKeyIndices.get(i).intValue();
 
             if (!this.doingUpdates && !this.onInsertRow) {
                 this.setParamValue(this.refresher, i + 1, this.thisRow, index, this.getMetadata().getFields()[index]);
@@ -1158,9 +1158,9 @@ public class UpdatableResultSet extends ResultSetImpl {
             }
         }
 
-        int numKeys = this.primaryKeyIndicies.size();
+        int numKeys = this.primaryKeyIndices.size();
         for (int i = 0; i < numKeys; i++) {
-            int idx = this.primaryKeyIndicies.get(i).intValue();
+            int idx = this.primaryKeyIndices.get(i).intValue();
             this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, fields[idx]);
         }
     }

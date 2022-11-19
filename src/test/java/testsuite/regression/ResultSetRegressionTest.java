@@ -8136,4 +8136,67 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.pstmt.close();
         testConn.close();
     }
+
+
+    /**
+     * Tests for Bug#68608 (Bug#16690898), UpdatableResultSet does not properly handle unsigned primary key.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug68608() throws Exception {
+        createTable("testBug68608", "(id INT UNSIGNED NOT NULL PRIMARY KEY, data VARCHAR(100))");
+
+        Statement testStmt = this.conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+
+        // Insert row.
+        ResultSet testRs = testStmt.executeQuery("SELECT * FROM testBug68608");
+        testRs.moveToInsertRow();
+        testRs.updateLong(1, 1L + Integer.MAX_VALUE);
+        testRs.updateString(2, "MySQL Connector/J 1");
+        testRs.insertRow();
+        testRs.close();
+
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug68608");
+        assertTrue(this.rs.next());
+        assertEquals(1L + Integer.MAX_VALUE, this.rs.getLong(1));
+        assertEquals("MySQL Connector/J 1", this.rs.getString(2));
+        assertFalse(this.rs.next());
+
+        // Refresh row.
+        testRs = testStmt.executeQuery("SELECT * FROM testBug68608");
+        testRs.next();
+        testRs.updateString(2, "MySQL Connector/J 2");
+        testRs.refreshRow();
+        testRs.close();
+
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug68608");
+        assertTrue(this.rs.next());
+        assertEquals(1L + Integer.MAX_VALUE, this.rs.getLong(1));
+        assertEquals("MySQL Connector/J 1", this.rs.getString(2));
+        assertFalse(this.rs.next());
+
+        // Update row.
+        testRs = testStmt.executeQuery("SELECT * FROM testBug68608");
+        testRs.next();
+        testRs.updateLong(1, 2L + Integer.MAX_VALUE);
+        testRs.updateString(2, "MySQL Connector/J 2");
+        testRs.updateRow();
+        testRs.close();
+
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug68608");
+        assertTrue(this.rs.next());
+        assertEquals(2L + Integer.MAX_VALUE, this.rs.getLong(1));
+        assertEquals("MySQL Connector/J 2", this.rs.getString(2));
+        assertFalse(this.rs.next());
+
+        // Delete row.
+        testRs = testStmt.executeQuery("SELECT * FROM testBug68608");
+        testRs.next();
+        testRs.deleteRow();
+        testRs.close();
+
+        this.rs = this.stmt.executeQuery("SELECT * FROM testBug68608");
+        assertFalse(this.rs.next());
+    }
 }

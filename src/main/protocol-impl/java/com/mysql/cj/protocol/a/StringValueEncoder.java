@@ -155,8 +155,8 @@ public class StringValueEncoder extends AbstractValueEncoder {
             case MEDIUMINT:
             case MEDIUMINT_UNSIGNED:
             case INT:
-            case INT_UNSIGNED:
                 return String.valueOf(Integer.parseInt(x));
+            case INT_UNSIGNED:
             case BIGINT:
                 return String.valueOf(Long.parseLong(x));
             case BIGINT_UNSIGNED:
