@@ -7549,7 +7549,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * Tests fix for BUG#94457 (29402209), CONNECTOR/J RESULTSET.GETOBJECT( ..., OFFSETDATETIME.CLASS ) THROWS.
      *
      * @throws Exception
-     *             if the test fails
      */
     @Test
     public void testBug94457() throws Exception {
@@ -7673,7 +7672,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * Tests fix for Bug#99013 (31074051), AN EXTRA HOUR GETS ADDED TO THE TIMESTAMP WHEN SUBTRACTING INTERVAL 'N' DAYS.
      *
      * @throws Exception
-     *             if the test fails
      */
     @Test
     public void testBug99013() throws Exception {
@@ -7819,7 +7817,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * Tests fix for Bug#102321 (32405590), CALLING RESULTSETMETADATA.GETCOLUMNCLASSNAME RETURNS WRONG VALUE FOR DATETIME.
      *
      * @throws Exception
-     *             if the test fails
      */
     @Test
     public void testBug102321() throws Exception {
@@ -7841,7 +7838,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
      * Tests fix for Bug#102131 (32338451), UPDATABLERESULTSET NPE WHEN USING DERIVED QUERIES OR VIEWS.
      *
      * @throws Exception
-     *             if the test fails
      */
     @Test
     public void testBug102131() throws Exception {
@@ -7861,10 +7857,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#20391659, GETBYTE() CALL RESULTS IN EXCEPTION WHEN USEUSAGEADVISOR = TRUE.
+     * Tests fix for Bug#20391659, GETBYTE() CALL RESULTS IN EXCEPTION WHEN USEUSAGEADVISOR = TRUE.
      * 
      * @throws Exception
-     *             if the test fails
      */
     @Test
     public void testBug20391659() throws Exception {
@@ -7895,10 +7890,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#20391631, GETBOOLEAN() CALL RESULTS IN EXCEPTION WHEN USEUSAGEADVISOR = TRUE.
+     * Tests fix for Bug#20391631, GETBOOLEAN() CALL RESULTS IN EXCEPTION WHEN USEUSAGEADVISOR = TRUE.
      * 
      * @throws Exception
-     *             if the test fails
      */
     @Test
     public void testBug20391631() throws Exception {
@@ -7928,10 +7922,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#19805370, GETBINARYSTREAM() WITH INVALID COLUMN INDEX RETURNS EXCEPTION.
+     * Tests fix for Bug#19805370, GETBINARYSTREAM() WITH INVALID COLUMN INDEX RETURNS EXCEPTION.
      * 
      * @throws Exception
-     *             if the test fails
      */
     @Test
     public void testBug19805370() throws Exception {
@@ -7967,10 +7960,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#20802947, RESULTSET UPDATE METHODS FAILS WHEN TABLENAME CONTAINS SPECIAL CHARACTERS.
+     * Tests fix for Bug#20802947, RESULTSET UPDATE METHODS FAILS WHEN TABLENAME CONTAINS SPECIAL CHARACTERS.
      * 
      * @throws Exception
-     *             if the test fails
      */
     @Test
     public void testBug20802947() throws Exception {
@@ -8004,7 +7996,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#32954396, EXECUTEQUERY HANGS WITH USECURSORFETCH=TRUE & SETFETCHSIZE.
+     * Tests fix for Bug#32954396, EXECUTEQUERY HANGS WITH USECURSORFETCH=TRUE & SETFETCHSIZE.
      * 
      * @throws Exception
      */
@@ -8035,7 +8027,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#33185116, Have method ResultSet.getBoolean() supporting conversion of 'T' and 'F' in a VARCHAR to True/False (boolean).
+     * Tests fix for Bug#33185116, Have method ResultSet.getBoolean() supporting conversion of 'T' and 'F' in a VARCHAR to True/False (boolean).
      * Extended the test for BUG#92574 (28706219), WHEN CONVERTING FROM VARCHAR TO JAVA BOOLEAN, 'N' IS NOT SUPPORTED.
      * 
      * @throws Exception
@@ -8061,7 +8053,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests for Bug#105197 (33461744), Statement.executeQuery() may return non-navigable ResultSet.
+     * Tests fix for Bug#105197 (33461744), Statement.executeQuery() may return non-navigable ResultSet.
      * 
      * @throws Exception
      */
@@ -8121,5 +8113,27 @@ public class ResultSetRegressionTest extends BaseTestCase {
             this.rs.isAfterLast();
             return null;
         });
+    }
+
+    /**
+     * Tests fix for Bug#102678 (Bug#32536384), Connector/J 8 query with explain can not return ResultRow.
+     * Resolved by fix for Bug#103878 (32954449), CONNECTOR/J 8 : QUERY WITH 'SHOW XXX' WILL GET EXCEPTION WHEN USE CURSOR.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug102678() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "true");
+        Connection testConn = getConnectionWithProps(props);
+
+        this.pstmt = testConn.prepareStatement("EXPLAIN SELECT 1");
+        this.pstmt.setFetchSize(100);
+        this.rs = this.pstmt.executeQuery();
+        assertTrue(this.rs.next());
+        this.pstmt.close();
+        testConn.close();
     }
 }

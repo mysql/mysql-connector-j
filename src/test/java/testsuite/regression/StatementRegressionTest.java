@@ -464,7 +464,6 @@ public class StatementRegressionTest extends BaseTestCase {
      * Tests fix for BUG#10155, double quotes not recognized when parsing client-side prepared statements.
      * 
      * @throws Exception
-     *             if the test fails.
      */
     @Test
     public void testBug10155() throws Exception {
@@ -654,7 +653,6 @@ public class StatementRegressionTest extends BaseTestCase {
      * Tests fix for BUG#11798 - Pstmt.setObject(...., Types.BOOLEAN) throws exception.
      * 
      * @throws Exception
-     *             if the test fails.
      */
     @Test
     public void testBug11798() throws Exception {
@@ -2306,7 +2304,6 @@ public class StatementRegressionTest extends BaseTestCase {
      * Tests that binary dates/times are encoded/decoded correctly.
      * 
      * @throws Exception
-     *             if the test fails.
      * 
      * @deprecated because we need to use this particular constructor for the
      *             date class, as Calendar-constructed dates don't pass the
@@ -12884,10 +12881,10 @@ public class StatementRegressionTest extends BaseTestCase {
             testStmt.executeBatch();
 
             this.rs = this.stmt.executeQuery("SELECT * FROM testBug99604");
-            assertTrue(this.rs.next());
-            assertEquals(1, this.rs.getInt(1));
-            assertEquals("MySQL Connector/J ", this.rs.getString(2));
-            assertFalse(this.rs.next());
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            assertEquals("MySQL Connector/J ", this.rs.getString(2), testCase);
+            assertFalse(this.rs.next(), testCase);
 
             this.stmt.execute("TRUNCATE TABLE testBug99604");
 

@@ -264,7 +264,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      * Tests fix for BUG#24471057, UPDATE FAILS WHEN THE NEW VALUE IS OF TYPE DBDOC WHICH HAS ARRAY IN IT.
      * 
      * @throws Exception
-     *             if the test fails.
      */
     @Test
     public void testBug24471057() throws Exception {
@@ -483,7 +482,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
      * Tests fix for BUG#27185332, WL#11210:ERROR IS THROWN WHEN NESTED EMPTY DOCUMENTS ARE INSERTED TO COLLECTION.
      * 
      * @throws Exception
-     *             if the test fails.
      */
     @Test
     public void testBug27185332() throws Exception {

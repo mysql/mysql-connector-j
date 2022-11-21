@@ -3,6 +3,8 @@
 
 Version 8.0.32
 
+  - Fix for Bug#102678 (Bug#32536384), Connector/J 8 query with explain can not return ResultRow.
+
   - Fix for Bug#99604 (Bug#31612628), Add support to row alias on INSERT... ON DUPLICATE KEY UPDATE on batch mode.
 
   - Fix for Bug#105449 (Bug#33563505), connectionCollation ignored if characterEncoding is set.

@@ -4543,7 +4543,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * Tests fix for BUG#68763, ReplicationConnection.isSourceConnection() returns false always
      * 
      * @throws Exception
-     *             if the test fails.
      */
     @Test
     public void testBug68763() throws Exception {
