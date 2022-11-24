@@ -12891,4 +12891,58 @@ public class StatementRegressionTest extends BaseTestCase {
             testConn.close();
         } while (useSPS = !useSPS);
     }
+
+    /**
+     * Tests fix for Bug#102520 (Bug#32476663), serverSideStatementCache ignores resultSetType.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug102520() throws Exception {
+        createTable("testBug102520", "(id INT)");
+        this.stmt.executeUpdate("INSERT INTO testBug102520 VALUES (1), (2), (3), (4), (5)");
+
+        boolean useSPS = false;
+        boolean cachePS = false;
+
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), Boolean.toString(cachePS));
+
+            final String testCase = String.format("Case [SPS: %s, CachePS: %s]", useSPS ? "Y" : "N", cachePS ? "Y" : "N");
+
+            Connection testConn = getConnectionWithProps(props);
+
+            PreparedStatement testStmt = testConn.prepareStatement("SELECT * FROM testBug102520"); // ResultSet.TYPE_FORWARD_ONLY by default.
+            this.rs = testStmt.executeQuery();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            assertThrows(testCase, SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", () -> {
+                this.rs.first();
+                return null;
+            });
+            testStmt.close();
+
+            testStmt = testConn.prepareStatement("SELECT * FROM testBug102520", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            this.rs = testStmt.executeQuery();
+            assertTrue(this.rs.absolute(3), testCase);
+            assertEquals(3, this.rs.getInt(1), testCase);
+            testStmt.close();
+
+            testStmt = testConn.prepareStatement("SELECT * FROM testBug102520");
+            this.rs = testStmt.executeQuery();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            assertThrows(testCase, SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", () -> {
+                assertTrue(this.rs.absolute(3), testCase);
+                return null;
+            });
+            testStmt.close();
+
+            testConn.close();
+        } while ((useSPS = !useSPS) || (cachePS = !cachePS));
+    }
 }
