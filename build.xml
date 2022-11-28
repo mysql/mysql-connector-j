@@ -976,7 +976,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                  overview="src/main/doc/connector-j-overview.html"
                  windowtitle="MySQL Connector/J"
                  header="&lt;b&gt;MySQL Connector/J Reference&lt;br&gt;v${com.mysql.cj.build.driver.version.full}&lt;/b&gt;"
-                 bottom="&lt;center&gt;Copyright &amp;copy; 2016, 2022, Oracle and/or its affiliates.&lt;/center&gt;"
+                 bottom="&lt;center&gt;Copyright &amp;copy; 2016, 2023, Oracle and/or its affiliates.&lt;/center&gt;"
                  linkoffline="https://docs.oracle.com/javase/8/docs/api ${com.mysql.cj.docs.jdk8pkg}">
             <sourcepath>
                 <pathelement path="src/main/user-api/java" />
@@ -1275,7 +1275,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                  overview="src/main/doc/mysqlx-overview.html"
                  windowtitle="MySQL Connector/J X DevAPI Reference"
                  header="&lt;b&gt;MySQL Connector/J X DevAPI Reference&lt;br&gt;v${com.mysql.cj.build.driver.version.full}&lt;/b&gt;"
-                 bottom="&lt;center&gt;Copyright &amp;copy; 2016, 2022, Oracle and/or its affiliates.&lt;/center&gt;"
+                 bottom="&lt;center&gt;Copyright &amp;copy; 2016, 2023, Oracle and/or its affiliates.&lt;/center&gt;"
                  linkoffline="https://docs.oracle.com/javase/8/docs/api ${com.mysql.cj.docs.jdk8pkg}">
             <sourcepath>
                 <pathelement path="src/main/user-api/java" />
