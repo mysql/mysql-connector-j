@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,6 +46,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.concurrent.Callable;
 
@@ -70,6 +71,7 @@ import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.conf.AbstractRuntimeProperty;
+import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
@@ -571,5 +573,35 @@ public class DataSourceRegressionTest extends BaseTestCase {
                 return null;
             }
         });
+    }
+
+    /**
+     * Tests fix for Bug#104954 (Bug#33361205), MysqlDataSource fails to URL encode database name when constructing JDBC URL.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug104954() throws Exception {
+        createDatabase("testBug104954");
+        createDatabase("`testBug104954?bug=104954`");
+
+        HostInfo hostInfo = mainConnectionUrl.getMainHost();
+        MysqlDataSource testDataSource = new MysqlDataSource();
+        testDataSource.setServerName(hostInfo.getHost());
+        testDataSource.setPortNumber(hostInfo.getPort());
+        testDataSource.setUser(hostInfo.getUser());
+        testDataSource.setPassword(hostInfo.getPassword());
+
+        for (String db : Arrays.asList("testBug104954", "testBug104954?bug=104954")) {
+            testDataSource.setDatabaseName(db);
+
+            Connection testConn = testDataSource.getConnection();
+            Statement testStmt = testConn.createStatement();
+
+            this.rs = testStmt.executeQuery("SELECT DATABASE()");
+            assertTrue(this.rs.next());
+            assertEquals(db, this.rs.getString(1));
+            assertFalse(this.rs.next());
+        }
     }
 }

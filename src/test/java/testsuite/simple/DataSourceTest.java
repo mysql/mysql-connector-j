@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -306,5 +306,17 @@ public class DataSourceTest extends BaseTestCase {
                 fail("Unknown " + def.getName() + " property type.");
             }
         }
+    }
+
+    @Test
+    public void testUrlEscaping() {
+        MysqlDataSource testDataSource = new MysqlDataSource();
+        testDataSource.setServerName("connectorj.mysql.com");
+        testDataSource.setDatabaseName("mysql?connector/j");
+        assertEquals("jdbc:mysql://connectorj.mysql.com:3306/mysql%3Fconnector%2Fj", testDataSource.getUrl());
+
+        testDataSource.setServerName("connectorj.mysql.com:12345/fakeDB?foo=");
+        testDataSource.setDatabaseName("goodDB");
+        assertEquals("jdbc:mysql://connectorj.mysql.com%3A12345%2FfakeDB%3Ffoo%3D:3306/goodDB", testDataSource.getUrl());
     }
 }

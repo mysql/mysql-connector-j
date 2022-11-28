@@ -3,6 +3,9 @@
 
 Version 8.0.32
 
+  - Fix for Bug#104954 (Bug#33361205), MysqlDataSource fails to URL encode database name when constructing JDBC URL.
+    Thanks to Jared Lundell for his contribution. 
+
   - Fix for Bug#102520 (Bug#32476663), serverSideStatementCache ignores resultSetType.
 
   - Fix for Bug#68608 (Bug#16690898), UpdatableResultSet does not properly handle unsigned primary key.

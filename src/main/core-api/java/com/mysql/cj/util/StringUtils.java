@@ -31,10 +31,12 @@ package com.mysql.cj.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1850,6 +1852,23 @@ public class StringUtils {
                 default:
                     bOut.write(b);
             }
+        }
+    }
+
+    /**
+     * URL-encode the given string.
+     * 
+     * @param stringToEncode
+     *            the string to encode
+     * @return
+     *         the encoded string
+     */
+    public static String urlEncode(String stringToEncode) {
+        try {
+            return URLEncoder.encode(stringToEncode, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            // Won't happen.
+            return null;
         }
     }
 }

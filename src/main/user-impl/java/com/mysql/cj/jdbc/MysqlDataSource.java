@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -48,6 +48,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
+import com.mysql.cj.util.StringUtils;
 
 /**
  * A JNDI DataSource for a Mysql JDBC connection
@@ -355,7 +356,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
     public String getUrl() {
         if (!this.explicitUrl) {
             StringBuilder sbUrl = new StringBuilder(ConnectionUrl.Type.SINGLE_CONNECTION.getScheme());
-            sbUrl.append("//").append(getServerName());
+            sbUrl.append("//").append(StringUtils.urlEncode(getServerName()));
             try {
                 if (this.explicitPort || !getBooleanRuntimeProperty(PropertyKey.dnsSrv.getKeyName())) {
                     sbUrl.append(":").append(getPort());
@@ -364,7 +365,7 @@ public class MysqlDataSource extends JdbcPropertySetImpl implements DataSource, 
                 // Should not happen, but if so, just add the port.
                 sbUrl.append(":").append(getPort());
             }
-            sbUrl.append("/").append(getDatabaseName());
+            sbUrl.append("/").append(StringUtils.urlEncode(getDatabaseName()));
             return sbUrl.toString();
         }
         return this.url;
