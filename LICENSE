@@ -10,7 +10,7 @@ Introduction
    third-party software which may be included in this distribution of
    MySQL Connector/J 8.0.
 
-   Last updated: August 2022
+   Last updated: November 2022
 
 Licensing Information
 
@@ -480,8 +480,9 @@ Licenses for Third-Party Components
 
 c3p0 JDBC Library
 
-   The MySQL Connector/J implements interfaces that are included in c3p0,
-   although no part of c3p0 is included or distributed with MySQL.
+The MySQL Connector/J implements interfaces that are included in
+c3p0, although no part of c3p0 is included or distributed with
+MySQL.
 
 Copyright (C) 2019 Machinery For Change, Inc.
 
@@ -723,8 +724,9 @@ Agreement will bring a legal action under this Agreement more than one year
 after the cause of action arose. Each party waives its rights to a jury trial in
 any resulting litigation.
 
-   The LGPL v2.1 can be found in GNU Lesser General Public License Version
-   2.1, February 1999.
+The LGPL v2.1 can be found in
+GNU Lesser General Public License v2.1, February 1999.
+See the 'Standard Licenses' section for license text.
 
    ======================================================================
    ======================================================================
@@ -769,8 +771,6 @@ support library is itself covered by the above license.
 
 Unicode Data Files
 
-   Unicode Data Files
-
 COPYRIGHT AND PERMISSION NOTICE
 
 Copyright (c) 1991-2014 Unicode, Inc. All rights reserved. Distributed under
@@ -810,7 +810,7 @@ copyright holder.
 
 Standard Licenses
 
-GNU Lesser General Public License Version 2.1, February 1999
+GNU Lesser General Public License v2.1, February 1999
 
 The following applies to all products licensed under the
 GNU Lesser General Public License, Version 2.1: You may
