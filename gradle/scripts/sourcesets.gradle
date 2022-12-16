@@ -1,0 +1,26 @@
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/main/core-impl/java',
+                    'src/main/core-api/java',
+                    'src/main/protocol-impl/java',
+                    'src/main/core-impl/java',
+                    'src/main/user-api/java',
+                    'src/main/user-impl/java',
+                    'src/generated/java',
+                    'src/legacy/java'
+        }
+    }
+    demo {
+        java {
+            srcDirs 'src/demo/java'
+        }
+    }
+    build {
+        java {
+            srcDirs 'src/build/java'
+//            compileClasspath += sourceSets.main.output
+//            runtimeClasspath += sourceSets.main.output
+        }
+    }
+}

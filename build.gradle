@@ -1,0 +1,42 @@
+plugins {
+    id 'java-library'
+    id 'jvm-test-suite'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+apply from: "$rootProject.projectDir/gradle/scripts/repositories.gradle"
+apply from: "$rootProject.projectDir/gradle/scripts/sourcesets.gradle"
+
+dependencies {
+    implementation 'org.slf4j:slf4j-api:2.0.3'
+    implementation 'com.google.protobuf:protobuf-java:3.21.9'
+    implementation 'org.javassist:javassist:3.29.2-GA'
+    implementation 'com.oracle.oci.sdk:oci-java-sdk-common:2.47.0'
+    implementation 'com.mchange:c3p0:0.9.5.5'
+}
+
+testing {
+    suites {
+        test {
+            useJUnitJupiter()
+            targets.all {
+                testTask.configure {
+                    systemProperty 'com.mysql.cj.testsuite.url', 'jdbc:mysql://localhost:3306/test?user=root&password=test'
+                }
+            }
+            dependencies {
+                implementation 'org.hamcrest:hamcrest:2.2'
+                implementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
+                implementation 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
+                implementation 'org.junit.platform:junit-platform-engine:1.9.1'
+                implementation 'org.junit.platform:junit-platform-launcher:1.9.1'
+            }
+        }
+    }
+}
+
