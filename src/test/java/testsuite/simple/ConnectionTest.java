@@ -82,6 +82,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.CharsetMappingWrapper;
@@ -1486,6 +1487,7 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     @Test
+    @Disabled("Test fails when MySQL is running in docker")
     public void testIsLocal() throws Exception {
         Properties parsedProps = getPropertiesFromTestsuiteUrl();
         String host = parsedProps.getProperty(PropertyKey.HOST.getKeyName(), "localhost");

@@ -1,0 +1,101 @@
+testing {
+    suites {
+        configureEach {
+            useJUnitJupiter()
+            targets.all {
+                testTask.configure {
+                    systemProperty 'com.mysql.cj.testsuite.url', 'jdbc:mysql://localhost:3306/test?user=root&password=test&cacheServerConfiguration=true'
+                    systemProperty 'com.mysql.cj.testsuite.mysqlx.url', 'jdbc:mysql://root:test@locaslhost:3306/test'
+                    systemProperty 'com.mysql.cj.testsuite.url', 'jdbc:mysql://localhost:3306/test?user=root&password=test'
+                }
+            }
+            dependencies {
+                implementation project()
+                implementation 'com.google.protobuf:protobuf-java:3.21.9'
+                implementation 'org.hamcrest:hamcrest:2.2'
+                implementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
+                implementation 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
+                implementation 'org.junit.platform:junit-platform-engine:1.9.1'
+                implementation 'org.junit.platform:junit-platform-launcher:1.9.1'
+            }
+        }
+        test {
+            targets.all {
+                testTask.configure {
+                    filter {
+                        excludeTestsMatching 'testsuite.*'
+                    }
+                }
+            }
+        }
+        functionalTest(JvmTestSuite) {
+            sources {
+                java {
+                    srcDirs = ['src/test/java']
+                }
+            }
+            targets.all {
+                testTask.configure {
+                    filter {
+                        includeTestsMatching "testsuite.simple.*"
+                    }
+                }
+            }
+        }
+        performanceTest(JvmTestSuite) {
+            sources {
+                java {
+                    srcDirs = ['src/test/java']
+                }
+            }
+            targets.all {
+                testTask.configure {
+                    filter {
+                        includeTestsMatching "testsuite.perf.*"
+                    }
+                }
+            }
+        }
+        regressionTest(JvmTestSuite) {
+            sources {
+                java {
+                    srcDirs = ['src/test/java']
+                }
+            }
+            targets.all {
+                testTask.configure {
+                    filter {
+                        includeTestsMatching "testsuite.regression.*"
+                    }
+                }
+            }
+        }
+        xTest(JvmTestSuite) {
+            sources {
+                java {
+                    srcDirs = ['src/test/java']
+                }
+            }
+            targets.all {
+                testTask.configure {
+                    filter {
+                        includeTestsMatching "testsuite.x.*"
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn(testing.suites.functionalTest)
+}
+tasks.named('check') {
+    dependsOn(testing.suites.performanceTest)
+}
+tasks.named('check') {
+    dependsOn(testing.suites.regressionTest)
+}
+tasks.named('check') {
+    dependsOn(testing.suites.xTest)
+}
