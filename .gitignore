@@ -6,6 +6,7 @@
 /nbproject/
 /patches/
 /*.properties
+/.gradle/
 *~
 *.lock
 *.swp
