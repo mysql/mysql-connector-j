@@ -1,0 +1,19 @@
+task addMethods(type: JavaExec, dependsOn: "classes") {
+    classpath = sourceSets.build.runtimeClasspath
+    mainClass = "instrumentation.AddMethods"
+    args = ["${buildDir}/classes/java/main", "false"]
+}
+
+task commonChecks(type: JavaExec, dependsOn: "classes") {
+    classpath = sourceSets.build.runtimeClasspath
+    mainClass = "instrumentation.CommonChecks"
+    args = ["${buildDir}/classes/java/main", "false"]
+}
+
+task translateExceptions(type: JavaExec, dependsOn: "classes") {
+    classpath = sourceSets.build.runtimeClasspath
+    mainClass = "instrumentation.TranslateExceptions"
+    args = ["${buildDir}/classes/java/main", "false"]
+}
+
+classes.finalizedBy("addMethods", "commonChecks", "translateExceptions")
