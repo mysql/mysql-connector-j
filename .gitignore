@@ -7,8 +7,6 @@
 /patches/
 /*.properties
 /.gradle/
-/.settings/
-/.externalToolBuilders/
 *~
 *.lock
 *.swp
