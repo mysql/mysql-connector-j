@@ -54,6 +54,7 @@ import java.util.Random;
 import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.CacheAdapter;
@@ -117,9 +118,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return this.session.getHostInfo().getHost();
     }
 
+    private final ReentrantLock connectionLock = new ReentrantLock();
     private JdbcConnection parentProxy = null;
     private JdbcConnection topProxy = null;
+    private final ReentrantLock topProxyLock = new ReentrantLock();
     private InvocationHandler realProxy = null;
+    private final ReentrantLock realProxyLock = new ReentrantLock();
 
     @Override
     public boolean isProxySet() {
@@ -141,6 +145,10 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return (this.topProxy != null) ? this.topProxy : (JdbcConnection) this;
     }
 
+    private ReentrantLock getProxyLock() {
+        return (this.topProxy != null) ? this.topProxyLock : connectionLock;
+    }
+
     @Override
     public JdbcConnection getMultiHostSafeProxy() {
         return this.getProxy();
@@ -157,8 +165,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     @Override
-    public Object getConnectionMutex() {
-        return (this.realProxy != null) ? this.realProxy : getProxy();
+    public ReentrantLock getConnectionMutex() {
+        return (this.realProxy != null) ? this.realProxyLock : getProxyLock();
     }
 
     /**
@@ -296,6 +304,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     private final CopyOnWriteArrayList<JdbcStatement> openStatements = new CopyOnWriteArrayList<>();
 
     private LRUCache<CompoundCacheKey, CallableStatement.CallableStatementParamInfo> parsedCallableStatementCache;
+    private ReentrantLock parsedCallableStatementCacheLock = new ReentrantLock();
 
     /** The password we used */
     private String password = null;
@@ -308,6 +317,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     /** Cache of ResultSet metadata */
     protected LRUCache<String, CachedResultSetMetaData> resultSetMetadataCache;
+    protected final ReentrantLock resultSetMetadataCacheLock = new ReentrantLock();
 
     /**
      * The type map for UDTs (not implemented, but used by some third-party
@@ -319,7 +329,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     private String user = null;
 
     private LRUCache<String, Boolean> serverSideStatementCheckCache;
+    private final ReentrantLock serverSideStatementCheckCacheLock = new ReentrantLock();
     private LRUCache<CompoundCacheKey, ServerPreparedStatement> serverSideStatementCache;
+    private final ReentrantLock serverSideStatementCacheLock = new ReentrantLock();
 
     private HostInfo origHostInfo;
 
@@ -508,7 +520,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         boolean allowMultiQueries = this.propertySet.getBooleanProperty(PropertyKey.allowMultiQueries).getValue();
 
         if (this.cachePrepStmts.getValue()) {
-            synchronized (this.serverSideStatementCheckCache) {
+            serverSideStatementCheckCacheLock.lock();
+            try {
                 Boolean flag = this.serverSideStatementCheckCache.get(sql);
 
                 if (flag != null) {
@@ -523,6 +536,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 }
 
                 return canHandle;
+            } finally {
+                serverSideStatementCheckCacheLock.unlock();
             }
         }
 
@@ -532,7 +547,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void changeUser(String userName, String newPassword) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
 
             if ((userName == null) || userName.equals("")) {
@@ -560,6 +577,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             this.session.setSessionVariables();
 
             setupServerForTruncationChecks();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -703,7 +722,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void close() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             if (this.connectionLifecycleInterceptors != null) {
                 for (ConnectionLifecycleInterceptor cli : this.connectionLifecycleInterceptors) {
                     cli.close();
@@ -711,6 +732,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             realClose(true, true, false, null);
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -759,7 +782,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void commit() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
 
             try {
@@ -802,13 +827,17 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             } finally {
                 this.session.setNeedsPing(this.reconnectAtTxEnd.getValue());
             }
+        } finally {
+            lock.unlock();
         }
         return;
     }
 
     @Override
     public void createNewIO(boolean isForReconnect) {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             // Synchronization Not needed for *new* connections, but definitely for connections going through fail-over, since we might get the new connection
             // up and running *enough* to start sending cached or still-open server-side prepared statements over to the backend before we get a chance to
             // re-prepare them...
@@ -824,6 +853,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             } catch (SQLException ex) {
                 throw ExceptionFactory.createException(UnableToConnectException.class, ex.getMessage(), ex);
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -847,7 +878,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 boolean oldReadOnly;
                 String oldDb;
 
-                synchronized (getConnectionMutex()) {
+                ReentrantLock lock = getConnectionMutex();
+                lock.lock();
+                try {
                     // save state from old connection
                     oldAutoCommit = getAutoCommit();
                     oldIsolationLevel = this.isolationLevel;
@@ -855,6 +888,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     oldDb = getDatabase();
 
                     this.session.setQueryInterceptors(this.queryInterceptors);
+                } finally {
+                    lock.unlock();
                 }
 
                 // Server properties might be different from previous connection, so initialize again...
@@ -1015,7 +1050,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     private void createPreparedStatementCaches() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             int cacheSize = this.propertySet.getIntegerProperty(PropertyKey.prepStmtCacheSize).getValue();
             String queryInfoCacheFactory = this.propertySet.getStringProperty(PropertyKey.queryInfoCacheFactory).getValue();
 
@@ -1075,6 +1112,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     }
                 };
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1112,22 +1151,34 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public boolean getAutoCommit() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             return this.session.getServerSession().isAutoCommit();
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public String getCatalog() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             return this.propertySet.<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA ? null : this.database;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public String getCharacterSetMetadata() {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             return this.session.getServerSession().getCharsetSettings().getMetadataEncoding();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1151,8 +1202,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      */
     @Override
     public long getIdleFor() {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             return this.session.getIdleFor();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1204,7 +1259,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public int getTransactionIsolation() throws SQLException {
 
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             if (!this.useLocalSessionState.getValue()) {
                 String s = this.session.queryServerVariable(
                         versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0)) ? "@@session.transaction_isolation"
@@ -1223,17 +1280,23 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             return this.isolationLevel;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public java.util.Map<String, Class<?>> getTypeMap() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             if (this.typeMap == null) {
                 this.typeMap = new HashMap<>();
             }
 
             return this.typeMap;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1404,7 +1467,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public boolean isSameResource(JdbcConnection otherConnection) {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             if (otherConnection == null) {
                 return false;
             }
@@ -1445,6 +1510,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             return false;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1520,7 +1587,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             cStmt = parseCallableStatement(sql);
         } else {
-            synchronized (this.parsedCallableStatementCache) {
+            this.parsedCallableStatementCacheLock.lock();
+            try {
                 CompoundCacheKey key = new CompoundCacheKey(getDatabase(), sql);
 
                 CallableStatement.CallableStatementParamInfo cachedParamInfo = this.parsedCallableStatementCache.get(key);
@@ -1536,6 +1604,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
                     this.parsedCallableStatementCache.put(key, cachedParamInfo);
                 }
+            } finally {
+                this.parsedCallableStatementCacheLock.unlock();
             }
         }
 
@@ -1574,7 +1644,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
 
             //
@@ -1592,7 +1664,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             if (this.useServerPrepStmts.getValue() && canServerPrepare) {
                 if (this.cachePrepStmts.getValue()) {
-                    synchronized (this.serverSideStatementCache) {
+                    this.serverSideStatementCacheLock.lock();
+                    try {
                         pStmt = this.serverSideStatementCache.remove(new CompoundCacheKey(this.database, sql));
 
                         if (pStmt != null) {
@@ -1623,6 +1696,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                                 }
                             }
                         }
+                    } finally {
+                        this.serverSideStatementCacheLock.unlock();
                     }
                 } else {
                     try {
@@ -1644,6 +1719,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             return pStmt;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1748,9 +1825,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void recachePreparedStatement(JdbcPreparedStatement pstmt) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             if (this.cachePrepStmts.getValue() && pstmt.isPoolable()) {
-                synchronized (this.serverSideStatementCache) {
+                this.serverSideStatementCacheLock.lock();
+                try {
                     Object oldServerPrepStmt = this.serverSideStatementCache.put(
                             new CompoundCacheKey(pstmt.getCurrentDatabase(), ((PreparedQuery) pstmt.getQuery()).getOriginalSql()),
                             (ServerPreparedStatement) pstmt);
@@ -1759,19 +1839,30 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                         ((ServerPreparedStatement) oldServerPrepStmt).setClosed(false);
                         ((ServerPreparedStatement) oldServerPrepStmt).realClose(true, true);
                     }
+                } finally {
+                    this.serverSideStatementCacheLock.unlock();
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void decachePreparedStatement(JdbcPreparedStatement pstmt) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             if (this.cachePrepStmts.getValue()) {
-                synchronized (this.serverSideStatementCache) {
+                this.serverSideStatementCacheLock.lock();
+                try {
                     this.serverSideStatementCache.remove(new CompoundCacheKey(pstmt.getCurrentDatabase(), ((PreparedQuery) pstmt.getQuery()).getOriginalSql()));
+                } finally {
+                    this.serverSideStatementCacheLock.unlock();
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1794,7 +1885,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void rollback() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
 
             try {
@@ -1840,13 +1933,17 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             } finally {
                 this.session.setNeedsPing(this.reconnectAtTxEnd.getValue());
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void rollback(final Savepoint savepoint) throws SQLException {
 
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
 
             try {
@@ -1890,7 +1987,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                             int indexOfError153 = msg.indexOf("153");
 
                             if (indexOfError153 != -1) {
-                                throw SQLError.createSQLException(Messages.getString("Connection.22", new Object[] { savepoint.getSavepointName() }),
+                                throw SQLError.createSQLException(Messages.getString("Connection.22", new Object[]{savepoint.getSavepointName()}),
                                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, errno, getExceptionInterceptor());
                             }
                         }
@@ -1913,11 +2010,15 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             } finally {
                 this.session.setNeedsPing(this.reconnectAtTxEnd.getValue());
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     private void rollbackNoChecks() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             if (this.useLocalTransactionState.getValue()) {
                 if (!this.session.getServerSession().inTransactionOnServer()) {
                     return; // effectively a no-op
@@ -1926,6 +2027,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             this.session.execSQL(null, "rollback", -1, null, false, this.nullStatementResultSetFactory, null, false);
 
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1989,7 +2092,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void setAutoCommit(final boolean autoCommitFlag) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
 
             if (this.connectionLifecycleInterceptors != null) {
@@ -2047,6 +2152,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             return;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2058,7 +2165,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     public void setDatabase(final String db) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
 
             if (db == null) {
@@ -2108,13 +2217,19 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             this.session.execSQL(null, query.toString(), -1, null, false, this.nullStatementResultSetFactory, null, false);
 
             this.database = db;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public String getDatabase() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             return this.database;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2141,7 +2256,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             // note this this is safe even inside a transaction
             if (this.readOnlyPropagatesToServer.getValue() && versionMeetsMinimum(5, 6, 5)) {
                 if (!this.useLocalSessionState.getValue() || (readOnlyFlag != this.readOnly)) {
@@ -2151,6 +2268,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             this.readOnly = readOnlyFlag;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2165,7 +2284,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     private void setSavepoint(MysqlSavepoint savepoint) throws SQLException {
 
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
 
             StringBuilder savePointQuery = new StringBuilder("SAVEPOINT ");
@@ -2182,23 +2303,31 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             } finally {
                 closeStatement(stmt);
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public java.sql.Savepoint setSavepoint(String name) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             MysqlSavepoint savepoint = new MysqlSavepoint(name, getExceptionInterceptor());
 
             setSavepoint(savepoint);
 
             return savepoint;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void setTransactionIsolation(int level) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
 
             String sql = null;
@@ -2243,7 +2372,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                         break;
 
                     default:
-                        throw SQLError.createSQLException(Messages.getString("Connection.25", new Object[] { level }),
+                        throw SQLError.createSQLException(Messages.getString("Connection.25", new Object[]{level}),
                                 MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
                 }
 
@@ -2251,18 +2380,26 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
                 this.isolationLevel = level;
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void setTypeMap(java.util.Map<String, Class<?>> map) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             this.typeMap = map;
+        } finally {
+            lock.unlock();
         }
     }
 
     private void setupServerForTruncationChecks() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             RuntimeProperty<Boolean> jdbcCompliantTruncation = this.propertySet.getProperty(PropertyKey.jdbcCompliantTruncation);
             if (jdbcCompliantTruncation.getValue()) {
                 String currentSqlMode = this.session.getServerSession().getServerVariable("sql_mode");
@@ -2287,6 +2424,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     jdbcCompliantTruncation.setValue(false); // server's handling this for us now
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2316,8 +2455,11 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public CachedResultSetMetaData getCachedMetaData(String sql) {
         if (this.resultSetMetadataCache != null) {
-            synchronized (this.resultSetMetadataCache) {
+            this.resultSetMetadataCacheLock.lock();
+            try {
                 return this.resultSetMetadataCache.get(sql);
+            } finally {
+                this.resultSetMetadataCacheLock.unlock();
             }
         }
 
@@ -2365,19 +2507,27 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void transactionBegun() {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             if (this.connectionLifecycleInterceptors != null) {
                 this.connectionLifecycleInterceptors.stream().forEach(ConnectionLifecycleInterceptor::transactionBegun);
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void transactionCompleted() {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             if (this.connectionLifecycleInterceptors != null) {
                 this.connectionLifecycleInterceptors.stream().forEach(ConnectionLifecycleInterceptor::transactionCompleted);
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2395,32 +2545,44 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public boolean isServerLocal() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             try {
                 return this.session.isServerLocal(this.getSession());
             } catch (CJException ex) {
                 SQLException sqlEx = SQLExceptionsMapping.translateException(ex, getExceptionInterceptor());
                 throw sqlEx;
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public int getSessionMaxRows() {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             return this.session.getSessionMaxRows();
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void setSessionMaxRows(int max) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
             if (this.session.getSessionMaxRows() != max) {
                 this.session.setSessionMaxRows(max);
                 this.session.execSQL(null, "SET SQL_SELECT_LIMIT=" + (this.session.getSessionMaxRows() == -1 ? "DEFAULT" : this.session.getSessionMaxRows()),
                         -1, null, false, this.nullStatementResultSetFactory, null, false);
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2434,9 +2596,13 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public String getSchema() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
             return this.propertySet.<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm).getValue() == DatabaseTerm.SCHEMA ? this.database : null;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2467,7 +2633,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void setNetworkTimeout(Executor executor, final int milliseconds) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             SecurityManager sec = System.getSecurityManager();
 
             if (sec != null) {
@@ -2481,6 +2649,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             checkClosed();
 
             executor.execute(new NetworkTimeoutSetter(this, milliseconds));
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2497,8 +2667,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         public void run() {
             JdbcConnection conn = this.connRef.get();
             if (conn != null) {
-                synchronized (conn.getConnectionMutex()) {
+                ReentrantLock lock = conn.getConnectionMutex();
+                lock.lock();
+                try {
                     ((NativeSession) conn.getSession()).setSocketTimeout(this.milliseconds);
+                } finally {
+                    lock.unlock();
                 }
             }
         }
@@ -2506,9 +2680,13 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public int getNetworkTimeout() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
             return this.session.getSocketTimeout();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2534,7 +2712,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public boolean isValid(int timeout) throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             if (isClosed()) {
                 return false;
             }
@@ -2557,6 +2737,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             return true;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2564,7 +2746,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
-        synchronized (getConnectionMutex()) {
+        ReentrantLock lock = getConnectionMutex();
+        lock.lock();
+        try {
             if (this.infoProvider == null) {
                 String clientInfoProvider = this.propertySet.getStringProperty(PropertyKey.clientInfoProvider).getStringValue();
                 try {
@@ -2589,6 +2773,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             return this.infoProvider;
+        } finally {
+            lock.unlock();
         }
     }
 

@@ -46,6 +46,7 @@ import java.sql.SQLNonTransientConnectionException;
 import java.sql.Statement;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
@@ -500,7 +501,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         cw.setStatementComment("Test comment");
         assertNotEquals(((JdbcConnection) this.conn).getStatementComment(), cw.getStatementComment());
 
-        assertEquals(ConnectionImpl.class, cw.getConnectionMutex().getClass());
+        assertEquals(ReentrantLock.class, cw.getConnectionMutex().getClass());
         assertNull(cw.getExceptionInterceptor());
         assertEquals(((JdbcConnection) this.conn).getNetworkTimeout(), cw.getNetworkTimeout());
         assertEquals(((JdbcConnection) this.conn).getTypeMap(), cw.getTypeMap());
@@ -880,7 +881,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
             }
         });
 
-        assertEquals(ConnectionImpl.class, cw.getConnectionMutex().getClass());
+        assertEquals(ReentrantLock.class, cw.getConnectionMutex().getClass());
         assertNull(cw.getExceptionInterceptor());
         assertEquals(((JdbcConnection) this.conn).getNetworkTimeout(), cw.getNetworkTimeout());
         assertThrows(SQLNonTransientConnectionException.class, "Logical handle no longer valid", new Callable<Void>() {
@@ -1336,7 +1337,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
                 return null;
             }
         });
-        assertEquals(ConnectionImpl.class, cw.getConnectionMutex().getClass());
+        assertEquals(ReentrantLock.class, cw.getConnectionMutex().getClass());
         assertNull(cw.getExceptionInterceptor());
 
         String comment = cw.getStatementComment();

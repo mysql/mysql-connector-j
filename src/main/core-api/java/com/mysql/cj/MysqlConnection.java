@@ -30,6 +30,7 @@
 package com.mysql.cj;
 
 import java.util.Properties;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
@@ -56,7 +57,7 @@ public interface MysqlConnection {
      */
     Properties getProperties();
 
-    Object getConnectionMutex();
+    ReentrantLock getConnectionMutex();
 
     Session getSession();
 

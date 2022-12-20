@@ -64,6 +64,7 @@ import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
@@ -328,7 +329,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public void initializeWithMetadata() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             initRowsWithMetadata();
 
             if (this.useUsageAdvisor) {
@@ -365,12 +368,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
                 this.session.getProtocol().getMetricsHolder().reportNumberOfTablesAccessed(tableNamesSet.size());
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public boolean absolute(int row) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -418,12 +425,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             setRowPositionValidity();
 
             return b;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void afterLast() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -439,12 +450,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             }
 
             setRowPositionValidity();
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void beforeFirst() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -462,6 +477,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             this.thisRow = null;
 
             setRowPositionValidity();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -499,7 +516,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
      *             if the index is out of bounds
      */
     protected final void checkColumnBounds(int columnIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if ((columnIndex < 1)) {
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column_Index_out_of_range_low",
@@ -515,6 +534,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             if (this.useUsageAdvisor) {
                 this.columnUsed[columnIndex - 1] = true;
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -554,8 +575,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public void clearWarnings() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             this.warningChain = null;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -577,7 +602,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public int findColumn(String columnName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             int index = this.columnDefinition.findColumn(columnName, this.useColumnNamesInFindColumn, 1);
 
             if (index == -1) {
@@ -587,12 +614,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             }
 
             return index;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public boolean first() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -614,6 +645,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             setRowPositionValidity();
 
             return b;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1080,23 +1113,35 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public int getFetchDirection() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return this.fetchDirection;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public int getFetchSize() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return this.fetchSize;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public char getFirstCharOfQuery() {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 return this.firstCharOfQuery;
+            } finally {
+                lock.unlock();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e); // FIXME: Need to evolve interface
@@ -1293,7 +1338,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             throw SQLError.createSQLException("Type parameter can not be null", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (type.equals(String.class)) {
                 return (T) getString(columnIndex);
 
@@ -1428,6 +1475,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
             throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1624,12 +1673,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public java.sql.Statement getStatement() throws SQLException {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 if (this.wrapperStatement != null) {
                     return this.wrapperStatement;
                 }
 
                 return this.owningStatement;
+            } finally {
+                lock.unlock();
             }
 
         } catch (SQLException sqlEx) {
@@ -1692,8 +1745,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public java.sql.SQLWarning getWarnings() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return this.warningChain;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1704,48 +1761,64 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public boolean isAfterLast() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
             return this.rowData.isAfterLast();
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public boolean isBeforeFirst() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             return this.rowData.isBeforeFirst();
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public boolean isFirst() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             return this.rowData.isFirst();
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public boolean isLast() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             return this.rowData.isLast();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1762,7 +1835,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public boolean last() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -1784,6 +1859,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             setRowPositionValidity();
 
             return b;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1799,7 +1876,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public boolean next() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -1825,6 +1904,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             setRowPositionValidity();
 
             return b;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1842,7 +1923,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
      *                if a database access error occurs
      */
     public boolean prev() throws java.sql.SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
 
             int rowIndex = this.rowData.getPosition();
 
@@ -1867,12 +1950,16 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             setRowPositionValidity();
 
             return b;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public boolean previous() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -1883,6 +1970,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             }
 
             return prev();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1894,7 +1983,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             return; // already closed
         }
 
-        synchronized (locallyScopedConn.getConnectionMutex()) {
+        ReentrantLock lock = locallyScopedConn.getConnectionMutex();
+        lock.lock();
+        try {
             // additional check in case ResultSet was closed while current thread was waiting for lock
             if (this.isClosed) {
                 return;
@@ -1984,6 +2075,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                     throw exceptionDuringClose;
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1999,7 +2092,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public boolean relative(int rows) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
                         MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
@@ -2021,6 +2116,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             setRowPositionValidity();
 
             return (!this.rowData.isAfterLast() && !this.rowData.isBeforeFirst());
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2041,7 +2138,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public void setFetchDirection(int direction) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if ((direction != FETCH_FORWARD) && (direction != FETCH_REVERSE) && (direction != FETCH_UNKNOWN)) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.Illegal_value_for_fetch_direction_64"),
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -2049,30 +2148,40 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
             if (isStrictlyForwardOnly() && direction != FETCH_FORWARD) {
                 String constName = direction == ResultSet.FETCH_REVERSE ? "ResultSet.FETCH_REVERSE" : "ResultSet.FETCH_UNKNOWN";
-                throw ExceptionFactory.createException(Messages.getString("ResultSet.Unacceptable_value_for_fetch_direction", new Object[] { constName }));
+                throw ExceptionFactory.createException(Messages.getString("ResultSet.Unacceptable_value_for_fetch_direction", new Object[]{constName}));
             }
 
             this.fetchDirection = direction;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void setFetchSize(int rows) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (rows < 0) { /* || rows > getMaxRows() */
                 throw SQLError.createSQLException(Messages.getString("ResultSet.Value_must_be_between_0_and_getMaxRows()_66"),
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             this.fetchSize = rows;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void setFirstCharOfQuery(char c) {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 this.firstCharOfQuery = c;
+            } finally {
+                lock.unlock();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e); // FIXME: Need to evolve public interface
@@ -2082,8 +2191,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public void setOwningStatement(JdbcStatement owningStatement) {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 this.owningStatement = (StatementImpl) owningStatement;
+            } finally {
+                lock.unlock();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e); // FIXME: Need to evolve public interface
@@ -2098,8 +2211,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
      */
     public synchronized void setResultSetConcurrency(int concurrencyFlag) {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 this.resultSetConcurrency = concurrencyFlag;
+            } finally {
+                lock.unlock();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e); // TODO: FIXME: Need to evolve public interface
@@ -2115,8 +2232,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
      */
     public synchronized void setResultSetType(int typeFlag) {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 this.resultSetType = typeFlag;
+            } finally {
+                lock.unlock();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e); // TODO: FIXME: Need to evolve public interface
@@ -2131,8 +2252,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
      */
     public void setServerInfo(String info) {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 this.serverInfo = info;
+            } finally {
+                lock.unlock();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e); // TODO: FIXME: Need to evolve public interface
@@ -2142,8 +2267,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public synchronized void setStatementUsedForFetchingRows(JdbcPreparedStatement stmt) {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 this.statementUsedForFetchingRows = stmt;
+            } finally {
+                lock.unlock();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e); // TODO: FIXME: Need to evolve public interface
@@ -2153,8 +2282,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public synchronized void setWrapperStatement(java.sql.Statement wrapperStatement) {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 this.wrapperStatement = wrapperStatement;
+            } finally {
+                lock.unlock();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e); // TODO: FIXME: Need to evolve public interface
@@ -2736,7 +2869,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     }
 
     @Override
-    public Object getSyncMutex() {
+    public ReentrantLock getSyncMutex() {
         return this.connection != null ? this.connection.getConnectionMutex() : null;
     }
 

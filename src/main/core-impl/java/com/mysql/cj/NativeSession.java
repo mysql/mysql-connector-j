@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 import com.mysql.cj.conf.HostInfo;
@@ -317,8 +318,9 @@ public class NativeSession extends CoreSession implements Serializable {
         this.protocol.setLocalInfileInputStream(stream);
     }
 
-    private void createConfigCacheIfNeeded(Object syncMutex) {
-        synchronized (syncMutex) {
+    private void createConfigCacheIfNeeded(ReentrantLock syncMutex) {
+        syncMutex.lock();
+        try {
             if (this.serverConfigCache != null) {
                 return;
             }
@@ -364,6 +366,8 @@ public class NativeSession extends CoreSession implements Serializable {
                         new Object[] { getPropertySet().getStringProperty(PropertyKey.queryInfoCacheFactory).getValue(), PropertyKey.queryInfoCacheFactory }),
                         e, getExceptionInterceptor());
             }
+        } finally {
+            syncMutex.unlock();
         }
     }
 
@@ -379,7 +383,7 @@ public class NativeSession extends CoreSession implements Serializable {
      * @param version
      *            driver version string
      */
-    public void loadServerVariables(Object syncMutex, String version) {
+    public void loadServerVariables(ReentrantLock syncMutex, String version) {
 
         if (this.cacheServerConfiguration.getValue()) {
             createConfigCacheIfNeeded(syncMutex);

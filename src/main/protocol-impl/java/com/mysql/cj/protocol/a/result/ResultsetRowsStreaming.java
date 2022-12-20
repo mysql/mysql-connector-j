@@ -50,6 +50,8 @@ import com.mysql.cj.protocol.a.TextRowFactory;
 import com.mysql.cj.result.Row;
 import com.mysql.cj.util.Util;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * Provides streaming of Resultset rows. Each next row is consumed from the
  * input stream only on {@link #next()} call. Consumed rows are not cached thus
@@ -78,6 +80,7 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
     private ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory;
 
     private NativeMessageBuilder commandBuilder = null;
+    private final ReentrantLock lock = new ReentrantLock();
 
     /**
      * Creates a new RowDataDynamic object.
@@ -106,12 +109,13 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
     @Override
     public void close() {
 
-        Object mutex = this.owner != null && this.owner.getSyncMutex() != null ? this.owner.getSyncMutex() : this;
+        ReentrantLock mutex = this.owner != null && this.owner.getSyncMutex() != null ? this.owner.getSyncMutex() : lock;
 
         boolean hadMore = false;
         int howMuchMore = 0;
 
-        synchronized (mutex) {
+        mutex.lock();
+        try {
             // drain the rest of the records.
             while (next() != null) {
                 hadMore = true;
@@ -143,6 +147,8 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
                             Messages.getString("RowDataDynamic.1", new String[] { String.valueOf(howMuchMore), this.owner.getPointOfOrigin() }));
                 }
             }
+        } finally {
+            mutex.unlock();
         }
 
         this.metadata = null;

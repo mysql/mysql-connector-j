@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.CancelQueryTask;
 import com.mysql.cj.Messages;
@@ -265,10 +266,14 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public void addBatch(String sql) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (sql != null) {
                 this.query.addBatch(sql);
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -386,8 +391,12 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public void clearBatch() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             this.query.clearBatchedArgs();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -398,10 +407,14 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public void clearWarnings() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             setClearWarningsCalled(true);
             this.warningChain = null;
             // TODO souldn't we also clear warnings from _server_ ?
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -437,7 +450,9 @@ public class StatementImpl implements JdbcStatement {
             return; // already closed
         }
 
-        synchronized (locallyScopedConn.getConnectionMutex()) {
+        ReentrantLock lock = locallyScopedConn.getConnectionMutex();
+        lock.lock();
+        try {
             if (this.openResults != null) {
                 for (ResultSetInternalMethods element : this.openResults) {
                     try {
@@ -449,6 +464,8 @@ public class StatementImpl implements JdbcStatement {
 
                 this.openResults.clear();
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -478,7 +495,9 @@ public class StatementImpl implements JdbcStatement {
     @Override
     public void removeOpenResultSet(ResultSetInternalMethods rs) {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 if (this.openResults != null) {
                     this.openResults.remove(rs);
                 }
@@ -499,6 +518,8 @@ public class StatementImpl implements JdbcStatement {
                 if (!this.isImplicitlyClosingResults && !hasMoreResults) {
                     checkAndPerformCloseOnCompletionAction();
                 }
+            } finally {
+                lock.unlock();
             }
         } catch (StatementIsClosedException e) {
             // we can't break the interface, having this be no-op in case of error is ok
@@ -508,12 +529,16 @@ public class StatementImpl implements JdbcStatement {
     @Override
     public int getOpenResultSetCount() {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 if (this.openResults != null) {
                     return this.openResults.size();
                 }
 
                 return 0;
+            } finally {
+                lock.unlock();
             }
         } catch (StatementIsClosedException e) {
             // we can't break the interface, having this be no-op in case of error is ok
@@ -528,12 +553,16 @@ public class StatementImpl implements JdbcStatement {
      */
     private void checkAndPerformCloseOnCompletionAction() {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 if (isCloseOnCompletion() && !this.dontTrackOpenResources.getValue() && getOpenResultSetCount() == 0
                         && (this.results == null || !this.results.hasRows() || this.results.isClosed())
                         && (this.generatedKeysResults == null || !this.generatedKeysResults.hasRows() || this.generatedKeysResults.isClosed())) {
                     realClose(false, false);
                 }
+            } finally {
+                lock.unlock();
             }
         } catch (SQLException e) {
         }
@@ -547,7 +576,9 @@ public class StatementImpl implements JdbcStatement {
      *             if a database access error occurs or this method is called on a closed Statement
      */
     private ResultSetInternalMethods createResultSetUsingServerFetch(String sql) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             java.sql.PreparedStatement pStmt = this.connection.prepareStatement(sql, this.query.getResultType().getIntValue(), this.resultSetConcurrency);
 
             pStmt.setFetchSize(this.query.getResultFetchSize());
@@ -574,6 +605,8 @@ public class StatementImpl implements JdbcStatement {
             this.results = rs;
 
             return rs;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -594,22 +627,30 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public void enableStreamingResults() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             this.originalResultSetType = this.query.getResultType();
             this.originalFetchSize = this.query.getResultFetchSize();
 
             setFetchSize(Integer.MIN_VALUE);
             setResultSetType(Type.FORWARD_ONLY);
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void disableStreamingResults() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (this.query.getResultFetchSize() == Integer.MIN_VALUE && this.query.getResultType() == Type.FORWARD_ONLY) {
                 setFetchSize(this.originalFetchSize);
                 setResultSetType(this.originalResultSetType);
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -651,7 +692,9 @@ public class StatementImpl implements JdbcStatement {
     private boolean executeInternal(String sql, boolean returnGeneratedKeys) throws SQLException {
         JdbcConnection locallyScopedConn = checkClosed();
 
-        synchronized (locallyScopedConn.getConnectionMutex()) {
+        ReentrantLock lock = locallyScopedConn.getConnectionMutex();
+        lock.lock();
+        try {
             checkClosed();
 
             checkNullOrEmptyQuery(sql);
@@ -760,6 +803,8 @@ public class StatementImpl implements JdbcStatement {
             } finally {
                 this.query.getStatementExecuting().set(false);
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -770,8 +815,12 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public void resetCancelledState() {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             this.query.resetCancelledState();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -798,7 +847,9 @@ public class StatementImpl implements JdbcStatement {
     protected long[] executeBatchInternal() throws SQLException {
         JdbcConnection locallyScopedConn = checkClosed();
 
-        synchronized (locallyScopedConn.getConnectionMutex()) {
+        ReentrantLock lock = locallyScopedConn.getConnectionMutex();
+        lock.lock();
+        try {
             if (locallyScopedConn.isReadOnly()) {
                 throw SQLError.createSQLException(Messages.getString("Statement.34") + Messages.getString("Statement.35"),
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -910,6 +961,8 @@ public class StatementImpl implements JdbcStatement {
 
                 clearBatch();
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -947,7 +1000,9 @@ public class StatementImpl implements JdbcStatement {
 
         JdbcConnection locallyScopedConn = checkClosed();
 
-        synchronized (locallyScopedConn.getConnectionMutex()) {
+        ReentrantLock lock = locallyScopedConn.getConnectionMutex();
+        lock.lock();
+        try {
             if (!multiQueriesEnabled) {
                 this.session.enableMultiQueries();
             }
@@ -1048,11 +1103,15 @@ public class StatementImpl implements JdbcStatement {
                     }
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     protected int processMultiCountsAndKeys(StatementImpl batchedStatement, int updateCountCounter, long[] updateCounts) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             updateCounts[updateCountCounter++] = batchedStatement.getLargeUpdateCount();
 
             boolean doGenKeys = this.batchedGeneratedKeys != null;
@@ -1080,6 +1139,8 @@ public class StatementImpl implements JdbcStatement {
             }
 
             return updateCountCounter;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1102,7 +1163,9 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public java.sql.ResultSet executeQuery(String sql) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             JdbcConnection locallyScopedConn = this.connection;
 
             this.retrieveGeneratedKeys = false;
@@ -1197,11 +1260,15 @@ public class StatementImpl implements JdbcStatement {
             }
 
             return this.results;
+        } finally {
+            lock.unlock();
         }
     }
 
     protected void doPingInstead() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (this.pingTarget != null) {
                 try {
                     this.pingTarget.doPing();
@@ -1216,27 +1283,37 @@ public class StatementImpl implements JdbcStatement {
 
             ResultSetInternalMethods fakeSelectOneResultSet = generatePingResultSet();
             this.results = fakeSelectOneResultSet;
+        } finally {
+            lock.unlock();
         }
     }
 
     protected ResultSetInternalMethods generatePingResultSet() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             String encoding = this.session.getServerSession().getCharsetSettings().getMetadataEncoding();
             int collationIndex = this.session.getServerSession().getCharsetSettings().getMetadataCollationIndex();
-            Field[] fields = { new Field(null, "1", collationIndex, encoding, MysqlType.BIGINT, 1) };
+            Field[] fields = {new Field(null, "1", collationIndex, encoding, MysqlType.BIGINT, 1)};
             ArrayList<Row> rows = new ArrayList<>();
-            byte[] colVal = new byte[] { (byte) '1' };
+            byte[] colVal = new byte[]{(byte) '1'};
 
-            rows.add(new ByteArrayRow(new byte[][] { colVal }, getExceptionInterceptor()));
+            rows.add(new ByteArrayRow(new byte[][]{colVal}, getExceptionInterceptor()));
 
             return this.resultSetFactory.createFromResultsetRows(ResultSet.CONCUR_READ_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE,
                     new ResultsetRowsStatic(rows, new DefaultColumnDefinition(fields)));
+        } finally {
+            lock.unlock();
         }
     }
 
     public void executeSimpleNonQuery(JdbcConnection c, String nonQuery) throws SQLException {
-        synchronized (c.getConnectionMutex()) {
+        ReentrantLock lock = c.getConnectionMutex();
+        lock.lock();
+        try {
             ((NativeSession) c.getSession()).<ResultSetImpl>execSQL(this, nonQuery, -1, null, false, getResultSetFactory(), null, false).close();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1246,7 +1323,9 @@ public class StatementImpl implements JdbcStatement {
     }
 
     protected long executeUpdateInternal(String sql, boolean isBatch, boolean returnGeneratedKeys) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             JdbcConnection locallyScopedConn = this.connection;
 
             checkNullOrEmptyQuery(sql);
@@ -1331,6 +1410,8 @@ public class StatementImpl implements JdbcStatement {
             this.lastInsertId = rs.getUpdateID();
 
             return this.updateCount;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1351,8 +1432,12 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public java.sql.Connection getConnection() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return this.connection;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1363,14 +1448,20 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public int getFetchSize() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return this.query.getResultFetchSize();
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public java.sql.ResultSet getGeneratedKeys() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (!this.retrieveGeneratedKeys) {
                 throw SQLError.createSQLException(Messages.getString("Statement.GeneratedKeysNotRequested"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
@@ -1392,6 +1483,8 @@ public class StatementImpl implements JdbcStatement {
                     new ResultsetRowsStatic(this.batchedGeneratedKeys, new DefaultColumnDefinition(fields)));
 
             return this.generatedKeysResults;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1406,7 +1499,9 @@ public class StatementImpl implements JdbcStatement {
     }
 
     protected ResultSetInternalMethods getGeneratedKeysInternal(long numKeys) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             String encoding = this.session.getServerSession().getCharsetSettings().getMetadataEncoding();
             int collationIndex = this.session.getServerSession().getCharsetSettings().getMetadataCollationIndex();
             Field[] fields = new Field[1];
@@ -1456,6 +1551,8 @@ public class StatementImpl implements JdbcStatement {
                     new ResultsetRowsStatic(rowSet, new DefaultColumnDefinition(fields)));
 
             return gkRs;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1471,8 +1568,12 @@ public class StatementImpl implements JdbcStatement {
      * @return the last update ID.
      */
     public long getLastInsertID() {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return this.lastInsertId;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1488,7 +1589,9 @@ public class StatementImpl implements JdbcStatement {
      * @return the current update count.
      */
     public long getLongUpdateCount() {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (this.results == null) {
                 return -1;
             }
@@ -1498,24 +1601,34 @@ public class StatementImpl implements JdbcStatement {
             }
 
             return this.updateCount;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public int getMaxFieldSize() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return this.maxFieldSize;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public int getMaxRows() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (this.maxRows <= 0) {
                 return 0;
             }
 
             return this.maxRows;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1526,7 +1639,9 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public boolean getMoreResults(int current) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (this.results == null) {
                 return false;
             }
@@ -1602,13 +1717,19 @@ public class StatementImpl implements JdbcStatement {
                 checkAndPerformCloseOnCompletionAction();
             }
             return moreResults;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public int getQueryTimeout() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return getTimeoutInMillis() / 1000;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1682,15 +1803,23 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public java.sql.ResultSet getResultSet() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return ((this.results != null) && this.results.hasRows()) ? (java.sql.ResultSet) this.results : null;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public int getResultSetConcurrency() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return this.resultSetConcurrency;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1702,8 +1831,12 @@ public class StatementImpl implements JdbcStatement {
     @Override
     public ResultSetInternalMethods getResultSetInternal() {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 return this.results;
+            } finally {
+                lock.unlock();
             }
         } catch (StatementIsClosedException e) {
             return this.results; // you end up with the same thing as before, you'll get exception when actually trying to use it
@@ -1712,8 +1845,12 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public int getResultSetType() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return this.query.getResultType().getIntValue();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1724,7 +1861,9 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public java.sql.SQLWarning getWarnings() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
 
             if (isClearWarningsCalled()) {
                 return null;
@@ -1739,6 +1878,8 @@ public class StatementImpl implements JdbcStatement {
             }
 
             return this.warningChain;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1820,8 +1961,12 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public void setEscapeProcessing(boolean enable) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             this.doEscapeProcessing = enable;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1840,20 +1985,28 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public void setFetchSize(int rows) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (((rows < 0) && (rows != Integer.MIN_VALUE)) || ((this.maxRows > 0) && (rows > this.getMaxRows()))) {
                 throw SQLError.createSQLException(Messages.getString("Statement.7"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             this.query.setResultFetchSize(rows);
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void setHoldResultsOpenOverClose(boolean holdResultsOpenOverClose) {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 this.holdResultsOpenOverClose = holdResultsOpenOverClose;
+            } finally {
+                lock.unlock();
             }
         } catch (StatementIsClosedException e) {
             // FIXME: can't break interface at this point
@@ -1862,7 +2015,9 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public void setMaxFieldSize(int max) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (max < 0) {
                 throw SQLError.createSQLException(Messages.getString("Statement.11"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -1870,11 +2025,13 @@ public class StatementImpl implements JdbcStatement {
             int maxBuf = this.maxAllowedPacket.getValue();
 
             if (max > maxBuf) {
-                throw SQLError.createSQLException(Messages.getString("Statement.13", new Object[] { Long.valueOf(maxBuf) }),
+                throw SQLError.createSQLException(Messages.getString("Statement.13", new Object[]{Long.valueOf(maxBuf)}),
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             this.maxFieldSize = max;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1885,12 +2042,16 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public void setQueryTimeout(int seconds) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (seconds < 0) {
                 throw SQLError.createSQLException(Messages.getString("Statement.21"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             setTimeoutInMillis(seconds * 1000);
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1904,10 +2065,14 @@ public class StatementImpl implements JdbcStatement {
      */
     void setResultSetConcurrency(int concurrencyFlag) throws SQLException {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 this.resultSetConcurrency = concurrencyFlag;
                 // updating resultset factory because concurrency is cached there
                 this.resultSetFactory = new ResultSetFactory(this.connection, this);
+            } finally {
+                lock.unlock();
             }
         } catch (StatementIsClosedException e) {
             // FIXME: Can't break interface atm, we'll get the exception later when you try and do something useful with a closed statement...
@@ -1924,10 +2089,14 @@ public class StatementImpl implements JdbcStatement {
      */
     void setResultSetType(Resultset.Type typeFlag) throws SQLException {
         try {
-            synchronized (checkClosed().getConnectionMutex()) {
+            ReentrantLock lock = checkClosed().getConnectionMutex();
+            lock.lock();
+            try {
                 this.query.setResultType(typeFlag);
                 // updating resultset factory because type is cached there
                 this.resultSetFactory = new ResultSetFactory(this.connection, this);
+            } finally {
+                lock.unlock();
             }
         } catch (StatementIsClosedException e) {
             // FIXME: Can't break interface atm, we'll get the exception later when you try and do something useful with a closed statement...
@@ -1939,7 +2108,9 @@ public class StatementImpl implements JdbcStatement {
     }
 
     protected void getBatchedGeneratedKeys(java.sql.Statement batchedStatement) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (this.retrieveGeneratedKeys) {
                 java.sql.ResultSet rs = null;
 
@@ -1947,7 +2118,7 @@ public class StatementImpl implements JdbcStatement {
                     rs = batchedStatement.getGeneratedKeys();
 
                     while (rs.next()) {
-                        this.batchedGeneratedKeys.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }, getExceptionInterceptor()));
+                        this.batchedGeneratedKeys.add(new ByteArrayRow(new byte[][]{rs.getBytes(1)}, getExceptionInterceptor()));
                     }
                 } finally {
                     if (rs != null) {
@@ -1955,18 +2126,22 @@ public class StatementImpl implements JdbcStatement {
                     }
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     protected void getBatchedGeneratedKeys(int maxKeys) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (this.retrieveGeneratedKeys) {
                 java.sql.ResultSet rs = null;
 
                 try {
                     rs = maxKeys == 0 ? getGeneratedKeysInternal() : getGeneratedKeysInternal(maxKeys);
                     while (rs.next()) {
-                        this.batchedGeneratedKeys.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }, getExceptionInterceptor()));
+                        this.batchedGeneratedKeys.add(new ByteArrayRow(new byte[][]{rs.getBytes(1)}, getExceptionInterceptor()));
                     }
                 } finally {
                     this.isImplicitlyClosingResults = true;
@@ -1979,13 +2154,19 @@ public class StatementImpl implements JdbcStatement {
                     }
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     private boolean useServerFetch() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return this.session.getPropertySet().getBooleanProperty(PropertyKey.useCursorFetch).getValue() && this.query.getResultFetchSize() > 0
                     && this.query.getResultType() == Type.FORWARD_ONLY;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1995,8 +2176,12 @@ public class StatementImpl implements JdbcStatement {
         if (locallyScopedConn == null) {
             return true;
         }
-        synchronized (locallyScopedConn.getConnectionMutex()) {
+        ReentrantLock lock = locallyScopedConn.getConnectionMutex();
+        lock.lock();
+        try {
             return this.isClosed;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2062,15 +2247,23 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public void closeOnCompletion() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             this.closeOnCompletion = true;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public boolean isCloseOnCompletion() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             return this.closeOnCompletion;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -2107,7 +2300,9 @@ public class StatementImpl implements JdbcStatement {
 
     @Override
     public long getLargeUpdateCount() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if (this.results == null) {
                 return -1;
             }
@@ -2117,12 +2312,16 @@ public class StatementImpl implements JdbcStatement {
             }
 
             return this.results.getUpdateCount();
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void setLargeMaxRows(long max) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock lock = checkClosed().getConnectionMutex();
+        lock.lock();
+        try {
             if ((max > MAX_ROWS) || (max < 0)) {
                 throw SQLError.createSQLException(Messages.getString("Statement.15") + max + " > " + MAX_ROWS + ".",
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -2133,6 +2332,8 @@ public class StatementImpl implements JdbcStatement {
             }
 
             this.maxRows = (int) max;
+        } finally {
+            lock.unlock();
         }
     }
 

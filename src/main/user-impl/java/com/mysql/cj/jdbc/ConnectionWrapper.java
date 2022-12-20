@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlConnection;
@@ -886,7 +887,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public Object getConnectionMutex() {
+    public ReentrantLock getConnectionMutex() {
         return this.mc.getConnectionMutex();
     }
 
