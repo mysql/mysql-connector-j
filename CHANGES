@@ -3,6 +3,8 @@
 
 Version 8.0.33
 
+  - WL#15490, Support OCI ephemeral key based authentication.
+
 Version 8.0.32
 
   - Fix for Bug#104954 (Bug#33361205), MysqlDataSource fails to URL encode database name when constructing JDBC URL.

@@ -32,6 +32,7 @@ package com.mysql.cj.protocol.a.authentication;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.Base64;
@@ -62,8 +63,11 @@ public class AuthenticationOciClient implements AuthenticationPlugin<NativePacke
 
     protected Protocol<NativePacketPayload> protocol = null;
     private MysqlCallbackHandler usernameCallbackHandler = null;
-    private String fingerprint = null;
+    private String configFingerprint = null;
+    private String configKeyFile = null;
+    private String configSecurityTokenFile = null;
     private RSAPrivateKey privateKey = null;
+    private byte[] token = null;
 
     @Override
     public void init(Protocol<NativePacketPayload> prot, MysqlCallbackHandler cbh) {
@@ -73,7 +77,7 @@ public class AuthenticationOciClient implements AuthenticationPlugin<NativePacke
 
     @Override
     public void reset() {
-        this.fingerprint = null;
+        this.configFingerprint = null;
         this.privateKey = null;
     }
 
@@ -123,16 +127,50 @@ public class AuthenticationOciClient implements AuthenticationPlugin<NativePacke
             return true;
         }
 
+        loadOciConfig();
         initializePrivateKey();
+        initializeToken();
 
         byte[] nonce = fromServer.readBytes(StringSelfDataType.STRING_EOF);
         byte[] signature = ExportControlled.sign(nonce, this.privateKey);
         if (signature == null) {
             signature = new byte[0];
         }
-        String payload = String.format("{\"fingerprint\":\"%s\", \"signature\":\"%s\"}", this.fingerprint, Base64.getEncoder().encodeToString(signature));
+        String payload = String.format("{\"fingerprint\":\"%s\", \"signature\":\"%s\", \"token\":\"%s\"}", this.configFingerprint,
+                Base64.getEncoder().encodeToString(signature), new String(this.token));
         toServer.add(new NativePacketPayload(payload.getBytes(Charset.defaultCharset())));
         return true;
+    }
+
+    private void loadOciConfig() {
+        ConfigFile configFile;
+        try {
+            String configFilePath = this.protocol.getPropertySet().getStringProperty(PropertyKey.ociConfigFile.getKeyName()).getStringValue();
+            String configProfile = this.protocol.getPropertySet().getStringProperty(PropertyKey.ociConfigProfile.getKeyName()).getStringValue();
+            if (StringUtils.isNullOrEmpty(configFilePath)) {
+                configFile = ConfigFileReader.parseDefault(configProfile);
+            } else if (Files.exists(Paths.get(configFilePath))) {
+                configFile = ConfigFileReader.parse(configFilePath, configProfile);
+            } else {
+                throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.ConfigFileNotFound"));
+            }
+        } catch (NoClassDefFoundError e) {
+            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.OciSdkNotFound"), e);
+        } catch (IOException e) {
+            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.OciConfigFileError"), e);
+        } catch (IllegalArgumentException e) {
+            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.ProfileNotFound"), e);
+        }
+
+        this.configFingerprint = configFile.get("fingerprint");
+        if (StringUtils.isNullOrEmpty(this.configFingerprint)) {
+            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.OciConfigFileMissingEntry"));
+        }
+        this.configKeyFile = configFile.get("key_file");
+        if (StringUtils.isNullOrEmpty(this.configKeyFile)) {
+            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.OciConfigFileMissingEntry"));
+        }
+        this.configSecurityTokenFile = configFile.get("security_token_file");
     }
 
     private void initializePrivateKey() {
@@ -140,38 +178,41 @@ public class AuthenticationOciClient implements AuthenticationPlugin<NativePacke
             // Already initialized.
             return;
         }
-
-        ConfigFile configFile;
         try {
-            String configFilePath = this.protocol.getPropertySet().getStringProperty(PropertyKey.ociConfigFile.getKeyName()).getStringValue();
-            if (StringUtils.isNullOrEmpty(configFilePath)) {
-                configFile = ConfigFileReader.parseDefault();
-            } else if (Files.exists(Paths.get(configFilePath))) {
-                configFile = ConfigFileReader.parse(configFilePath);
-            } else {
-                throw ExceptionFactory.createException("configuration file does not exist");
+            Path keyFilePath = Paths.get(this.configKeyFile);
+            if (Files.notExists(keyFilePath)) {
+                throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.PrivateKeyNotFound"));
             }
-        } catch (NoClassDefFoundError e) {
-            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.SdkNotFound"), e);
-        } catch (IOException e) {
-            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.OciConfigFileError"), e);
-        }
-        this.fingerprint = configFile.get("fingerprint");
-        if (StringUtils.isNullOrEmpty(this.fingerprint)) {
-            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.OciConfigFileMissingEntry"));
-        }
-        String keyFilePath = configFile.get("key_file");
-        if (StringUtils.isNullOrEmpty(keyFilePath)) {
-            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.OciConfigFileMissingEntry"));
-        }
-
-        try {
-            String key = new String(Files.readAllBytes(Paths.get(keyFilePath)), Charset.defaultCharset());
+            String key = new String(Files.readAllBytes(keyFilePath));
             this.privateKey = ExportControlled.decodeRSAPrivateKey(key);
         } catch (IOException e) {
-            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.PrivateKeyNotFound"), e);
+            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.FailedReadingPrivateKey"), e);
         } catch (RSAException | IllegalArgumentException e) {
             throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.PrivateKeyNotValid"), e);
+        }
+    }
+
+    private void initializeToken() {
+        if (this.token != null) {
+            // Already initialized.
+            return;
+        }
+        if (StringUtils.isNullOrEmpty(this.configSecurityTokenFile)) {
+            this.token = new byte[0];
+            return;
+        }
+        try {
+            Path securityTokenFilePath = Paths.get(this.configSecurityTokenFile);
+            if (Files.notExists(securityTokenFilePath)) {
+                throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.SecurityTokenFileNotFound"));
+            }
+            long size = Files.size(securityTokenFilePath);
+            if (size > 10240) { // Fail if above 10KB.
+                throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.SecurityTokenTooBig"));
+            }
+            this.token = Files.readAllBytes(Paths.get(this.configSecurityTokenFile));
+        } catch (IOException e) {
+            throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.FailedReadingSecurityTokenFile"), e);
         }
     }
 }

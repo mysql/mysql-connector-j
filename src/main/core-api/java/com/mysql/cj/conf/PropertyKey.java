@@ -168,6 +168,7 @@ public enum PropertyKey {
     noDatetimeStringSync("noDatetimeStringSync", true), //
     nullDatabaseMeansCurrent("nullDatabaseMeansCurrent", "nullCatalogMeansCurrent", true), //
     ociConfigFile("ociConfigFile", true), //
+    ociConfigProfile("ociConfigProfile", true), //
     overrideSupportsIntegrityEnhancementFacility("overrideSupportsIntegrityEnhancementFacility", true), //
     packetDebugBufferSize("packetDebugBufferSize", true), //
     padCharsWithSpace("padCharsWithSpace", true), //
