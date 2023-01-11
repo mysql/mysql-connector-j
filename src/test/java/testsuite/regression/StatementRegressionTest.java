@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -12944,5 +12944,21 @@ public class StatementRegressionTest extends BaseTestCase {
 
             testConn.close();
         } while ((useSPS = !useSPS) || (cachePS = !cachePS));
+    }
+
+    /**
+     * Tests fix for Bug#109243 (Bug#34852047), Judge whether the returned result set of the sql statement is incorrect.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug109243() throws Exception {
+        assumeTrue(versionMeetsMinimum(8, 0), "MySQL 8.0+ is required to run this test.");
+
+        this.rs = this.stmt.executeQuery("WITH q1 AS (SELECT 1 v1),q2 AS (SELECT 2 v2) SELECT v1,v2 FROM q1,q2");
+        assertTrue(this.rs.next());
+        assertEquals(1, this.rs.getInt(1));
+        assertEquals(2, this.rs.getInt(2));
+        assertFalse(this.rs.next());
     }
 }

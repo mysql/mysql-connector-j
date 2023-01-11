@@ -3,6 +3,8 @@
 
 Version 8.0.33
 
+  - Fix for Bug#109243 (Bug#34852047), Judge whether the returned result set of the sql statement is incorrect.
+
   - WL#15490, Support OCI ephemeral key based authentication.
 
 Version 8.0.32

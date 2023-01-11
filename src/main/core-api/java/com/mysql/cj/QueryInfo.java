@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -698,7 +698,7 @@ public class QueryInfo {
             if (!asFound && section.equalsIgnoreCase(AS_CLAUSE)) {
                 asFound = true; // Since the subquery part is skipped, this must be followed by a "," or the context statement.
             } else if (asFound) {
-                if (section.equalsIgnoreCase(",")) {
+                if (section.charAt(0) == ',') {
                     asFound = false; // Another CTE is expected.
                 } else {
                     return section;
