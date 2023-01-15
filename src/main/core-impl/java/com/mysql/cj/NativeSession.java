@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 import com.mysql.cj.conf.HostInfo;
@@ -103,6 +104,8 @@ public class NativeSession extends CoreSession implements Serializable {
 
     private transient Timer cancelTimer;
 
+    private final ReentrantLock lock = new ReentrantLock();
+
     public NativeSession(HostInfo hostInfo, PropertySet propSet) {
         super(hostInfo, propSet);
     }
@@ -151,11 +154,14 @@ public class NativeSession extends CoreSession implements Serializable {
             }
 
         }
-        synchronized (this) {
+        lock.lock();
+        try {
             if (this.cancelTimer != null) {
                 this.cancelTimer.cancel();
                 this.cancelTimer = null;
             }
+        } finally {
+            lock.unlock();
         }
         this.isClosed = true;
         super.quit();
@@ -177,11 +183,14 @@ public class NativeSession extends CoreSession implements Serializable {
             }
             //this.protocol = null; // TODO actually we shouldn't remove protocol instance because some it's methods can be called after closing socket
         }
-        synchronized (this) {
+        lock.lock();
+        try {
             if (this.cancelTimer != null) {
                 this.cancelTimer.cancel();
                 this.cancelTimer = null;
             }
+        } finally {
+            lock.unlock();
         }
         this.isClosed = true;
         super.forceClose();
@@ -825,10 +834,23 @@ public class NativeSession extends CoreSession implements Serializable {
         return this.protocol != null && this.protocol.getServerSession().useAnsiQuotedIdentifiers() ? "\"" : "`";
     }
 
-    public synchronized Timer getCancelTimer() {
-        if (this.cancelTimer == null) {
-            this.cancelTimer = new Timer("MySQL Statement Cancellation Timer", Boolean.TRUE);
+    public Timer getCancelTimer() {
+        lock.lock();
+        try {
+            if (this.cancelTimer == null) {
+                this.cancelTimer = new Timer("MySQL Statement Cancellation Timer", Boolean.TRUE);
+            }
+            return this.cancelTimer;
+        } finally {
+            lock.unlock();
         }
-        return this.cancelTimer;
+    }
+
+    public void lock() {
+        lock.lock();
+    }
+
+    public void unlock() {
+        lock.unlock();
     }
 }

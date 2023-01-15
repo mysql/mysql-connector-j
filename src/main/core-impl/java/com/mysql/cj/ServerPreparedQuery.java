@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.sql.Clob;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
@@ -93,6 +94,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
 
     protected NativeMessageBuilder commandBuilder = null;
 
+    private final ReentrantLock lock = new ReentrantLock();
+
     public static ServerPreparedQuery getInstance(NativeSession sess) {
         if (sess.getPropertySet().getBooleanProperty(PropertyKey.autoGenerateTestcaseScript).getValue()) {
             return new ServerPreparedQueryTestcaseGenerator(sess);
@@ -122,7 +125,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
     public void serverPrepare(String sql) throws IOException {
         this.session.checkClosed();
 
-        synchronized (this.session) {
+        this.session.lock();
+        try {
             long begin = this.profileSQL ? System.currentTimeMillis() : 0;
 
             NativePacketPayload prepareResultPacket = this.session.getProtocol()
@@ -162,6 +166,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
             if (fieldCount > 0) {
                 this.resultFields = this.session.getProtocol().read(ColumnDefinition.class, new ColumnDefinitionFactory(fieldCount, null));
             }
+        } finally {
+            this.session.unlock();
         }
     }
 
@@ -397,7 +403,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
      * 
      */
     private void serverLongData(int parameterIndex, BindValue binding) {
-        synchronized (this) {
+        lock.lock();
+        try {
             NativePacketPayload packet = this.session.getSharedSendPacket();
             Object value = binding.getValue();
             if (value instanceof byte[]) {
@@ -429,6 +436,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
                         Messages.getString("ServerPreparedStatement.18") + value.getClass().getName() + "'", this.session.getExceptionInterceptor());
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -472,7 +481,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
         char[] cBuf = null;
         String clobEncoding = null;
 
-        synchronized (this.session) {
+        this.session.lock();
+        try {
             if (isStream) {
                 bBuf = new byte[BLOB_STREAM_READ_BUF_SIZE];
             } else {
@@ -544,6 +554,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
                     }
                 }
             }
+        } finally {
+            this.session.unlock();
         }
     }
 
@@ -566,13 +578,16 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
 
     public void serverResetStatement() {
         this.session.checkClosed();
-        synchronized (this.session) {
+        this.session.lock();
+        try {
             try {
                 this.session.getProtocol().sendCommand(this.commandBuilder.buildComStmtReset(this.session.getSharedSendPacket(), this.serverStatementId), false,
                         0);
             } finally {
                 this.session.clearInputStream();
             }
+        } finally {
+            this.session.unlock();
         }
     }
 

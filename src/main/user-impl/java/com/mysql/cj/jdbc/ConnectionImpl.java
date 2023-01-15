@@ -54,6 +54,7 @@ import java.util.Random;
 import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.CacheAdapter;
@@ -296,6 +297,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     private final CopyOnWriteArrayList<JdbcStatement> openStatements = new CopyOnWriteArrayList<>();
 
     private LRUCache<CompoundCacheKey, CallableStatement.CallableStatementParamInfo> parsedCallableStatementCache;
+    private final ReentrantLock parsedCallableStatementCacheLock = new ReentrantLock();
 
     /** The password we used */
     private String password = null;
@@ -320,6 +322,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     private LRUCache<String, Boolean> serverSideStatementCheckCache;
     private LRUCache<CompoundCacheKey, ServerPreparedStatement> serverSideStatementCache;
+    private ReentrantLock serverSideStatementCacheLock = new ReentrantLock();
 
     private HostInfo origHostInfo;
 
@@ -1520,7 +1523,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             cStmt = parseCallableStatement(sql);
         } else {
-            synchronized (this.parsedCallableStatementCache) {
+            this.parsedCallableStatementCacheLock.lock();
+            try {
                 CompoundCacheKey key = new CompoundCacheKey(getDatabase(), sql);
 
                 CallableStatement.CallableStatementParamInfo cachedParamInfo = this.parsedCallableStatementCache.get(key);
@@ -1536,6 +1540,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
                     this.parsedCallableStatementCache.put(key, cachedParamInfo);
                 }
+            } finally {
+                this.parsedCallableStatementCacheLock.unlock();
             }
         }
 
@@ -1592,7 +1598,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             if (this.useServerPrepStmts.getValue() && canServerPrepare) {
                 if (this.cachePrepStmts.getValue()) {
-                    synchronized (this.serverSideStatementCache) {
+                    this.serverSideStatementCacheLock.lock();
+                    try {
                         pStmt = this.serverSideStatementCache.remove(new CompoundCacheKey(this.database, sql));
 
                         if (pStmt != null) {
@@ -1623,6 +1630,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                                 }
                             }
                         }
+                    } finally {
+                        this.serverSideStatementCacheLock.unlock();
                     }
                 } else {
                     try {
