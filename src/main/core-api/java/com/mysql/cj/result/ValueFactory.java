@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,8 +40,8 @@ import com.mysql.cj.protocol.InternalTimestamp;
 /**
  * A class implements the <code>ValueFactory&lt;T&gt;</code> interface to create value instances from intermediate forms.
  * <p>
- * A <code>ValueFactory</code> implementation is responsible for creating instance of a single type, supplying a value for the type parameter <tt>T</tt>. If an
- * instance cannot be created from the intermediate form, an {@link java.lang.UnsupportedOperationException} can be thrown.
+ * A <code>ValueFactory</code> implementation is responsible for creating instance of a single type, supplying a value for the type parameter <code>T</code>. If
+ * an instance cannot be created from the intermediate form, an {@link java.lang.UnsupportedOperationException} can be thrown.
  * 
  * @param <T>
  *            value type

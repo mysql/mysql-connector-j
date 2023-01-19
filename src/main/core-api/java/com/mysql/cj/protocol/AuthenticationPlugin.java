@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2012, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -123,6 +123,7 @@ public interface AuthenticationPlugin<M extends Message> {
      * Authentication plugin implementation can use this information to decide if the data coming from the server is useful to them or not.
      * 
      * @param sourceOfAuthData
+     *            the authentication plugin that is source of the authentication data
      */
     default void setSourceOfAuthData(String sourceOfAuthData) {
         // Do nothing by default.

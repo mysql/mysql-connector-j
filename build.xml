@@ -128,63 +128,60 @@ com.mysql.cj.extra.libs - location of third-party libraries: [${com.mysql.cj.ext
 
 com.mysql.cj.build.jdk - path to JDK used for building driver: [${com.mysql.cj.build.jdk}]
 com.mysql.cj.build.addDebugInfo - whether the driver be compiled with debugging info: [${com.mysql.cj.build.addDebugInfo}]
-com.mysql.cj.build.noCleanBetweenCompiles - don't delete compiled classes from previous build: [_unset_]
-com.mysql.cj.build.failOnWarnings - fail the build when any warning is found: [_unset_]
-com.mysql.cj.build.verbose - log the extended build info: [_unset_]
+com.mysql.cj.build.noCleanBetweenCompiles - don't delete compiled classes from previous build: [${com.mysql.cj.build.noCleanBetweenCompiles}]
+com.mysql.cj.build.failOnWarnings - fail the build when any warning is found: [${com.mysql.cj.build.failOnWarnings}]
+com.mysql.cj.build.verbose - log the extended build info (true/false): [${com.mysql.cj.build.verbose}]
 
-com.mysql.cj.build.commercial - build commercial variant of the driver: [_unset_]
-com.mysql.cj.build.filterLicense - build ISV variant of the driver: [_unset_]
-com.mysql.cj.build.noCrypto - build the driver without SSL support: [_unset_]
+com.mysql.cj.build.commercial - build commercial variant of the driver: [${com.mysql.cj.build.commercial}]
+com.mysql.cj.build.filterLicense - build ISV variant of the driver: [${com.mysql.cj.build.filterLicense}]
+com.mysql.cj.build.noCrypto - build the driver without SSL support: [${com.mysql.cj.build.noCrypto}]
 
 com.mysql.cj.build.driver.version.major - major version: [${com.mysql.cj.build.driver.version.major}]
 com.mysql.cj.build.driver.version.minor - minor version: [${com.mysql.cj.build.driver.version.minor}]
 com.mysql.cj.build.driver.version.subminor - subminor version: [${com.mysql.cj.build.driver.version.subminor}]
 com.mysql.cj.build.driver.version.status - version status, such as '-rc' or '-dmr': [${com.mysql.cj.build.driver.version.status}]
-com.mysql.cj.build.driver.version.series - product series, i.e. x.y: [${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}]
-com.mysql.cj.build.driver.version.numeric - numeric version, i.e. x.y.z: [${com.mysql.cj.build.driver.version.series}.${com.mysql.cj.build.driver.version.subminor}]
-com.mysql.cj.build.driver.version - standard version string (includes version status): [${com.mysql.cj.build.driver.version.numeric}${com.mysql.cj.build.driver.version.status}]
+com.mysql.cj.build.driver.version.series - product series, i.e. x.y: [${com.mysql.cj.build.driver.version.series}]
+com.mysql.cj.build.driver.version.numeric - numeric version, i.e. x.y.z: [${com.mysql.cj.build.driver.version.numeric}]
+com.mysql.cj.build.driver.version - standard version string (includes version status): [${com.mysql.cj.build.driver.version}]
 com.mysql.cj.build.driver.version.extra - optional version information appended to the version string: [${com.mysql.cj.build.driver.version.extra}]
 com.mysql.cj.build.driver.version.snapshot - optional version snapshot marker: [${com.mysql.cj.build.driver.version.snapshot}]
-com.mysql.cj.build.driver.version.full - full version string: [${com.mysql.cj.build.driver.version}${com.mysql.cj.build.driver.version.extra}${com.mysql.cj.build.driver.version.snapshot}]
+com.mysql.cj.build.driver.version.full - full version string: [${com.mysql.cj.build.driver.version.full}]
 
 com.mysql.cj.build.driver.displayName - product display name: [${com.mysql.cj.build.driver.displayName}]
 com.mysql.cj.build.driver.name - product name: [${com.mysql.cj.build.driver.name}]
 com.mysql.cj.build.driver.extraName - optional extension to product name: [${com.mysql.cj.build.driver.extraName}]
-com.mysql.cj.build.driver.extendedName - final product name: [${com.mysql.cj.build.driver.name}${com.mysql.cj.build.driver.extraName}]
-com.mysql.cj.build.driver.fullName - full product name (includes version): [${com.mysql.cj.build.driver.extendedName}-${com.mysql.cj.build.driver.version.full}]
+com.mysql.cj.build.driver.extendedName - final product name: [${com.mysql.cj.build.driver.extendedName}]
+com.mysql.cj.build.driver.fullName - full product name (includes version): [${com.mysql.cj.build.driver.fullName}]
 
 com.mysql.cj.build.dir - root directory for driver build: [${com.mysql.cj.build.dir}]
-com.mysql.cj.build.dir.driver - driver build directory: [${com.mysql.cj.build.dir}/${com.mysql.cj.build.driver.fullName}]
+com.mysql.cj.build.dir.driver - driver build directory: [${com.mysql.cj.build.dir.driver}]
+com.mysql.cj.build.dir.javadoc - javadoc build directory: [${com.mysql.cj.build.dir.javadoc}]
 
-com.mysql.cj.dist.packageName - final package name: [${com.mysql.cj.build.driver.extendedName}${com.mysql.cj.dist.packageExtraName}-${com.mysql.cj.build.driver.version.full}]
 com.mysql.cj.dist.packageExtraName - optional extension to package name: [${com.mysql.cj.dist.packageExtraName}]
-com.mysql.cj.dist.noSources - don't include sources into dist archives: [_unset_]
-com.mysql.cj.dist.noMaven - don't create Maven bundles: [_unset_] 
+com.mysql.cj.dist.packageName - final package name: [${com.mysql.cj.dist.packageName}]
 com.mysql.cj.dist.licenseUrl - license book location: [${com.mysql.cj.dist.licenseUrl}]
-
-com.mysql.cj.dist.archiveName - final archive name: [${com.mysql.cj.dist.packageName}[_src|_no-src|_none_]]
-com.mysql.cj.dist.archiveSourcesSuffix - sources indicator suffix added to the archive name (depends on package type - GPL/Commercial): [_src|_no-src|_unset_]
+com.mysql.cj.dist.noMaven - don't create Maven bundles: [${com.mysql.cj.dist.noMaven}] 
 
 com.mysql.cj.dist.dir - root directory for driver packaging: [${com.mysql.cj.dist.dir}]
-com.mysql.cj.dist.dir.prepare - directory for preparing packages: [${com.mysql.cj.dist.dir.prepare}]
-com.mysql.cj.dist.dir.package - directory for preparing packages for given package name: [${com.mysql.cj.dist.dir.prepare}/${com.mysql.cj.dist.packageName}]
-com.mysql.cj.dist.dir.maven - directory for preparing Maven packages: [${com.mysql.cj.dist.dir.prepare}/${com.mysql.cj.dist.packageName}-maven]
+com.mysql.cj.dist.dir.workspace - directory for preparing packages: [${com.mysql.cj.dist.dir.workspace}]
+com.mysql.cj.dist.dir.package - directory for preparing packages for given package name: [${com.mysql.cj.dist.dir.package}]
+com.mysql.cj.dist.dir.maven - directory for preparing Maven packages: [${com.mysql.cj.dist.dir.maven}]
 
 com.mysql.cj.dist.deb.maintainerEmail - the deb package maintainer email: [${com.mysql.cj.dist.deb.maintainerEmail}]
 
-com.mysql.cj.docs.xdevapi - destination of the X DevAPI Javadoc HTML files: [docs] 
+com.mysql.cj.docs.xdevapi - destination of the X DevAPI Javadoc HTML files: [${com.mysql.cj.dist.dir.maven}] 
 
 Available test properties
 =========================
 
+com.mysql.cj.testsuite.jvm - path to the JVM used to run the test suite: [${com.mysql.cj.testsuite.jvm}]
+com.mysql.cj.testsuite.url - connection string to the test server: [${com.mysql.cj.testsuite.url}]
+com.mysql.cj.testsuite.mysqlx.url - connection string to the test server with X Plugin: [${com.mysql.cj.testsuite.mysqlx.url}]
+com.mysql.cj.testsuite.test.class - test class name to run: [${com.mysql.cj.testsuite.test.class}]
+com.mysql.cj.testsuite.test.methods - a comma separated list of test names existing in the class specified in 'com.mysql.cj.testsuite.test.class': [${com.mysql.cj.testsuite.test.methods}]
+com.mysql.cj.testsuite.unavailable.host - a host:port pair used for tests checking socket connection timeout: [${com.mysql.cj.testsuite.unavailable.host}]
 com.mysql.cj.testsuite.build.dir - root directory for building the test suite: [${com.mysql.cj.testsuite.build.dir}]
 com.mysql.cj.testsuite.junit.results - where to put JUnit reports: [${com.mysql.cj.testsuite.junit.results}]
-com.mysql.cj.testsuite.jvm - path to the JVM used to run the test suite: [${com.mysql.cj.testsuite.jvm}]
-com.mysql.cj.testsuite.url - connection string to the test server: [_unset_]
-com.mysql.cj.testsuite.mysqlx.url - connection string to the test server with X Plugin: [_unset_]
-com.mysql.cj.testsuite.test.class - test class name to run: [_unset_]
-com.mysql.cj.testsuite.test.methods - a comma separated list of test names existing in the class defined by 'com.mysql.cj.testsuite.test.class': [_unset_]
-com.mysql.cj.testsuite.unavailable.host - a host:port pair used for tests checking socket connection timeout: [_unset_]
 
 See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test options.
 
@@ -199,11 +196,24 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- If build.properties exists, initialize properties from it. -->
     <property file="build.properties" />
 
+    <!-- Location of third-party libraries we don't distribute and extra source files. -->
+    <property name="com.mysql.cj.extra.libs" value="lib" />
+
+    <!-- The JDK used to compile the code. -->
+    <property name="com.mysql.cj.build.jdk" value="/usr/lib/jvm/jdk1.8" />
+    <property name="com.mysql.cj.build.addDebugInfo" value="yes" />
+    <property name="com.mysql.cj.build.noCleanBetweenCompiles" value="no" />
+    <property name="com.mysql.cj.build.failOnWarnings" value="no" />
+    <property name="com.mysql.cj.build.verbose" value="false" />
+
+    <property name="com.mysql.cj.build.commercial" value="no" />
+    <property name="com.mysql.cj.build.filterLicense" value="no" />
+    <property name="com.mysql.cj.build.noCrypto" value="no" />
+
     <property name="com.mysql.cj.build.driver.version.major" value="8" />
     <property name="com.mysql.cj.build.driver.version.minor" value="0" />
-    <property name="com.mysql.cj.build.driver.version.subminor" value="31" />
+    <property name="com.mysql.cj.build.driver.version.subminor" value="32" />
     <property name="com.mysql.cj.build.driver.version.status" value="" />
-
     <property name="com.mysql.cj.build.driver.version.series" value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}" />
     <property name="com.mysql.cj.build.driver.version.numeric"
               value="${com.mysql.cj.build.driver.version.series}.${com.mysql.cj.build.driver.version.subminor}" />
@@ -221,30 +231,38 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <property name="com.mysql.cj.build.dir" value="build" />
     <property name="com.mysql.cj.build.dir.driver" value="${com.mysql.cj.build.dir}/${com.mysql.cj.build.driver.fullName}" />
+    <property name="com.mysql.cj.build.dir.javadoc" value="${com.mysql.cj.build.dir.driver}/javadoc" />
 
     <condition property="com.mysql.cj.dist.packageExtraName" value="-commercial" else="">
         <istrue value="${com.mysql.cj.build.commercial}" />
     </condition>
     <property name="com.mysql.cj.dist.packageName"
               value="${com.mysql.cj.build.driver.extendedName}${com.mysql.cj.dist.packageExtraName}-${com.mysql.cj.build.driver.version.full}" />
-    <property name="com.mysql.cj.dist.licenseUrl" value="file:./LICENSE" />
+    <property name="com.mysql.cj.dist.licenseUrl" value="file:${basedir}/LICENSE" />
+    <property name="com.mysql.cj.dist.noMaven" value="no" />
 
     <property name="com.mysql.cj.dist.dir" value="dist" />
-    <property name="com.mysql.cj.dist.dir.prepare" value="${com.mysql.cj.dist.dir}/prepare" />
-    <property name="com.mysql.cj.dist.dir.package" value="${com.mysql.cj.dist.dir.prepare}/${com.mysql.cj.dist.packageName}" />
-    <property name="com.mysql.cj.dist.dir.maven" value="${com.mysql.cj.dist.dir.prepare}/${com.mysql.cj.dist.packageName}-maven" />
+    <property name="com.mysql.cj.dist.dir.workspace" value="${com.mysql.cj.dist.dir}/workspace" />
+    <property name="com.mysql.cj.dist.dir.package" value="${com.mysql.cj.dist.dir.workspace}/${com.mysql.cj.dist.packageName}" />
+    <property name="com.mysql.cj.dist.dir.maven" value="${com.mysql.cj.dist.dir.workspace}/${com.mysql.cj.dist.packageName}_maven" />
 
     <property name="com.mysql.cj.dist.deb.maintainerEmail" value="MySQL Release Engineering &lt;mysql-build@oss.oracle.com&gt;" />
 
     <property name="com.mysql.cj.docs.xdevapi" value="docs" />
 
+    <property name="com.mysql.cj.testsuite.jvm" value="${com.mysql.cj.build.jdk}" />
+    <property name="com.mysql.cj.testsuite.url" value="" />
+    <property name="com.mysql.cj.testsuite.mysqlx.url" value="" />
+    <property name="com.mysql.cj.testsuite.test.class" value="" />
+    <property name="com.mysql.cj.testsuite.test.methods" value="" />
+    <property name="com.mysql.cj.testsuite.unavailable.host" value="" />
     <property name="com.mysql.cj.testsuite.build.dir" value="buildtest" />
     <property name="com.mysql.cj.testsuite.junit.results" value="${com.mysql.cj.testsuite.build.dir}/junit" />
 
     <!-- TODO: Remove as soon as maven relocation artifacts stop being published -->
     <property name="com.mysql.cj.build.driver.extendedNameRelocation" value="mysql-connector-java${com.mysql.cj.dist.packageExtraName}" />
     <property name="com.mysql.cj.dist.packageNameRelocation"
-              value="${com.mysql.cj.build.driver.extendedNameRelocation}-${com.mysql.cj.build.driver.version.full}" />
+              value="mysql-connector-java${com.mysql.cj.build.driver.extraName}${com.mysql.cj.dist.packageExtraName}-${com.mysql.cj.build.driver.version.full}" />
 
     <!-- Send class files to correct location if running in eclipse. -->
     <condition property="com.mysql.cj.build.compiler.output" value="bin" else="${com.mysql.cj.build.dir.driver}">
@@ -263,18 +281,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <contains string="${ant.home}" substring="plugins" />
         </or>
     </condition>
-
-    <!-- The JDK used to compile the code. -->
-    <property name="com.mysql.cj.build.jdk" value="/usr/lib/jvm/jdk1.8" />
-
-    <!-- Generate debugging info in compiled code. -->
-    <property name="com.mysql.cj.build.addDebugInfo" value="yes" />
-
-    <!-- Location of third-party libraries we don't distribute and extra source files. -->
-    <property name="com.mysql.cj.extra.libs" value="lib" />
-
-    <!-- JVM used to execute the tests. -->
-    <property name="com.mysql.cj.testsuite.jvm" value="${com.mysql.cj.build.jdk}" />
 
     <!-- Propertyset used to forward testsuite properties to JUnit tasks as system variables. -->
     <propertyset id="junit.system.properties">
@@ -509,7 +515,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <!-- Copy main source files. -->
     <target name="-copy-files-main" depends="-clean-build, -load-info-properties">
-        <mkdir dir="${com.mysql.cj.build.dir}" />
+        <mkdir dir="${com.mysql.cj.build.dir.driver}" />
 
         <!-- Compute the RPM release field, adding status, extra and snapshot information if set. -->
         <condition property="com.mysql.cj.dist.rpm.release" value="1" else="0.1">
@@ -680,7 +686,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <target name="-copy-notices-commercial" if="${com.mysql.cj.build.commercial}">
         <fail message="Commercial license book URL required. Set the URL from where to fetch the license book with the property 'com.mysql.cj.dist.licenseUrl'.">
             <condition>
-                <equals arg1="${com.mysql.cj.dist.licenseUrl}" arg2="file:./LICENSE" />
+                <equals arg1="${com.mysql.cj.dist.licenseUrl}" arg2="file:${basedir}/LICENSE" />
             </condition>
         </fail>
 
@@ -725,9 +731,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <!-- Build binary files for distribution. -->
     <target name="build" description="Compiles the driver code and builds the binary .jar file." depends="-clean-all, -init, compile">
-        <!-- JDBC 4+ support of service provider mechanism. -->
-        <mkdir dir="${com.mysql.cj.build.dir.driver}/META-INF/services/" />
-        <echo file="${com.mysql.cj.build.dir.driver}/META-INF/services/java.sql.Driver" message="com.mysql.cj.jdbc.Driver" />
+        <mkdir dir="${com.mysql.cj.build.dir.driver}/META-INF" />
 
         <property name="com.mysql.cj.build.meta-inf.osgid-version"
                   value="${com.mysql.cj.build.driver.version.major}.${com.mysql.cj.build.driver.version.minor}.${com.mysql.cj.build.driver.version.subminor}" />
@@ -798,37 +802,23 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                        value="${com.mysql.cj.build.meta-inf.crypto-imports},${com.mysql.cj.build.meta-inf.security-imports},${com.mysql.cj.build.meta-inf.jdbc4-imports},${com.mysql.cj.build.meta-inf.jee-imports},${com.mysql.cj.build.meta-inf.jmx-imports},${com.mysql.cj.build.meta-inf.integration-imports},${com.mysql.cj.build.meta-inf.logging-imports},${com.mysql.cj.build.meta-inf.xdevapi-imports}" />
         </manifest>
 
-        <!-- Add legal notices and INFO files to META-INF. -->
-        <copy todir="${com.mysql.cj.build.dir.driver}/META-INF">
-            <filelist dir="${com.mysql.cj.build.dir.driver}">
-                <file name="INFO_BIN" />
-                <file name="INFO_SRC" />
-                <file name="LICENSE" />
-                <file name="README" />
-            </filelist>
-        </copy>
-
         <jar jarfile="${com.mysql.cj.build.dir.driver}/${com.mysql.cj.build.driver.fullName}.jar"
-             basedir="${com.mysql.cj.build.compiler.output}"
-             includes="**/*.class, **/*.properties*, META-INF/**"
-             excludes="demo/**, documentation/**, instrumentation/**, testsuite/**"
-             index="true"
-             manifest="${com.mysql.cj.build.dir.driver}/META-INF/MANIFEST.MF" />
+             manifest="${com.mysql.cj.build.dir.driver}/META-INF/MANIFEST.MF"
+             index="true">
+            <fileset dir="${com.mysql.cj.build.compiler.output}"
+                     includes="**/*.class, **/*.properties*"
+                     excludes="demo/**, documentation/**, instrumentation/**, testsuite/**" />
+            <fileset dir="${com.mysql.cj.build.dir.driver}" includes="INFO_BIN, INFO_SRC, LICENSE, README" />
+            <metainf dir="${com.mysql.cj.build.dir.driver}/META-INF" />
+            <service type="java.sql.Driver" provider="com.mysql.cj.jdbc.Driver" />
+        </jar>
     </target>
-
-
-    <!-- TODO: Delete before merging!!! -->
-    <target name="full-package" description="Alias for package." depends="package" />
 
 
     <!-- Make MySQL Connector/J GPL or commercial licensed binaries packages, that contains sources. -->
     <target name="package"
             description="Builds the driver, the binary .jar file and creates packages (.zip, .tar.gz) suitable for distribution that do contain sources."
             depends="-clean-all, build, -make-packages, -remove-sources, -create-archives" />
-
-
-    <!-- TODO: Delete before merging!!! -->
-    <target name="full-package-no-sources" description="Alias for package-no-sources." depends="package-no-sources" />
 
 
     <!-- Make MySQL Connector/J GPL or commercial licensed binaries packages, that do not contain sources. -->
@@ -861,13 +851,13 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <!-- Initialize a distribution package. -->
     <target name="-make-packages-init" depends="build">
-        <delete dir="${com.mysql.cj.dist.dir.prepare}" />
+        <delete dir="${com.mysql.cj.dist.dir.workspace}" />
 
         <mkdir dir="${com.mysql.cj.dist.dir}" />
-        <mkdir dir="${com.mysql.cj.dist.dir.prepare}" />
+        <mkdir dir="${com.mysql.cj.dist.dir.workspace}" />
         <mkdir dir="${com.mysql.cj.dist.dir.package}" />
 
-        <patternset id="non.test.sources">
+        <patternset id="exclude.files">
             <exclude name="**/*.nb*" />
             <exclude name="**/*.bak" />
             <exclude name="**/*.*~" />
@@ -878,11 +868,11 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
         <copy todir="${com.mysql.cj.dist.dir.package}">
             <fileset dir="${com.mysql.cj.build.dir.driver}" includes="*.jar, INFO_BIN, INFO_SRC, LICENSE, README">
-                <patternset refid="non.test.sources" />
+                <patternset refid="exclude.files" />
             </fileset>
 
             <fileset dir="." includes="src/**, lib/*, build.xml, CHANGES">
-                <patternset refid="non.test.sources" />
+                <patternset refid="exclude.files" />
             </fileset>
         </copy>
     </target>
@@ -890,7 +880,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <!-- Delete source files from package. -->
     <target name="-remove-sources" if="${com.mysql.cj.dist.noSources}">
-        <echo>Removing sources from '${com.mysql.cj.dist.dir.prepare}'</echo>
+        <echo>Removing sources from '${com.mysql.cj.dist.dir.package}'</echo>
         <delete>
             <fileset dir="${com.mysql.cj.dist.dir.package}">
                 <include name="**/*.java" />
@@ -911,26 +901,24 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <delete file="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}.tar.gz" />
 
         <tar destfile="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}.tar.gz" compression="gzip" longfile="gnu">
-            <tarfileset dir="${com.mysql.cj.dist.dir.prepare}">
-                <patternset refid="non.test.sources" />
+            <tarfileset dir="${com.mysql.cj.dist.dir.workspace}">
+                <patternset refid="exclude.files" />
             </tarfileset>
         </tar>
-        <checksum file="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}.tar.gz" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
 
         <delete file="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}.zip" />
 
         <zip destfile="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}.zip">
-            <fileset dir="${com.mysql.cj.dist.dir.prepare}">
-                <patternset refid="non.test.sources" />
+            <fileset dir="${com.mysql.cj.dist.dir.workspace}">
+                <patternset refid="exclude.files" />
             </fileset>
         </zip>
-        <checksum file="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}.zip" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
     </target>
 
 
     <!-- Create a Maven bundle containing all the files to upload into the central or local repository. -->
     <target name="-create-maven-archive"
-            depends="-make-packages, -create-maven-archive-main, -create-maven-archive-sources, -set-archive-name"
+            depends="-make-packages, -create-maven-archive-main, -create-maven-archive-sources, -create-maven-archive-javadoc, -set-archive-name"
             unless="${com.mysql.cj.dist.noMaven}">
         <delete file="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveName}_maven.tar.gz" />
 
@@ -952,33 +940,63 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <copy file="${com.mysql.cj.build.dir.driver}/pom.xml" tofile="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom" />
         <checksum file="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}.pom" forceoverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
-
-        <copy file="${com.mysql.cj.build.dir.driver}/LICENSE" todir="${com.mysql.cj.dist.dir.maven}" />
-        <checksum file="${com.mysql.cj.dist.dir.maven}/LICENSE" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir.maven}/LICENSE" forceoverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
-
-        <copy file="${com.mysql.cj.build.dir.driver}/README" todir="${com.mysql.cj.dist.dir.maven}" />
-        <checksum file="${com.mysql.cj.dist.dir.maven}/README" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir.maven}/README" forceoverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
-
-        <copy file="${com.mysql.cj.build.dir.driver}/INFO_BIN" todir="${com.mysql.cj.dist.dir.maven}" />
-        <checksum file="${com.mysql.cj.dist.dir.maven}/INFO_BIN" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir.maven}/INFO_BIN" forceoverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
-
-        <copy file="${com.mysql.cj.build.dir.driver}/INFO_SRC" todir="${com.mysql.cj.dist.dir.maven}" />
-        <checksum file="${com.mysql.cj.dist.dir.maven}/INFO_SRC" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir.maven}/INFO_SRC" forceoverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
     </target>
 
 
     <!-- Create a sources jar to include in the Maven bundle. -->
     <target name="-create-maven-archive-sources" depends="-create-maven-archive-sources-check" unless="${com.mysql.cj.dist.noMavenSources}">
         <jar jarfile="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar"
-             basedir="${com.mysql.cj.build.compiler.output}"
-             includes="**/*.java, **/*.properties*, META-INF/**"
-             excludes="demo/**, documentation/**, instrumentation/**, testsuite/**, META-INF/services/**, META-INF/MANIFEST.MF" />
+             basedir="${com.mysql.cj.build.dir.driver}"
+             includes="**/*.java, **/*.properties*, INFO_BIN, INFO_SRC, LICENSE, README"
+             excludes="demo/**, documentation/**, instrumentation/**, testsuite/**" />
         <checksum file="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar"
+                  forceoverwrite="yes"
+                  fileext=".sha1"
+                  algorithm="SHA-1" />
+    </target>
+
+
+    <!-- Create a javadoc jar to include in the Maven bundle. -->
+    <target name="-create-maven-archive-javadoc" unless="${com.mysql.cj.dist.noMaven}">
+        <delete dir="${com.mysql.cj.build.dir.javadoc}" />
+        <mkdir dir="${com.mysql.cj.build.dir.javadoc}" />
+
+        <tempfile property="com.mysql.cj.docs.jdk8pkg" prefix="jdk8pkg_" />
+        <mkdir dir="${com.mysql.cj.docs.jdk8pkg}" />
+
+        <get src="https://docs.oracle.com/javase/8/docs/api/package-list" dest="${com.mysql.cj.docs.jdk8pkg}/package-list" verbose="true" />
+
+        <javadoc destdir="${com.mysql.cj.build.dir.javadoc}"
+                 packagenames="com.mysql.cj.*"
+                 encoding="UTF-8"
+                 private="yes"
+                 source="8"
+                 failonwarning="yes"
+                 overview="src/main/doc/connector-j-overview.html"
+                 windowtitle="MySQL Connector/J"
+                 header="&lt;b&gt;MySQL Connector/J Reference&lt;br&gt;v${com.mysql.cj.build.driver.version.full}&lt;/b&gt;"
+                 bottom="&lt;center&gt;Copyright &amp;copy; 2016, 2023, Oracle and/or its affiliates.&lt;/center&gt;"
+                 linkoffline="https://docs.oracle.com/javase/8/docs/api ${com.mysql.cj.docs.jdk8pkg}">
+            <sourcepath>
+                <pathelement path="src/main/user-api/java" />
+                <pathelement path="src/main/core-api/java" />
+            </sourcepath>
+            <classpath refid="com.mysql.cj.build.classpath" />
+        </javadoc>
+
+        <copy file="${com.mysql.cj.build.dir.driver}/LICENSE" todir="${com.mysql.cj.build.dir.javadoc}" />
+        <copy file="${com.mysql.cj.build.dir.driver}/README" todir="${com.mysql.cj.build.dir.javadoc}" />
+        <copy file="${com.mysql.cj.build.dir.driver}/INFO_BIN" todir="${com.mysql.cj.build.dir.javadoc}" />
+        <copy file="${com.mysql.cj.build.dir.driver}/INFO_SRC" todir="${com.mysql.cj.build.dir.javadoc}" />
+
+        <delete verbose="yes" includeemptydirs="yes">
+            <fileset dir="${basedir}" includes="jdk8pkg_*/**" />
+        </delete>
+
+        <jar jarfile="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}-javadoc.jar" basedir="${com.mysql.cj.build.dir.javadoc}" />
+        <checksum file="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}-javadoc.jar" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
+        <checksum file="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}-javadoc.jar"
                   forceoverwrite="yes"
                   fileext=".sha1"
                   algorithm="SHA-1" />
@@ -1025,16 +1043,17 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- TODO: Remove as soon as maven relocation artifacts stop being published -->
     <!-- Create a Maven relocation bundle containing all the files to upload into the central or local repository. -->
     <target name="-create-maven-relocation-archive" depends="-make-packages, -set-archive-name-relocation" unless="${com.mysql.cj.dist.noMaven}">
-        <property name="com.mysql.cj.dist.dir.mavenRelocation" value="${com.mysql.cj.dist.dir.prepare}/${com.mysql.cj.dist.packageNameRelocation}-maven" />
+        <property name="com.mysql.cj.dist.dir.mavenRelocation"
+                  value="${com.mysql.cj.dist.dir.workspace}/${com.mysql.cj.dist.packageNameRelocation}_maven-relocation" />
         <mkdir dir="${com.mysql.cj.dist.dir.mavenRelocation}" />
 
         <copy file="${com.mysql.cj.build.dir.driver}/pom-relocation.xml"
-              tofile="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.build.driver.fullName}.pom" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.build.driver.fullName}.pom"
+              tofile="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.dist.packageNameRelocation}.pom" />
+        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.dist.packageNameRelocation}.pom"
                   forceoverwrite="yes"
                   fileext=".md5"
                   algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.build.driver.fullName}.pom"
+        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.dist.packageNameRelocation}.pom"
                   forceoverwrite="yes"
                   fileext=".sha1"
                   algorithm="SHA-1" />
@@ -1226,8 +1245,8 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <!-- Delete compiled classes from the build directory conditionally on the value of 'com.mysql.cj.build.noCleanBetweenCompiles'. -->
     <target name="-clean-classes" unless="${com.mysql.cj.build.noCleanBetweenCompiles}">
         <delete failonerror="false">
-            <fileset dir="${com.mysql.cj.build.dir}" includes="**/*.class" />
-            <fileset dir="${com.mysql.cj.testsuite.build.dir}" includes="**/*.class" />
+            <fileset dir="${com.mysql.cj.build.compiler.output}" includes="**/*.class" />
+            <fileset dir="${com.mysql.cj.testsuite.compiler.output}" includes="**/*.class" />
         </delete>
     </target>
 
@@ -1247,15 +1266,16 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
         <get src="https://docs.oracle.com/javase/8/docs/api/package-list" dest="${com.mysql.cj.docs.jdk8pkg}/package-list" verbose="true" />
 
-        <javadoc destdir="docs"
+        <javadoc destdir="${com.mysql.cj.docs.xdevapi}"
                  packagenames="com.mysql.cj.xdevapi"
                  encoding="UTF-8"
                  private="yes"
+                 source="8"
                  failonwarning="yes"
                  overview="src/main/doc/mysqlx-overview.html"
                  windowtitle="MySQL Connector/J X DevAPI Reference"
-                 header="&lt;b&gt;MySQL Connector/J X DevAPI Reference&lt;br&gt;v1&lt;/b&gt;"
-                 bottom="&lt;center&gt;Copyright &amp;copy; 2016, 2022, Oracle and/or its affiliates.&lt;/center&gt;"
+                 header="&lt;b&gt;MySQL Connector/J X DevAPI Reference&lt;br&gt;v${com.mysql.cj.build.driver.version.full}&lt;/b&gt;"
+                 bottom="&lt;center&gt;Copyright &amp;copy; 2016, 2023, Oracle and/or its affiliates.&lt;/center&gt;"
                  linkoffline="https://docs.oracle.com/javase/8/docs/api ${com.mysql.cj.docs.jdk8pkg}">
             <sourcepath>
                 <pathelement path="src/main/user-api/java" />
@@ -1326,32 +1346,53 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
         <mkdir dir="${com.mysql.cj.testsuite.junit.results}/report" />
 
-        <local name="com.mysql.cj.testsuite.test.methods.enabled" />
-        <condition property="com.mysql.cj.testsuite.test.methods.enabled">
+        <local name="com.mysql.cj.testsuite.run.methods" />
+        <condition property="com.mysql.cj.testsuite.run.methods" value="true" else="false">
             <and>
-                <isset property="com.mysql.cj.testsuite.test.class" />
                 <isset property="com.mysql.cj.testsuite.test.methods" />
+                <not>
+                    <equals arg1="${com.mysql.cj.testsuite.test.methods}" arg2="" />
+                </not>
+                <isset property="com.mysql.cj.testsuite.test.class" />
+                <not>
+                    <equals arg1="${com.mysql.cj.testsuite.test.class}" arg2="" />
+                </not>
+            </and>
+        </condition>
+        <local name="com.mysql.cj.testsuite.run.class" />
+        <condition property="com.mysql.cj.testsuite.run.class" value="true" else="false">
+            <and>
+                <isfalse value="${com.mysql.cj.testsuite.run.methods}" />
+                <isset property="com.mysql.cj.testsuite.test.class" />
+                <not>
+                    <equals arg1="${com.mysql.cj.testsuite.test.class}" arg2="" />
+                </not>
+            </and>
+        </condition>
+        <local name="com.mysql.cj.testsuite.run.all" />
+        <condition property="com.mysql.cj.testsuite.run.all" value="true" else="false">
+            <and>
+                <isfalse value="${com.mysql.cj.testsuite.run.methods}" />
+                <isfalse value="${com.mysql.cj.testsuite.run.class}" />
             </and>
         </condition>
 
-        <local name="com.mysql.cj.testsuite.message.test.mode" />
-        <condition property="com.mysql.cj.testsuite.message.test.mode"
-                   value="Running JDBC unit tests against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'">
-            <not>
-                <isset property="com.mysql.cj.testsuite.test.class" />
-            </not>
+        <local name="com.mysql.cj.testsuite.test.class.sanitized" />
+        <condition property="com.mysql.cj.testsuite.test.class.sanitized" value="_none_" else="${com.mysql.cj.testsuite.test.class}">
+            <istrue value="${com.mysql.cj.testsuite.run.all}" />
         </condition>
-        <condition property="com.mysql.cj.testsuite.message.test.mode"
-                   value="Running JDBC unit test '${com.mysql.cj.testsuite.test.class}', method(s) '${com.mysql.cj.testsuite.test.methods}' against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'"
-                   else="Running JDBC unit test '${com.mysql.cj.testsuite.test.class}' against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'">
-            <isset property="com.mysql.cj.testsuite.test.methods.enabled" />
-        </condition>
-        <echo>${com.mysql.cj.testsuite.message.test.mode}</echo>
 
-        <local name="com.mysql.cj.testsuite.test.coverage" />
-        <condition property="com.mysql.cj.testsuite.test.coverage" value="true" else="false">
-            <isset property="com.mysql.cj.coverage.result.dir.final" />
+        <local name="com.mysql.cj.testsuite.run.message" />
+        <condition property="com.mysql.cj.testsuite.run.message"
+                   value="Running JDBC unit tests against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'">
+            <istrue value="${com.mysql.cj.testsuite.run.all}" />
         </condition>
+        <condition property="com.mysql.cj.testsuite.run.message"
+                   value="Running JDBC unit test '${com.mysql.cj.testsuite.test.class}' against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'"
+                   else="Running JDBC unit test '${com.mysql.cj.testsuite.test.class}', method(s) '${com.mysql.cj.testsuite.test.methods}' against '${com.mysql.cj.testsuite.url}' with jvm '${com.mysql.cj.testsuite.jvm.java}'">
+            <istrue value="${com.mysql.cj.testsuite.run.class}" />
+        </condition>
+        <echo>${com.mysql.cj.testsuite.run.message}</echo>
 
         <local name="com.mysql.cj.testsuite.test.coverage.jvmargfinal" />
         <condition property="com.mysql.cj.testsuite.test.coverage.jvmargfinal"
@@ -1371,8 +1412,8 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <junitlauncher haltOnFailure="false" printSummary="true" failureProperty="com.mysql.cj.testsuite.junit.fail">
             <classpath refid="com.mysql.cj.testsuite.build.classpath" />
 
-            <test if="${com.mysql.cj.testsuite.test.methods.enabled}"
-                  name="${com.mysql.cj.testsuite.test.class}"
+            <test if="${com.mysql.cj.testsuite.run.methods}"
+                  name="${com.mysql.cj.testsuite.test.class.sanitized}"
                   methods="${com.mysql.cj.testsuite.test.methods}"
                   outputdir="${com.mysql.cj.testsuite.junit.results}">
                 <fork>
@@ -1386,9 +1427,8 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
             </test>
 
-            <test if="com.mysql.cj.testsuite.test.class"
-                  unless="com.mysql.cj.testsuite.test.methods"
-                  name="${com.mysql.cj.testsuite.test.class}"
+            <test if="${com.mysql.cj.testsuite.run.class}"
+                  name="${com.mysql.cj.testsuite.test.class.sanitized}"
                   outputdir="${com.mysql.cj.testsuite.junit.results}">
                 <fork>
                     <jvmarg value="-Dfile.encoding=UTF-8" />
@@ -1401,7 +1441,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <listener type="legacy-plain" sendSysOut="true" sendSysErr="true" />
             </test>
 
-            <testclasses unless="com.mysql.cj.testsuite.test.class" outputdir="${com.mysql.cj.testsuite.junit.results}">
+            <testclasses if="${com.mysql.cj.testsuite.run.all}" outputdir="${com.mysql.cj.testsuite.junit.results}">
                 <fileset dir="${com.mysql.cj.testsuite.build.dir}/${com.mysql.cj.build.driver.fullName}">
                     <include name="**/*Test.class" />
                     <exclude name="**/perf/*.class" />
@@ -1529,6 +1569,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <target name="-prepare-rpm-deb-commercial-props" if="${com.mysql.cj.build.commercial}">
         <echo>Using Commercial settings</echo>
         <property name="deb_version_suffix" value="+commercial" />
+        <property name="deb_commercial_flag" value="true" />
         <property name="lic_file" value="LICENSE" />
         <property name="rpm_com_arg" value="--define=commercial yes" />
     </target>
@@ -1537,6 +1578,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <target name="-prepare-rpm-deb-gpl-props" unless="${com.mysql.cj.build.commercial}">
         <echo>Using GPL settings</echo>
         <property name="deb_version_suffix" value="" />
+        <property name="deb_commercial_flag" value="" />
         <property name="lic_file" value="LICENSE" />
         <property name="rpm_com_arg" value="--define=dummy yes" />
     </target>
@@ -1656,7 +1698,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         <exec executable="debuild" dir="build/deb/src" failonerror="true">
             <arg value="--set-envvar=ANT_HOME=${ant.home}" />
             <arg value="--set-envvar=JAVA_HOME=${com.mysql.cj.build.jdk}" />
-            <arg value="--set-envvar=COMMERCIAL=${com.mysql.cj.build.commercial}" />
+            <arg value="--set-envvar=COMMERCIAL=${deb_commercial_flag}" />
             <arg value="-uc" />
             <arg value="-us" />
             <arg value="-j4" />

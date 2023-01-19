@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -106,6 +106,16 @@ public interface MessageReader<H extends MessageHeader, M extends Message> {
      */
     default M readMessage(Optional<M> reuse, int expectedType) throws IOException {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
+    /**
+     * Skips the next packet, or the current one if previously probed, by reading and discarding it.
+     * 
+     * @throws IOException
+     *             if an error occurs
+     */
+    default void skipPacket() throws IOException {
+        readMessage(Optional.empty(), readHeader());
     }
 
     /**

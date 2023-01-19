@@ -95,7 +95,7 @@ public class BooleanValueEncoder extends AbstractValueEncoder {
             case BOOLEAN:
             case TINYINT:
             case TINYINT_UNSIGNED:
-                intoPacket.writeInteger(IntegerDataType.INT1, Long.valueOf(b ? 1L : 0L));
+                intoPacket.writeInteger(IntegerDataType.INT1, b ? 1L : 0L);
                 return;
             case CHAR:
             case VARCHAR:
@@ -109,7 +109,7 @@ public class BooleanValueEncoder extends AbstractValueEncoder {
             case SMALLINT_UNSIGNED:
             case MEDIUMINT:
             case MEDIUMINT_UNSIGNED:
-                intoPacket.writeInteger(IntegerDataType.INT2, Long.valueOf(b ? 1L : 0L));
+                intoPacket.writeInteger(IntegerDataType.INT2, b ? 1L : 0L);
                 return;
             case INT:
             case INT_UNSIGNED:
@@ -118,7 +118,7 @@ public class BooleanValueEncoder extends AbstractValueEncoder {
                 return;
             case BIGINT:
             case BIGINT_UNSIGNED:
-                intoPacket.writeInteger(IntegerDataType.INT8, Long.valueOf(b ? 1L : 0L));
+                intoPacket.writeInteger(IntegerDataType.INT8, b ? 1L : 0L);
                 return;
             case FLOAT:
             case FLOAT_UNSIGNED:
@@ -144,6 +144,6 @@ public class BooleanValueEncoder extends AbstractValueEncoder {
     public void encodeAsQueryAttribute(Message msg, BindValue binding) {
         boolean b = ((Boolean) binding.getValue()).booleanValue();
         NativePacketPayload intoPacket = (NativePacketPayload) msg;
-        intoPacket.writeInteger(IntegerDataType.INT1, Long.valueOf(b ? 1L : 0L));
+        intoPacket.writeInteger(IntegerDataType.INT1, b ? 1L : 0L);
     }
 }

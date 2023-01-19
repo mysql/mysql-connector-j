@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -141,7 +141,7 @@ public class ConnectionUrlTest {
                 "address=(protocol=tcp)(host=verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789)(port=1234)",
                 "address=(protocol=tcp)(host=verylonghostname01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789)(port=1234)(key=value%28%29)" };
         private static final String[] HOST; // Initialized below.
-        private static final String[] DB = new String[] { "", "/", "/mysql" };
+        private static final String[] DB = new String[] { "", "/", "/mysql", "/mysql%2Fcj" };
         private static final String[] PARAMS = new String[] { "", "?", "?key=value&flag", "?key=value%26&flag&26", "?file=%2Fpath%2Fto%2Ffile&flag&key=value",
                 "?file=(/path/to/file)&flag&key=value" };
 
@@ -348,7 +348,7 @@ public class ConnectionUrlTest {
             } else if (this.urlMode == UrlMode.OUTER_HOSTS_LIST) {
                 counterIndex += (this.numberOfHosts - 1) * 2; // increments of two per additional host
             }
-            return DB[this.current[counterIndex]];
+            return decode(DB[this.current[counterIndex]]);
         }
 
         /**

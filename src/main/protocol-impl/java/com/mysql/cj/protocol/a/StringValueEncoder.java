@@ -155,18 +155,18 @@ public class StringValueEncoder extends AbstractValueEncoder {
             case MEDIUMINT:
             case MEDIUMINT_UNSIGNED:
             case INT:
+                return String.valueOf(Integer.parseInt(x));
             case INT_UNSIGNED:
-                return String.valueOf(Integer.valueOf(x).intValue());
             case BIGINT:
-                return String.valueOf(Long.valueOf(x).longValue());
+                return String.valueOf(Long.parseLong(x));
             case BIGINT_UNSIGNED:
                 return String.valueOf(new BigInteger(x).longValue());
             case FLOAT:
             case FLOAT_UNSIGNED:
-                return StringUtils.fixDecimalExponent(Float.toString(Float.valueOf(x)));
+                return StringUtils.fixDecimalExponent(Float.toString(Float.parseFloat(x)));
             case DOUBLE:
             case DOUBLE_UNSIGNED:
-                return StringUtils.fixDecimalExponent(Double.toString(Double.valueOf(x).doubleValue()));
+                return StringUtils.fixDecimalExponent(Double.toString(Double.parseDouble(x)));
             case DECIMAL:
             case DECIMAL_UNSIGNED:
                 return getScaled(new BigDecimal(x), binding.getScaleOrLength()).toPlainString();
@@ -290,33 +290,33 @@ public class StringValueEncoder extends AbstractValueEncoder {
                     throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("PreparedStatement.66", new Object[] { x }),
                             this.exceptionInterceptor);
                 }
-                intoPacket.writeInteger(IntegerDataType.INT1, Long.valueOf(b ? 1L : 0L));
+                intoPacket.writeInteger(IntegerDataType.INT1, b ? 1L : 0L);
                 return;
             case TINYINT:
             case TINYINT_UNSIGNED:
-                intoPacket.writeInteger(IntegerDataType.INT1, Long.valueOf(x));
+                intoPacket.writeInteger(IntegerDataType.INT1, Long.parseLong(x));
                 return;
             case SMALLINT:
             case SMALLINT_UNSIGNED:
             case MEDIUMINT:
             case MEDIUMINT_UNSIGNED:
-                intoPacket.writeInteger(IntegerDataType.INT2, Long.valueOf(x));
+                intoPacket.writeInteger(IntegerDataType.INT2, Long.parseLong(x));
                 return;
             case INT:
             case INT_UNSIGNED:
-                intoPacket.writeInteger(IntegerDataType.INT4, Long.valueOf(x));
+                intoPacket.writeInteger(IntegerDataType.INT4, Long.parseLong(x));
                 return;
             case BIGINT:
             case BIGINT_UNSIGNED:
-                intoPacket.writeInteger(IntegerDataType.INT8, Long.valueOf(x));
+                intoPacket.writeInteger(IntegerDataType.INT8, Long.parseLong(x));
                 return;
             case FLOAT:
             case FLOAT_UNSIGNED:
-                intoPacket.writeInteger(IntegerDataType.INT4, Float.floatToIntBits(Float.valueOf(x)));
+                intoPacket.writeInteger(IntegerDataType.INT4, Float.floatToIntBits(Float.parseFloat(x)));
                 return;
             case DOUBLE:
             case DOUBLE_UNSIGNED:
-                intoPacket.writeInteger(IntegerDataType.INT8, Double.doubleToLongBits(Double.valueOf(x)));
+                intoPacket.writeInteger(IntegerDataType.INT8, Double.doubleToLongBits(Double.parseDouble(x)));
                 return;
             case DECIMAL:
             case DECIMAL_UNSIGNED:
@@ -383,10 +383,10 @@ public class StringValueEncoder extends AbstractValueEncoder {
             case YEAR:
                 dt = TimeUtil.parseToDateTimeObject(x, binding.getMysqlType());
                 if (dt instanceof LocalDate) {
-                    intoPacket.writeInteger(IntegerDataType.INT4, Long.valueOf(((LocalDate) dt).getYear()));
+                    intoPacket.writeInteger(IntegerDataType.INT4, ((LocalDate) dt).getYear());
                     return;
                 } else if (dt instanceof LocalDateTime) {
-                    intoPacket.writeInteger(IntegerDataType.INT4, Long.valueOf(((LocalDateTime) dt).getYear()));
+                    intoPacket.writeInteger(IntegerDataType.INT4, ((LocalDateTime) dt).getYear());
                     return;
                 }
                 break;

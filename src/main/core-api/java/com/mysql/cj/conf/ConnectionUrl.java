@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -495,7 +495,7 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         int port = hi.getPort();
         if (port == HostInfo.NO_PORT && !isNullOrEmpty(portAsString)) {
             try {
-                port = Integer.valueOf(portAsString);
+                port = Integer.parseInt(portAsString);
             } catch (NumberFormatException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
                         Messages.getString("ConnectionString.7", new Object[] { hostProps.get(PropertyKey.PORT.getKeyName()) }), e);

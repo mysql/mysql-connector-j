@@ -40,10 +40,6 @@
   <description>JDBC Type 4 driver for MySQL.</description>
   <url>http://dev.mysql.com/doc/connector-j/en/</url>
 
-  <organization>
-    <name>Oracle Corporation</name>
-    <url>http://www.oracle.com</url>
-  </organization>
   <licenses>
     <license>
       <name>@MYSQL_CJ_LICENSE_NAME@</name>
@@ -51,6 +47,20 @@
       <comments>For detailed license information see the LICENSE file in this distribution.</comments>
     </license>
   </licenses>
+
+  <organization>
+    <name>Oracle Corporation</name>
+    <url>https://www.oracle.com/</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <name>Filipe Silva</name>
+      <email>filipe.silva@oracle.com</email>
+      <organization>Oracle Corporation</organization>
+      <organizationUrl>https://www.oracle.com/</organizationUrl>
+    </developer>
+  </developers>
 
   <scm>
     <connection>scm:git:git@github.com:mysql/mysql-connector-j.git</connection>
@@ -61,13 +71,13 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.19.4</version>
+      <version>3.21.9</version>
     </dependency>
 
     <dependency>
       <groupId>com.oracle.oci.sdk</groupId>
       <artifactId>oci-java-sdk-common</artifactId>
-      <version>2.14.1</version>
+      <version>2.47.0</version>
       <optional>true</optional>
     </dependency>
   </dependencies>

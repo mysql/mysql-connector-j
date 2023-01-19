@@ -51,8 +51,11 @@ public class FidoAuthenticationCallback implements MysqlCallback {
      * interactions with the FIDO authenticator devices.
      * 
      * @param scramble
+     *            the scramble
      * @param relyingPartyId
+     *            the relying party id
      * @param credentialId
+     *            the credential id
      */
     public FidoAuthenticationCallback(byte[] scramble, String relyingPartyId, byte[] credentialId) {
         this.scramble = scramble;

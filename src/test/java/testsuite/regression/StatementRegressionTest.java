@@ -66,6 +66,7 @@ import java.sql.Connection;
 import java.sql.DataTruncation;
 import java.sql.Date;
 import java.sql.NClob;
+import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.Ref;
 import java.sql.ResultSet;
@@ -115,9 +116,11 @@ import org.junit.jupiter.api.Test;
 import com.mysql.cj.CharsetMappingWrapper;
 import com.mysql.cj.ClientPreparedQuery;
 import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.MysqlType;
 import com.mysql.cj.Query;
 import com.mysql.cj.ServerPreparedQuery;
 import com.mysql.cj.Session;
+import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
@@ -461,7 +464,6 @@ public class StatementRegressionTest extends BaseTestCase {
      * Tests fix for BUG#10155, double quotes not recognized when parsing client-side prepared statements.
      * 
      * @throws Exception
-     *             if the test fails.
      */
     @Test
     public void testBug10155() throws Exception {
@@ -651,7 +653,6 @@ public class StatementRegressionTest extends BaseTestCase {
      * Tests fix for BUG#11798 - Pstmt.setObject(...., Types.BOOLEAN) throws exception.
      * 
      * @throws Exception
-     *             if the test fails.
      */
     @Test
     public void testBug11798() throws Exception {
@@ -2303,7 +2304,6 @@ public class StatementRegressionTest extends BaseTestCase {
      * Tests that binary dates/times are encoded/decoded correctly.
      * 
      * @throws Exception
-     *             if the test fails.
      * 
      * @deprecated because we need to use this particular constructor for the
      *             date class, as Calendar-constructed dates don't pass the
@@ -12669,5 +12669,280 @@ public class StatementRegressionTest extends BaseTestCase {
             startPos = pos + "NULL".length();
             assertEquals(-1, sql.indexOf("NULL", startPos), testCase);
         } while ((useSPS = !useSPS) && (setMax = !setMax));
+    }
+
+    /**
+     * Tests fix for Bug#108419 (Bug#34578010), Contribution: Recognize "ON DUPLICATE KEY UPDATE" in "INSERT SET" Statement.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug108419() throws Exception {
+        createTable("testBug108419", "(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, data1 VARCHAR(255) NOT NULL, data2 VARCHAR(255))");
+
+        boolean useSPS = false;
+        boolean rwBS = false;
+        boolean noODKU = false;
+
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), Boolean.toString(rwBS));
+            props.setProperty(PropertyKey.dontCheckOnDuplicateKeyUpdateInSQL.getKeyName(), Boolean.toString(noODKU));
+            Connection testConn = getConnectionWithProps(props);
+
+            final String testCase = String.format("Case [useSPS: %s, rwBS: %s, noODKU: %s]", useSPS ? "Y" : "N", rwBS ? "Y" : "N", noODKU ? "Y" : "N");
+
+            this.pstmt = testConn.prepareStatement("INSERT INTO testBug108419 (id, data1) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setString(2, "MySQL");
+            this.pstmt.execute();
+            this.rs = this.pstmt.getGeneratedKeys();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            assertFalse(this.rs.next(), testCase);
+
+            this.pstmt = testConn.prepareStatement("INSERT INTO testBug108419 (id, data1) VALUES (?, ?) ON DUPLICATE KEY UPDATE data2 = VALUES(data1)",
+                    Statement.RETURN_GENERATED_KEYS);
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setString(2, "Connector/J");
+            this.pstmt.execute();
+            this.rs = this.pstmt.getGeneratedKeys();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            if (!rwBS && noODKU) { // Assume two keys were generated only when no query re-write and don't check for ODKU.
+                assertTrue(this.rs.next(), testCase);
+                assertEquals(2, this.rs.getInt(1), testCase);
+            }
+            assertFalse(this.rs.next(), testCase);
+
+            this.pstmt = testConn.prepareStatement("INSERT INTO testBug108419 SET id = ?, data1 = ? ON DUPLICATE KEY UPDATE data2 = VALUES(data1)",
+                    Statement.RETURN_GENERATED_KEYS);
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setString(2, "MySQL Connector/J");
+            this.pstmt.execute();
+            this.rs = this.pstmt.getGeneratedKeys();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            if (!rwBS && noODKU) { // Assume two keys were generated only when no query re-write and don't check for ODKU.
+                assertTrue(this.rs.next(), testCase);
+                assertEquals(2, this.rs.getInt(1), testCase);
+            }
+            assertFalse(this.rs.next(), testCase);
+
+            this.stmt.execute("TRUNCATE TABLE testBug108419");
+        } while ((useSPS = !useSPS) || (rwBS = !rwBS) || (noODKU = !noODKU));
+    }
+
+    /**
+     * Tests fix for Bug#106252 (Bug#33968169), Connector/J client hangs after prepare & execute process with old version server.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug106252() throws Exception {
+        boolean useSPS = false;
+
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            Connection testConn = getConnectionWithProps(props);
+
+            this.pstmt = testConn.prepareStatement("SELECT 1 + ? AS c1, 'MySQL' AS c2, ? AS c3");
+
+            ResultSetMetaData md = this.pstmt.getMetaData();
+            assertEquals(3, md.getColumnCount());
+            assertEquals("c1", md.getColumnName(1));
+            assertEquals("c2", md.getColumnName(2));
+            assertEquals("c3", md.getColumnName(3));
+
+            ParameterMetaData pmd = this.pstmt.getParameterMetaData();
+            assertEquals(2, pmd.getParameterCount());
+            if (useSPS) {
+                // Prior to this fix one of the following was throwing a NullPointerException.
+                // The values they return are not important for this test because different server versions return different metadata.
+                pmd.getParameterClassName(1);
+                pmd.getParameterTypeName(1);
+                pmd.getParameterClassName(2);
+                pmd.getParameterTypeName(2);
+            } else {
+                assertThrows(SQLException.class, () -> pmd.getParameterType(1));
+                assertThrows(SQLException.class, () -> pmd.getParameterType(2));
+            }
+
+            this.pstmt.setInt(1, 5);
+            this.pstmt.setString(2, "Connector/J");
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertEquals(6, this.rs.getInt(1));
+            assertEquals("MySQL", this.rs.getString(2));
+            assertEquals("Connector/J", this.rs.getString(3));
+            assertFalse(this.rs.next());
+
+            testConn.close();
+        } while (useSPS = !useSPS);
+    }
+
+    /**
+     * Tests fix for Bug#108414 (Bug#34578541), Malformed packet generation for `COM_STMT_EXECUTE`.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug108414() throws Exception {
+        boolean useSPS = false;
+        boolean bitIsBool = false;
+        boolean value = false;
+
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), PropertyDefinitions.SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.transformedBitIsBoolean.getKeyName(), Boolean.toString(bitIsBool));
+
+            final String testCase = String.format("Case [SPS: %s, BitIsBool: %s, Expected: %s]", useSPS ? "Y" : "N", bitIsBool ? "Y" : "N", value ? "Y" : "N");
+
+            Connection testConn = getConnectionWithProps(props);
+            this.pstmt = testConn.prepareStatement("SELECT ?, ?, ?, ?, ?");
+
+            this.pstmt.setBoolean(1, value);
+            this.pstmt.setObject(2, value);
+            this.pstmt.setObject(3, value, MysqlType.BOOLEAN);
+            this.pstmt.setObject(4, value, MysqlType.TINYINT);
+            this.pstmt.setObject(5, value, MysqlType.BIT);
+
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+
+            assertEquals(value, this.rs.getBoolean(1), testCase);
+            assertEquals(value, this.rs.getBoolean(2), testCase);
+            assertEquals(value, this.rs.getBoolean(3), testCase);
+            assertEquals(value, this.rs.getBoolean(4), testCase);
+            assertEquals(value, this.rs.getBoolean(5), testCase);
+
+            testConn.close();
+        } while ((useSPS = !useSPS) || (bitIsBool = !bitIsBool) || (value = !value));
+    }
+
+    /**
+     * Tests fix for Bug#108195 (Bug#34512212), Connector/J rejects UNION with CTE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug108195() throws Exception {
+        assumeTrue(versionMeetsMinimum(8, 0), "MySQL 8.0+ is required to run this test.");
+
+        this.rs = this.stmt.executeQuery("WITH cte AS (SELECT 1) (SELECT * FROM cte) UNION (SELECT 2)");
+        assertTrue(this.rs.next());
+        assertEquals(1, this.rs.getInt(1));
+        assertTrue(this.rs.next());
+        assertEquals(2, this.rs.getInt(1));
+        assertFalse(this.rs.next());
+    }
+
+    /**
+     * Tests for Bug#99604 (Bug#31612628), Add support to row alias on INSERT... ON DUPLICATE KEY UPDATE on batch mode.
+     * Resolved by fix for Bug#106240 (33781440), StringIndexOutOfBoundsException when VALUE is at the end of the query.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug99604() throws Exception {
+        assumeTrue(versionMeetsMinimum(8, 0, 19), "MySQL 8.0.19+ is required to run this test.");
+
+        createTable("testBug99604", "(id INT NOT NULL PRIMARY KEY, data VARCHAR(100))");
+
+        boolean useSPS = false;
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+
+            final String testCase = String.format("Case [SPS: %s]", useSPS ? "Y" : "N");
+
+            Connection testConn = getConnectionWithProps(props);
+
+            PreparedStatement testStmt = testConn.prepareStatement(
+                    "INSERT INTO testBug99604 (id, data) VALUES (?, ?) AS new ON DUPLICATE KEY UPDATE testBug99604.data = CONCAT(testBug99604.data, new.data)");
+            testStmt.setInt(1, 1);
+            testStmt.setString(2, "MySQL ");
+            testStmt.addBatch();
+            testStmt.setInt(1, 1);
+            testStmt.setString(2, "Connector/J ");
+            testStmt.addBatch();
+            testStmt.executeBatch();
+
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug99604");
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            assertEquals("MySQL Connector/J ", this.rs.getString(2), testCase);
+            assertFalse(this.rs.next(), testCase);
+
+            this.stmt.execute("TRUNCATE TABLE testBug99604");
+
+            testConn.close();
+        } while (useSPS = !useSPS);
+    }
+
+    /**
+     * Tests fix for Bug#102520 (Bug#32476663), serverSideStatementCache ignores resultSetType.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug102520() throws Exception {
+        createTable("testBug102520", "(id INT)");
+        this.stmt.executeUpdate("INSERT INTO testBug102520 VALUES (1), (2), (3), (4), (5)");
+
+        boolean useSPS = false;
+        boolean cachePS = false;
+
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), Boolean.toString(cachePS));
+
+            final String testCase = String.format("Case [SPS: %s, CachePS: %s]", useSPS ? "Y" : "N", cachePS ? "Y" : "N");
+
+            Connection testConn = getConnectionWithProps(props);
+
+            PreparedStatement testStmt = testConn.prepareStatement("SELECT * FROM testBug102520"); // ResultSet.TYPE_FORWARD_ONLY by default.
+            this.rs = testStmt.executeQuery();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            assertThrows(testCase, SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", () -> {
+                this.rs.first();
+                return null;
+            });
+            testStmt.close();
+
+            testStmt = testConn.prepareStatement("SELECT * FROM testBug102520", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            this.rs = testStmt.executeQuery();
+            assertTrue(this.rs.absolute(3), testCase);
+            assertEquals(3, this.rs.getInt(1), testCase);
+            testStmt.close();
+
+            testStmt = testConn.prepareStatement("SELECT * FROM testBug102520");
+            this.rs = testStmt.executeQuery();
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(1, this.rs.getInt(1), testCase);
+            assertThrows(testCase, SQLException.class, "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY\\.", () -> {
+                assertTrue(this.rs.absolute(3), testCase);
+                return null;
+            });
+            testStmt.close();
+
+            testConn.close();
+        } while ((useSPS = !useSPS) || (cachePS = !cachePS));
     }
 }

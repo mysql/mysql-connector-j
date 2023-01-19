@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -61,19 +61,10 @@ public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefini
         }
 
         /* read the metadata from the server */
-        Field[] fields = null;
-        boolean checkEOF = !this.protocol.getServerSession().isEOFDeprecated();
-
-        // Read in the column information
-
-        fields = new Field[(int) columnCount];
+        Field[] fields = new Field[(int) columnCount];
 
         for (int i = 0; i < columnCount; i++) {
             NativePacketPayload fieldPacket = this.protocol.readMessage(null);
-            // next check is needed for SSPS
-            if (checkEOF && fieldPacket.isEOFPacket()) {
-                break;
-            }
             fields[i] = unpackField(fieldPacket, this.protocol.getServerSession().getCharsetSettings().getMetadataEncoding());
         }
 

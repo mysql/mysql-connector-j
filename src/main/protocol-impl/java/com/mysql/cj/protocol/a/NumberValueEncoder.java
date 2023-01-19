@@ -60,9 +60,9 @@ public class NumberValueEncoder extends AbstractValueEncoder {
             case MEDIUMINT:
             case MEDIUMINT_UNSIGNED:
             case INT:
-            case INT_UNSIGNED:
             case YEAR:
                 return String.valueOf(x.intValue());
+            case INT_UNSIGNED:
             case BIGINT:
             case BIGINT_UNSIGNED:
                 return String.valueOf(x.longValue());

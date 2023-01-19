@@ -163,15 +163,11 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     /**
-     * Used as a key for caching callable statements which (may) depend on
-     * current database...In 5.0.x, they don't (currently), but stored procedure
-     * names soon will, so current database is a (hidden) component of the name.
+     * Used as a key for caching callable/prepared statements which (may) depend on current database.
      */
     static class CompoundCacheKey {
         final String componentOne;
-
         final String componentTwo;
-
         final int hashCode;
 
         CompoundCacheKey(String partOne, String partTwo) {
@@ -1605,6 +1601,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                         if (pStmt != null) {
                             ((com.mysql.cj.jdbc.ServerPreparedStatement) pStmt).setClosed(false);
                             pStmt.clearParameters();
+                            pStmt.setResultSetType(resultSetType);
+                            pStmt.setResultSetConcurrency(resultSetConcurrency);
                         }
 
                         if (pStmt == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,7 +43,7 @@ public interface MysqlCallbackHandler {
      * like:
      * 
      * <pre>
-     * private MysqlCallbackHandler callbackHandler = (cb) -> {
+     * private MysqlCallbackHandler callbackHandler = (cb) -&gt; {
      *     if (cb instanceof UsernameCallback) {
      *         this.username = ((UsernameCallback) cb).getUsername();
      *     }
@@ -51,7 +51,7 @@ public interface MysqlCallbackHandler {
      * </pre>
      * 
      * @param cb
-     * 
+     *            the {@link MysqlCallback} to process
      */
     void handle(MysqlCallback cb);
 }
