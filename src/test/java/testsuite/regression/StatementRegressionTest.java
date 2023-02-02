@@ -45,6 +45,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.CharArrayReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -57,6 +58,8 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Array;
 import java.sql.BatchUpdateException;
 import java.sql.Blob;
@@ -12960,5 +12963,46 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(1, this.rs.getInt(1));
         assertEquals(2, this.rs.getInt(2));
         assertFalse(this.rs.next());
+    }
+
+    /**
+     * Tests for Bug#77368 (Bug#21321849), "LOAD DATA LOCAL INFILE" doesn't work properly with relative paths.
+     * 
+     * Testing this would require changing the value of "user.dir" which could cause other tests to fail. As such, only basic testing to verify that the default
+     * relative paths work fine is done here.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug77368() throws Exception {
+        createTable("testBug77368", "(id INT, txt VARCHAR(100))");
+
+        final String data = "1\tMySQL\n2\tConnector/J";
+        final String fileName = "TestBug77368.tsv";
+
+        Files.write(Paths.get(fileName), data.getBytes());
+
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "true");
+            Connection testConn = getConnectionWithProps(props);
+            Statement testStmt = testConn.createStatement();
+            testStmt.execute("LOAD DATA LOCAL INFILE './" + fileName + "' INTO TABLE testBug77368");
+
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug77368");
+            assertTrue(this.rs.next());
+            assertEquals(1, this.rs.getInt(1));
+            assertEquals("MySQL", this.rs.getString(2));
+            assertTrue(this.rs.next());
+            assertEquals(2, this.rs.getInt(1));
+            assertEquals("Connector/J", this.rs.getString(2));
+            assertFalse(this.rs.next());
+            testConn.close();
+        } finally {
+            try {
+                Files.delete(Paths.get(fileName));
+            } catch (FileNotFoundException e) {
+            }
+        }
     }
 }

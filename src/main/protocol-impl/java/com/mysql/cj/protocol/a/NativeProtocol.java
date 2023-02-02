@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,6 +30,7 @@
 package com.mysql.cj.protocol.a;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1881,7 +1882,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                     }
                 }
             }
-            return new BufferedInputStream(new FileInputStream(fileName));
+            return new BufferedInputStream(new FileInputStream(new File(fileName).getCanonicalFile()));
         }
 
         // Given the code paths above, allowLoadLocaInfileInPath.isExplicitlySet() must be true and restrictions to "LOAD DATA LOCAL INFILE" apply.
