@@ -3,6 +3,8 @@
 
 Version 8.0.33
 
+  - Fix for Bug#109864 (Bug#35034666), Connector/J 8.0.32 hangs on MySQL 5.5 with prepared statements.
+
   - Fix for Bug#109807 (Bug#35021014), DatabaseMetaData#getTypeInfo should ordered by DATA_TYPE.
 
   - Fix for Bug#77368 (Bug#21321849), "LOAD DATA LOCAL INFILE" doesn't work properly with relative paths.

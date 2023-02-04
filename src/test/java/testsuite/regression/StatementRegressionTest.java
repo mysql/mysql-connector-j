@@ -8363,14 +8363,14 @@ public class StatementRegressionTest extends BaseTestCase {
             // A. Test Statement.execute() results
             createTable("testBug71672", tableDDL);
             for (int i = 0; i < queries.length; i++) {
-                testBug71672Statement(testStep, testConn, queries[i], -1, expectedGenKeys[i]);
+                checkStatementForTestBug71672(testStep, testConn, queries[i], -1, expectedGenKeys[i]);
             }
             dropTable("testBug71672");
 
             // B. Test Statement.executeUpdate() results
             createTable("testBug71672", tableDDL);
             for (int i = 0; i < queries.length; i++) {
-                testBug71672Statement(testStep, testConn, queries[i], expectedUpdCount[i], expectedGenKeys[i]);
+                checkStatementForTestBug71672(testStep, testConn, queries[i], expectedUpdCount[i], expectedGenKeys[i]);
             }
             dropTable("testBug71672");
 
@@ -8400,14 +8400,14 @@ public class StatementRegressionTest extends BaseTestCase {
             // D. Test PreparedStatement.execute() results
             createTable("testBug71672", tableDDL);
             for (int i = 0; i < queries.length; i++) {
-                testBug71672PreparedStatement(testStep, testConn, queries[i], -1, expectedGenKeys[i]);
+                checkPreparedStatementForTestBug71672(testStep, testConn, queries[i], -1, expectedGenKeys[i]);
             }
             dropTable("testBug71672");
 
             // E. Test PreparedStatement.executeUpdate() results
             createTable("testBug71672", tableDDL);
             for (int i = 0; i < queries.length; i++) {
-                testBug71672PreparedStatement(testStep, testConn, queries[i], expectedUpdCount[i], expectedGenKeys[i]);
+                checkPreparedStatementForTestBug71672(testStep, testConn, queries[i], expectedUpdCount[i], expectedGenKeys[i]);
             }
             dropTable("testBug71672");
 
@@ -8465,22 +8465,22 @@ public class StatementRegressionTest extends BaseTestCase {
 
             // A. Test Statement.execute() results
             createTable("testBug71672", tableDDL);
-            testBug71672Statement(testStep, testConn, allQueries, -1, expectedGenKeysMultiQueries);
+            checkStatementForTestBug71672(testStep, testConn, allQueries, -1, expectedGenKeysMultiQueries);
             dropTable("testBug71672");
 
             // B. Test Statement.executeUpdate() results
             createTable("testBug71672", tableDDL);
-            testBug71672Statement(testStep, testConn, allQueries, 3, expectedGenKeysMultiQueries);
+            checkStatementForTestBug71672(testStep, testConn, allQueries, 3, expectedGenKeysMultiQueries);
             dropTable("testBug71672");
 
             // C. Test PreparedStatement.execute() results
             createTable("testBug71672", tableDDL);
-            testBug71672PreparedStatement(testStep, testConn, allQueries, -1, expectedGenKeysMultiQueries);
+            checkPreparedStatementForTestBug71672(testStep, testConn, allQueries, -1, expectedGenKeysMultiQueries);
             dropTable("testBug71672");
 
             // D. Test PreparedStatement.executeUpdate() results
             createTable("testBug71672", tableDDL);
-            testBug71672PreparedStatement(testStep, testConn, allQueries, 3, expectedGenKeysMultiQueries);
+            checkPreparedStatementForTestBug71672(testStep, testConn, allQueries, 3, expectedGenKeysMultiQueries);
             dropTable("testBug71672");
 
             testConn.close();
@@ -8498,7 +8498,8 @@ public class StatementRegressionTest extends BaseTestCase {
      * @param expectedKeys
      * @throws SQLException
      */
-    public void testBug71672Statement(int testStep, Connection testConn, String query, int expectedUpdateCount, int[] expectedKeys) throws SQLException {
+    private void checkStatementForTestBug71672(int testStep, Connection testConn, String query, int expectedUpdateCount, int[] expectedKeys)
+            throws SQLException {
         Statement testStmt = testConn.createStatement();
 
         if (expectedUpdateCount < 0) {
@@ -8528,7 +8529,7 @@ public class StatementRegressionTest extends BaseTestCase {
      * @param expectedKeys
      * @throws SQLException
      */
-    public void testBug71672PreparedStatement(int testStep, Connection testConn, String query, int expectedUpdateCount, int[] expectedKeys)
+    private void checkPreparedStatementForTestBug71672(int testStep, Connection testConn, String query, int expectedUpdateCount, int[] expectedKeys)
             throws SQLException {
         PreparedStatement testPStmt = testConn.prepareStatement(query);
 
@@ -12850,7 +12851,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests for Bug#99604 (Bug#31612628), Add support to row alias on INSERT... ON DUPLICATE KEY UPDATE on batch mode.
+     * Tests fix for Bug#99604 (Bug#31612628), Add support to row alias on INSERT... ON DUPLICATE KEY UPDATE on batch mode.
      * Resolved by fix for Bug#106240 (33781440), StringIndexOutOfBoundsException when VALUE is at the end of the query.
      * 
      * @throws Exception
@@ -12966,7 +12967,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests for Bug#77368 (Bug#21321849), "LOAD DATA LOCAL INFILE" doesn't work properly with relative paths.
+     * Tests fix for Bug#77368 (Bug#21321849), "LOAD DATA LOCAL INFILE" doesn't work properly with relative paths.
      * 
      * Testing this would require changing the value of "user.dir" which could cause other tests to fail. As such, only basic testing to verify that the default
      * relative paths work fine is done here.
@@ -12974,7 +12975,7 @@ public class StatementRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     @Test
-    void testBug77368() throws Exception {
+    public void testBug77368() throws Exception {
         createTable("testBug77368", "(id INT, txt VARCHAR(100))");
 
         final String data = "1\tMySQL\n2\tConnector/J";
@@ -13004,5 +13005,51 @@ public class StatementRegressionTest extends BaseTestCase {
             } catch (FileNotFoundException e) {
             }
         }
+    }
+
+    /**
+     * Tests fix for Bug#109864 (Bug#35034666), Connector/J 8.0.32 hangs on MySQL 5.5 with prepared statements.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testBug109864() throws Exception {
+        createTable("testBug109864", "(id INT)");
+
+        boolean useSPS = false;
+
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.socketTimeout.getKeyName(), "5000");
+
+            Connection testConn = getConnectionWithProps(props);
+
+            this.pstmt = testConn.prepareStatement("SELECT ?");  // Both column and parameter definition blocks in Prepare response.
+            this.pstmt.setInt(1, 1);
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertFalse(this.rs.next());
+            this.pstmt.close();
+
+            this.pstmt = testConn.prepareStatement("SELECT 1");  // No parameter definition block in Stmt Prepare response.
+            this.rs = this.pstmt.executeQuery();
+            assertTrue(this.rs.next());
+            assertFalse(this.rs.next());
+
+            // Prior to this fix preparing this statement would hang indefinitely with server-prepared statements.
+            this.pstmt = testConn.prepareStatement("INSERT INTO testBug109864 VALUES (?)"); // No column definition block in Prepare response.
+            this.pstmt.setInt(1, 1);
+            assertEquals(1, this.pstmt.executeUpdate());
+            this.pstmt.close();
+
+            this.pstmt = testConn.prepareStatement("INSERT INTO testBug109864 VALUES (2)");  // No column or parameter definition blocks in Prepare response.
+            assertEquals(1, this.pstmt.executeUpdate());
+            this.pstmt.close();
+
+            testConn.close();
+        } while (useSPS = !useSPS);
     }
 }
