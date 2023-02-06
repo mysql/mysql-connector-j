@@ -5493,4 +5493,29 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests fix for Bug#109807 (Bug#35021014), DatabaseMetaData#getTypeInfo should ordered by DATA_TYPE.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug109807() throws Exception {
+        boolean useIS = false;
+        boolean yearDT = false;
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useInformationSchema.getKeyName(), Boolean.toString(useIS));
+            props.setProperty(PropertyKey.yearIsDateType.getKeyName(), Boolean.toString(yearDT));
+            Connection testConn = getConnectionWithProps(props);
+            DatabaseMetaData testDbMD = testConn.getMetaData();
+            this.rs = testDbMD.getTypeInfo();
+            int prevDataType = Integer.MIN_VALUE;
+            while (this.rs.next()) {
+                assertTrue(prevDataType <= this.rs.getInt("DATA_TYPE"), "DatabaseMetaData#getTypeInfo must be ordered ascending by DATA_TYPE");
+                prevDataType = this.rs.getInt("DATA_TYPE");
+            }
+            testConn.close();
+        } while ((useIS = !useIS) || (yearDT = !yearDT));
+    }
 }

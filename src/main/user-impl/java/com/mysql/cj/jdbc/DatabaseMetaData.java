@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -4060,49 +4060,73 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         ArrayList<Row> tuples = new ArrayList<>();
 
-        tuples.add(new ByteArrayRow(getTypeInfo("BIGINT"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("BIGINT UNSIGNED"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("BINARY"), getExceptionInterceptor()));
+        // Ordered by DATA_TYPE and then by how closely the data type maps to the corresponding JDBC SQL type.
+        // java.sql.Types.BIT = -7
         tuples.add(new ByteArrayRow(getTypeInfo("BIT"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("BLOB"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("BOOL"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("CHAR"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("DATE"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("DATETIME"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("DECIMAL"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("DOUBLE PRECISION"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("DOUBLE PRECISION UNSIGNED"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("DOUBLE"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("DOUBLE UNSIGNED"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("ENUM"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("FLOAT"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("INT"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("INT UNSIGNED"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("INTEGER"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("INTEGER UNSIGNED"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("LONG VARBINARY"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("LONG VARCHAR"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("LONGBLOB"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("LONGTEXT"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMBLOB"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMINT"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMINT UNSIGNED"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMTEXT"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("NUMERIC"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("REAL"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("SET"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("SMALLINT"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("SMALLINT UNSIGNED"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("TEXT"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("TIME"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("TIMESTAMP"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("TINYBLOB"), getExceptionInterceptor()));
+        // java.sql.Types.TINYINT = -6
         tuples.add(new ByteArrayRow(getTypeInfo("TINYINT"), getExceptionInterceptor()));
         tuples.add(new ByteArrayRow(getTypeInfo("TINYINT UNSIGNED"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("TINYTEXT"), getExceptionInterceptor()));
+        // java.sql.Types.BIGINT = -5
+        tuples.add(new ByteArrayRow(getTypeInfo("BIGINT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("BIGINT UNSIGNED"), getExceptionInterceptor()));
+        // java.sql.Types.LONGVARBINARY = -4
+        tuples.add(new ByteArrayRow(getTypeInfo("LONG VARBINARY"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMBLOB"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("LONGBLOB"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("BLOB"), getExceptionInterceptor()));
+        // java.sql.Types.VARBINARY = -3
         tuples.add(new ByteArrayRow(getTypeInfo("VARBINARY"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("TINYBLOB"), getExceptionInterceptor()));
+        // java.sql.Types.BINARY = -2
+        tuples.add(new ByteArrayRow(getTypeInfo("BINARY"), getExceptionInterceptor()));
+        // java.sql.Types.LONGVARCHAR = -1
+        tuples.add(new ByteArrayRow(getTypeInfo("LONG VARCHAR"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMTEXT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("LONGTEXT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("TEXT"), getExceptionInterceptor()));
+        // java.sql.Types.CHAR = 1
+        tuples.add(new ByteArrayRow(getTypeInfo("CHAR"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("ENUM"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("SET"), getExceptionInterceptor()));
+        // java.sql.Types.DECIMAL = 3
+        tuples.add(new ByteArrayRow(getTypeInfo("DECIMAL"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("NUMERIC"), getExceptionInterceptor()));
+        // java.sql.Types.INTEGER = 4
+        tuples.add(new ByteArrayRow(getTypeInfo("INTEGER"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("INT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMINT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("INTEGER UNSIGNED"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("INT UNSIGNED"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMINT UNSIGNED"), getExceptionInterceptor()));
+        // java.sql.Types.SMALLINT = 5
+        tuples.add(new ByteArrayRow(getTypeInfo("SMALLINT"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("SMALLINT UNSIGNED"), getExceptionInterceptor()));
+        if (!this.yearIsDateType) {
+            tuples.add(new ByteArrayRow(getTypeInfo("YEAR"), getExceptionInterceptor()));
+        }
+        // java.sql.Types.REAL = 7
+        tuples.add(new ByteArrayRow(getTypeInfo("FLOAT"), getExceptionInterceptor()));
+        // java.sql.Types.DOUBLE = 8
+        tuples.add(new ByteArrayRow(getTypeInfo("DOUBLE"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("DOUBLE PRECISION"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("REAL"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("DOUBLE UNSIGNED"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("DOUBLE PRECISION UNSIGNED"), getExceptionInterceptor()));
+        // java.sql.Types.VARCHAR = 12
         tuples.add(new ByteArrayRow(getTypeInfo("VARCHAR"), getExceptionInterceptor()));
-        tuples.add(new ByteArrayRow(getTypeInfo("YEAR"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("TINYTEXT"), getExceptionInterceptor()));
+        // java.sql.Types.BOOLEAN = 16
+        tuples.add(new ByteArrayRow(getTypeInfo("BOOL"), getExceptionInterceptor()));
+        // java.sql.Types.DATE = 91
+        tuples.add(new ByteArrayRow(getTypeInfo("DATE"), getExceptionInterceptor()));
+        if (this.yearIsDateType) {
+            tuples.add(new ByteArrayRow(getTypeInfo("YEAR"), getExceptionInterceptor()));
+        }
+        // java.sql.Types.TIME = 92
+        tuples.add(new ByteArrayRow(getTypeInfo("TIME"), getExceptionInterceptor()));
+        // java.sql.Types.TIMESTAMP = 93
+        tuples.add(new ByteArrayRow(getTypeInfo("DATETIME"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("TIMESTAMP"), getExceptionInterceptor()));
 
         // TODO add missed types (aliases)
 
