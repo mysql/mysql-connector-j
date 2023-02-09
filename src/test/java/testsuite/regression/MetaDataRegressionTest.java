@@ -488,6 +488,16 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
             this.rs = this.stmt.executeQuery("SELECT * from typesRegressTest");
 
+            Map<String, String> expectedTypes = new HashMap<>();
+            expectedTypes.put("varcharField", "VARCHAR");
+            expectedTypes.put("charField", "CHAR");
+            expectedTypes.put("enumField", "CHAR");
+            expectedTypes.put("setField", "CHAR");
+            expectedTypes.put("tinyblobField", "TINYBLOB");
+            expectedTypes.put("mediumBlobField", "MEDIUMBLOB");
+            expectedTypes.put("longblobField", "LONGBLOB");
+            expectedTypes.put("blobField", "BLOB");
+
             ResultSetMetaData rsmd = this.rs.getMetaData();
 
             int numCols = rsmd.getColumnCount();
@@ -495,7 +505,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
             for (int i = 0; i < numCols; i++) {
                 String columnName = rsmd.getColumnName(i + 1);
                 String columnTypeName = rsmd.getColumnTypeName(i + 1);
-                // System.out.println(columnName + " -> " + columnTypeName);
+                assertEquals(expectedTypes.get(columnName), columnTypeName);
             }
         } finally {
             this.stmt.execute("DROP TABLE IF EXISTS typesRegressTest");
@@ -5517,5 +5527,31 @@ public class MetaDataRegressionTest extends BaseTestCase {
             }
             testConn.close();
         } while ((useIS = !useIS) || (yearDT = !yearDT));
+    }
+
+    /**
+     * Tests fix for Bug#109808 (Bug#35021038), DatabaseMetaData#getPrimaryKeys should ordered by COLUMN_NAME.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug109808() throws Exception {
+        createTable("testBug109808",
+                "(col_A INT NOT NULL, col_b INT NOT NULL, col_C VARCHAR(100) NOT NULL, col_D TIMESTAMP, PRIMARY KEY(col_b, col_C, col_A))");
+        boolean useIS = false;
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useInformationSchema.getKeyName(), Boolean.toString(useIS));
+            Connection testConn = getConnectionWithProps(props);
+            DatabaseMetaData dbmd = testConn.getMetaData();
+            this.rs = dbmd.getPrimaryKeys(null, null, "testBug109808");
+            assertTrue(this.rs.next());
+            assertEquals("col_A", this.rs.getString("COLUMN_NAME"));
+            assertTrue(this.rs.next());
+            assertEquals("col_b", this.rs.getString("COLUMN_NAME"));
+            assertTrue(this.rs.next());
+            assertEquals("col_C", this.rs.getString("COLUMN_NAME"));
+            assertFalse(this.rs.next());
+        } while (useIS = !useIS);
     }
 }

@@ -2964,7 +2964,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, final String table) throws SQLException {
-
         if (table == null) {
             throw SQLError.createSQLException(Messages.getString("DatabaseMetaData.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
@@ -2977,14 +2976,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         final Statement stmt = this.conn.getMetadataSafeStatement();
 
         try {
-
             new IterateBlock<String>(getDatabaseIterator(db)) {
                 @Override
                 void forEach(String dbStr) throws SQLException {
                     ResultSet rs = null;
 
                     try {
-
                         StringBuilder queryBuf = new StringBuilder("SHOW KEYS FROM ");
                         queryBuf.append(StringUtils.quoteIdentifier(table, DatabaseMetaData.this.quotedId, DatabaseMetaData.this.pedantic));
                         queryBuf.append(" FROM ");
@@ -3002,8 +2999,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             }
                         }
 
-                        TreeMap<String, byte[][]> sortMap = new TreeMap<>();
-
+                        TreeMap<String, byte[][]> sortMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
                         while (rs != null && rs.next()) {
                             String keyType = rs.getString("Key_name");
 
@@ -3036,7 +3032,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                 rs.close();
                             } catch (Exception ex) {
                             }
-
                             rs = null;
                         }
                     }

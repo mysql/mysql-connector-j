@@ -554,7 +554,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             sqlBuf.append(" TABLE_SCHEMA = ? AND");
         }
         sqlBuf.append(" TABLE_NAME = ?");
-        sqlBuf.append(" AND INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
+        sqlBuf.append(" AND INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, SEQ_IN_INDEX");
 
         java.sql.PreparedStatement pStmt = null;
 
