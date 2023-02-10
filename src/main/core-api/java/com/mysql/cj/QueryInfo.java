@@ -134,16 +134,26 @@ public class QueryInfo {
         int generalEndpointStart = 0;
         int valuesEndpointStart = 0;
         int valuesClauseBegin = -1;
+        boolean valuesClauseBeginFound = false;
         int valuesClauseEnd = -1;
+        boolean valuesClauseEndFound = false;
         boolean withinValuesClause = false;
+        boolean valueStrMayBeTableName = true;
         int parensLevel = 0;
         int matchEnd = -1;
+        int lastPos = -1;
+        char lastChar = 0;
 
         // Endpoints for the satement's static sections (parts around placeholders).
         ArrayList<Integer> staticEndpoints = new ArrayList<>();
 
         while (strInspector.indexOfNextChar() != -1) {
-            if (strInspector.getChar() == '?') { // Process placeholder.
+            int currPos = strInspector.getPosition();
+            char currChar = strInspector.getChar();
+
+            if (currChar == '?') { // Process placeholder.
+                valueStrMayBeTableName = false; // At this point a string "VALUE" cannot be a table name.
+
                 this.numberOfPlaceholders++;
                 int endpointEnd = strInspector.getPosition();
                 staticEndpoints.add(generalEndpointStart);
@@ -152,9 +162,9 @@ public class QueryInfo {
                 generalEndpointStart = strInspector.getPosition(); // Next section starts after the placeholder.
 
                 if (rewritableAsMultiValues) {
-                    if (valuesClauseBegin == -1) { // There's a placeholder before the VALUES clause.
+                    if (!valuesClauseBeginFound) { // There's a placeholder before the VALUES clause.
                         rewritableAsMultiValues = false;
-                    } else if (valuesClauseEnd != -1) { // There's a placeholder after the end of the VALUES clause.
+                    } else if (valuesClauseEndFound) { // There's a placeholder after the end of the VALUES clause.
                         rewritableAsMultiValues = false;
                     } else if (withinValuesClause) {
                         this.valuesEndpoints.add(valuesEndpointStart);
@@ -163,14 +173,18 @@ public class QueryInfo {
                     }
                 }
 
-            } else if (strInspector.getChar() == ';') { // Multi-query SQL.
+            } else if (currChar == ';') { // Multi-query SQL.
+                valueStrMayBeTableName = false; // At this point a string "VALUE" cannot be a table name.
+
                 strInspector.incrementPosition();
                 if (strInspector.indexOfNextNonWsChar() != -1) {
                     this.numberOfQueries++;
 
                     if (rewritableAsMultiValues) {
                         rewritableAsMultiValues = false;
+                        valuesClauseBeginFound = false;
                         valuesClauseBegin = -1;
+                        valuesClauseEndFound = false;
                         valuesClauseEnd = -1;
                         withinValuesClause = false;
                         parensLevel = 0;
@@ -182,38 +196,55 @@ public class QueryInfo {
                     } else {
                         isInsert = strInspector.matchesIgnoreCase(INSERT_STATEMENT) != -1;
                         if (isInsert) {
-                            strInspector.incrementPosition(INSERT_STATEMENT.length()); // Advance to the end of "INSERT".
+                            strInspector.incrementPosition(INSERT_STATEMENT.length() - 1); // Advance to the end of "INSERT" and capture last character.
+                            currPos = strInspector.getPosition();
+                            currChar = strInspector.getChar();
+                            strInspector.incrementPosition();
                         }
                         lookForOnDuplicateKeyUpdate = isInsert;
                     }
                 }
 
             } else {
-                int currPos = strInspector.getPosition();
-
                 if (rewritableAsMultiValues) {
-                    if (valuesClauseBegin == -1 && strInspector.matchesIgnoreCase(VALUE_CLAUSE) != -1) { // VALUE(S) clause found.
-                        strInspector.incrementPosition(VALUE_CLAUSE.length()); // Advance to the end of "VALUE".
+                    if ((!valuesClauseBeginFound || valueStrMayBeTableName) && strInspector.matchesIgnoreCase(VALUE_CLAUSE) != -1) { // VALUE(S) clause found.
+                        boolean leftBound = currPos > lastPos + 1 || lastChar == ')'; // ')' would mark the ending of the columns list.
+
+                        strInspector.incrementPosition(VALUE_CLAUSE.length() - 1); // Advance to the end of "VALUE" and capture last character.
+                        currPos = strInspector.getPosition();
+                        currChar = strInspector.getChar();
+                        strInspector.incrementPosition();
                         boolean matchedValues = false;
                         if (strInspector.matchesIgnoreCase("S") != -1) { // Check for the "S" in "VALUE(S)" and advance 1 more character if needed.
+                            currPos = strInspector.getPosition();
+                            currChar = strInspector.getChar();
                             strInspector.incrementPosition();
                             matchedValues = true;
                         }
 
-                        if (matchedValues && this.containsOnDuplicateKeyUpdate) { // VALUES after ODKU is a function, not a clause.
-                            rewritableAsMultiValues = false;
-                        } else {
-                            withinValuesClause = true;
-                            strInspector.indexOfNextChar(); // Position on the first values list character.
-                            valuesClauseBegin = strInspector.getPosition();
-                            valuesEndpointStart = valuesClauseBegin;
+                        int endPos = strInspector.getPosition();
+                        int nextPos = strInspector.indexOfNextChar(); // Position on the first meaningful character after VALUE(S).
+                        boolean rightBound = nextPos > endPos || strInspector.getChar() == '('; // '(' would mark the beginning of the VALUE(S) list.
+
+                        if (leftBound && rightBound) { // VALUE(S) keyword must not be part of another string, such as a table or column name.
+                            if (matchedValues) {
+                                valueStrMayBeTableName = false; // At this point a string "VALUE" cannot be a table name.
+                            }
+                            if (matchedValues && this.containsOnDuplicateKeyUpdate) { // VALUES after ODKU is a function, not a clause.
+                                rewritableAsMultiValues = false;
+                            } else {
+                                withinValuesClause = true;
+                                valuesClauseBegin = strInspector.getPosition();
+                                valuesClauseBeginFound = true;
+                                valuesEndpointStart = valuesClauseBegin;
+                            }
                         }
 
-                    } else if (withinValuesClause && strInspector.getChar() == '(') {
+                    } else if (withinValuesClause && currChar == '(') {
                         parensLevel++;
                         strInspector.incrementPosition();
 
-                    } else if (withinValuesClause && strInspector.getChar() == ')') {
+                    } else if (withinValuesClause && currChar == ')') {
                         parensLevel--;
                         if (parensLevel < 0) {
                             parensLevel = 0; // Keep going, not checking for syntax validity.
@@ -222,22 +253,34 @@ public class QueryInfo {
                         valuesClauseEnd = strInspector.getPosition(); // It may not be the end of the VALUES clause yet but save it for later.
 
                     } else if (withinValuesClause && parensLevel == 0 && isInsert && strInspector.matchesIgnoreCase(AS_CLAUSE) != -1) { // End of VALUES clause.
+                        valueStrMayBeTableName = false; // At this point a string "VALUE" cannot be a table name.
+
                         if (valuesClauseEnd == -1) {
                             valuesClauseEnd = strInspector.getPosition();
                         }
+                        valuesClauseEndFound = true;
                         withinValuesClause = false;
-                        strInspector.incrementPosition(AS_CLAUSE.length()); // Advance to the end of "AS".
+                        strInspector.incrementPosition(AS_CLAUSE.length() - 1); // Advance to the end of "AS" and capture last character.
+                        currPos = strInspector.getPosition();
+                        currChar = strInspector.getChar();
+                        strInspector.incrementPosition();
 
                         this.valuesEndpoints.add(valuesEndpointStart);
                         this.valuesEndpoints.add(valuesClauseEnd);
 
                     } else if (withinValuesClause && parensLevel == 0 && isInsert //
                             && (matchEnd = strInspector.matchesIgnoreCase(ODKU_CLAUSE)) != -1) { // End of VALUES clause.
+                        valueStrMayBeTableName = false; // At this point a string "VALUE" cannot be a table name.
+
                         if (valuesClauseEnd == -1) {
                             valuesClauseEnd = strInspector.getPosition();
                         }
+                        valuesClauseEndFound = true;
                         withinValuesClause = false;
-                        strInspector.incrementPosition(matchEnd - strInspector.getPosition()); // Advance to the end of "ON DUPLICATE KEY UPDATE".
+                        strInspector.incrementPosition(matchEnd - strInspector.getPosition() - 1); // Advance to the end of "ODKU" and capture last character.
+                        currPos = strInspector.getPosition();
+                        currChar = strInspector.getChar();
+                        strInspector.incrementPosition();
 
                         this.valuesEndpoints.add(valuesEndpointStart);
                         this.valuesEndpoints.add(valuesClauseEnd);
@@ -247,12 +290,18 @@ public class QueryInfo {
 
                     } else if (strInspector.matchesIgnoreCase(LAST_INSERT_ID_FUNC) != -1) { // Can't rewrite as multi-values if LAST_INSERT_ID function is used. 
                         rewritableAsMultiValues = false;
-                        strInspector.incrementPosition(LAST_INSERT_ID_FUNC.length()); // Advance to the end of "LAST_INSERT_ID".
+                        strInspector.incrementPosition(LAST_INSERT_ID_FUNC.length() - 1); // Advance to the end of "LAST_INSERT_ID" and capture last character.
+                        currPos = strInspector.getPosition();
+                        currChar = strInspector.getChar();
+                        strInspector.incrementPosition();
                     }
                 }
 
                 if (lookForOnDuplicateKeyUpdate && currPos == strInspector.getPosition() && (matchEnd = strInspector.matchesIgnoreCase(ODKU_CLAUSE)) != -1) {
-                    strInspector.incrementPosition(matchEnd - strInspector.getPosition()); // Advance to the end of "ON DUPLICATE KEY UPDATE".
+                    strInspector.incrementPosition(matchEnd - strInspector.getPosition() - 1); // Advance to the end of "ODKU" and capture last character.
+                    currPos = strInspector.getPosition();
+                    currChar = strInspector.getChar();
+                    strInspector.incrementPosition();
 
                     this.containsOnDuplicateKeyUpdate = true;
                     lookForOnDuplicateKeyUpdate = false;
@@ -262,18 +311,26 @@ public class QueryInfo {
                     strInspector.incrementPosition();
                 }
             }
+
+            lastPos = currPos;
+            lastChar = currChar;
         }
         staticEndpoints.add(generalEndpointStart);
         staticEndpoints.add(this.queryLength);
         if (rewritableAsMultiValues) {
-            if (withinValuesClause) {
+            if (!valuesClauseEndFound) {
+                if (valuesClauseEnd == -1) {
+                    valuesClauseEnd = this.queryLength;
+                }
+                valuesClauseEndFound = true;
                 withinValuesClause = false;
+
                 this.valuesEndpoints.add(valuesEndpointStart);
-                this.valuesEndpoints.add(valuesClauseEnd != -1 ? valuesClauseEnd : this.queryLength);
+                this.valuesEndpoints.add(valuesClauseEnd);
             }
 
-            if (valuesClauseBegin != -1) {
-                this.valuesClauseLength = (valuesClauseEnd != -1 ? valuesClauseEnd : this.queryLength) - valuesClauseBegin;
+            if (valuesClauseBeginFound && valuesClauseEndFound) {
+                this.valuesClauseLength = valuesClauseEnd - valuesClauseBegin;
             } else {
                 rewritableAsMultiValues = false;
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -5258,6 +5258,7 @@ public class StatementsTest extends BaseTestCase {
             /*
              * Special Case 3: Table and column names.
              */
+
             // INSERT ... tbl (c1, c2) ... VALUES (?, ?) AS ... --> rewritable.
             QueryInfoQueryInterceptor.startCapturing();
             this.pstmt = testConn.prepareStatement("INSERT INTO testQueryInfo (c1, c2) VALUES (?, ?) AS new(v1, v2)");
@@ -5280,7 +5281,7 @@ public class StatementsTest extends BaseTestCase {
                         "INSERT INTO testQueryInfo (c1, c2) VALUES (3, 4) AS new(v1, v2)");
             }
 
-            // INSERT ... tbl (c1, c2) ... VALUES(?, ? )ON DUPLICATE KEY UPDATE ... --> rewritable.
+            // INSERT ... tbl (c1, c2) ... VALUES (?, ?) ON DUPLICATE KEY UPDATE ... --> rewritable.
             QueryInfoQueryInterceptor.startCapturing();
             this.pstmt = testConn.prepareStatement("INSERT INTO testQueryInfo (c1, c2) VALUES (?, ?) ON DUPLICATE KEY UPDATE c1 = VALUES(c2)");
             this.pstmt.setInt(1, 1);
@@ -5370,6 +5371,78 @@ public class StatementsTest extends BaseTestCase {
                 QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (12, 3),(45, 6)");
             } else { // !rwBS && (useSPS || !useSPS)
                 QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (12, 3)", "INSERT INTO testQueryInfo VALUES (45, 6)");
+            }
+
+            /*
+             * Special Case 6: Multiple VALUES lists.
+             */
+
+            // INSERT ... VALUES (?, n), (?, m) --> rewritable.
+            QueryInfoQueryInterceptor.startCapturing();
+            this.pstmt = testConn.prepareStatement("INSERT INTO testQueryInfo VALUES (?, 0), (?, 1)");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setInt(2, 2);
+            this.pstmt.addBatch();
+            this.pstmt.setInt(1, 3);
+            this.pstmt.setInt(2, 4);
+            this.pstmt.addBatch();
+            this.pstmt.executeBatch();
+            if (rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (?, 0), (?, 1),(?, 0), (?, 1)");
+            } else if (!rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (?, 0), (?, 1)",
+                        "INSERT INTO testQueryInfo VALUES (?, 0), (?, 1)");
+            } else if (rwBS) { // && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (1, 0), (2, 1),(3, 0), (4, 1)");
+            } else { // !rwBS && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (1, 0), (2, 1)",
+                        "INSERT INTO testQueryInfo VALUES (3, 0), (4, 1)");
+            }
+
+            // INSERT ... VALUES (?, n), (?, m) AS ... --> rewritable.
+            QueryInfoQueryInterceptor.startCapturing();
+            this.pstmt = testConn.prepareStatement("INSERT INTO testQueryInfo VALUES (?, 0), (?, 1) AS new(v1, v2)");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setInt(2, 2);
+            this.pstmt.addBatch();
+            this.pstmt.setInt(1, 3);
+            this.pstmt.setInt(2, 4);
+            this.pstmt.addBatch();
+            this.pstmt.executeBatch();
+            if (rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (?, 0), (?, 1),(?, 0), (?, 1) AS new(v1, v2)");
+            } else if (!rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (?, 0), (?, 1) AS new(v1, v2)",
+                        "INSERT INTO testQueryInfo VALUES (?, 0), (?, 1) AS new(v1, v2)");
+            } else if (rwBS) { // && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (1, 0), (2, 1),(3, 0), (4, 1) AS new(v1, v2)");
+            } else { // !rwBS && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (1, 0), (2, 1) AS new(v1, v2)",
+                        "INSERT INTO testQueryInfo VALUES (3, 0), (4, 1) AS new(v1, v2)");
+            }
+
+            // INSERT ... VALUES (?, n), (?, m) ON DUPLICATE KEY UPDATE ... --> rewritable.
+            QueryInfoQueryInterceptor.startCapturing();
+            this.pstmt = testConn.prepareStatement("INSERT INTO testQueryInfo VALUES (?, 0), (?, 1) ON DUPLICATE KEY UPDATE c1 = VALUES(c2)");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setInt(2, 2);
+            this.pstmt.addBatch();
+            this.pstmt.setInt(1, 3);
+            this.pstmt.setInt(2, 4);
+            this.pstmt.addBatch();
+            this.pstmt.executeBatch();
+            if (rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase,
+                        "INSERT INTO testQueryInfo VALUES (?, 0), (?, 1),(?, 0), (?, 1) ON DUPLICATE KEY UPDATE c1 = VALUES(c2)");
+            } else if (!rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (?, 0), (?, 1) ON DUPLICATE KEY UPDATE c1 = VALUES(c2)",
+                        "INSERT INTO testQueryInfo VALUES (?, 0), (?, 1) ON DUPLICATE KEY UPDATE c1 = VALUES(c2)");
+            } else if (rwBS) { // && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase,
+                        "INSERT INTO testQueryInfo VALUES (1, 0), (2, 1),(3, 0), (4, 1) ON DUPLICATE KEY UPDATE c1 = VALUES(c2)");
+            } else { // !rwBS && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES (1, 0), (2, 1) ON DUPLICATE KEY UPDATE c1 = VALUES(c2)",
+                        "INSERT INTO testQueryInfo VALUES (3, 0), (4, 1) ON DUPLICATE KEY UPDATE c1 = VALUES(c2)");
             }
 
             testConn.close();

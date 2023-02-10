@@ -2,6 +2,7 @@
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
 Version 8.0.33
+  - Fix for Bug#109377 (Bug#34900156), rewriteBatchedStatements doesn't work when parenthesis are found in values.
 
   - Fix for Bug#109808 (Bug#35021038), DatabaseMetaData#getPrimaryKeys should ordered by COLUMN_NAME.
 

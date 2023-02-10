@@ -5316,8 +5316,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /*
-     * Bug #40439 - Error rewriting batched statement if table name ends with
-     * "values".
+     * Bug #40439 - Error rewriting batched statement if table name ends with "values".
      */
     @Test
     public void testBug40439() throws Exception {
@@ -13051,5 +13050,70 @@ public class StatementRegressionTest extends BaseTestCase {
 
             testConn.close();
         } while (useSPS = !useSPS);
+    }
+
+    /**
+     * Tests fix for Bug#109377 (Bug#34900156), rewriteBatchedStatements doesn't work when parenthesis are found in values.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug109377() throws Exception {
+        createTable("testBug109377", "(d DOUBLE, i INT)");
+
+        boolean useSPS = false;
+        do {
+            final String testCase = String.format("Case [useSPS: %s]", useSPS ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.queryInterceptors.getKeyName(), QueryInfoQueryInterceptor.class.getName());
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+
+            try (Connection testConn = getConnectionWithProps(props)) {
+                QueryInfoQueryInterceptor.startCapturing();
+                this.pstmt = testConn.prepareStatement("INSERT INTO testBug109377 (d, i) VALUES (RAND(?), ?)");
+                this.pstmt.setInt(1, 10);
+                this.pstmt.setInt(2, 1);
+                this.pstmt.addBatch();
+                this.pstmt.setInt(1, 10);
+                this.pstmt.setInt(2, 2);
+                this.pstmt.addBatch();
+                this.pstmt.executeBatch();
+                if (useSPS) {
+                    QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testBug109377 (d, i) VALUES (RAND(?), ?),(RAND(?), ?)");
+                } else {
+                    QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testBug109377 (d, i) VALUES (RAND(10), 1),(RAND(10), 2)");
+                }
+            }
+        } while (useSPS = !useSPS);
+    }
+
+    public static class QueryInfoQueryInterceptor extends BaseQueryInterceptor {
+        private static boolean enabled = false;
+        private static List<String> capturedSql = new ArrayList<>();
+
+        public static void startCapturing() {
+            enabled = true;
+            capturedSql.clear();
+        }
+
+        public static void assertCapturedSql(String testCase, String... expectedSql) {
+            enabled = false;
+            assertEquals(expectedSql.length, capturedSql.size(), testCase);
+            for (int i = 0; i < expectedSql.length; i++) {
+                assertEquals(expectedSql[i], capturedSql.get(i), testCase);
+            }
+        }
+
+        @Override
+        public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
+            if (enabled && interceptedQuery != null) {
+                capturedSql.add(sql.get());
+            }
+            return super.preProcess(sql, interceptedQuery);
+        }
     }
 }
