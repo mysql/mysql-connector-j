@@ -5445,6 +5445,134 @@ public class StatementsTest extends BaseTestCase {
                         "INSERT INTO testQueryInfo VALUES (3, 0), (4, 1) ON DUPLICATE KEY UPDATE c1 = VALUES(c2)");
             }
 
+            /*
+             * Special Case 7: "VALUE" as table and column name.
+             */
+
+            createTable("value", "(value INT)");
+
+            // INSERT ... VALUE (?) --> rewritable.
+            QueryInfoQueryInterceptor.startCapturing();
+            this.pstmt = testConn.prepareStatement("INSERT INTO value (value) VALUE (?)");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.addBatch();
+            this.pstmt.setInt(1, 2);
+            this.pstmt.addBatch();
+            this.pstmt.executeBatch();
+            if (rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (?),(?)");
+            } else if (!rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (?)", "INSERT INTO value (value) VALUE (?)");
+            } else if (rwBS) { // && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (1),(2)");
+            } else { // !rwBS && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (1)", "INSERT INTO value (value) VALUE (2)");
+            }
+
+            // INSERT ... VALUE (?) AS ... --> rewritable.
+            QueryInfoQueryInterceptor.startCapturing();
+            this.pstmt = testConn.prepareStatement("INSERT INTO value (value) VALUE (?) AS new(v)");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.addBatch();
+            this.pstmt.setInt(1, 2);
+            this.pstmt.addBatch();
+            this.pstmt.executeBatch();
+            if (rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (?),(?) AS new(v)");
+            } else if (!rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (?) AS new(v)",
+                        "INSERT INTO value (value) VALUE (?) AS new(v)");
+            } else if (rwBS) { // && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (1),(2) AS new(v)");
+            } else { // !rwBS && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (1) AS new(v)",
+                        "INSERT INTO value (value) VALUE (2) AS new(v)");
+            }
+
+            // INSERT ... VALUE (?) ON DUPLICATE KEY UPDATE ... --> rewritable.
+            QueryInfoQueryInterceptor.startCapturing();
+            this.pstmt = testConn.prepareStatement("INSERT INTO value (value) VALUE (?) ON DUPLICATE KEY UPDATE value = VALUES(value)");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.addBatch();
+            this.pstmt.setInt(1, 2);
+            this.pstmt.addBatch();
+            this.pstmt.executeBatch();
+            if (rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (?),(?) ON DUPLICATE KEY UPDATE value = VALUES(value)");
+            } else if (!rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (?) ON DUPLICATE KEY UPDATE value = VALUES(value)",
+                        "INSERT INTO value (value) VALUE (?) ON DUPLICATE KEY UPDATE value = VALUES(value)");
+            } else if (rwBS) { // && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (1),(2) ON DUPLICATE KEY UPDATE value = VALUES(value)");
+            } else { // !rwBS && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (value) VALUE (1) ON DUPLICATE KEY UPDATE value = VALUES(value)",
+                        "INSERT INTO value (value) VALUE (2) ON DUPLICATE KEY UPDATE value = VALUES(value)");
+            }
+
+            /*
+             * Special Case 8: "VALUE" as table name and "?" as column name.
+             */
+
+            createTable("value", "(`?` INT)");
+
+            // INSERT ... VALUE (?) --> rewritable.
+            QueryInfoQueryInterceptor.startCapturing();
+            this.pstmt = testConn.prepareStatement("INSERT INTO value (`?`) VALUE (?)");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.addBatch();
+            this.pstmt.setInt(1, 2);
+            this.pstmt.addBatch();
+            this.pstmt.executeBatch();
+            if (rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (?),(?)");
+            } else if (!rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (?)", "INSERT INTO value (`?`) VALUE (?)");
+            } else if (rwBS) { // && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (1),(2)");
+            } else { // !rwBS && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (1)", "INSERT INTO value (`?`) VALUE (2)");
+            }
+
+            // INSERT ... VALUE (?) AS ... --> rewritable.
+            QueryInfoQueryInterceptor.startCapturing();
+            this.pstmt = testConn.prepareStatement("INSERT INTO value (`?`) VALUE (?) AS `values`(`?`)");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.addBatch();
+            this.pstmt.setInt(1, 2);
+            this.pstmt.addBatch();
+            this.pstmt.executeBatch();
+            if (rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (?),(?) AS `values`(`?`)");
+            } else if (!rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (?) AS `values`(`?`)",
+                        "INSERT INTO value (`?`) VALUE (?) AS `values`(`?`)");
+            } else if (rwBS) { // && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (1),(2) AS `values`(`?`)");
+            } else { // !rwBS && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (1) AS `values`(`?`)",
+                        "INSERT INTO value (`?`) VALUE (2) AS `values`(`?`)");
+            }
+
+            // INSERT ... VALUE (?) ON DUPLICATE KEY UPDATE ... --> rewritable.
+            QueryInfoQueryInterceptor.startCapturing();
+            this.pstmt = testConn.prepareStatement("INSERT INTO value (`?`) VALUE (?) ON DUPLICATE KEY UPDATE `?` = VALUES(`?`)");
+            this.pstmt.setInt(1, 1);
+            this.pstmt.addBatch();
+            this.pstmt.setInt(1, 2);
+            this.pstmt.addBatch();
+            this.pstmt.executeBatch();
+            if (rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (?),(?) ON DUPLICATE KEY UPDATE `?` = VALUES(`?`)");
+            } else if (!rwBS && useSPS) {
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (?) ON DUPLICATE KEY UPDATE `?` = VALUES(`?`)",
+                        "INSERT INTO value (`?`) VALUE (?) ON DUPLICATE KEY UPDATE `?` = VALUES(`?`)");
+            } else if (rwBS) { // && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (1),(2) ON DUPLICATE KEY UPDATE `?` = VALUES(`?`)");
+            } else { // !rwBS && !useSPS
+                QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO value (`?`) VALUE (1) ON DUPLICATE KEY UPDATE `?` = VALUES(`?`)",
+                        "INSERT INTO value (`?`) VALUE (2) ON DUPLICATE KEY UPDATE `?` = VALUES(`?`)");
+            }
+
             testConn.close();
         } while ((useSPS = !useSPS) || (rwBS = !rwBS));
     }

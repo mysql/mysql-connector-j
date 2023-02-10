@@ -13091,6 +13091,50 @@ public class StatementRegressionTest extends BaseTestCase {
         } while (useSPS = !useSPS);
     }
 
+    /**
+     * Tests for Bug#107577 (Bug#34325361), rewriteBatchedStatements not work when table column name contains 'value' string.
+     * 
+     * Duplicate of Bug#40439 (Bug#11750096), Error rewriting batched statement if table name ends with "values", that re-surfaced while fixing Bug#109377
+     * (Bug#34900156).
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug107577() throws Exception {
+        createTable("VALUES_testBug_VALUE_107577_VALUES", "(value INT, VALUE_foo_VALUES_bar_VALUE INT)");
+
+        boolean useSPS = false;
+        do {
+            final String testCase = String.format("Case [useSPS: %s]", useSPS ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.queryInterceptors.getKeyName(), QueryInfoQueryInterceptor.class.getName());
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+
+            try (Connection testConn = getConnectionWithProps(props)) {
+                QueryInfoQueryInterceptor.startCapturing();
+                this.pstmt = testConn.prepareStatement("INSERT INTO VALUES_testBug_VALUE_107577_VALUES (value, VALUE_foo_VALUES_bar_VALUE) VALUES (?, ?)");
+                this.pstmt.setInt(1, 1);
+                this.pstmt.setInt(2, 1);
+                this.pstmt.addBatch();
+                this.pstmt.setInt(1, 2);
+                this.pstmt.setInt(2, 2);
+                this.pstmt.addBatch();
+                this.pstmt.executeBatch();
+                if (useSPS) {
+                    QueryInfoQueryInterceptor.assertCapturedSql(testCase,
+                            "INSERT INTO VALUES_testBug_VALUE_107577_VALUES (value, VALUE_foo_VALUES_bar_VALUE) VALUES (?, ?),(?, ?)");
+                } else {
+                    QueryInfoQueryInterceptor.assertCapturedSql(testCase,
+                            "INSERT INTO VALUES_testBug_VALUE_107577_VALUES (value, VALUE_foo_VALUES_bar_VALUE) VALUES (1, 1),(2, 2)");
+                }
+            }
+        } while (useSPS = !useSPS);
+    }
+
     public static class QueryInfoQueryInterceptor extends BaseQueryInterceptor {
         private static boolean enabled = false;
         private static List<String> capturedSql = new ArrayList<>();
