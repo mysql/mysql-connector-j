@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2022, Oracle and/or its affiliates.
+# Copyright (c) 2017, 2023, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License, version 2.0, as published by the
@@ -61,6 +61,9 @@
 %global lic_tag        GPLv2
 %endif
 
+%global legacy_name    @MYSQL_CJ_EXTENDED_LEGACY_PROD_NAME@@MYSQL_CJ_RPM_PACKAGE_SUFFIX@
+
+
 Summary:        Standardized MySQL database driver for Java
 Name:           @MYSQL_CJ_EXTENDED_PROD_NAME@@MYSQL_CJ_RPM_PACKAGE_SUFFIX@
 Version:        @MYSQL_CJ_VERSION_NUMERIC@
@@ -74,12 +77,12 @@ Source0:        https://cdn.mysql.com/Downloads/Connector-J/@MYSQL_CJ_FULL_PROD_
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 
-Obsoletes:     mysql-connector-java@MYSQL_CJ_RPM_PACKAGE_SUFFIX@ < %{version}-%{release}
-Provides:      mysql-connector-java@MYSQL_CJ_RPM_PACKAGE_SUFFIX@ = %{version}-%{release}
+Obsoletes:     %{legacy_name} < %{version}-%{release}
+Provides:      %{legacy_name} = %{version}-%{release}
 
 %if 0%{?commercial:1}
-Obsoletes:     mysql-connector-java < %{version}-%{release}
-Provides:      mysql-connector-java = %{version}-%{release}
+Obsoletes:     @MYSQL_CJ_EXTENDED_LEGACY_PROD_NAME@ < %{version}-%{release}
+Provides:      @MYSQL_CJ_EXTENDED_LEGACY_PROD_NAME@ = %{version}-%{release}
 Obsoletes:     @MYSQL_CJ_EXTENDED_PROD_NAME@ < %{version}-%{release}
 Provides:      @MYSQL_CJ_EXTENDED_PROD_NAME@ = %{version}-%{release}
 %endif
@@ -175,6 +178,11 @@ cp %{with_docs}/en/txt/connector-j.txt   package-content/docs/
 install -d -m 0755 %{buildroot}%{_javadir}
 install -p -m 0644 package-content/@MYSQL_CJ_FULL_PROD_NAME@.jar %{buildroot}%{_javadir}/%{name}.jar
 
+# To make it easier for users, provide a soft link with the old
+# "mysql-connector-java.jar" name. We can't use "install", it will
+# dereference the link
+ln -s %{name}.jar %{buildroot}%{_javadir}/%{legacy_name}.jar
+
 %clean
 rm -rf %{buildroot}
 
@@ -195,6 +203,7 @@ rm -rf %{buildroot}
 %endif
 
 %{_javadir}/%{name}.jar
+%{_javadir}/%{legacy_name}.jar
 
 %changelog
 * Mon Nov 27 2017 MySQL Release Engineering <mysql-build@oss.oracle.com> - 8.0.9-1

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-  Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2002, 2023, Oracle and/or its affiliates.
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License, version 2.0, as published by the
@@ -225,8 +225,10 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
     <property name="com.mysql.cj.build.driver.displayName" value="MySQL Connector/J" />
     <property name="com.mysql.cj.build.driver.name" value="mysql-connector-j" />
+    <property name="com.mysql.cj.build.driver.legacyName" value="mysql-connector-java" />
     <property name="com.mysql.cj.build.driver.extraName" value="" />
     <property name="com.mysql.cj.build.driver.extendedName" value="${com.mysql.cj.build.driver.name}${com.mysql.cj.build.driver.extraName}" />
+    <property name="com.mysql.cj.build.driver.extendedLegacyName" value="${com.mysql.cj.build.driver.legacyName}${com.mysql.cj.build.driver.extraName}" />
     <property name="com.mysql.cj.build.driver.fullName" value="${com.mysql.cj.build.driver.extendedName}-${com.mysql.cj.build.driver.version.full}" />
 
     <property name="com.mysql.cj.build.dir" value="build" />
@@ -563,6 +565,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <filter token="MYSQL_CJ_REVISION" value="${com.mysql.cj.build.git.commit}" />
             <filter token="MYSQL_CJ_EXTRA_NAME" value="${com.mysql.cj.build.driver.extraName}" />
             <filter token="MYSQL_CJ_EXTENDED_PROD_NAME" value="${com.mysql.cj.build.driver.extendedName}" />
+            <filter token="MYSQL_CJ_EXTENDED_LEGACY_PROD_NAME" value="${com.mysql.cj.build.driver.extendedLegacyName}" />
             <!-- TODO: Remove as soon as maven relocation artifacts stop being published -->
             <filter token="MYSQL_CJ_EXTENDED_PROD_NAME_RELOCATION" value="${com.mysql.cj.build.driver.extendedNameRelocation}" />
             <filter token="MYSQL_CJ_FULL_PROD_NAME" value="${com.mysql.cj.build.driver.fullName}" />
@@ -1687,6 +1690,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                 <filter token="CODENAME" value="${codename}" />
                 <filter token="LIC_FILE" value="${lic_file}" />
                 <filter token="PRODUCT_NAME" value="${com.mysql.cj.build.driver.extendedName}" />
+                <filter token="PRODUCT_LEGACY_NAME" value="${com.mysql.cj.build.driver.extendedLegacyName}" />
                 <filter token="PACKAGE_SUFFIX" value="${com.mysql.cj.dist.packageExtraName}" />
                 <filter token="DIR_PACKAGE" value="${com.mysql.cj.dist.dir.package}" />
                 <filter token="DEB_VERSION_SUFFIX" value="${deb_version_suffix}" />

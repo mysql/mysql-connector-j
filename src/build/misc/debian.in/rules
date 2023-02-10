@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# Copyright (c) 2016, 2022, Oracle and/or its affiliates.
+# Copyright (c) 2016, 2023, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License, version 2.0, as published by the
@@ -25,6 +25,8 @@
 # You should have received a copy of the GNU General Public License along with
 # this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+
+export DH_VERBOSE=1
 
 upstream_version := $(shell dpkg-parsechangelog | sed -n -e'/^Version: / { s/Version: //; s/-[^-]\+$$//; p }')
 base_version = $(shell echo $(upstream_version) | sed -e's/r[0-9]\+$$//')

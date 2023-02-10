@@ -2,6 +2,9 @@
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
 Version 8.0.33
+
+  - Fix for Bug#35018216, Problems with Connector/J RPM's: jar names renamed.
+
   - Fix for Bug#107577 (Bug#34325361), rewriteBatchedStatements not work when table column name contains 'value' string.
 
   - Fix for Bug#109377 (Bug#34900156), rewriteBatchedStatements doesn't work when parenthesis are found in values.

@@ -3,15 +3,15 @@ Section: database
 Priority: optional
 Maintainer: Oracle MySQL Product Engineering Team <mysql-build@oss.oracle.com>
 Standards-Version: 3.9.2
-Build-Depends: debhelper (>= 8.9.4)
+Build-Depends: debhelper (>= 11)
 Homepage: http://dev.mysql.com/downloads/connector/j/
 
 Package: @PRODUCT_NAME@@PACKAGE_SUFFIX@
 Section: database
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Replaces: mysql-connector-java@PACKAGE_SUFFIX@ (<< 8.0.31)
-Breaks: mysql-connector-java@PACKAGE_SUFFIX@ (<< 8.0.31)
-Provides: mysql-connector-java@PACKAGE_SUFFIX@
+Replaces: @PRODUCT_LEGACY_NAME@@PACKAGE_SUFFIX@ (<< 8.0.31)
+Breaks: @PRODUCT_LEGACY_NAME@@PACKAGE_SUFFIX@ (<< 8.0.31)
+Provides: @PRODUCT_LEGACY_NAME@@PACKAGE_SUFFIX@
 Description: MySQL Connector/J
  Standardized MySQL database driver for Java
