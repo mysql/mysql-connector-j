@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,8 +52,7 @@ public class MessagesTest {
         assertEquals("Malformed database URL, failed to parse the port '123' as a number.", Messages.getString("ConnectionString.7", new Object[] { 123 }));
         assertEquals("Illegal transformation to the 'Test' property. The value 'Ten' is not a valid number.",
                 Messages.getString("ConnectionString.8", new Object[] { "Test", "Ten" }));
-        assertEquals("Unable to create properties transform instance 'Test' due to underlying exception: " + ex.toString(),
-                Messages.getString("ConnectionString.9", new Object[] { "Test", ex.toString() }));
+        assertEquals("Unable to create an instance of the specified  properties transform class.", Messages.getString("ConnectionString.9"));
         assertEquals("Can't find configuration template named 'Test'", Messages.getString("ConnectionString.10", new Object[] { "Test" }));
         assertEquals("Unable to load configuration template 'Test' due to underlying IOException",
                 Messages.getString("ConnectionString.11", new Object[] { "Test" }));

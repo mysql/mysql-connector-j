@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -66,6 +66,7 @@ import com.mysql.cj.protocol.a.authentication.MysqlOldPasswordPlugin;
 import com.mysql.cj.protocol.a.authentication.Sha256PasswordPlugin;
 import com.mysql.cj.protocol.a.result.OkPacket;
 import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.Util;
 
 public class NativeAuthenticationProvider implements AuthenticationProvider<NativePacketPayload> {
     private static final int AUTH_411_OVERHEAD = 33;
@@ -264,12 +265,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         if (authenticationPluginClasses != null && !"".equals(authenticationPluginClasses.trim())) {
             List<String> pluginsToCreate = StringUtils.split(authenticationPluginClasses, ",", true);
             for (String className : pluginsToCreate) {
-                try {
-                    pluginsToInit.add((AuthenticationPlugin<NativePacketPayload>) Class.forName(className).newInstance());
-                } catch (Throwable t) {
-                    throw ExceptionFactory.createException(WrongArgumentException.class,
-                            Messages.getString("AuthenticationProvider.BadAuthenticationPlugin", new Object[] { className }), t, this.exceptionInterceptor);
-                }
+                pluginsToInit.add(Util.getInstance(AuthenticationPlugin.class, className, null, null, getExceptionInterceptor()));
             }
         }
 

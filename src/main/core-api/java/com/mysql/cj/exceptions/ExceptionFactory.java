@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,6 +30,8 @@
 package com.mysql.cj.exceptions;
 
 import java.net.BindException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyKey;
@@ -37,7 +39,6 @@ import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.protocol.PacketReceivedTimeHolder;
 import com.mysql.cj.protocol.PacketSentTimeHolder;
 import com.mysql.cj.protocol.ServerSession;
-import com.mysql.cj.util.Util;
 
 public class ExceptionFactory {
 
@@ -101,9 +102,7 @@ public class ExceptionFactory {
     }
 
     public static <T extends CJException> T createException(Class<T> clazz, String message, Throwable cause) {
-
         T sqlEx = createException(clazz, message);
-
         if (cause != null) {
             try {
                 sqlEx.initCause(cause);
@@ -282,8 +281,13 @@ public class ExceptionFactory {
             //
             if (underlyingException instanceof BindException) {
                 String localSocketAddress = propertySet.getStringProperty(PropertyKey.localSocketAddress).getValue();
-                exceptionMessageBuf.append(localSocketAddress != null && !Util.interfaceExists(localSocketAddress)
-                        ? Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable")
+                boolean interfaceNotAvaliable;
+                try {
+                    interfaceNotAvaliable = localSocketAddress != null && NetworkInterface.getByName(localSocketAddress) == null;
+                } catch (SocketException e1) {
+                    interfaceNotAvaliable = false;
+                }
+                exceptionMessageBuf.append(interfaceNotAvaliable ? Messages.getString("CommunicationsException.LocalSocketAddressNotAvailable")
                         : Messages.getString("CommunicationsException.TooManyClientConnections"));
             }
         }
@@ -303,5 +307,4 @@ public class ExceptionFactory {
 
         return exceptionMessageBuf.toString();
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -173,10 +173,8 @@ public abstract class CoreSession implements Session {
         if (this.eventSink == null) {
             synchronized (this) {
                 if (this.eventSink == null) { // check again to ensure that other thread didn't set it already
-                    this.eventSink = (ProfilerEventHandler) Util.getInstance(
-                            this.propertySet.getStringProperty(PropertyKey.profilerEventHandler).getStringValue(), new Class<?>[0], new Object[0],
-                            this.exceptionInterceptor);
-
+                    this.eventSink = Util.getInstance(ProfilerEventHandler.class,
+                            this.propertySet.getStringProperty(PropertyKey.profilerEventHandler).getStringValue(), null, null, this.exceptionInterceptor);
                     this.eventSink.init(this.log);
                 }
             }

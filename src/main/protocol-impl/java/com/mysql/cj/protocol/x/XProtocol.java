@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -263,7 +263,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         compressionAlgorithmsList = compressionAlgorithmsList == null ? "" : compressionAlgorithmsList.trim();
         String[] compressionAlgorithmsOrder;
         String[] compressionAlgsOrder = compressionAlgorithmsList.split("\\s*,\\s*");
-        compressionAlgorithmsOrder = Arrays.stream(compressionAlgsOrder).sequential().filter(n -> n != null && n.length() > 0).map(String::toLowerCase)
+        compressionAlgorithmsOrder = Arrays.stream(compressionAlgsOrder).sequential().filter(n -> n != null && !n.isEmpty()).map(String::toLowerCase)
                 .map(CompressionAlgorithm::getNormalizedAlgorithmName).toArray(String[]::new);
 
         String compressionExtensions = this.propertySet.getStringProperty(PropertyKey.xdevapiCompressionExtensions.getKeyName()).getValue();
@@ -281,10 +281,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
         String algorithm = algorithmOpt.get();
         this.compressionAlgorithm = compressionAlgorithms.get(algorithm);
-
-        // Make sure the picked compression algorithm streams exist.
-        this.compressionAlgorithm.getInputStreamClass();
-        this.compressionAlgorithm.getOutputStreamClass();
 
         Map<String, Object> compressionCap = new HashMap<>();
         compressionCap.put(XServerCapabilities.SUBKEY_COMPRESSION_ALGORITHM, algorithm);

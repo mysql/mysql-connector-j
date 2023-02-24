@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -207,7 +207,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     this.balancer = new ServerAffinityStrategy(props.getProperty(PropertyKey.serverAffinityOrder.getKeyName(), null));
                     break;
                 default:
-                    this.balancer = (BalanceStrategy) Class.forName(strategy).newInstance();
+                    this.balancer = Util.getInstance(BalanceStrategy.class, strategy, null, null, null);
             }
         } catch (Throwable t) {
             throw SQLError.createSQLException(Messages.getString("InvalidLoadBalanceStrategy", new Object[] { strategy }),
@@ -236,10 +236,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         try {
             String lbExceptionChecker = props.getProperty(PropertyKey.loadBalanceExceptionChecker.getKeyName(),
                     StandardLoadBalanceExceptionChecker.class.getName());
-            this.exceptionChecker = (LoadBalanceExceptionChecker) Util.getInstance(lbExceptionChecker, new Class<?>[0], new Object[0], null,
-                    Messages.getString("InvalidLoadBalanceExceptionChecker"));
+            this.exceptionChecker = Util.getInstance(LoadBalanceExceptionChecker.class, lbExceptionChecker, null, null, null);
             this.exceptionChecker.init(props);
-
         } catch (CJException e) {
             throw SQLExceptionsMapping.translateException(e, null);
         }

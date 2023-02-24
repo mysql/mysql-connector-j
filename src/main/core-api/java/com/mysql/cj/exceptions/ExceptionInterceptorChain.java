@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,7 +29,7 @@
 
 package com.mysql.cj.exceptions;
 
-import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -38,11 +38,11 @@ import com.mysql.cj.log.Log;
 import com.mysql.cj.util.Util;
 
 public class ExceptionInterceptorChain implements ExceptionInterceptor {
-    List<ExceptionInterceptor> interceptors;
+    private List<ExceptionInterceptor> interceptors;
 
     public ExceptionInterceptorChain(String interceptorClasses, Properties props, Log log) {
-        this.interceptors = Util.<ExceptionInterceptor> loadClasses(interceptorClasses, "Connection.BadExceptionInterceptor", this).stream()
-                .map(o -> o.init(props, log)).collect(Collectors.toList());
+        this.interceptors = Util.loadClasses(ExceptionInterceptor.class, interceptorClasses, "Connection.BadExceptionInterceptor", null).stream()
+                .map(i -> i.init(props, log)).collect(Collectors.toCollection(LinkedList::new));
     }
 
     public void addRingZero(ExceptionInterceptor interceptor) {
@@ -50,41 +50,22 @@ public class ExceptionInterceptorChain implements ExceptionInterceptor {
     }
 
     public Exception interceptException(Exception sqlEx) {
-        if (this.interceptors != null) {
-            Iterator<ExceptionInterceptor> iter = this.interceptors.iterator();
-
-            while (iter.hasNext()) {
-                sqlEx = iter.next().interceptException(sqlEx);
-            }
+        for (ExceptionInterceptor ie : this.interceptors) {
+            sqlEx = ie.interceptException(sqlEx);
         }
-
         return sqlEx;
     }
 
     public void destroy() {
-        if (this.interceptors != null) {
-            Iterator<ExceptionInterceptor> iter = this.interceptors.iterator();
-
-            while (iter.hasNext()) {
-                iter.next().destroy();
-            }
-        }
-
+        this.interceptors.forEach(ExceptionInterceptor::destroy);
     }
 
     public ExceptionInterceptor init(Properties properties, Log log) {
-        if (this.interceptors != null) {
-            Iterator<ExceptionInterceptor> iter = this.interceptors.iterator();
-
-            while (iter.hasNext()) {
-                iter.next().init(properties, log);
-            }
-        }
+        this.interceptors = this.interceptors.stream().map(i -> i.init(properties, log)).collect(Collectors.toCollection(LinkedList::new));
         return this;
     }
 
     public List<ExceptionInterceptor> getInterceptors() {
         return this.interceptors;
     }
-
 }

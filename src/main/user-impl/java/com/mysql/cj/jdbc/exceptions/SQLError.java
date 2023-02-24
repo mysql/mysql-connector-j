@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -29,6 +29,7 @@
 
 package com.mysql.cj.jdbc.exceptions;
 
+import java.sql.BatchUpdateException;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -205,8 +206,7 @@ public class SQLError {
     }
 
     /**
-     * Create a BatchUpdateException taking in consideration the JDBC version in use. For JDBC version prior to 4.2 the updates count array has int elements
-     * while JDBC 4.2 and beyond uses long values.
+     * Create a BatchUpdateException.
      * 
      * @param underlyingEx
      *            underlying exception
@@ -221,9 +221,8 @@ public class SQLError {
     public static SQLException createBatchUpdateException(SQLException underlyingEx, long[] updateCounts, ExceptionInterceptor interceptor)
             throws SQLException {
         // TODO should not throw SQLException
-        SQLException newEx = (SQLException) Util.getInstance("java.sql.BatchUpdateException",
-                new Class<?>[] { String.class, String.class, int.class, long[].class, Throwable.class },
-                new Object[] { underlyingEx.getMessage(), underlyingEx.getSQLState(), underlyingEx.getErrorCode(), updateCounts, underlyingEx }, interceptor);
+        SQLException newEx = new BatchUpdateException(underlyingEx.getMessage(), underlyingEx.getSQLState(), underlyingEx.getErrorCode(), updateCounts,
+                underlyingEx);
         return runThroughExceptionInterceptor(interceptor, newEx);
     }
 

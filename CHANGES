@@ -3,6 +3,8 @@
 
 Version 8.0.33
 
+  - Fix for Bug#34918989, Pluggable classes are initialized even when they cannot be used by Connector/J.
+
   - Fix for Bug#93415 (Bug#28992710), Documentation for getDefaultSchema() Needs Improvements.
 
   - Fix for Bug#110168 (Bug#35110706), yum update fails upgrading Connector/J package.

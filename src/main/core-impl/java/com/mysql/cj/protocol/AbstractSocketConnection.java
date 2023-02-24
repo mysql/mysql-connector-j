@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,10 +35,11 @@ import java.net.Socket;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertySet;
-import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.UnableToConnectException;
+import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.util.Util;
 import com.mysql.jdbc.SocketFactoryWrapper;
 
 public abstract class AbstractSocketConnection implements SocketConnection {
@@ -69,7 +70,7 @@ public abstract class AbstractSocketConnection implements SocketConnection {
         if (this.mysqlInput != null) {
             return this.mysqlInput;
         }
-        throw new IOException(Messages.getString("SocketConnection.2"));
+        throw new IOException(Messages.getString("SocketConnection.1"));
     }
 
     public void setMysqlInput(FullReadInputStream mysqlInput) {
@@ -80,7 +81,7 @@ public abstract class AbstractSocketConnection implements SocketConnection {
         if (this.mysqlOutput != null) {
             return this.mysqlOutput;
         }
-        throw new IOException(Messages.getString("SocketConnection.2"));
+        throw new IOException(Messages.getString("SocketConnection.1"));
     }
 
     public boolean isSSLEstablished() {
@@ -122,23 +123,25 @@ public abstract class AbstractSocketConnection implements SocketConnection {
         return this.propertySet;
     }
 
+    @SuppressWarnings("deprecation")
     protected SocketFactory createSocketFactory(String socketFactoryClassName) {
+        if (socketFactoryClassName == null) {
+            throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("SocketConnection.0"), getExceptionInterceptor());
+        }
+
         try {
-            if (socketFactoryClassName == null) {
-                throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("SocketConnection.0"), getExceptionInterceptor());
+            return Util.getInstance(SocketFactory.class, socketFactoryClassName, null, null, getExceptionInterceptor());
+        } catch (WrongArgumentException e1) {
+            if (e1.getCause() == null) {
+                // Wrap legacy socket factories.
+                try {
+                    return new SocketFactoryWrapper(
+                            Util.getInstance(com.mysql.jdbc.SocketFactory.class, socketFactoryClassName, null, null, getExceptionInterceptor()));
+                } catch (Exception e2) {
+                    throw e1;
+                }
             }
-
-            Object sf = Class.forName(socketFactoryClassName).newInstance();
-            if (sf instanceof SocketFactory) {
-                return (SocketFactory) (Class.forName(socketFactoryClassName).newInstance());
-            }
-
-            // wrap legacy socket factories
-            return new SocketFactoryWrapper(sf);
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | CJException ex) {
-            throw ExceptionFactory.createException(UnableToConnectException.class,
-                    Messages.getString("SocketConnection.1", new String[] { socketFactoryClassName }), getExceptionInterceptor());
+            throw e1;
         }
     }
-
 }

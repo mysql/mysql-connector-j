@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -10838,7 +10838,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             return null;
         });
         assertEquals(SQLException.class, t.getCause().getClass());
-        assertEquals("Can't instantiate required class", t.getCause().getMessage());
+        assertEquals("Failed loading the class 'DummyClass'.", t.getCause().getMessage());
         testConn2.close();
 
         // clientInfoProvider=java.lang.Object
@@ -10849,8 +10849,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             return null;
         });
         assertEquals(SQLException.class, t.getCause().getClass());
-        assertEquals("Configured clientInfoProvider class 'java.lang.Object' does not implement com.mysql.cj.jdbc.ClientInfoProvider.",
-                t.getCause().getMessage());
+        assertEquals("The class 'java.lang.Object' does not implement the interface 'com.mysql.cj.jdbc.ClientInfoProvider'.", t.getCause().getMessage());
         testConn3.close();
     }
 
@@ -11691,6 +11690,43 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } finally {
             if (replConn != null) {
                 replConn.close();
+            }
+        }
+    }
+
+    /*
+     * Tests fix for Bug#34918989, Pluggable classes are initialized even when they cannot be used by Connector/J.
+     */
+    @Test
+    void testBug34918989() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.propertiesTransform.getKeyName(), TestBug34918989PropTransOK.class.getName());
+        getConnectionWithProps(props).close();
+
+        props.setProperty(PropertyKey.propertiesTransform.getKeyName(), TestBug34918989PropTransKO.class.getName());
+        assertThrows(SQLException.class, () -> {
+            getConnectionWithProps(props).close();
+            return null;
+        });
+        // First time initializing the class throws ExceptionInInitializerError.
+        assertThrows(ExceptionInInitializerError.class, () -> Class.forName(TestBug34918989PropTransKO.class.getName()));
+        // After initialization failure it is as if the class does not exist.
+        assertThrows(NoClassDefFoundError.class, () -> Class.forName(TestBug34918989PropTransKO.class.getName()));
+    }
+
+    public static class TestBug34918989PropTransOK implements ConnectionPropertiesTransform {
+        @Override
+        public Properties transformProperties(Properties props) {
+            return props;
+        }
+    }
+
+    public static class TestBug34918989PropTransKO {
+        static {
+            if (true) {
+                throw new RuntimeException("Initialization failed!");
             }
         }
     }

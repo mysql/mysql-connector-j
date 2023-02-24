@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2010, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,10 +30,11 @@
 package com.mysql.cj.jdbc.ha;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
@@ -95,36 +96,22 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
         if (sqlStates == null || "".equals(sqlStates)) {
             return;
         }
-        List<String> states = StringUtils.split(sqlStates, ",", true);
-        List<String> newStates = new ArrayList<>();
 
-        for (String state : states) {
-            if (state.length() > 0) {
-                newStates.add(state);
-            }
-        }
-        if (newStates.size() > 0) {
-            this.sqlStateList = newStates;
-        }
+        this.sqlStateList = StringUtils.split(sqlStates, ",", true).stream().filter(s -> !s.isEmpty()).collect(Collectors.toList());
     }
 
     private void configureSQLExceptionSubclassList(String sqlExClasses) {
         if (sqlExClasses == null || "".equals(sqlExClasses)) {
             return;
         }
-        List<String> classes = StringUtils.split(sqlExClasses, ",", true);
-        List<Class<?>> newClasses = new ArrayList<>();
 
-        for (String exClass : classes) {
+        this.sqlExClassList = StringUtils.split(sqlExClasses, ",", true).stream().filter(s -> !s.isEmpty()).map(s -> {
             try {
-                Class<?> c = Class.forName(exClass);
-                newClasses.add(c);
-            } catch (Exception e) {
-                // ignore and don't check, class doesn't exist
+                return Class.forName(s, false, this.getClass().getClassLoader());
+            } catch (ClassNotFoundException e) {
+                // Ignore and don't check, class doesn't exist.
             }
-        }
-        if (newClasses.size() > 0) {
-            this.sqlExClassList = newClasses;
-        }
+            return null;
+        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

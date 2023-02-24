@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,6 +47,7 @@ import java.sql.Savepoint;
 import java.sql.Struct;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -92,6 +93,7 @@ import com.mysql.cj.log.ProfilerEvent;
 import com.mysql.cj.log.StandardLogger;
 import com.mysql.cj.protocol.ServerSessionStateController;
 import com.mysql.cj.protocol.SocksProxySocketFactory;
+import com.mysql.cj.protocol.a.NativeProtocol;
 import com.mysql.cj.util.LRUCache;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
@@ -436,8 +438,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             initializeSafeQueryInterceptors();
 
-        } catch (CJException e1) {
-            throw SQLExceptionsMapping.translateException(e1, getExceptionInterceptor());
+        } catch (CJException e) {
+            throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
         }
 
         try {
@@ -461,7 +463,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                                             new Object[] { this.session.getHostInfo().getHost(), this.session.getHostInfo().getPort() }),
                             MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
         }
-
     }
 
     @Override
@@ -471,9 +472,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void unSafeQueryInterceptors() throws SQLException {
-        this.queryInterceptors = this.queryInterceptors.stream().map(u -> ((NoSubInterceptorWrapper) u).getUnderlyingInterceptor())
-                .collect(Collectors.toList());
-
+        this.queryInterceptors = this.queryInterceptors.stream().map(NoSubInterceptorWrapper.class::cast).map(NoSubInterceptorWrapper::getUnderlyingInterceptor)
+                .collect(Collectors.toCollection(LinkedList::new));
         if (this.session != null) {
             this.session.setQueryInterceptors(this.queryInterceptors);
         }
@@ -482,9 +482,10 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public void initializeSafeQueryInterceptors() throws SQLException {
         this.queryInterceptors = Util
-                .<QueryInterceptor>loadClasses(this.propertySet.getStringProperty(PropertyKey.queryInterceptors).getStringValue(),
+                .loadClasses(QueryInterceptor.class, this.propertySet.getStringProperty(PropertyKey.queryInterceptors).getStringValue(),
                         "MysqlIo.BadQueryInterceptor", getExceptionInterceptor())
-                .stream().map(o -> new NoSubInterceptorWrapper(o.init(this, this.props, this.session.getLog()))).collect(Collectors.toList());
+                .stream().map(o -> new NoSubInterceptorWrapper(o.init(this, this.props, this.session.getLog())))
+                .collect(Collectors.toCollection(LinkedList::new));
     }
 
     @Override
@@ -871,8 +872,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 close();
                 this.session.getProtocol().getSocketConnection().forceClose();
 
-            } catch (Exception EEE) {
-                connectionException = EEE;
+            } catch (Exception e) {
+                connectionException = e;
                 connectionGood = false;
             }
 
@@ -965,13 +966,16 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
         } catch (UnableToConnectException rejEx) {
             close();
-            this.session.getProtocol().getSocketConnection().forceClose();
+            NativeProtocol protocol = this.session.getProtocol();
+            if (protocol != null) {
+                protocol.getSocketConnection().forceClose();
+            }
             throw rejEx;
 
-        } catch (Exception EEE) {
+        } catch (Exception e) {
 
-            if ((EEE instanceof PasswordExpiredException
-                    || EEE instanceof SQLException && ((SQLException) EEE).getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD)
+            if ((e instanceof PasswordExpiredException
+                    || e instanceof SQLException && ((SQLException) e).getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD)
                     && !this.disconnectOnExpiredPasswords.getValue()) {
                 return;
             }
@@ -980,18 +984,18 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 this.session.forceClose();
             }
 
-            connectionNotEstablishedBecause = EEE;
+            connectionNotEstablishedBecause = e;
 
-            if (EEE instanceof SQLException) {
-                throw (SQLException) EEE;
+            if (e instanceof SQLException) {
+                throw (SQLException) e;
             }
 
-            if (EEE.getCause() != null && EEE.getCause() instanceof SQLException) {
-                throw (SQLException) EEE.getCause();
+            if (e.getCause() != null && e.getCause() instanceof SQLException) {
+                throw (SQLException) e.getCause();
             }
 
-            if (EEE instanceof CJException) {
-                throw (CJException) EEE;
+            if (e instanceof CJException) {
+                throw (CJException) e;
             }
 
             SQLException chainedEx = SQLError.createSQLException(Messages.getString("Connection.UnableToConnect"),
@@ -1015,37 +1019,14 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             int cacheSize = this.propertySet.getIntegerProperty(PropertyKey.prepStmtCacheSize).getValue();
             String queryInfoCacheFactory = this.propertySet.getStringProperty(PropertyKey.queryInfoCacheFactory).getValue();
 
-            try {
-                Class<?> factoryClass;
-
-                factoryClass = Class.forName(queryInfoCacheFactory);
-
-                @SuppressWarnings("unchecked")
-                CacheAdapterFactory<String, QueryInfo> cacheFactory = ((CacheAdapterFactory<String, QueryInfo>) factoryClass.newInstance());
-
-                this.queryInfoCache = cacheFactory.getInstance(this, this.origHostInfo.getDatabaseUrl(), cacheSize, this.prepStmtCacheSqlLimit.getValue());
-
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantFindCacheFactory", new Object[] { queryInfoCacheFactory, PropertyKey.queryInfoCacheFactory }),
-                        getExceptionInterceptor());
-                sqlEx.initCause(e);
-
-                throw sqlEx;
-            } catch (Exception e) {
-                SQLException sqlEx = SQLError.createSQLException(
-                        Messages.getString("Connection.CantLoadCacheFactory", new Object[] { queryInfoCacheFactory, PropertyKey.queryInfoCacheFactory }),
-                        getExceptionInterceptor());
-                sqlEx.initCause(e);
-
-                throw sqlEx;
-            }
+            @SuppressWarnings("unchecked")
+            CacheAdapterFactory<String, QueryInfo> cacheFactory = Util.getInstance(CacheAdapterFactory.class, queryInfoCacheFactory, null, null,
+                    getExceptionInterceptor());
+            this.queryInfoCache = cacheFactory.getInstance(this, this.origHostInfo.getDatabaseUrl(), cacheSize, this.prepStmtCacheSqlLimit.getValue());
 
             if (this.useServerPrepStmts.getValue()) {
                 this.serverSideStatementCheckCache = new LRUCache<>(cacheSize);
-
                 this.serverSideStatementCache = new LRUCache<CompoundCacheKey, ServerPreparedStatement>(cacheSize) {
-
                     private static final long serialVersionUID = 7692318650375988114L;
 
                     @Override
@@ -1053,9 +1034,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                         if (this.maxElements <= 1) {
                             return false;
                         }
-
                         boolean removeIt = super.removeEldestEntry(eldest);
-
                         if (removeIt) {
                             ServerPreparedStatement ps = eldest.getValue();
                             ps.isCached = false;
@@ -1066,7 +1045,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                                 // punt
                             }
                         }
-
                         return removeIt;
                     }
                 };
@@ -1273,16 +1251,14 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      */
     private void initializePropsFromServer() throws SQLException {
         String connectionInterceptorClasses = this.propertySet.getStringProperty(PropertyKey.connectionLifecycleInterceptors).getStringValue();
-
         this.connectionLifecycleInterceptors = null;
 
         if (connectionInterceptorClasses != null) {
             try {
                 this.connectionLifecycleInterceptors = Util
-                        .<ConnectionLifecycleInterceptor>loadClasses(
-                                this.propertySet.getStringProperty(PropertyKey.connectionLifecycleInterceptors).getStringValue(),
-                                "Connection.badLifecycleInterceptor", getExceptionInterceptor())
-                        .stream().map(o -> o.init(this, this.props, this.session.getLog())).collect(Collectors.toList());
+                        .loadClasses(ConnectionLifecycleInterceptor.class, connectionInterceptorClasses, "Connection.badLifecycleInterceptor",
+                                getExceptionInterceptor())
+                        .stream().map(i -> i.init(this, this.props, this.session.getLog())).collect(Collectors.toCollection(LinkedList::new));
             } catch (CJException e) {
                 throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
             }
@@ -1722,9 +1698,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             if (this.queryInterceptors != null) {
-                for (int i = 0; i < this.queryInterceptors.size(); i++) {
-                    this.queryInterceptors.get(i).destroy();
-                }
+                this.queryInterceptors.forEach(QueryInterceptor::destroy);
             }
 
             if (this.exceptionInterceptor != null) {
@@ -2566,26 +2540,22 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (this.infoProvider == null) {
                 String clientInfoProvider = this.propertySet.getStringProperty(PropertyKey.clientInfoProvider).getStringValue();
                 try {
-                    try {
-                        this.infoProvider = (ClientInfoProvider) Util.getInstance(clientInfoProvider, new Class<?>[0], new Object[0],
-                                getExceptionInterceptor());
-                    } catch (CJException ex1) {
+                    this.infoProvider = Util.getInstance(ClientInfoProvider.class, clientInfoProvider, null, null, getExceptionInterceptor());
+                } catch (CJException e1) {
+                    if (ClassNotFoundException.class.isInstance(e1.getCause())) {
+                        // Retry with package name prepended.
                         try {
-                            // try with package name prepended
-                            this.infoProvider = (ClientInfoProvider) Util.getInstance("com.mysql.cj.jdbc." + clientInfoProvider, new Class<?>[0], new Object[0],
+                            this.infoProvider = Util.getInstance(ClientInfoProvider.class, "com.mysql.cj.jdbc." + clientInfoProvider, null, null,
                                     getExceptionInterceptor());
-                        } catch (CJException ex2) {
-                            throw SQLExceptionsMapping.translateException(ex1, getExceptionInterceptor());
+                        } catch (CJException e2) {
+                            throw SQLExceptionsMapping.translateException(e1, getExceptionInterceptor());
                         }
+                    } else {
+                        throw SQLExceptionsMapping.translateException(e1, getExceptionInterceptor());
                     }
-                } catch (ClassCastException ex) {
-                    throw SQLError.createSQLException(Messages.getString("Connection.ClientInfoNotImplemented", new Object[] { clientInfoProvider }),
-                            MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                 }
-
                 this.infoProvider.initialize(this, this.props);
             }
-
             return this.infoProvider;
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -54,7 +54,7 @@ import com.mysql.cj.jdbc.ha.ReplicationConnectionProxy;
 import com.mysql.cj.util.StringUtils;
 
 /**
- * The Java SQL framework allows for multiple database drivers. Each driver should supply a class that implements the Driver interface
+ * The Java SQL framework allows for multiple database drivers. Each driver should supply a class that implements the Driver interface.
  * 
  * <p>
  * The DriverManager will try to load as many drivers as it can find and then for any given connection request, it will ask each driver in turn to try to
@@ -68,14 +68,29 @@ import com.mysql.cj.util.StringUtils;
  * 
  * <p>
  * When a Driver class is loaded, it should create an instance of itself and register it with the DriverManager. This means that a user can load and register a
- * driver by doing Class.forName("foo.bah.Driver")
+ * driver by doing Class.forName("foo.bar.Driver").
  * </p>
  */
 public class NonRegisteringDriver implements java.sql.Driver {
+    static {
+        try {
+            Class.forName(AbandonedConnectionCleanupThread.class.getName());
+        } catch (ClassNotFoundException e) {
+        }
+    }
 
-    /*
-     * Standardizes OS name information to align with other drivers/clients
-     * for MySQL connection attributes
+    /**
+     * Construct a new driver and register it with DriverManager.
+     * 
+     * @throws SQLException
+     *             if a database error occurs.
+     */
+    public NonRegisteringDriver() throws SQLException {
+        // Required for Class.forName().newInstance().
+    }
+
+    /**
+     * Standardizes OS name information to align with other drivers/clients for MySQL connection attributes.
      * 
      * @return the transformed, standardized OS name
      */
@@ -83,9 +98,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
         return Constants.OS_NAME;
     }
 
-    /*
-     * Standardizes platform information to align with other drivers/clients
-     * for MySQL connection attributes
+    /**
+     * Standardizes platform information to align with other drivers/clients for MySQL connection attributes.
      * 
      * @return the transformed, standardized platform details
      */
@@ -93,16 +107,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
         return Constants.OS_ARCH;
     }
 
-    static {
-        try {
-            Class.forName(AbandonedConnectionCleanupThread.class.getName());
-        } catch (ClassNotFoundException e) {
-            // ignore
-        }
-    }
-
     /**
-     * Gets the drivers major version number
+     * Gets the drivers major version number.
      * 
      * @return the drivers major version number
      */
@@ -111,7 +117,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
     }
 
     /**
-     * Get the drivers minor version number
+     * Get the drivers minor version number.
      * 
      * @return the drivers minor version number
      */
@@ -120,36 +126,21 @@ public class NonRegisteringDriver implements java.sql.Driver {
     }
 
     /**
-     * Construct a new driver and register it with DriverManager
-     * 
-     * @throws SQLException
-     *             if a database error occurs.
-     */
-    public NonRegisteringDriver() throws SQLException {
-        // Required for Class.forName().newInstance()
-    }
-
-    /**
-     * Typically, drivers will return true if they understand the subprotocol
-     * specified in the URL and false if they don't. This driver's protocols
-     * start with jdbc:mysql:
+     * Typically, drivers will return true if they understand the subprotocol specified in the URL and false if they don't. This driver's protocols start with
+     * jdbc:mysql:
      * 
      * @param url
-     *            the URL of the driver
+     *            the URL of the driver.
      * 
-     * @return true if this driver accepts the given URL
+     * @return true if this driver accepts the given URL.
      * 
      * @exception SQLException
-     *                if a database access error occurs or the url is null
+     *                if a database access error occurs or the url is null.
      */
     @Override
     public boolean acceptsURL(String url) throws SQLException {
         return (ConnectionUrl.acceptsUrl(url));
     }
-
-    //
-    // return the database name property
-    //
 
     /**
      * Try to make a database connection to the given URL. The driver should return "null" if it realizes it is the wrong kind of driver to connect to the given
@@ -166,22 +157,21 @@ public class NonRegisteringDriver implements java.sql.Driver {
      * </p>
      * 
      * <p>
-     * MySQL protocol takes the form: jdbc:mysql://host:port/database
+     * MySQL protocol takes the form: jdbc:mysql://host:port/database.
      * </p>
      * 
      * @param url
-     *            the URL of the database to connect to
+     *            the URL of the database to connect to.
      * @param info
-     *            a list of arbitrary tag/value pairs as connection arguments
+     *            a list of arbitrary tag/value pairs as connection arguments.
      * 
-     * @return a connection to the URL or null if it isn't us
+     * @return a connection to the URL or null if it isn't us.
      * 
      * @exception SQLException
-     *                if a database access error occurs or the url is {@code null}
+     *                if a database access error occurs or the url is {@code null}.
      */
     @Override
     public java.sql.Connection connect(String url, Properties info) throws SQLException {
-
         try {
             if (!ConnectionUrl.acceptsUrl(url)) {
                 /*
@@ -214,7 +204,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
             }
 
         } catch (UnsupportedConnectionStringException e) {
-            // when Connector/J can't handle this connection string the Driver must return null
+            // When Connector/J can't handle this connection string the Driver must return null.
             return null;
 
         } catch (CJException ex) {
@@ -294,7 +284,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
     @Override
     public boolean jdbcCompliant() {
-        // NOTE: MySQL is not SQL92 compliant
+        // NOTE: MySQL is not SQL92 compliant.
         // TODO Is it true? DatabaseMetaData.supportsANSI92EntryLevelSQL() returns true...
         return false;
     }

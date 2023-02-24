@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,7 +32,7 @@ package com.mysql.cj.jdbc;
 import java.sql.SQLException;
 
 /**
- * The Java SQL framework allows for multiple database drivers. Each driver should supply a class that implements the Driver interface
+ * The Java SQL framework allows for multiple database drivers. Each driver should supply a class that implements the Driver interface.
  * 
  * <p>
  * The DriverManager will try to load as many drivers as it can find and then for any given connection request, it will ask each driver in turn to try to
@@ -44,12 +44,10 @@ import java.sql.SQLException;
  * 
  * <p>
  * When a Driver class is loaded, it should create an instance of itself and register it with the DriverManager. This means that a user can load and register a
- * driver by doing Class.forName("foo.bah.Driver")
+ * driver by doing Class.forName("foo.bar.Driver").
  */
 public class Driver extends NonRegisteringDriver implements java.sql.Driver {
-    //
-    // Register ourselves with the DriverManager
-    //
+    // Register ourselves with the DriverManager.
     static {
         try {
             java.sql.DriverManager.registerDriver(new Driver());
@@ -65,6 +63,6 @@ public class Driver extends NonRegisteringDriver implements java.sql.Driver {
      *             if a database error occurs.
      */
     public Driver() throws SQLException {
-        // Required for Class.forName().newInstance()
+        // Required for Class.forName().newInstance().
     }
 }

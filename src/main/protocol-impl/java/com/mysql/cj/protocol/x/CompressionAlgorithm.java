@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -53,9 +53,7 @@ public class CompressionAlgorithm {
     private String algorithmIdentifier;
     private CompressionMode compressionMode;
     private String inputStreamClassFqn;
-    private Class<?> inputStreamClass = null;
     private String outputStreamClassFqn;
-    private Class<?> outputStreamClass = null;
 
     /**
      * Returns a list of the compression algorithms supported natively. Additional algorithms can be registered by user.
@@ -87,15 +85,29 @@ public class CompressionAlgorithm {
         this.algorithmIdentifier = getNormalizedAlgorithmName(name);
         String[] nameMode = this.algorithmIdentifier.split("_");
         if (nameMode.length != 2) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.4", new Object[] { name }));
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.3", new Object[] { name }));
         }
         try {
             CompressionMode mode = CompressionMode.valueOf(nameMode[1].toUpperCase());
             this.compressionMode = mode;
         } catch (IllegalArgumentException e) {
-            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.5", new Object[] { nameMode[1] }));
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.4", new Object[] { nameMode[1] }));
+        }
+
+        try {
+            Class.forName(inputStreamClassFqn, false, this.getClass().getClassLoader());
+        } catch (ClassNotFoundException e) {
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("Protocol.Compression.5", new Object[] { inputStreamClassFqn }), e);
         }
         this.inputStreamClassFqn = inputStreamClassFqn;
+
+        try {
+            Class.forName(outputStreamClassFqn, false, this.getClass().getClassLoader());
+        } catch (ClassNotFoundException e) {
+            throw ExceptionFactory.createException(WrongArgumentException.class,
+                    Messages.getString("Protocol.Compression.5", new Object[] { outputStreamClassFqn }), e);
+        }
         this.outputStreamClassFqn = outputStreamClassFqn;
     }
 
@@ -118,36 +130,20 @@ public class CompressionAlgorithm {
     }
 
     /**
-     * Gets this algorithm's {@link InputStream} implementation class that can be used to inflate data.
+     * Gets this algorithm's {@link InputStream} implementation class name that can be used to inflate data.
      * 
      * @return an {@link InputStream} that knows how to inflate data.
      */
-    public Class<?> getInputStreamClass() {
-        if (this.inputStreamClass == null) {
-            try {
-                this.inputStreamClass = Class.forName(this.inputStreamClassFqn);
-            } catch (ClassNotFoundException e) {
-                throw ExceptionFactory.createException(WrongArgumentException.class,
-                        Messages.getString("Protocol.Compression.3", new Object[] { this.inputStreamClassFqn }), e);
-            }
-        }
-        return this.inputStreamClass;
+    public String getInputStreamClassName() {
+        return this.inputStreamClassFqn;
     }
 
     /**
-     * Gets this algorithm's {@link OutputStream} implementation class that can be used to deflate data.
+     * Gets this algorithm's {@link OutputStream} implementation class name that can be used to deflate data.
      * 
      * @return an {@link OutputStream} that knows how to deflate data.
      */
-    public Class<?> getOutputStreamClass() {
-        if (this.outputStreamClass == null) {
-            try {
-                this.outputStreamClass = Class.forName(this.outputStreamClassFqn);
-            } catch (ClassNotFoundException e) {
-                throw ExceptionFactory.createException(WrongArgumentException.class,
-                        Messages.getString("Protocol.Compression.3", new Object[] { this.outputStreamClassFqn }), e);
-            }
-        }
-        return this.outputStreamClass;
+    public String getOutputStreamClassName() {
+        return this.outputStreamClassFqn;
     }
 }

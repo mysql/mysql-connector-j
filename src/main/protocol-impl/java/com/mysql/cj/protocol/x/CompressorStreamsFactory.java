@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.mysql.cj.Messages;
+import com.mysql.cj.exceptions.CJException;
+import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.util.Util;
 
 /**
@@ -83,9 +86,14 @@ public class CompressorStreamsFactory {
             underlyingIn = this.underlyingInputStream;
         }
 
-        InputStream compressionIn = (InputStream) Util.getInstance(this.compressionAlgorithm.getInputStreamClass().getName(),
-                new Class<?>[] { InputStream.class }, new Object[] { underlyingIn }, null, Messages.getString("Protocol.Compression.IoFactory.0",
-                        new Object[] { this.compressionAlgorithm.getInputStreamClass().getName(), this.compressionAlgorithm }));
+        InputStream compressionIn;
+        try {
+            compressionIn = Util.getInstance(InputStream.class, this.compressionAlgorithm.getInputStreamClassName(), new Class<?>[] { InputStream.class },
+                    new Object[] { underlyingIn }, null);
+        } catch (CJException e) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.IoFactory.0",
+                    new Object[] { this.compressionAlgorithm.getInputStreamClassName(), this.compressionAlgorithm.getAlgorithmIdentifier() }), e);
+        }
 
         if (areCompressedStreamsContinuous()) {
             this.compressorInputStreamInstance = compressionIn;
@@ -117,9 +125,14 @@ public class CompressorStreamsFactory {
             underlyingOut = this.underlyingOutputStream;
         }
 
-        OutputStream compressionOut = (OutputStream) Util.getInstance(this.compressionAlgorithm.getOutputStreamClass().getName(),
-                new Class<?>[] { OutputStream.class }, new Object[] { underlyingOut }, null, Messages.getString("Protocol.Compression.IoFactory.1",
-                        new Object[] { this.compressionAlgorithm.getOutputStreamClass().getName(), this.compressionAlgorithm }));
+        OutputStream compressionOut;
+        try {
+            compressionOut = Util.getInstance(OutputStream.class, this.compressionAlgorithm.getOutputStreamClassName(), new Class<?>[] { OutputStream.class },
+                    new Object[] { underlyingOut }, null);
+        } catch (CJException e) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.IoFactory.1",
+                    new Object[] { this.compressionAlgorithm.getOutputStreamClassName(), this.compressionAlgorithm.getAlgorithmIdentifier() }), e);
+        }
 
         if (areCompressedStreamsContinuous()) {
             compressionOut = new ContinuousOutputStream(compressionOut);
