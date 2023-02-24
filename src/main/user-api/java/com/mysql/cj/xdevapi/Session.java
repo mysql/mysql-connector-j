@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -93,16 +93,17 @@ public interface Session {
     Schema getSchema(String schemaName);
 
     /**
-     * Retrieve the default schema name which may be configured at connect time.
+     * Retrieve the default schema name, which might have been configured at the time of connection. Returns empty String if no default schema has been set.
      * 
-     * @return default schema name
+     * @return default schema name or empty String if no default schema has been set
      */
     String getDefaultSchemaName();
 
     /**
-     * Retrieve the default schema which may be configured at connect time.
+     * Retrieve the default schema name, which might have been configured at the time of connection. Returns <code>null</code> if no default schema has been
+     * set.
      * 
-     * @return default {@link Schema}
+     * @return default {@link Schema} or <code>null</code> if no default schema has been set
      */
     Schema getDefaultSchema();
 
