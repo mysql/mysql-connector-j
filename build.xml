@@ -223,13 +223,13 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <property name="com.mysql.cj.build.driver.version.full"
               value="${com.mysql.cj.build.driver.version}${com.mysql.cj.build.driver.version.extra}${com.mysql.cj.build.driver.version.snapshot}" />
 
-    <property name="com.mysql.cj.build.driver.displayName" value="MySQL Connector/J" />
     <property name="com.mysql.cj.build.driver.name" value="mysql-connector-j" />
     <property name="com.mysql.cj.build.driver.legacyName" value="mysql-connector-java" />
     <property name="com.mysql.cj.build.driver.extraName" value="" />
     <property name="com.mysql.cj.build.driver.extendedName" value="${com.mysql.cj.build.driver.name}${com.mysql.cj.build.driver.extraName}" />
     <property name="com.mysql.cj.build.driver.extendedLegacyName" value="${com.mysql.cj.build.driver.legacyName}${com.mysql.cj.build.driver.extraName}" />
     <property name="com.mysql.cj.build.driver.fullName" value="${com.mysql.cj.build.driver.extendedName}-${com.mysql.cj.build.driver.version.full}" />
+    <property name="com.mysql.cj.build.driver.displayName" value="MySQL Connector/J" />
 
     <property name="com.mysql.cj.build.dir" value="build" />
     <property name="com.mysql.cj.build.dir.driver" value="${com.mysql.cj.build.dir}/${com.mysql.cj.build.driver.fullName}" />
