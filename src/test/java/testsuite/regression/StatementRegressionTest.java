@@ -13160,4 +13160,94 @@ public class StatementRegressionTest extends BaseTestCase {
             return super.preProcess(sql, interceptedQuery);
         }
     }
+
+    /**
+     * Tests fix for Bug#34558945, PS using setCharacterStream() fails with "Incorrect string value" if the Java program encoding is not UTF-8 after 8.0.29.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug34558945() throws Exception {
+        createTable("testBug34558945Utf8", "(txt VARCHAR(100) COLLATE utf8mb4_0900_ai_ci)");
+        createTable("testBug34558945SJis", "(txt VARCHAR(100) COLLATE sjis_japanese_ci)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+
+        final String utf8 = "UTF-8";
+        final String sjis = "Shift_JIS";
+        final String[] charEncs = { null, utf8, sjis };
+        final String value = "\u7ADC";
+
+        for (String ce : charEncs) {
+            for (String cce : charEncs) {
+
+                if (ce == null) {
+                    props.remove(PropertyKey.characterEncoding.getKeyName());
+                } else {
+                    props.setProperty(PropertyKey.characterEncoding.getKeyName(), ce);
+                }
+                if (cce == null) {
+                    props.remove(PropertyKey.clobCharacterEncoding.getKeyName());
+                } else {
+                    props.setProperty(PropertyKey.clobCharacterEncoding.getKeyName(), cce);
+                }
+
+                boolean useSPS = false;
+                do {
+                    props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+                    try (Connection testConn = getConnectionWithProps(props)) {
+                        int records;
+                        PreparedStatement testPStmt;
+                        Statement testStmt;
+
+                        // Table with UTF-8 column.
+                        records = 1;
+                        testPStmt = testConn.prepareStatement("INSERT INTO testBug34558945Utf8 VALUES (?)");
+                        testPStmt.setString(1, value);
+                        assertEquals(1, testPStmt.executeUpdate());
+                        testPStmt.setCharacterStream(1, new StringReader(value), value.length());
+                        if (sjis.equals(cce) || cce == null && sjis.equals(ce)) {
+                            assertThrows(SQLException.class, ".*Incorrect string value:.*", testPStmt::executeUpdate);
+                        } else {
+                            assertEquals(1, testPStmt.executeUpdate());
+                            records = 2;
+                        }
+
+                        testStmt = testConn.createStatement();
+                        this.rs = testStmt.executeQuery("SELECT * FROM testBug34558945Utf8");
+                        while (records-- > 0) {
+                            assertTrue(this.rs.next());
+                            assertEquals(value, this.rs.getString(1));
+                        }
+                        assertFalse(this.rs.next());
+                        testStmt.executeUpdate("TRUNCATE TABLE testBug34558945Utf8");
+
+                        // Table with Shift_JIS column.
+                        records = 1;
+                        testPStmt = testConn.prepareStatement("INSERT INTO testBug34558945SJis VALUES (?)");
+                        testPStmt.setString(1, value);
+                        assertEquals(1, testPStmt.executeUpdate());
+                        testPStmt.setCharacterStream(1, new StringReader(value), value.length());
+                        if (sjis.equals(cce) || cce == null && sjis.equals(ce)) {
+                            assertEquals(1, testPStmt.executeUpdate());
+                            records = 2;
+                        } else {
+                            assertThrows(SQLException.class, ".*Incorrect string value:.*", testPStmt::executeUpdate);
+                        }
+
+                        testStmt = testConn.createStatement();
+                        this.rs = testStmt.executeQuery("SELECT * FROM testBug34558945SJis");
+                        while (records-- > 0) {
+                            assertTrue(this.rs.next());
+                            assertEquals(value, this.rs.getString(1));
+                        }
+                        assertFalse(this.rs.next());
+                        testStmt.executeUpdate("TRUNCATE TABLE testBug34558945SJis");
+                    }
+                } while (useSPS = !useSPS);
+            }
+        }
+    }
 }

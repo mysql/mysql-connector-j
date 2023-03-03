@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -66,20 +66,23 @@ public class ReaderValueEncoder extends AbstractValueEncoder {
             byte[] bytes;
 
             boolean useLength = this.propertySet.getBooleanProperty(PropertyKey.useStreamLengthsInPrepStmts).getValue();
-            String forcedEncoding = binding.isNational() ? null : this.propertySet.getStringProperty(PropertyKey.clobCharacterEncoding).getStringValue();
+            String clobEncoding = binding.isNational() ? null : this.propertySet.getStringProperty(PropertyKey.clobCharacterEncoding).getStringValue();
+            if (clobEncoding == null) {
+                clobEncoding = this.charEncoding.getStringValue();
+            }
 
             long scaleOrLength = binding.getScaleOrLength();
             if (useLength && (scaleOrLength != -1)) {
                 c = new char[(int) scaleOrLength];
                 int numCharsRead = Util.readFully(reader, c, (int) scaleOrLength); // blocks until all read
-                bytes = StringUtils.getBytes(new String(c, 0, numCharsRead), forcedEncoding);
+                bytes = StringUtils.getBytes(new String(c, 0, numCharsRead), clobEncoding);
             } else {
                 c = new char[4096];
                 StringBuilder buf = new StringBuilder();
                 while ((len = reader.read(c)) != -1) {
                     buf.append(c, 0, len);
                 }
-                bytes = StringUtils.getBytes(buf.toString(), forcedEncoding);
+                bytes = StringUtils.getBytes(buf.toString(), clobEncoding);
             }
             return escapeBytesIfNeeded(bytes);
 
