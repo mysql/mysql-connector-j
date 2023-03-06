@@ -572,6 +572,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
                 this.session.getProtocol().sendCommand(this.commandBuilder.buildComStmtReset(this.session.getSharedSendPacket(), this.serverStatementId), false,
                         0);
             } finally {
+                // OK_PACKET returned in previous sendCommand() was not processed so keep original transaction state.
+                this.session.getProtocol().getServerSession().preserveOldTransactionState();
                 this.session.clearInputStream();
             }
         }

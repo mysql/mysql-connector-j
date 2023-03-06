@@ -11788,4 +11788,64 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.stmt.execute("TRUNCATE TABLE testBug108643");
         } while ((useSPS = !useSPS) || (allowMQ = !allowMQ) || (rwBatchStmts = !rwBatchStmts) || (useLTS = !useLTS) || (useLSS = !useLSS));
     }
+
+    /**
+     * Tests fix for Bug#109013 (Bug#34772608), useServerPrepStmts and useLocalTransactionState could cause rollback failure.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug109013() throws Exception {
+        createTable("testBug109013", "(id INT PRIMARY KEY)");
+
+        boolean useSPS = false;
+        boolean useLTS = false;
+        boolean useLSS = false;
+
+        do {
+            final String testCase = String.format("Case: [useSPS: %s, useLTS: %s, useLSS: %s ]", useSPS ? "Y" : "N", useLTS ? "Y" : "N", useLSS ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), PropertyDefinitions.SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.useLocalTransactionState.getKeyName(), Boolean.toString(useLTS));
+            props.setProperty(PropertyKey.useLocalSessionState.getKeyName(), Boolean.toString(useLSS));
+
+            // Insert duplicate record in batch.
+            try (Connection testConn = getConnectionWithProps(props)) {
+                testConn.setAutoCommit(false);
+                try (PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug109013 VALUES (?)")) {
+                    testPstmt.setInt(1, 1);
+                    testPstmt.addBatch();
+                    testPstmt.setInt(1, 1); // Duplicate record.
+                    testPstmt.addBatch();
+                    assertThrows(testCase, SQLException.class, testPstmt::executeBatch);
+                    testConn.rollback();
+                }
+                testConn.setAutoCommit(true); // Bad data must have been rolled back, otherwise this commits it.
+            }
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug109013");
+            assertFalse(this.rs.next(), testCase);
+
+            // Insert duplicate record one by one.
+            try (Connection testConn = getConnectionWithProps(props)) {
+                testConn.createStatement().execute("TRUNCATE TABLE testBug109013");
+                testConn.setAutoCommit(false);
+                try (PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug109013 VALUES (?)")) {
+                    testPstmt.clearParameters();
+                    testPstmt.setInt(1, 1);
+                    assertEquals(1, testPstmt.executeUpdate());
+                    testPstmt.clearParameters();
+                    testPstmt.setInt(1, 1); // Duplicate record.
+                    assertThrows(testCase, SQLException.class, testPstmt::executeUpdate);
+                    testConn.rollback();
+                }
+                testConn.setAutoCommit(true); // Bad data must have been rolled back, otherwise this commits it.
+            }
+            this.rs = this.stmt.executeQuery("SELECT * FROM testBug109013");
+            assertFalse(this.rs.next(), testCase);
+
+        } while ((useSPS = !useSPS) || (useLTS = !useLTS) || (useLSS = !useLSS));
+    }
 }
