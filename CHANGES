@@ -3,6 +3,8 @@
 
 Version 8.0.33
 
+  - Fix for bug Bug#108643 (Bug#34652568), Commit statement not effect when two params turns on.
+
   - Fix for Bug#34918989, Pluggable classes are initialized even when they cannot be used by Connector/J.
 
   - Fix for Bug#93415 (Bug#28992710), Documentation for getDefaultSchema() Needs Improvements.

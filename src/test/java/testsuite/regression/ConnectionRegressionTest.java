@@ -11694,8 +11694,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
     }
 
-    /*
+    /**
      * Tests fix for Bug#34918989, Pluggable classes are initialized even when they cannot be used by Connector/J.
+     * 
+     * @throws Exception
      */
     @Test
     void testBug34918989() throws Exception {
@@ -11729,5 +11731,61 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 throw new RuntimeException("Initialization failed!");
             }
         }
+    }
+
+    /**
+     * Tests fix for bug Bug#108643 (Bug#34652568), Commit statement not effect when two params turns on.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug108643() throws Exception {
+        createTable("testBug108643", "(id INT PRIMARY KEY)");
+
+        boolean useSPS = false;
+        boolean allowMQ = false;
+        boolean rwBatchStmts = false;
+        boolean useLTS = false;
+        boolean useLSS = false;
+
+        do {
+            final String testCase = String.format("Case: [useSPS: %s, allowMQ: %s, rwBatchStmts: %s, useLTS: %s, useLSS: %s ]", useSPS ? "Y" : "N",
+                    allowMQ ? "Y" : "N", rwBatchStmts ? "Y" : "N", useLTS ? "Y" : "N", useLSS ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), PropertyDefinitions.SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.allowMultiQueries.getKeyName(), Boolean.toString(allowMQ));
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), Boolean.toString(rwBatchStmts));
+            props.setProperty(PropertyKey.useLocalTransactionState.getKeyName(), Boolean.toString(useLTS));
+            props.setProperty(PropertyKey.useLocalSessionState.getKeyName(), Boolean.toString(useLSS));
+
+            try (Connection testConn = getConnectionWithProps(props)) {
+                testConn.setAutoCommit(false);
+
+                PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug108643 VALUES (?)");
+                for (int i = 1; i <= 5; i++) {
+                    testPstmt.setInt(1, i);
+                    testPstmt.addBatch();
+                }
+                assertEquals(5, testPstmt.executeBatch().length);
+                for (int i = 6; i <= 10; i++) {
+                    testPstmt.setInt(1, i);
+                    testPstmt.addBatch();
+                }
+                assertEquals(5, testPstmt.executeBatch().length);
+                testConn.commit();
+
+                testPstmt.close();
+            }
+
+            this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM testBug108643");
+            assertTrue(this.rs.next(), testCase);
+            assertEquals(10, this.rs.getInt(1), testCase);
+            assertFalse(this.rs.next());
+
+            this.stmt.execute("TRUNCATE TABLE testBug108643");
+        } while ((useSPS = !useSPS) || (allowMQ = !allowMQ) || (rwBatchStmts = !rwBatchStmts) || (useLTS = !useLTS) || (useLSS = !useLSS));
     }
 }
