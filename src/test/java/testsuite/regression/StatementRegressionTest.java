@@ -13168,7 +13168,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     @Test
     void testBug34558945() throws Exception {
-        createTable("testBug34558945Utf8", "(txt VARCHAR(100) COLLATE utf8mb4_0900_ai_ci)");
+        createTable("testBug34558945Utf8", "(txt VARCHAR(100) COLLATE utf8mb4_general_ci)");
         createTable("testBug34558945SJis", "(txt VARCHAR(100) COLLATE sjis_japanese_ci)");
 
         Properties props = new Properties();
