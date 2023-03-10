@@ -3,6 +3,8 @@
 
 Version 8.0.34
 
+  - Fix for Bug#110321 (Bug#35167701), Issue in JDBC PreparedStatement on adding NO_BACKSLASH_ESCAPES in sql_mode.
+
 Version 8.0.33
 
   - Fix for Bug#34558945, PS using setCharacterStream() fails with "Incorrect string value" if the Java program encoding is not UTF-8 after 8.0.29.

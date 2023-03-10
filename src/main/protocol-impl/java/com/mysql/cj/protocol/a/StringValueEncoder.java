@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -70,7 +70,6 @@ public class StringValueEncoder extends AbstractValueEncoder {
 
     @Override
     public byte[] getBytes(BindValue binding) {
-
         switch (binding.getMysqlType()) {
             case NULL:
                 return StringUtils.getBytes("null");
@@ -104,11 +103,7 @@ public class StringValueEncoder extends AbstractValueEncoder {
                 if (this.serverSession.isNoBackslashEscapesSet()) {
                     // Scan for any nasty chars
                     if (!isEscapeNeededForString(x, stringLength)) {
-                        StringBuilder quotedString = new StringBuilder(x.length() + 2);
-                        quotedString.append('\'');
-                        quotedString.append(x);
-                        quotedString.append('\'');
-                        StringUtils.getBytes(quotedString.toString(), this.charEncoding.getValue());
+                        return StringUtils.getBytesWrapped(x, '\'', '\'', this.charEncoding.getValue());
                     }
                     return escapeBytesIfNeeded(StringUtils.getBytes(x, this.charEncoding.getValue()));
                 }

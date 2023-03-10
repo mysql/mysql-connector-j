@@ -13250,4 +13250,48 @@ public class StatementRegressionTest extends BaseTestCase {
             }
         }
     }
+
+    /**
+     * Tests fix for Bug#110321 (Bug#35167701), Issue in JDBC PreparedStatement on adding NO_BACKSLASH_ESCAPES in sql_mode.
+     * 
+     * @throws Exception
+     */
+    @Test
+    void testBug110321() throws Exception {
+        String sqlMode = getMysqlVariable("sql_mode");
+        if (!sqlMode.contains("NO_BACKSLASH_ESCAPES")) {
+            if (sqlMode.length() > 0) {
+                sqlMode += ",";
+            }
+            sqlMode += "NO_BACKSLASH_ESCAPES";
+        }
+
+        String version = getMysqlVariable("version");
+        boolean useSPS = false;
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.sessionVariables.getKeyName(), "sql_mode='" + sqlMode + "'");
+
+            try (Connection testConn = getConnectionWithProps(props)) {
+                assertTrue(((JdbcConnection) testConn).getSession().getServerSession().isNoBackslashEscapesSet());
+
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SHOW VARIABLES LIKE 'version'");
+                assertTrue(this.rs.next());
+                assertEquals(version, this.rs.getString(2));
+                assertFalse(this.rs.next());
+
+                PreparedStatement testPStmt = testConn.prepareStatement("SHOW VARIABLES LIKE ?");
+                testPStmt.setString(1, "version");
+                this.rs = testPStmt.executeQuery();
+                assertTrue(this.rs.next());
+                assertEquals(version, this.rs.getString(2));
+                assertFalse(this.rs.next());
+
+            }
+        } while (useSPS = !useSPS);
+    }
 }
