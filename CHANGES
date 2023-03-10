@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
 
+Version 8.0.34
+
 Version 8.0.33
 
   - Fix for Bug#34558945, PS using setCharacterStream() fails with "Incorrect string value" if the Java program encoding is not UTF-8 after 8.0.29.

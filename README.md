@@ -35,7 +35,7 @@ Alternatively, MySQL Connector/J can be obtained automatically via [Maven's depe
 <dependency>
   <groupId>com.mysql</groupId>
   <artifactId>mysql-connector-j</artifactId>
-  <version>8.0.33</version>
+  <version>8.0.34</version>
 </dependency>
 ```
 
@@ -45,7 +45,7 @@ MySQL Connector/J's own Project Object Model (POM) file specifies a transitive d
 <dependency>
   <groupId>com.mysql</groupId>
   <artifactId>mysql-connector-j</artifactId>
-  <version>8.0.33</version>
+  <version>8.0.34</version>
   <exclusions>
     <exclusion>
       <groupId>com.google.protobuf</groupId>
