@@ -32,6 +32,7 @@ package com.mysql.cj.util;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.CacheAdapter;
 import com.mysql.cj.CacheAdapterFactory;
@@ -64,7 +65,7 @@ public class PerVmServerConfigCacheFactory implements CacheAdapterFactory<String
         }
     };
 
-    public CacheAdapter<String, Map<String, String>> getInstance(Object syncMutex, String url, int cacheMaxSize, int maxKeySize) {
+    public CacheAdapter<String, Map<String, String>> getInstance(ReentrantLock syncMutex, String url, int cacheMaxSize, int maxKeySize) {
         return serverConfigCache;
     }
 }

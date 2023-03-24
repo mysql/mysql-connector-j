@@ -31,6 +31,7 @@ package com.mysql.cj;
 
 import java.net.SocketAddress;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
@@ -55,6 +56,8 @@ import com.mysql.cj.result.Row;
  * 
  */
 public interface Session {
+
+    ReentrantLock getSessionMutex();
 
     PropertySet getPropertySet();
 

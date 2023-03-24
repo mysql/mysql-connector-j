@@ -463,40 +463,50 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         return this.replicasConnection;
     }
 
-    private synchronized boolean switchToSourceConnection() throws SQLException {
-        if (this.sourceConnection == null || this.sourceConnection.isClosed()) {
-            try {
-                if (initializeSourceConnection() == null) {
-                    return false;
+    private boolean switchToSourceConnection() throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            if (this.sourceConnection == null || this.sourceConnection.isClosed()) {
+                try {
+                    if (initializeSourceConnection() == null) {
+                        return false;
+                    }
+                } catch (SQLException e) {
+                    this.currentConnection = null;
+                    throw e;
                 }
-            } catch (SQLException e) {
-                this.currentConnection = null;
-                throw e;
             }
+            if (!isSourceConnection() && this.sourceConnection != null) {
+                syncSessionState(this.currentConnection, this.sourceConnection, false);
+                this.currentConnection = this.sourceConnection;
+            }
+            return true;
+        } finally {
+            this.getObjectLock().unlock();
         }
-        if (!isSourceConnection() && this.sourceConnection != null) {
-            syncSessionState(this.currentConnection, this.sourceConnection, false);
-            this.currentConnection = this.sourceConnection;
-        }
-        return true;
     }
 
-    private synchronized boolean switchToReplicasConnection() throws SQLException {
-        if (this.replicasConnection == null || this.replicasConnection.isClosed()) {
-            try {
-                if (initializeReplicasConnection() == null) {
-                    return false;
+    private boolean switchToReplicasConnection() throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            if (this.replicasConnection == null || this.replicasConnection.isClosed()) {
+                try {
+                    if (initializeReplicasConnection() == null) {
+                        return false;
+                    }
+                } catch (SQLException e) {
+                    this.currentConnection = null;
+                    throw e;
                 }
-            } catch (SQLException e) {
-                this.currentConnection = null;
-                throw e;
             }
+            if (!isReplicasConnection() && this.replicasConnection != null) {
+                syncSessionState(this.currentConnection, this.replicasConnection, true);
+                this.currentConnection = this.replicasConnection;
+            }
+            return true;
+        } finally {
+            this.getObjectLock().unlock();
         }
-        if (!isReplicasConnection() && this.replicasConnection != null) {
-            syncSessionState(this.currentConnection, this.replicasConnection, true);
-            this.currentConnection = this.replicasConnection;
-        }
-        return true;
     }
 
     private boolean switchToReplicasConnectionIfNecessary() throws SQLException {
@@ -512,16 +522,26 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         return false;
     }
 
-    public synchronized JdbcConnection getCurrentConnection() {
-        return this.currentConnection == null ? LoadBalancedConnectionProxy.getNullLoadBalancedConnectionInstance() : this.currentConnection;
+    public JdbcConnection getCurrentConnection() {
+        this.getObjectLock().lock();
+        try {
+            return this.currentConnection == null ? LoadBalancedConnectionProxy.getNullLoadBalancedConnectionInstance() : this.currentConnection;
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     public long getConnectionGroupId() {
         return this.connectionGroupID;
     }
 
-    public synchronized JdbcConnection getSourceConnection() {
-        return this.sourceConnection;
+    public JdbcConnection getSourceConnection() {
+        this.getObjectLock().lock();
+        try {
+            return this.sourceConnection;
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
@@ -531,24 +551,34 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @deprecated
      */
     @Deprecated
-    public synchronized JdbcConnection getMasterConnection() {
-        return getSourceConnection();
+    public JdbcConnection getMasterConnection() {
+        this.getObjectLock().lock();
+        try {
+            return getSourceConnection();
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
-    public synchronized void promoteReplicaToSource(String hostPortPair) throws SQLException {
-        HostInfo host = getReplicaHost(hostPortPair);
-        if (host == null) {
-            return;
-        }
-        this.sourceHosts.add(host);
-        removeReplica(hostPortPair);
-        if (this.sourceConnection != null) {
-            this.sourceConnection.addHost(hostPortPair);
-        }
+    public void promoteReplicaToSource(String hostPortPair) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            HostInfo host = getReplicaHost(hostPortPair);
+            if (host == null) {
+                return;
+            }
+            this.sourceHosts.add(host);
+            removeReplica(hostPortPair);
+            if (this.sourceConnection != null) {
+                this.sourceConnection.addHost(hostPortPair);
+            }
 
-        // Switch back to the sources connection if this connection was running in fail-safe mode.
-        if (!this.readOnly && !isSourceConnection()) {
-            switchToSourceConnection();
+            // Switch back to the sources connection if this connection was running in fail-safe mode.
+            if (!this.readOnly && !isSourceConnection()) {
+                switchToSourceConnection();
+            }
+        } finally {
+            this.getObjectLock().unlock();
         }
     }
 
@@ -561,12 +591,22 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @deprecated
      */
     @Deprecated
-    public synchronized void promoteSlaveToMaster(String hostPortPair) throws SQLException {
-        promoteReplicaToSource(hostPortPair);
+    public void promoteSlaveToMaster(String hostPortPair) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            promoteReplicaToSource(hostPortPair);
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
-    public synchronized void removeSourceHost(String hostPortPair) throws SQLException {
-        this.removeSourceHost(hostPortPair, true);
+    public void removeSourceHost(String hostPortPair) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            this.removeSourceHost(hostPortPair, true);
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
@@ -578,12 +618,22 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @deprecated
      */
     @Deprecated
-    public synchronized void removeMasterHost(String hostPortPair) throws SQLException {
-        removeSourceHost(hostPortPair);
+    public void removeMasterHost(String hostPortPair) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            removeSourceHost(hostPortPair);
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
-    public synchronized void removeSourceHost(String hostPortPair, boolean waitUntilNotInUse) throws SQLException {
-        this.removeSourceHost(hostPortPair, waitUntilNotInUse, false);
+    public void removeSourceHost(String hostPortPair, boolean waitUntilNotInUse) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            this.removeSourceHost(hostPortPair, waitUntilNotInUse, false);
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
@@ -597,40 +647,50 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @deprecated
      */
     @Deprecated
-    public synchronized void removeMasterHost(String hostPortPair, boolean waitUntilNotInUse) throws SQLException {
-        removeSourceHost(hostPortPair, waitUntilNotInUse);
+    public void removeMasterHost(String hostPortPair, boolean waitUntilNotInUse) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            removeSourceHost(hostPortPair, waitUntilNotInUse);
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
-    public synchronized void removeSourceHost(String hostPortPair, boolean waitUntilNotInUse, boolean isNowReplica) throws SQLException {
-        HostInfo host = getSourceHost(hostPortPair);
-        if (host == null) {
-            return;
-        }
-        if (isNowReplica) {
-            this.replicaHosts.add(host);
-            resetReadFromSourceWhenNoReplicas();
-        }
-        this.sourceHosts.remove(host);
+    public void removeSourceHost(String hostPortPair, boolean waitUntilNotInUse, boolean isNowReplica) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            HostInfo host = getSourceHost(hostPortPair);
+            if (host == null) {
+                return;
+            }
+            if (isNowReplica) {
+                this.replicaHosts.add(host);
+                resetReadFromSourceWhenNoReplicas();
+            }
+            this.sourceHosts.remove(host);
 
-        // The source connection may have been implicitly closed by a previous op., don't let it stop us.
-        if (this.sourceConnection == null || this.sourceConnection.isClosed()) {
-            this.sourceConnection = null;
-            return;
-        }
+            // The source connection may have been implicitly closed by a previous op., don't let it stop us.
+            if (this.sourceConnection == null || this.sourceConnection.isClosed()) {
+                this.sourceConnection = null;
+                return;
+            }
 
-        if (waitUntilNotInUse) {
-            this.sourceConnection.removeHostWhenNotInUse(hostPortPair);
-        } else {
-            this.sourceConnection.removeHost(hostPortPair);
-        }
+            if (waitUntilNotInUse) {
+                this.sourceConnection.removeHostWhenNotInUse(hostPortPair);
+            } else {
+                this.sourceConnection.removeHost(hostPortPair);
+            }
 
-        // Close the connection if that was the last source.
-        if (this.sourceHosts.isEmpty()) {
-            this.sourceConnection.close();
-            this.sourceConnection = null;
+            // Close the connection if that was the last source.
+            if (this.sourceHosts.isEmpty()) {
+                this.sourceConnection.close();
+                this.sourceConnection = null;
 
-            // Default behavior, no need to check this.readFromSourceWhenNoReplicas.
-            switchToReplicasConnectionIfNecessary();
+                // Default behavior, no need to check this.readFromSourceWhenNoReplicas.
+                switchToReplicasConnectionIfNecessary();
+            }
+        } finally {
+            this.getObjectLock().unlock();
         }
     }
 
@@ -647,8 +707,13 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @deprecated
      */
     @Deprecated
-    public synchronized void removeMasterHost(String hostPortPair, boolean waitUntilNotInUse, boolean isNowReplica) throws SQLException {
-        removeSourceHost(hostPortPair, waitUntilNotInUse, isNowReplica);
+    public void removeMasterHost(String hostPortPair, boolean waitUntilNotInUse, boolean isNowReplica) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            removeSourceHost(hostPortPair, waitUntilNotInUse, isNowReplica);
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     public boolean isHostSource(String hostPortPair) {
@@ -671,8 +736,13 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         return isHostSource(hostPortPair);
     }
 
-    public synchronized JdbcConnection getReplicasConnection() {
-        return this.replicasConnection;
+    public JdbcConnection getReplicasConnection() {
+        this.getObjectLock().lock();
+        try {
+            return this.replicasConnection;
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
@@ -682,21 +752,31 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @deprecated
      */
     @Deprecated
-    public synchronized JdbcConnection getSlavesConnection() {
-        return getReplicasConnection();
+    public JdbcConnection getSlavesConnection() {
+        this.getObjectLock().lock();
+        try {
+            return getReplicasConnection();
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
-    public synchronized void addReplicaHost(String hostPortPair) throws SQLException {
-        if (this.isHostReplica(hostPortPair)) {
-            return;
-        }
-        this.replicaHosts.add(getConnectionUrl().getReplicaHostOrSpawnIsolated(hostPortPair));
-        resetReadFromSourceWhenNoReplicas();
-        if (this.replicasConnection == null) {
-            initializeReplicasConnection();
-            switchToReplicasConnectionIfNecessary();
-        } else {
-            this.replicasConnection.addHost(hostPortPair);
+    public void addReplicaHost(String hostPortPair) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            if (this.isHostReplica(hostPortPair)) {
+                return;
+            }
+            this.replicaHosts.add(getConnectionUrl().getReplicaHostOrSpawnIsolated(hostPortPair));
+            resetReadFromSourceWhenNoReplicas();
+            if (this.replicasConnection == null) {
+                initializeReplicasConnection();
+                switchToReplicasConnectionIfNecessary();
+            } else {
+                this.replicasConnection.addHost(hostPortPair);
+            }
+        } finally {
+            this.getObjectLock().unlock();
         }
     }
 
@@ -709,12 +789,22 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @deprecated
      */
     @Deprecated
-    public synchronized void addSlaveHost(String hostPortPair) throws SQLException {
-        addReplicaHost(hostPortPair);
+    public void addSlaveHost(String hostPortPair) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            addReplicaHost(hostPortPair);
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
-    public synchronized void removeReplica(String hostPortPair) throws SQLException {
-        removeReplica(hostPortPair, true);
+    public void removeReplica(String hostPortPair) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            removeReplica(hostPortPair, true);
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
@@ -726,39 +816,49 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @deprecated
      */
     @Deprecated
-    public synchronized void removeSlave(String hostPortPair) throws SQLException {
-        removeReplica(hostPortPair);
+    public void removeSlave(String hostPortPair) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            removeReplica(hostPortPair);
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
-    public synchronized void removeReplica(String hostPortPair, boolean closeGently) throws SQLException {
-        HostInfo host = getReplicaHost(hostPortPair);
-        if (host == null) {
-            return;
-        }
-        this.replicaHosts.remove(host);
-        resetReadFromSourceWhenNoReplicas();
-
-        if (this.replicasConnection == null || this.replicasConnection.isClosed()) {
-            this.replicasConnection = null;
-            return;
-        }
-
-        if (closeGently) {
-            this.replicasConnection.removeHostWhenNotInUse(hostPortPair);
-        } else {
-            this.replicasConnection.removeHost(hostPortPair);
-        }
-
-        // Close the connection if that was the last replica.
-        if (this.replicaHosts.isEmpty()) {
-            this.replicasConnection.close();
-            this.replicasConnection = null;
-
-            // Default behavior, no need to check this.readFromSourceWhenNoReplicas.
-            switchToSourceConnection();
-            if (isSourceConnection()) {
-                this.currentConnection.setReadOnly(this.readOnly); // Maintain.
+    public void removeReplica(String hostPortPair, boolean closeGently) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            HostInfo host = getReplicaHost(hostPortPair);
+            if (host == null) {
+                return;
             }
+            this.replicaHosts.remove(host);
+            resetReadFromSourceWhenNoReplicas();
+
+            if (this.replicasConnection == null || this.replicasConnection.isClosed()) {
+                this.replicasConnection = null;
+                return;
+            }
+
+            if (closeGently) {
+                this.replicasConnection.removeHostWhenNotInUse(hostPortPair);
+            } else {
+                this.replicasConnection.removeHost(hostPortPair);
+            }
+
+            // Close the connection if that was the last replica.
+            if (this.replicaHosts.isEmpty()) {
+                this.replicasConnection.close();
+                this.replicasConnection = null;
+
+                // Default behavior, no need to check this.readFromSourceWhenNoReplicas.
+                switchToSourceConnection();
+                if (isSourceConnection()) {
+                    this.currentConnection.setReadOnly(this.readOnly); // Maintain.
+                }
+            }
+        } finally {
+            this.getObjectLock().unlock();
         }
     }
 
@@ -773,8 +873,13 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
      * @deprecated
      */
     @Deprecated
-    public synchronized void removeSlave(String hostPortPair, boolean closeGently) throws SQLException {
-        removeReplica(hostPortPair, closeGently);
+    public void removeSlave(String hostPortPair, boolean closeGently) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            removeReplica(hostPortPair, closeGently);
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     public boolean isHostReplica(String hostPortPair) {
@@ -797,50 +902,55 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         return isHostReplica(hostPortPair);
     }
 
-    public synchronized void setReadOnly(boolean readOnly) throws SQLException {
-        if (readOnly) {
-            if (!isReplicasConnection() || this.currentConnection.isClosed()) {
-                boolean switched = true;
-                SQLException exceptionCaught = null;
-                try {
-                    switched = switchToReplicasConnection();
-                } catch (SQLException e) {
-                    switched = false;
-                    exceptionCaught = e;
+    public void setReadOnly(boolean readOnly) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            if (readOnly) {
+                if (!isReplicasConnection() || this.currentConnection.isClosed()) {
+                    boolean switched = true;
+                    SQLException exceptionCaught = null;
+                    try {
+                        switched = switchToReplicasConnection();
+                    } catch (SQLException e) {
+                        switched = false;
+                        exceptionCaught = e;
+                    }
+                    if (!switched && this.readFromSourceWhenNoReplicas && switchToSourceConnection()) {
+                        exceptionCaught = null; // The connection is OK. Cancel the exception, if any.
+                    }
+                    if (exceptionCaught != null) {
+                        throw exceptionCaught;
+                    }
                 }
-                if (!switched && this.readFromSourceWhenNoReplicas && switchToSourceConnection()) {
-                    exceptionCaught = null; // The connection is OK. Cancel the exception, if any.
-                }
-                if (exceptionCaught != null) {
-                    throw exceptionCaught;
+            } else {
+                if (!isSourceConnection() || this.currentConnection.isClosed()) {
+                    boolean switched = true;
+                    SQLException exceptionCaught = null;
+                    try {
+                        switched = switchToSourceConnection();
+                    } catch (SQLException e) {
+                        switched = false;
+                        exceptionCaught = e;
+                    }
+                    if (!switched && switchToReplicasConnectionIfNecessary()) {
+                        exceptionCaught = null; // The connection is OK. Cancel the exception, if any.
+                    }
+                    if (exceptionCaught != null) {
+                        throw exceptionCaught;
+                    }
                 }
             }
-        } else {
-            if (!isSourceConnection() || this.currentConnection.isClosed()) {
-                boolean switched = true;
-                SQLException exceptionCaught = null;
-                try {
-                    switched = switchToSourceConnection();
-                } catch (SQLException e) {
-                    switched = false;
-                    exceptionCaught = e;
-                }
-                if (!switched && switchToReplicasConnectionIfNecessary()) {
-                    exceptionCaught = null; // The connection is OK. Cancel the exception, if any.
-                }
-                if (exceptionCaught != null) {
-                    throw exceptionCaught;
-                }
-            }
-        }
-        this.readOnly = readOnly;
+            this.readOnly = readOnly;
 
-        /*
-         * Reset sources connection read-only state if 'readFromSourceWhenNoReplicas=true'. If there are no replicas then the sources connection will be used
-         * with read-only state in its place. Even if not, it must be reset from a possible previous read-only state.
-         */
-        if (this.readFromSourceWhenNoReplicas && isSourceConnection()) {
-            this.currentConnection.setReadOnly(this.readOnly);
+            /*
+             * Reset sources connection read-only state if 'readFromSourceWhenNoReplicas=true'. If there are no replicas then the sources connection will be used
+             * with read-only state in its place. Even if not, it must be reset from a possible previous read-only state.
+             */
+            if (this.readFromSourceWhenNoReplicas && isSourceConnection()) {
+                this.currentConnection.setReadOnly(this.readOnly);
+            }
+        } finally {
+            this.getObjectLock().unlock();
         }
     }
 

@@ -29,8 +29,10 @@
 
 package com.mysql.cj;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 public interface CacheAdapterFactory<K, V> {
 
-    CacheAdapter<K, V> getInstance(Object syncMutex, String url, int cacheMaxSize, int maxKeySize);
+    CacheAdapter<K, V> getInstance(ReentrantLock syncMutex, String url, int cacheMaxSize, int maxKeySize);
 
 }

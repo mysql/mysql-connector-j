@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.CompletionHandler;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.protobuf.MessageLite;
 import com.mysql.cj.Messages;
@@ -58,14 +59,15 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
     private int maxAllowedPacket = -1;
 
     /** Lock to protect async writes from sync ones. */
-    Object waitingAsyncOperationMonitor = new Object();
+    final ReentrantLock waitingAsyncOperationMonitor = new ReentrantLock();
 
     public SyncMessageSender(OutputStream os) {
         this.outputStream = os;
     }
 
     public void send(XMessage message) {
-        synchronized (this.waitingAsyncOperationMonitor) {
+        this.waitingAsyncOperationMonitor.lock();
+        try {
             MessageLite msg = message.getMessage();
             try {
                 int type = MessageConstants.getTypeForMessageClass(msg.getClass());
@@ -85,12 +87,15 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
             } catch (IOException ex) {
                 throw new CJCommunicationsException("Unable to write message", ex);
             }
+        } finally {
+            this.waitingAsyncOperationMonitor.unlock();
         }
     }
 
     @Override
     public CompletableFuture<?> send(XMessage message, CompletableFuture<?> future, Runnable callback) {
-        synchronized (this.waitingAsyncOperationMonitor) {
+        this.waitingAsyncOperationMonitor.lock();
+        try {
             CompletionHandler<Long, Void> resultHandler = new ErrorToFutureCompletionHandler<>(future, callback);
             MessageLite msg = message.getMessage();
             try {
@@ -101,6 +106,8 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
                 resultHandler.failed(t, null);
             }
             return future;
+        } finally {
+            this.waitingAsyncOperationMonitor.unlock();
         }
     }
 

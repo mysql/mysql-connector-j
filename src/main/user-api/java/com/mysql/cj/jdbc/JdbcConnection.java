@@ -31,6 +31,7 @@ package com.mysql.cj.jdbc;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.ServerVersion;
@@ -46,6 +47,8 @@ import com.mysql.cj.jdbc.result.ResultSetInternalMethods;
  * (which is why there are still references to ConnectionImpl throughout the code).
  */
 public interface JdbcConnection extends java.sql.Connection, MysqlConnection, TransactionEventHandler {
+
+    ReentrantLock getObjectLock();
 
     public JdbcPropertySet getPropertySet();
 

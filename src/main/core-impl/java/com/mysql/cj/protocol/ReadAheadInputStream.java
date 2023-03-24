@@ -32,6 +32,7 @@ package com.mysql.cj.protocol;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.log.Log;
 
@@ -53,6 +54,8 @@ public class ReadAheadInputStream extends InputStream {
     protected boolean doDebug = false;
 
     protected Log log;
+
+    private final ReentrantLock objectLock = new ReentrantLock();
 
     private void fill(int readAtLeastTheseManyBytes) throws IOException {
         checkClosed();
@@ -166,42 +169,47 @@ public class ReadAheadInputStream extends InputStream {
     }
 
     @Override
-    public synchronized int read(byte b[], int off, int len) throws IOException {
-        checkClosed(); // Check for closed stream
-        if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
-            throw new IndexOutOfBoundsException();
-        } else if (len == 0) {
-            return 0;
-        }
+    public int read(byte b[], int off, int len) throws IOException {
+        objectLock.lock();
+        try {
+            checkClosed(); // Check for closed stream
+            if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
+                throw new IndexOutOfBoundsException();
+            } else if (len == 0) {
+                return 0;
+            }
 
-        int totalBytesRead = 0;
+            int totalBytesRead = 0;
 
-        while (true) {
-            int bytesReadThisRound = readFromUnderlyingStreamIfNecessary(b, off + totalBytesRead, len - totalBytesRead);
+            while (true) {
+                int bytesReadThisRound = readFromUnderlyingStreamIfNecessary(b, off + totalBytesRead, len - totalBytesRead);
 
-            // end-of-stream?
-            if (bytesReadThisRound <= 0) {
-                if (totalBytesRead == 0) {
-                    totalBytesRead = bytesReadThisRound;
+                // end-of-stream?
+                if (bytesReadThisRound <= 0) {
+                    if (totalBytesRead == 0) {
+                        totalBytesRead = bytesReadThisRound;
+                    }
+
+                    break;
                 }
 
-                break;
+                totalBytesRead += bytesReadThisRound;
+
+                // Read _at_least_ enough bytes
+                if (totalBytesRead >= len) {
+                    break;
+                }
+
+                // Nothing to read?
+                if (this.underlyingStream.available() <= 0) {
+                    break;
+                }
             }
 
-            totalBytesRead += bytesReadThisRound;
-
-            // Read _at_least_ enough bytes
-            if (totalBytesRead >= len) {
-                break;
-            }
-
-            // Nothing to read?
-            if (this.underlyingStream.available() <= 0) {
-                break;
-            }
+            return totalBytesRead;
+        } finally {
+            objectLock.unlock();
         }
-
-        return totalBytesRead;
     }
 
     @Override

@@ -33,6 +33,7 @@ import java.sql.Time;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.WarningListener;
@@ -51,7 +52,8 @@ import com.mysql.cj.protocol.InternalTimestamp;
 public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
     private WarningListener warningListener;
     // cached per instance to avoid re-creation on every create*() call
-    private Calendar cal;
+    private final Calendar cal;
+    private final ReentrantLock calLock = new ReentrantLock();
 
     public SqlTimeValueFactory(PropertySet pset, Calendar calendar, TimeZone tz) {
         super(pset);
@@ -71,13 +73,16 @@ public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
 
     @Override
     Time localCreateFromDate(InternalDate idate) {
-        synchronized (this.cal) {
+        this.calLock.lock();
+        try {
             try {
                 this.cal.clear();
                 return new Time(this.cal.getTimeInMillis());
             } catch (IllegalArgumentException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
             }
+        } finally {
+            this.calLock.unlock();
         }
     }
 
@@ -87,7 +92,8 @@ public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
             throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] { it.toString() }));
         }
 
-        synchronized (this.cal) {
+        this.calLock.lock();
+        try {
             try {
                 // c.f. java.sql.Time "The date components should be set to the "zero epoch" value of January 1, 1970 and should not be accessed."
                 this.cal.set(1970, 0, 1, it.getHours(), it.getMinutes(), it.getSeconds());
@@ -97,6 +103,8 @@ public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
             } catch (IllegalArgumentException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
             }
+        } finally {
+            this.calLock.unlock();
         }
     }
 

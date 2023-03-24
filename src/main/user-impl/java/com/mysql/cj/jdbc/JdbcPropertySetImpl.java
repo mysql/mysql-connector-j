@@ -33,6 +33,7 @@ import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.conf.DefaultPropertySet;
@@ -45,6 +46,8 @@ import com.mysql.cj.util.StringUtils;
 public class JdbcPropertySetImpl extends DefaultPropertySet implements JdbcPropertySet {
 
     private static final long serialVersionUID = -8223499903182568260L;
+
+    protected final ReentrantLock objectLock = new ReentrantLock();
 
     @Override
     public void postInitialization() {

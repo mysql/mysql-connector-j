@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.ServerVersion;
@@ -83,6 +84,12 @@ public class MultiHostMySQLConnection implements JdbcConnection {
      * here in this class refer to.
      */
     protected MultiHostConnectionProxy thisAsProxy;
+    private final ReentrantLock objectLock = new ReentrantLock();
+
+    @Override
+    public ReentrantLock getObjectLock() {
+        return objectLock;
+    }
 
     public MultiHostMySQLConnection(MultiHostConnectionProxy proxy) {
         this.thisAsProxy = proxy;
@@ -94,8 +101,11 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     @Override
     public JdbcConnection getActiveMySQLConnection() {
-        synchronized (this.thisAsProxy) {
+        this.thisAsProxy.getObjectLock().lock();
+        try {
             return this.thisAsProxy.currentConnection;
+        } finally {
+            this.thisAsProxy.getObjectLock().unlock();
         }
     }
 
@@ -642,7 +652,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     @Override
-    public Object getConnectionMutex() {
+    public ReentrantLock getConnectionMutex() {
         return getActiveMySQLConnection().getConnectionMutex();
     }
 
@@ -730,8 +740,11 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     @Override
     public ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
-        synchronized (getThisAsProxy()) {
+        getThisAsProxy().getObjectLock().lock();
+        try{
             return getActiveMySQLConnection().getClientInfoProviderImpl();
+        } finally {
+            getThisAsProxy().getObjectLock().unlock();
         }
     }
 

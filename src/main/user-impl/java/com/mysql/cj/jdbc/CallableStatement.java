@@ -55,6 +55,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
@@ -106,7 +107,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         MysqlType desiredMysqlType = MysqlType.UNKNOWN;
 
         CallableStatementParam(String name, int idx, boolean in, boolean out, int jdbcType, String typeName, int precision, int scale, short nullability,
-                int inOutModifier) {
+                               int inOutModifier) {
             this.paramName = name;
             this.isIn = in;
             this.isOut = out;
@@ -152,7 +153,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         /**
          * Constructor that converts a full list of parameter metadata into one
          * that only represents the placeholders present in the {CALL ()}.
-         * 
+         *
          * @param fullParamInfo
          *            the metadata for all parameters for this stored
          *            procedure or function.
@@ -443,12 +444,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Creates a new CallableStatement
-     * 
+     *
      * @param conn
      *            the connection creating this statement
      * @param paramInfo
      *            the SQL to prepare
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -469,7 +470,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Creates a callable statement instance
-     * 
+     *
      * @param conn
      *            the connection creating this statement
      * @param sql
@@ -489,7 +490,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Creates a callable statement instance
-     * 
+     *
      * @param conn
      *            the connection creating this statement
      * @param paramInfo
@@ -506,7 +507,9 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     private int[] placeholderToParameterIndexMap;
 
     private void generateParameterMap() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.paramInfo == null) {
                 return;
             }
@@ -557,12 +560,14 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                     }
                 }
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Creates a new CallableStatement
-     * 
+     *
      * @param conn
      *            the connection creating this statement
      * @param sql
@@ -571,7 +576,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      *            the current database
      * @param isFunctionCall
      *            is it a function call or a procedure call?
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -609,7 +614,9 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     private CallableStatementParam checkIsOutputParam(int paramIndex) throws SQLException {
 
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.callingStoredFunction) {
                 if (paramIndex == 1) {
 
@@ -649,19 +656,25 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.hasOutputParams = true;
 
             return paramDescriptor;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * @param paramIndex
      *            parameter index
-     * 
+     *
      * @throws SQLException
      *             if a database access error occurs or this method is called on a closed PreparedStatement
      */
     private void checkParameterIndexBounds(int paramIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             this.paramInfo.checkBounds(paramIndex);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -669,7 +682,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      * Checks whether or not this statement is supposed to be providing
      * streamable result sets...If output parameters are registered, the driver
      * can not stream the results.
-     * 
+     *
      * @throws SQLException
      *             if a database access error occurs
      */
@@ -682,7 +695,9 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     @Override
     public void clearParameters() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             super.clearParameters();
 
             try {
@@ -692,21 +707,25 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             } finally {
                 this.outputParameterResults = null;
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Used to fake up some metadata when we don't have access to
      * SHOW CREATE PROCEDURE or mysql.proc.
-     * 
+     *
      * @param isReallyProcedure
      *            is it a procedure or function
-     * 
+     *
      * @throws SQLException
      *             if we can't build the metadata.
      */
     private void fakeParameterTypes(boolean isReallyProcedure) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             String encoding = this.connection.getSession().getServerSession().getCharsetSettings().getMetadataEncoding();
             int collationIndex = this.connection.getSession().getServerSession().getCharsetSettings().getMetadataCollationIndex();
             Field[] fields = new Field[13];
@@ -760,11 +779,15 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                     new ResultsetRowsStatic(resultRows, new DefaultColumnDefinition(fields)));
 
             convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     private void determineParameterTypes() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             java.sql.ResultSet paramTypesRs = null;
 
             try {
@@ -825,18 +848,26 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                     throw sqlExRethrow;
                 }
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     private void convertGetProcedureColumnsToInternalDescriptors(java.sql.ResultSet paramTypesRs) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             this.paramInfo = new CallableStatementParamInfo(paramTypesRs);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public boolean execute() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             boolean returnVal = false;
 
             checkStreamability();
@@ -874,12 +905,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
             // Functions can't return results
             return false;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public java.sql.ResultSet executeQuery() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
 
             checkStreamability();
 
@@ -893,6 +928,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             retrieveOutParams();
 
             return execResults;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -939,17 +976,19 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Adds 'at' symbol to beginning of parameter names if needed.
-     * 
+     *
      * @param paramNameIn
      *            the parameter name to 'fix'
-     * 
+     *
      * @return the parameter name with an 'a' prepended, if needed
-     * 
+     *
      * @throws SQLException
      *             if the parameter name is null or empty.
      */
     protected String fixParameterName(String paramNameIn) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (paramNameIn == null) {
                 paramNameIn = "nullpn";
             }
@@ -960,12 +999,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             }
 
             return mangleParameterName(paramNameIn);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Array getArray(int i) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(i);
 
             Array retValue = rs.getArray(mapOutputParameterIndexToRsIndex(i));
@@ -973,12 +1016,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Array getArray(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Array retValue = rs.getArray(fixParameterName(parameterName));
@@ -986,12 +1033,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             BigDecimal retValue = rs.getBigDecimal(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -999,13 +1050,17 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     @Deprecated
     public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             BigDecimal retValue = rs.getBigDecimal(mapOutputParameterIndexToRsIndex(parameterIndex), scale);
@@ -1013,12 +1068,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public BigDecimal getBigDecimal(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             BigDecimal retValue = rs.getBigDecimal(fixParameterName(parameterName));
@@ -1026,12 +1085,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Blob getBlob(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             Blob retValue = rs.getBlob(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1039,12 +1102,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Blob getBlob(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Blob retValue = rs.getBlob(fixParameterName(parameterName));
@@ -1052,12 +1119,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public boolean getBoolean(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             boolean retValue = rs.getBoolean(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1065,12 +1136,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public boolean getBoolean(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             boolean retValue = rs.getBoolean(fixParameterName(parameterName));
@@ -1078,12 +1153,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public byte getByte(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             byte retValue = rs.getByte(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1091,12 +1170,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public byte getByte(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             byte retValue = rs.getByte(fixParameterName(parameterName));
@@ -1104,12 +1187,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public byte[] getBytes(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             byte[] retValue = rs.getBytes(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1117,12 +1204,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public byte[] getBytes(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             byte[] retValue = rs.getBytes(fixParameterName(parameterName));
@@ -1130,12 +1221,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Clob getClob(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             Clob retValue = rs.getClob(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1143,12 +1238,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Clob getClob(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Clob retValue = rs.getClob(fixParameterName(parameterName));
@@ -1156,12 +1255,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Date getDate(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             Date retValue = rs.getDate(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1169,12 +1272,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Date getDate(int parameterIndex, Calendar cal) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             Date retValue = rs.getDate(mapOutputParameterIndexToRsIndex(parameterIndex), cal);
@@ -1182,12 +1289,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Date getDate(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Date retValue = rs.getDate(fixParameterName(parameterName));
@@ -1195,12 +1306,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Date getDate(String parameterName, Calendar cal) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Date retValue = rs.getDate(fixParameterName(parameterName), cal);
@@ -1208,12 +1323,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public double getDouble(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             double retValue = rs.getDouble(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1221,12 +1340,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public double getDouble(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             double retValue = rs.getDouble(fixParameterName(parameterName));
@@ -1234,12 +1357,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public float getFloat(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             float retValue = rs.getFloat(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1247,12 +1374,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public float getFloat(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             float retValue = rs.getFloat(fixParameterName(parameterName));
@@ -1260,12 +1391,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public int getInt(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             int retValue = rs.getInt(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1273,12 +1408,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public int getInt(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             int retValue = rs.getInt(fixParameterName(parameterName));
@@ -1286,12 +1425,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public long getLong(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             long retValue = rs.getLong(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1299,12 +1442,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public long getLong(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             long retValue = rs.getLong(fixParameterName(parameterName));
@@ -1312,11 +1459,15 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     protected int getNamedParamIndex(String paramName, boolean forOut) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.noAccessToProcedureBodies) {
                 throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -1350,12 +1501,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
             throw SQLError.createSQLException(Messages.getString("CallableStatement.6", new Object[] { paramName }),
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Object getObject(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
 
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1365,12 +1520,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retVal;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Object getObject(int parameterIndex, Map<String, Class<?>> map) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             Object retVal = rs.getObject(mapOutputParameterIndexToRsIndex(parameterIndex), map);
@@ -1378,12 +1537,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retVal;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Object getObject(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Object retValue = rs.getObject(fixParameterName(parameterName));
@@ -1391,12 +1554,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Object getObject(String parameterName, Map<String, Class<?>> map) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Object retValue = rs.getObject(fixParameterName(parameterName), map);
@@ -1404,12 +1571,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public <T> T getObject(int parameterIndex, Class<T> type) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             // remove cast once 1.5, 1.6 EOL'd
@@ -1418,12 +1589,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retVal;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public <T> T getObject(String parameterName, Class<T> type) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             T retValue = ((ResultSetImpl) rs).getObject(fixParameterName(parameterName), type);
@@ -1431,24 +1606,28 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Returns the ResultSet that holds the output parameters, or throws an
      * appropriate exception if none exist, or they weren't returned.
-     * 
+     *
      * @param paramIndex
      *            parameter index
-     * 
+     *
      * @return the ResultSet that holds the output parameters
-     * 
+     *
      * @throws SQLException
      *             if no output parameters were defined, or if no output
      *             parameters were returned.
      */
     protected ResultSetInternalMethods getOutputParameters(int paramIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             this.outputParamWasNull = false;
 
             if (paramIndex == 1 && this.callingStoredFunction && this.returnValueParam != null) {
@@ -1465,23 +1644,31 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             }
 
             return this.outputParameterResults;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public ParameterMetaData getParameterMetaData() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.placeholderToParameterIndexMap == null) {
                 return this.paramInfo;
             }
 
             return new CallableStatementParamInfo(this.paramInfo);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Ref getRef(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             Ref retValue = rs.getRef(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1489,12 +1676,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Ref getRef(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Ref retValue = rs.getRef(fixParameterName(parameterName));
@@ -1502,12 +1693,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public short getShort(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             short retValue = rs.getShort(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1515,12 +1710,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public short getShort(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             short retValue = rs.getShort(fixParameterName(parameterName));
@@ -1528,12 +1727,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public String getString(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             String retValue = rs.getString(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1541,12 +1744,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public String getString(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             String retValue = rs.getString(fixParameterName(parameterName));
@@ -1554,12 +1761,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Time getTime(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             Time retValue = rs.getTime(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1567,12 +1778,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Time getTime(int parameterIndex, Calendar cal) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             Time retValue = rs.getTime(mapOutputParameterIndexToRsIndex(parameterIndex), cal);
@@ -1580,12 +1795,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Time getTime(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Time retValue = rs.getTime(fixParameterName(parameterName));
@@ -1593,12 +1812,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Time getTime(String parameterName, Calendar cal) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Time retValue = rs.getTime(fixParameterName(parameterName), cal);
@@ -1606,12 +1829,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Timestamp getTimestamp(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             Timestamp retValue = rs.getTimestamp(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1619,12 +1846,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Timestamp getTimestamp(int parameterIndex, Calendar cal) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             Timestamp retValue = rs.getTimestamp(mapOutputParameterIndexToRsIndex(parameterIndex), cal);
@@ -1632,12 +1863,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Timestamp getTimestamp(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Timestamp retValue = rs.getTimestamp(fixParameterName(parameterName));
@@ -1645,12 +1880,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public Timestamp getTimestamp(String parameterName, Calendar cal) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             Timestamp retValue = rs.getTimestamp(fixParameterName(parameterName), cal);
@@ -1658,12 +1897,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public URL getURL(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
             URL retValue = rs.getURL(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1671,12 +1914,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public URL getURL(String parameterName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be from ?=
 
             URL retValue = rs.getURL(fixParameterName(parameterName));
@@ -1684,12 +1931,16 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.outputParamWasNull = rs.wasNull();
 
             return retValue;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     protected int mapOutputParameterIndexToRsIndex(int paramIndex) throws SQLException {
 
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.returnValueParam != null && paramIndex == 1) {
                 return 1;
             }
@@ -1710,6 +1961,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             }
 
             return rsIndex + 1;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1782,8 +2035,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     @Override
     public void registerOutParameter(String parameterName, int sqlType) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             registerOutParameter(getNamedParamIndex(parameterName, true), sqlType);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1826,12 +2083,14 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Issues a second query to retrieve all output parameters.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs.
      */
     private void retrieveOutParams() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             int numParameters = this.paramInfo.numberOfParameters();
 
             this.parameterIndexToRsIndex = new int[numParameters];
@@ -1902,6 +2161,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             } else {
                 this.outputParameterResults = null;
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1961,9 +2222,11 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     }
 
     private void setInOutParamsOnServer() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.paramInfo.numParameters > 0) {
-                for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter.hasNext();) {
+                for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter.hasNext(); ) {
 
                     CallableStatementParam inParamInfo = paramIter.next();
 
@@ -1992,6 +2255,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                     }
                 }
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -2027,8 +2292,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     @Override
     public void setObject(String parameterName, Object x, SQLType targetSqlType) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             setObject(getNamedParamIndex(parameterName, false), x, targetSqlType);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -2039,15 +2308,21 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     @Override
     public void setObject(String parameterName, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             setObject(getNamedParamIndex(parameterName, false), x, targetSqlType, scaleOrLength);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     private void setOutParams() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.paramInfo.numParameters > 0) {
-                for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter.hasNext();) {
+                for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter.hasNext(); ) {
                     CallableStatementParam outParamInfo = paramIter.next();
 
                     if (!this.callingStoredFunction && outParamInfo.isOut) {
@@ -2075,7 +2350,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                             }
 
                             if (!found) {
-                                throw SQLError.createSQLException(Messages.getString("CallableStatement.21", new Object[] { outParamInfo.paramName }),
+                                throw SQLError.createSQLException(Messages.getString("CallableStatement.21", new Object[]{outParamInfo.paramName}),
                                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                             }
                         }
@@ -2084,6 +2359,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                     }
                 }
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -2124,8 +2401,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     @Override
     public boolean wasNull() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             return this.outputParamWasNull;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -2230,13 +2511,15 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Check whether the stored procedure alters any data or is safe for read-only usage.
-     * 
+     *
      * @return true if procedure does not alter data
      * @throws SQLException
      *             if a database access error occurs or this method is called on a closed PreparedStatement
      */
     private boolean checkReadOnlyProcedure() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.noAccessToProcedureBodies) {
                 return false;
             }
@@ -2293,6 +2576,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             }
             this.paramInfo.isReadOnlySafeChecked = false;
             this.paramInfo.isReadOnlySafeProcedure = false;
+        } finally {
+            connectionMutex.unlock();
         }
         return false;
 
@@ -2495,7 +2780,9 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     @Override
     public long executeLargeUpdate() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             long returnVal = -1;
 
             checkStreamability();
@@ -2514,6 +2801,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             retrieveOutParams();
 
             return returnVal;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 

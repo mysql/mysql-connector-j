@@ -33,6 +33,7 @@ import java.sql.Date;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.WarningListener;
@@ -51,7 +52,8 @@ import com.mysql.cj.util.TimeUtil;
 public class SqlDateValueFactory extends AbstractDateTimeValueFactory<Date> {
     private WarningListener warningListener;
     // cached per instance to avoid re-creation on every create*() call
-    private Calendar cal;
+    private final Calendar cal;
+    private final ReentrantLock calLock = new ReentrantLock();
 
     public SqlDateValueFactory(PropertySet pset, Calendar calendar, TimeZone tz) {
         super(pset);
@@ -72,7 +74,8 @@ public class SqlDateValueFactory extends AbstractDateTimeValueFactory<Date> {
 
     @Override
     public Date localCreateFromDate(InternalDate idate) {
-        synchronized (this.cal) {
+        this.calLock.lock();
+        try {
             try {
                 if (idate.isZero()) {
                     throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
@@ -85,6 +88,8 @@ public class SqlDateValueFactory extends AbstractDateTimeValueFactory<Date> {
             } catch (IllegalArgumentException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
             }
+        } finally {
+            calLock.unlock();
         }
     }
 

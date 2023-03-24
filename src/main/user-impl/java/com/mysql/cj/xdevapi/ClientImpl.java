@@ -42,6 +42,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -75,11 +76,13 @@ public class ClientImpl implements Client, ProtocolEventListener {
     Map<HostInfo, Long> demotedHosts = null;
 
     BlockingQueue<PooledXProtocol> idleProtocols = null;
+    private final ReentrantLock idleProtocolsMutex = new ReentrantLock();
     Set<WeakReference<PooledXProtocol>> activeProtocols = null;
 
     Set<WeakReference<Session>> nonPooledSessions = null;
 
     SessionFactory sessionFactory = new SessionFactory();
+    private final ReentrantLock objectLock = new ReentrantLock();
 
     public ClientImpl(String url, String clientPropsJson) {
         Properties clientProps = StringUtils.isNullOrEmpty(clientPropsJson) ? new Properties() : clientPropsFromJson(clientPropsJson);
@@ -249,7 +252,8 @@ public class ClientImpl implements Client, ProtocolEventListener {
         }
 
         if (!this.poolingEnabled) {
-            synchronized (this) {
+            this.objectLock.lock();
+            try {
                 // Remove nulled and closed session references from the nonPooledSessions set.
                 List<WeakReference<Session>> obsoletedSessions = new ArrayList<>();
                 for (WeakReference<Session> ws : this.nonPooledSessions) {
@@ -267,22 +271,28 @@ public class ClientImpl implements Client, ProtocolEventListener {
                 Session sess = this.sessionFactory.getSession(this.connUrl);
                 this.nonPooledSessions.add(new WeakReference<>(sess));
                 return sess;
+            } finally {
+                this.objectLock.unlock();
             }
         }
 
         PooledXProtocol prot = null;
         List<HostInfo> hostsList = this.connUrl.getHostsList();
 
-        synchronized (this) {
+        this.objectLock.lock();
+        try {
             // 0. Close and remove idle protocols connected to a host that is not usable anymore.
             List<PooledXProtocol> toCloseAndRemove = this.idleProtocols.stream().filter(p -> !p.isHostInfoValid(hostsList)).collect(Collectors.toList());
             toCloseAndRemove.stream().peek(PooledXProtocol::realClose).peek(this.idleProtocols::remove).map(PooledXProtocol::getHostInfo).sequential()
                     .forEach(this.demotedHosts::remove);
+        } finally {
+            this.objectLock.unlock();
         }
 
         long start = System.currentTimeMillis();
         while (prot == null && (this.queueTimeout == 0 || System.currentTimeMillis() < start + this.queueTimeout)) { // TODO how to avoid endless loop?
-            synchronized (this.idleProtocols) {
+            this.idleProtocolsMutex.lock();
+            try {
                 if (this.idleProtocols.peek() != null) {
                     // 1. If there are idle Protocols then return one of them. 
                     PooledXProtocol tryProt = this.idleProtocols.poll();
@@ -360,13 +370,18 @@ public class ClientImpl implements Client, ProtocolEventListener {
                     // 4. No idle Protocols, no free space in the pool. Waiting indefinitely for idle Protocol.
                     prot = this.idleProtocols.poll(); // TODO endless lock ?
                 }
+            } finally {
+                this.idleProtocolsMutex.unlock();
             }
         }
         if (prot == null) {
             throw new XDevAPIError("Session can not be obtained within " + this.queueTimeout + " milliseconds.");
         }
-        synchronized (this) {
+        this.objectLock.lock();
+        try {
             this.activeProtocols.add(new WeakReference<>(prot));
+        } finally {
+            this.objectLock.unlock();
         }
         SessionImpl sess = new SessionImpl(prot);
         return sess;
@@ -384,7 +399,8 @@ public class ClientImpl implements Client, ProtocolEventListener {
 
     @Override
     public void close() {
-        synchronized (this) {
+        this.objectLock.lock();
+        try {
             if (this.poolingEnabled) {
                 if (!this.isClosed) {
                     this.isClosed = true;
@@ -396,11 +412,14 @@ public class ClientImpl implements Client, ProtocolEventListener {
             } else {
                 this.nonPooledSessions.stream().map(WeakReference::get).filter(Objects::nonNull).filter(Session::isOpen).forEach(s -> s.close());
             }
+        } finally {
+            this.objectLock.unlock();
         }
     }
 
     void idleProtocol(PooledXProtocol prot) {
-        synchronized (this) {
+        this.objectLock.lock();
+        try {
             if (!this.isClosed) {
                 List<WeakReference<PooledXProtocol>> removeThem = new ArrayList<>();
                 for (WeakReference<PooledXProtocol> wps : this.activeProtocols) {
@@ -419,6 +438,8 @@ public class ClientImpl implements Client, ProtocolEventListener {
                     this.activeProtocols.remove(wr);
                 }
             }
+        } finally {
+            this.objectLock.unlock();
         }
     }
 
@@ -464,7 +485,8 @@ public class ClientImpl implements Client, ProtocolEventListener {
         switch (type) {
             case SERVER_SHUTDOWN:
                 HostInfo hi = ((PooledXProtocol) info).getHostInfo();
-                synchronized (this) {
+                this.objectLock.lock();
+                try{
                     // Close and remove idle protocols connected to a host that is not usable anymore.
                     List<PooledXProtocol> toCloseAndRemove = this.idleProtocols.stream().filter(p -> p.getHostInfo().equalHostPortPair(hi))
                             .collect(Collectors.toList());
@@ -472,12 +494,17 @@ public class ClientImpl implements Client, ProtocolEventListener {
                             .forEach(this.demotedHosts::remove);
 
                     removeActivePooledXProtocol((PooledXProtocol) info);
+                } finally {
+                    this.objectLock.unlock();
                 }
                 break;
 
             case SERVER_CLOSED_SESSION:
-                synchronized (this) {
+                this.objectLock.lock();
+                try {
                     removeActivePooledXProtocol((PooledXProtocol) info);
+                } finally {
+                    this.objectLock.unlock();
                 }
                 break;
 

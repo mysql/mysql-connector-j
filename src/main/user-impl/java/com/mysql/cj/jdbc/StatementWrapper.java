@@ -36,6 +36,7 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -53,6 +54,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
     protected Statement wrappedStmt;
 
     protected ConnectionWrapper wrappedConn;
+    protected final ReentrantLock objectLock = new ReentrantLock();
 
     public StatementWrapper(ConnectionWrapper c, MysqlPooledConnection conn, Statement toWrap) {
         super(conn);
@@ -651,7 +653,8 @@ public class StatementWrapper extends WrapperBase implements Statement {
     }
 
     @Override
-    public synchronized <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+    public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+        objectLock.lock();
         try {
             if ("java.sql.Statement".equals(iface.getName()) || "java.sql.Wrapper.class".equals(iface.getName())) {
                 return iface.cast(this);
@@ -673,6 +676,8 @@ public class StatementWrapper extends WrapperBase implements Statement {
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+        } finally {
+            objectLock.unlock();
         }
     }
 

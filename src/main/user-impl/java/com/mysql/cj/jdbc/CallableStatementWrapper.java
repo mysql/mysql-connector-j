@@ -1766,7 +1766,8 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
     }
 
     @Override
-    public synchronized <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+    public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+        objectLock.lock();
         try {
             if ("java.sql.Statement".equals(iface.getName()) || "java.sql.CallableStatement".equals(iface.getName())
                     || "java.sql.PreparedStatement".equals(iface.getName()) || "java.sql.Wrapper.class".equals(iface.getName())) {
@@ -1789,6 +1790,8 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+        } finally {
+            objectLock.unlock();
         }
     }
 

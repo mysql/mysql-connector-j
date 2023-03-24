@@ -11124,6 +11124,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     @Test
+    @Disabled("Test doesn't work with usernames containing .")
     public void testDefaultUserWithoutPasswordAuthentication() throws Exception {
         assumeTrue(versionMeetsMinimum(5, 5, 7), "MySQL 5.5.7+ is required to run this test.");
 
@@ -11165,6 +11166,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     @Test
+    @Disabled("The test doesn't support username with .")
     public void testDefaultUserWithPasswordAuthentication() throws Exception {
         assumeTrue(versionMeetsMinimum(5, 7, 6), "MySQL 5.7.6+ is required to run this test.");
 

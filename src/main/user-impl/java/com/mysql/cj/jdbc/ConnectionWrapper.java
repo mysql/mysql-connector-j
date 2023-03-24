@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlConnection;
@@ -78,6 +79,12 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     private boolean closed;
 
     private boolean isForXa;
+    private final ReentrantLock objectLock = new ReentrantLock();
+
+    @Override
+    public ReentrantLock getObjectLock() {
+        return objectLock;
+    }
 
     protected static ConnectionWrapper getInstance(MysqlPooledConnection mysqlPooledConnection, JdbcConnection mysqlConnection, boolean forXa)
             throws SQLException {
@@ -567,7 +574,9 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     protected void close(boolean fireClosedEvent) throws SQLException {
-        synchronized (this.pooledConnection) {
+        ReentrantLock pooledConnectionLock = this.pooledConnection.getObjectLock();
+        pooledConnectionLock.lock();
+        try {
             if (this.closed) {
                 return;
             }
@@ -583,6 +592,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             // set closed status to true so that if application client tries to make additional calls a sqlException will be thrown. The physical connection is
             // re-used by the pooled connection each time getConnection is called.
             this.closed = true;
+        } finally {
+            pooledConnectionLock.unlock();
         }
     }
 
@@ -886,7 +897,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public Object getConnectionMutex() {
+    public ReentrantLock getConnectionMutex() {
         return this.mc.getConnectionMutex();
     }
 
@@ -945,14 +956,19 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public synchronized boolean isValid(int timeout) throws SQLException {
+    public boolean isValid(int timeout) throws SQLException {
+        objectLock.lock();
         try {
-            return ((java.sql.Connection) this.mc).isValid(timeout);
-        } catch (SQLException sqlException) {
-            checkAndFireConnectionError(sqlException);
-        }
+            try {
+                return ((java.sql.Connection) this.mc).isValid(timeout);
+            } catch (SQLException sqlException) {
+                checkAndFireConnectionError(sqlException);
+            }
 
-        return false; // never reached, but compiler can't tell
+            return false; // never reached, but compiler can't tell
+        } finally {
+            objectLock.unlock();
+        }
     }
 
     @Override
@@ -1036,7 +1052,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public synchronized <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+    public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+        objectLock.lock();
         try {
             if ("java.sql.Connection".equals(iface.getName()) || "java.sql.Wrapper.class".equals(iface.getName())) {
                 return iface.cast(this);
@@ -1058,6 +1075,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+        } finally {
+            objectLock.unlock();
         }
     }
 

@@ -62,7 +62,6 @@ public class ReplicationConnectionGroup {
 
     public long registerReplicationConnection(ReplicationConnection conn, List<String> localSourceList, List<String> localReplicaList) {
         long currentConnectionId;
-
         synchronized (this) {
             if (!this.isInitialized) {
                 if (localSourceList != null) {

@@ -500,7 +500,6 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         cw.setStatementComment("Test comment");
         assertNotEquals(((JdbcConnection) this.conn).getStatementComment(), cw.getStatementComment());
 
-        assertEquals(ConnectionImpl.class, cw.getConnectionMutex().getClass());
         assertNull(cw.getExceptionInterceptor());
         assertEquals(((JdbcConnection) this.conn).getNetworkTimeout(), cw.getNetworkTimeout());
         assertEquals(((JdbcConnection) this.conn).getTypeMap(), cw.getTypeMap());

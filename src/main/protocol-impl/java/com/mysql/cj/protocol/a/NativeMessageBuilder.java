@@ -30,6 +30,7 @@
 package com.mysql.cj.protocol.a;
 
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.BindValue;
 import com.mysql.cj.Constants;
@@ -50,6 +51,7 @@ import com.mysql.cj.util.StringUtils;
 
 public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload> {
     private boolean supportsQueryAttributes = true;
+    private final ReentrantLock objectLock = new ReentrantLock();
 
     public NativeMessageBuilder(boolean supportsQueryAttributes) {
         this.supportsQueryAttributes = supportsQueryAttributes;
@@ -98,7 +100,8 @@ public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload>
         NativePacketPayload sendPacket = sharedPacket != null ? sharedPacket : new NativePacketPayload(9);
         QueryAttributesBindings queryAttributesBindings = preparedQuery.getQueryAttributesBindings();
 
-        synchronized (this) {
+        this.objectLock.lock();
+        try {
             BindValue[] bindValues = bindings.getBindValues();
 
             sendPacket.writeInteger(IntegerDataType.INT1, NativeConstants.COM_QUERY);
@@ -178,6 +181,8 @@ public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload>
             sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, staticSqlStrings[bindValues.length]);
 
             return sendPacket;
+        } finally {
+            this.objectLock.unlock();
         }
     }
 

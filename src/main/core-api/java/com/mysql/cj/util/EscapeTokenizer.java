@@ -29,6 +29,8 @@
 
 package com.mysql.cj.util;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * EscapeTokenizer breaks up an SQL statement into SQL and escape code parts.
  */
@@ -52,6 +54,7 @@ public class EscapeTokenizer {
     private int bracesLevel = 0;
     private boolean inQuotes = false;
     private char quoteChar = 0;
+    private final ReentrantLock objectLock = new ReentrantLock();
 
     /**
      * Creates a new EscapeTokenizer object.
@@ -70,8 +73,13 @@ public class EscapeTokenizer {
      * 
      * @return if this tokenizer has more tokens available
      */
-    public synchronized boolean hasMoreTokens() {
-        return (this.pos < this.sourceLength);
+    public boolean hasMoreTokens() {
+        objectLock.lock();
+        try {
+            return (this.pos < this.sourceLength);
+        } finally {
+            objectLock.unlock();
+        }
     }
 
     /**
@@ -79,103 +87,108 @@ public class EscapeTokenizer {
      * 
      * @return the next token.
      */
-    public synchronized String nextToken() {
-        StringBuilder tokenBuf = new StringBuilder();
-        boolean backslashEscape = false;
+    public String nextToken() {
+        objectLock.lock();
+        try {
+            StringBuilder tokenBuf = new StringBuilder();
+            boolean backslashEscape = false;
 
-        if (this.emittingEscapeCode) {
-            // Previous token ended at the beginning of an escape code, so this token must start with '{'
-            tokenBuf.append("{");
-            this.emittingEscapeCode = false;
-        }
-
-        for (; this.pos < this.sourceLength; this.pos++) {
-            char c = this.source.charAt(this.pos);
-
-            // process escape char: (\)
-            if (c == CHR_ESCAPE) {
-                tokenBuf.append(c);
-                backslashEscape = !backslashEscape;
-                continue;
+            if (this.emittingEscapeCode) {
+                // Previous token ended at the beginning of an escape code, so this token must start with '{'
+                tokenBuf.append("{");
+                this.emittingEscapeCode = false;
             }
 
-            // process quotes: ('|")
-            if ((c == CHR_SGL_QUOTE || c == CHR_DBL_QUOTE) && !backslashEscape) {
-                tokenBuf.append(c);
-                if (this.inQuotes) {
-                    if (c == this.quoteChar) {
-                        // look ahead for doubled quote
-                        if ((this.pos + 1 < this.sourceLength) && (this.source.charAt(this.pos + 1) == this.quoteChar)) {
-                            tokenBuf.append(c);
-                            this.pos++; // consume following char '\'' or '"'
-                        } else {
-                            this.inQuotes = false;
-                        }
-                    }
-                } else {
-                    this.inQuotes = true;
-                    this.quoteChar = c;
+            for (; this.pos < this.sourceLength; this.pos++) {
+                char c = this.source.charAt(this.pos);
+
+                // process escape char: (\)
+                if (c == CHR_ESCAPE) {
+                    tokenBuf.append(c);
+                    backslashEscape = !backslashEscape;
+                    continue;
                 }
-                continue;
-            }
 
-            // process new line: (\n|\r)
-            if ((c == CHR_LF) || (c == CHR_CR)) {
+                // process quotes: ('|")
+                if ((c == CHR_SGL_QUOTE || c == CHR_DBL_QUOTE) && !backslashEscape) {
+                    tokenBuf.append(c);
+                    if (this.inQuotes) {
+                        if (c == this.quoteChar) {
+                            // look ahead for doubled quote
+                            if ((this.pos + 1 < this.sourceLength) && (this.source.charAt(this.pos + 1) == this.quoteChar)) {
+                                tokenBuf.append(c);
+                                this.pos++; // consume following char '\'' or '"'
+                            } else {
+                                this.inQuotes = false;
+                            }
+                        }
+                    } else {
+                        this.inQuotes = true;
+                        this.quoteChar = c;
+                    }
+                    continue;
+                }
+
+                // process new line: (\n|\r)
+                if ((c == CHR_LF) || (c == CHR_CR)) {
+                    tokenBuf.append(c);
+                    backslashEscape = false;
+                    continue;
+                }
+
+                if (!this.inQuotes && !backslashEscape) {
+                    // process comments: (--)
+                    if (c == CHR_COMMENT) {
+                        tokenBuf.append(c);
+                        // look ahead for double hyphen
+                        if ((this.pos + 1 < this.sourceLength) && (this.source.charAt(this.pos + 1) == CHR_COMMENT)) {
+                            // consume following chars until new line or end of string
+                            while (++this.pos < this.sourceLength && c != CHR_LF && c != CHR_CR) {
+                                c = this.source.charAt(this.pos);
+                                tokenBuf.append(c);
+                            }
+                            this.pos--;
+                        }
+                        continue;
+                    }
+
+                    // process begin token: ({)
+                    if (c == CHR_BEGIN_TOKEN) {
+                        this.bracesLevel++;
+                        if (this.bracesLevel == 1) {
+                            this.emittingEscapeCode = true;
+                            this.pos++; // consume char '{' before returning
+                            return tokenBuf.toString();
+                        }
+                        tokenBuf.append(c);
+                        continue;
+                    }
+
+                    // process end token: (})
+                    if (c == CHR_END_TOKEN) {
+                        tokenBuf.append(c);
+                        this.bracesLevel--;
+                        if (this.bracesLevel == 0) {
+                            this.pos++; // consume char '}' before returning
+                            return tokenBuf.toString();
+                        }
+                        continue;
+                    }
+
+                    // detect variable usage: (@)
+                    if (c == CHR_VARIABLE) {
+                        this.sawVariableUse = true;
+                    }
+                }
+
                 tokenBuf.append(c);
                 backslashEscape = false;
-                continue;
             }
 
-            if (!this.inQuotes && !backslashEscape) {
-                // process comments: (--)
-                if (c == CHR_COMMENT) {
-                    tokenBuf.append(c);
-                    // look ahead for double hyphen
-                    if ((this.pos + 1 < this.sourceLength) && (this.source.charAt(this.pos + 1) == CHR_COMMENT)) {
-                        // consume following chars until new line or end of string
-                        while (++this.pos < this.sourceLength && c != CHR_LF && c != CHR_CR) {
-                            c = this.source.charAt(this.pos);
-                            tokenBuf.append(c);
-                        }
-                        this.pos--;
-                    }
-                    continue;
-                }
-
-                // process begin token: ({)
-                if (c == CHR_BEGIN_TOKEN) {
-                    this.bracesLevel++;
-                    if (this.bracesLevel == 1) {
-                        this.emittingEscapeCode = true;
-                        this.pos++; // consume char '{' before returning
-                        return tokenBuf.toString();
-                    }
-                    tokenBuf.append(c);
-                    continue;
-                }
-
-                // process end token: (})
-                if (c == CHR_END_TOKEN) {
-                    tokenBuf.append(c);
-                    this.bracesLevel--;
-                    if (this.bracesLevel == 0) {
-                        this.pos++; // consume char '}' before returning
-                        return tokenBuf.toString();
-                    }
-                    continue;
-                }
-
-                // detect variable usage: (@)
-                if (c == CHR_VARIABLE) {
-                    this.sawVariableUse = true;
-                }
-            }
-
-            tokenBuf.append(c);
-            backslashEscape = false;
+            return tokenBuf.toString();
+        } finally {
+            objectLock.unlock();
         }
-
-        return tokenBuf.toString();
     }
 
     /**

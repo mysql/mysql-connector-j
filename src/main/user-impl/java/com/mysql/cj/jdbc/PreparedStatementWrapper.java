@@ -886,7 +886,8 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
     }
 
     @Override
-    public synchronized <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+    public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+        objectLock.lock();
         try {
             if ("java.sql.Statement".equals(iface.getName()) || "java.sql.PreparedStatement".equals(iface.getName())
                     || "java.sql.Wrapper.class".equals(iface.getName())) {
@@ -909,27 +910,34 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+        } finally {
+            objectLock.unlock();
         }
     }
 
     @Override
-    public synchronized void close() throws SQLException {
-        if (this.pooledConnection == null) {
-            // no-op
-            return;
-        }
-
-        MysqlPooledConnection con = this.pooledConnection; // we need this later...
-
+    public void close() throws SQLException {
+        objectLock.lock();
         try {
-            super.close();
-        } finally {
-            try {
-                StatementEvent e = new StatementEvent(con, this);
-                con.fireStatementEvent(e);
-            } finally {
-                this.unwrappedInterfaces = null;
+            if (this.pooledConnection == null) {
+                // no-op
+                return;
             }
+
+            MysqlPooledConnection con = this.pooledConnection; // we need this later...
+
+            try {
+                super.close();
+            } finally {
+                try {
+                    StatementEvent e = new StatementEvent(con, this);
+                    con.fireStatementEvent(e);
+                } finally {
+                    this.unwrappedInterfaces = null;
+                }
+            }
+        } finally {
+            objectLock.unlock();
         }
     }
 

@@ -46,6 +46,7 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 import com.mysql.cj.Messages;
@@ -60,6 +61,7 @@ import com.mysql.cj.exceptions.WrongArgumentException;
  */
 public class TimeUtil {
     static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
+    static final ReentrantLock OBJECT_LOCK = new ReentrantLock();
 
     public static final LocalDate DEFAULT_DATE = LocalDate.of(1970, 1, 1);
     public static final LocalTime DEFAULT_TIME = LocalTime.of(0, 0);
@@ -164,10 +166,13 @@ public class TimeUtil {
             }
         }
 
-        synchronized (TimeUtil.class) {
+        OBJECT_LOCK.lock();
+        try {
             if (timeZoneMappings == null) {
                 loadTimeZoneMappings(exceptionInterceptor);
             }
+        } finally {
+            OBJECT_LOCK.unlock();
         }
 
         String canonicalTz;

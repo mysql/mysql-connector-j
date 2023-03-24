@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
@@ -54,14 +55,15 @@ import com.mysql.cj.util.StringUtils;
  */
 public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
-    private static Map<ServerVersion, String> keywordsCache = Collections.synchronizedMap(new LRUCache<>(10));
-
     protected enum FunctionConstant {
         // COLUMN_TYPE values
         FUNCTION_COLUMN_UNKNOWN, FUNCTION_COLUMN_IN, FUNCTION_COLUMN_INOUT, FUNCTION_COLUMN_OUT, FUNCTION_COLUMN_RETURN, FUNCTION_COLUMN_RESULT,
         // NULLABLE values
         FUNCTION_NO_NULLS, FUNCTION_NULLABLE, FUNCTION_NULLABLE_UNKNOWN;
+
     }
+    private static Map<ServerVersion, String> keywordsCache = Collections.synchronizedMap(new LRUCache<>(10));
+    private static final ReentrantLock KEYWORDS_CACHE_LOCK = new ReentrantLock();
 
     protected DatabaseMetaDataUsingInfoSchema(JdbcConnection connToSet, String databaseToSet, ResultSetFactory resultSetFactory) throws SQLException {
         super(connToSet, databaseToSet, resultSetFactory);
@@ -1182,7 +1184,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
             return keywords;
         }
 
-        synchronized (keywordsCache) {
+        KEYWORDS_CACHE_LOCK.lock();
+        try {
             // Double check, maybe another thread already added it.
             keywords = keywordsCache.get(this.conn.getServerVersion());
             if (keywords != null) {
@@ -1202,6 +1205,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
             keywordsCache.put(this.conn.getServerVersion(), keywords);
             return keywords;
+        } finally {
+            KEYWORDS_CACHE_LOCK.unlock();
         }
     }
 

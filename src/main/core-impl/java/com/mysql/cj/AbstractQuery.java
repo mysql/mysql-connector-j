@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
@@ -61,7 +62,7 @@ public abstract class AbstractQuery implements Query {
     protected String charEncoding = null;
 
     /** Mutex to prevent race between returning query results and noticing that query has been timed-out or cancelled. */
-    protected Object cancelTimeoutMutex = new Object();
+    protected ReentrantLock cancelTimeoutMutex = new ReentrantLock();
 
     private CancelStatus cancelStatus = CancelStatus.NOT_CANCELED;
 
@@ -91,6 +92,8 @@ public abstract class AbstractQuery implements Query {
 
     /** Query attributes bindings */
     protected QueryAttributesBindings queryAttributesBindings;
+
+    protected final ReentrantLock objectLock = new ReentrantLock();
 
     public AbstractQuery(NativeSession sess) {
         statementCounter++;
@@ -122,18 +125,24 @@ public abstract class AbstractQuery implements Query {
 
     @Override
     public void checkCancelTimeout() {
-        synchronized (this.cancelTimeoutMutex) {
+        this.cancelTimeoutMutex.lock();
+        try {
             if (this.cancelStatus != CancelStatus.NOT_CANCELED) {
                 CJException cause = this.cancelStatus == CancelStatus.CANCELED_BY_TIMEOUT ? new CJTimeoutException() : new OperationCancelledException();
                 resetCancelledState();
                 throw cause;
             }
+        } finally {
+            this.cancelTimeoutMutex.unlock();
         }
     }
 
     public void resetCancelledState() {
-        synchronized (this.cancelTimeoutMutex) {
+        this.cancelTimeoutMutex.lock();
+        try {
             this.cancelStatus = CancelStatus.NOT_CANCELED;
+        } finally {
+            this.cancelTimeoutMutex.unlock();
         }
     }
 
@@ -149,7 +158,7 @@ public abstract class AbstractQuery implements Query {
     }
 
     @Override
-    public Object getCancelTimeoutMutex() {
+    public ReentrantLock getCancelTimeoutMutex() {
         return this.cancelTimeoutMutex;
     }
 

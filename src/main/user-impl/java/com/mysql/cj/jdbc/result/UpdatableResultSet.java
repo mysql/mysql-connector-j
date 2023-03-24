@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
@@ -133,14 +134,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     /**
      * Creates a new ResultSet object.
-     * 
+     *
      * @param tuples
      *            actual row data
      * @param conn
      *            the Connection that created us.
      * @param creatorStmt
      *            statement owning this result set
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -206,7 +207,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     /**
      * Is this ResultSet updatable?
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -393,7 +394,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void deleteRow() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.isUpdatable) {
                 throw new NotUpdatable(this.notUpdatableReason);
             }
@@ -428,6 +431,8 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.rowData.remove();
 
             prev(); // position on previous row - Bug#27431
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -556,7 +561,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     /**
      * Figure out whether or not this ResultSet is updatable, and if so,
      * generate the PreparedStatements to support updates.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      * @throws NotUpdatable
@@ -713,8 +718,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public int getConcurrency() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             return (this.isUpdatable ? CONCUR_UPDATABLE : CONCUR_READ_ONLY);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -728,7 +737,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void insertRow() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.7"), getExceptionInterceptor());
             }
@@ -758,6 +769,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             this.rowData.addRow(resultSetRow);
             resetInserter();
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -799,7 +812,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void moveToCurrentRow() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.isUpdatable) {
                 throw new NotUpdatable(this.notUpdatableReason);
             }
@@ -808,12 +823,16 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.onInsertRow = false;
                 this.thisRow = this.savedCurrentRow;
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void moveToInsertRow() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.isUpdatable) {
                 throw new NotUpdatable(this.notUpdatableReason);
             }
@@ -881,6 +900,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                     }
                 }
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -926,7 +947,9 @@ public class UpdatableResultSet extends ResultSetImpl {
             return;
         }
 
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             SQLException sqlEx = null;
 
             if (this.useUsageAdvisor) {
@@ -973,12 +996,16 @@ public class UpdatableResultSet extends ResultSetImpl {
             if (sqlEx != null) {
                 throw sqlEx;
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void refreshRow() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (isStrictlyForwardOnly()) {
                 throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
             }
@@ -998,6 +1025,8 @@ public class UpdatableResultSet extends ResultSetImpl {
             }
 
             refreshRow(this.updater, this.thisRow);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1117,7 +1146,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     /**
      * Reset UPDATE prepared statement to value in current row. This_Row MUST
      * point to current, valid row.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -1167,7 +1196,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateRow() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.isUpdatable) {
                 throw new NotUpdatable(this.notUpdatableReason);
             }
@@ -1182,6 +1213,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             // fixes calling updateRow() and then doing more updates on same row...
             syncUpdate();
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1197,7 +1230,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateAsciiStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1209,6 +1244,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setAsciiStream(columnIndex, x, length);
                 this.thisRow.setBytes(columnIndex - 1, STREAM_DATA_MARKER);
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1219,7 +1256,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1231,6 +1270,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setBigDecimal(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, x == null ? null : StringUtils.getBytes(x.toString()));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1241,7 +1282,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateBinaryStream(int columnIndex, java.io.InputStream x, int length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1253,6 +1296,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setBinaryStream(columnIndex, x, length);
                 this.thisRow.setBytes(columnIndex - 1, x == null ? null : STREAM_DATA_MARKER);
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1263,7 +1308,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateBlob(int columnIndex, java.sql.Blob blob) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1275,6 +1322,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setBlob(columnIndex, blob);
                 this.thisRow.setBytes(columnIndex - 1, blob == null ? null : STREAM_DATA_MARKER);
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1285,7 +1334,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateBoolean(int columnIndex, boolean x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1297,6 +1348,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setBoolean(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1307,7 +1360,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateByte(int columnIndex, byte x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1319,6 +1374,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setByte(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1329,7 +1386,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateBytes(int columnIndex, byte[] x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1341,6 +1400,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setBytes(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, x);
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1351,7 +1412,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateCharacterStream(int columnIndex, java.io.Reader x, int length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1363,6 +1426,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setCharacterStream(columnIndex, x, length);
                 this.thisRow.setBytes(columnIndex - 1, x == null ? null : STREAM_DATA_MARKER);
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1373,12 +1438,16 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateClob(int columnIndex, java.sql.Clob clob) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (clob == null) {
                 updateNull(columnIndex);
             } else {
                 updateCharacterStream(columnIndex, clob.getCharacterStream(), (int) clob.length());
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1389,7 +1458,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateDate(int columnIndex, java.sql.Date x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1401,6 +1472,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setDate(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1411,7 +1484,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateDouble(int columnIndex, double x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1423,6 +1498,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setDouble(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1433,7 +1510,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateFloat(int columnIndex, float x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1445,6 +1524,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setFloat(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1455,7 +1536,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateInt(int columnIndex, int x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1467,6 +1550,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setInt(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1477,7 +1562,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateLong(int columnIndex, long x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1489,6 +1576,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setLong(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1499,7 +1588,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateNull(int columnIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1511,6 +1602,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setNull(columnIndex, 0);
                 this.thisRow.setBytes(columnIndex - 1, null);
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1537,7 +1630,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     /**
      * Internal setObject implementation. Although targetType is not part of default ResultSet methods signatures, it is used for type conversions from
      * JDBC42UpdatableResultSet new JDBC 4.2 updateObject() methods.
-     * 
+     *
      * @param columnIndex
      *            column index
      * @param x
@@ -1562,7 +1655,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     /**
      * Internal setObject implementation.
-     * 
+     *
      * @param columnIndex
      *            column index
      * @param x
@@ -1575,7 +1668,9 @@ public class UpdatableResultSet extends ResultSetImpl {
      *             if an error occurs
      */
     protected void updateObjectInternal(int columnIndex, Object x, SQLType targetType, int scaleOrLength) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1596,6 +1691,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 
                 this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1626,7 +1723,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateShort(int columnIndex, short x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1638,6 +1737,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setShort(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1648,7 +1749,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateString(int columnIndex, String x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1660,6 +1763,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setString(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, x == null ? null : StringUtils.getBytes(x, this.charEncoding));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1670,7 +1775,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateTime(int columnIndex, java.sql.Time x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1682,6 +1789,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setTime(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1692,7 +1801,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateTimestamp(int columnIndex, java.sql.Timestamp x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (!this.onInsertRow) {
                 if (!this.doingUpdates) {
                     this.doingUpdates = true;
@@ -1704,6 +1815,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setTimestamp(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, this.inserter.getBytesRepresentation(columnIndex));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1919,7 +2032,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
             if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
                 throw new SQLException(Messages.getString("ResultSet.16"));
@@ -1936,6 +2051,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setNCharacterStream(columnIndex, x, length);
                 this.thisRow.setBytes(columnIndex - 1, x == null ? null : STREAM_DATA_MARKER);
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1974,7 +2091,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateNClob(int columnIndex, java.sql.NClob nClob) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
             if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
                 throw new SQLException(Messages.getString("ResultSet.17"));
@@ -1985,6 +2104,8 @@ public class UpdatableResultSet extends ResultSetImpl {
             } else {
                 updateNCharacterStream(columnIndex, nClob.getCharacterStream(), (int) nClob.length());
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -2005,7 +2126,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateNString(int columnIndex, String x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
             if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
                 throw new SQLException(Messages.getString("ResultSet.18"));
@@ -2022,6 +2145,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.inserter.setNString(columnIndex, x);
                 this.thisRow.setBytes(columnIndex - 1, x == null ? null : StringUtils.getBytes(x, fieldEncoding));
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 

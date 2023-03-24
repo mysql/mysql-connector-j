@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.jdbc.exceptions.SQLError;
@@ -46,12 +47,14 @@ public class ConnectionGroup {
     private long connections = 0;
     private long activeConnections = 0;
     private HashMap<Long, LoadBalancedConnectionProxy> connectionProxies = new HashMap<>();
+    private ReentrantLock connectionProxiesLock = new ReentrantLock();
     private Set<String> hostList = new HashSet<>();
     private boolean isInitialized = false;
     private long closedProxyTotalPhysicalConnections = 0;
     private long closedProxyTotalTransactions = 0;
     private int activeHosts = 0;
     private Set<String> closedHosts = new HashSet<>();
+    private final ReentrantLock objectLock = new ReentrantLock();
 
     ConnectionGroup(String groupName) {
         this.groupName = groupName;
@@ -60,7 +63,8 @@ public class ConnectionGroup {
     public long registerConnectionProxy(LoadBalancedConnectionProxy proxy, List<String> localHostList) {
         long currentConnectionId;
 
-        synchronized (this) {
+        objectLock.lock();
+        try {
             if (!this.isInitialized) {
                 this.hostList.addAll(localHostList);
                 this.isInitialized = true;
@@ -68,6 +72,8 @@ public class ConnectionGroup {
             }
             currentConnectionId = ++this.connections;
             this.connectionProxies.put(Long.valueOf(currentConnectionId), proxy);
+        } finally {
+            objectLock.unlock();
         }
         this.activeConnections++;
 
@@ -102,8 +108,11 @@ public class ConnectionGroup {
     public long getActivePhysicalConnectionCount() {
         long result = 0;
         Map<Long, LoadBalancedConnectionProxy> proxyMap = new HashMap<>();
-        synchronized (this.connectionProxies) {
+        connectionProxiesLock.lock();
+        try {
             proxyMap.putAll(this.connectionProxies);
+        } finally {
+            connectionProxiesLock.unlock();
         }
         for (LoadBalancedConnectionProxy proxy : proxyMap.values()) {
             result += proxy.getActivePhysicalConnectionCount();
@@ -114,8 +123,11 @@ public class ConnectionGroup {
     public long getTotalPhysicalConnectionCount() {
         long allConnections = this.closedProxyTotalPhysicalConnections;
         Map<Long, LoadBalancedConnectionProxy> proxyMap = new HashMap<>();
-        synchronized (this.connectionProxies) {
+        connectionProxiesLock.lock();
+        try {
             proxyMap.putAll(this.connectionProxies);
+        } finally {
+            connectionProxiesLock.unlock();
         }
         for (LoadBalancedConnectionProxy proxy : proxyMap.values()) {
             allConnections += proxy.getTotalPhysicalConnectionCount();
@@ -127,8 +139,11 @@ public class ConnectionGroup {
         // need to account for closed connection proxies
         long transactions = this.closedProxyTotalTransactions;
         Map<Long, LoadBalancedConnectionProxy> proxyMap = new HashMap<>();
-        synchronized (this.connectionProxies) {
+        connectionProxiesLock.lock();
+        try {
             proxyMap.putAll(this.connectionProxies);
+        } finally {
+            connectionProxiesLock.unlock();
         }
         for (LoadBalancedConnectionProxy proxy : proxyMap.values()) {
             transactions += proxy.getTransactionCount();
@@ -183,33 +198,41 @@ public class ConnectionGroup {
      * @throws SQLException
      *             if a database access error occurs
      */
-    public synchronized void removeHost(String hostPortPair, boolean removeExisting, boolean waitForGracefulFailover) throws SQLException {
-        if (this.activeHosts == 1) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionGroup.0"), null);
-        }
-
-        if (this.hostList.remove(hostPortPair)) {
-            this.activeHosts--;
-        } else {
-            throw SQLError.createSQLException(Messages.getString("ConnectionGroup.1", new Object[] { hostPortPair }), null);
-        }
-
-        if (removeExisting) {
-            // make a local copy to keep synchronization overhead to minimum
-            Map<Long, LoadBalancedConnectionProxy> proxyMap = new HashMap<>();
-            synchronized (this.connectionProxies) {
-                proxyMap.putAll(this.connectionProxies);
+    public void removeHost(String hostPortPair, boolean removeExisting, boolean waitForGracefulFailover) throws SQLException {
+        objectLock.lock();
+        try {
+            if (this.activeHosts == 1) {
+                throw SQLError.createSQLException(Messages.getString("ConnectionGroup.0"), null);
             }
 
-            for (LoadBalancedConnectionProxy proxy : proxyMap.values()) {
-                if (waitForGracefulFailover) {
-                    proxy.removeHostWhenNotInUse(hostPortPair);
-                } else {
-                    proxy.removeHost(hostPortPair);
+            if (this.hostList.remove(hostPortPair)) {
+                this.activeHosts--;
+            } else {
+                throw SQLError.createSQLException(Messages.getString("ConnectionGroup.1", new Object[] { hostPortPair }), null);
+            }
+
+            if (removeExisting) {
+                // make a local copy to keep synchronization overhead to minimum
+                Map<Long, LoadBalancedConnectionProxy> proxyMap = new HashMap<>();
+                connectionProxiesLock.lock();
+                try {
+                    proxyMap.putAll(this.connectionProxies);
+                } finally {
+                    connectionProxiesLock.unlock();
+                }
+
+                for (LoadBalancedConnectionProxy proxy : proxyMap.values()) {
+                    if (waitForGracefulFailover) {
+                        proxy.removeHostWhenNotInUse(hostPortPair);
+                    } else {
+                        proxy.removeHost(hostPortPair);
+                    }
                 }
             }
+            this.closedHosts.add(hostPortPair);
+        } finally {
+            objectLock.unlock();
         }
-        this.closedHosts.add(hostPortPair);
     }
 
     /**
@@ -231,10 +254,13 @@ public class ConnectionGroup {
      *            Whether affects existing load-balanced connections or only new ones.
      */
     public void addHost(String hostPortPair, boolean forExisting) {
-        synchronized (this) {
+        objectLock.lock();
+        try {
             if (this.hostList.add(hostPortPair)) {
                 this.activeHosts++;
             }
+        } finally {
+            objectLock.unlock();
         }
         // all new connections will have this host
         if (!forExisting) {
@@ -243,8 +269,11 @@ public class ConnectionGroup {
 
         // make a local copy to keep synchronization overhead to minimum
         Map<Long, LoadBalancedConnectionProxy> proxyMap = new HashMap<>();
-        synchronized (this.connectionProxies) {
+        connectionProxiesLock.lock();
+        try {
             proxyMap.putAll(this.connectionProxies);
+        } finally {
+            connectionProxiesLock.unlock();
         }
 
         for (LoadBalancedConnectionProxy proxy : proxyMap.values()) {

@@ -35,6 +35,7 @@ import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.Properties;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ClientInfoProviderSP implements ClientInfoProvider {
 
@@ -49,93 +50,116 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
 
     PreparedStatement getClientInfoBulkSp;
 
-    @Override
-    public synchronized void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException {
-        String identifierQuote = ((JdbcConnection) conn).getSession().getIdentifierQuoteString();
-        String setClientInfoSpName = configurationProps.getProperty(PNAME_clientInfoSetSPName, "setClientInfo");
-        String getClientInfoSpName = configurationProps.getProperty(PNAME_clientInfoGetSPName, "getClientInfo");
-        String getClientInfoBulkSpName = configurationProps.getProperty(PNAME_clientInfoGetBulkSPName, "getClientInfoBulk");
-        String clientInfoDatabase = configurationProps.getProperty(PNAME_clientInfoDatabase, ""); // "" means use current from connection
-
-        String db = "".equals(clientInfoDatabase) ? ((JdbcConnection) conn).getDatabase() : clientInfoDatabase;
-
-        this.setClientInfoSp = ((JdbcConnection) conn).clientPrepareStatement(
-                "CALL " + identifierQuote + db + identifierQuote + "." + identifierQuote + setClientInfoSpName + identifierQuote + "(?, ?)");
-
-        this.getClientInfoSp = ((JdbcConnection) conn).clientPrepareStatement(
-                "CALL" + identifierQuote + db + identifierQuote + "." + identifierQuote + getClientInfoSpName + identifierQuote + "(?)");
-
-        this.getClientInfoBulkSp = ((JdbcConnection) conn).clientPrepareStatement(
-                "CALL " + identifierQuote + db + identifierQuote + "." + identifierQuote + getClientInfoBulkSpName + identifierQuote + "()");
-    }
+    private final ReentrantLock objectLock = new ReentrantLock();
 
     @Override
-    public synchronized void destroy() throws SQLException {
-        if (this.setClientInfoSp != null) {
-            this.setClientInfoSp.close();
-            this.setClientInfoSp = null;
-        }
-
-        if (this.getClientInfoSp != null) {
-            this.getClientInfoSp.close();
-            this.getClientInfoSp = null;
-        }
-
-        if (this.getClientInfoBulkSp != null) {
-            this.getClientInfoBulkSp.close();
-            this.getClientInfoBulkSp = null;
-        }
-    }
-
-    @Override
-    public synchronized Properties getClientInfo(java.sql.Connection conn) throws SQLException {
-        ResultSet rs = null;
-
-        Properties props = new Properties();
-
+    public void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException {
+        objectLock.lock();
         try {
-            this.getClientInfoBulkSp.execute();
+            String identifierQuote = ((JdbcConnection) conn).getSession().getIdentifierQuoteString();
+            String setClientInfoSpName = configurationProps.getProperty(PNAME_clientInfoSetSPName, "setClientInfo");
+            String getClientInfoSpName = configurationProps.getProperty(PNAME_clientInfoGetSPName, "getClientInfo");
+            String getClientInfoBulkSpName = configurationProps.getProperty(PNAME_clientInfoGetBulkSPName, "getClientInfoBulk");
+            String clientInfoDatabase = configurationProps.getProperty(PNAME_clientInfoDatabase, ""); // "" means use current from connection
 
-            rs = this.getClientInfoBulkSp.getResultSet();
+            String db = "".equals(clientInfoDatabase) ? ((JdbcConnection) conn).getDatabase() : clientInfoDatabase;
 
-            while (rs.next()) {
-                props.setProperty(rs.getString(1), rs.getString(2));
+            this.setClientInfoSp = ((JdbcConnection) conn).clientPrepareStatement(
+                    "CALL " + identifierQuote + db + identifierQuote + "." + identifierQuote + setClientInfoSpName + identifierQuote + "(?, ?)");
+
+            this.getClientInfoSp = ((JdbcConnection) conn).clientPrepareStatement(
+                    "CALL" + identifierQuote + db + identifierQuote + "." + identifierQuote + getClientInfoSpName + identifierQuote + "(?)");
+
+            this.getClientInfoBulkSp = ((JdbcConnection) conn).clientPrepareStatement(
+                    "CALL " + identifierQuote + db + identifierQuote + "." + identifierQuote + getClientInfoBulkSpName + identifierQuote + "()");
+        } finally {
+            objectLock.unlock();
+        }
+    }
+
+    @Override
+    public void destroy() throws SQLException {
+        objectLock.lock();
+        try {
+            if (this.setClientInfoSp != null) {
+                this.setClientInfoSp.close();
+                this.setClientInfoSp = null;
+            }
+
+            if (this.getClientInfoSp != null) {
+                this.getClientInfoSp.close();
+                this.getClientInfoSp = null;
+            }
+
+            if (this.getClientInfoBulkSp != null) {
+                this.getClientInfoBulkSp.close();
+                this.getClientInfoBulkSp = null;
             }
         } finally {
-            if (rs != null) {
-                rs.close();
-            }
+            objectLock.unlock();
         }
-
-        return props;
     }
 
     @Override
-    public synchronized String getClientInfo(java.sql.Connection conn, String name) throws SQLException {
-        ResultSet rs = null;
-
-        String clientInfo = null;
-
+    public Properties getClientInfo(java.sql.Connection conn) throws SQLException {
+        objectLock.lock();
         try {
-            this.getClientInfoSp.setString(1, name);
-            this.getClientInfoSp.execute();
+            ResultSet rs = null;
 
-            rs = this.getClientInfoSp.getResultSet();
+            Properties props = new Properties();
 
-            if (rs.next()) {
-                clientInfo = rs.getString(1);
+            try {
+                this.getClientInfoBulkSp.execute();
+
+                rs = this.getClientInfoBulkSp.getResultSet();
+
+                while (rs.next()) {
+                    props.setProperty(rs.getString(1), rs.getString(2));
+                }
+            } finally {
+                if (rs != null) {
+                    rs.close();
+                }
             }
+
+            return props;
         } finally {
-            if (rs != null) {
-                rs.close();
-            }
+            objectLock.unlock();
         }
-
-        return clientInfo;
     }
 
     @Override
-    public synchronized void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException {
+    public String getClientInfo(java.sql.Connection conn, String name) throws SQLException {
+        objectLock.lock();
+        try {
+            ResultSet rs = null;
+
+            String clientInfo = null;
+
+            try {
+                this.getClientInfoSp.setString(1, name);
+                this.getClientInfoSp.execute();
+
+                rs = this.getClientInfoSp.getResultSet();
+
+                if (rs.next()) {
+                    clientInfo = rs.getString(1);
+                }
+            } finally {
+                if (rs != null) {
+                    rs.close();
+                }
+            }
+
+            return clientInfo;
+        } finally {
+            objectLock.unlock();
+        }
+    }
+
+    @Override
+    public void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException {
+        objectLock.lock();
         try {
             Enumeration<?> propNames = properties.propertyNames();
 
@@ -150,11 +174,14 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
             clientInfoEx.initCause(sqlEx);
 
             throw clientInfoEx;
+        } finally {
+            objectLock.unlock();
         }
     }
 
     @Override
-    public synchronized void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException {
+    public void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException {
+        objectLock.lock();
         try {
             this.setClientInfoSp.setString(1, name);
             this.setClientInfoSp.setString(2, value);
@@ -164,6 +191,8 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
             clientInfoEx.initCause(sqlEx);
 
             throw clientInfoEx;
+        } finally {
+            objectLock.unlock();
         }
     }
 }

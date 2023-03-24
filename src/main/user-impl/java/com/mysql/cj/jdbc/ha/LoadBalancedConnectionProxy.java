@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import com.mysql.cj.Messages;
@@ -81,6 +82,9 @@ import com.mysql.cj.util.Util;
  * scoped to connections in JDBC.
  */
 public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implements PingTarget {
+
+    private static final ReentrantLock OBJECT_LOCK = new ReentrantLock();
+
     private ConnectionGroup connectionGroup = null;
     private long connectionGroupProxyID = 0;
 
@@ -307,26 +311,31 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      *             if an error occurs
      */
     @Override
-    synchronized void invalidateConnection(JdbcConnection conn) throws SQLException {
-        super.invalidateConnection(conn);
+    void invalidateConnection(JdbcConnection conn) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            super.invalidateConnection(conn);
 
-        // add host to the global blocklist, if enabled
-        if (this.isGlobalBlocklistEnabled()) {
-            String host = this.connectionsToHostsMap.get(conn);
-            if (host != null) {
-                addToGlobalBlocklist(host);
+            // add host to the global blocklist, if enabled
+            if (this.isGlobalBlocklistEnabled()) {
+                String host = this.connectionsToHostsMap.get(conn);
+                if (host != null) {
+                    addToGlobalBlocklist(host);
+                }
             }
-        }
 
-        // remove from liveConnections
-        this.liveConnections.remove(this.connectionsToHostsMap.get(conn));
-        Object mappedHost = this.connectionsToHostsMap.remove(conn);
-        if (mappedHost != null && this.hostsToListIndexMap.containsKey(mappedHost)) {
-            int hostIndex = this.hostsToListIndexMap.get(mappedHost);
-            // reset the statistics for the host
-            synchronized (this.responseTimes) {
-                this.responseTimes[hostIndex] = 0;
+            // remove from liveConnections
+            this.liveConnections.remove(this.connectionsToHostsMap.get(conn));
+            Object mappedHost = this.connectionsToHostsMap.remove(conn);
+            if (mappedHost != null && this.hostsToListIndexMap.containsKey(mappedHost)) {
+                int hostIndex = this.hostsToListIndexMap.get(mappedHost);
+                // reset the statistics for the host
+                synchronized (this.responseTimes) {
+                    this.responseTimes[hostIndex] = 0;
+                }
             }
+        } finally {
+            this.getObjectLock().unlock();
         }
     }
 
@@ -337,54 +346,59 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      *             if an error occurs
      */
     @Override
-    public synchronized void pickNewConnection() throws SQLException {
-        if (this.isClosed && this.closedExplicitly) {
-            return;
-        }
+    public void pickNewConnection() throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            if (this.isClosed && this.closedExplicitly) {
+                return;
+            }
 
-        List<String> hostPortList = Collections.unmodifiableList(this.hostsList.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList()));
+            List<String> hostPortList = Collections.unmodifiableList(this.hostsList.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList()));
 
-        if (this.currentConnection == null) { // startup
-            this.currentConnection = this.balancer.pickConnection(this, hostPortList, Collections.unmodifiableMap(this.liveConnections),
-                    this.responseTimes.clone(), this.retriesAllDown);
-            return;
-        }
-
-        if (this.currentConnection.isClosed()) {
-            invalidateCurrentConnection();
-        }
-
-        int pingTimeout = this.currentConnection.getPropertySet().getIntegerProperty(PropertyKey.loadBalancePingTimeout).getValue();
-        boolean pingBeforeReturn = this.currentConnection.getPropertySet().getBooleanProperty(PropertyKey.loadBalanceValidateConnectionOnSwapServer).getValue();
-
-        for (int hostsTried = 0, hostsToTry = this.hostsList.size(); hostsTried < hostsToTry; hostsTried++) {
-            ConnectionImpl newConn = null;
-            try {
-                newConn = (ConnectionImpl) this.balancer.pickConnection(this, hostPortList, Collections.unmodifiableMap(this.liveConnections),
+            if (this.currentConnection == null) { // startup
+                this.currentConnection = this.balancer.pickConnection(this, hostPortList, Collections.unmodifiableMap(this.liveConnections),
                         this.responseTimes.clone(), this.retriesAllDown);
+                return;
+            }
 
-                if (this.currentConnection != null) {
-                    if (pingBeforeReturn) {
-                        newConn.pingInternal(true, pingTimeout);
+            if (this.currentConnection.isClosed()) {
+                invalidateCurrentConnection();
+            }
+
+            int pingTimeout = this.currentConnection.getPropertySet().getIntegerProperty(PropertyKey.loadBalancePingTimeout).getValue();
+            boolean pingBeforeReturn = this.currentConnection.getPropertySet().getBooleanProperty(PropertyKey.loadBalanceValidateConnectionOnSwapServer).getValue();
+
+            for (int hostsTried = 0, hostsToTry = this.hostsList.size(); hostsTried < hostsToTry; hostsTried++) {
+                ConnectionImpl newConn = null;
+                try {
+                    newConn = (ConnectionImpl) this.balancer.pickConnection(this, hostPortList, Collections.unmodifiableMap(this.liveConnections),
+                            this.responseTimes.clone(), this.retriesAllDown);
+
+                    if (this.currentConnection != null) {
+                        if (pingBeforeReturn) {
+                            newConn.pingInternal(true, pingTimeout);
+                        }
+
+                        syncSessionState(this.currentConnection, newConn);
                     }
 
-                    syncSessionState(this.currentConnection, newConn);
-                }
+                    this.currentConnection = newConn;
+                    return;
 
-                this.currentConnection = newConn;
-                return;
-
-            } catch (SQLException e) {
-                if (shouldExceptionTriggerConnectionSwitch(e) && newConn != null) {
-                    // connection error, close up shop on current connection
-                    invalidateConnection(newConn);
+                } catch (SQLException e) {
+                    if (shouldExceptionTriggerConnectionSwitch(e) && newConn != null) {
+                        // connection error, close up shop on current connection
+                        invalidateConnection(newConn);
+                    }
                 }
             }
-        }
 
-        // no hosts available to swap connection to, close up.
-        this.isClosed = true;
-        this.closedReason = "Connection closed after inability to pick valid new connection during load-balance.";
+            // no hosts available to swap connection to, close up.
+            this.isClosed = true;
+            this.closedReason = "Connection closed after inability to pick valid new connection during load-balance.";
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
@@ -398,24 +412,29 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      *             if an error occurs
      */
     @Override
-    public synchronized ConnectionImpl createConnectionForHost(HostInfo hostInfo) throws SQLException {
-        ConnectionImpl conn = super.createConnectionForHost(hostInfo);
+    public ConnectionImpl createConnectionForHost(HostInfo hostInfo) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            ConnectionImpl conn = super.createConnectionForHost(hostInfo);
 
-        this.liveConnections.put(hostInfo.getHostPortPair(), conn);
-        this.connectionsToHostsMap.put(conn, hostInfo.getHostPortPair());
+            this.liveConnections.put(hostInfo.getHostPortPair(), conn);
+            this.connectionsToHostsMap.put(conn, hostInfo.getHostPortPair());
 
-        removeFromGlobalBlocklist(hostInfo.getHostPortPair());
+            removeFromGlobalBlocklist(hostInfo.getHostPortPair());
 
-        this.totalPhysicalConnections++;
+            this.totalPhysicalConnections++;
 
-        for (QueryInterceptor stmtInterceptor : conn.getQueryInterceptorsInstances()) {
-            if (stmtInterceptor instanceof LoadBalancedAutoCommitInterceptor) {
-                ((LoadBalancedAutoCommitInterceptor) stmtInterceptor).resumeCounters();
-                break;
+            for (QueryInterceptor stmtInterceptor : conn.getQueryInterceptorsInstances()) {
+                if (stmtInterceptor instanceof LoadBalancedAutoCommitInterceptor) {
+                    ((LoadBalancedAutoCommitInterceptor) stmtInterceptor).resumeCounters();
+                    break;
+                }
             }
-        }
 
-        return conn;
+            return conn;
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     @Override
@@ -445,89 +464,114 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * @throws SQLException
      *             if an error occurs
      */
-    public synchronized ConnectionImpl createConnectionForHost(String hostPortPair) throws SQLException {
-        for (HostInfo hi : this.hostsList) {
-            if (hi.getHostPortPair().equals(hostPortPair)) {
-                return createConnectionForHost(hi);
+    public ConnectionImpl createConnectionForHost(String hostPortPair) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            for (HostInfo hi : this.hostsList) {
+                if (hi.getHostPortPair().equals(hostPortPair)) {
+                    return createConnectionForHost(hi);
+                }
             }
+            return null;
+        } finally {
+            this.getObjectLock().unlock();
         }
-        return null;
     }
 
     /**
      * Closes all live connections.
      */
-    private synchronized void closeAllConnections() {
-        // close all underlying connections
-        for (Connection c : this.liveConnections.values()) {
-            try {
-                c.close();
-            } catch (SQLException e) {
+    private void closeAllConnections() {
+        this.getObjectLock().lock();
+        try {
+            // close all underlying connections
+            for (Connection c : this.liveConnections.values()) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
             }
-        }
 
-        if (!this.isClosed) {
-            if (this.connectionGroup != null) {
-                this.connectionGroup.closeConnectionProxy(this);
+            if (!this.isClosed) {
+                if (this.connectionGroup != null) {
+                    this.connectionGroup.closeConnectionProxy(this);
+                }
             }
-        }
 
-        this.liveConnections.clear();
-        this.connectionsToHostsMap.clear();
+            this.liveConnections.clear();
+            this.connectionsToHostsMap.clear();
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
      * Closes all live connections.
      */
     @Override
-    synchronized void doClose() {
-        closeAllConnections();
+    void doClose() {
+        this.getObjectLock().lock();
+        try {
+            closeAllConnections();
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
      * Aborts all live connections
      */
     @Override
-    synchronized void doAbortInternal() {
-        // abort all underlying connections
-        for (JdbcConnection c : this.liveConnections.values()) {
-            try {
-                c.abortInternal();
-            } catch (SQLException e) {
+    void doAbortInternal() {
+        this.getObjectLock().lock();
+        try {
+            // abort all underlying connections
+            for (JdbcConnection c : this.liveConnections.values()) {
+                try {
+                    c.abortInternal();
+                } catch (SQLException e) {
+                }
             }
-        }
 
-        if (!this.isClosed) {
-            if (this.connectionGroup != null) {
-                this.connectionGroup.closeConnectionProxy(this);
+            if (!this.isClosed) {
+                if (this.connectionGroup != null) {
+                    this.connectionGroup.closeConnectionProxy(this);
+                }
             }
-        }
 
-        this.liveConnections.clear();
-        this.connectionsToHostsMap.clear();
+            this.liveConnections.clear();
+            this.connectionsToHostsMap.clear();
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
      * Aborts all live connections, using the provided Executor.
      */
     @Override
-    synchronized void doAbort(Executor executor) {
-        // close all underlying connections
-        for (Connection c : this.liveConnections.values()) {
-            try {
-                c.abort(executor);
-            } catch (SQLException e) {
+    void doAbort(Executor executor) {
+        this.getObjectLock().lock();
+        try {
+            // close all underlying connections
+            for (Connection c : this.liveConnections.values()) {
+                try {
+                    c.abort(executor);
+                } catch (SQLException e) {
+                }
             }
-        }
 
-        if (!this.isClosed) {
-            if (this.connectionGroup != null) {
-                this.connectionGroup.closeConnectionProxy(this);
+            if (!this.isClosed) {
+                if (this.connectionGroup != null) {
+                    this.connectionGroup.closeConnectionProxy(this);
+                }
             }
-        }
 
-        this.liveConnections.clear();
-        this.connectionsToHostsMap.clear();
+            this.liveConnections.clear();
+            this.connectionsToHostsMap.clear();
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
@@ -613,64 +657,72 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      *             if an error occurs
      */
     @Override
-    public synchronized void doPing() throws SQLException {
-        SQLException se = null;
-        boolean foundHost = false;
-        int pingTimeout = this.currentConnection.getPropertySet().getIntegerProperty(PropertyKey.loadBalancePingTimeout).getValue();
+    public void doPing() throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            SQLException se = null;
+            boolean foundHost = false;
+            int pingTimeout = this.currentConnection.getPropertySet().getIntegerProperty(PropertyKey.loadBalancePingTimeout).getValue();
 
-        synchronized (this) {
-            for (HostInfo hi : this.hostsList) {
-                String host = hi.getHostPortPair();
-                ConnectionImpl conn = this.liveConnections.get(host);
-                if (conn == null) {
-                    continue;
-                }
-                try {
-                    if (pingTimeout == 0) {
-                        conn.ping();
-                    } else {
-                        conn.pingInternal(true, pingTimeout);
+            this.getObjectLock().lock();
+            try {
+                for (HostInfo hi : this.hostsList) {
+                    String host = hi.getHostPortPair();
+                    ConnectionImpl conn = this.liveConnections.get(host);
+                    if (conn == null) {
+                        continue;
                     }
-                    foundHost = true;
-                } catch (SQLException e) {
-                    // give up if it is the current connection, otherwise NPE faking resultset later.
-                    if (host.equals(this.connectionsToHostsMap.get(this.currentConnection))) {
-                        // clean up underlying connections, since connection pool won't do it
-                        closeAllConnections();
-                        this.isClosed = true;
-                        this.closedReason = "Connection closed because ping of current connection failed.";
-                        throw e;
-                    }
+                    try {
+                        if (pingTimeout == 0) {
+                            conn.ping();
+                        } else {
+                            conn.pingInternal(true, pingTimeout);
+                        }
+                        foundHost = true;
+                    } catch (SQLException e) {
+                        // give up if it is the current connection, otherwise NPE faking resultset later.
+                        if (host.equals(this.connectionsToHostsMap.get(this.currentConnection))) {
+                            // clean up underlying connections, since connection pool won't do it
+                            closeAllConnections();
+                            this.isClosed = true;
+                            this.closedReason = "Connection closed because ping of current connection failed.";
+                            throw e;
+                        }
 
-                    // if the Exception is caused by ping connection lifetime checks, don't add to blocklist
-                    if (e.getMessage().equals(Messages.getString("Connection.exceededConnectionLifetime"))) {
-                        // only set the return Exception if it's null
-                        if (se == null) {
+                        // if the Exception is caused by ping connection lifetime checks, don't add to blocklist
+                        if (e.getMessage().equals(Messages.getString("Connection.exceededConnectionLifetime"))) {
+                            // only set the return Exception if it's null
+                            if (se == null) {
+                                se = e;
+                            }
+                        } else {
+                            // overwrite the return Exception no matter what
                             se = e;
+                            if (isGlobalBlocklistEnabled()) {
+                                addToGlobalBlocklist(host);
+                            }
                         }
-                    } else {
-                        // overwrite the return Exception no matter what
-                        se = e;
-                        if (isGlobalBlocklistEnabled()) {
-                            addToGlobalBlocklist(host);
-                        }
+                        // take the connection out of the liveConnections Map
+                        this.liveConnections.remove(this.connectionsToHostsMap.get(conn));
                     }
-                    // take the connection out of the liveConnections Map
-                    this.liveConnections.remove(this.connectionsToHostsMap.get(conn));
                 }
+            } finally {
+                this.getObjectLock().unlock();
             }
-        }
-        // if there were no successful pings
-        if (!foundHost) {
-            closeAllConnections();
-            this.isClosed = true;
-            this.closedReason = "Connection closed due to inability to ping any active connections.";
-            // throw the stored Exception, if exists
-            if (se != null) {
-                throw se;
+            // if there were no successful pings
+            if (!foundHost) {
+                closeAllConnections();
+                this.isClosed = true;
+                this.closedReason = "Connection closed due to inability to ping any active connections.";
+                // throw the stored Exception, if exists
+                if (se != null) {
+                    throw se;
+                }
+                // or create a new SQLException and throw it, must be no liveConnections
+                ((ConnectionImpl) this.currentConnection).throwConnectionClosedException();
             }
-            // or create a new SQLException and throw it, must be no liveConnections
-            ((ConnectionImpl) this.currentConnection).throwConnectionClosedException();
+        } finally {
+            this.getObjectLock().unlock();
         }
     }
 
@@ -778,50 +830,55 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * @return
      *         A local hosts blocklist.
      */
-    public synchronized Map<String, Long> getGlobalBlocklist() {
-        if (!isGlobalBlocklistEnabled()) {
-            if (this.hostsToRemove.isEmpty()) {
+    public Map<String, Long> getGlobalBlocklist() {
+        this.getObjectLock().lock();
+        try {
+            if (!isGlobalBlocklistEnabled()) {
+                if (this.hostsToRemove.isEmpty()) {
+                    return new HashMap<>(1);
+                }
+                HashMap<String, Long> fakedBlocklist = new HashMap<>();
+                for (String h : this.hostsToRemove) {
+                    fakedBlocklist.put(h, System.currentTimeMillis() + 5000);
+                }
+                return fakedBlocklist;
+            }
+
+            // Make a local copy of the blocklist
+            Map<String, Long> blocklistClone = new HashMap<>(globalBlocklist.size());
+            // Copy everything from synchronized global blocklist to local copy for manipulation
+            synchronized (globalBlocklist) {
+                blocklistClone.putAll(globalBlocklist);
+            }
+            Set<String> keys = blocklistClone.keySet();
+
+            // We're only interested in blocklisted hosts that are in the hostList
+            keys.retainAll(this.hostsList.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList()));
+
+            // Don't need to synchronize here as we using a local copy
+            for (Iterator<String> i = keys.iterator(); i.hasNext();) {
+                String host = i.next();
+                // OK if null is returned because another thread already purged Map entry.
+                Long timeout = globalBlocklist.get(host);
+                if (timeout != null && timeout < System.currentTimeMillis()) {
+                    // Timeout has expired, remove from blocklist
+                    synchronized (globalBlocklist) {
+                        globalBlocklist.remove(host);
+                    }
+                    i.remove();
+                }
+
+            }
+            if (keys.size() == this.hostsList.size()) {
+                // return an empty blocklist, let the BalanceStrategy implementations try to connect to everything since it appears that all hosts are
+                // unavailable - we don't want to wait for loadBalanceBlocklistTimeout to expire.
                 return new HashMap<>(1);
             }
-            HashMap<String, Long> fakedBlocklist = new HashMap<>();
-            for (String h : this.hostsToRemove) {
-                fakedBlocklist.put(h, System.currentTimeMillis() + 5000);
-            }
-            return fakedBlocklist;
+
+            return blocklistClone;
+        } finally {
+            this.getObjectLock().unlock();
         }
-
-        // Make a local copy of the blocklist
-        Map<String, Long> blocklistClone = new HashMap<>(globalBlocklist.size());
-        // Copy everything from synchronized global blocklist to local copy for manipulation
-        synchronized (globalBlocklist) {
-            blocklistClone.putAll(globalBlocklist);
-        }
-        Set<String> keys = blocklistClone.keySet();
-
-        // We're only interested in blocklisted hosts that are in the hostList
-        keys.retainAll(this.hostsList.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList()));
-
-        // Don't need to synchronize here as we using a local copy
-        for (Iterator<String> i = keys.iterator(); i.hasNext();) {
-            String host = i.next();
-            // OK if null is returned because another thread already purged Map entry.
-            Long timeout = globalBlocklist.get(host);
-            if (timeout != null && timeout < System.currentTimeMillis()) {
-                // Timeout has expired, remove from blocklist
-                synchronized (globalBlocklist) {
-                    globalBlocklist.remove(host);
-                }
-                i.remove();
-            }
-
-        }
-        if (keys.size() == this.hostsList.size()) {
-            // return an empty blocklist, let the BalanceStrategy implementations try to connect to everything since it appears that all hosts are
-            // unavailable - we don't want to wait for loadBalanceBlocklistTimeout to expire.
-            return new HashMap<>(1);
-        }
-
-        return blocklistClone;
     }
 
     /**
@@ -832,8 +889,13 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * @deprecated
      */
     @Deprecated
-    public synchronized Map<String, Long> getGlobalBlacklist() {
-        return getGlobalBlocklist();
+    public Map<String, Long> getGlobalBlacklist() {
+        this.getObjectLock().lock();
+        try {
+            return getGlobalBlocklist();
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
@@ -852,7 +914,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
 
         int timeBetweenChecks = this.hostRemovalGracePeriod > 1000 ? 1000 : this.hostRemovalGracePeriod;
 
-        synchronized (this) {
+        this.getObjectLock().lock();
+        try {
             addToGlobalBlocklist(hostPortPair, System.currentTimeMillis() + this.hostRemovalGracePeriod + timeBetweenChecks);
 
             long cur = System.currentTimeMillis();
@@ -871,6 +934,8 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
                     // better to swallow this and retry.
                 }
             }
+        } finally {
+            this.getObjectLock().unlock();
         }
 
         removeHost(hostPortPair);
@@ -884,35 +949,40 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      * @throws SQLException
      *             if an error occurs
      */
-    public synchronized void removeHost(String hostPortPair) throws SQLException {
-        if (this.connectionGroup != null) {
-            if (this.connectionGroup.getInitialHosts().size() == 1 && this.connectionGroup.getInitialHosts().contains(hostPortPair)) {
-                throw SQLError.createSQLException(Messages.getString("LoadBalancedConnectionProxy.0"), null);
-            }
-        }
-
-        this.hostsToRemove.add(hostPortPair);
-
-        this.connectionsToHostsMap.remove(this.liveConnections.remove(hostPortPair));
-        if (this.hostsToListIndexMap.remove(hostPortPair) != null) {
-            long[] newResponseTimes = new long[this.responseTimes.length - 1];
-            int newIdx = 0;
-            for (HostInfo hostInfo : this.hostsList) {
-                String host = hostInfo.getHostPortPair();
-                if (!this.hostsToRemove.contains(host)) {
-                    Integer idx = this.hostsToListIndexMap.get(host);
-                    if (idx != null && idx < this.responseTimes.length) {
-                        newResponseTimes[newIdx] = this.responseTimes[idx];
-                    }
-                    this.hostsToListIndexMap.put(host, newIdx++);
+    public void removeHost(String hostPortPair) throws SQLException {
+        this.getObjectLock().lock();
+        try {
+            if (this.connectionGroup != null) {
+                if (this.connectionGroup.getInitialHosts().size() == 1 && this.connectionGroup.getInitialHosts().contains(hostPortPair)) {
+                    throw SQLError.createSQLException(Messages.getString("LoadBalancedConnectionProxy.0"), null);
                 }
             }
-            this.responseTimes = newResponseTimes;
-        }
 
-        if (hostPortPair.equals(this.currentConnection.getHostPortPair())) {
-            invalidateConnection(this.currentConnection);
-            pickNewConnection();
+            this.hostsToRemove.add(hostPortPair);
+
+            this.connectionsToHostsMap.remove(this.liveConnections.remove(hostPortPair));
+            if (this.hostsToListIndexMap.remove(hostPortPair) != null) {
+                long[] newResponseTimes = new long[this.responseTimes.length - 1];
+                int newIdx = 0;
+                for (HostInfo hostInfo : this.hostsList) {
+                    String host = hostInfo.getHostPortPair();
+                    if (!this.hostsToRemove.contains(host)) {
+                        Integer idx = this.hostsToListIndexMap.get(host);
+                        if (idx != null && idx < this.responseTimes.length) {
+                            newResponseTimes[newIdx] = this.responseTimes[idx];
+                        }
+                        this.hostsToListIndexMap.put(host, newIdx++);
+                    }
+                }
+                this.responseTimes = newResponseTimes;
+            }
+
+            if (hostPortPair.equals(this.currentConnection.getHostPortPair())) {
+                invalidateConnection(this.currentConnection);
+                pickNewConnection();
+            }
+        } finally {
+            this.getObjectLock().unlock();
         }
     }
 
@@ -923,60 +993,100 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      *            The host to be added.
      * @return true if host was added and false if the host list already contains it
      */
-    public synchronized boolean addHost(String hostPortPair) {
-        if (this.hostsToListIndexMap.containsKey(hostPortPair)) {
-            return false;
-        }
-
-        long[] newResponseTimes = new long[this.responseTimes.length + 1];
-        System.arraycopy(this.responseTimes, 0, newResponseTimes, 0, this.responseTimes.length);
-
-        this.responseTimes = newResponseTimes;
-        if (this.hostsList.stream().noneMatch(hi -> hostPortPair.equals(hi.getHostPortPair()))) {
-            this.hostsList.add(this.connectionUrl.getHostOrSpawnIsolated(hostPortPair));
-        }
-        this.hostsToListIndexMap.put(hostPortPair, this.responseTimes.length - 1);
-        this.hostsToRemove.remove(hostPortPair);
-
-        return true;
-    }
-
-    public synchronized boolean inTransaction() {
-        return this.inTransaction;
-    }
-
-    public synchronized long getTransactionCount() {
-        return this.transactionCount;
-    }
-
-    public synchronized long getActivePhysicalConnectionCount() {
-        return this.liveConnections.size();
-    }
-
-    public synchronized long getTotalPhysicalConnectionCount() {
-        return this.totalPhysicalConnections;
-    }
-
-    public synchronized long getConnectionGroupProxyID() {
-        return this.connectionGroupProxyID;
-    }
-
-    public synchronized String getCurrentActiveHost() {
-        JdbcConnection c = this.currentConnection;
-        if (c != null) {
-            Object o = this.connectionsToHostsMap.get(c);
-            if (o != null) {
-                return o.toString();
+    public boolean addHost(String hostPortPair) {
+        this.getObjectLock().lock();
+        try {
+            if (this.hostsToListIndexMap.containsKey(hostPortPair)) {
+                return false;
             }
+
+            long[] newResponseTimes = new long[this.responseTimes.length + 1];
+            System.arraycopy(this.responseTimes, 0, newResponseTimes, 0, this.responseTimes.length);
+
+            this.responseTimes = newResponseTimes;
+            if (this.hostsList.stream().noneMatch(hi -> hostPortPair.equals(hi.getHostPortPair()))) {
+                this.hostsList.add(this.connectionUrl.getHostOrSpawnIsolated(hostPortPair));
+            }
+            this.hostsToListIndexMap.put(hostPortPair, this.responseTimes.length - 1);
+            this.hostsToRemove.remove(hostPortPair);
+
+            return true;
+        } finally {
+            this.getObjectLock().unlock();
         }
-        return null;
     }
 
-    public synchronized long getCurrentTransactionDuration() {
-        if (this.inTransaction && this.transactionStartTime > 0) {
-            return System.nanoTime() - this.transactionStartTime;
+    public boolean inTransaction() {
+        this.getObjectLock().lock();
+        try {
+            return this.inTransaction;
+        } finally {
+            this.getObjectLock().unlock();
         }
-        return 0;
+    }
+
+    public long getTransactionCount() {
+        this.getObjectLock().lock();
+        try {
+            return this.transactionCount;
+        } finally {
+            this.getObjectLock().unlock();
+        }
+    }
+
+    public long getActivePhysicalConnectionCount() {
+        this.getObjectLock().lock();
+        try {
+            return this.liveConnections.size();
+        } finally {
+            this.getObjectLock().unlock();
+        }
+    }
+
+    public long getTotalPhysicalConnectionCount() {
+        this.getObjectLock().lock();
+        try {
+            return this.totalPhysicalConnections;
+        } finally {
+            this.getObjectLock().unlock();
+        }
+    }
+
+    public long getConnectionGroupProxyID() {
+        this.getObjectLock().lock();
+        try {
+            return this.connectionGroupProxyID;
+        } finally {
+            this.getObjectLock().unlock();
+        }
+    }
+
+    public String getCurrentActiveHost() {
+        this.getObjectLock().lock();
+        try {
+            JdbcConnection c = this.currentConnection;
+            if (c != null) {
+                Object o = this.connectionsToHostsMap.get(c);
+                if (o != null) {
+                    return o.toString();
+                }
+            }
+            return null;
+        } finally {
+            this.getObjectLock().unlock();
+        }
+    }
+
+    public long getCurrentTransactionDuration() {
+        this.getObjectLock().lock();
+        try {
+            if (this.inTransaction && this.transactionStartTime > 0) {
+                return System.nanoTime() - this.transactionStartTime;
+            }
+            return 0;
+        } finally {
+            this.getObjectLock().unlock();
+        }
     }
 
     /**
@@ -1003,11 +1113,16 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
 
     private static LoadBalancedConnection nullLBConnectionInstance = null;
 
-    static synchronized LoadBalancedConnection getNullLoadBalancedConnectionInstance() {
-        if (nullLBConnectionInstance == null) {
-            nullLBConnectionInstance = (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(),
-                    INTERFACES_TO_PROXY, new NullLoadBalancedConnectionProxy());
+    static LoadBalancedConnection getNullLoadBalancedConnectionInstance() {
+        OBJECT_LOCK.lock();
+        try {
+            if (nullLBConnectionInstance == null) {
+                nullLBConnectionInstance = (LoadBalancedConnection) java.lang.reflect.Proxy.newProxyInstance(LoadBalancedConnection.class.getClassLoader(),
+                        INTERFACES_TO_PROXY, new NullLoadBalancedConnectionProxy());
+            }
+            return nullLBConnectionInstance;
+        } finally {
+            OBJECT_LOCK.unlock();
         }
-        return nullLBConnectionInstance;
     }
 }

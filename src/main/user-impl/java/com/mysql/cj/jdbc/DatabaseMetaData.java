@@ -51,6 +51,7 @@ import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
@@ -91,6 +92,8 @@ import com.mysql.cj.util.StringUtils;
  * </p>
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
+
+    private static final ReentrantLock OBJECT_LOCK = new ReentrantLock();
 
     /**
      * Default max buffer size. See {@link PropertyKey#maxAllowedPacket}.
@@ -3489,7 +3492,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             return mysqlKeywords;
         }
 
-        synchronized (DatabaseMetaData.class) {
+        OBJECT_LOCK.lock();
+        try {
             // double check, maybe it's already set
             if (mysqlKeywords != null) {
                 return mysqlKeywords;
@@ -3507,6 +3511,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
             mysqlKeywords = mysqlKeywordsBuffer.substring(1);
             return mysqlKeywords;
+        } finally {
+            OBJECT_LOCK.unlock();
         }
     }
 

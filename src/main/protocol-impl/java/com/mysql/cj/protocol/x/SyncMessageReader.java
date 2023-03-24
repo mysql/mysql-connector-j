@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -68,9 +69,9 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
     BlockingQueue<MessageListener<XMessage>> messageListenerQueue = new LinkedBlockingQueue<>();
 
     /** Lock to protect the pending message. */
-    Object dispatchingThreadMonitor = new Object();
+    final ReentrantLock dispatchingThreadMonitor = new ReentrantLock();
     /** Lock to protect async reads from sync ones. */
-    Object waitingSyncOperationMonitor = new Object();
+    final ReentrantLock waitingSyncOperationMonitor = new ReentrantLock();
 
     Thread dispatchingThread = null;
 
@@ -84,7 +85,8 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
     @Override
     public XMessageHeader readHeader() throws IOException {
         // waiting for ListenersDispatcher completion to perform sync call
-        synchronized (this.waitingSyncOperationMonitor) {
+        this.waitingSyncOperationMonitor.lock();
+        try {
             XMessageHeader header;
             if ((header = this.headersQueue.peek()) == null) {
                 header = readHeaderLocal();
@@ -93,11 +95,14 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
                 throw new XProtocolError(readMessageLocal(Error.class, true));
             }
             return header;
+        } finally {
+            this.waitingSyncOperationMonitor.unlock();
         }
     }
 
     public int getNextNonNoticeMessageType() throws IOException {
-        synchronized (this.waitingSyncOperationMonitor) {
+        this.waitingSyncOperationMonitor.lock();
+        try {
             if (!this.headersQueue.isEmpty()) {
                 for (XMessageHeader hdr : this.headersQueue) {
                     if (hdr.getMessageType() != ServerMessages.Type.NOTICE_VALUE) {
@@ -120,6 +125,8 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
             } while (header.getMessageType() == ServerMessages.Type.NOTICE_VALUE);
 
             return header.getMessageType();
+        } finally {
+            this.waitingSyncOperationMonitor.unlock();
         }
     }
 
@@ -203,7 +210,8 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
     @Override
     public XMessage readMessage(Optional<XMessage> reuse, int expectedType) throws IOException {
         // waiting for ListenersDispatcher completion to perform sync call
-        synchronized (this.waitingSyncOperationMonitor) {
+        this.waitingSyncOperationMonitor.lock();
+        try {
             try {
                 Class<? extends GeneratedMessageV3> expectedClass = MessageConstants.getMessageClassForType(expectedType);
 
@@ -228,6 +236,8 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
             } catch (IOException e) {
                 throw new XProtocolError(e.getMessage(), e);
             }
+        } finally {
+            this.waitingSyncOperationMonitor.unlock();
         }
     }
 
@@ -238,7 +248,8 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
             throw new CJCommunicationsException("Cannot queue message listener.", e);
         }
 
-        synchronized (this.dispatchingThreadMonitor) {
+        this.dispatchingThreadMonitor.lock();
+        try {
             if (this.dispatchingThread == null) {
                 ListenersDispatcher ld = new ListenersDispatcher();
                 this.dispatchingThread = new Thread(ld, "Message listeners dispatching thread");
@@ -261,6 +272,8 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
                     }
                 }
             }
+        } finally {
+            this.dispatchingThreadMonitor.unlock();
         }
     }
 
@@ -278,17 +291,21 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
 
         @Override
         public void run() {
-            synchronized (SyncMessageReader.this.waitingSyncOperationMonitor) {
+            SyncMessageReader.this.waitingSyncOperationMonitor.lock();
+            try {
                 this.started = true;
                 try {
                     while (true) {
                         MessageListener<XMessage> l;
                         if ((l = SyncMessageReader.this.messageListenerQueue.poll(POLL_TIMEOUT, TimeUnit.MILLISECONDS)) == null) {
-                            synchronized (SyncMessageReader.this.dispatchingThreadMonitor) {
+                            SyncMessageReader.this.dispatchingThreadMonitor.lock();
+                            try {
                                 if (SyncMessageReader.this.messageListenerQueue.peek() == null) {
                                     SyncMessageReader.this.dispatchingThread = null;
                                     break;
                                 }
+                            } finally {
+                                SyncMessageReader.this.dispatchingThreadMonitor.unlock();
                             }
                         } else {
                             try {
@@ -305,6 +322,8 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
                 } catch (InterruptedException e) {
                     throw new CJCommunicationsException("Read operation interrupted.", e);
                 }
+            } finally {
+                SyncMessageReader.this.waitingSyncOperationMonitor.unlock();
             }
         }
     }

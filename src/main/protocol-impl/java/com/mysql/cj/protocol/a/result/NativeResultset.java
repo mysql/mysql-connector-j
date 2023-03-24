@@ -30,6 +30,7 @@
 package com.mysql.cj.protocol.a.result;
 
 import java.util.HashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.Resultset;
@@ -64,6 +65,7 @@ public class NativeResultset implements Resultset {
 
     /** Pointer to current row data */
     protected Row thisRow = null; // Values for current row
+    protected final ReentrantLock objectLock = new ReentrantLock();
 
     public NativeResultset() {
     }
@@ -126,25 +128,40 @@ public class NativeResultset implements Resultset {
         this.columnDefinition.setColumnToIndexCache(new HashMap<String, Integer>());
     }
 
-    public synchronized void setNextResultset(Resultset nextResultset) {
-        this.nextResultset = nextResultset;
+    public void setNextResultset(Resultset nextResultset) {
+        this.objectLock.lock();
+        try {
+            this.nextResultset = nextResultset;
+        } finally {
+            this.objectLock.unlock();
+        }
     }
 
     /**
      * @return the nextResultSet, if any, null if none exists.
      */
-    public synchronized Resultset getNextResultset() {
-        // read next RS from streamer ?
-        return this.nextResultset;
+    public Resultset getNextResultset() {
+        this.objectLock.lock();
+        try {
+            // read next RS from streamer ?
+            return this.nextResultset;
+        } finally {
+            this.objectLock.unlock();
+        }
     }
 
     /**
      * We can't do this ourselves, otherwise the contract for
      * Statement.getMoreResults() won't work correctly.
      */
-    public synchronized void clearNextResultset() {
-        // TODO release resources of nextResultset, close streamer
-        this.nextResultset = null;
+    public void clearNextResultset() {
+        this.objectLock.lock();
+        try {
+            // TODO release resources of nextResultset, close streamer
+            this.nextResultset = null;
+        } finally {
+            this.objectLock.unlock();
+        }
     }
 
     public long getUpdateCount() {

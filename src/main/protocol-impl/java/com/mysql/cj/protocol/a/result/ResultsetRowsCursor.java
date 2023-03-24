@@ -31,6 +31,7 @@ package com.mysql.cj.protocol.a.result;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -204,7 +205,9 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
             return;
         }
 
-        synchronized (this.owner.getSyncMutex()) {
+        ReentrantLock syncMutex = this.owner.getSyncMutex();
+        syncMutex.lock();
+        try {
             try {
                 boolean oldFirstFetchCompleted = this.firstFetchCompleted;
 
@@ -253,6 +256,8 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
             } catch (Exception ex) {
                 throw ExceptionFactory.createException(ex.getMessage(), ex);
             }
+        } finally {
+            syncMutex.unlock();
         }
     }
 

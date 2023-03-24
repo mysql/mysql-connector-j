@@ -36,6 +36,7 @@ import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.sql.Wrapper;
 import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.BindValue;
 import com.mysql.cj.CancelQueryTask;
@@ -67,10 +68,14 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     private boolean hasOnDuplicateKeyUpdate = false;
 
-    /** Has this prepared statement been marked invalid? */
+    /**
+     * Has this prepared statement been marked invalid?
+     */
     private boolean invalid = false;
 
-    /** If this statement has been marked invalid, what was the reason? */
+    /**
+     * If this statement has been marked invalid, what was the reason?
+     */
     private CJException invalidationException;
 
     protected boolean isCacheable = false;
@@ -78,20 +83,14 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     /**
      * Creates a prepared statement instance
-     * 
-     * @param conn
-     *            the connection creating us.
-     * @param sql
-     *            the SQL containing the statement to prepare.
-     * @param db
-     *            the database in use when we were created.
-     * @param resultSetType
-     *            ResultSet type
-     * @param resultSetConcurrency
-     *            ResultSet concurrency
+     *
+     * @param conn                 the connection creating us.
+     * @param sql                  the SQL containing the statement to prepare.
+     * @param db                   the database in use when we were created.
+     * @param resultSetType        ResultSet type
+     * @param resultSetConcurrency ResultSet concurrency
      * @return new ServerPreparedStatement
-     * @throws SQLException
-     *             If an error occurs
+     * @throws SQLException If an error occurs
      */
     protected static ServerPreparedStatement getInstance(JdbcConnection conn, String sql, String db, int resultSetType, int resultSetConcurrency)
             throws SQLException {
@@ -100,20 +99,13 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     /**
      * Creates a new ServerPreparedStatement object.
-     * 
-     * @param conn
-     *            the connection creating us.
-     * @param sql
-     *            the SQL containing the statement to prepare.
-     * @param db
-     *            the database in use when we were created.
-     * @param resultSetType
-     *            ResultSet type
-     * @param resultSetConcurrency
-     *            ResultSet concurrency
-     * 
-     * @throws SQLException
-     *             If an error occurs
+     *
+     * @param conn                 the connection creating us.
+     * @param sql                  the SQL containing the statement to prepare.
+     * @param db                   the database in use when we were created.
+     * @param resultSetType        ResultSet type
+     * @param resultSetConcurrency ResultSet concurrency
+     * @throws SQLException If an error occurs
      */
     protected ServerPreparedStatement(JdbcConnection conn, String sql, String db, int resultSetType, int resultSetConcurrency) throws SQLException {
         super(conn, db);
@@ -155,8 +147,12 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     @Override
     public void addBatch() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             this.query.addBatch(((PreparedQuery) this.query).getQueryBindings().clone());
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -171,8 +167,12 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     @Override
     public void clearParameters() {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((ServerPreparedQuery) this.query).clearParameters(true);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -188,7 +188,9 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
             return; // already closed
         }
 
-        synchronized (locallyScopedConn.getConnectionMutex()) {
+        ReentrantLock connectionMutex = locallyScopedConn.getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.isClosed) {
                 return; // already closed
             }
@@ -206,12 +208,16 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
             this.isClosed = false;
             realClose(true, true);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     protected long[] executeBatchSerially(int batchTimeout) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             JdbcConnection locallyScopedConn = this.connection;
 
             if (locallyScopedConn.isReadOnly()) {
@@ -315,6 +321,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
                 clearBatch();
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -330,8 +338,10 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     @Override
     protected <M extends Message> com.mysql.cj.jdbc.result.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, M sendPacket,
-            boolean createStreamingResultSet, boolean queryIsSelectOnly, ColumnDefinition metadata, boolean isBatch) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+                                                                                                    boolean createStreamingResultSet, boolean queryIsSelectOnly, ColumnDefinition metadata, boolean isBatch) throws SQLException {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setNumberOfExecutions(((PreparedQuery) this.query).getQueryBindings().getNumberOfExecutions() + 1);
 
             // We defer to server-side execution
@@ -373,49 +383,60 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
                 throw sqlEx;
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Returns the structure representing the value that (can be)/(is)
      * bound at the given parameter index.
-     * 
-     * @param parameterIndex
-     *            1-based
-     * @param forLongData
-     *            is this for a stream?
+     *
+     * @param parameterIndex 1-based
+     * @param forLongData    is this for a stream?
      * @return {@link BindValue}
-     * @throws SQLException
-     *             if a database access error occurs or this method is called on a closed PreparedStatement
+     * @throws SQLException if a database access error occurs or this method is called on a closed PreparedStatement
      */
     protected BindValue getBinding(int parameterIndex, boolean forLongData) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             int i = getCoreParameterIndex(parameterIndex);
             return ((ServerPreparedQuery) this.query).getQueryBindings().getBinding(i, forLongData);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ColumnDefinition resultFields = ((ServerPreparedQuery) this.query).getResultFields();
 
             return resultFields == null || resultFields.getFields() == null ? null
                     : new ResultSetMetaData(this.session, resultFields.getFields(),
-                            this.session.getPropertySet().getBooleanProperty(PropertyKey.useOldAliasMetadataBehavior).getValue(),
-                            this.session.getPropertySet().getBooleanProperty(PropertyKey.yearIsDateType).getValue(), this.exceptionInterceptor);
+                    this.session.getPropertySet().getBooleanProperty(PropertyKey.useOldAliasMetadataBehavior).getValue(),
+                    this.session.getPropertySet().getBooleanProperty(PropertyKey.yearIsDateType).getValue(), this.exceptionInterceptor);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public ParameterMetaData getParameterMetaData() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.parameterMetaData == null) {
                 this.parameterMetaData = new MysqlParameterMetadata(this.session, ((ServerPreparedQuery) this.query).getParameterFields(),
                         ((PreparedQuery) this.query).getParameterCount(), this.exceptionInterceptor);
             }
 
             return this.parameterMetaData;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -431,7 +452,9 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
             return; // already closed
         }
 
-        synchronized (locallyScopedConn.getConnectionMutex()) {
+        ReentrantLock connectionMutex = locallyScopedConn.getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.connection != null) {
                 //
                 // Don't communicate with the server if we're being called from the finalizer...
@@ -453,13 +476,17 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
                 // Finally deallocate the prepared statement.
                 if (calledExplicitly && !locallyScopedConn.isClosed()) {
-                    synchronized (locallyScopedConn.getConnectionMutex()) {
+                    ReentrantLock connectionMutex1 = locallyScopedConn.getConnectionMutex();
+                    connectionMutex1.lock();
+                    try {
                         try {
                             ((NativeSession) locallyScopedConn.getSession()).getProtocol().sendCommand(
                                     this.commandBuilder.buildComStmtClose(null, ((ServerPreparedQuery) this.query).getServerStatementId()), true, 0);
                         } catch (CJException sqlEx) {
                             exceptionDuringClose = sqlEx;
                         }
+                    } finally {
+                        connectionMutex1.unlock();
                     }
                 }
 
@@ -467,18 +494,21 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                     throw exceptionDuringClose;
                 }
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Used by Connection when auto-reconnecting to retrieve 'lost' prepared
      * statements.
-     * 
-     * @throws CJException
-     *             if an error occurs.
+     *
+     * @throws CJException if an error occurs.
      */
     protected void rePrepare() {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             this.invalidationException = null;
 
             try {
@@ -515,48 +545,52 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                     this.connection.unregisterStatement(this);
                 }
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Tells the server to execute this prepared statement with the current
      * parameter bindings.
-     * 
+     *
      * <pre>
      *    -   Server gets the command 'COM_EXECUTE' to execute the
      *        previously         prepared query. If there is any param markers;
      *  then client will send the data in the following format:
-     * 
+     *
      *  [COM_EXECUTE:1]
      *  [STMT_ID:4]
      *  [NULL_BITS:(param_count+7)/8)]
      *  [TYPES_SUPPLIED_BY_CLIENT(0/1):1]
      *  [[length]data]
      *  [[length]data] .. [[length]data].
-     * 
+     *
      *  (Note: Except for string/binary types; all other types will not be
      *  supplied with length field)
      * </pre>
-     * 
-     * @param maxRowsToRetrieve
-     *            rows limit
-     * @param createStreamingResultSet
-     *            should c/J create a streaming result?
-     * @param metadata
-     *            use this metadata instead of the one provided on wire
+     *
+     * @param maxRowsToRetrieve        rows limit
+     * @param createStreamingResultSet should c/J create a streaming result?
+     * @param metadata                 use this metadata instead of the one provided on wire
      * @return result set
-     * @throws SQLException
-     *             if a database access error occurs or this method is called on a closed PreparedStatement
+     * @throws SQLException if a database access error occurs or this method is called on a closed PreparedStatement
      */
     protected ResultSetInternalMethods serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, ColumnDefinition metadata) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             this.results = ((ServerPreparedQuery) this.query).serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadata, this.resultSetFactory);
             return this.results;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     protected void serverPrepare(String sql) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             SQLException t = null;
 
             try {
@@ -591,6 +625,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                     throw t;
                 }
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -636,7 +672,9 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     @Override
     protected ClientPreparedStatement prepareBatchedInsertSQL(JdbcConnection localConn, int numBatches) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             try {
                 ClientPreparedStatement pstmt = ((Wrapper) localConn.prepareStatement(((PreparedQuery) this.query).getQueryInfo().getSqlForBatch(numBatches),
                         this.resultSetConcurrency, this.query.getResultType().getIntValue())).unwrap(ClientPreparedStatement.class);
@@ -652,6 +690,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
                 throw sqlEx;
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 

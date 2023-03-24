@@ -50,6 +50,7 @@ import java.sql.Timestamp;
 import java.sql.Wrapper;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.BindValue;
 import com.mysql.cj.CancelQueryTask;
@@ -85,12 +86,12 @@ import com.mysql.cj.util.Util;
 
 /**
  * A SQL Statement is pre-compiled and stored in a PreparedStatement object. This object can then be used to efficiently execute this statement multiple times.
- * 
+ *
  * <p>
  * <B>Note:</B> The setXXX methods for setting IN parameter values must specify types that are compatible with the defined SQL type of the input parameter. For
  * instance, if the IN parameter has SQL type Integer, then setInt should be used.
  * </p>
- * 
+ *
  * <p>
  * If arbitrary parameter type conversions are required, then the setObject method should be used with a target SQL type.
  * </p>
@@ -99,7 +100,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     /**
      * Does the batch (if any) contain "plain" statements added by Statement.addBatch(String)?
-     * 
+     * <p>
      * If so, we can't re-write it to use multi-value or multi-queries.
      */
     protected boolean batchHasPlainStatements = false;
@@ -118,16 +119,12 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     /**
      * Creates a prepared statement instance
-     * 
-     * @param conn
-     *            the connection creating this statement
-     * @param sql
-     *            the SQL for this statement
-     * @param db
-     *            the database this statement should be issued against
+     *
+     * @param conn the connection creating this statement
+     * @param sql  the SQL for this statement
+     * @param db   the database this statement should be issued against
      * @return ClientPreparedStatement
-     * @throws SQLException
-     *             if a database access error occurs
+     * @throws SQLException if a database access error occurs
      */
     protected static ClientPreparedStatement getInstance(JdbcConnection conn, String sql, String db) throws SQLException {
         return new ClientPreparedStatement(conn, sql, db);
@@ -135,18 +132,13 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     /**
      * Creates a prepared statement instance
-     * 
-     * @param conn
-     *            the connection creating this statement
-     * @param sql
-     *            the SQL for this statement
-     * @param db
-     *            the database this statement should be issued against
-     * @param cachedQueryInfo
-     *            already created {@link QueryInfo} or null.
+     *
+     * @param conn            the connection creating this statement
+     * @param sql             the SQL for this statement
+     * @param db              the database this statement should be issued against
+     * @param cachedQueryInfo already created {@link QueryInfo} or null.
      * @return ClientPreparedStatement instance
-     * @throws SQLException
-     *             if a database access error occurs
+     * @throws SQLException if a database access error occurs
      */
     protected static ClientPreparedStatement getInstance(JdbcConnection conn, String sql, String db, QueryInfo cachedQueryInfo) throws SQLException {
         return new ClientPreparedStatement(conn, sql, db, cachedQueryInfo);
@@ -159,14 +151,10 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     /**
      * Constructor used by server-side prepared statements
-     * 
-     * @param conn
-     *            the connection that created us
-     * @param db
-     *            the database in use when we were created
-     * 
-     * @throws SQLException
-     *             if an error occurs
+     *
+     * @param conn the connection that created us
+     * @param db   the database in use when we were created
+     * @throws SQLException if an error occurs
      */
     protected ClientPreparedStatement(JdbcConnection conn, String db) throws SQLException {
         super(conn, db);
@@ -177,16 +165,11 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     /**
      * Constructor for the PreparedStatement class.
-     * 
-     * @param conn
-     *            the connection creating this statement
-     * @param sql
-     *            the SQL for this statement
-     * @param db
-     *            the database this statement should be issued against
-     * 
-     * @throws SQLException
-     *             if a database error occurs.
+     *
+     * @param conn the connection creating this statement
+     * @param sql  the SQL for this statement
+     * @param db   the database this statement should be issued against
+     * @throws SQLException if a database error occurs.
      */
     public ClientPreparedStatement(JdbcConnection conn, String sql, String db) throws SQLException {
         this(conn, sql, db, null);
@@ -194,18 +177,12 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     /**
      * Creates a new PreparedStatement object.
-     * 
-     * @param conn
-     *            the connection creating this statement
-     * @param sql
-     *            the SQL for this statement
-     * @param db
-     *            the database this statement should be issued against
-     * @param cachedQueryInfo
-     *            already created {@link QueryInfo} or null.
-     * 
-     * @throws SQLException
-     *             if a database access error occurs
+     *
+     * @param conn            the connection creating this statement
+     * @param sql             the SQL for this statement
+     * @param db              the database this statement should be issued against
+     * @param cachedQueryInfo already created {@link QueryInfo} or null.
+     * @throws SQLException if a database access error occurs
      */
     public ClientPreparedStatement(JdbcConnection conn, String sql, String db, QueryInfo cachedQueryInfo) throws SQLException {
         this(conn, db);
@@ -230,7 +207,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     /**
      * Returns this PreparedStatement represented as a string.
-     * 
+     *
      * @return this PreparedStatement represented as a string.
      */
     @Override
@@ -244,57 +221,78 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     @Override
     public void addBatch() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             QueryBindings queryBindings = ((PreparedQuery) this.query).getQueryBindings();
             queryBindings.checkAllParametersSet();
             this.query.addBatch(queryBindings.clone());
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void addBatch(String sql) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             this.batchHasPlainStatements = true;
 
             super.addBatch(sql);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void clearBatch() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             this.batchHasPlainStatements = false;
 
             super.clearBatch();
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void clearParameters() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             for (BindValue bv : ((PreparedQuery) this.query).getQueryBindings().getBindValues()) {
                 bv.reset();
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Check to see if the statement is safe for read-only replicas after failover.
-     * 
+     *
      * @return true if safe for read-only.
-     * @throws SQLException
-     *             if a database access error occurs or this method is called on a closed PreparedStatement
+     * @throws SQLException if a database access error occurs or this method is called on a closed PreparedStatement
      */
     protected boolean checkReadOnlySafeStatement() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             return QueryInfo.isReadOnlySafeQuery(((PreparedQuery) this.query).getOriginalSql(), this.session.getServerSession().isNoBackslashEscapesSet())
                     || !this.connection.isReadOnly();
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public boolean execute() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
 
             JdbcConnection locallyScopedConn = this.connection;
 
@@ -376,12 +374,16 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             }
 
             return ((rs != null) && rs.hasRows());
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     protected long[] executeBatchInternal() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
 
             if (this.connection.isReadOnly()) {
                 throw new SQLException(Messages.getString("PreparedStatement.25") + Messages.getString("PreparedStatement.26"),
@@ -421,21 +423,22 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
                 clearBatch();
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Rewrites the already prepared statement into a multi-statement query and executes the entire batch using this new statement.
-     * 
-     * @param batchTimeout
-     *            timeout for the batch execution
+     *
+     * @param batchTimeout timeout for the batch execution
      * @return update counts in the same fashion as executeBatch()
-     * 
-     * @throws SQLException
-     *             if a database access error occurs or this method is called on a closed PreparedStatement
+     * @throws SQLException if a database access error occurs or this method is called on a closed PreparedStatement
      */
     protected long[] executePreparedBatchAsMultiStatement(int batchTimeout) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             // This is kind of an abuse, but it gets the job done
             if (this.batchedValuesClause == null) {
                 this.batchedValuesClause = ((PreparedQuery) this.query).getOriginalSql() + ";";
@@ -477,9 +480,9 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
                     batchedStatement = this.retrieveGeneratedKeys
                             ? ((Wrapper) locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch), RETURN_GENERATED_KEYS))
-                                    .unwrap(java.sql.PreparedStatement.class)
+                            .unwrap(java.sql.PreparedStatement.class)
                             : ((Wrapper) locallyScopedConn.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch)))
-                                    .unwrap(java.sql.PreparedStatement.class);
+                            .unwrap(java.sql.PreparedStatement.class);
 
                     timeoutTask = startQueryTimer((StatementImpl) batchedStatement, batchTimeout);
 
@@ -581,6 +584,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
                 clearBatch();
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -595,7 +600,9 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     }
 
     private String generateMultiStatementForBatch(int numBatches) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             String origSql = ((PreparedQuery) this.query).getOriginalSql();
             StringBuilder newStatementSql = new StringBuilder((origSql.length() + 1) * numBatches);
 
@@ -607,21 +614,22 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             }
 
             return newStatementSql.toString();
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Rewrites the already prepared statement into a multi-values clause INSERT/REPLACE statement and executes the entire batch using this new statement.
-     * 
-     * @param batchTimeout
-     *            timeout for the batch execution
+     *
+     * @param batchTimeout timeout for the batch execution
      * @return update counts in the same fashion as executeBatch()
-     * 
-     * @throws SQLException
-     *             if a database access error occurs or this method is called on a closed PreparedStatement
+     * @throws SQLException if a database access error occurs or this method is called on a closed PreparedStatement
      */
     protected long[] executeBatchWithMultiValuesClause(int batchTimeout) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             JdbcConnection locallyScopedConn = this.connection;
 
             int numBatchedArgs = this.query.getBatchedArgs().size();
@@ -736,21 +744,23 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 stopQueryTimer(timeoutTask, false, false);
                 resetCancelledState();
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Executes the current batch of statements by executing them one-by-one.
-     * 
-     * @param batchTimeout
-     *            timeout for the batch execution
+     *
+     * @param batchTimeout timeout for the batch execution
      * @return a list of update counts
-     * @throws SQLException
-     *             if an error occurs
+     * @throws SQLException if an error occurs
      */
     protected long[] executeBatchSerially(int batchTimeout) throws SQLException {
 
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.connection == null) {
                 checkClosed();
             }
@@ -840,6 +850,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             }
 
             return (updateCounts != null) ? updateCounts : new long[0];
+        } finally {
+            connectionMutex.unlock();
         }
 
     }
@@ -847,31 +859,22 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     /**
      * Actually execute the prepared statement. This is here so server-side
      * PreparedStatements can re-use most of the code from this class.
-     * 
-     * @param <M>
-     *            extends {@link Message}
-     * 
-     * @param maxRowsToRetrieve
-     *            the max number of rows to return
-     * @param sendPacket
-     *            the packet to send
-     * @param createStreamingResultSet
-     *            should a 'streaming' result set be created?
-     * @param queryIsSelectOnly
-     *            is this query doing a SELECT?
-     * @param metadata
-     *            use this metadata instead of the one provided on wire
-     * @param isBatch
-     *            is this a batch query?
-     * 
+     *
+     * @param <M>                      extends {@link Message}
+     * @param maxRowsToRetrieve        the max number of rows to return
+     * @param sendPacket               the packet to send
+     * @param createStreamingResultSet should a 'streaming' result set be created?
+     * @param queryIsSelectOnly        is this query doing a SELECT?
+     * @param metadata                 use this metadata instead of the one provided on wire
+     * @param isBatch                  is this a batch query?
      * @return the results as a ResultSet
-     * 
-     * @throws SQLException
-     *             if an error occurs.
+     * @throws SQLException if an error occurs.
      */
     protected <M extends Message> ResultSetInternalMethods executeInternal(int maxRowsToRetrieve, M sendPacket, boolean createStreamingResultSet,
-            boolean queryIsSelectOnly, ColumnDefinition metadata, boolean isBatch) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+                                                                           boolean queryIsSelectOnly, ColumnDefinition metadata, boolean isBatch) throws SQLException {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             try {
 
                 JdbcConnection locallyScopedConnection = this.connection;
@@ -909,16 +912,20 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 return rs;
             } catch (NullPointerException npe) {
                 checkClosed(); // we can't synchronize ourselves against async connection-close due to deadlock issues, so this is the next best thing for
-                              // this particular corner case.
+                // this particular corner case.
 
                 throw npe;
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public java.sql.ResultSet executeQuery() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
 
             JdbcConnection locallyScopedConn = this.connection;
 
@@ -986,6 +993,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             this.lastInsertId = this.results.getUpdateID();
 
             return this.results;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1000,32 +1009,33 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      * keys we need to gather for the batch.
      */
     protected long executeUpdateInternal(boolean clearBatchedGeneratedKeysAndWarnings, boolean isBatch) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (clearBatchedGeneratedKeysAndWarnings) {
                 clearWarnings();
                 this.batchedGeneratedKeys = null;
             }
 
             return executeUpdateInternal(((PreparedQuery) this.query).getQueryBindings(), isBatch);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Added to allow batch-updates
-     * 
-     * @param bindings
-     *            bindings object
-     * @param isReallyBatch
-     *            is it a batched statement?
-     * 
+     *
+     * @param bindings      bindings object
+     * @param isReallyBatch is it a batched statement?
      * @return the update count
-     * 
-     * @throws SQLException
-     *             if a database error occurs
+     * @throws SQLException if a database error occurs
      */
     protected long executeUpdateInternal(QueryBindings bindings, boolean isReallyBatch) throws SQLException {
 
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
 
             JdbcConnection locallyScopedConn = this.connection;
 
@@ -1081,6 +1091,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             this.lastInsertId = rs.getUpdateID();
 
             return this.updateCount;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1090,17 +1102,16 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     /**
      * Returns a prepared statement for the number of batched parameters, used when re-writing batch INSERTs.
-     * 
-     * @param localConn
-     *            the connection creating this statement
-     * @param numBatches
-     *            number of entries in a batch
+     *
+     * @param localConn  the connection creating this statement
+     * @param numBatches number of entries in a batch
      * @return new ClientPreparedStatement
-     * @throws SQLException
-     *             if a database access error occurs or this method is called on a closed PreparedStatement
+     * @throws SQLException if a database access error occurs or this method is called on a closed PreparedStatement
      */
     protected ClientPreparedStatement prepareBatchedInsertSQL(JdbcConnection localConn, int numBatches) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ClientPreparedStatement pstmt = new ClientPreparedStatement(localConn, "Rewritten batch of: " + ((PreparedQuery) this.query).getOriginalSql(),
                     this.getCurrentDatabase(), getQueryInfo().getQueryInfoForBatch(numBatches));
             pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
@@ -1109,26 +1120,38 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             getQueryAttributesBindings().runThroughAll(a -> ((JdbcStatement) pstmt).setAttribute(a.getName(), a.getValue()));
 
             return pstmt;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     protected void setRetrieveGeneratedKeys(boolean flag) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             this.retrieveGeneratedKeys = flag;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public byte[] getBytesRepresentation(int parameterIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             return ((PreparedQuery) this.query).getQueryBindings().getBytesRepresentation(getCoreParameterIndex(parameterIndex));
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
 
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             //
             // We could just tack on a LIMIT 0 here no matter what the  statement, and check if a result set was returned or not, but I'm not comfortable with
             // that, myself, so we take the "safer" road, and only allow metadata for _actual_ SELECTS (but not SHOWs).
@@ -1197,14 +1220,15 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             }
 
             return this.pstmtResultMetaData;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * Checks if the given SQL query is a result set producing query.
-     * 
-     * @return
-     *         <code>true</code> if the query produces a result set, <code>false</code> otherwise.
+     *
+     * @return <code>true</code> if the query produces a result set, <code>false</code> otherwise.
      */
     protected boolean isResultSetProducingQuery() {
         QueryReturnType queryReturnType = getQueryInfo().getQueryReturnType();
@@ -1213,9 +1237,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     /**
      * Checks if the given SQL query does not return a result set.
-     * 
-     * @return
-     *         <code>true</code> if the query does not produce a result set, <code>false</code> otherwise.
+     *
+     * @return <code>true</code> if the query does not produce a result set, <code>false</code> otherwise.
      */
     private boolean isNonResultSetProducingQuery() {
         QueryReturnType queryReturnType = getQueryInfo().getQueryReturnType();
@@ -1224,7 +1247,9 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     @Override
     public ParameterMetaData getParameterMetaData() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.parameterMetaData == null) {
                 if (this.session.getPropertySet().getBooleanProperty(PropertyKey.generateSimpleParameterMetadata).getValue()) {
                     this.parameterMetaData = new MysqlParameterMetadata(((PreparedQuery) this.query).getParameterCount());
@@ -1235,6 +1260,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             }
 
             return this.parameterMetaData;
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1244,19 +1271,27 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     }
 
     private void initializeFromQueryInfo() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
 
             int parameterCount = getQueryInfo().getStaticSqlParts().length - 1;
             ((PreparedQuery) this.query).setParameterCount(parameterCount);
             ((PreparedQuery) this.query).setQueryBindings(new NativeQueryBindings(parameterCount, this.session, NativeQueryBindValue::new));
             clearParameters();
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public boolean isNull(int paramIndex) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             return ((PreparedQuery) this.query).getQueryBindings().getBindValues()[getCoreParameterIndex(paramIndex)].isNull();
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1268,7 +1303,9 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             return; // already closed
         }
 
-        synchronized (locallyScopedConn.getConnectionMutex()) {
+        ReentrantLock connectionMutex = locallyScopedConn.getConnectionMutex();
+        connectionMutex.lock();
+        try {
 
             // additional check in case Statement was closed
             // while current thread was waiting for lock
@@ -1288,17 +1325,23 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
             ((PreparedQuery) this.query).setOriginalSql(null);
             ((PreparedQuery) this.query).setQueryBindings(null);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public String getPreparedSql() {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (this.rewrittenBatchSize == 0) {
                 return ((PreparedQuery) this.query).getOriginalSql();
             }
 
             return getQueryInfo().getSqlForBatch();
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1321,15 +1364,19 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     }
 
     public ParameterBindings getParameterBindings() throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             return new ParameterBindingsImpl((PreparedQuery) this.query, this.session, this.resultSetFactory);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     /**
      * For calling stored functions, this will be -1 as Connector/J does not count
      * the first '?' parameter marker, but JDBC counts it * as 1, otherwise it will return 0
-     * 
+     *
      * @return offset
      */
     protected int getParameterIndexOffset() {
@@ -1337,7 +1384,9 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
     }
 
     protected void checkBounds(int paramIndex, int parameterIndexOffset) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if ((paramIndex < 1)) {
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.49") + paramIndex + Messages.getString("PreparedStatement.50"),
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
@@ -1350,6 +1399,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.63"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                         this.exceptionInterceptor);
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1366,162 +1417,254 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setAsciiStream(getCoreParameterIndex(parameterIndex), x, -1);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setAsciiStream(getCoreParameterIndex(parameterIndex), x, length);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setAsciiStream(getCoreParameterIndex(parameterIndex), x, (int) length);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setBigDecimal(getCoreParameterIndex(parameterIndex), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setBinaryStream(getCoreParameterIndex(parameterIndex), x, -1);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setBinaryStream(getCoreParameterIndex(parameterIndex), x, length);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setBinaryStream(getCoreParameterIndex(parameterIndex), x, (int) length);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setBlob(int i, java.sql.Blob x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setBlob(getCoreParameterIndex(i), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setBinaryStream(getCoreParameterIndex(parameterIndex), inputStream, -1);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setBinaryStream(getCoreParameterIndex(parameterIndex), inputStream, (int) length);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setBoolean(getCoreParameterIndex(parameterIndex), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setByte(int parameterIndex, byte x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setByte(getCoreParameterIndex(parameterIndex), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setBytes(int parameterIndex, byte[] x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setBytes(getCoreParameterIndex(parameterIndex), x, true);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setBytes(int parameterIndex, byte[] x, boolean escapeIfNeeded) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setBytes(getCoreParameterIndex(parameterIndex), x, escapeIfNeeded);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setCharacterStream(getCoreParameterIndex(parameterIndex), reader, -1);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setCharacterStream(getCoreParameterIndex(parameterIndex), reader, length);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setCharacterStream(getCoreParameterIndex(parameterIndex), reader, (int) length);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setCharacterStream(getCoreParameterIndex(parameterIndex), reader, -1);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setCharacterStream(getCoreParameterIndex(parameterIndex), reader, (int) length);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setClob(int i, Clob x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setClob(getCoreParameterIndex(i), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setDate(int parameterIndex, Date x) throws java.sql.SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setDate(getCoreParameterIndex(parameterIndex), x, null);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setDate(getCoreParameterIndex(parameterIndex), x, cal);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setDouble(int parameterIndex, double x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setDouble(getCoreParameterIndex(parameterIndex), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1532,57 +1675,89 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     @Override
     public void setInt(int parameterIndex, int x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setInt(getCoreParameterIndex(parameterIndex), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setLong(int parameterIndex, long x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setLong(getCoreParameterIndex(parameterIndex), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setBigInteger(int parameterIndex, BigInteger x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setBigInteger(getCoreParameterIndex(parameterIndex), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setNCharacterStream(getCoreParameterIndex(parameterIndex), value, -1);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setNCharacterStream(getCoreParameterIndex(parameterIndex), reader, length);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setNCharacterStream(getCoreParameterIndex(parameterIndex), reader, -1);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setNCharacterStream(getCoreParameterIndex(parameterIndex), reader, length);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setNClob(int parameterIndex, NClob value) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setNClob(getCoreParameterIndex(parameterIndex), value);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1591,33 +1766,41 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      * VARCHAR or LONGVARCHAR value with introducer _utf8 (depending on the
      * arguments size relative to the driver's limits on VARCHARs) when it sends
      * it to the database. If charset is set as utf8, this method just call setString.
-     * 
-     * @param parameterIndex
-     *            the first parameter is 1...
-     * @param x
-     *            the parameter value
-     * 
-     * @exception SQLException
-     *                if a database access error occurs
+     *
+     * @param parameterIndex the first parameter is 1...
+     * @param x              the parameter value
+     * @throws SQLException if a database access error occurs
      */
     @Override
     public void setNString(int parameterIndex, String x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setNString(getCoreParameterIndex(parameterIndex), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setNull(getCoreParameterIndex(parameterIndex)); // MySQL ignores sqlType
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setNull(getCoreParameterIndex(parameterIndex));
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1628,14 +1811,20 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     @Override
     public void setObject(int parameterIndex, Object parameterObj) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setObject(getCoreParameterIndex(parameterIndex), parameterObj);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setObject(int parameterIndex, Object parameterObj, int targetSqlType) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             try {
                 ((PreparedQuery) this.query).getQueryBindings().setObject(getCoreParameterIndex(parameterIndex), parameterObj,
                         MysqlType.getByJdbcType(targetSqlType), -1);
@@ -1643,23 +1832,31 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(targetSqlType),
                         MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setObject(int parameterIndex, Object parameterObj, SQLType targetSqlType) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (targetSqlType instanceof MysqlType) {
                 ((PreparedQuery) this.query).getQueryBindings().setObject(getCoreParameterIndex(parameterIndex), parameterObj, (MysqlType) targetSqlType, -1);
             } else {
                 setObject(parameterIndex, parameterObj, targetSqlType.getVendorTypeNumber());
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setObject(int parameterIndex, Object parameterObj, int targetSqlType, int scale) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             try {
                 ((PreparedQuery) this.query).getQueryBindings().setObject(getCoreParameterIndex(parameterIndex), parameterObj,
                         MysqlType.getByJdbcType(targetSqlType), scale);
@@ -1667,17 +1864,23 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(targetSqlType),
                         MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setObject(int parameterIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             if (targetSqlType instanceof MysqlType) {
                 ((PreparedQuery) this.query).getQueryBindings().setObject(getCoreParameterIndex(parameterIndex), x, (MysqlType) targetSqlType, scaleOrLength);
             } else {
                 setObject(parameterIndex, x, targetSqlType.getVendorTypeNumber(), scaleOrLength);
             }
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1693,8 +1896,12 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     @Override
     public void setShort(int parameterIndex, short x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setShort(getCoreParameterIndex(parameterIndex), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
@@ -1710,36 +1917,56 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
     @Override
     public void setString(int parameterIndex, String x) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setString(getCoreParameterIndex(parameterIndex), x);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setTime(int parameterIndex, Time x) throws java.sql.SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setTime(getCoreParameterIndex(parameterIndex), x, null);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setTime(int parameterIndex, java.sql.Time x, Calendar cal) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setTime(getCoreParameterIndex(parameterIndex), x, cal);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) throws java.sql.SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x, null, null, MysqlType.TIMESTAMP);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 
     @Override
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x, Calendar cal) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
+        ReentrantLock connectionMutex = checkClosed().getConnectionMutex();
+        connectionMutex.lock();
+        try {
             ((PreparedQuery) this.query).getQueryBindings().setTimestamp(getCoreParameterIndex(parameterIndex), x, cal, null, MysqlType.TIMESTAMP);
+        } finally {
+            connectionMutex.unlock();
         }
     }
 

@@ -33,6 +33,8 @@ import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
 import com.mysql.cj.Session;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 public interface ResultsetRowsOwner {
 
     void closeOwner(boolean calledExplicitly);
@@ -41,7 +43,7 @@ public interface ResultsetRowsOwner {
 
     Session getSession();
 
-    Object getSyncMutex();
+    ReentrantLock getSyncMutex();
 
     /**
      * StackTrace generated where ResultSet was created... used when profiling

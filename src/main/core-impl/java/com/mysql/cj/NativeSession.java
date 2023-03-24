@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 import com.mysql.cj.conf.HostInfo;
@@ -151,11 +152,14 @@ public class NativeSession extends CoreSession implements Serializable {
             }
 
         }
-        synchronized (this) {
+        this.getSessionMutex().lock();
+        try {
             if (this.cancelTimer != null) {
                 this.cancelTimer.cancel();
                 this.cancelTimer = null;
             }
+        } finally {
+            this.getSessionMutex().unlock();
         }
         this.isClosed = true;
         super.quit();
@@ -177,11 +181,14 @@ public class NativeSession extends CoreSession implements Serializable {
             }
             //this.protocol = null; // TODO actually we shouldn't remove protocol instance because some it's methods can be called after closing socket
         }
-        synchronized (this) {
+        this.getSessionMutex().lock();
+        try {
             if (this.cancelTimer != null) {
                 this.cancelTimer.cancel();
                 this.cancelTimer = null;
             }
+        } finally {
+            this.getSessionMutex().unlock();
         }
         this.isClosed = true;
         super.forceClose();
@@ -317,8 +324,9 @@ public class NativeSession extends CoreSession implements Serializable {
         this.protocol.setLocalInfileInputStream(stream);
     }
 
-    private void createConfigCacheIfNeeded(Object syncMutex) {
-        synchronized (syncMutex) {
+    private void createConfigCacheIfNeeded(ReentrantLock syncMutex) {
+        syncMutex.lock();
+        try {
             if (this.serverConfigCache != null) {
                 return;
             }
@@ -364,6 +372,8 @@ public class NativeSession extends CoreSession implements Serializable {
                         new Object[] { getPropertySet().getStringProperty(PropertyKey.queryInfoCacheFactory).getValue(), PropertyKey.queryInfoCacheFactory }),
                         e, getExceptionInterceptor());
             }
+        } finally {
+            syncMutex.unlock();
         }
     }
 
@@ -379,7 +389,7 @@ public class NativeSession extends CoreSession implements Serializable {
      * @param version
      *            driver version string
      */
-    public void loadServerVariables(Object syncMutex, String version) {
+    public void loadServerVariables(ReentrantLock syncMutex, String version) {
 
         if (this.cacheServerConfiguration.getValue()) {
             createConfigCacheIfNeeded(syncMutex);
@@ -825,10 +835,15 @@ public class NativeSession extends CoreSession implements Serializable {
         return this.protocol != null && this.protocol.getServerSession().useAnsiQuotedIdentifiers() ? "\"" : "`";
     }
 
-    public synchronized Timer getCancelTimer() {
-        if (this.cancelTimer == null) {
-            this.cancelTimer = new Timer("MySQL Statement Cancellation Timer", Boolean.TRUE);
+    public Timer getCancelTimer() {
+        this.getSessionMutex().lock();
+        try {
+            if (this.cancelTimer == null) {
+                this.cancelTimer = new Timer("MySQL Statement Cancellation Timer", Boolean.TRUE);
+            }
+            return this.cancelTimer;
+        } finally {
+            this.getSessionMutex().unlock();
         }
-        return this.cancelTimer;
     }
 }
