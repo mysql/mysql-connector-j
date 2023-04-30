@@ -215,7 +215,6 @@ public class StatementsTest extends BaseTestCase {
         sspsConn.close();
     }
 
-    @Test
     private void testBinaryResultSetNumericTypesInternal(Connection con) throws Exception {
         /*
          * TINYINT 1 -128 127 SMALLINT 2 -32768 32767 MEDIUMINT 3 -8388608
