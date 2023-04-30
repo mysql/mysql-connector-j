@@ -1068,7 +1068,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
         testJsonTypeCheckFunction("SELECT JSON_VALID('{\"a\": 1}')", "1");
     }
 
-    @Test
     private void testJsonTypeCheckFunction(String sql, String expectedResult) throws Exception {
         this.rs = this.stmt.executeQuery(sql);
         assertTrue(this.rs.next());
