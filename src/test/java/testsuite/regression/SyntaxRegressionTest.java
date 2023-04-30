@@ -1301,7 +1301,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
         }
     }
 
-    @Test
     private void testCreateTablespaceCheckTablespaces(int expectedTsCount) throws Exception {
         if (versionMeetsMinimum(8, 0, 3)) {
             this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_tablespaces WHERE name LIKE 'testTs_'");
@@ -1312,7 +1311,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
         assertEquals(expectedTsCount, this.rs.getInt(1));
     }
 
-    @Test
     private void testCreateTablespaceCheckTables(String tablespace, int expectedTblCount) throws Exception {
         if (versionMeetsMinimum(8, 0, 3)) {
             this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_tables a, information_schema.innodb_tablespaces b "
@@ -1371,7 +1369,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
         testSetMergeThresholdIndices(tableMergeThreshold, keyMergeThresholds);
     }
 
-    @Test
     private void testSetMergeThresholdIndices(int defaultMergeThreshold, Map<String, Integer> keyMergeThresholds) throws Exception {
         boolean dbMapsToSchema = ((JdbcConnection) this.conn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
                 .getValue() == DatabaseTerm.SCHEMA;
