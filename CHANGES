@@ -1,7 +1,7 @@
 # Changelog
-# https://dev.mysql.com/doc/relnotes/connector-j/8.0/en/
+# https://dev.mysql.com/doc/relnotes/connector-j/en/
 
-Version 8.0.34
+Version 8.1.0
 
   - Fix for Bug#110321 (Bug#35167701), Issue in JDBC PreparedStatement on adding NO_BACKSLASH_ESCAPES in sql_mode.
 
