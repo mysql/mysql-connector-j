@@ -16,7 +16,7 @@
 	</natures>
 	<filteredResources>
 		<filter>
-			<id>0</id>
+			<id>1687523287226</id>
 			<name></name>
 			<type>26</type>
 			<matcher>
@@ -25,7 +25,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>0</id>
+			<id>1687523287234</id>
 			<name></name>
 			<type>26</type>
 			<matcher>
@@ -34,16 +34,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>0</id>
-			<name></name>
-			<type>26</type>
-			<matcher>
-				<id>org.eclipse.ui.ide.multiFilter</id>
-				<arguments>1.0-projectRelativePath-matches-false-false-patches</arguments>
-			</matcher>
-		</filter>
-		<filter>
-			<id>0</id>
+			<id>1687523287240</id>
 			<name></name>
 			<type>26</type>
 			<matcher>
