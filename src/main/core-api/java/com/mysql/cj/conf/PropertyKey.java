@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -124,6 +124,7 @@ public enum PropertyKey {
     failOverReadOnly("failOverReadOnly", true), //
     fallbackToSystemKeyStore("fallbackToSystemKeyStore", true), //
     fallbackToSystemTrustStore("fallbackToSystemTrustStore", true), //
+    fipsCompliantJsse("fipsCompliantJsse", true), //
     forceConnectionTimeZoneToSession("forceConnectionTimeZoneToSession", true), //
     functionsNeverReturnBlobs("functionsNeverReturnBlobs", true), //
     gatherPerfMetrics("gatherPerfMetrics", true), //
@@ -139,6 +140,8 @@ public enum PropertyKey {
     initialTimeout("initialTimeout", true), //
     interactiveClient("interactiveClient", true), //
     jdbcCompliantTruncation("jdbcCompliantTruncation", true), //
+    keyManagerFactoryProvider("KeyManagerFactoryProvider", true), //
+    keyStoreProvider("keyStoreProvider", true), //
     largeRowSizeThreshold("largeRowSizeThreshold", true), //
     ldapServerHostname("ldapServerHostname", true), // 
     loadBalanceAutoCommitStatementRegex("loadBalanceAutoCommitStatementRegex", true), //
@@ -219,6 +222,7 @@ public enum PropertyKey {
     socksProxyHost("socksProxyHost", true), //
     socksProxyPort("socksProxyPort", true), //
     socksProxyRemoteDns("socksProxyRemoteDns", true), //
+    sslContextProvider("sslContextProvider", true), //
     sslMode("sslMode", true), //
     strictUpdates("strictUpdates", true), //
     tcpKeepAlive("tcpKeepAlive", true), //
@@ -236,6 +240,7 @@ public enum PropertyKey {
     trustCertificateKeyStorePassword("trustCertificateKeyStorePassword", true), //
     trustCertificateKeyStoreType("trustCertificateKeyStoreType", true), //
     trustCertificateKeyStoreUrl("trustCertificateKeyStoreUrl", true), //
+    trustManagerFactoryProvider("trustManagerFactoryProvider", true), //
     ultraDevHack("ultraDevHack", true), //
     useAffectedRows("useAffectedRows", true), //
     useColumnNamesInFindColumn("useColumnNamesInFindColumn", true), //

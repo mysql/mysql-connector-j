@@ -10297,11 +10297,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
             }
             assertTrue(cause != null && cause instanceof CertificateException, "CertificateException expected");
             String errMsg = cause.getMessage();
-            if (errMsg.startsWith("java.security.cert.CertificateException: ")) {
-                errMsg = errMsg.substring("java.security.cert.CertificateException: ".length());
+            if (errMsg.startsWith("com.mysql.cj.exceptions.SSLParamsException: ")) {
+                errMsg = errMsg.substring("com.mysql.cj.exceptions.SSLParamsException: ".length());
             }
-            assertEquals("Server identity verification failed. None of the DNS or IP Subject Alternative Name " + "entries matched the server hostname/IP '"
-                    + getHostFromTestsuiteUrl() + "'.", errMsg);
+            assertEquals("Server identity verification failed. None of the certificate's DNS or IP Subject Alternative Name entries matched the server "
+                    + "hostname/IP '" + getHostFromTestsuiteUrl() + "'.", errMsg);
         }
     }
 
@@ -10990,8 +10990,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 if (errMsg.startsWith("java.security.cert.CertificateException: ")) {
                     errMsg = errMsg.substring("java.security.cert.CertificateException: ".length());
                 }
-                assertEquals("Server identity verification failed. None of the DNS or IP Subject Alternative Name " + "entries matched the server hostname/IP '"
-                        + notOkHost + "'.", errMsg);
+                assertEquals("Server identity verification failed. None of the certificate's DNS or IP Subject Alternative Name entries matched the server "
+                        + "hostname/IP '" + notOkHost + "'.", errMsg);
             }
 
             // Not OK hosts are OK if not verifying identity, though.

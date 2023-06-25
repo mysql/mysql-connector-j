@@ -373,11 +373,11 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             this.packetSender = new SimplePacketSender(this.socketConnection.getMysqlOutput());
             this.packetReader = new SimplePacketReader(this.socketConnection, this.maxAllowedPacket);
 
-        } catch (FeatureNotAvailableException nae) {
-            throw new CJConnectionFeatureNotAvailableException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder(), nae);
-        } catch (IOException ioEx) {
+        } catch (FeatureNotAvailableException e) {
+            throw new CJConnectionFeatureNotAvailableException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder(), e);
+        } catch (IOException e) {
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, this.getPacketSentTimeHolder(),
-                    this.getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+                    this.getPacketReceivedTimeHolder(), e, getExceptionInterceptor());
         }
     }
 

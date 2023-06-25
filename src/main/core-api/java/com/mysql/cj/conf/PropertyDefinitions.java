@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -374,6 +374,21 @@ public class PropertyDefinitions {
 
                 new StringPropertyDefinition(PropertyKey.tlsVersions, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.tlsVersions"), "8.0.8", CATEGORY_SECURITY, 14),
+
+                new BooleanPropertyDefinition(PropertyKey.fipsCompliantJsse, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.fipsCompliantJsse"), "8.1.0", CATEGORY_SECURITY, 15),
+
+                new StringPropertyDefinition(PropertyKey.keyManagerFactoryProvider, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.keyManagerFactoryProvider"), "8.1.0", CATEGORY_SECURITY, 16),
+
+                new StringPropertyDefinition(PropertyKey.trustManagerFactoryProvider, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.trustManagerFactoryProvider"), "8.1.0", CATEGORY_SECURITY, 17),
+
+                new StringPropertyDefinition(PropertyKey.keyStoreProvider, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.keyStoreProvider"), "8.1.0", CATEGORY_SECURITY, 18),
+
+                new StringPropertyDefinition(PropertyKey.sslContextProvider, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.sslContextProvider"), "8.1.0", CATEGORY_SECURITY, 19),
 
                 new BooleanPropertyDefinition(PropertyKey.allowLoadLocalInfile, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.loadDataLocal"), "3.0.3", CATEGORY_SECURITY, Integer.MAX_VALUE),
