@@ -370,7 +370,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
      *                if a database access error occurs
      */
     public ConnectionImpl(HostInfo hostInfo) throws SQLException {
-
         try {
             // Stash away for later, used to clone this connection for Statement.cancel and Statement.setQueryTimeout().
             this.origHostInfo = hostInfo;
@@ -382,9 +381,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             this.password = hostInfo.getPassword();
 
             this.props = hostInfo.exposeAsProperties();
-
             this.propertySet = new JdbcPropertySetImpl();
-
             this.propertySet.initializeProperties(this.props);
 
             // We need Session ASAP to get access to central driver functionality
@@ -413,31 +410,28 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             if (exceptionInterceptorClasses != null && !"".equals(exceptionInterceptorClasses)) {
                 this.exceptionInterceptor = new ExceptionInterceptorChain(exceptionInterceptorClasses, this.props, this.session.getLog());
             }
-
             if (this.cachePrepStmts.getValue()) {
                 createPreparedStatementCaches();
             }
-
             if (this.propertySet.getBooleanProperty(PropertyKey.cacheCallableStmts).getValue()) {
                 this.parsedCallableStatementCache = new LRUCache<>(this.propertySet.getIntegerProperty(PropertyKey.callableStmtCacheSize).getValue());
             }
-
             if (this.propertySet.getBooleanProperty(PropertyKey.allowMultiQueries).getValue()) {
                 this.propertySet.getProperty(PropertyKey.cacheResultSetMetadata).setValue(false); // we don't handle this yet
             }
-
             if (this.propertySet.getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
                 this.resultSetMetadataCache = new LRUCache<>(this.propertySet.getIntegerProperty(PropertyKey.metadataCacheSize).getValue());
             }
-
             if (this.propertySet.getStringProperty(PropertyKey.socksProxyHost).getStringValue() != null) {
                 this.propertySet.getProperty(PropertyKey.socketFactory).setValue(SocksProxySocketFactory.class.getName());
             }
 
+            if (this.propertySet.getBooleanProperty(PropertyKey.autoDeserialize.getKeyName()).getValue()) {
+                this.session.getLog().logWarn(Messages.getString("Connection.WarnAutoDeserialize"));
+            }
+
             this.dbmd = getMetaData(false, false);
-
             initializeSafeQueryInterceptors();
-
         } catch (CJException e) {
             throw SQLExceptionsMapping.translateException(e, getExceptionInterceptor());
         }

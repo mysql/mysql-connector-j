@@ -3,6 +3,8 @@
 
 Version 8.1.0
 
+  - WL#15826, Deprecate autoDeserialize feature.
+
   - Fix for Bug#95039 (Bug#35534640), KeyManagementException: FIPS mode: only SunJSSE TrustManagers may be used.
 
   - Fix for Bug#110321 (Bug#35167701), Issue in JDBC PreparedStatement on adding NO_BACKSLASH_ESCAPES in sql_mode.
