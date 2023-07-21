@@ -1747,7 +1747,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             checkTransactionState();
         } else {
             // read OK packet
-            OkPacket ok = OkPacket.parse(rowPacket, this.serverSession.getCharsetSettings().getErrorMessageEncoding());
+            OkPacket ok = OkPacket.parse(rowPacket, this.serverSession);
             result = (T) ok;
 
             this.serverSession.setStatusFlags(ok.getStatusFlags(), saveOldStatus);

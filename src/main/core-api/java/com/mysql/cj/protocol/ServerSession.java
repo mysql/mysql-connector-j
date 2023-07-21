@@ -121,6 +121,8 @@ public interface ServerSession {
 
     boolean useMultiResults();
 
+    boolean isSessionStateTrackingEnabled();
+
     boolean isEOFDeprecated();
 
     boolean supportsQueryAttributes();

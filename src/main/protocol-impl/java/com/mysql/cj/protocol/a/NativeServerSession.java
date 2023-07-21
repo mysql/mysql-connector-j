@@ -214,6 +214,11 @@ public class NativeServerSession implements ServerSession {
     }
 
     @Override
+    public boolean isSessionStateTrackingEnabled() {
+        return (this.clientParam & CLIENT_SESSION_TRACK) != 0;
+    }
+
+    @Override
     public boolean isEOFDeprecated() {
         return (this.clientParam & CLIENT_DEPRECATE_EOF) != 0;
     }

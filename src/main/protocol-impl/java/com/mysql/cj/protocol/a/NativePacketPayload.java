@@ -603,6 +603,9 @@ public class NativePacketPayload implements Message {
                 break;
 
             case STRING_LENENC:
+                if (this.position >= this.payloadLength) { // Servers do not always respect STRING_LENENC encoding: Bug#35630063.
+                    return "";
+                }
                 long l = readInteger(IntegerDataType.INT_LENENC);
                 return l == NULL_LENGTH ? null : l == 0 ? "" : readString(StringLengthDataType.STRING_FIXED, encoding, (int) l);
 

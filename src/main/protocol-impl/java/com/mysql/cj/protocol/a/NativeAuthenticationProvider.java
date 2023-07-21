@@ -470,7 +470,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
             if (lastReceived.isOKPacket()) {
                 // read OK packet
-                OkPacket ok = OkPacket.parse(lastReceived, null);
+                OkPacket ok = OkPacket.parse(lastReceived, serverSession);
                 serverSession.setStatusFlags(ok.getStatusFlags(), true);
                 serverSession.getServerSessionStateController().setSessionStateChanges(ok.getSessionStateChanges());
 

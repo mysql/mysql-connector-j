@@ -11941,4 +11941,80 @@ public class ConnectionRegressionTest extends BaseTestCase {
         } while ((useSPS = !useSPS) || (useLTS = !useLTS) || (useLSS = !useLSS));
     }
 
+    /**
+     * Tests fix for Bug#35358417, MySQL Connector/J is not parsing the sessionStateChanges from the OK_Packet correctly.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug35358417() throws Exception {
+        assumeTrue(versionMeetsMinimum(5, 7, 6), "Session state tracking requires at least MySQL 5.7.6");
+
+        String gtidMode = getMysqlVariable("gtid_mode");
+        if ("OFF".equalsIgnoreCase(gtidMode)) {
+            // Enable GTID mode.
+            this.stmt.execute("SET GLOBAL gtid_mode='OFF_PERMISSIVE'");
+            this.stmt.execute("SET GLOBAL gtid_mode='ON_PERMISSIVE'");
+        }
+        String uuid = getMysqlVariable("server_uuid");
+
+        createTable("testBug35358417", "(id INT)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.trackSessionState.getKeyName(), "true");
+        try (Connection testConn = getConnectionWithProps(props)) {
+            testConn.createStatement().executeUpdate("SET SESSION session_track_gtids='OWN_GTID'");
+            testConn.createStatement().executeUpdate("SET SESSION session_track_schema=OFF");
+            testConn.createStatement().executeUpdate("SET SESSION session_track_state_change=OFF");
+            testConn.createStatement().executeUpdate("SET SESSION session_track_transaction_info=OFF");
+
+            TestBug35358417Listener sessStateChangesListener = new TestBug35358417Listener();
+            ((MysqlConnection) testConn).getServerSessionStateController().addSessionStateChangesListener(sessStateChangesListener);
+
+            Statement testStmt = testConn.createStatement();
+            List<SessionStateChange> changes;
+            SessionStateChange change;
+            String gtid;
+
+            testStmt.executeUpdate("INSERT INTO testBug35358417 VALUES (1)");
+            assertNotNull(sessStateChangesListener.capturedChanges);
+            changes = sessStateChangesListener.capturedChanges.getSessionStateChangesList();
+            assertEquals(1, changes.size());
+            change = changes.get(0);
+            assertEquals(ServerSessionStateController.SESSION_TRACK_GTIDS, change.getType());
+            gtid = change.getValues().get(0);
+            assertTrue(gtid.startsWith(uuid));
+            assertEquals(':', gtid.charAt(uuid.length()));
+            sessStateChangesListener.capturedChanges = null;
+
+            testStmt.executeUpdate("UPDATE testBug35358417 SET id = id + 1 WHERE id = 1");
+            assertNotNull(sessStateChangesListener.capturedChanges);
+            changes = sessStateChangesListener.capturedChanges.getSessionStateChangesList();
+            assertEquals(1, changes.size());
+            change = changes.get(0);
+            assertEquals(ServerSessionStateController.SESSION_TRACK_GTIDS, change.getType());
+            gtid = change.getValues().get(0);
+            assertTrue(gtid.startsWith(uuid));
+            assertEquals(':', gtid.charAt(uuid.length()));
+            sessStateChangesListener.capturedChanges = null;
+        } finally {
+            if ("OFF".equalsIgnoreCase(gtidMode)) {
+                // Reset GTID mode to original state.
+                this.stmt.execute("SET GLOBAL gtid_mode='OFF_PERMISSIVE'");
+                this.stmt.execute("SET GLOBAL gtid_mode='OFF'");
+            }
+        }
+    }
+
+    class TestBug35358417Listener implements SessionStateChangesListener {
+
+        ServerSessionStateChanges capturedChanges = null;
+
+        @Override
+        public void handleSessionStateChanges(ServerSessionStateChanges changes) {
+            this.capturedChanges = changes;
+        }
+
+    }
+
 }

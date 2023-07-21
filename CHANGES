@@ -3,6 +3,8 @@
 
 Version 8.2.0
 
+  - Fix for Bug#35358417, MySQL Connector/J is not parsing the sessionStateChanges from the OK_Packet correctly.
+
   - WL#15845, Stop building artifacts for old maven coordinates.
 
 Version 8.1.0

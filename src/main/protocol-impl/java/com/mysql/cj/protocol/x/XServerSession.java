@@ -40,7 +40,6 @@ import com.mysql.cj.protocol.ServerCapabilities;
 import com.mysql.cj.protocol.ServerSession;
 
 public class XServerSession implements ServerSession {
-
     XServerCapabilities serverCapabilities = null;
 
     private TimeZone defaultTimeZone = TimeZone.getDefault();
@@ -127,6 +126,11 @@ public class XServerSession implements ServerSession {
 
     @Override
     public boolean hasLongColumnInfo() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
+    @Override
+    public boolean isSessionStateTrackingEnabled() {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 

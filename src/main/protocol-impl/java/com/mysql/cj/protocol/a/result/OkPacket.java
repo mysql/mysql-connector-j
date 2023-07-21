@@ -32,6 +32,7 @@ package com.mysql.cj.protocol.a.result;
 import static com.mysql.cj.protocol.a.NativeServerSession.SERVER_SESSION_STATE_CHANGED;
 
 import com.mysql.cj.protocol.ProtocolEntity;
+import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.protocol.a.NativePacketPayload;
@@ -50,22 +51,24 @@ public class OkPacket implements ProtocolEntity {
         this.sessionStateChanges = new NativeServerSessionStateChanges();
     }
 
-    public static OkPacket parse(NativePacketPayload buf, String errorMessageEncoding) {
-        OkPacket ok = new OkPacket();
+    public static OkPacket parse(NativePacketPayload buf, ServerSession session) {
+        String errMsgEnc = session.getCharsetSettings().getErrorMessageEncoding();
 
-        buf.setPosition(1); // skips the 'last packet' flag (packet signature)
+        OkPacket ok = new OkPacket();
+        buf.setPosition(1); // skips the 'last packet' flag (packet signature) 
 
         // read OK packet
         ok.setUpdateCount(buf.readInteger(IntegerDataType.INT_LENENC)); // affected_rows
         ok.setUpdateID(buf.readInteger(IntegerDataType.INT_LENENC)); // last_insert_id
         ok.setStatusFlags((int) buf.readInteger(IntegerDataType.INT2));
         ok.setWarningCount((int) buf.readInteger(IntegerDataType.INT2));
-        ok.setInfo(buf.readString(StringSelfDataType.STRING_TERM, errorMessageEncoding)); // info
+        ok.setInfo(buf.readString(StringSelfDataType.STRING_LENENC, errMsgEnc)); // info
 
-        // read session state changes info
-        if ((ok.getStatusFlags() & SERVER_SESSION_STATE_CHANGED) > 0) {
-            ok.sessionStateChanges.init(buf, errorMessageEncoding);
+        if (session.isSessionStateTrackingEnabled() && (ok.getStatusFlags() & SERVER_SESSION_STATE_CHANGED) != 0) {
+            // read session state changes info
+            ok.sessionStateChanges.init(buf, errMsgEnc);
         }
+
         return ok;
     }
 
