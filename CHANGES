@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/en/
 
+Version 8.2.0
+
 Version 8.1.0
 
   - WL#15826, Deprecate autoDeserialize feature.
