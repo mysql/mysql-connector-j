@@ -3,6 +3,8 @@
 
 Version 8.2.0
 
+  - WL#15845, Stop building artifacts for old maven coordinates.
+
 Version 8.1.0
 
   - WL#15826, Deprecate autoDeserialize feature.

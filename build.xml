@@ -261,11 +261,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <property name="com.mysql.cj.testsuite.build.dir" value="buildtest" />
     <property name="com.mysql.cj.testsuite.junit.results" value="${com.mysql.cj.testsuite.build.dir}/junit" />
 
-    <!-- TODO: Remove as soon as maven relocation artifacts stop being published -->
-    <property name="com.mysql.cj.build.driver.extendedNameRelocation" value="mysql-connector-java${com.mysql.cj.dist.packageExtraName}" />
-    <property name="com.mysql.cj.dist.packageNameRelocation"
-              value="mysql-connector-java${com.mysql.cj.build.driver.extraName}${com.mysql.cj.dist.packageExtraName}-${com.mysql.cj.build.driver.version.full}" />
-
     <!-- Send class files to correct location if running in eclipse. -->
     <condition property="com.mysql.cj.build.compiler.output" value="bin" else="${com.mysql.cj.build.dir.driver}">
         <or>
@@ -566,8 +561,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <filter token="MYSQL_CJ_EXTRA_NAME" value="${com.mysql.cj.build.driver.extraName}" />
             <filter token="MYSQL_CJ_EXTENDED_PROD_NAME" value="${com.mysql.cj.build.driver.extendedName}" />
             <filter token="MYSQL_CJ_EXTENDED_LEGACY_PROD_NAME" value="${com.mysql.cj.build.driver.extendedLegacyName}" />
-            <!-- TODO: Remove as soon as maven relocation artifacts stop being published -->
-            <filter token="MYSQL_CJ_EXTENDED_PROD_NAME_RELOCATION" value="${com.mysql.cj.build.driver.extendedNameRelocation}" />
             <filter token="MYSQL_CJ_FULL_PROD_NAME" value="${com.mysql.cj.build.driver.fullName}" />
             <filter token="MYSQL_CJ_DISPLAY_PROD_NAME" value="${com.mysql.cj.build.driver.displayName}" />
             <filter token="MYSQL_CJ_RPM_RELEASE_FULL" value="${com.mysql.cj.dist.rpm.releaseFull}" />
@@ -896,7 +889,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
 
     <!-- Create archive files with package. -->
-    <target name="-create-archives" depends="-create-portable-archives, -create-maven-archive, -create-maven-relocation-archive" />
+    <target name="-create-archives" depends="-create-portable-archives, -create-maven-archive" />
 
 
     <!-- Create portable archives. -->
@@ -1040,77 +1033,6 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         </condition>
 
         <property name="com.mysql.cj.dist.archiveName" value="${com.mysql.cj.dist.packageName}${com.mysql.cj.dist.archiveSourcesSuffix}" />
-    </target>
-
-
-    <!-- TODO: Remove as soon as maven relocation artifacts stop being published -->
-    <!-- Create a Maven relocation bundle containing all the files to upload into the central or local repository. -->
-    <target name="-create-maven-relocation-archive" depends="-make-packages, -set-archive-name-relocation" unless="${com.mysql.cj.dist.noMaven}">
-        <property name="com.mysql.cj.dist.dir.mavenRelocation"
-                  value="${com.mysql.cj.dist.dir.workspace}/${com.mysql.cj.dist.packageNameRelocation}_maven-relocation" />
-        <mkdir dir="${com.mysql.cj.dist.dir.mavenRelocation}" />
-
-        <copy file="${com.mysql.cj.build.dir.driver}/pom-relocation.xml"
-              tofile="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.dist.packageNameRelocation}.pom" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.dist.packageNameRelocation}.pom"
-                  forceoverwrite="yes"
-                  fileext=".md5"
-                  algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/${com.mysql.cj.dist.packageNameRelocation}.pom"
-                  forceoverwrite="yes"
-                  fileext=".sha1"
-                  algorithm="SHA-1" />
-
-        <copy file="${com.mysql.cj.build.dir.driver}/LICENSE" todir="${com.mysql.cj.dist.dir.mavenRelocation}" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/LICENSE" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/LICENSE" forceoverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
-
-        <copy file="${com.mysql.cj.build.dir.driver}/README" todir="${com.mysql.cj.dist.dir.mavenRelocation}" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/README" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/README" forceoverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
-
-        <copy file="${com.mysql.cj.build.dir.driver}/INFO_BIN" todir="${com.mysql.cj.dist.dir.mavenRelocation}" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/INFO_BIN" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/INFO_BIN" forceoverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
-
-        <copy file="${com.mysql.cj.build.dir.driver}/INFO_SRC" todir="${com.mysql.cj.dist.dir.mavenRelocation}" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/INFO_SRC" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
-        <checksum file="${com.mysql.cj.dist.dir.mavenRelocation}/INFO_SRC" forceoverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
-
-        <delete file="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveNameRelocation}_maven-relocation.tar.gz" />
-
-        <tar destfile="${com.mysql.cj.dist.dir}/${com.mysql.cj.dist.archiveNameRelocation}_maven-relocation.tar.gz"
-             basedir="${com.mysql.cj.dist.dir.mavenRelocation}"
-             compression="gzip"
-             longfile="gnu" />
-    </target>
-
-
-    <!-- TODO: Remove as soon as maven relocation artifacts stop being published -->
-    <!-- Compute the archive name, including a reference to whether the package contains sources or not, if not expected by default (GPL package should contain
-         sources, commercial package shouldn't). -->
-    <target name="-set-archive-name-relocation" unless="com.mysql.cj.dist.archiveNameRelocation">
-        <condition property="com.mysql.cj.dist.archiveSourcesSuffixRelocation" value="_src">
-            <and>
-                <not>
-                    <isset property="com.mysql.cj.dist.archiveSourcesSuffixRelocation" />
-                </not>
-                <istrue value="${com.mysql.cj.build.commercial}" />
-                <isfalse value="${com.mysql.cj.dist.noSources}" />
-            </and>
-        </condition>
-        <condition property="com.mysql.cj.dist.archiveSourcesSuffixRelocation" value="_no-src" else="">
-            <and>
-                <not>
-                    <isset property="com.mysql.cj.dist.archiveSourcesSuffixRelocation" />
-                </not>
-                <isfalse value="${com.mysql.cj.build.commercial}" />
-                <istrue value="${com.mysql.cj.dist.noSources}" />
-            </and>
-        </condition>
-
-        <property name="com.mysql.cj.dist.archiveNameRelocation"
-                  value="${com.mysql.cj.dist.packageNameRelocation}${com.mysql.cj.dist.archiveSourcesSuffixRelocation}" />
     </target>
 
 
