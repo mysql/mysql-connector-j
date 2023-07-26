@@ -29,11 +29,8 @@
 
 package com.mysql.cj.jdbc.result;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -384,35 +381,31 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
             if (this.rowData.size() == 0) {
                 b = false;
-            } else {
-                if (row == 0) {
+            } else if (row == 0) {
+                beforeFirst();
+                b = false;
+            } else if (row == 1) {
+                b = first();
+            } else if (row == -1) {
+                b = last();
+            } else if (row > this.rowData.size()) {
+                afterLast();
+                b = false;
+            } else if (row < 0) {
+                // adjust to reflect after end of result set
+                int newRowPosition = this.rowData.size() + row + 1;
+
+                if (newRowPosition <= 0) {
                     beforeFirst();
                     b = false;
-                } else if (row == 1) {
-                    b = first();
-                } else if (row == -1) {
-                    b = last();
-                } else if (row > this.rowData.size()) {
-                    afterLast();
-                    b = false;
                 } else {
-                    if (row < 0) {
-                        // adjust to reflect after end of result set
-                        int newRowPosition = this.rowData.size() + row + 1;
-
-                        if (newRowPosition <= 0) {
-                            beforeFirst();
-                            b = false;
-                        } else {
-                            b = absolute(newRowPosition);
-                        }
-                    } else {
-                        row--; // adjust for index difference
-                        this.rowData.setCurrentRow(row);
-                        this.thisRow = this.rowData.get(row);
-                        b = true;
-                    }
+                    b = absolute(newRowPosition);
                 }
+            } else {
+                row--; // adjust for index difference
+                this.rowData.setCurrentRow(row);
+                this.thisRow = this.rowData.get(row);
+                b = true;
             }
 
             setRowPositionValidity();
@@ -1130,33 +1123,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 // TODO Field sets binary and blob flags if the length of BIT field is > 1; is it needed at all?
                 if (field.isBinary() || field.isBlob()) {
                     byte[] data = getBytes(columnIndex);
-
-                    if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.autoDeserialize).getValue()) {
-                        Object obj = data;
-
-                        if (data != null && data.length >= 2) {
-                            if (data[0] == -84 && data[1] == -19) {
-                                // Serialized object?
-                                try {
-                                    ByteArrayInputStream bytesIn = new ByteArrayInputStream(data);
-                                    ObjectInputStream objIn = new ObjectInputStream(bytesIn);
-                                    obj = objIn.readObject();
-                                    objIn.close();
-                                    bytesIn.close();
-                                } catch (ClassNotFoundException cnfe) {
-                                    throw SQLError.createSQLException(Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
-                                            + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
-                                } catch (IOException ex) {
-                                    obj = data; // not serialized?
-                                }
-                            } else {
-                                return getString(columnIndex);
-                            }
-                        }
-
-                        return obj;
-                    }
-
                     return data;
                 }
 
@@ -1232,38 +1198,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             case MEDIUMBLOB:
             case LONGBLOB:
             case BLOB:
-                if (field.isBinary() || field.isBlob()) {
-                    byte[] data = getBytes(columnIndex);
-
-                    if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.autoDeserialize).getValue()) {
-                        Object obj = data;
-
-                        if (data != null && data.length >= 2) {
-                            if (data[0] == -84 && data[1] == -19) {
-                                // Serialized object?
-                                try {
-                                    ByteArrayInputStream bytesIn = new ByteArrayInputStream(data);
-                                    ObjectInputStream objIn = new ObjectInputStream(bytesIn);
-                                    obj = objIn.readObject();
-                                    objIn.close();
-                                    bytesIn.close();
-                                } catch (ClassNotFoundException cnfe) {
-                                    throw SQLError.createSQLException(Messages.getString("ResultSet.Class_not_found___91") + cnfe.toString()
-                                            + Messages.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor());
-                                } catch (IOException ex) {
-                                    obj = data; // not serialized?
-                                }
-                            } else {
-                                return getString(columnIndex);
-                            }
-                        }
-
-                        return obj;
-                    }
-
-                    return data;
-                }
-
                 return getBytes(columnIndex);
 
             case YEAR:
@@ -1412,18 +1346,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 checkRowPos();
                 checkColumnBounds(columnIndex);
                 return (T) this.thisRow.getValue(columnIndex - 1, new DurationValueFactory(this.session.getPropertySet()));
-            }
-
-            if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.autoDeserialize).getValue()) {
-                try {
-                    return (T) getObject(columnIndex);
-                } catch (ClassCastException cce) {
-                    SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(),
-                            MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-                    sqlEx.initCause(cce);
-
-                    throw sqlEx;
-                }
             }
 
             throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,

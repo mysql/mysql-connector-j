@@ -39,6 +39,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.lang.management.ManagementFactory;
@@ -3038,7 +3039,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-        props.setProperty(PropertyKey.autoDeserialize.getKeyName(), "true");
         props.setProperty(PropertyKey.treatUtilDateAsTimestamp.getKeyName(), "false");
 
         deserializeConn = getConnectionWithProps(props);
@@ -3051,8 +3051,17 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         this.rs = deserializeConn.createStatement().executeQuery("SELECT MY_OBJECT_FIELD FROM testBug25787");
         this.rs.next();
-        assertEquals("java.util.Date", this.rs.getObject(1).getClass().getName());
-        assertEquals(dt, this.rs.getObject(1));
+        Object data = this.rs.getObject(1);
+        assertEquals(byte[].class, data.getClass());
+
+        ByteArrayInputStream bytesInStream = new ByteArrayInputStream((byte[]) data);
+        ObjectInputStream objInStream = new ObjectInputStream(bytesInStream);
+        Object obj = objInStream.readObject();
+        objInStream.close();
+        bytesInStream.close();
+
+        assertEquals(java.util.Date.class, obj.getClass());
+        assertEquals(dt, obj);
     }
 
     @Test

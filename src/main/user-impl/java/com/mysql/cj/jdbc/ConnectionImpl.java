@@ -428,10 +428,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 this.propertySet.getProperty(PropertyKey.socketFactory).setValue(SocksProxySocketFactory.class.getName());
             }
 
-            if (this.propertySet.getBooleanProperty(PropertyKey.autoDeserialize.getKeyName()).getValue()) {
-                this.session.getLog().logWarn(Messages.getString("Connection.WarnAutoDeserialize"));
-            }
-
             this.dbmd = getMetaData(false, false);
             initializeSafeQueryInterceptors();
         } catch (CJException e) {

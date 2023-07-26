@@ -519,9 +519,6 @@ public class PropertyDefinitions {
                 //
                 // CATEGORY_BLOBS
                 //
-                new BooleanPropertyDefinition(PropertyKey.autoDeserialize, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.autoDeserialize"), "3.1.5", CATEGORY_BLOBS, Integer.MIN_VALUE),
-
                 new MemorySizePropertyDefinition(PropertyKey.blobSendChunkSize, 1024 * 1024, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.blobSendChunkSize"), "3.1.9", CATEGORY_BLOBS, Integer.MIN_VALUE, 0, 0),
 
@@ -785,8 +782,9 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.gatherPerfMetrics, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.gatherPerfMetrics"), "3.1.2", CATEGORY_DEBUGING_PROFILING, 10),
 
+                // TODO currently is not used !!!
                 new IntegerPropertyDefinition(PropertyKey.reportMetricsIntervalMillis, 30000, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.reportMetricsIntervalMillis"), "3.1.2", CATEGORY_DEBUGING_PROFILING, 11, 0, Integer.MAX_VALUE), // TODO currently is not used !!!
+                        Messages.getString("ConnectionProperties.reportMetricsIntervalMillis"), "3.1.2", CATEGORY_DEBUGING_PROFILING, 11, 0, Integer.MAX_VALUE),
 
                 new BooleanPropertyDefinition(PropertyKey.logXaCommands, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.logXaCommands"), "5.0.5", CATEGORY_DEBUGING_PROFILING, 12),

@@ -73,7 +73,6 @@ public enum PropertyKey {
     authenticationFidoCallbackHandler("authenticationFidoCallbackHandler", true), //
     authenticationPlugins("authenticationPlugins", true), //
     autoClosePStmtStreams("autoClosePStmtStreams", true), //
-    autoDeserialize("autoDeserialize", true), //
     autoGenerateTestcaseScript("autoGenerateTestcaseScript", true), //
     autoReconnect("autoReconnect", true), //
     autoReconnectForPools("autoReconnectForPools", true), //

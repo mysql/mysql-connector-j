@@ -42,6 +42,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.CharArrayReader;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Field;
@@ -1766,7 +1767,6 @@ public class StatementsTest extends BaseTestCase {
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.characterEncoding.getKeyName(), "UTF-8");
         props.setProperty(PropertyKey.treatUtilDateAsTimestamp.getKeyName(), "false");
-        props.setProperty(PropertyKey.autoDeserialize.getKeyName(), "true");
 
         for (boolean useSPS : new boolean[] { false, true }) {
             props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
@@ -1808,7 +1808,16 @@ public class StatementsTest extends BaseTestCase {
                 if (boundObject instanceof Number) {
                     assertEquals(valuesToTest[i].toString(), boundObject.toString(),
                             "For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass);
-                } else if (boundObject instanceof Date) {
+                } else if (boundObject instanceof byte[]) {
+                    // Deserialize java.util.Date value.
+                    ByteArrayInputStream bytesInStream = new ByteArrayInputStream((byte[]) boundObject);
+                    ObjectInputStream objInStream = new ObjectInputStream(bytesInStream);
+                    Object obj = objInStream.readObject();
+                    objInStream.close();
+                    bytesInStream.close();
+
+                    assertEquals(java.util.Date.class, obj.getClass());
+                    assertEquals(valuesToTest[i], obj, "For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass);
 
                 } else {
                     assertEquals(valuesToTest[i], boundObject, "For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass);
